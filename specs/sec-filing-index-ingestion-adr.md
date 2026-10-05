@@ -1,8 +1,8 @@
 # Use Azure-managed orchestration for SEC filing indexes
 
-- **Status:** Proposed
+- **Status:** Accepted (2026-10-05)
 - **Date:** 2026-10-05
-- **Deciders:** Lowell (owner; acceptance pending)
+- **Deciders:** Lowell Mason (owner; explicitly accepted this ADR and the design spec on 2026-10-05)
 - **Blast radius:** historical and daily SEC index ingestion; the ingestion manifest; raw and
   curated storage; ETL execution; `packages/sec-edgar-ingest/`; deployment, monitoring and
   recovery procedures.

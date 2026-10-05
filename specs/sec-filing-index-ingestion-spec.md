@@ -1,6 +1,12 @@
 # SEC filing-index ingestion on Azure — Design Spec
 
-**Status:** PROPOSED (2026-10-05) — pending design acceptance
+**Status:** ACCEPTED (2026-10-05) — formally accepted by Lowell Mason.
+
+**Acceptance record:** The owner accepted this spec and its ADR, including the operating
+defaults, on 2026-10-05. Stage 1 records the selected range and deployment settings and investigates
+readiness. Acceptance establishes the implementation contract; the readiness finding and later
+deployment evidence remain separate gates. References below to the proposal or draft describe
+the document's original design provenance.
 
 **Decision:** [Use Azure-managed orchestration for SEC filing indexes](sec-filing-index-ingestion-adr.md).
 
