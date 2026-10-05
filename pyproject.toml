@@ -1,0 +1,25 @@
+[project]
+name = "sec-edgar"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Lowell Mason", email = "mason.lowell@mac.com" }
+]
+requires-python = ">=3.14"
+dependencies = []
+
+[project.scripts]
+sec-edgar = "sec_edgar:main"
+
+[build-system]
+requires = ["uv_build>=0.12.15,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.uv.workspace]
+members = [
+    "packages/sec-edgar-ingest",
+    "packages/sec-edgar-index-ingest",
+    "packages/sec-edgar-download",
+    "packages/sec-edgar-client",
+]
