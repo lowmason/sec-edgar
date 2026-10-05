@@ -1,6 +1,6 @@
 # SEC filing-index ingestion — Stage 1: Scope and feasibility findings
 
-**Status:** DESIGN APPROVED (2026-10-05); awaiting owner review of this written spec.
+**Status:** APPROVED (2026-10-05) — written spec accepted by Lowell Mason.
 **Owner and decider:** Lowell Mason.
 **Repository:** /Users/lowell/Projects/sec-edgar.
 **Authorization:** The owner authorized Stage 1 and approved its approach, scope, evidence boundary,
