@@ -1,0 +1,383 @@
+COMMAND: uv run --offline --frozen --package sec-edgar-ingest python -m unittest discover -s packages/sec-edgar-ingest/tests -p test_config.py -v
+EXIT: 1
+test_azure_explicit_binding_and_credential_free_endpoints (test_config.ConfigTests.test_azure_explicit_binding_and_credential_free_endpoints) ... 
+  test_azure_explicit_binding_and_credential_free_endpoints (test_config.ConfigTests.test_azure_explicit_binding_and_credential_free_endpoints) (name='missing Azure endpoint') ... FAIL
+  test_azure_explicit_binding_and_credential_free_endpoints (test_config.ConfigTests.test_azure_explicit_binding_and_credential_free_endpoints) (name='credentials in endpoint') ... FAIL
+  test_azure_explicit_binding_and_credential_free_endpoints (test_config.ConfigTests.test_azure_explicit_binding_and_credential_free_endpoints) (name='query credential') ... FAIL
+  test_azure_explicit_binding_and_credential_free_endpoints (test_config.ConfigTests.test_azure_explicit_binding_and_credential_free_endpoints) (name='foreign account') ... FAIL
+  test_azure_explicit_binding_and_credential_free_endpoints (test_config.ConfigTests.test_azure_explicit_binding_and_credential_free_endpoints) (name='foreign endpoint') ... FAIL
+  test_azure_explicit_binding_and_credential_free_endpoints (test_config.ConfigTests.test_azure_explicit_binding_and_credential_free_endpoints) (name='different sentinel') ... FAIL
+  test_azure_explicit_binding_and_credential_free_endpoints (test_config.ConfigTests.test_azure_explicit_binding_and_credential_free_endpoints) (name='different namespace') ... FAIL
+  test_azure_explicit_binding_and_credential_free_endpoints (test_config.ConfigTests.test_azure_explicit_binding_and_credential_free_endpoints) (name='different budget') ... FAIL
+  test_azure_explicit_binding_and_credential_free_endpoints (test_config.ConfigTests.test_azure_explicit_binding_and_credential_free_endpoints) (name='synthetic image') ... FAIL
+  test_azure_explicit_binding_and_credential_free_endpoints (test_config.ConfigTests.test_azure_explicit_binding_and_credential_free_endpoints) (name='fixture marker') ... FAIL
+  test_azure_explicit_binding_and_credential_free_endpoints (test_config.ConfigTests.test_azure_explicit_binding_and_credential_free_endpoints) (name='fixture parser') ... FAIL
+  test_azure_explicit_binding_and_credential_free_endpoints (test_config.ConfigTests.test_azure_explicit_binding_and_credential_free_endpoints) (name='fixture-only cap') ... FAIL
+  test_azure_explicit_binding_and_credential_free_endpoints (test_config.ConfigTests.test_azure_explicit_binding_and_credential_free_endpoints) (name='fixture-only override') ... FAIL
+test_fixture_overrides_are_explicit_and_validated (test_config.ConfigTests.test_fixture_overrides_are_explicit_and_validated) ... ok
+test_invalid_configuration_precedes_external_factories (test_config.ConfigTests.test_invalid_configuration_precedes_external_factories) ... FAIL
+test_json_yaml_subset_loads_without_creating_fixture_root (test_config.ConfigTests.test_json_yaml_subset_loads_without_creating_fixture_root) ... ok
+test_mapping_is_detached_and_typed_settings_are_frozen (test_config.ConfigTests.test_mapping_is_detached_and_typed_settings_are_frozen) ... ok
+test_pin_context_checks_range_identity_and_deadline (test_config.ConfigTests.test_pin_context_checks_range_identity_and_deadline) ... 
+  test_pin_context_checks_range_identity_and_deadline (test_config.ConfigTests.test_pin_context_checks_range_identity_and_deadline) (name='future endpoint') ... FAIL
+  test_pin_context_checks_range_identity_and_deadline (test_config.ConfigTests.test_pin_context_checks_range_identity_and_deadline) (name='unbound config') ... FAIL
+  test_pin_context_checks_range_identity_and_deadline (test_config.ConfigTests.test_pin_context_checks_range_identity_and_deadline) (name='unbound image') ... FAIL
+  test_pin_context_checks_range_identity_and_deadline (test_config.ConfigTests.test_pin_context_checks_range_identity_and_deadline) (name='unbound parser') ... FAIL
+  test_pin_context_checks_range_identity_and_deadline (test_config.ConfigTests.test_pin_context_checks_range_identity_and_deadline) (name='too long') ... FAIL
+test_rejects_configuration_matrix (test_config.ConfigTests.test_rejects_configuration_matrix) ... 
+  test_rejects_configuration_matrix (test_config.ConfigTests.test_rejects_configuration_matrix) (name='reversed quarters') ... FAIL
+  test_rejects_configuration_matrix (test_config.ConfigTests.test_rejects_configuration_matrix) (name='unsupported config') ... FAIL
+  test_rejects_configuration_matrix (test_config.ConfigTests.test_rejects_configuration_matrix) (name='unsupported schema') ... FAIL
+  test_rejects_configuration_matrix (test_config.ConfigTests.test_rejects_configuration_matrix) (name='malformed image') ... FAIL
+  test_rejects_configuration_matrix (test_config.ConfigTests.test_rejects_configuration_matrix) (name='zero rate') ... FAIL
+  test_rejects_configuration_matrix (test_config.ConfigTests.test_rejects_configuration_matrix) (name='target at ten') ... FAIL
+  test_rejects_configuration_matrix (test_config.ConfigTests.test_rejects_configuration_matrix) (name='negative attempts') ... FAIL
+  test_rejects_configuration_matrix (test_config.ConfigTests.test_rejects_configuration_matrix) (name='too many attempts') ... FAIL
+  test_rejects_configuration_matrix (test_config.ConfigTests.test_rejects_configuration_matrix) (name='zero received') ... FAIL
+  test_rejects_configuration_matrix (test_config.ConfigTests.test_rejects_configuration_matrix) (name='negative expanded') ... FAIL
+  test_rejects_configuration_matrix (test_config.ConfigTests.test_rejects_configuration_matrix) (name='unsafe path') ... FAIL
+  test_rejects_configuration_matrix (test_config.ConfigTests.test_rejects_configuration_matrix) (name='absolute output path') ... FAIL
+  test_rejects_configuration_matrix (test_config.ConfigTests.test_rejects_configuration_matrix) (name='bad namespace') ... FAIL
+  test_rejects_configuration_matrix (test_config.ConfigTests.test_rejects_configuration_matrix) (name='renew after lease') ... FAIL
+  test_rejects_configuration_matrix (test_config.ConfigTests.test_rejects_configuration_matrix) (name='bad retries') ... FAIL
+  test_rejects_configuration_matrix (test_config.ConfigTests.test_rejects_configuration_matrix) (name='bad replays') ... FAIL
+  test_rejects_configuration_matrix (test_config.ConfigTests.test_rejects_configuration_matrix) (name='no withdrawal gate') ... FAIL
+test_second_collector_is_refused (test_config.ConfigTests.test_second_collector_is_refused) ... FAIL
+
+======================================================================
+FAIL: test_azure_explicit_binding_and_credential_free_endpoints (test_config.ConfigTests.test_azure_explicit_binding_and_credential_free_endpoints) (name='missing Azure endpoint')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_config.py", line 130, in test_azure_explicit_binding_and_credential_free_endpoints
+    with self.assertRaises(ValueError):
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_azure_explicit_binding_and_credential_free_endpoints (test_config.ConfigTests.test_azure_explicit_binding_and_credential_free_endpoints) (name='credentials in endpoint')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_config.py", line 130, in test_azure_explicit_binding_and_credential_free_endpoints
+    with self.assertRaises(ValueError):
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_azure_explicit_binding_and_credential_free_endpoints (test_config.ConfigTests.test_azure_explicit_binding_and_credential_free_endpoints) (name='query credential')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_config.py", line 130, in test_azure_explicit_binding_and_credential_free_endpoints
+    with self.assertRaises(ValueError):
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_azure_explicit_binding_and_credential_free_endpoints (test_config.ConfigTests.test_azure_explicit_binding_and_credential_free_endpoints) (name='foreign account')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_config.py", line 130, in test_azure_explicit_binding_and_credential_free_endpoints
+    with self.assertRaises(ValueError):
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_azure_explicit_binding_and_credential_free_endpoints (test_config.ConfigTests.test_azure_explicit_binding_and_credential_free_endpoints) (name='foreign endpoint')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_config.py", line 130, in test_azure_explicit_binding_and_credential_free_endpoints
+    with self.assertRaises(ValueError):
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_azure_explicit_binding_and_credential_free_endpoints (test_config.ConfigTests.test_azure_explicit_binding_and_credential_free_endpoints) (name='different sentinel')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_config.py", line 130, in test_azure_explicit_binding_and_credential_free_endpoints
+    with self.assertRaises(ValueError):
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_azure_explicit_binding_and_credential_free_endpoints (test_config.ConfigTests.test_azure_explicit_binding_and_credential_free_endpoints) (name='different namespace')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_config.py", line 130, in test_azure_explicit_binding_and_credential_free_endpoints
+    with self.assertRaises(ValueError):
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_azure_explicit_binding_and_credential_free_endpoints (test_config.ConfigTests.test_azure_explicit_binding_and_credential_free_endpoints) (name='different budget')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_config.py", line 130, in test_azure_explicit_binding_and_credential_free_endpoints
+    with self.assertRaises(ValueError):
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_azure_explicit_binding_and_credential_free_endpoints (test_config.ConfigTests.test_azure_explicit_binding_and_credential_free_endpoints) (name='synthetic image')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_config.py", line 130, in test_azure_explicit_binding_and_credential_free_endpoints
+    with self.assertRaises(ValueError):
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_azure_explicit_binding_and_credential_free_endpoints (test_config.ConfigTests.test_azure_explicit_binding_and_credential_free_endpoints) (name='fixture marker')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_config.py", line 130, in test_azure_explicit_binding_and_credential_free_endpoints
+    with self.assertRaises(ValueError):
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_azure_explicit_binding_and_credential_free_endpoints (test_config.ConfigTests.test_azure_explicit_binding_and_credential_free_endpoints) (name='fixture parser')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_config.py", line 130, in test_azure_explicit_binding_and_credential_free_endpoints
+    with self.assertRaises(ValueError):
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_azure_explicit_binding_and_credential_free_endpoints (test_config.ConfigTests.test_azure_explicit_binding_and_credential_free_endpoints) (name='fixture-only cap')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_config.py", line 130, in test_azure_explicit_binding_and_credential_free_endpoints
+    with self.assertRaises(ValueError):
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_azure_explicit_binding_and_credential_free_endpoints (test_config.ConfigTests.test_azure_explicit_binding_and_credential_free_endpoints) (name='fixture-only override')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_config.py", line 130, in test_azure_explicit_binding_and_credential_free_endpoints
+    with self.assertRaises(ValueError):
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_invalid_configuration_precedes_external_factories (test_config.ConfigTests.test_invalid_configuration_precedes_external_factories)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_config.py", line 31, in test_invalid_configuration_precedes_external_factories
+    with self.assertRaises(ValueError):
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_pin_context_checks_range_identity_and_deadline (test_config.ConfigTests.test_pin_context_checks_range_identity_and_deadline) (name='future endpoint')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_config.py", line 178, in test_pin_context_checks_range_identity_and_deadline
+    with self.subTest(name=name), self.assertRaises(ValueError):
+                                  ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_pin_context_checks_range_identity_and_deadline (test_config.ConfigTests.test_pin_context_checks_range_identity_and_deadline) (name='unbound config')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_config.py", line 178, in test_pin_context_checks_range_identity_and_deadline
+    with self.subTest(name=name), self.assertRaises(ValueError):
+                                  ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_pin_context_checks_range_identity_and_deadline (test_config.ConfigTests.test_pin_context_checks_range_identity_and_deadline) (name='unbound image')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_config.py", line 178, in test_pin_context_checks_range_identity_and_deadline
+    with self.subTest(name=name), self.assertRaises(ValueError):
+                                  ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_pin_context_checks_range_identity_and_deadline (test_config.ConfigTests.test_pin_context_checks_range_identity_and_deadline) (name='unbound parser')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_config.py", line 178, in test_pin_context_checks_range_identity_and_deadline
+    with self.subTest(name=name), self.assertRaises(ValueError):
+                                  ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_pin_context_checks_range_identity_and_deadline (test_config.ConfigTests.test_pin_context_checks_range_identity_and_deadline) (name='too long')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_config.py", line 178, in test_pin_context_checks_range_identity_and_deadline
+    with self.subTest(name=name), self.assertRaises(ValueError):
+                                  ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_rejects_configuration_matrix (test_config.ConfigTests.test_rejects_configuration_matrix) (name='reversed quarters')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_config.py", line 78, in test_rejects_configuration_matrix
+    with self.assertRaises(ValueError):
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_rejects_configuration_matrix (test_config.ConfigTests.test_rejects_configuration_matrix) (name='unsupported config')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_config.py", line 78, in test_rejects_configuration_matrix
+    with self.assertRaises(ValueError):
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_rejects_configuration_matrix (test_config.ConfigTests.test_rejects_configuration_matrix) (name='unsupported schema')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_config.py", line 78, in test_rejects_configuration_matrix
+    with self.assertRaises(ValueError):
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_rejects_configuration_matrix (test_config.ConfigTests.test_rejects_configuration_matrix) (name='malformed image')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_config.py", line 78, in test_rejects_configuration_matrix
+    with self.assertRaises(ValueError):
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_rejects_configuration_matrix (test_config.ConfigTests.test_rejects_configuration_matrix) (name='zero rate')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_config.py", line 78, in test_rejects_configuration_matrix
+    with self.assertRaises(ValueError):
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_rejects_configuration_matrix (test_config.ConfigTests.test_rejects_configuration_matrix) (name='target at ten')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_config.py", line 78, in test_rejects_configuration_matrix
+    with self.assertRaises(ValueError):
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_rejects_configuration_matrix (test_config.ConfigTests.test_rejects_configuration_matrix) (name='negative attempts')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_config.py", line 78, in test_rejects_configuration_matrix
+    with self.assertRaises(ValueError):
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_rejects_configuration_matrix (test_config.ConfigTests.test_rejects_configuration_matrix) (name='too many attempts')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_config.py", line 78, in test_rejects_configuration_matrix
+    with self.assertRaises(ValueError):
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_rejects_configuration_matrix (test_config.ConfigTests.test_rejects_configuration_matrix) (name='zero received')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_config.py", line 78, in test_rejects_configuration_matrix
+    with self.assertRaises(ValueError):
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_rejects_configuration_matrix (test_config.ConfigTests.test_rejects_configuration_matrix) (name='negative expanded')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_config.py", line 78, in test_rejects_configuration_matrix
+    with self.assertRaises(ValueError):
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_rejects_configuration_matrix (test_config.ConfigTests.test_rejects_configuration_matrix) (name='unsafe path')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_config.py", line 78, in test_rejects_configuration_matrix
+    with self.assertRaises(ValueError):
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_rejects_configuration_matrix (test_config.ConfigTests.test_rejects_configuration_matrix) (name='absolute output path')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_config.py", line 78, in test_rejects_configuration_matrix
+    with self.assertRaises(ValueError):
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_rejects_configuration_matrix (test_config.ConfigTests.test_rejects_configuration_matrix) (name='bad namespace')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_config.py", line 78, in test_rejects_configuration_matrix
+    with self.assertRaises(ValueError):
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_rejects_configuration_matrix (test_config.ConfigTests.test_rejects_configuration_matrix) (name='renew after lease')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_config.py", line 78, in test_rejects_configuration_matrix
+    with self.assertRaises(ValueError):
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_rejects_configuration_matrix (test_config.ConfigTests.test_rejects_configuration_matrix) (name='bad retries')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_config.py", line 78, in test_rejects_configuration_matrix
+    with self.assertRaises(ValueError):
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_rejects_configuration_matrix (test_config.ConfigTests.test_rejects_configuration_matrix) (name='bad replays')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_config.py", line 78, in test_rejects_configuration_matrix
+    with self.assertRaises(ValueError):
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_rejects_configuration_matrix (test_config.ConfigTests.test_rejects_configuration_matrix) (name='no withdrawal gate')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_config.py", line 78, in test_rejects_configuration_matrix
+    with self.assertRaises(ValueError):
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_second_collector_is_refused (test_config.ConfigTests.test_second_collector_is_refused)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_config.py", line 24, in test_second_collector_is_refused
+    with self.assertRaisesRegex(ValueError, "max_active_collectors"):
+         ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.046s
+
+FAILED (failures=37)

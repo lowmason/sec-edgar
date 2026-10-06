@@ -1,0 +1,430 @@
+# Review package: 1d1bd25..3085d67
+
+## Commits
+3085d67 fix: align snapshot paths mode and endpoint contracts
+
+## Files changed
+ .../src/sec_edgar_ingest/config.py                 |   2 +-
+ .../src/sec_edgar_ingest/models.py                 |  23 +++-
+ .../src/sec_edgar_ingest/worksets.py               |  18 +--
+ packages/sec-edgar-ingest/tests/test_config.py     |  16 +++
+ packages/sec-edgar-ingest/tests/test_worksets.py   | 129 ++++++++++++++++++++-
+ 5 files changed, 169 insertions(+), 19 deletions(-)
+
+## Diff
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/config.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/config.py
+index 5018710..db36da3 100644
+--- a/packages/sec-edgar-ingest/src/sec_edgar_ingest/config.py
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/config.py
+@@ -270,11 +270,11 @@ def pin_context(settings: Settings, context: RunContext, today: date) -> tuple[R
+         if getattr(context, label) != value:
+             raise ValueError(f"context {label} does not match the effective configuration")
+     duration = (context.deadline - context.started_at).total_seconds()
+     if duration > WORKER_ALLOWANCE_SECONDS and not (settings.fixture and settings.fixture.allow_deadline_override):
+         raise ValueError("context deadline exceeds the accepted 3600-second worker allowance")
+     end = quarter_for(today) if settings.backfill.end_quarter == "open" else settings.backfill.end_quarter
+     if quarter_value(end) > quarter_value(quarter_for(today)):
+         raise ValueError("backfill endpoint is in a future quarter")
+     if quarter_value(end) < quarter_value(settings.backfill.start_quarter):
+         raise ValueError("pinned backfill endpoint precedes start_quarter")
+-    return replace(context, effective_config=settings.to_mapping()), end
++    return replace(context, effective_config=settings.to_mapping(), pinned_on=today), end
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py
+index 8f20fa3..4c57da4 100644
+--- a/packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py
+@@ -13,20 +13,23 @@ from typing import Literal, Union, get_args, get_origin, get_type_hints
+ 
+ from .urls import canonical_source_url, canonical_listing_url, source_id as url_source_id
+ 
+ FORMAT_VERSION = "sec-acquisition-v1"
+ SCHEMA_VERSION = "sec-index-v1"
+ QUARTERLY_ENVELOPE_VERSION = "sec-quarterly-envelope-v1"
+ DAILY_ENVELOPE_VERSION = "sec-daily-envelope-v1"
+ SHA256_PATTERN = re.compile(r"[0-9a-f]{64}\Z")
+ IMAGE_PATTERN = re.compile(r"sha256:[0-9a-f]{64}\Z")
+ QUARTER_PATTERN = re.compile(r"([0-9]{4})Q([1-4])\Z")
++RAW_SNAPSHOT_PATH = re.compile(
++    r"raw/sec/indexes/kind=(quarterly|daily)/period=([^/]+)/sha256=([0-9a-f]{64})/(master\.(?:zip|idx))\Z"
++)
+ Priority = Literal["daily", "backfill", "reconciliation"]
+ Representation = Literal["zip", "idx"]
+ 
+ 
+ def canonical_json(value: object) -> bytes:
+     return json.dumps(value, sort_keys=True, separators=(",", ":"),
+                       ensure_ascii=False, allow_nan=False).encode("utf-8")
+ 
+ 
+ def _unique_json_object(pairs):
+@@ -306,20 +309,21 @@ class RunContext(Record):
+     command: str
+     attempt_id: str
+     image_digest: str
+     parser_version: str
+     schema_version: str
+     config_sha256: str
+     started_at: datetime
+     deadline: datetime
+     priority: Priority
+     effective_config: Mapping[str, object] = field(default_factory=dict)
++    pinned_on: date | None = None
+ 
+     def __post_init__(self):
+         validate_record_fields(self)
+         for label in ("run_id", "execution_id", "command", "attempt_id", "parser_version"):
+             require_text(getattr(self, label), label)
+         if IMAGE_PATTERN.fullmatch(self.image_digest) is None:
+             raise ValueError("image_digest must be immutable sha256")
+         if self.schema_version != SCHEMA_VERSION:
+             raise ValueError("unsupported schema_version")
+         require_hash(self.config_sha256, "config_sha256")
+@@ -408,24 +412,35 @@ class Snapshot(Record):
+     received_at: datetime
+     validators: Mapping[str, str]
+     representation: Representation
+     envelope_version: str
+ 
+     def __post_init__(self):
+         validate_record_fields(self)
+         require_hash(self.source_id, "source_id")
+         require_hash(self.sha256, "sha256")
+         safe_relative_path(self.raw_path, "raw_path")
+-        components = self.raw_path.split("/")
+-        has_hash = any(item == self.sha256 or item == f"{self.sha256}.{self.representation}" for item in components)
+-        if "latest" in components or self.source_id not in components or not has_hash:
+-            raise ValueError("raw_path must address this source and exact snapshot hash")
++        address = RAW_SNAPSHOT_PATH.fullmatch(self.raw_path)
++        if address is None or address[3] != self.sha256:
++            raise ValueError("raw_path must use the approved index layout and exact snapshot hash")
++        expected_kind = "quarterly" if self.representation == "zip" else "daily"
++        if address[1] != expected_kind or address[4] != f"master.{self.representation}":
++            raise ValueError("raw_path kind/file conflicts with representation")
++        if address[1] == "quarterly":
++            quarter_value(address[2])
++        else:
++            try:
++                period = date.fromisoformat(address[2])
++            except ValueError as error:
++                raise ValueError("raw_path daily period must be a valid ISO date") from error
++            if period.isoformat() != address[2]:
++                raise ValueError("raw_path daily period must be a canonical ISO date")
+         require_number(self.byte_count, "byte_count", integer=True)
+         require_utc(self.received_at, "received_at")
+         if self.representation not in ("zip", "idx"):
+             raise ValueError("unsupported representation")
+         require_envelope(self.representation, self.envelope_version)
+         if self.raw_path.endswith((".zip", ".idx")) and not self.raw_path.endswith("." + self.representation):
+             raise ValueError("raw_path extension conflicts with representation")
+         if not isinstance(self.validators, Mapping) or any(not isinstance(key, str) or not isinstance(item, str) for key, item in self.validators.items()):
+             raise ValueError("validators must be string mappings")
+         object.__setattr__(self, "validators", freeze(self.validators))
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/worksets.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/worksets.py
+index f93c422..a12a36e 100644
+--- a/packages/sec-edgar-ingest/src/sec_edgar_ingest/worksets.py
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/worksets.py
+@@ -1,14 +1,15 @@
+ """Strict deterministic codecs for pinned source and snapshot worksets."""
+ import hashlib
+ from dataclasses import replace
+ from datetime import date
++from typing import Literal
+ 
+ from .config import Settings, pin_context
+ from .models import (FORMAT_VERSION, DirectoryOutcome, RunContext, Snapshot, SnapshotWorkset,
+                      Source, SourceWorkset, canonical_json, parse_json, quarter_for, quarter_value,
+                      require_hash, require_text)
+ 
+ 
+ def workset_digest(payload: dict[str, object]) -> str:
+     return hashlib.sha256(canonical_json(payload)).hexdigest()
+ 
+@@ -61,26 +62,26 @@ def decode_source_workset(body: bytes) -> SourceWorkset:
+ 
+ def decode_snapshot_workset(body: bytes) -> SnapshotWorkset:
+     return _decode(body, "snapshot")
+ 
+ 
+ def _validate_common(workset: SourceWorkset | SnapshotWorkset) -> dict[str, DirectoryOutcome]:
+     require_hash(workset.workset_id, "workset_id")
+     if not workset.context.effective_config:
+         raise ValueError("workset context must pin its effective configuration")
+     settings = Settings.from_mapping(workset.context.to_mapping()["effective_config"])
+-    pin_context(settings, workset.context, workset.context.started_at.date())
+-    end = quarter_value(workset.pinned_end_quarter)
+-    if end < quarter_value(settings.backfill.start_quarter) or end > quarter_value(quarter_for(workset.context.started_at.date())):
+-        raise ValueError("workset requires a resolved endpoint within the run's quarter range")
+-    if settings.backfill.end_quarter != "open" and workset.pinned_end_quarter != settings.backfill.end_quarter:
+-        raise ValueError("workset endpoint differs from the pinned effective configuration")
++    if workset.context.pinned_on is None:
++        raise ValueError("workset context requires its actual pinning date")
++    _, resolved_endpoint = pin_context(settings, workset.context, workset.context.pinned_on)
++    quarter_value(workset.pinned_end_quarter)
++    if workset.pinned_end_quarter != resolved_endpoint:
++        raise ValueError("workset endpoint differs from its exact pinned configuration/date resolution")
+     if type(workset.overlap_from) is not date or workset.overlap_from > workset.context.started_at.date():
+         raise ValueError("overlap_from must be a date no later than the run start")
+     if workset.acquisition_mode not in ("reuse_accepted", "refresh"):
+         raise ValueError("unsupported acquisition_mode")
+     urls = [directory.url for directory in workset.directories]
+     if len(set(urls)) != len(urls):
+         raise ValueError("duplicate workset directories")
+     if urls != sorted(urls):
+         raise ValueError("workset directories must be in canonical order")
+     by_source = {}
+@@ -130,26 +131,27 @@ def _validate_snapshot(workset: SnapshotWorkset, *, check_identity: bool = True)
+     for snapshot in workset.snapshots:
+         expected = "zip" if "/full-index/" in by_source[snapshot.source_id].url else "idx"
+         if snapshot.representation != expected:
+             raise ValueError("snapshot representation differs from its source member")
+     if check_identity and workset.workset_id != _identity(workset):
+         raise ValueError("workset identity does not match its content")
+ 
+ 
+ def make_source_workset(context: RunContext, end_quarter: str, discovery_id: str,
+                         members: tuple[Source, ...], directories: tuple[DirectoryOutcome, ...],
+-                        overlap_from: date) -> SourceWorkset:
++                        overlap_from: date, *,
++                        acquisition_mode: Literal["reuse_accepted", "refresh"] = "reuse_accepted") -> SourceWorkset:
+     workset = SourceWorkset("0" * 64, context, end_quarter, discovery_id,
+                            tuple(sorted(members, key=lambda member: member.source_id)),
+                            tuple(sorted(directories, key=lambda directory: directory.url)),
+                            bool(directories) and all(directory.outcome != "discovery_failed" for directory in directories),
+-                           overlap_from, "refresh" if context.command == "refresh" else "reuse_accepted")
++                           overlap_from, acquisition_mode)
+     _validate_source(workset, check_identity=False)
+     return _identified(workset)
+ 
+ 
+ def make_snapshot_workset(source: SourceWorkset, snapshots: tuple[Snapshot, ...]) -> SnapshotWorkset:
+     _validate_source(source)
+     if not source.discovery_complete:
+         raise ValueError("cannot snapshot an incomplete source workset")
+     workset = SnapshotWorkset("0" * 64, source.workset_id, source.context,
+                              tuple(sorted(snapshots, key=lambda snapshot: snapshot.source_id)),
+diff --git a/packages/sec-edgar-ingest/tests/test_config.py b/packages/sec-edgar-ingest/tests/test_config.py
+index fff465c..5126b6c 100644
+--- a/packages/sec-edgar-ingest/tests/test_config.py
++++ b/packages/sec-edgar-ingest/tests/test_config.py
+@@ -222,10 +222,26 @@ class ConfigTests(unittest.TestCase):
+         with tempfile.TemporaryDirectory() as directory:
+             path = Path(directory) / "config.yaml"
+             body = FIXTURE_CONFIG.read_text()
+             for name, malformed in [
+                 ("duplicate keys", body.replace('"config_version":', '"config_version":"sec-acquisition-v1","config_version":').encode()),
+                 ("non-UTF8", body.encode("utf-16")),
+             ]:
+                 with self.subTest(name=name), self.assertRaises(ValueError):
+                     path.write_bytes(malformed)
+                     self.config.load_config(path)
++
++    def test_pinning_retains_exact_date_without_changing_run_start(self):
++        original = fixture_context()
++        settings = fixture_settings(fixture={"allow_clock_override": True})
++        context = replace(original, config_sha256=settings.config_sha256)
++        pinning_date = date(2026, 7, 15)
++        pinned, endpoint = self.config.pin_context(settings, context, pinning_date)
++        self.assertEqual(endpoint, "2026Q3")
++        self.assertEqual(pinned.started_at, context.started_at)
++        self.assertEqual(pinned.deadline, context.deadline)
++        self.assertEqual(getattr(pinned, "pinned_on", None), pinning_date,
++                         "the actual labelled fixture pinning date must be retained")
++        self.assertEqual(type(pinned).from_mapping(pinned.to_mapping()), pinned)
++        self.assertEqual(pinned.to_mapping()["pinned_on"], "2026-07-15")
++        with self.assertRaises(FrozenInstanceError):
++            pinned.pinned_on = date(2026, 7, 16)
+diff --git a/packages/sec-edgar-ingest/tests/test_worksets.py b/packages/sec-edgar-ingest/tests/test_worksets.py
+index b2251a9..8453fa2 100644
+--- a/packages/sec-edgar-ingest/tests/test_worksets.py
++++ b/packages/sec-edgar-ingest/tests/test_worksets.py
+@@ -1,33 +1,36 @@
+ import copy
+ import importlib
+ import importlib.util
+ import json
+ import unittest
+ from dataclasses import FrozenInstanceError, replace
+-from datetime import datetime, timedelta, timezone
++from datetime import date, datetime, timedelta, timezone
+ from pathlib import Path
+ 
+ from support import fixture_context, fixture_settings, fixture_source, fixture_workset
+ 
+ 
+ class WorksetTests(unittest.TestCase):
+     def setUp(self):
+         self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.worksets"),
+                              "Immutable workset identity must be enforced")
+         self.worksets = importlib.import_module("sec_edgar_ingest.worksets")
+         self.models = importlib.import_module("sec_edgar_ingest.models")
+ 
+     def snapshot(self, source, digest="b" * 64):
+-        return self.models.Snapshot(source.source_id, digest,
+-                                    f"raw/{source.source_id}/{digest}/master.zip", 12,
+-                                    fixture_context().started_at, {"etag": "abc"}, "zip", "sec-quarterly-envelope-v1")
++        envelope = (self.models.QUARTERLY_ENVELOPE_VERSION if source.kind == "quarterly"
++                    else self.models.DAILY_ENVELOPE_VERSION)
++        raw_path = (f"raw/sec/indexes/kind={source.kind}/period={source.period}/"
++                    f"sha256={digest}/master.{source.representation}")
++        return self.models.Snapshot(source.source_id, digest, raw_path, 12,
++                                   fixture_context().started_at, {"etag": "abc"}, source.representation, envelope)
+ 
+     def tamper(self, workset, edit, decoder=None):
+         value = json.loads(self.worksets.encode_workset(workset))
+         edit(value)
+         value["workset_id"] = self.worksets.workset_digest({key: item for key, item in value.items() if key != "workset_id"})
+         with self.assertRaises(ValueError):
+             (decoder or self.worksets.decode_source_workset)(self.worksets.canonical_json(value))
+ 
+     def test_member_order_does_not_change_workset_identity(self):
+         a, b = fixture_source("2015Q1"), fixture_source("2015Q2")
+@@ -38,22 +41,23 @@ class WorksetTests(unittest.TestCase):
+         changed = replace(first, pinned_end_quarter="2026Q3")
+         with self.assertRaisesRegex(ValueError, "identity"):
+             self.worksets.decode_source_workset(self.worksets.encode_workset(changed))
+ 
+     def test_changed_context_or_content_changes_identity(self):
+         source = fixture_source()
+         first = fixture_workset((source,))
+         changed = self.worksets.make_source_workset(replace(first.context, execution_id="different"),
+                   first.pinned_end_quarter, first.discovery_id, first.members, first.directories, first.overlap_from)
+         self.assertNotEqual(first.workset_id, changed.workset_id)
+-        refreshed = self.worksets.make_source_workset(replace(first.context, command="refresh"),
+-                  first.pinned_end_quarter, first.discovery_id, first.members, first.directories, first.overlap_from)
++        refreshed = self.worksets.make_source_workset(first.context,
++                  first.pinned_end_quarter, first.discovery_id, first.members, first.directories, first.overlap_from,
++                  acquisition_mode="refresh")
+         self.assertEqual(refreshed.acquisition_mode, "refresh")
+         self.assertNotEqual(first.workset_id, refreshed.workset_id)
+         one = self.worksets.make_snapshot_workset(first, (self.snapshot(source),))
+         two = self.worksets.make_snapshot_workset(first, (self.snapshot(source, "c" * 64),))
+         self.assertNotEqual(one.workset_id, two.workset_id)
+         self.assertEqual(self.worksets.decode_snapshot_workset(self.worksets.encode_workset(one)), one)
+ 
+     def test_detached_serializers_and_deep_immutability(self):
+         source = fixture_source()
+         workset = fixture_workset((source,))
+@@ -211,10 +215,123 @@ class WorksetTests(unittest.TestCase):
+         for name, changes in [
+             ("unknown envelope", {"envelope_version": "latest"}),
+             ("wrong representation envelope", {"envelope_version": "sec-daily-envelope-v1"}),
+             ("wrong timestamp", {"received_at": datetime(2026, 10, 6)}),
+         ]:
+             with self.subTest(name=name), self.assertRaises(ValueError):
+                 replace(snapshot, **changes)
+         workset = fixture_workset((source,))
+         with self.assertRaises(ValueError):
+             self.worksets.decode_source_workset(self.worksets.encode_workset(workset).decode().encode("utf-16"))
++
++    def test_approved_raw_layout_round_trips_both_representations(self):
++        cases = [
++            (fixture_source("2015Q1"), "master.zip", "sec-quarterly-envelope-v1"),
++            (fixture_source("2024-02-29", "daily"), "master.idx", "sec-daily-envelope-v1"),
++        ]
++        for source, filename, envelope in cases:
++            with self.subTest(kind=source.kind):
++                digest = "b" * 64
++                raw_path = (f"raw/sec/indexes/kind={source.kind}/period={source.period}/"
++                            f"sha256={digest}/{filename}")
++                try:
++                    snapshot = self.models.Snapshot(source.source_id, digest, raw_path, 12,
++                               fixture_context().started_at, {"etag": "abc"}, source.representation, envelope)
++                except ValueError as error:
++                    self.fail(f"approved raw path rejected: {error}")
++                self.assertEqual(self.models.Snapshot.from_mapping(snapshot.to_mapping()), snapshot)
++                workset = self.worksets.make_snapshot_workset(fixture_workset((source,)), (snapshot,))
++                self.assertEqual(self.worksets.decode_snapshot_workset(self.worksets.encode_workset(workset)), workset)
++
++    def test_approved_raw_layout_rejects_unsafe_or_mismatched_content_addresses(self):
++        source = fixture_source()
++        snapshot = self.snapshot(source)
++        root = "raw/sec/indexes/kind=quarterly/period=2015Q1/"
++        cases = [
++            ("different hash", root + "sha256=" + "c" * 64 + "/master.zip"),
++            ("nonhex hash", root + "sha256=" + "Z" * 64 + "/master.zip"),
++            ("missing hash label", root + "b" * 64 + "/master.zip"),
++            ("wrong kind", root.replace("quarterly", "daily") + "sha256=" + "b" * 64 + "/master.zip"),
++            ("invalid period", root.replace("2015Q1", "2015Q5") + "sha256=" + "b" * 64 + "/master.zip"),
++            ("absolute path", "/" + root + "sha256=" + "b" * 64 + "/master.zip"),
++            ("parent escape", "../" + root + "sha256=" + "b" * 64 + "/master.zip"),
++            ("encoded escape", root + "sha256=" + "b" * 64 + "/%2e%2e/master.zip"),
++            ("mutable latest", root + "sha256=latest/master.zip"),
++            ("wrong file", root + "sha256=" + "b" * 64 + "/company.zip"),
++        ]
++        for name, raw_path in cases:
++            with self.subTest(name=name), self.assertRaises(ValueError):
++                replace(snapshot, raw_path=raw_path)
++
++    def test_discover_freezes_explicit_mode_without_rewriting_command(self):
++        source = fixture_source()
++        original = fixture_workset((source,))
++        context = fixture_context(command="discover")
++        try:
++            reused = self.worksets.make_source_workset(context, original.pinned_end_quarter,
++                      original.discovery_id, original.members, original.directories, original.overlap_from,
++                      acquisition_mode="reuse_accepted")
++            refreshed = self.worksets.make_source_workset(context, original.pinned_end_quarter,
++                         original.discovery_id, original.members, original.directories, original.overlap_from,
++                         acquisition_mode="refresh")
++        except TypeError as error:
++            self.fail(f"discover cannot freeze its explicit acquisition mode: {error}")
++        self.assertEqual(reused.context.command, "discover")
++        self.assertEqual(refreshed.context.command, "discover")
++        self.assertEqual(reused.acquisition_mode, "reuse_accepted")
++        self.assertEqual(refreshed.acquisition_mode, "refresh")
++        self.assertNotEqual(reused.workset_id, refreshed.workset_id)
++        snapshot_worksets = []
++        for workset in (reused, refreshed):
++            self.assertEqual(self.worksets.decode_source_workset(self.worksets.encode_workset(workset)), workset)
++            snapshots = self.worksets.make_snapshot_workset(workset, (self.snapshot(source),))
++            self.assertEqual(snapshots.context.command, "discover")
++            self.assertEqual(snapshots.acquisition_mode, workset.acquisition_mode)
++            self.assertEqual(self.worksets.decode_snapshot_workset(self.worksets.encode_workset(snapshots)), snapshots)
++            snapshot_worksets.append(snapshots)
++        self.assertNotEqual(snapshot_worksets[0].workset_id, snapshot_worksets[1].workset_id)
++        with self.assertRaises(ValueError):
++            self.worksets.make_source_workset(context, original.pinned_end_quarter, original.discovery_id,
++                       original.members, original.directories, original.overlap_from, acquisition_mode="latest")
++
++    def test_open_endpoint_matches_exact_resolution_in_constructor_and_decoders(self):
++        source = fixture_source()
++        original = fixture_workset((source,))
++        with self.subTest(boundary="constructor"), self.assertRaisesRegex(ValueError, "endpoint"):
++            self.worksets.make_source_workset(original.context, "2026Q3", original.discovery_id,
++                      original.members, original.directories, original.overlap_from)
++        with self.subTest(boundary="source decoder"):
++            self.tamper(original, lambda value: value.update(pinned_end_quarter="2026Q3"))
++        snapshots = self.worksets.make_snapshot_workset(original, (self.snapshot(source),))
++        with self.subTest(boundary="snapshot decoder"):
++            self.tamper(snapshots, lambda value: value.update(pinned_end_quarter="2026Q3"),
++                        self.worksets.decode_snapshot_workset)
++
++    def test_fixture_clock_override_keeps_exact_auditable_endpoint(self):
++        original = fixture_workset((fixture_source(),))
++        settings = fixture_settings(fixture={"allow_clock_override": True})
++        context = replace(original.context, config_sha256=settings.config_sha256)
++        config = importlib.import_module("sec_edgar_ingest.config")
++        pinning_date = date(2026, 7, 15)
++        context, endpoint = config.pin_context(settings, context, pinning_date)
++        self.assertEqual(getattr(context, "pinned_on", None), pinning_date,
++                         "worksets must retain the actual fixture pinning date")
++        self.assertEqual(context.started_at, original.context.started_at)
++        self.assertEqual(endpoint, "2026Q3")
++        workset = self.worksets.make_source_workset(context, endpoint, original.discovery_id,
++                  original.members, original.directories, original.overlap_from)
++        self.assertEqual(self.worksets.decode_source_workset(self.worksets.encode_workset(workset)), workset)
++        snapshots = self.worksets.make_snapshot_workset(workset, (self.snapshot(original.members[0]),))
++        self.assertEqual(snapshots.context.pinned_on, pinning_date)
++        self.assertEqual(self.worksets.decode_snapshot_workset(self.worksets.encode_workset(snapshots)), snapshots)
++        for wrong in ("2026Q2", "2026Q4"):
++            with self.subTest(boundary="constructor", endpoint=wrong), self.assertRaisesRegex(ValueError, "endpoint"):
++                self.worksets.make_source_workset(context, wrong, original.discovery_id,
++                          original.members, original.directories, original.overlap_from)
++            with self.subTest(boundary="source decoder", endpoint=wrong):
++                self.tamper(workset, lambda value: value.update(pinned_end_quarter=wrong))
++            with self.subTest(boundary="snapshot decoder", endpoint=wrong):
++                self.tamper(snapshots, lambda value: value.update(pinned_end_quarter=wrong),
++                            self.worksets.decode_snapshot_workset)
++        with self.assertRaisesRegex(ValueError, "pinning date"):
++            self.worksets.make_source_workset(replace(context, pinned_on=None), endpoint,
++                      original.discovery_id, original.members, original.directories, original.overlap_from)

@@ -1,0 +1,218 @@
+[
+  {
+    "at": "2026-10-06T00:00:00+00:00",
+    "event": "enqueue",
+    "mono": 0.0,
+    "owner": "old:fixture-attempt:cc15b2bce70340fe85b9bf7b85a21030",
+    "priority": "backfill",
+    "ticket_id": "e297b2b2dc384459a6b09ca6fe86128d"
+  },
+  {
+    "at": "2026-10-06T00:00:00+00:00",
+    "event": "queue-choice",
+    "mono": 0.0,
+    "owner": "old:fixture-attempt:cc15b2bce70340fe85b9bf7b85a21030",
+    "priority": "backfill",
+    "ticket_id": "e297b2b2dc384459a6b09ca6fe86128d"
+  },
+  {
+    "at": "2026-10-06T00:00:00+00:00",
+    "event": "queue-choice",
+    "mono": 0.0,
+    "owner": "old:fixture-attempt:cc15b2bce70340fe85b9bf7b85a21030",
+    "priority": "backfill",
+    "ticket_id": "e297b2b2dc384459a6b09ca6fe86128d"
+  },
+  {
+    "at": "2026-10-06T00:00:00+00:00",
+    "epoch": 1,
+    "event": "acquire",
+    "lease_id": "c235bdaa-8277-4cff-93b4-29be7d465b18",
+    "mono": 0.0,
+    "owner": "old:fixture-attempt:cc15b2bce70340fe85b9bf7b85a21030",
+    "ownership_until": "2026-10-06T00:01:00+00:00"
+  },
+  {
+    "at": "2026-10-06T00:00:00+00:00",
+    "earliest_safe": "2026-10-06T00:00:00+00:00",
+    "epoch": 1,
+    "event": "takeover",
+    "mono": 0.0,
+    "owner": "old:fixture-attempt:cc15b2bce70340fe85b9bf7b85a21030"
+  },
+  {
+    "at": "2026-10-06T00:00:00+00:00",
+    "epoch": 1,
+    "event": "reserve",
+    "mono": 0.0,
+    "next_allowed_at": "2026-10-06T00:00:00.666668+00:00",
+    "owner": "old:fixture-attempt:cc15b2bce70340fe85b9bf7b85a21030",
+    "request_id": "8e2d66c8c749465385634336d8bd9a3f",
+    "start_before_mono": 0.3333333333333333
+  },
+  {
+    "at": "2026-10-06T00:00:00+00:00",
+    "epoch": 1,
+    "event": "request-start",
+    "mono": 0.0,
+    "owner": "old:fixture-attempt:cc15b2bce70340fe85b9bf7b85a21030",
+    "request_id": "8e2d66c8c749465385634336d8bd9a3f"
+  },
+  {
+    "at": "2026-10-06T00:00:20+00:00",
+    "epoch": 1,
+    "event": "loss",
+    "mono": 20.0,
+    "owner": "old:fixture-attempt:cc15b2bce70340fe85b9bf7b85a21030",
+    "reason": "renewal committed but acknowledgement lost"
+  },
+  {
+    "at": "2026-10-06T00:00:20+00:00",
+    "epoch": 1,
+    "event": "request-end",
+    "mono": 20.0,
+    "owner": "old:fixture-attempt:cc15b2bce70340fe85b9bf7b85a21030",
+    "request_id": "8e2d66c8c749465385634336d8bd9a3f"
+  },
+  {
+    "at": "2026-10-06T00:01:20+00:00",
+    "event": "enqueue",
+    "mono": 80.0,
+    "owner": "new:fixture-attempt:b1063145e72b47fba9d93a80070f1bc5",
+    "priority": "daily",
+    "ticket_id": "4493b5f4aa9c4ba590f4295ed4befc70"
+  },
+  {
+    "at": "2026-10-06T00:01:20+00:00",
+    "event": "queue-choice",
+    "mono": 80.0,
+    "owner": "new:fixture-attempt:b1063145e72b47fba9d93a80070f1bc5",
+    "priority": "daily",
+    "ticket_id": "4493b5f4aa9c4ba590f4295ed4befc70"
+  },
+  {
+    "at": "2026-10-06T00:01:20+00:00",
+    "event": "queue-choice",
+    "mono": 80.0,
+    "owner": "new:fixture-attempt:b1063145e72b47fba9d93a80070f1bc5",
+    "priority": "daily",
+    "ticket_id": "4493b5f4aa9c4ba590f4295ed4befc70"
+  },
+  {
+    "at": "2026-10-06T00:01:20+00:00",
+    "epoch": 2,
+    "event": "acquire",
+    "lease_id": "8bafc53d-7676-4c50-8648-5afc430cc99c",
+    "mono": 80.0,
+    "owner": "new:fixture-attempt:b1063145e72b47fba9d93a80070f1bc5",
+    "ownership_until": "2026-10-06T00:02:20+00:00"
+  },
+  {
+    "at": "2026-10-06T00:01:20+00:00",
+    "earliest_safe": "2026-10-06T00:04:07+00:00",
+    "epoch": 2,
+    "event": "takeover",
+    "mono": 80.0,
+    "owner": "new:fixture-attempt:b1063145e72b47fba9d93a80070f1bc5"
+  },
+  {
+    "at": "2026-10-06T00:01:40+00:00",
+    "epoch": 2,
+    "event": "renew",
+    "mono": 100.0,
+    "owner": "new:fixture-attempt:b1063145e72b47fba9d93a80070f1bc5",
+    "ownership_until": "2026-10-06T00:02:40+00:00"
+  },
+  {
+    "at": "2026-10-06T00:02:00+00:00",
+    "epoch": 2,
+    "event": "renew",
+    "mono": 120.0,
+    "owner": "new:fixture-attempt:b1063145e72b47fba9d93a80070f1bc5",
+    "ownership_until": "2026-10-06T00:03:00+00:00"
+  },
+  {
+    "at": "2026-10-06T00:02:20+00:00",
+    "epoch": 2,
+    "event": "renew",
+    "mono": 140.0,
+    "owner": "new:fixture-attempt:b1063145e72b47fba9d93a80070f1bc5",
+    "ownership_until": "2026-10-06T00:03:20+00:00"
+  },
+  {
+    "at": "2026-10-06T00:02:40+00:00",
+    "epoch": 2,
+    "event": "renew",
+    "mono": 160.0,
+    "owner": "new:fixture-attempt:b1063145e72b47fba9d93a80070f1bc5",
+    "ownership_until": "2026-10-06T00:03:40+00:00"
+  },
+  {
+    "at": "2026-10-06T00:03:00+00:00",
+    "epoch": 2,
+    "event": "renew",
+    "mono": 180.0,
+    "owner": "new:fixture-attempt:b1063145e72b47fba9d93a80070f1bc5",
+    "ownership_until": "2026-10-06T00:04:00+00:00"
+  },
+  {
+    "at": "2026-10-06T00:03:20+00:00",
+    "epoch": 2,
+    "event": "renew",
+    "mono": 200.0,
+    "owner": "new:fixture-attempt:b1063145e72b47fba9d93a80070f1bc5",
+    "ownership_until": "2026-10-06T00:04:20+00:00"
+  },
+  {
+    "at": "2026-10-06T00:03:40+00:00",
+    "epoch": 2,
+    "event": "renew",
+    "mono": 220.0,
+    "owner": "new:fixture-attempt:b1063145e72b47fba9d93a80070f1bc5",
+    "ownership_until": "2026-10-06T00:04:40+00:00"
+  },
+  {
+    "at": "2026-10-06T00:04:00+00:00",
+    "epoch": 2,
+    "event": "renew",
+    "mono": 240.0,
+    "owner": "new:fixture-attempt:b1063145e72b47fba9d93a80070f1bc5",
+    "ownership_until": "2026-10-06T00:05:00+00:00"
+  },
+  {
+    "at": "2026-10-06T00:04:07+00:00",
+    "epoch": 2,
+    "event": "reserve",
+    "mono": 247.0,
+    "next_allowed_at": "2026-10-06T00:04:07.666668+00:00",
+    "owner": "new:fixture-attempt:b1063145e72b47fba9d93a80070f1bc5",
+    "request_id": "5290366c783d43e69e594f60099f08a5",
+    "start_before_mono": 247.33333333333334
+  },
+  {
+    "at": "2026-10-06T00:04:07+00:00",
+    "epoch": 2,
+    "event": "request-start",
+    "mono": 247.0,
+    "owner": "new:fixture-attempt:b1063145e72b47fba9d93a80070f1bc5",
+    "request_id": "5290366c783d43e69e594f60099f08a5"
+  },
+  {
+    "at": "2026-10-06T00:04:07+00:00",
+    "epoch": 2,
+    "event": "request-end",
+    "mono": 247.0,
+    "owner": "new:fixture-attempt:b1063145e72b47fba9d93a80070f1bc5",
+    "request_id": "5290366c783d43e69e594f60099f08a5"
+  },
+  {
+    "at": "2026-10-06T00:04:07+00:00",
+    "clean_release": true,
+    "drained": true,
+    "epoch": 2,
+    "event": "release",
+    "mono": 247.0,
+    "owner": "new:fixture-attempt:b1063145e72b47fba9d93a80070f1bc5",
+    "unsafe_until": "2026-10-06T00:04:07+00:00"
+  }
+]

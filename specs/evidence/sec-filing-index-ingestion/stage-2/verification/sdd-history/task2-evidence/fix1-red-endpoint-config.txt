@@ -1,0 +1,30 @@
+COMMAND: uv run --offline --frozen --package sec-edgar-ingest python -m unittest discover -s packages/sec-edgar-ingest/tests -p test_config.py -v
+EXIT: 1
+test_azure_deadlines_and_two_callers_share_one_binding (test_config.ConfigTests.test_azure_deadlines_and_two_callers_share_one_binding) ... ok
+test_azure_explicit_binding_and_credential_free_endpoints (test_config.ConfigTests.test_azure_explicit_binding_and_credential_free_endpoints) ... ok
+test_clock_override_is_fixture_only_and_explicit (test_config.ConfigTests.test_clock_override_is_fixture_only_and_explicit) ... ok
+test_config_parser_rejects_duplicate_keys_and_non_utf8 (test_config.ConfigTests.test_config_parser_rejects_duplicate_keys_and_non_utf8) ... ok
+test_fixture_overrides_are_explicit_and_validated (test_config.ConfigTests.test_fixture_overrides_are_explicit_and_validated) ... ok
+test_invalid_configuration_precedes_external_factories (test_config.ConfigTests.test_invalid_configuration_precedes_external_factories) ... ok
+test_json_yaml_subset_loads_without_creating_fixture_root (test_config.ConfigTests.test_json_yaml_subset_loads_without_creating_fixture_root) ... ok
+test_mapping_is_detached_and_typed_settings_are_frozen (test_config.ConfigTests.test_mapping_is_detached_and_typed_settings_are_frozen) ... ok
+test_pin_context_checks_range_identity_and_deadline (test_config.ConfigTests.test_pin_context_checks_range_identity_and_deadline) ... ok
+test_pinning_retains_exact_date_without_changing_run_start (test_config.ConfigTests.test_pinning_retains_exact_date_without_changing_run_start) ... FAIL
+test_rejects_configuration_matrix (test_config.ConfigTests.test_rejects_configuration_matrix) ... ok
+test_second_collector_is_refused (test_config.ConfigTests.test_second_collector_is_refused) ... ok
+
+======================================================================
+FAIL: test_pinning_retains_exact_date_without_changing_run_start (test_config.ConfigTests.test_pinning_retains_exact_date_without_changing_run_start)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_config.py", line 242, in test_pinning_retains_exact_date_without_changing_run_start
+    self.assertEqual(getattr(pinned, "pinned_on", None), pinning_date,
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                     "the actual labelled fixture pinning date must be retained")
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: None != datetime.date(2026, 7, 15) : the actual labelled fixture pinning date must be retained
+
+----------------------------------------------------------------------
+Ran 12 tests in 0.142s
+
+FAILED (failures=1)

@@ -1,0 +1,193 @@
+argv=['.venv/bin/python', '-m', 'unittest', 'discover', '-s', 'packages/sec-edgar-ingest/tests', '-p', 'test_cli.py', '-v']
+stdout:
+
+stderr:
+test_collection_outcomes_are_named_and_non_success (test_cli.CliTests.test_collection_outcomes_are_named_and_non_success) ... 
+  test_collection_outcomes_are_named_and_non_success (test_cli.CliTests.test_collection_outcomes_are_named_and_non_success) (fixture='pending') ... FAIL
+  test_collection_outcomes_are_named_and_non_success (test_cli.CliTests.test_collection_outcomes_are_named_and_non_success) (fixture='retry-exhausted') ... FAIL
+  test_collection_outcomes_are_named_and_non_success (test_cli.CliTests.test_collection_outcomes_are_named_and_non_success) (fixture='access-blocked') ... FAIL
+  test_collection_outcomes_are_named_and_non_success (test_cli.CliTests.test_collection_outcomes_are_named_and_non_success) (fixture='quarantined') ... FAIL
+  test_collection_outcomes_are_named_and_non_success (test_cli.CliTests.test_collection_outcomes_are_named_and_non_success) (fixture='ownership-lost') ... FAIL
+  test_collection_outcomes_are_named_and_non_success (test_cli.CliTests.test_collection_outcomes_are_named_and_non_success) (fixture='deferred') ... FAIL
+test_completed_attempt_cannot_change_config_deadline_mode_refresh_or_workset (test_cli.CliTests.test_completed_attempt_cannot_change_config_deadline_mode_refresh_or_workset) ... 
+  test_completed_attempt_cannot_change_config_deadline_mode_refresh_or_workset (test_cli.CliTests.test_completed_attempt_cannot_change_config_deadline_mode_refresh_or_workset) (variation='config') ... FAIL
+  test_completed_attempt_cannot_change_config_deadline_mode_refresh_or_workset (test_cli.CliTests.test_completed_attempt_cannot_change_config_deadline_mode_refresh_or_workset) (variation='deadline') ... FAIL
+  test_completed_attempt_cannot_change_config_deadline_mode_refresh_or_workset (test_cli.CliTests.test_completed_attempt_cannot_change_config_deadline_mode_refresh_or_workset) (variation='mode') ... FAIL
+  test_completed_attempt_cannot_change_config_deadline_mode_refresh_or_workset (test_cli.CliTests.test_completed_attempt_cannot_change_config_deadline_mode_refresh_or_workset) (variation='refresh') ... FAIL
+  test_completed_attempt_cannot_change_config_deadline_mode_refresh_or_workset (test_cli.CliTests.test_completed_attempt_cannot_change_config_deadline_mode_refresh_or_workset) (variation='discovery') ... FAIL
+test_failed_discovery_is_not_empty_success (test_cli.CliTests.test_failed_discovery_is_not_empty_success) ... FAIL
+test_fixture_pack_required_and_overrides_rejected_in_azure_before_clients (test_cli.CliTests.test_fixture_pack_required_and_overrides_rejected_in_azure_before_clients) ... ok
+test_missing_identity_creates_no_external_clients (test_cli.CliTests.test_missing_identity_creates_no_external_clients) ... ok
+test_success_result_current_context_hash_and_replay_no_requests (test_cli.CliTests.test_success_result_current_context_hash_and_replay_no_requests) ... ERROR
+test_unknown_and_missing_workset_refuse_without_false_completion (test_cli.CliTests.test_unknown_and_missing_workset_refuse_without_false_completion) ... ok
+test_unsafe_identifiers_refuse_before_backend_construction (test_cli.CliTests.test_unsafe_identifiers_refuse_before_backend_construction) ... ok
+test_valid_empty_and_help_do_not_offer_unimplemented_stages (test_cli.CliTests.test_valid_empty_and_help_do_not_offer_unimplemented_stages) ... FAIL
+test_pack_validates_hash_provenance_url_path_and_never_falls_back (test_cli.FixturePackTests.test_pack_validates_hash_provenance_url_path_and_never_falls_back) ... ERROR
+test_canonical_result_codec_is_strict_and_roundtrips (test_cli.ResultTests.test_canonical_result_codec_is_strict_and_roundtrips) ... ok
+test_exact_exit_mapping_and_structured_event (test_cli.ResultTests.test_exact_exit_mapping_and_structured_event) ... ok
+test_result_precedes_attempt_and_conflicting_bytes_refuse (test_cli.ResultTests.test_result_precedes_attempt_and_conflicting_bytes_refuse) ... ok
+test_result_reader_refuses_wrong_path_correlation (test_cli.ResultTests.test_result_reader_refuses_wrong_path_correlation) ... ok
+
+======================================================================
+ERROR: test_success_result_current_context_hash_and_replay_no_requests (test_cli.CliTests.test_success_result_current_context_hash_and_replay_no_requests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_cli.py", line 163, in test_success_result_current_context_hash_and_replay_no_requests
+    discovered = json.loads(h.discover().stdout)
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/json/decoder.py", line 345, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/json/decoder.py", line 363, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+======================================================================
+ERROR: test_pack_validates_hash_provenance_url_path_and_never_falls_back (test_cli.FixturePackTests.test_pack_validates_hash_provenance_url_path_and_never_falls_back)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_cli.py", line 222, in test_pack_validates_hash_provenance_url_path_and_never_falls_back
+    self.assertIsNotNone(cls.load(ACQUISITION_PACK))
+                         ~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/download.py", line 704, in load
+    raise FixtureError('fixture URL requires a nonempty response sequence')
+sec_edgar_ingest.download.FixtureError: fixture URL requires a nonempty response sequence
+
+======================================================================
+FAIL: test_collection_outcomes_are_named_and_non_success (test_cli.CliTests.test_collection_outcomes_are_named_and_non_success) (fixture='pending')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_cli.py", line 153, in test_collection_outcomes_are_named_and_non_success
+    self.assertEqual(discovered.returncode, 0, discovered.stderr)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 2 != 0 : {"error":"fixture URL requires a nonempty response sequence","outcome":"configuration"}
+
+
+======================================================================
+FAIL: test_collection_outcomes_are_named_and_non_success (test_cli.CliTests.test_collection_outcomes_are_named_and_non_success) (fixture='retry-exhausted')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_cli.py", line 153, in test_collection_outcomes_are_named_and_non_success
+    self.assertEqual(discovered.returncode, 0, discovered.stderr)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 2 != 0 : {"error":"fixture URL requires a nonempty response sequence","outcome":"configuration"}
+
+
+======================================================================
+FAIL: test_collection_outcomes_are_named_and_non_success (test_cli.CliTests.test_collection_outcomes_are_named_and_non_success) (fixture='access-blocked')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_cli.py", line 153, in test_collection_outcomes_are_named_and_non_success
+    self.assertEqual(discovered.returncode, 0, discovered.stderr)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 2 != 0 : {"error":"fixture URL requires a nonempty response sequence","outcome":"configuration"}
+
+
+======================================================================
+FAIL: test_collection_outcomes_are_named_and_non_success (test_cli.CliTests.test_collection_outcomes_are_named_and_non_success) (fixture='quarantined')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_cli.py", line 153, in test_collection_outcomes_are_named_and_non_success
+    self.assertEqual(discovered.returncode, 0, discovered.stderr)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 2 != 0 : {"error":"fixture URL requires a nonempty response sequence","outcome":"configuration"}
+
+
+======================================================================
+FAIL: test_collection_outcomes_are_named_and_non_success (test_cli.CliTests.test_collection_outcomes_are_named_and_non_success) (fixture='ownership-lost')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_cli.py", line 153, in test_collection_outcomes_are_named_and_non_success
+    self.assertEqual(discovered.returncode, 0, discovered.stderr)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 2 != 0 : {"error":"fixture URL requires a nonempty response sequence","outcome":"configuration"}
+
+
+======================================================================
+FAIL: test_collection_outcomes_are_named_and_non_success (test_cli.CliTests.test_collection_outcomes_are_named_and_non_success) (fixture='deferred')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_cli.py", line 153, in test_collection_outcomes_are_named_and_non_success
+    self.assertEqual(discovered.returncode, 0, discovered.stderr)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 2 != 0 : {"error":"fixture URL requires a nonempty response sequence","outcome":"configuration"}
+
+
+======================================================================
+FAIL: test_completed_attempt_cannot_change_config_deadline_mode_refresh_or_workset (test_cli.CliTests.test_completed_attempt_cannot_change_config_deadline_mode_refresh_or_workset) (variation='config')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_cli.py", line 193, in test_completed_attempt_cannot_change_config_deadline_mode_refresh_or_workset
+    self.assertEqual(first.returncode, 0, first.stderr)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 2 != 0 : {"error":"fixture URL requires a nonempty response sequence","outcome":"configuration"}
+
+
+======================================================================
+FAIL: test_completed_attempt_cannot_change_config_deadline_mode_refresh_or_workset (test_cli.CliTests.test_completed_attempt_cannot_change_config_deadline_mode_refresh_or_workset) (variation='deadline')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_cli.py", line 193, in test_completed_attempt_cannot_change_config_deadline_mode_refresh_or_workset
+    self.assertEqual(first.returncode, 0, first.stderr)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 2 != 0 : {"error":"fixture URL requires a nonempty response sequence","outcome":"configuration"}
+
+
+======================================================================
+FAIL: test_completed_attempt_cannot_change_config_deadline_mode_refresh_or_workset (test_cli.CliTests.test_completed_attempt_cannot_change_config_deadline_mode_refresh_or_workset) (variation='mode')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_cli.py", line 193, in test_completed_attempt_cannot_change_config_deadline_mode_refresh_or_workset
+    self.assertEqual(first.returncode, 0, first.stderr)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 2 != 0 : {"error":"fixture URL requires a nonempty response sequence","outcome":"configuration"}
+
+
+======================================================================
+FAIL: test_completed_attempt_cannot_change_config_deadline_mode_refresh_or_workset (test_cli.CliTests.test_completed_attempt_cannot_change_config_deadline_mode_refresh_or_workset) (variation='refresh')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_cli.py", line 193, in test_completed_attempt_cannot_change_config_deadline_mode_refresh_or_workset
+    self.assertEqual(first.returncode, 0, first.stderr)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 2 != 0 : {"error":"fixture URL requires a nonempty response sequence","outcome":"configuration"}
+
+
+======================================================================
+FAIL: test_completed_attempt_cannot_change_config_deadline_mode_refresh_or_workset (test_cli.CliTests.test_completed_attempt_cannot_change_config_deadline_mode_refresh_or_workset) (variation='discovery')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_cli.py", line 193, in test_completed_attempt_cannot_change_config_deadline_mode_refresh_or_workset
+    self.assertEqual(first.returncode, 0, first.stderr)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 2 != 0 : {"error":"fixture URL requires a nonempty response sequence","outcome":"configuration"}
+
+
+======================================================================
+FAIL: test_failed_discovery_is_not_empty_success (test_cli.CliTests.test_failed_discovery_is_not_empty_success)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_cli.py", line 99, in test_failed_discovery_is_not_empty_success
+    self.assertEqual(completed.returncode, 3, completed.stderr)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 2 != 3 : {"error":"fixture URL requires a nonempty response sequence","outcome":"configuration"}
+
+
+======================================================================
+FAIL: test_valid_empty_and_help_do_not_offer_unimplemented_stages (test_cli.CliTests.test_valid_empty_and_help_do_not_offer_unimplemented_stages)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_cli.py", line 135, in test_valid_empty_and_help_do_not_offer_unimplemented_stages
+    self.assertEqual(done.returncode, 0, done.stderr)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 2 != 0 : {"error":"fixture URL requires a nonempty response sequence","outcome":"configuration"}
+
+
+----------------------------------------------------------------------
+Ran 14 tests in 3.381s
+
+FAILED (failures=13, errors=2)
+
+exit_code=1

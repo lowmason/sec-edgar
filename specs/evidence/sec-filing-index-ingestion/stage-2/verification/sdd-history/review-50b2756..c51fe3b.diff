@@ -1,0 +1,1420 @@
+# Review package: 50b2756330cbef91b5c664a5f4cc72c2f5c35626..c51fe3b3350d71195ed94880359304ab3634aca9
+
+## Commits
+c51fe3b feat: discover durable source worksets without hiding gaps
+
+## Files changed
+ .../src/sec_edgar_ingest/discovery.py              | 341 +++++++++++++
+ .../sec-edgar-ingest/src/sec_edgar_ingest/state.py | 176 ++++++-
+ .../tests/fixtures/listings/empty.json             |   8 +
+ .../tests/fixtures/listings/late-daily.json        |  16 +
+ .../tests/fixtures/listings/leap-day.json          |  16 +
+ .../tests/fixtures/listings/malformed.json         |   6 +
+ .../tests/fixtures/listings/unsafe.json            |  16 +
+ packages/sec-edgar-ingest/tests/support.py         | 139 +++++
+ packages/sec-edgar-ingest/tests/test_discovery.py  | 565 +++++++++++++++++++++
+ 9 files changed, 1281 insertions(+), 2 deletions(-)
+
+## Diff
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/discovery.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/discovery.py
+new file mode 100644
+index 0000000..7a06a71
+--- /dev/null
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/discovery.py
+@@ -0,0 +1,341 @@
++"""Trusted SEC listing traversal with durable evidence and conservative boundaries."""
++from __future__ import annotations
++
++import hashlib
++import re
++from dataclasses import dataclass
++from datetime import date
++from typing import Literal
++
++from .config import Settings, pin_context
++from .download import HTTP_OK, FetchError, RequestClient
++from .models import (BodyReceipt, DirectoryOutcome, Error, RunContext, Source, SourceWorkset,
++                     canonical_json, parse_json, quarter_for, quarter_value, require_text)
++from .state import AcquisitionState
++from .storage.contracts import Conflict, ObjectStore
++from .urls import SEC_ORIGIN, canonical_listing_url, child_url, source_id
++from .worksets import encode_workset, make_source_workset
++
++INDEX_BASE = SEC_ORIGIN + '/Archives/edgar/'
++QUARTERS_PER_YEAR = 4
++MONTHS_PER_QUARTER = 3
++DAILY_FILENAME = re.compile(r'master\.([0-9]{8})\.idx\Z')
++
++
++@dataclass(frozen=True, slots=True)
++class DirectoryEntry:
++    name: str
++    href: str
++    kind: Literal['dir', 'file']
++    size_label: str
++    modified_label: str
++
++
++def parse_listing(url: str, body: bytes) -> tuple[DirectoryEntry, ...]:
++    """Decode the retained JSON family; parent-dir is metadata and never followed."""
++    if canonical_listing_url(url) != url or not isinstance(body, bytes):
++        raise ValueError('listing requires a canonical URL and original bytes')
++    value = parse_json(body)
++    directory = value.get('directory') if isinstance(value, dict) else None
++    if not isinstance(directory, dict):
++        raise ValueError('listing requires a directory object')
++    expected_name = url[len(INDEX_BASE):-len('index.json')]
++    if directory.get('name') != expected_name or not isinstance(directory.get('parent-dir'), str):
++        raise ValueError('directory metadata differs from the requested index path')
++    items = directory.get('item')
++    if not isinstance(items, list):
++        raise ValueError('directory item must be a list, including for valid empty listings')
++    entries = {}
++    for item in items:
++        fields = ('name', 'href', 'type', 'size', 'last-modified')
++        if not isinstance(item, dict) or any(not isinstance(item.get(field), str) for field in fields):
++            raise ValueError('every listing entry requires string name/href/type/size/last-modified')
++        name, href, kind = item['name'], item['href'], item['type']
++        if (not name or name in ('.', '..') or any(c in name for c in '/\\%?#:')
++                or any(c.isspace() or ord(c) < 32 or ord(c) == 127 for c in name)):
++            raise ValueError('listing child name must be an immediate safe descendant')
++        if kind not in ('dir', 'file'):
++            raise ValueError('listing type must be dir or file')
++        suffix = name + ('/' if kind == 'dir' else '')
++        expected_url = url.rsplit('/', 1)[0] + '/' + suffix
++        if href not in (suffix, expected_url):
++            raise ValueError('listing child href must match its exact immediate name and parent')
++        if name in entries:
++            raise ValueError('duplicate listing child name')
++        entries[name] = DirectoryEntry(name, href, kind, item['size'], item['last-modified'])
++    return tuple(entries[name] for name in sorted(entries))
++
++
++def quarter_of(day: date) -> str:
++    if type(day) is not date:
++        raise ValueError('day must be an explicit date')
++    return quarter_for(day)
++
++
++def quarter_span(start: str, end: str) -> tuple[str, ...]:
++    first_year, first_quarter = quarter_value(start)
++    last_year, last_quarter = quarter_value(end)
++    first, last = first_year * QUARTERS_PER_YEAR + first_quarter - 1, last_year * QUARTERS_PER_YEAR + last_quarter - 1
++    if first > last:
++        raise ValueError('quarter range is reversed')
++    return tuple(f'{ordinal // QUARTERS_PER_YEAR}Q{ordinal % QUARTERS_PER_YEAR + 1}' for ordinal in range(first, last + 1))
++
++
++def _previous_quarter(period: str) -> str:
++    year, quarter = quarter_value(period)
++    return f'{year}Q{quarter - 1}' if quarter > 1 else f'{year - 1}Q{QUARTERS_PER_YEAR}'
++
++
++def _quarter_start(period: str) -> date:
++    year, quarter = quarter_value(period)
++    return date(year, (quarter - 1) * MONTHS_PER_QUARTER + 1, 1)
++
++
++def required_daily_quarters(today: date, handoff: date, boundary: date | None,
++                            pending_periods: tuple[str, ...]) -> tuple[str, ...]:
++    open_quarter = quarter_of(today)
++    if type(handoff) is not date or (boundary is not None and type(boundary) is not date):
++        raise ValueError('handoff and boundary must be dates')
++    if handoff > today or (boundary is not None and boundary > today):
++        raise ValueError('daily discovery dates cannot be in the future')
++    start = quarter_of(handoff if boundary is None else boundary)
++    quarters = set(quarter_span(start, open_quarter))
++    quarters.update((open_quarter, _previous_quarter(open_quarter)))
++    for period in pending_periods:
++        quarter_value(period)
++        if quarter_value(period) > quarter_value(open_quarter):
++            raise ValueError('pending quarter cannot be in the future')
++        quarters.add(period)
++    return tuple(sorted(quarters, key=quarter_value))
++
++
++def advance_daily_boundary(previous: date | None, today: date,
++                           outcomes: tuple[DirectoryOutcome, ...]) -> date | None:
++    if not outcomes or any(item.outcome == 'discovery_failed' for item in outcomes):
++        return previous
++    return today if previous is None else max(previous, today)
++
++
++def _required_units(families: dict[str, set[str]]) -> tuple[dict[str, str], ...]:
++    units = {}
++    for family, quarters in families.items():
++        root = INDEX_BASE + family + '/index.json'
++        units[root] = {'url': root, 'period': family, 'role': 'root'}
++        for period in quarters:
++            year, quarter = quarter_value(period)
++            year_url = INDEX_BASE + f'{family}/{year}/index.json'
++            quarter_url = INDEX_BASE + f'{family}/{year}/QTR{quarter}/index.json'
++            # Expected directory addresses account for gaps; requests still follow actual children.
++            units[year_url] = {'url': year_url, 'period': str(year), 'role': 'year'}
++            units[quarter_url] = {'url': quarter_url, 'period': period, 'role': 'quarter'}
++    return tuple(units[url] for url in sorted(units))
++
++
++def _inventory(settings: Settings, state: AcquisitionState, mode: str, today: date,
++               end: str) -> tuple[tuple[dict[str, str], ...], date]:
++    pending = state.pending_sources()
++    failed = state.failed_directories()
++    families = {'daily-index' if mode == 'daily' else 'full-index': set()}
++    if mode == 'daily':
++        old_periods = tuple(quarter_of(date.fromisoformat(s.period)) if s.kind == 'daily' else s.period for s in pending)
++        failed_periods = tuple(d.period for d in failed if re.fullmatch(r'[1-9][0-9]{3}Q[1-4]', d.period))
++        required = required_daily_quarters(today, settings.daily.start_date, state.daily_boundary(), old_periods + failed_periods)
++        families['daily-index'].update(required)
++        overlap = min(settings.daily.start_date, _quarter_start(_previous_quarter(quarter_of(today))))
++    else:
++        families['full-index'].update(quarter_span(settings.backfill.start_quarter, end))
++        overlap = _quarter_start(settings.backfill.start_quarter)
++    for source in pending:
++        family = 'daily-index' if source.kind == 'daily' else 'full-index'
++        period = quarter_of(date.fromisoformat(source.period)) if source.kind == 'daily' else source.period
++        families.setdefault(family, set()).add(period)
++    for outcome in failed:
++        family = outcome.url[len(INDEX_BASE):].split('/')[0]
++        if re.fullmatch(r'[1-9][0-9]{3}Q[1-4]', outcome.period):
++            families.setdefault(family, set()).add(outcome.period)
++        else:
++            families.setdefault(family, set())
++    units = {unit['url']: unit for unit in _required_units(families)}
++    for outcome in failed:
++        if outcome.url not in units:
++            parts = outcome.url[len(INDEX_BASE):].split('/')[:-1]
++            role = 'root' if len(parts) == 1 else 'year' if len(parts) == 2 else 'quarter'
++            units[outcome.url] = {'url': outcome.url, 'period': outcome.period, 'role': role}
++    if quarter_of(today) in families.get('full-index', set()):
++        units[INDEX_BASE + 'full-index/index.json']['bridge_period'] = quarter_of(today)
++    return tuple(units[url] for url in sorted(units)), overlap
++
++
++class _SelectionError(ValueError):
++    pass
++
++
++def _select(url: str, period: str, role: str, entries: tuple[DirectoryEntry, ...], *, bridge_period: str | None = None):
++    if role != 'quarter':
++        selection = {'ignored': []}
++        if role == 'root' and bridge_period is not None and '/full-index/' in url:
++            bridge = next((entry for entry in entries if entry.kind == 'file' and entry.name == 'master.zip'), None)
++            selection['ignored'] = [
++                {'name': entry.name, 'reason': 'root master representations are not independent quarter inputs'}
++                for entry in entries if entry.kind == 'file' and entry.name.startswith('master.')
++                and (bridge is None or entry.name != bridge.name)
++            ]
++            if bridge is not None:
++                selection['alternative'] = {'url': url.rsplit('/', 1)[0] + '/master.zip', 'period': bridge_period,
++                    'reason': 'root bridge alternative to the discovered open-quarter child; no byte equality or independent coverage'}
++        return (), selection
++    members, master_entries = [], []
++    quarterly = '/full-index/' in url
++    for entry in entries:
++        if entry.kind != 'file' or not entry.name.startswith('master.'):
++            continue
++        master_entries.append(entry)
++        supported = entry.name == 'master.zip' if quarterly else DAILY_FILENAME.fullmatch(entry.name) is not None
++        if supported:
++            source_url = child_url(url, entry.href, entry.name, False)
++            source_period = period if quarterly else date(int(entry.name[7:11]), int(entry.name[11:13]), int(entry.name[13:15])).isoformat()
++            members.append(Source(source_id(source_url), source_url, 'quarterly' if quarterly else 'daily',
++                                  source_period, 'zip' if quarterly else 'idx'))
++    if master_entries and not members:
++        raise _SelectionError('only unsupported master representations are advertised')
++    selected_names = {source.canonical_url.rsplit('/', 1)[1] for source in members}
++    ignored = [{'name': entry.name, 'reason': 'unselected alternate master representation; selected ZIP/plain IDX only'}
++               for entry in master_entries if entry.name not in selected_names]
++    return tuple(sorted(members, key=lambda source: source.source_id)), {'ignored': ignored}
++
++
++def _persist_receipt(objects: ObjectStore, receipt: BodyReceipt, context: RunContext, *, failed=False):
++    body = receipt.temporary_path.read_bytes()
++    digest = hashlib.sha256(body).hexdigest()
++    if digest != receipt.sha256 or len(body) != receipt.byte_count:
++        raise Conflict('original listing receipt no longer matches its retained bytes')
++    namespace = 'quarantine/discovery' if failed else 'worksets/discovery/listings'
++    body_path = f'{namespace}/sha256={digest}/listing.body'
++    objects.put_once(body_path, body)
++    objects.verify(body_path, digest, len(body))
++    metadata = canonical_json({'receipt': receipt.to_mapping(), 'context': context.to_mapping(), 'body_path': body_path})
++    metadata_hash = hashlib.sha256(metadata).hexdigest()
++    receipt_path = f'{namespace}/receipts/sha256={metadata_hash}.json'
++    objects.put_once(receipt_path, metadata)
++    objects.verify(receipt_path, metadata_hash, len(metadata))
++    return {'body_path': body_path, 'sha256': digest, 'byte_count': len(body),
++            'receipt_path': receipt_path, 'receipt_sha256': metadata_hash, 'receipt_byte_count': len(metadata)}
++
++
++def _reopen_listing(objects: ObjectStore, value: dict, unit: dict):
++    outcome = DirectoryOutcome.from_mapping(value['outcome'])
++    if outcome.url != unit['url'] or outcome.period != unit['period']:
++        raise Conflict('cached directory progress differs from the requested directory metadata')
++    evidence = value['evidence']
++    objects.verify(evidence['body_path'], evidence['sha256'], evidence['byte_count'])
++    objects.verify(evidence['receipt_path'], evidence['receipt_sha256'], evidence['receipt_byte_count'])
++    metadata = parse_json(objects.read(evidence['receipt_path']))
++    receipt = BodyReceipt.from_mapping(metadata['receipt'])
++    if (not receipt.complete or receipt.status != HTTP_OK or receipt.error is not None or receipt.url != unit['url']
++            or receipt.sha256 != outcome.listing_sha256 or receipt.byte_count != evidence['byte_count']
++            or metadata['body_path'] != evidence['body_path'] or outcome.listing_sha256 != evidence['sha256']):
++        raise Conflict('successful directory progress lacks its exact original receipt')
++    entries = parse_listing(unit['url'], objects.read(evidence['body_path']))
++    members, selection = _select(unit['url'], unit['period'], unit['role'], entries, bridge_period=unit.get('bridge_period'))
++    if ([member.to_mapping() for member in members] != value['members'] or selection != value['selection']
++            or outcome.source_ids != tuple(sorted(member.source_id for member in members))):
++        raise Conflict('directory progress differs from its validated immediate listing children')
++    return outcome, members, entries, receipt.received_at
++
++
++def _missing(unit: dict, parent: DirectoryOutcome) -> DirectoryOutcome:
++    code = 'ancestor_failed' if parent.outcome == 'discovery_failed' else 'missing_directory'
++    details = {'parent_url': parent.url, 'parent_listing_sha256': parent.listing_sha256}
++    return DirectoryOutcome(unit['url'], unit['period'], 'discovery_failed', None, (),
++                            Error(code, 'required child directory is unresolved in its actual parent listing', True, None, details))
++
++
++def discover(settings: Settings, context: RunContext, mode: Literal['quarterly', 'daily'],
++             discovery_id: str, client: RequestClient, state: AcquisitionState,
++             objects: ObjectStore, today: date, refresh: bool = False) -> SourceWorkset:
++    if mode not in ('quarterly', 'daily') or type(refresh) is not bool:
++        raise ValueError('discovery requires quarterly/daily mode and a boolean refresh')
++    require_text(discovery_id, 'discovery_id')
++    request_context, end = pin_context(settings, context, today)
++    if client.settings != settings:
++        raise ValueError('discovery and RequestClient require the same effective settings')
++    old = state.discovery_session(discovery_id)
++    if old is None and mode == 'daily' and end != quarter_of(today):
++        raise ValueError('daily discovery endpoint must include the current quarter')
++    state.begin_attempt(request_context)
++    if old is None:
++        units, overlap = _inventory(settings, state, mode, today, end)
++        frozen = {'context': request_context.to_mapping(), 'today': today.isoformat(), 'end': end,
++                  'mode': mode, 'acquisition_mode': 'refresh' if refresh else 'reuse_accepted',
++                  'units': list(units), 'overlap_from': overlap.isoformat()}
++    else:
++        frozen = old.to_mapping()['value']['frozen']
++    session = state.begin_discovery(discovery_id, frozen, request_context, mode,
++                                    'refresh' if refresh else 'reuse_accepted').to_mapping()['value']
++    frozen = session['frozen']
++    pinned_context = RunContext.from_mapping(frozen['context'])
++    outcomes, members, listings = {}, {}, {}
++    # Root, then year, then quarter: every actual request must be authorized by its parent.
++    units = sorted(frozen['units'], key=lambda unit: (unit['url'].count('/'), unit['url']))
++    for unit in units:
++        url, role = unit['url'], unit['role']
++        cached = state.directory_progress(discovery_id, url)
++        if cached is not None and cached.value['outcome']['outcome'] != 'discovery_failed':
++            saved = cached.to_mapping()['value']
++            outcome, selected, entries, discovered_at = _reopen_listing(objects, saved, unit)
++            state.record_directory(discovery_id, outcome, selected, evidence=saved['evidence'],
++                                   selection=saved['selection'], expected_gap=saved['observed_gap_token'])
++        else:
++            parent_url = url.rsplit('/', 2)[0] + '/index.json'
++            if role != 'root':
++                parent = outcomes[parent_url]
++                wanted_name = url.rsplit('/', 2)[1]
++                entry = next((entry for entry in listings.get(parent_url, ())
++                              if entry.name == wanted_name and entry.kind == 'dir'), None)
++                if parent.outcome == 'discovery_failed' or entry is None:
++                    outcome = _missing(unit, parent)
++                    state.record_directory(discovery_id, outcome, ())
++                    outcomes[url] = outcome
++                    continue
++                actual_url = child_url(parent_url, entry.href, entry.name, True) + 'index.json'
++                if actual_url != url:
++                    raise Conflict('validated child differs from required directory accounting')
++            expected_gap = state.directory_gap(url)
++            receipt = None
++            try:
++                receipt = client.fetch(url, request_context)
++                entries = parse_listing(url, receipt.temporary_path.read_bytes())
++                selected, selection = _select(url, unit['period'], role, entries, bridge_period=unit.get('bridge_period'))
++            except (FetchError, ValueError) as failure:
++                if isinstance(failure, FetchError):
++                    receipt, error = failure.receipt, failure.error
++                else:
++                    code = 'unsupported_source' if isinstance(failure, _SelectionError) else 'listing_invalid'
++                    error = Error(code, str(failure), True, None, {})
++                evidence = _persist_receipt(objects, receipt, request_context, failed=True) if receipt is not None else None
++                error = Error(error.code, error.message, error.retryable, None,
++                              {**error.to_mapping()['details'], 'evidence': evidence})
++                outcome = DirectoryOutcome(url, unit['period'], 'discovery_failed', None, (), error)
++                state.record_directory(discovery_id, outcome, ())
++                outcomes[url] = outcome
++                continue
++            evidence = _persist_receipt(objects, receipt, request_context)
++            discovered_at = receipt.received_at
++            outcome = DirectoryOutcome(url, unit['period'], 'available' if selected else 'no_new_sources',
++                                       receipt.sha256, tuple(source.source_id for source in selected), None)
++            state.record_directory(discovery_id, outcome, selected, evidence=evidence,
++                                   selection=selection, expected_gap=expected_gap)
++        outcomes[url], listings[url] = outcome, entries
++        for source in selected:
++            state.observe(source, discovered_at, 'available')
++            members[source.source_id] = source
++    directories = tuple(outcomes.values())
++    workset = make_source_workset(pinned_context, frozen['end'], discovery_id, tuple(members.values()), directories,
++                                  date.fromisoformat(frozen['overlap_from']), acquisition_mode=frozen['acquisition_mode'])
++    objects.put_once(f'worksets/source/{workset.workset_id}.json', encode_workset(workset))
++    state.finish_discovery(discovery_id, workset.workset_id, request_context)
++    if frozen['mode'] == 'daily':
++        candidate = advance_daily_boundary(state.daily_boundary(), date.fromisoformat(frozen['today']), directories)
++        if candidate is not None and workset.discovery_complete:
++            state.advance_boundary(date.fromisoformat(frozen['today']), discovery_id, directories)
++    return workset
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/state.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/state.py
+index 041eff5..c742709 100644
+--- a/packages/sec-edgar-ingest/src/sec_edgar_ingest/state.py
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/state.py
+@@ -1,18 +1,20 @@
+ """Durable source observations, accepted receipts, first pins and attempt audit."""
+ from __future__ import annotations
+ 
+ import hashlib
+-from datetime import datetime, timezone
++import uuid
++from collections.abc import Callable
++from datetime import date, datetime, timezone
+ 
+ from .config import HTTP_ATTEMPT_LIMIT
+-from .models import Binding, BodyReceipt, CommandResult, Error, Permit, RunContext, Snapshot, Source, Versioned, canonical_json, require_number, require_text, require_utc
++from .models import Binding, BodyReceipt, CommandResult, DirectoryOutcome, Error, Permit, RunContext, Snapshot, Source, Versioned, canonical_json, require_number, require_text, require_utc
+ from .storage.contracts import AlreadyExists, CAS_ATTEMPTS, Conflict, StateStore
+ 
+ 
+ def attempt_key(context: RunContext) -> str:
+     return hashlib.sha256(canonical_json({name: getattr(context, name) for name in
+         ("run_id", "execution_id", "command", "attempt_id", "image_digest")})).hexdigest()
+ 
+ 
+ class AcquisitionState:
+     def __init__(self, store: StateStore, *, clock=None):
+@@ -56,20 +58,190 @@ class AcquisitionState:
+                 value["discovery_status"] = discovery_status
+         self._update_source(source, change)
+ 
+     def get_source(self, source_id: str) -> Versioned | None:
+         return self.store.get("Source", source_id)
+ 
+     def pending_sources(self) -> tuple[Source, ...]:
+         return tuple(Source.from_mapping(row.to_mapping()["value"]["source"])
+                      for row in self.store.scan("Source", {"needs_acquisition": True}))
+ 
++    def discovery_session(self, discovery_id: str) -> Versioned | None:
++        require_text(discovery_id, "discovery_id")
++        return self.store.get("DiscoverySession", hashlib.sha256(discovery_id.encode()).hexdigest())
++
++    def begin_discovery(self, discovery_id: str, frozen: dict[str, object], context: RunContext,
++                        mode: str, acquisition_mode: str) -> Versioned:
++        key = hashlib.sha256(discovery_id.encode()).hexdigest()
++        value = {"discovery_id": discovery_id, "frozen": frozen, "workset_id": None,
++                 "predecessor_workset_id": None, "history": [], "registered": False}
++        try:
++            session = self.store.insert("DiscoverySession", key, value)
++        except AlreadyExists:
++            session = self.discovery_session(discovery_id)
++        saved = session.to_mapping()["value"]["frozen"]
++        original = RunContext.from_mapping(saved["context"])
++        if (_run_provenance(original) != _run_provenance(context) or original.command != context.command
++                or saved["mode"] != mode or saved["acquisition_mode"] != acquisition_mode):
++            raise Conflict("discovery session has conflicting frozen provenance or acquisition mode")
++        required = {unit["url"]: unit for unit in saved["units"]}
++        if len(required) != len(saved["units"]) or not required:
++            raise Conflict("discovery session requires unique directory units")
++        if session.value["registered"]:
++            return session
++        def register(value):
++            for url, unit in required.items():
++                progress = self.directory_progress(discovery_id, url)
++                successful = progress is not None and progress.value["outcome"]["outcome"] != "discovery_failed"
++                if url not in value["gaps"] and not successful:
++                    pending = DirectoryOutcome(url, unit["period"], "discovery_failed", None, (),
++                        Error("discovery_pending", "required directory has not completed", True, None, {}))
++                    value["gaps"][url] = {"token": hashlib.sha256(canonical_json([discovery_id, url])).hexdigest(),
++                                          "discovery_id": discovery_id, "outcome": pending.to_mapping()}
++        self._change_boundary(register)
++        for _ in range(CAS_ATTEMPTS):
++            current = self.discovery_session(discovery_id)
++            value = current.to_mapping()["value"]
++            if value["registered"]:
++                return current
++            value["registered"] = True
++            try:
++                return self.store.replace("DiscoverySession", key, value, current.version)
++            except Conflict:
++                continue
++        raise Conflict("discovery registration exhausted conditional races")
++
++    def _change_boundary(self, change: Callable[[dict[str, object]], None]) -> Versioned:
++        for _ in range(CAS_ATTEMPTS):
++            row = self.store.get("DiscoveryBoundary", "daily")
++            value = row.to_mapping()["value"] if row else {"day": None, "gaps": {}}
++            change(value)
++            try:
++                if row is None:
++                    return self.store.insert("DiscoveryBoundary", "daily", value)
++                return self.store.replace("DiscoveryBoundary", "daily", value, row.version)
++            except (AlreadyExists, Conflict):
++                continue
++        raise Conflict("discovery boundary exhausted conditional races")
++
++    def directory_gap(self, url: str) -> str | None:
++        row = self.store.get("DiscoveryBoundary", "daily")
++        gap = None if row is None else row.to_mapping()["value"]["gaps"].get(url)
++        return gap["token"] if gap else None
++
++    def directory_progress(self, discovery_id: str, url: str) -> Versioned | None:
++        return self.store.get("DirectoryProgress", hashlib.sha256(canonical_json([discovery_id, url])).hexdigest())
++
++    def record_directory(self, discovery_id: str, outcome: DirectoryOutcome, members: tuple[Source, ...], *,
++                         evidence: dict[str, object] | None = None, selection: dict[str, object] | None = None,
++                         expected_gap: str | None = None) -> None:
++        if tuple(sorted(member.source_id for member in members)) != outcome.source_ids:
++            raise Conflict("directory outcome must name its exact members")
++        if any(member.canonical_url.rsplit("/", 1)[0] + "/index.json" != outcome.url for member in members):
++            raise Conflict("source member must originate from its immediate directory")
++        failed = outcome.outcome == "discovery_failed"
++        if not failed and (evidence is None or evidence.get("sha256") != outcome.listing_sha256):
++            raise Conflict("successful directory progress requires durable original evidence")
++        if failed:
++            audit = {"discovery_id": discovery_id, "outcome": outcome.to_mapping(), "recorded_at": self._now().isoformat(), "event_id": uuid.uuid4().hex,
++                     "attempt_key": attempt_key(self.active_context) if self.active_context is not None else None,
++                     "context": self.active_context.to_mapping() if self.active_context is not None else None}
++            token = hashlib.sha256(canonical_json(audit)).hexdigest()
++            def add_gap(value):
++                value["gaps"][outcome.url] = {"token": token, "discovery_id": discovery_id, "outcome": outcome.to_mapping()}
++            # The shared CAS gap is durable before a failure row can appear complete elsewhere.
++            self._change_boundary(add_gap)
++            self._insert_immutable("Failure", token, audit)
++        key = hashlib.sha256(canonical_json([discovery_id, outcome.url])).hexdigest()
++        value = {"discovery_id": discovery_id, "outcome": outcome.to_mapping(),
++                 "members": [member.to_mapping() for member in members], "evidence": evidence,
++                 "selection": selection or {"ignored": []}, "observed_gap_token": expected_gap}
++        for _ in range(CAS_ATTEMPTS):
++            current = self.directory_progress(discovery_id, outcome.url)
++            if current is not None and current.value["outcome"]["outcome"] != "discovery_failed":
++                if current.to_mapping()["value"] != value:
++                    raise Conflict("successful directory progress is immutable within a session")
++                break
++            try:
++                if current is None:
++                    self.store.insert("DirectoryProgress", key, value)
++                else:
++                    self.store.replace("DirectoryProgress", key, value, current.version)
++                break
++            except (AlreadyExists, Conflict):
++                continue
++        else:
++            raise Conflict("directory progress exhausted conditional races")
++        if not failed:
++            def resolve(value):
++                gap = value["gaps"].get(outcome.url)
++                if gap and expected_gap is not None and gap["token"] == expected_gap:
++                    del value["gaps"][outcome.url]
++            self._change_boundary(resolve)
++
++    def failed_directories(self) -> tuple[DirectoryOutcome, ...]:
++        row = self.store.get("DiscoveryBoundary", "daily")
++        gaps = {} if row is None else row.to_mapping()["value"]["gaps"]
++        return tuple(DirectoryOutcome.from_mapping(gaps[url]["outcome"]) for url in sorted(gaps))
++
++    def daily_boundary(self) -> date | None:
++        row = self.store.get("DiscoveryBoundary", "daily")
++        day = None if row is None else row.value["day"]
++        return date.fromisoformat(day) if day else None
++
++    def advance_boundary(self, candidate: date, discovery_id: str,
++                         outcomes: tuple[DirectoryOutcome, ...]) -> None:
++        if type(candidate) is not date:
++            raise ValueError("boundary candidate must be a date")
++        session = self.discovery_session(discovery_id)
++        if session is None:
++            raise Conflict("boundary requires a registered discovery session")
++        if not session.value["registered"]:
++            raise Conflict("required discovery gaps were never registered")
++        frozen = session.to_mapping()["value"]["frozen"]
++        if frozen["mode"] != "daily" or candidate != date.fromisoformat(frozen["today"]):
++            raise Conflict("boundary candidate differs from its pinned daily discovery")
++        supplied = {outcome.url: outcome for outcome in outcomes}
++        required = {unit["url"] for unit in frozen["units"]}
++        if len(supplied) != len(outcomes) or set(supplied) != required:
++            raise Conflict("boundary requires the complete exact required-unit outcome set")
++        for url, outcome in supplied.items():
++            progress = self.directory_progress(discovery_id, url)
++            if progress is None or progress.to_mapping()["value"]["outcome"] != outcome.to_mapping():
++                raise Conflict("boundary outcome lacks its exact durable directory progress")
++        def advance(value):
++            if value["gaps"] or any(outcome.outcome == "discovery_failed" for outcome in outcomes):
++                return
++            previous = date.fromisoformat(value["day"]) if value["day"] else None
++            value["day"] = (max(previous, candidate) if previous else candidate).isoformat()
++        self._change_boundary(advance)
++
++    def finish_discovery(self, discovery_id: str, workset_id: str, context: RunContext) -> None:
++        key = hashlib.sha256(discovery_id.encode()).hexdigest()
++        for _ in range(CAS_ATTEMPTS):
++            row = self.discovery_session(discovery_id)
++            if row is None:
++                raise Conflict("discovery session was never begun")
++            value = row.to_mapping()["value"]
++            if value["workset_id"] == workset_id:
++                return
++            predecessor = value["workset_id"]
++            value.update(workset_id=workset_id, predecessor_workset_id=predecessor)
++            value["history"].append({"workset_id": workset_id, "predecessor_workset_id": predecessor,
++                                     "resumed_by": context.to_mapping()})
++            try:
++                self.store.replace("DiscoverySession", key, value, row.version)
++                return
++            except Conflict:
++                continue
++        raise Conflict("discovery checkpoint exhausted conditional races")
++
+     def remember_snapshot(self, snapshot: Snapshot) -> Snapshot:
+         row = self.get_source(snapshot.source_id)
+         source = None if row is None else Source.from_mapping(row.to_mapping()["value"]["source"])
+         if source is not None:
+             expected = f"raw/sec/indexes/kind={source.kind}/period={source.period}/sha256={snapshot.sha256}/master.{source.representation}"
+             if snapshot.raw_path != expected:
+                 raise Conflict("snapshot address disagrees with observed source")
+         key = snapshot.source_id + ":" + snapshot.sha256
+         try:
+             self.store.insert("Snapshot", key, snapshot.to_mapping())
+diff --git a/packages/sec-edgar-ingest/tests/fixtures/listings/empty.json b/packages/sec-edgar-ingest/tests/fixtures/listings/empty.json
+new file mode 100644
+index 0000000..93d627c
+--- /dev/null
++++ b/packages/sec-edgar-ingest/tests/fixtures/listings/empty.json
+@@ -0,0 +1,8 @@
++{
++  "directory": {
++    "name": "daily-index/2026/QTR4/",
++    "parent-dir": "../",
++    "item": []
++  },
++  "fixture_provenance": "synthetic offline Task 6 fixture"
++}
+diff --git a/packages/sec-edgar-ingest/tests/fixtures/listings/late-daily.json b/packages/sec-edgar-ingest/tests/fixtures/listings/late-daily.json
+new file mode 100644
+index 0000000..ba82322
+--- /dev/null
++++ b/packages/sec-edgar-ingest/tests/fixtures/listings/late-daily.json
+@@ -0,0 +1,16 @@
++{
++  "directory": {
++    "name": "daily-index/2026/QTR4/",
++    "parent-dir": "../",
++    "item": [
++      {
++        "name": "master.20261001.idx",
++        "href": "master.20261001.idx",
++        "type": "file",
++        "size": "synthetic label",
++        "last-modified": "synthetic label"
++      }
++    ]
++  },
++  "fixture_provenance": "synthetic offline Task 6 fixture"
++}
+diff --git a/packages/sec-edgar-ingest/tests/fixtures/listings/leap-day.json b/packages/sec-edgar-ingest/tests/fixtures/listings/leap-day.json
+new file mode 100644
+index 0000000..7c65c3b
+--- /dev/null
++++ b/packages/sec-edgar-ingest/tests/fixtures/listings/leap-day.json
+@@ -0,0 +1,16 @@
++{
++  "directory": {
++    "name": "daily-index/2024/QTR1/",
++    "parent-dir": "../",
++    "item": [
++      {
++        "name": "master.20240229.idx",
++        "href": "master.20240229.idx",
++        "type": "file",
++        "size": "synthetic label",
++        "last-modified": "synthetic label"
++      }
++    ]
++  },
++  "fixture_provenance": "synthetic offline Task 6 fixture"
++}
+diff --git a/packages/sec-edgar-ingest/tests/fixtures/listings/malformed.json b/packages/sec-edgar-ingest/tests/fixtures/listings/malformed.json
+new file mode 100644
+index 0000000..033f44d
+--- /dev/null
++++ b/packages/sec-edgar-ingest/tests/fixtures/listings/malformed.json
+@@ -0,0 +1,6 @@
++{
++  "directory": {
++    "name": 42
++  },
++  "fixture_provenance": "synthetic malformed"
++}
+diff --git a/packages/sec-edgar-ingest/tests/fixtures/listings/unsafe.json b/packages/sec-edgar-ingest/tests/fixtures/listings/unsafe.json
+new file mode 100644
+index 0000000..481e2a7
+--- /dev/null
++++ b/packages/sec-edgar-ingest/tests/fixtures/listings/unsafe.json
+@@ -0,0 +1,16 @@
++{
++  "directory": {
++    "name": "daily-index/2026/QTR4/",
++    "parent-dir": "../",
++    "item": [
++      {
++        "name": "../master.idx",
++        "href": "../master.idx",
++        "type": "file",
++        "size": "synthetic label",
++        "last-modified": "synthetic label"
++      }
++    ]
++  },
++  "fixture_provenance": "synthetic offline Task 6 fixture"
++}
+diff --git a/packages/sec-edgar-ingest/tests/support.py b/packages/sec-edgar-ingest/tests/support.py
+index bf82424..c67ad37 100644
+--- a/packages/sec-edgar-ingest/tests/support.py
++++ b/packages/sec-edgar-ingest/tests/support.py
+@@ -1,19 +1,20 @@
+ """Validated builders shared by offline acquisition tests."""
+ import json
+ from collections.abc import Callable
+ from datetime import date, datetime, timedelta, timezone
+ from pathlib import Path
+ from typing import TYPE_CHECKING
+ 
+ if TYPE_CHECKING:
+     from sec_edgar_ingest.config import Settings
++    from sec_edgar_ingest.download import ResponseSpec
+     from sec_edgar_ingest.models import RunContext, Source, SourceWorkset, Snapshot
+     from sec_edgar_ingest.storage.contracts import StateStore, ObjectStore, LeaseStore, BoundaryObserver
+ 
+ FIXTURE_CONFIG = Path(__file__).parent / "fixtures/config/local.json"
+ 
+ 
+ def fixture_settings(**overrides: object) -> "Settings":
+     from sec_edgar_ingest.config import Settings
+     value = json.loads(FIXTURE_CONFIG.read_text())
+     for key, override in overrides.items():
+@@ -837,10 +838,148 @@ def delayed_adapter_child(transport, cancellation, channel):
+     import requests
+     import sec_edgar_ingest.download as download
+     send = requests.adapters.HTTPAdapter.send
+     def delayed_send(adapter, request, **kwargs):
+         download._trace_transport(transport, "adapter-delay-begin")
+         time.sleep(0.55)
+         download._trace_transport(transport, "adapter-delay-end")
+         return send(adapter, request, **kwargs)
+     requests.adapters.HTTPAdapter.send = delayed_send
+     download._child_exchange(transport, cancellation, channel)
++
++
++# These JSON listings are synthetic offline fixtures, distinct from retained SEC evidence.
++def listing_response(period: str, names: list[str], *, family: str = 'daily-index') -> "ResponseSpec":
++    from sec_edgar_ingest.download import ResponseSpec
++    if period in ('daily-index', 'full-index'):
++        path = period+'/'
++    elif 'Q' in period:
++        year, quarter = period.split('Q')
++        path = f'{family}/{year}/QTR{quarter}/'
++    else:
++        path = f'{family}/{period}/'
++    items = [{'name': name.rstrip('/'), 'href': name, 'type': 'dir' if name.endswith('/') else 'file',
++              'size': '', 'last-modified': 'synthetic fixture label'} for name in names]
++    return ResponseSpec(200, json.dumps({'directory': {'name': path, 'parent-dir': '../', 'item': items}}).encode(),
++                        {'Content-Type': 'application/json', 'X-Fixture': 'synthetic'})
++
++
++def failed_response(status: int) -> "ResponseSpec":
++    from sec_edgar_ingest.download import ResponseSpec
++    return ResponseSpec(status, b'synthetic fixture HTTP failure', {})
++
++
++class DiscoveryHarness:
++    def __init__(self, root, responses):
++        import tempfile
++        from sec_edgar_ingest.coordination import Coordinator
++        from sec_edgar_ingest.download import RequestClient, ScriptedSender
++        from sec_edgar_ingest.state import AcquisitionState
++        self.directory = tempfile.TemporaryDirectory(prefix='sec-discovery-') if root is None else None
++        self.root = Path(self.directory.name) if root is None else Path(root)
++        self.clock = fixture_clock()
++        self.settings = fixture_settings(fixture={"allow_clock_override": True})
++        self.store, self.objects, self.leases = store_bundle(self.root, clock=self.clock)
++        self.state = AcquisitionState(self.store, clock=self.clock)
++        self.coordinator = Coordinator(self.settings, self.store, self.leases, self.clock)
++        self.responses = {key: list(value) for key, value in responses.items()}
++        self.attempted_urls = []
++        self.family = 'daily-index'
++        harness = self
++        class ListingSender(ScriptedSender):
++            def send(self, url, context, permit, *, cancellation):
++                harness.attempted_urls.append(url)
++                key = harness.key(url)
++                supplied = harness.responses.get(url, harness.responses.get(key))
++                if supplied:
++                    spec = supplied[0]
++                    if (spec.status == 200 and spec.fault is None) or len(supplied) > 1:
++                        supplied.pop(0)
++                elif supplied is not None:
++                    raise AssertionError('synthetic response sequence exhausted for '+url)
++                elif key in ('daily-index', 'full-index'):
++                    years = sorted({str(y) for y in range(2010, 2028)})
++                    spec = listing_response(key, [year+'/' for year in years], family=key)
++                elif len(key) == 4:
++                    spec = listing_response(key, ['QTR1/', 'QTR2/', 'QTR3/', 'QTR4/'], family=url.split('/edgar/')[1].split('/')[0])
++                else:
++                    spec = listing_response(key, [], family=url.split('/edgar/')[1].split('/')[0])
++                self.responses = [spec]
++                return super().send(url, context, permit, cancellation=cancellation)
++        self.sender = ListingSender([])
++        self.sender.clock = self.clock
++        self.client = RequestClient(self.settings, self.coordinator, self.sender, self.state, self.clock)
++        self.client.jitter = lambda: 0.0
++        self.closed = False
++        self.invocations = 0
++
++    @staticmethod
++    def key(url):
++        path = url.split('/edgar/')[1].split('/')[:-1]
++        return path[0] if len(path) == 1 else path[1] if len(path) == 2 else path[1]+'Q'+path[2][3:]
++
++    def url(self, key):
++        prefix = 'https://www.sec.gov/Archives/edgar/'
++        if key in ('daily-index', 'full-index'):
++            return prefix+key+'/index.json'
++        path = key.replace('Q', '/QTR')
++        return prefix+self.family+'/'+path+'/index.json'
++
++    @property
++    def requested_quarters(self):
++        return tuple(sorted({self.key(url) for url in self.attempted_urls if 'QTR' in url}))
++
++    @property
++    def boundary(self):
++        return self.state.daily_boundary()
++
++    def seed_boundary(self, day: date) -> None:
++        self.store.insert('DiscoveryBoundary', 'daily', {'day': day.isoformat(), 'gaps': {}})
++
++    def add_pending(self, source: "Source") -> None:
++        self.state.observe(source, self.clock.now(), 'available')
++
++    @staticmethod
++    def workset_path(workset):
++        return f'worksets/source/{workset.workset_id}.json'
++
++    def run(self, mode: str, today: date, discovery_id: str, *, refresh: bool = False) -> "SourceWorkset":
++        from dataclasses import replace
++        from sec_edgar_ingest.discovery import discover
++        from sec_edgar_ingest.config import pin_context
++        self.family = 'daily-index' if mode == 'daily' else 'full-index'
++        self.invocations += 1
++        context = replace(fixture_context(command='discover', priority='daily' if mode == 'daily' else 'backfill'),
++                          attempt_id=f'discover-{self.invocations}', execution_id=f'discover-{today}',
++                          config_sha256=self.settings.config_sha256, pinned_on=None)
++        context, _ = pin_context(self.settings, context, today)
++        return discover(self.settings, context, mode, discovery_id, self.client, self.state, self.objects, today, refresh)
++
++    def run_single_directory(self, period: str) -> "SourceWorkset":
++        year, quarter = period.split('Q')
++        day = date(int(year), (int(quarter)-1)*3+1, 1)
++        self.settings = fixture_settings(backfill={'start_quarter': period, 'end_quarter': 'open'}, daily={'start_date': day.isoformat()}, fixture={'allow_clock_override': True})
++        # The explicit fixture clock override pins this selected historical test quarter.
++        from dataclasses import replace
++        from sec_edgar_ingest.config import pin_context
++        from sec_edgar_ingest.discovery import discover
++        self.coordinator.settings = self.settings
++        self.client.settings = self.settings
++        context = replace(fixture_context('discover', 'daily'), config_sha256=self.settings.config_sha256, pinned_on=None)
++        context, _ = pin_context(self.settings, context, day)
++        self.seed_boundary(day)
++        # Daily always includes preceding overlap; synthesize the other leaf as valid empty.
++        return discover(self.settings, context, 'daily', 'single-'+period, self.client, self.state, self.objects, day)
++
++    def close(self):
++        if self.closed:
++            return
++        self.closed = True
++        self.store.close()
++        self.leases.close()
++        self.sender.close()
++        if self.directory is not None:
++            self.directory.cleanup()
++
++
++def discovery_harness(root: Path | None, responses: dict[str, list["ResponseSpec"]]) -> DiscoveryHarness:
++    return DiscoveryHarness(root, responses)
+diff --git a/packages/sec-edgar-ingest/tests/test_discovery.py b/packages/sec-edgar-ingest/tests/test_discovery.py
+new file mode 100644
+index 0000000..b8f2908
+--- /dev/null
++++ b/packages/sec-edgar-ingest/tests/test_discovery.py
+@@ -0,0 +1,565 @@
++"""Offline trusted listing discovery and durable recovery contracts."""
++import hashlib
++import json
++import tempfile
++import unittest
++from datetime import date
++from pathlib import Path
++
++from support import discovery_harness, failed_response, fixture_source, listing_response
++
++
++class DiscoveryTests(unittest.TestCase):
++    def harness(self, responses, root=None):
++        result = discovery_harness(root, responses)
++        self.addCleanup(result.close)
++        return result
++
++    def test_later_success_cannot_cross_a_failed_directory(self):
++        h = self.harness({'2026Q2': [failed_response(503)],
++                          '2026Q3': [listing_response('2026Q3', ['master.20260930.idx'])],
++                          '2026Q4': [listing_response('2026Q4', ['master.20261001.idx'])]})
++        h.seed_boundary(date(2026, 3, 31))
++        workset = h.run('daily', date(2026, 10, 6), 'outage-a')
++        self.assertFalse(workset.discovery_complete)
++        self.assertEqual(h.boundary, date(2026, 3, 31))
++        self.assertTrue(any(d.outcome == 'discovery_failed' for d in workset.directories))
++        self.assertIn('2026Q2', h.requested_quarters)
++
++    def test_valid_empty_listing_has_a_distinct_outcome(self):
++        h = self.harness({'2026Q4': [listing_response('2026Q4', [])]})
++        workset = h.run_single_directory('2026Q4')
++        self.assertTrue(workset.discovery_complete)
++        self.assertEqual(workset.members, ())
++        leaf = next(d for d in workset.directories if d.period == '2026Q4')
++        self.assertEqual(leaf.outcome, 'no_new_sources')
++        self.assertEqual(leaf.listing_sha256, hashlib.sha256(listing_response('2026Q4', []).body).hexdigest())
++
++    def test_first_daily_run_replays_handoff_and_preceding_quarter(self):
++        h = self.harness({})
++        workset = h.run('daily', date(2026, 10, 6), 'first')
++        self.assertEqual(h.requested_quarters, ('2026Q3', '2026Q4'))
++        self.assertEqual(workset.overlap_from, date(2026, 7, 1))
++        self.assertEqual(h.boundary, date(2026, 10, 6))
++
++    def test_pending_old_source_is_revisited_without_handoff_filter(self):
++        old = fixture_source('2015-01-02', 'daily')
++        h = self.harness({'2015Q1': [listing_response('2015Q1', ['master.20150102.idx'])]})
++        h.add_pending(old)
++        workset = h.run('daily', date(2026, 10, 6), 'pending')
++        self.assertIn('2015Q1', h.requested_quarters)
++        self.assertIn(old, workset.members)
++
++    def test_multi_quarter_outage_includes_entire_boundary_range(self):
++        h = self.harness({'2026Q1': [failed_response(503)], '2026Q2': [failed_response(503)]})
++        h.seed_boundary(date(2025, 12, 31))
++        workset = h.run('daily', date(2026, 10, 6), 'long-outage')
++        self.assertEqual(h.requested_quarters, ('2025Q4', '2026Q1', '2026Q2', '2026Q3', '2026Q4'))
++        self.assertFalse(workset.discovery_complete)
++        self.assertEqual(h.boundary, date(2025, 12, 31))
++
++    def test_failed_ancestor_never_constructs_child_requests(self):
++        h = self.harness({'daily-index': [failed_response(503)]})
++        workset = h.run('daily', date(2026, 10, 6), 'ancestor')
++        self.assertFalse(workset.discovery_complete)
++        self.assertEqual(set(h.attempted_urls), {h.url('daily-index')})
++        self.assertIsNone(h.boundary)
++
++    def test_missing_requested_quarter_is_gap_not_empty_child(self):
++        h = self.harness({'2026': [listing_response('2026', ['QTR3/'])]})
++        workset = h.run('daily', date(2026, 10, 6), 'missing')
++        self.assertFalse(workset.discovery_complete)
++        leaf = next(d for d in workset.directories if d.period == '2026Q4')
++        self.assertEqual(leaf.error.code, 'missing_directory')
++        self.assertNotIn(h.url('2026Q4'), h.attempted_urls)
++        self.assertIsNone(leaf.listing_sha256)
++
++    def test_malformed_untrusted_and_unsupported_listing_remain_gaps(self):
++        from sec_edgar_ingest.download import ResponseSpec
++        for body in (b'<html>untrusted</html>', b'<directory/>', b'{',
++                     listing_response('2026Q4', ['master.gz']).body,
++                     listing_response('2026Q4', ['master.20261001.idx.gz']).body):
++            with self.subTest(body=body[:70]):
++                h = self.harness({'2026Q4': [ResponseSpec(200, body, {})]})
++                workset = h.run_single_directory('2026Q4')
++                leaf = next(d for d in workset.directories if d.period == '2026Q4')
++                self.assertFalse(workset.discovery_complete)
++                self.assertEqual(leaf.outcome, 'discovery_failed')
++                self.assertIsNone(leaf.listing_sha256)
++                self.assertEqual(leaf.source_ids, ())
++                self.assertIn('evidence', leaf.error.details)
++
++    def test_supported_representation_retains_ignored_codec_reason(self):
++        h = self.harness({'2026Q4': [listing_response('2026Q4', ['master.20261001.idx', 'master.20261001.idx.gz'])]})
++        workset = h.run_single_directory('2026Q4')
++        self.assertTrue(workset.discovery_complete)
++        self.assertEqual(len(workset.members), 1)
++        progress = h.state.directory_progress(workset.discovery_id, h.url('2026Q4'))
++        self.assertTrue(progress.value['selection']['ignored'])
++
++    def test_delayed_file_requires_fresh_session_and_old_bytes_stay_immutable(self):
++        h = self.harness({'2026Q4': [listing_response('2026Q4', []),
++                          listing_response('2026Q4', ['master.20261001.idx'])]})
++        first = h.run('daily', date(2026, 10, 6), 'late-first')
++        first_bytes = h.objects.read(h.workset_path(first))
++        before = len(h.attempted_urls)
++        same = h.run('daily', date(2026, 10, 6), 'late-first')
++        self.assertEqual(same, first)
++        self.assertEqual(len(h.attempted_urls), before)
++        fresh = h.run('daily', date(2026, 10, 6), 'late-fresh')
++        self.assertEqual(len(fresh.members), 1)
++        self.assertNotEqual(fresh.workset_id, first.workset_id)
++        self.assertEqual(h.objects.read(h.workset_path(first)), first_bytes)
++
++    def test_restart_reuses_verified_success_and_retries_failure(self):
++        with tempfile.TemporaryDirectory() as directory:
++            root = Path(directory)
++            h = self.harness({'2026Q3': [listing_response('2026Q3', ['master.20260930.idx'])],
++                              '2026Q4': [failed_response(503)]}, root)
++            old = h.run('daily', date(2026, 10, 6), 'resume')
++            old_bytes = h.objects.read(h.workset_path(old))
++            old_sha = next(d.listing_sha256 for d in old.directories if d.period == '2026Q3')
++            h.close()
++            resumed = self.harness({'2026Q4': [listing_response('2026Q4', ['master.20261001.idx'])]}, root)
++            final = resumed.run('daily', date(2026, 10, 7), 'resume')
++            self.assertTrue(final.discovery_complete)
++            self.assertNotEqual(final.workset_id, old.workset_id)
++            self.assertEqual(final.context, old.context)
++            self.assertEqual(next(d.listing_sha256 for d in final.directories if d.period == '2026Q3'), old_sha)
++            self.assertEqual(resumed.objects.read(resumed.workset_path(old)), old_bytes)
++            self.assertNotIn(resumed.url('2026Q3'), resumed.attempted_urls)
++            checkpoint = resumed.state.discovery_session('resume').value
++            self.assertEqual(checkpoint['predecessor_workset_id'], old.workset_id)
++            self.assertEqual(checkpoint['workset_id'], final.workset_id)
++            self.assertEqual(resumed.boundary, date(2026, 10, 6))
++
++    def test_same_session_refuses_changed_refresh_or_configuration(self):
++        from sec_edgar_ingest.storage.contracts import Conflict
++        h = self.harness({})
++        h.run('daily', date(2026, 10, 6), 'frozen')
++        with self.assertRaises(Conflict):
++            h.run('daily', date(2026, 10, 6), 'frozen', refresh=True)
++
++    def test_absence_does_not_erase_pending_or_accepted_snapshot(self):
++        from support import fixture_snapshot
++        source = fixture_source('2015-01-02', 'daily')
++        h = self.harness({})
++        h.add_pending(source)
++        snapshot = fixture_snapshot(source, b'previously accepted fixture')
++        h.state.remember_snapshot(snapshot)
++        from sec_edgar_ingest.models import Error
++        h.state.record_failure(source, Error('retry', 'fixture pending', True, source.source_id, {}))
++        h.run('daily', date(2026, 10, 6), 'absent')
++        row = h.state.get_source(source.source_id).value
++        self.assertEqual(row['latest_downloaded_snapshot'], snapshot.sha256)
++        self.assertTrue(row['needs_acquisition'])
++        self.assertIn('2015Q1', h.requested_quarters)
++
++    def test_boundary_rejects_unbacked_future_candidate(self):
++        from sec_edgar_ingest.storage.contracts import Conflict
++        h = self.harness({})
++        workset = h.run('daily', date(2026, 10, 6), 'exact-day')
++        with self.assertRaises(Conflict):
++            h.state.advance_boundary(date(2026, 10, 7), 'exact-day', workset.directories)
++        self.assertEqual(h.boundary, date(2026, 10, 6))
++
++    def test_success_progress_crash_resumes_gap_resolution_without_refetch(self):
++        h = self.harness({})
++        original = h.store.insert
++        crashed = []
++        def interrupted(kind, key, value):
++            result = original(kind, key, value)
++            if kind == 'DirectoryProgress' and not crashed:
++                crashed.append(True)
++                raise RuntimeError('fixture crash after durable successful progress')
++            return result
++        h.store.insert = interrupted
++        with self.assertRaisesRegex(RuntimeError, 'fixture crash'):
++            h.run('daily', date(2026, 10, 6), 'progress-crash')
++        h.store.insert = original
++        root_before = h.attempted_urls.count(h.url('daily-index'))
++        workset = h.run('daily', date(2026, 10, 6), 'progress-crash')
++        self.assertTrue(workset.discovery_complete)
++        self.assertEqual(h.attempted_urls.count(h.url('daily-index')), root_before)
++        self.assertEqual(h.boundary, date(2026, 10, 6))
++        self.assertEqual(h.state.failed_directories(), ())
++
++    def test_concurrent_boundary_cas_cannot_erase_older_unrelated_gap(self):
++        from sec_edgar_ingest.models import DirectoryOutcome, Error
++        from sec_edgar_ingest.state import AcquisitionState
++        from sec_edgar_ingest.storage.local import LocalStateStore
++        h = self.harness({})
++        h.seed_boundary(date(2026, 10, 5))
++        sibling_store = LocalStateStore(h.root, page_size=1)
++        self.addCleanup(sibling_store.close)
++        sibling = AcquisitionState(sibling_store, clock=h.clock)
++        missing = DirectoryOutcome(h.url('2015Q1'), '2015Q1', 'discovery_failed', None, (),
++                                   Error('listing_outage', 'older required gap', True, None, {}))
++        original = h.store.replace
++        injected = []
++        def race(kind, key, value, version):
++            if kind == 'DiscoveryBoundary' and value['day'] == '2026-10-06' and not injected:
++                injected.append(True)
++                sibling.record_directory('older-outage', missing, ())
++            return original(kind, key, value, version)
++        h.store.replace = race
++        workset = h.run('daily', date(2026, 10, 6), 'boundary-race')
++        self.assertTrue(workset.discovery_complete)
++        self.assertTrue(injected)
++        self.assertEqual(h.boundary, date(2026, 10, 5))
++        self.assertIn(missing, h.state.failed_directories())
++
++    def test_cached_old_listing_cannot_resolve_newer_same_url_gap(self):
++        from sec_edgar_ingest.models import DirectoryOutcome, Error
++        h = self.harness({})
++        workset = h.run('daily', date(2026, 10, 6), 'cached-old')
++        outage = DirectoryOutcome(h.url('2026Q3'), '2026Q3', 'discovery_failed', None, (),
++                                  Error('listing_outage', 'newer failed reread', True, None, {}))
++        h.state.record_directory('newer-outage', outage, ())
++        h.run('daily', date(2026, 10, 6), 'cached-old')
++        self.assertIn(outage, h.state.failed_directories())
++        self.assertEqual(h.state.directory_progress('cached-old', outage.url).value['outcome']['listing_sha256'],
++                         next(d.listing_sha256 for d in workset.directories if d.url == outage.url))
++
++    def test_successful_receipt_and_exact_bytes_precede_progress_and_are_verified(self):
++        from sec_edgar_ingest.models import parse_json
++        from sec_edgar_ingest.storage.contracts import Conflict
++        h = self.harness({'2026Q4': [listing_response('2026Q4', ['master.20261001.idx'])]})
++        original = h.store.insert
++        verified = []
++        def verify_at_insert(kind, key, value):
++            if kind == 'DirectoryProgress' and value['outcome']['outcome'] != 'discovery_failed':
++                evidence = value['evidence']
++                raw = h.objects.read(evidence['body_path'])
++                metadata = parse_json(h.objects.read(evidence['receipt_path']))
++                self.assertEqual(hashlib.sha256(raw).hexdigest(), value['outcome']['listing_sha256'])
++                self.assertEqual(metadata['receipt']['sha256'], value['outcome']['listing_sha256'])
++                verified.append(value['outcome']['url'])
++            return original(kind, key, value)
++        h.store.insert = verify_at_insert
++        workset = h.run('daily', date(2026, 10, 6), 'durable')
++        self.assertEqual(set(verified), {outcome.url for outcome in workset.directories})
++        progress = h.state.directory_progress('durable', h.url('2026Q4')).value
++        (h.objects.directory/progress['evidence']['body_path']).write_bytes(b'corrupted fixture support')
++        before = len(h.attempted_urls)
++        with self.assertRaises(Conflict):
++            h.run('daily', date(2026, 10, 6), 'durable')
++        self.assertEqual(len(h.attempted_urls), before)
++
++    def test_quarterly_uses_actual_master_zip_and_records_open_bridge_alternative(self):
++        from support import fixture_settings
++        h = self.harness({'full-index': [listing_response('full-index', ['2026/', 'master.zip', 'master.gz'])],
++                          '2026Q3': [listing_response('2026Q3', ['master.zip', 'master.gz'], family='full-index')],
++                          '2026Q4': [listing_response('2026Q4', ['master.zip'], family='full-index')]})
++        h.settings = fixture_settings(backfill={'start_quarter': '2026Q3', 'end_quarter': 'open'},
++                              fixture={'allow_clock_override': True})
++        h.coordinator.settings = h.settings
++        h.client.settings = h.settings
++        workset = h.run('quarterly', date(2026, 10, 6), 'quarterly')
++        self.assertTrue(workset.discovery_complete)
++        self.assertEqual({source.period for source in workset.members}, {'2026Q3', '2026Q4'})
++        self.assertEqual({source.representation for source in workset.members}, {'zip'})
++        root = h.state.directory_progress('quarterly', h.url('full-index')).value
++        self.assertIn('alternative', root['selection'])
++        self.assertEqual(tuple(entry['name'] for entry in root['selection']['ignored']), ('master.gz',))
++        self.assertEqual(root['outcome']['source_ids'], ())
++        self.assertIsNone(h.boundary)
++
++    def test_refresh_is_frozen_in_immutable_workset(self):
++        from sec_edgar_ingest.worksets import decode_source_workset
++        h = self.harness({})
++        result = h.run('daily', date(2026, 10, 6), 'refresh', refresh=True)
++        self.assertEqual(result.acquisition_mode, 'refresh')
++        self.assertEqual(decode_source_workset(h.objects.read(h.workset_path(result))), result)
++
++    def test_historical_closed_quarter_does_not_register_root_bridge_as_coverage(self):
++        from support import fixture_settings
++        h = self.harness({'full-index': [listing_response('full-index', ['2015/', 'master.zip'])],
++                          '2015Q1': [listing_response('2015Q1', ['master.zip'], family='full-index')]})
++        h.settings = fixture_settings(backfill={'start_quarter': '2015Q1', 'end_quarter': '2015Q1'},
++                                      fixture={'allow_clock_override': True})
++        h.coordinator.settings = h.client.settings = h.settings
++        workset = h.run('quarterly', date(2026, 10, 6), 'historical')
++        self.assertEqual(len(workset.members), 1)
++        root = h.state.directory_progress('historical', h.url('full-index')).value
++        self.assertNotIn('alternative', root['selection'])
++
++    def test_unresolved_old_year_unit_is_revisited_even_without_sources(self):
++        from sec_edgar_ingest.models import DirectoryOutcome, Error
++        h = self.harness({})
++        old_url = h.url('2015')
++        gap = DirectoryOutcome(old_url, '2015', 'discovery_failed', None, (),
++                               Error('year_outage', 'older failed year unit', True, None, {}))
++        h.state.record_directory('older-year', gap, ())
++        workset = h.run('daily', date(2026, 10, 6), 'year-recovery')
++        self.assertIn(old_url, h.attempted_urls)
++        self.assertIn(old_url, {d.url for d in workset.directories})
++        self.assertEqual(h.state.failed_directories(), ())
++        self.assertEqual(h.boundary, date(2026, 10, 6))
++
++    def test_completed_sessions_do_not_accumulate_in_shared_boundary_row(self):
++        from sec_edgar_ingest.models import canonical_json
++        h = self.harness({})
++        h.run('daily', date(2026, 10, 6), 'bounded-0')
++        baseline = len(canonical_json(h.store.get('DiscoveryBoundary', 'daily').to_mapping()['value']))
++        for ordinal in range(1, 8):
++            h.run('daily', date(2026, 10, 6), f'bounded-{ordinal}')
++        final = len(canonical_json(h.store.get('DiscoveryBoundary', 'daily').to_mapping()['value']))
++        self.assertLessEqual(final, baseline + 100)
++
++    def test_pending_sources_are_paginated_and_old_failed_quarter_is_also_retried(self):
++        from sec_edgar_ingest.models import DirectoryOutcome, Error
++        h = self.harness({})
++        h.store.page_size = 1
++        for day in ('2015-01-02', '2016-05-04', '2017-09-01'):
++            h.add_pending(fixture_source(day, 'daily'))
++        old = DirectoryOutcome(h.url('2014Q2'), '2014Q2', 'discovery_failed', None, (),
++                               Error('old_outage', 'failed listing before handoff', True, None, {}))
++        h.state.record_directory('older-quarter', old, ())
++        workset = h.run('daily', date(2026, 10, 6), 'paged')
++        self.assertTrue(workset.discovery_complete)
++        for quarter in ('2014Q2', '2015Q1', '2016Q2', '2017Q3'):
++            self.assertIn(quarter, h.requested_quarters)
++        self.assertEqual(h.state.failed_directories(), ())
++
++    def test_named_synthetic_fixtures_are_used_separately_from_retained_evidence(self):
++        from sec_edgar_ingest.discovery import parse_listing
++        from sec_edgar_ingest.download import ResponseSpec
++        directory = Path(__file__).parent/'fixtures/listings'
++        empty = (directory/'empty.json').read_bytes()
++        self.assertEqual(parse_listing('https://www.sec.gov/Archives/edgar/daily-index/2026/QTR4/index.json', empty), ())
++        for name in ('malformed.json', 'unsafe.json'):
++            with self.subTest(name=name), self.assertRaises(ValueError):
++                parse_listing('https://www.sec.gov/Archives/edgar/daily-index/2026/QTR4/index.json', (directory/name).read_bytes())
++        for name, period in (('leap-day.json', '2024Q1'), ('late-daily.json', '2026Q4')):
++            h = self.harness({period: [ResponseSpec(200, (directory/name).read_bytes(), {})]})
++            result = h.run_single_directory(period)
++            self.assertTrue(result.discovery_complete)
++            self.assertEqual(len(result.members), 1)
++
++    def test_denial_and_owner_policy_latch_remain_terminal_directory_gaps(self):
++        from sec_edgar_ingest.download import ResponseSpec
++        h = self.harness({'daily-index': [failed_response(403)]})
++        result = h.run('daily', date(2026, 10, 6), 'denied')
++        self.assertFalse(result.discovery_complete)
++        self.assertEqual(len(h.attempted_urls), 1)
++        self.assertTrue(any(d.error and d.error.code == 'access_denied' for d in result.directories))
++        blocked = self.harness({'daily-index': [ResponseSpec(429, b'synthetic retry delay', {'Retry-After': '1000000000000'})]})
++        first = blocked.run('daily', date(2026, 10, 6), 'latched')
++        second = blocked.run('daily', date(2026, 10, 6), 'latched-next')
++        self.assertFalse(first.discovery_complete or second.discovery_complete)
++        self.assertEqual(len(blocked.attempted_urls), 1)
++        self.assertTrue(any(d.error and d.error.code == 'policy_blocked' for d in second.directories))
++        self.assertIsNone(blocked.boundary)
++
++    def test_boundary_requires_exact_complete_durable_outcome_set(self):
++        from sec_edgar_ingest.models import DirectoryOutcome
++        from sec_edgar_ingest.storage.contracts import Conflict
++        h = self.harness({})
++        result = h.run('daily', date(2026, 10, 6), 'proof-set')
++        with self.assertRaises(Conflict):
++            h.state.advance_boundary(date(2026, 10, 6), 'proof-set', result.directories[:-1])
++        changed = result.directories[0].to_mapping(); changed['listing_sha256'] = 'b' * 64
++        supplied = (DirectoryOutcome.from_mapping(changed),) + result.directories[1:]
++        with self.assertRaises(Conflict):
++            h.state.advance_boundary(date(2026, 10, 6), 'proof-set', supplied)
++
++    def test_discovery_requests_share_one_budget_and_preserve_actual_child_membership(self):
++        h = self.harness({'2026Q3': [listing_response('2026Q3', ['master.20260930.idx'])],
++                          '2026Q4': [listing_response('2026Q4', ['master.20261001.idx'])]})
++        result = h.run('daily', date(2026, 10, 6), 'budget')
++        starts = h.sender.starts
++        self.assertEqual(h.sender.maximum_active, 1)
++        self.assertTrue(all(later - earlier >= 1/3 for earlier, later in zip(starts, starts[1:])))
++        attempts = tuple(h.store.scan('TransportAttempt', {}))
++        self.assertEqual(len(attempts), len(h.attempted_urls))
++        self.assertTrue(all(row.value['source_id'] is None for row in attempts))
++        directories = {d.url: d for d in result.directories}
++        for source in result.members:
++            directory_url = source.canonical_url.rsplit('/', 1)[0]+'/index.json'
++            self.assertIn(source.source_id, directories[directory_url].source_ids)
++
++    def test_listing_absence_and_truncation_preserve_original_failure_bytes(self):
++        from sec_edgar_ingest.download import ResponseSpec
++        for spec in (failed_response(404), ResponseSpec(200, b'{"directory":', {}, 'timeout')):
++            with self.subTest(spec=spec):
++                h = self.harness({'2026Q4': [spec]})
++                result = h.run_single_directory('2026Q4')
++                leaf = next(d for d in result.directories if d.period == '2026Q4')
++                self.assertEqual(leaf.outcome, 'discovery_failed')
++                self.assertEqual(leaf.source_ids, ())
++                self.assertIsNone(leaf.listing_sha256)
++                evidence = leaf.error.details['evidence']
++                self.assertEqual(h.objects.read(evidence['body_path']), spec.body)
++                self.assertTrue(evidence['body_path'].startswith('quarantine/discovery/'))
++
++    def test_failed_year_and_missing_year_do_not_invent_quarter_fetches(self):
++        for responses in ({'2026': [failed_response(503)]},
++                          {'daily-index': [listing_response('daily-index', ['2015/'])]}):
++            with self.subTest(responses=responses):
++                h = self.harness(responses)
++                result = h.run('daily', date(2026, 10, 6), 'hierarchy-gap')
++                self.assertFalse(result.discovery_complete)
++                self.assertEqual(h.requested_quarters, ())
++                self.assertIsNone(h.boundary)
++
++    def test_crash_before_receipt_metadata_write_cannot_record_successful_progress(self):
++        from support import Faults
++        h = self.harness({})
++        faults, writes = Faults(), []
++        def interrupt_second_link():
++            writes.append(True)
++            if len(writes) == 2:
++                raise RuntimeError('fixture crash before receipt metadata link')
++            faults.at('object.before_link', interrupt_second_link)
++        faults.at('object.before_link', interrupt_second_link)
++        h.objects.observer = faults
++        with self.assertRaisesRegex(RuntimeError, 'metadata link'):
++            h.run('daily', date(2026, 10, 6), 'receipt-crash')
++        self.assertIsNone(h.state.directory_progress('receipt-crash', h.url('daily-index')))
++        self.assertIsNone(h.boundary)
++        result = h.run('daily', date(2026, 10, 6), 'receipt-crash')
++        self.assertTrue(result.discovery_complete)
++        self.assertEqual(h.attempted_urls.count(h.url('daily-index')), 2)
++
++    def test_configuration_change_is_refused_on_same_discovery_session(self):
++        from support import fixture_settings
++        from sec_edgar_ingest.storage.contracts import Conflict
++        h = self.harness({})
++        h.run('daily', date(2026, 10, 6), 'config-frozen')
++        before = len(h.attempted_urls)
++        h.settings = fixture_settings(backfill={'start_quarter': '2026Q3'}, fixture={'allow_clock_override': True})
++        h.coordinator.settings = h.client.settings = h.settings
++        with self.assertRaises(Conflict):
++            h.run('daily', date(2026, 10, 6), 'config-frozen')
++        self.assertEqual(len(h.attempted_urls), before)
++
++    def test_daily_endpoint_cannot_exclude_current_quarter_even_when_listings_are_empty(self):
++        from support import fixture_settings
++        h = self.harness({})
++        h.settings = fixture_settings(backfill={'start_quarter': '2015Q1', 'end_quarter': '2015Q1'},
++                                      fixture={'allow_clock_override': True})
++        h.coordinator.settings = h.client.settings = h.settings
++        with self.assertRaisesRegex(ValueError, 'endpoint'):
++            h.run('daily', date(2026, 10, 6), 'closed-daily')
++        self.assertEqual(h.attempted_urls, [])
++
++    def test_source_observation_uses_actual_successful_receipt_time(self):
++        h = self.harness({'2026Q4': [listing_response('2026Q4', ['master.20261001.idx'])]})
++        result = h.run('daily', date(2026, 10, 6), 'observation-time')
++        source = result.members[0]
++        progress = h.state.directory_progress('observation-time', h.url('2026Q4')).value
++        metadata = json.loads(h.objects.read(progress['evidence']['receipt_path']))
++        self.assertEqual(h.state.get_source(source.source_id).value['first_discovered_at'],
++                         metadata['receipt']['received_at'])
++
++    def test_cached_progress_must_match_requested_directory_metadata(self):
++        from sec_edgar_ingest.storage.contracts import Conflict
++        h = self.harness({})
++        h.run('daily', date(2026, 10, 6), 'metadata-integrity')
++        url = h.url('daily-index')
++        row = h.state.directory_progress('metadata-integrity', url)
++        value = row.to_mapping()['value']; value['outcome']['period'] = 'wrong-family'
++        key = hashlib.sha256(json.dumps(['metadata-integrity', url], sort_keys=True, separators=(',', ':')).encode()).hexdigest()
++        h.store.replace('DirectoryProgress', key, value, row.version)
++        with self.assertRaises(Conflict):
++            h.run('daily', date(2026, 10, 6), 'metadata-integrity')
++
++    def test_retained_root_year_and_quarter_select_exact_actual_zip_child(self):
++        from support import fixture_settings
++        from sec_edgar_ingest.download import ResponseSpec
++        root = Path(__file__).resolve().parents[3]
++        manifest = json.loads((Path(__file__).parent/'fixtures/retained-manifest.json').read_bytes())
++        records = {item['path']: item for item in manifest['records']}
++        for entry in manifest['provenance'].values():
++            self.assertEqual(hashlib.sha256((root/entry['path']).read_bytes()).hexdigest(), entry['sha256'])
++        responses, hashes = {}, {}
++        for number in (1, 2, 3):
++            stem = f'specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-{number:04d}'
++            values = {}
++            for suffix in ('body', 'headers.json', 'intent.json'):
++                path = stem+'.'+suffix; body = (root/path).read_bytes()
++                self.assertEqual(hashlib.sha256(body).hexdigest(), records[path]['sha256'])
++                self.assertEqual(len(body), records[path]['bytes'])
++                values[suffix] = body
++            url = json.loads(values['intent.json'])['url']
++            self.assertEqual(json.loads(values['headers.json'])['url'], url)
++            responses[url] = [ResponseSpec(200, values['body'], {'X-Fixture': f'retained-original-SEC-{number:04d}'})]
++            hashes[url] = records[stem+'.body']['sha256']
++        h = self.harness(responses)
++        h.settings = fixture_settings(backfill={'start_quarter': '2010Q1', 'end_quarter': '2010Q1'},
++                                      fixture={'allow_clock_override': True})
++        h.coordinator.settings = h.client.settings = h.settings
++        result = h.run('quarterly', date(2026, 10, 6), 'retained-hierarchy')
++        self.assertTrue(result.discovery_complete)
++        self.assertEqual(len(result.members), 1)
++        self.assertEqual(result.members[0].canonical_url,
++                         'https://www.sec.gov/Archives/edgar/full-index/2010/QTR1/master.zip')
++        self.assertEqual({d.url: d.listing_sha256 for d in result.directories}, hashes)
++
++
++class ListingTests(unittest.TestCase):
++    def test_retained_originals_parse_with_verified_manifest_provenance(self):
++        from sec_edgar_ingest.discovery import parse_listing
++        root = Path(__file__).resolve().parents[3]
++        manifest = json.loads((Path(__file__).parent/'fixtures/retained-manifest.json').read_bytes())
++        records = {item['path']: item for item in manifest['records']}
++        for row in manifest['provenance'].values():
++            self.assertEqual(hashlib.sha256((root/row['path']).read_bytes()).hexdigest(), row['sha256'])
++        for number in (1, 2, 3, 28, 85, 86, 87, 88, 89, 104, 135, 137, 138, 139):
++            stem = f'specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-{number:04d}'
++            values = {}
++            for suffix in ('body', 'headers.json', 'intent.json'):
++                path = stem+'.'+suffix
++                body = (root/path).read_bytes()
++                self.assertEqual(hashlib.sha256(body).hexdigest(), records[path]['sha256'])
++                self.assertEqual(len(body), records[path]['bytes'])
++                values[suffix] = body
++            headers = json.loads(values['headers.json'])
++            intent = json.loads(values['intent.json'])
++            self.assertEqual(intent['url'], headers['url'])
++            self.assertEqual(headers['sha256'], records[stem+'.body']['sha256'])
++            entries = parse_listing(intent['url'], values['body'])
++            raw = json.loads(values['body'])['directory']['item']
++            self.assertEqual(len(entries), len(raw))
++            self.assertEqual({e.name: (e.size_label, e.modified_label) for e in entries},
++                             {e['name']: (e['size'], e['last-modified']) for e in raw})
++
++    def test_rejects_wrong_directory_duplicate_unsafe_missing_or_wrong_typed_fields(self):
++        from sec_edgar_ingest.discovery import parse_listing
++        url = 'https://www.sec.gov/Archives/edgar/daily-index/2026/QTR4/index.json'
++        normal = json.loads(listing_response('2026Q4', ['master.20261001.idx']).body)
++        cases = []
++        for key, value in (('name', 'full-index/2026/QTR4/'), ('item', {}), ('parent-dir', None)):
++            changed = json.loads(json.dumps(normal)); changed['directory'][key] = value; cases.append(changed)
++        for key, value in (('href', '../master.20261001.idx'), ('name', '../master.idx'), ('type', 'unknown'), ('size', 42)):
++            changed = json.loads(json.dumps(normal)); changed['directory']['item'][0][key] = value; cases.append(changed)
++        changed = json.loads(json.dumps(normal)); changed['directory']['item'].append(dict(changed['directory']['item'][0])); cases.append(changed)
++        changed = json.loads(json.dumps(normal)); del changed['directory']['item'][0]['href']; cases.append(changed)
++        for changed in cases:
++            with self.subTest(changed=changed), self.assertRaises(ValueError):
++                parse_listing(url, json.dumps(changed).encode())
++
++    def test_filename_calendar_and_hierarchy_validation_including_leap_day(self):
++        h = discovery_harness(None, {'2024Q1': [listing_response('2024Q1', ['master.20240229.idx'])]})
++        self.addCleanup(h.close)
++        self.assertEqual(h.run_single_directory('2024Q1').members[0].period, '2024-02-29')
++        for name in ('master.20260229.idx', 'master.20261000.idx', 'master.20260930.idx'):
++            with self.subTest(name=name):
++                bad = discovery_harness(None, {'2026Q4': [listing_response('2026Q4', [name])]})
++                self.addCleanup(bad.close)
++                self.assertFalse(bad.run_single_directory('2026Q4').discovery_complete)
++
++    def test_quarter_functions_rollover_and_contiguous_boundary(self):
++        from sec_edgar_ingest.discovery import advance_daily_boundary, quarter_of, quarter_span, required_daily_quarters
++        self.assertEqual(quarter_of(date(2024, 2, 29)), '2024Q1')
++        self.assertEqual(quarter_span('2025Q4', '2026Q2'), ('2025Q4', '2026Q1', '2026Q2'))
++        self.assertEqual(required_daily_quarters(date(2027, 1, 1), date(2026, 10, 1), None, ('2015Q1',)),
++                         ('2015Q1', '2026Q4', '2027Q1'))
++        self.assertIsNone(advance_daily_boundary(None, date(2026, 10, 6), ()))
++        with self.assertRaises(ValueError):
++            quarter_span('2026Q2', '2026Q1')
++
++
++if __name__ == '__main__':
++    unittest.main()

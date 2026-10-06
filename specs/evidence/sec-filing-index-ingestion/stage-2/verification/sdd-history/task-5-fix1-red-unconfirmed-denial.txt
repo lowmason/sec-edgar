@@ -1,0 +1,18 @@
+test_unconfirmed_denial_persistence_retains_original_receipt_and_unsafe_guard (test_download.PolicyHandoffTests.test_unconfirmed_denial_persistence_retains_original_receipt_and_unsafe_guard) ... FAIL
+
+======================================================================
+FAIL: test_unconfirmed_denial_persistence_retains_original_receipt_and_unsafe_guard (test_download.PolicyHandoffTests.test_unconfirmed_denial_persistence_retains_original_receipt_and_unsafe_guard)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_download.py", line 337, in test_unconfirmed_denial_persistence_retains_original_receipt_and_unsafe_guard
+    self.assertEqual(raised.exception.error.code, "ownership_lost")
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'access_denied' != 'ownership_lost'
+- access_denied
++ ownership_lost
+
+
+----------------------------------------------------------------------
+Ran 1 test in 0.046s
+
+FAILED (failures=1)

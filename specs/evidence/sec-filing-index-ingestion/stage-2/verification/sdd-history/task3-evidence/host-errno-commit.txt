@@ -1,0 +1,32 @@
+COMMAND: git diff --cached --name-only
+EXIT: 0
+
+COMMAND: git add -- packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py packages/sec-edgar-ingest/tests/test_storage.py
+EXIT: 0
+
+COMMAND: git diff --cached --name-only
+EXIT: 0
+packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py
+packages/sec-edgar-ingest/tests/test_storage.py
+
+COMMAND: git diff --cached --check
+EXIT: 0
+
+COMMAND: git commit -m 'fix: use host errno for immutable object path guards'
+EXIT: 0
+[codex/sec-edgar-stage-2 c22285a] fix: use host errno for immutable object path guards
+ 2 files changed, 18 insertions(+), 2 deletions(-)
+
+COMMAND: git rev-parse HEAD
+EXIT: 0
+c22285aad83cbf88b238f3c49b836842f0ccbad8
+
+COMMAND: git status --short
+EXIT: 0
+ D packages/sec-edgar-index-ingest/README.md
+ D packages/sec-edgar-index-ingest/pyproject.toml
+ D packages/sec-edgar-index-ingest/src/sec_edgar_index_ingest/__init__.py
+ D packages/sec-edgar-index-ingest/src/sec_edgar_index_ingest/py.typed
+
+COMMAND: git diff 3085d6765f65529820743c2d86dca84a497c2060 HEAD --check
+EXIT: 0

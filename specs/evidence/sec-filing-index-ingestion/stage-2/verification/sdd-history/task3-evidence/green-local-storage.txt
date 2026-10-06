@@ -1,0 +1,18 @@
+COMMAND: uv run --offline --frozen --package sec-edgar-ingest python -m unittest discover -s packages/sec-edgar-ingest/tests -p test_storage.py -v
+EXIT: 0
+test_committed_insert_survives_observer_exception (test_storage.StorageTests.test_committed_insert_survives_observer_exception) ... ok
+test_create_conflict_preserves_first_value_and_reopens (test_storage.StorageTests.test_create_conflict_preserves_first_value_and_reopens) ... ok
+test_fixed_registry_is_conditional_and_factory_shares_root_and_budget (test_storage.StorageTests.test_fixed_registry_is_conditional_and_factory_shares_root_and_budget) ... ok
+test_object_fault_before_and_after_link_is_restart_safe (test_storage.StorageTests.test_object_fault_before_and_after_link_is_restart_safe) ... ok
+test_reopening_lease_client_preserves_existing_sentinel_journal (test_storage.StorageTests.test_reopening_lease_client_preserves_existing_sentinel_journal) ... ok
+test_scan_reads_all_pages_and_filters_detached_values (test_storage.StorageTests.test_scan_reads_all_pages_and_filters_detached_values) ... ok
+test_shared_finite_lease_expiry_renewal_and_stale_handles (test_storage.StorageTests.test_shared_finite_lease_expiry_renewal_and_stale_handles) ... ok
+test_stage_promote_verified_bytes_before_raw_reference (test_storage.StorageTests.test_stage_promote_verified_bytes_before_raw_reference) ... ok
+test_stale_cas_and_missing_rows_cannot_replace (test_storage.StorageTests.test_stale_cas_and_missing_rows_cannot_replace) ... ok
+test_unsafe_paths_and_symlinks_cannot_escape_object_root (test_storage.StorageTests.test_unsafe_paths_and_symlinks_cannot_escape_object_root) ... ok
+test_write_once_same_bytes_are_idempotent_different_bytes_are_corruption (test_storage.StorageTests.test_write_once_same_bytes_are_idempotent_different_bytes_are_corruption) ... ok
+
+----------------------------------------------------------------------
+Ran 11 tests in 0.102s
+
+OK

@@ -1,0 +1,142 @@
+test_installed_distribution_exposes_the_cli (test_workspace.CliTests.test_installed_distribution_exposes_the_cli) ... ERROR
+test_main_help_and_version_exit_successfully (test_workspace.CliTests.test_main_help_and_version_exit_successfully) ... ERROR
+test_main_without_arguments_prints_help (test_workspace.CliTests.test_main_without_arguments_prints_help) ... ERROR
+test_module_and_console_invocations (test_workspace.CliTests.test_module_and_console_invocations) ... 
+  test_module_and_console_invocations (test_workspace.CliTests.test_module_and_console_invocations) (invocation=('/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/bin/python3.14', '-m', 'sec_edgar_ingest'), argument='--help') ... FAIL
+  test_module_and_console_invocations (test_workspace.CliTests.test_module_and_console_invocations) (invocation=('/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/bin/python3.14', '-m', 'sec_edgar_ingest'), argument='--version') ... FAIL
+  test_module_and_console_invocations (test_workspace.CliTests.test_module_and_console_invocations) (invocation=('/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/bin/sec-edgar-ingest',), argument='--help') ... ERROR
+  test_module_and_console_invocations (test_workspace.CliTests.test_module_and_console_invocations) (invocation=('/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/bin/sec-edgar-ingest',), argument='--version') ... ERROR
+test_unimplemented_commands_are_rejected (test_workspace.CliTests.test_unimplemented_commands_are_rejected) ... ERROR
+test_only_ingest_is_a_workspace_member (test_workspace.WorkspaceTests.test_only_ingest_is_a_workspace_member) ... FAIL
+
+======================================================================
+ERROR: test_installed_distribution_exposes_the_cli (test_workspace.CliTests.test_installed_distribution_exposes_the_cli)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_workspace.py", line 63, in test_installed_distribution_exposes_the_cli
+    from sec_edgar_ingest import __version__
+ModuleNotFoundError: No module named 'sec_edgar_ingest'
+
+======================================================================
+ERROR: test_main_help_and_version_exit_successfully (test_workspace.CliTests.test_main_help_and_version_exit_successfully)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_workspace.py", line 40, in test_main_help_and_version_exit_successfully
+    from sec_edgar_ingest.cli import main
+ModuleNotFoundError: No module named 'sec_edgar_ingest'
+
+======================================================================
+ERROR: test_main_without_arguments_prints_help (test_workspace.CliTests.test_main_without_arguments_prints_help)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_workspace.py", line 29, in test_main_without_arguments_prints_help
+    from sec_edgar_ingest.cli import main
+ModuleNotFoundError: No module named 'sec_edgar_ingest'
+
+======================================================================
+ERROR: test_module_and_console_invocations (test_workspace.CliTests.test_module_and_console_invocations) (invocation=('/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/bin/sec-edgar-ingest',), argument='--help')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_workspace.py", line 87, in test_module_and_console_invocations
+    result = subprocess.run([*invocation, argument],
+                            capture_output=True, text=True,
+                            timeout=10)
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/subprocess.py", line 554, in run
+    with Popen(*popenargs, **kwargs) as process:
+         ~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/subprocess.py", line 1038, in __init__
+    self._execute_child(args, executable, preexec_fn, close_fds,
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                        pass_fds, cwd, env,
+                        ^^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+                        gid, gids, uid, umask,
+                        ^^^^^^^^^^^^^^^^^^^^^^
+                        start_new_session, process_group)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/subprocess.py", line 1970, in _execute_child
+    raise child_exception_type(errno_num, err_msg, err_filename)
+FileNotFoundError: [Errno 2] No such file or directory: '/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/bin/sec-edgar-ingest'
+
+======================================================================
+ERROR: test_module_and_console_invocations (test_workspace.CliTests.test_module_and_console_invocations) (invocation=('/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/bin/sec-edgar-ingest',), argument='--version')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_workspace.py", line 87, in test_module_and_console_invocations
+    result = subprocess.run([*invocation, argument],
+                            capture_output=True, text=True,
+                            timeout=10)
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/subprocess.py", line 554, in run
+    with Popen(*popenargs, **kwargs) as process:
+         ~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/subprocess.py", line 1038, in __init__
+    self._execute_child(args, executable, preexec_fn, close_fds,
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                        pass_fds, cwd, env,
+                        ^^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+                        gid, gids, uid, umask,
+                        ^^^^^^^^^^^^^^^^^^^^^^
+                        start_new_session, process_group)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/subprocess.py", line 1970, in _execute_child
+    raise child_exception_type(errno_num, err_msg, err_filename)
+FileNotFoundError: [Errno 2] No such file or directory: '/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/bin/sec-edgar-ingest'
+
+======================================================================
+ERROR: test_unimplemented_commands_are_rejected (test_workspace.CliTests.test_unimplemented_commands_are_rejected)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_workspace.py", line 53, in test_unimplemented_commands_are_rejected
+    from sec_edgar_ingest.cli import main
+ModuleNotFoundError: No module named 'sec_edgar_ingest'
+
+======================================================================
+FAIL: test_module_and_console_invocations (test_workspace.CliTests.test_module_and_console_invocations) (invocation=('/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/bin/python3.14', '-m', 'sec_edgar_ingest'), argument='--help')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_workspace.py", line 90, in test_module_and_console_invocations
+    self.assertEqual(result.returncode, 0, result.stderr)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 1 != 0 : /Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/bin/python3.14: No module named sec_edgar_ingest
+
+
+======================================================================
+FAIL: test_module_and_console_invocations (test_workspace.CliTests.test_module_and_console_invocations) (invocation=('/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/bin/python3.14', '-m', 'sec_edgar_ingest'), argument='--version')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_workspace.py", line 90, in test_module_and_console_invocations
+    self.assertEqual(result.returncode, 0, result.stderr)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 1 != 0 : /Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/bin/python3.14: No module named sec_edgar_ingest
+
+
+======================================================================
+FAIL: test_only_ingest_is_a_workspace_member (test_workspace.WorkspaceTests.test_only_ingest_is_a_workspace_member)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_workspace.py", line 16, in test_only_ingest_is_a_workspace_member
+    self.assertEqual(root["tool"]["uv"]["workspace"]["members"],
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                     ["packages/sec-edgar-ingest"])
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: ['pac[18 chars]gest', 'packages/sec-edgar-index-ingest', 'pac[50 chars]ent'] != ['pac[18 chars]gest']
+
+First list contains 3 additional elements.
+First extra element 1:
+'packages/sec-edgar-index-ingest'
+
+- ['packages/sec-edgar-ingest',
+?                             ^
+
++ ['packages/sec-edgar-ingest']
+?                             ^
+
+-  'packages/sec-edgar-index-ingest',
+-  'packages/sec-edgar-download',
+-  'packages/sec-edgar-client']
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.024s
+
+FAILED (failures=3, errors=6)

@@ -1,0 +1,448 @@
+{
+  "exit_codes": [
+    0,
+    0
+  ],
+  "ordered_events": [
+    {
+      "at": "2026-10-06T19:05:32.028032+00:00",
+      "event": "receipt_checkpoint",
+      "monotonic_ns": 2752795997288791,
+      "pid": 47161
+    },
+    {
+      "at": "2026-10-06T19:05:32.042807+00:00",
+      "event": "receipt_checkpoint",
+      "monotonic_ns": 2752796012063625,
+      "pid": 47162
+    },
+    {
+      "at": "2026-10-06T19:05:32.051669+00:00",
+      "event": "bind_read_absent",
+      "key": "b23d0edd881821ae44696ffa62c28185ef98f34f2f8b0ba7eddc964bb48670f0:6cf7f339fd98f08d888586fbf41d907cb071d3a54259128e659f51e1f7caaa72",
+      "monotonic_ns": 2752796020926625,
+      "pid": 47161
+    },
+    {
+      "at": "2026-10-06T19:05:32.054484+00:00",
+      "event": "bind_read_absent",
+      "key": "b23d0edd881821ae44696ffa62c28185ef98f34f2f8b0ba7eddc964bb48670f0:6cf7f339fd98f08d888586fbf41d907cb071d3a54259128e659f51e1f7caaa72",
+      "monotonic_ns": 2752796023741333,
+      "pid": 47162
+    },
+    {
+      "at": "2026-10-06T19:05:32.056111+00:00",
+      "event": "bind_insert_attempt",
+      "monotonic_ns": 2752796025369125,
+      "pid": 47161,
+      "snapshot_sha256": "203964cb70ac1bfae0210db0776984db66030e5b302c3086c285595a03bc12a3"
+    },
+    {
+      "at": "2026-10-06T19:05:32.056458+00:00",
+      "event": "bind_insert_success",
+      "monotonic_ns": 2752796025716166,
+      "pid": 47161,
+      "snapshot_sha256": "203964cb70ac1bfae0210db0776984db66030e5b302c3086c285595a03bc12a3"
+    },
+    {
+      "at": "2026-10-06T19:05:32.057354+00:00",
+      "event": "bind_insert_attempt",
+      "monotonic_ns": 2752796026611666,
+      "pid": 47162,
+      "snapshot_sha256": "37e8d9f8431be0de04c50359c4dab6e3787681e23670cbb357df9c79c3ffcd74"
+    },
+    {
+      "at": "2026-10-06T19:05:32.057721+00:00",
+      "event": "bind_insert_conflict",
+      "monotonic_ns": 2752796026979250,
+      "pid": 47162
+    },
+    {
+      "at": "2026-10-06T19:05:32.058160+00:00",
+      "event": "bind_read_winner",
+      "monotonic_ns": 2752796027417375,
+      "pid": 47162,
+      "snapshot_sha256": "203964cb70ac1bfae0210db0776984db66030e5b302c3086c285595a03bc12a3"
+    },
+    {
+      "at": "2026-10-06T19:05:32.061184+00:00",
+      "event": "bind_read_winner",
+      "monotonic_ns": 2752796030441541,
+      "pid": 47162,
+      "snapshot_sha256": "203964cb70ac1bfae0210db0776984db66030e5b302c3086c285595a03bc12a3"
+    },
+    {
+      "at": "2026-10-06T19:05:32.061769+00:00",
+      "event": "bind_read_winner",
+      "monotonic_ns": 2752796031026791,
+      "pid": 47161,
+      "snapshot_sha256": "203964cb70ac1bfae0210db0776984db66030e5b302c3086c285595a03bc12a3"
+    },
+    {
+      "at": "2026-10-06T19:05:32.066565+00:00",
+      "event": "adopted",
+      "monotonic_ns": 2752796035822458,
+      "pid": 47162,
+      "snapshots": [
+        {
+          "byte_count": 220,
+          "envelope_version": "sec-daily-envelope-v1",
+          "raw_path": "raw/sec/indexes/kind=daily/period=2026-10-01/sha256=203964cb70ac1bfae0210db0776984db66030e5b302c3086c285595a03bc12a3/master.idx",
+          "received_at": "2026-10-06T00:00:00+00:00",
+          "representation": "idx",
+          "sha256": "203964cb70ac1bfae0210db0776984db66030e5b302c3086c285595a03bc12a3",
+          "source_id": "6cf7f339fd98f08d888586fbf41d907cb071d3a54259128e659f51e1f7caaa72",
+          "validators": {
+            "Content-Length": "220",
+            "Content-Type": "text/plain",
+            "ETag": "\"synthetic-Original One\"",
+            "X-Fixture": "synthetic"
+          }
+        }
+      ]
+    },
+    {
+      "at": "2026-10-06T19:05:32.067486+00:00",
+      "event": "adopted",
+      "monotonic_ns": 2752796036743125,
+      "pid": 47161,
+      "snapshots": [
+        {
+          "byte_count": 220,
+          "envelope_version": "sec-daily-envelope-v1",
+          "raw_path": "raw/sec/indexes/kind=daily/period=2026-10-01/sha256=203964cb70ac1bfae0210db0776984db66030e5b302c3086c285595a03bc12a3/master.idx",
+          "received_at": "2026-10-06T00:00:00+00:00",
+          "representation": "idx",
+          "sha256": "203964cb70ac1bfae0210db0776984db66030e5b302c3086c285595a03bc12a3",
+          "source_id": "6cf7f339fd98f08d888586fbf41d907cb071d3a54259128e659f51e1f7caaa72",
+          "validators": {
+            "Content-Length": "220",
+            "Content-Type": "text/plain",
+            "ETag": "\"synthetic-Original One\"",
+            "X-Fixture": "synthetic"
+          }
+        }
+      ]
+    }
+  ],
+  "results": [
+    {
+      "candidate_sha256": "37e8d9f8431be0de04c50359c4dab6e3787681e23670cbb357df9c79c3ffcd74",
+      "events": [
+        {
+          "at": "2026-10-06T19:05:32.042807+00:00",
+          "event": "receipt_checkpoint",
+          "monotonic_ns": 2752796012063625,
+          "pid": 47162
+        },
+        {
+          "at": "2026-10-06T19:05:32.054484+00:00",
+          "event": "bind_read_absent",
+          "key": "b23d0edd881821ae44696ffa62c28185ef98f34f2f8b0ba7eddc964bb48670f0:6cf7f339fd98f08d888586fbf41d907cb071d3a54259128e659f51e1f7caaa72",
+          "monotonic_ns": 2752796023741333,
+          "pid": 47162
+        },
+        {
+          "at": "2026-10-06T19:05:32.057354+00:00",
+          "event": "bind_insert_attempt",
+          "monotonic_ns": 2752796026611666,
+          "pid": 47162,
+          "snapshot_sha256": "37e8d9f8431be0de04c50359c4dab6e3787681e23670cbb357df9c79c3ffcd74"
+        },
+        {
+          "at": "2026-10-06T19:05:32.057721+00:00",
+          "event": "bind_insert_conflict",
+          "monotonic_ns": 2752796026979250,
+          "pid": 47162
+        },
+        {
+          "at": "2026-10-06T19:05:32.058160+00:00",
+          "event": "bind_read_winner",
+          "monotonic_ns": 2752796027417375,
+          "pid": 47162,
+          "snapshot_sha256": "203964cb70ac1bfae0210db0776984db66030e5b302c3086c285595a03bc12a3"
+        },
+        {
+          "at": "2026-10-06T19:05:32.061184+00:00",
+          "event": "bind_read_winner",
+          "monotonic_ns": 2752796030441541,
+          "pid": 47162,
+          "snapshot_sha256": "203964cb70ac1bfae0210db0776984db66030e5b302c3086c285595a03bc12a3"
+        },
+        {
+          "at": "2026-10-06T19:05:32.066565+00:00",
+          "event": "adopted",
+          "monotonic_ns": 2752796035822458,
+          "pid": 47162,
+          "snapshots": [
+            {
+              "byte_count": 220,
+              "envelope_version": "sec-daily-envelope-v1",
+              "raw_path": "raw/sec/indexes/kind=daily/period=2026-10-01/sha256=203964cb70ac1bfae0210db0776984db66030e5b302c3086c285595a03bc12a3/master.idx",
+              "received_at": "2026-10-06T00:00:00+00:00",
+              "representation": "idx",
+              "sha256": "203964cb70ac1bfae0210db0776984db66030e5b302c3086c285595a03bc12a3",
+              "source_id": "6cf7f339fd98f08d888586fbf41d907cb071d3a54259128e659f51e1f7caaa72",
+              "validators": {
+                "Content-Length": "220",
+                "Content-Type": "text/plain",
+                "ETag": "\"synthetic-Original One\"",
+                "X-Fixture": "synthetic"
+              }
+            }
+          ]
+        }
+      ],
+      "result": {
+        "context": {
+          "attempt_id": "race-Original Two",
+          "command": "collect",
+          "config_sha256": "70cadd455a9ce2e892d25e327ea6f8f3ecd5ae7635e043536f62d2bb1f900b50",
+          "deadline": "2026-10-06T01:00:00+00:00",
+          "effective_config": {
+            "backfill": {
+              "end_quarter": "open",
+              "start_quarter": "2015Q1"
+            },
+            "config_version": "sec-acquisition-v1",
+            "coordination": {
+              "clock_uncertainty_seconds": 2.0,
+              "lease_seconds": 60.0,
+              "namespace": "sec-owner-lowell-mason",
+              "renew_every_seconds": 20.0
+            },
+            "daily": {
+              "start_date": "2026-10-01"
+            },
+            "etl": {
+              "parser_version": "fixture-envelope-v1",
+              "schema_version": "sec-index-v1"
+            },
+            "fixture": null,
+            "http": {
+              "connect_timeout_seconds": 15.0,
+              "exchange_deadline_seconds": 90.0,
+              "max_attempts": 5,
+              "max_expanded_bytes": 536870912,
+              "max_received_bytes": 67108864,
+              "read_timeout_seconds": 60.0,
+              "retry_base_seconds": 2.0,
+              "retry_cap_seconds": 120.0
+            },
+            "jobs": {
+              "replica_retry_limit": 0
+            },
+            "orchestration": {
+              "transient_replays": 1
+            },
+            "reconciliation": {
+              "require_withdrawal_approval": true
+            },
+            "sec": {
+              "max_active_collectors": 1,
+              "requests_per_second": 3.0,
+              "user_agent": "Lowell Mason sec-edgar-ingest mason.lowell@mac.com"
+            },
+            "storage": {
+              "account_name": null,
+              "attempt_table": "Attempts",
+              "backend": "local-fixture",
+              "binding_registry_blob": "sec-owner-lowell-mason/binding.json",
+              "blob_api_version": "2026-04-06",
+              "blob_endpoint": null,
+              "lock_blob": "sec-owner-lowell-mason/sentinel.json",
+              "lock_container": "locks",
+              "quarantine_container": "quarantine",
+              "raw_container": "raw",
+              "root": ".fixture-state",
+              "source_table": "SourceState",
+              "table_api_version": "2020-12-06",
+              "table_endpoint": null,
+              "workset_container": "worksets"
+            },
+            "worker": {
+              "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "provenance": "synthetic-fixture"
+            }
+          },
+          "execution_id": "race-Original Two",
+          "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "parser_version": "fixture-envelope-v1",
+          "pinned_on": "2026-10-06",
+          "priority": "backfill",
+          "run_id": "fixture-run",
+          "schema_version": "sec-index-v1",
+          "started_at": "2026-10-06T00:00:00+00:00"
+        },
+        "discovered": 1,
+        "downloaded": 1,
+        "ended_at": "2026-10-06T00:00:01.250000+00:00",
+        "failed": 0,
+        "gaps": [],
+        "outcome": "success",
+        "pending": 0,
+        "quarantined": 0,
+        "snapshot_workset_ref": "worksets/sec/snapshot/sha256=99cb307f2ef0563a8dccb6fc3d17b687073cc5c4bf714dd0c63f876fa9129fdb/workset.json",
+        "source_workset_ref": "worksets/sec/source/sha256=b23d0edd881821ae44696ffa62c28185ef98f34f2f8b0ba7eddc964bb48670f0/workset.json",
+        "started_at": "2026-10-06T00:00:00+00:00",
+        "unchanged": 0
+      }
+    },
+    {
+      "candidate_sha256": "203964cb70ac1bfae0210db0776984db66030e5b302c3086c285595a03bc12a3",
+      "events": [
+        {
+          "at": "2026-10-06T19:05:32.028032+00:00",
+          "event": "receipt_checkpoint",
+          "monotonic_ns": 2752795997288791,
+          "pid": 47161
+        },
+        {
+          "at": "2026-10-06T19:05:32.051669+00:00",
+          "event": "bind_read_absent",
+          "key": "b23d0edd881821ae44696ffa62c28185ef98f34f2f8b0ba7eddc964bb48670f0:6cf7f339fd98f08d888586fbf41d907cb071d3a54259128e659f51e1f7caaa72",
+          "monotonic_ns": 2752796020926625,
+          "pid": 47161
+        },
+        {
+          "at": "2026-10-06T19:05:32.056111+00:00",
+          "event": "bind_insert_attempt",
+          "monotonic_ns": 2752796025369125,
+          "pid": 47161,
+          "snapshot_sha256": "203964cb70ac1bfae0210db0776984db66030e5b302c3086c285595a03bc12a3"
+        },
+        {
+          "at": "2026-10-06T19:05:32.056458+00:00",
+          "event": "bind_insert_success",
+          "monotonic_ns": 2752796025716166,
+          "pid": 47161,
+          "snapshot_sha256": "203964cb70ac1bfae0210db0776984db66030e5b302c3086c285595a03bc12a3"
+        },
+        {
+          "at": "2026-10-06T19:05:32.061769+00:00",
+          "event": "bind_read_winner",
+          "monotonic_ns": 2752796031026791,
+          "pid": 47161,
+          "snapshot_sha256": "203964cb70ac1bfae0210db0776984db66030e5b302c3086c285595a03bc12a3"
+        },
+        {
+          "at": "2026-10-06T19:05:32.067486+00:00",
+          "event": "adopted",
+          "monotonic_ns": 2752796036743125,
+          "pid": 47161,
+          "snapshots": [
+            {
+              "byte_count": 220,
+              "envelope_version": "sec-daily-envelope-v1",
+              "raw_path": "raw/sec/indexes/kind=daily/period=2026-10-01/sha256=203964cb70ac1bfae0210db0776984db66030e5b302c3086c285595a03bc12a3/master.idx",
+              "received_at": "2026-10-06T00:00:00+00:00",
+              "representation": "idx",
+              "sha256": "203964cb70ac1bfae0210db0776984db66030e5b302c3086c285595a03bc12a3",
+              "source_id": "6cf7f339fd98f08d888586fbf41d907cb071d3a54259128e659f51e1f7caaa72",
+              "validators": {
+                "Content-Length": "220",
+                "Content-Type": "text/plain",
+                "ETag": "\"synthetic-Original One\"",
+                "X-Fixture": "synthetic"
+              }
+            }
+          ]
+        }
+      ],
+      "result": {
+        "context": {
+          "attempt_id": "race-Original One",
+          "command": "collect",
+          "config_sha256": "70cadd455a9ce2e892d25e327ea6f8f3ecd5ae7635e043536f62d2bb1f900b50",
+          "deadline": "2026-10-06T01:00:00+00:00",
+          "effective_config": {
+            "backfill": {
+              "end_quarter": "open",
+              "start_quarter": "2015Q1"
+            },
+            "config_version": "sec-acquisition-v1",
+            "coordination": {
+              "clock_uncertainty_seconds": 2.0,
+              "lease_seconds": 60.0,
+              "namespace": "sec-owner-lowell-mason",
+              "renew_every_seconds": 20.0
+            },
+            "daily": {
+              "start_date": "2026-10-01"
+            },
+            "etl": {
+              "parser_version": "fixture-envelope-v1",
+              "schema_version": "sec-index-v1"
+            },
+            "fixture": null,
+            "http": {
+              "connect_timeout_seconds": 15.0,
+              "exchange_deadline_seconds": 90.0,
+              "max_attempts": 5,
+              "max_expanded_bytes": 536870912,
+              "max_received_bytes": 67108864,
+              "read_timeout_seconds": 60.0,
+              "retry_base_seconds": 2.0,
+              "retry_cap_seconds": 120.0
+            },
+            "jobs": {
+              "replica_retry_limit": 0
+            },
+            "orchestration": {
+              "transient_replays": 1
+            },
+            "reconciliation": {
+              "require_withdrawal_approval": true
+            },
+            "sec": {
+              "max_active_collectors": 1,
+              "requests_per_second": 3.0,
+              "user_agent": "Lowell Mason sec-edgar-ingest mason.lowell@mac.com"
+            },
+            "storage": {
+              "account_name": null,
+              "attempt_table": "Attempts",
+              "backend": "local-fixture",
+              "binding_registry_blob": "sec-owner-lowell-mason/binding.json",
+              "blob_api_version": "2026-04-06",
+              "blob_endpoint": null,
+              "lock_blob": "sec-owner-lowell-mason/sentinel.json",
+              "lock_container": "locks",
+              "quarantine_container": "quarantine",
+              "raw_container": "raw",
+              "root": ".fixture-state",
+              "source_table": "SourceState",
+              "table_api_version": "2020-12-06",
+              "table_endpoint": null,
+              "workset_container": "worksets"
+            },
+            "worker": {
+              "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "provenance": "synthetic-fixture"
+            }
+          },
+          "execution_id": "race-Original One",
+          "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "parser_version": "fixture-envelope-v1",
+          "pinned_on": "2026-10-06",
+          "priority": "backfill",
+          "run_id": "fixture-run",
+          "schema_version": "sec-index-v1",
+          "started_at": "2026-10-06T00:00:00+00:00"
+        },
+        "discovered": 1,
+        "downloaded": 1,
+        "ended_at": "2026-10-06T00:00:00+00:00",
+        "failed": 0,
+        "gaps": [],
+        "outcome": "success",
+        "pending": 0,
+        "quarantined": 0,
+        "snapshot_workset_ref": "worksets/sec/snapshot/sha256=99cb307f2ef0563a8dccb6fc3d17b687073cc5c4bf714dd0c63f876fa9129fdb/workset.json",
+        "source_workset_ref": "worksets/sec/source/sha256=b23d0edd881821ae44696ffa62c28185ef98f34f2f8b0ba7eddc964bb48670f0/workset.json",
+        "started_at": "2026-10-06T00:00:00+00:00",
+        "unchanged": 0
+      }
+    }
+  ]
+}

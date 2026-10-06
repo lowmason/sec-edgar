@@ -1,0 +1,107 @@
+Command: uv run --offline --frozen --package sec-edgar-ingest python -m unittest discover -s packages/sec-edgar-ingest/tests -p test_coordination.py -v
+Exit: 1
+test_delayed_dispatch_cannot_compress_actual_socket_starts (test_coordination.CoordinationTests.test_delayed_dispatch_cannot_compress_actual_socket_starts) ... FAIL
+test_expired_lease_does_not_allow_overlap_with_old_request (test_coordination.CoordinationTests.test_expired_lease_does_not_allow_overlap_with_old_request) ... FAIL
+test_restart_retains_global_cooldown (test_coordination.CoordinationTests.test_restart_retains_global_cooldown) ... FAIL
+test_stale_epoch_and_dispatch_deadline_are_refused (test_coordination.CoordinationTests.test_stale_epoch_and_dispatch_deadline_are_refused) ... FAIL
+test_azure_journal_fences_read_and_write_with_lease_and_actual_etag (test_coordination.JournalContractTests.test_azure_journal_fences_read_and_write_with_lease_and_actual_etag) ... FAIL
+test_date_precision_plus_rtt_must_fit_two_second_bound (test_coordination.JournalContractTests.test_date_precision_plus_rtt_must_fit_two_second_bound) ... FAIL
+test_journal_is_durable_and_fenced_by_actual_lease_and_version (test_coordination.JournalContractTests.test_journal_is_durable_and_fenced_by_actual_lease_and_version) ... FAIL
+test_permit_exposes_detached_validated_persisted_next_allowed_time (test_coordination.JournalContractTests.test_permit_exposes_detached_validated_persisted_next_allowed_time) ... FAIL
+test_upper_bounds_include_server_date_precision_and_rtt (test_coordination.JournalContractTests.test_upper_bounds_include_server_date_precision_and_rtt) ... FAIL
+
+======================================================================
+FAIL: test_delayed_dispatch_cannot_compress_actual_socket_starts (test_coordination.CoordinationTests.test_delayed_dispatch_cannot_compress_actual_socket_starts)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_coordination.py", line 119, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.coordination"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Every SEC request needs finite leased-journal coordination")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Every SEC request needs finite leased-journal coordination
+
+======================================================================
+FAIL: test_expired_lease_does_not_allow_overlap_with_old_request (test_coordination.CoordinationTests.test_expired_lease_does_not_allow_overlap_with_old_request)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_coordination.py", line 119, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.coordination"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Every SEC request needs finite leased-journal coordination")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Every SEC request needs finite leased-journal coordination
+
+======================================================================
+FAIL: test_restart_retains_global_cooldown (test_coordination.CoordinationTests.test_restart_retains_global_cooldown)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_coordination.py", line 119, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.coordination"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Every SEC request needs finite leased-journal coordination")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Every SEC request needs finite leased-journal coordination
+
+======================================================================
+FAIL: test_stale_epoch_and_dispatch_deadline_are_refused (test_coordination.CoordinationTests.test_stale_epoch_and_dispatch_deadline_are_refused)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_coordination.py", line 119, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.coordination"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Every SEC request needs finite leased-journal coordination")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Every SEC request needs finite leased-journal coordination
+
+======================================================================
+FAIL: test_azure_journal_fences_read_and_write_with_lease_and_actual_etag (test_coordination.JournalContractTests.test_azure_journal_fences_read_and_write_with_lease_and_actual_etag)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_coordination.py", line 104, in test_azure_journal_fences_read_and_write_with_lease_and_actual_etag
+    self.assertTrue(hasattr(leases, "read_journal"), "Azure sentinel journal must use actual leased Blob operations")
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : Azure sentinel journal must use actual leased Blob operations
+
+======================================================================
+FAIL: test_date_precision_plus_rtt_must_fit_two_second_bound (test_coordination.JournalContractTests.test_date_precision_plus_rtt_must_fit_two_second_bound)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_coordination.py", line 94, in test_date_precision_plus_rtt_must_fit_two_second_bound
+    with self.assertRaises(ClockUncertain):
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+AssertionError: ClockUncertain not raised
+
+======================================================================
+FAIL: test_journal_is_durable_and_fenced_by_actual_lease_and_version (test_coordination.JournalContractTests.test_journal_is_durable_and_fenced_by_actual_lease_and_version)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_coordination.py", line 23, in test_journal_is_durable_and_fenced_by_actual_lease_and_version
+    self.assertTrue(hasattr(leases, "read_journal"), "The leased sentinel must expose a durable fenced journal")
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : The leased sentinel must expose a durable fenced journal
+
+======================================================================
+FAIL: test_permit_exposes_detached_validated_persisted_next_allowed_time (test_coordination.JournalContractTests.test_permit_exposes_detached_validated_persisted_next_allowed_time)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_coordination.py", line 47, in test_permit_exposes_detached_validated_persisted_next_allowed_time
+    self.assertIn("next_allowed_at", permit.to_mapping(), "The transport row needs the journal's durable next-start/cooldown")
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'next_allowed_at' not found in {'owner_id': 'owner', 'epoch': 1, 'request_id': 'request', 'must_start_before': '2026-10-06T00:00:01+00:00', 'must_end_by': '2026-10-06T00:01:30+00:00', 'takeover_after': '2026-10-06T00:02:32+00:00', 'start_before_mono': 1.0, 'deadline_mono': 90.0} : The transport row needs the journal's durable next-start/cooldown
+
+======================================================================
+FAIL: test_upper_bounds_include_server_date_precision_and_rtt (test_coordination.JournalContractTests.test_upper_bounds_include_server_date_precision_and_rtt)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_coordination.py", line 79, in test_upper_bounds_include_server_date_precision_and_rtt
+    self.assertEqual(getattr(handle, "acquired_upper", None), FixtureClock().now()+timedelta(seconds=1.5),
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                     "Expiry/takeover need the server upper bound, never the lower observed_until")
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: None != datetime.datetime(2026, 10, 6, 0, 0, 1, 500000, tzinfo=datetime.timezone.utc) : Expiry/takeover need the server upper bound, never the lower observed_until
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.089s
+
+FAILED (failures=9)

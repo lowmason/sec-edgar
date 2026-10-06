@@ -33,8 +33,8 @@ class CliTests(unittest.TestCase):
             result = main([])
         self.assertEqual(result, 0)
         self.assertIn("usage: sec-edgar-ingest", output.getvalue())
-        self.assertNotIn("discover", output.getvalue())
-        self.assertNotIn("collect", output.getvalue())
+        self.assertIn("discover", output.getvalue())
+        self.assertIn("collect", output.getvalue())
 
     def test_main_help_and_version_exit_successfully(self):
         from sec_edgar_ingest.cli import main
@@ -52,7 +52,7 @@ class CliTests(unittest.TestCase):
     def test_unimplemented_commands_are_rejected(self):
         from sec_edgar_ingest.cli import main
 
-        for command in ("discover", "collect"):
+        for command in ("transform", "publish"):
             with self.subTest(command=command):
                 with contextlib.redirect_stderr(io.StringIO()):
                     with self.assertRaises(SystemExit) as raised:

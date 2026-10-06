@@ -1,0 +1,47 @@
+{
+  "events": [
+    {
+      "event": "socket-accepted",
+      "monotonic": 2746051.868628875
+    },
+    {
+      "event": "request-received",
+      "monotonic": 2746051.868653625
+    },
+    {
+      "event": "headers-sent",
+      "monotonic": 2746051.868691
+    },
+    {
+      "byte_count": 14,
+      "event": "entity-sent",
+      "monotonic": 2746051.868696083
+    },
+    {
+      "event": "socket-closed",
+      "monotonic": 2746051.869211
+    }
+  ],
+  "extra": {
+    "receipt": {
+      "byte_count": 14,
+      "complete": true,
+      "error": null,
+      "headers": {
+        "Connection": "close",
+        "Content-Length": "14",
+        "ETag": "fixture-validator",
+        "Location": "http://127.0.0.1:1/must-not-follow"
+      },
+      "received_at": "2026-10-06T17:13:07.885399+00:00",
+      "sha256": "52c3935626c104b2cbc9031291a1c4d56614c38f52072a361d658a58a9c48698",
+      "status": 302,
+      "temporary_path": "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/tmp4l8il0ib/sender/body",
+      "url": "http://127.0.0.1:57971/fixture"
+    }
+  },
+  "requests": [
+    "GET /fixture HTTP/1.1\r\nHost: 127.0.0.1:57971\r\nUser-Agent: Lowell Mason sec-edgar-ingest mason.lowell@mac.com\r\nAccept-Encoding: identity\r\nAccept: */*\r\nConnection: keep-alive\r\n\r\n"
+  ],
+  "sent_bytes": 14
+}

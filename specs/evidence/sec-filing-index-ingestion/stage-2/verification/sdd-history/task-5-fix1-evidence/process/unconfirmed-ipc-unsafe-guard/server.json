@@ -1,0 +1,120 @@
+{
+  "events": [
+    {
+      "event": "socket-accepted",
+      "monotonic": 2746052.847648875
+    },
+    {
+      "event": "request-received",
+      "monotonic": 2746052.847691958
+    },
+    {
+      "event": "headers-sent",
+      "monotonic": 2746052.847719583
+    },
+    {
+      "byte_count": 23,
+      "event": "entity-sent",
+      "monotonic": 2746052.847724208
+    },
+    {
+      "event": "socket-closed",
+      "monotonic": 2746052.848217291
+    }
+  ],
+  "extra": {
+    "coordination": [
+      {
+        "at": "2026-10-06T17:13:08.782459+00:00",
+        "event": "enqueue",
+        "mono": 2746052.765904291,
+        "owner": "fixture-execution:fixture-attempt:4205795b9d674afa966562b13fcccd7c",
+        "priority": "backfill",
+        "ticket_id": "be0fbfab8b654dcab3b966746ae286d4"
+      },
+      {
+        "at": "2026-10-06T17:13:08.783829+00:00",
+        "event": "queue-choice",
+        "mono": 2746052.767274125,
+        "owner": "fixture-execution:fixture-attempt:4205795b9d674afa966562b13fcccd7c",
+        "priority": "backfill",
+        "ticket_id": "be0fbfab8b654dcab3b966746ae286d4"
+      },
+      {
+        "at": "2026-10-06T17:13:08.787347+00:00",
+        "event": "queue-choice",
+        "mono": 2746052.770793125,
+        "owner": "fixture-execution:fixture-attempt:4205795b9d674afa966562b13fcccd7c",
+        "priority": "backfill",
+        "ticket_id": "be0fbfab8b654dcab3b966746ae286d4"
+      },
+      {
+        "at": "2026-10-06T17:13:08.789523+00:00",
+        "epoch": 1,
+        "event": "acquire",
+        "lease_id": "5808f99a-2093-4099-b159-a3d9acbb7388",
+        "mono": 2746052.772966583,
+        "owner": "fixture-execution:fixture-attempt:4205795b9d674afa966562b13fcccd7c",
+        "ownership_until": "2026-10-06T17:14:08.783839+00:00"
+      },
+      {
+        "at": "2026-10-06T17:13:08.789526+00:00",
+        "earliest_safe": "2026-10-06T17:13:08.788032+00:00",
+        "epoch": 1,
+        "event": "takeover",
+        "mono": 2746052.772969291,
+        "owner": "fixture-execution:fixture-attempt:4205795b9d674afa966562b13fcccd7c"
+      },
+      {
+        "at": "2026-10-06T17:13:08.791836+00:00",
+        "epoch": 1,
+        "event": "reserve",
+        "mono": 2746052.775280375,
+        "next_allowed_at": "2026-10-06T17:13:09.457496+00:00",
+        "owner": "fixture-execution:fixture-attempt:4205795b9d674afa966562b13fcccd7c",
+        "request_id": "830e101193804eba8000f9b8e1daebba",
+        "start_before_mono": 2746053.1076010414
+      },
+      {
+        "at": "2026-10-06T17:13:08.792999+00:00",
+        "epoch": 1,
+        "event": "request-start",
+        "mono": 2746052.776443041,
+        "owner": "fixture-execution:fixture-attempt:4205795b9d674afa966562b13fcccd7c",
+        "request_id": "830e101193804eba8000f9b8e1daebba"
+      },
+      {
+        "at": "2026-10-06T17:13:08.874679+00:00",
+        "epoch": 1,
+        "event": "loss",
+        "mono": 2746052.858124875,
+        "owner": "fixture-execution:fixture-attempt:4205795b9d674afa966562b13fcccd7c",
+        "reason": "turn exited with an unconfirmed exchange outcome"
+      }
+    ],
+    "receipt": {
+      "byte_count": 23,
+      "complete": false,
+      "error": {
+        "code": "ipc_loss",
+        "details": {},
+        "message": "child receipt or completion channel was not positively confirmed",
+        "retryable": false,
+        "source_id": null
+      },
+      "headers": {
+        "Connection": "close",
+        "Content-Length": "23"
+      },
+      "received_at": "2026-10-06T17:13:08.864423+00:00",
+      "sha256": "5c4a2092895a57a5db1c8c00d4f8c9fab040f93e69542c9732cf4f5989c9a08b",
+      "status": 200,
+      "temporary_path": "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/tmphk8yt09w/sender/body",
+      "url": "http://127.0.0.1:57978/fixture"
+    }
+  },
+  "requests": [
+    "GET /fixture HTTP/1.1\r\nHost: 127.0.0.1:57978\r\nUser-Agent: Lowell Mason sec-edgar-ingest mason.lowell@mac.com\r\nAccept-Encoding: identity\r\nAccept: */*\r\nConnection: keep-alive\r\n\r\n"
+  ],
+  "sent_bytes": 23
+}

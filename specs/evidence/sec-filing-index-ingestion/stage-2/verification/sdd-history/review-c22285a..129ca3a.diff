@@ -1,0 +1,194 @@
+# Review package: c22285a..129ca3a
+
+## Commits
+129ca3a test: make first-pin process conflict deterministic
+
+## Files changed
+ packages/sec-edgar-ingest/tests/test_state.py | 120 ++++++++++++++++++++++----
+ 1 file changed, 105 insertions(+), 15 deletions(-)
+
+## Diff
+diff --git a/packages/sec-edgar-ingest/tests/test_state.py b/packages/sec-edgar-ingest/tests/test_state.py
+index 16ca12a..a5e1766 100644
+--- a/packages/sec-edgar-ingest/tests/test_state.py
++++ b/packages/sec-edgar-ingest/tests/test_state.py
+@@ -1,36 +1,90 @@
+ import importlib
+ import importlib.util
++import json
+ import multiprocessing
++import os
+ import tempfile
++import time
+ import unittest
+ from dataclasses import replace
+-from datetime import timedelta
++from datetime import datetime, timedelta, timezone
+ from pathlib import Path
+ 
+ from sec_edgar_ingest.models import Binding, BodyReceipt, CommandResult, Error, Permit
+ from support import Faults, FixtureClock, fixture_context, fixture_snapshot, fixture_source, store_bundle
+ 
+ 
+-def pin_in_process(root, barrier, output, body):
++class TracedBindingStore:
++    """Barrier the real read consumed by bind_once; trace delegated creates."""
++
++    def __init__(self, store, barrier, counter):
++        self.store = store
++        self.barrier = barrier
++        self.counter = counter
++        self.events = []
++        self.absent_read_synchronized = False
++
++    def record(self, event, **details):
++        with self.counter.get_lock():
++            self.counter.value += 1
++            entry = {"order": self.counter.value, "at": datetime.now(timezone.utc).isoformat(),
++                     "monotonic_ns": time.monotonic_ns(), "pid": os.getpid(), "event": event, **details}
++        self.events.append(entry)
++
++    def get(self, kind, key):
++        row = self.store.get(kind, key)
++        if kind == "Binding":
++            if row is None and not self.absent_read_synchronized:
++                self.absent_read_synchronized = True
++                self.record("binding_read_absent", key=key)
++                self.barrier.wait(timeout=20)
++            elif row is not None:
++                self.record("binding_read_existing", key=key, version=row.version,
++                            snapshot_sha256=row.value["snapshot_sha256"])
++        return row
++
++    def insert(self, kind, key, value):
++        from sec_edgar_ingest.storage.contracts import AlreadyExists
++        if kind != "Binding":
++            return self.store.insert(kind, key, value)
++        self.record("binding_insert_attempt", key=key, snapshot_sha256=value["snapshot_sha256"])
++        try:
++            row = self.store.insert(kind, key, value)
++        except AlreadyExists:
++            self.record("binding_create_conflict", key=key)
++            raise
++        self.record("binding_insert_success", key=key, version=row.version,
++                    snapshot_sha256=row.value["snapshot_sha256"])
++        return row
++
++    def replace(self, kind, key, value, version):
++        return self.store.replace(kind, key, value, version)
++
++    def scan(self, kind, filters):
++        return self.store.scan(kind, filters)
++
++
++def pin_in_process(root, barrier, counter, output, body):
+     from sec_edgar_ingest.state import AcquisitionState
+     store = store_bundle(Path(root))[0]
+-    state = AcquisitionState(store)
+-    source = fixture_source()
+-    snapshot = fixture_snapshot(source, body)
+-    state.remember_snapshot(snapshot)
+-    candidate = Binding("a" * 64, source.source_id, snapshot.sha256)
+-    assert state.binding(candidate.source_workset_id, source.source_id) is None
+-    barrier.wait(timeout=20)
+-    winner = state.bind_once(candidate)
+-    output.put(winner.to_mapping())
+-    store.close()
++    try:
++        source = fixture_source()
++        snapshot = fixture_snapshot(source, body)
++        AcquisitionState(store).remember_snapshot(snapshot)
++        candidate = Binding("a" * 64, source.source_id, snapshot.sha256)
++        traced = TracedBindingStore(store, barrier, counter)
++        winner = AcquisitionState(traced).bind_once(candidate)
++        traced.record("binding_adopted", snapshot_sha256=winner.snapshot_sha256)
++        output.put({"binding": winner.to_mapping(), "events": traced.events})
++    finally:
++        store.close()
+ 
+ 
+ class StateTests(unittest.TestCase):
+     def setUp(self):
+         self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.state"),
+                              "First pins and attempt failures require durable state transitions")
+         self.state_module = importlib.import_module("sec_edgar_ingest.state")
+         self.contracts = importlib.import_module("sec_edgar_ingest.storage.contracts")
+         self.directory = tempfile.TemporaryDirectory()
+         self.addCleanup(self.directory.cleanup)
+@@ -51,37 +105,73 @@ class StateTests(unittest.TestCase):
+         reopened_store = store_bundle(self.root)[0]
+         self.addCleanup(reopened_store.close)
+         reopened = self.state_module.AcquisitionState(reopened_store)
+         loser = reopened.bind_once(Binding("a" * 64, self.source.source_id, new.sha256))
+         self.assertEqual(loser, winner)
+         self.assertEqual(reopened.snapshot(self.source.source_id, winner.snapshot_sha256), old)
+ 
+     def test_independent_processes_observe_absence_then_race_first_pin(self):
+         context = multiprocessing.get_context("spawn")
+         barrier = context.Barrier(2)
++        counter = context.Value("Q", 0)
+         output = context.Queue()
+-        processes = [context.Process(target=pin_in_process, args=(str(self.root), barrier, output, body))
++        processes = [context.Process(target=pin_in_process, args=(str(self.root), barrier, counter, output, body))
+                      for body in (b"first", b"second")]
+         for process in processes:
+             process.start()
+         try:
+             results = [output.get(timeout=30) for _ in processes]
+         finally:
+             for process in processes:
+                 process.join(timeout=30)
+                 if process.is_alive():
+                     process.terminate()
+                     process.join(timeout=5)
+         self.assertEqual([process.exitcode for process in processes], [0, 0])
+-        self.assertEqual(results[0], results[1])
++        self.assertTrue(all("binding" in result and "events" in result for result in results),
++                        "The process race must retain internal Binding reads, two actual insert attempts and one actual AlreadyExists adoption")
++        bindings = [result["binding"] for result in results]
++        self.assertEqual(bindings[0], bindings[1])
++        events = sorted((event for result in results for event in result["events"]), key=lambda event: event["order"])
++        trace_path = os.environ.get("SEC_EDGAR_FIX1_TRACE")
++        if trace_path is not None:
++            Path(trace_path).write_text(json.dumps({"results": results, "ordered_events": events}, indent=2, sort_keys=True) + "\n")
++        self.assertEqual([event["order"] for event in events], list(range(1, len(events) + 1)))
++        for event in events:
++            self.assertEqual(datetime.fromisoformat(event["at"]).utcoffset(), timedelta(0))
++            self.assertGreater(event["monotonic_ns"], 0)
++        absent = [event for event in events if event["event"] == "binding_read_absent"]
++        attempts = [event for event in events if event["event"] == "binding_insert_attempt"]
++        successes = [event for event in events if event["event"] == "binding_insert_success"]
++        conflicts = [event for event in events if event["event"] == "binding_create_conflict"]
++        reads = [event for event in events if event["event"] == "binding_read_existing"]
++        adopted = [event for event in events if event["event"] == "binding_adopted"]
++        self.assertEqual(len(absent), 2)
++        self.assertEqual(len(attempts), 2)
++        self.assertEqual(len(successes), 1)
++        self.assertEqual(len(conflicts), 1)
++        self.assertEqual(len(reads), 1)
++        self.assertEqual(len(adopted), 2)
++        self.assertEqual({event["pid"] for event in absent}, {process.pid for process in processes})
++        self.assertEqual({event["pid"] for event in attempts}, {process.pid for process in processes})
++        self.assertLess(max(event["order"] for event in absent), min(event["order"] for event in attempts))
++        self.assertNotEqual(successes[0]["pid"], conflicts[0]["pid"])
++        self.assertEqual(reads[0]["pid"], conflicts[0]["pid"])
++        self.assertLess(conflicts[0]["order"], reads[0]["order"])
++        loser_adopted = next(event for event in adopted if event["pid"] == conflicts[0]["pid"])
++        self.assertLess(reads[0]["order"], loser_adopted["order"])
+         winner = self.state.binding("a" * 64, self.source.source_id)
+-        self.assertEqual(winner.to_mapping(), results[0])
++        self.assertEqual(winner.to_mapping(), bindings[0])
++        durable = self.store.get("Binding", winner.source_workset_id + ":" + winner.source_id)
++        self.assertEqual(successes[0]["version"], durable.version)
++        self.assertEqual(reads[0]["version"], durable.version)
++        self.assertTrue(all(event["snapshot_sha256"] == winner.snapshot_sha256 for event in adopted))
+         self.state.snapshot(self.source.source_id, winner.snapshot_sha256)
+ 
+     def test_discovery_and_later_failure_preserve_success_and_existing_pin(self):
+         at = self.clock.now()
+         self.state.observe(self.source, at, "available")
+         snapshot = fixture_snapshot(self.source, b"accepted")
+         self.state.remember_snapshot(snapshot)
+         binding = self.state.bind_once(Binding("a" * 64, self.source.source_id, snapshot.sha256))
+         self.clock.advance(5)
+         self.state.observe(self.source, self.clock.now(), "discovery_failed")

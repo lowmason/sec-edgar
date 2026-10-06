@@ -1,0 +1,86 @@
+[
+  {
+    "at": "2026-10-06T00:00:02+00:00",
+    "event": "enqueue",
+    "mono": 2.0,
+    "owner": "fixture-execution:fixture-attempt:a14b718c756d4a098b19e9de701d7cac",
+    "priority": "backfill",
+    "ticket_id": "b157a4fe97e041eab7313160fc43cf35"
+  },
+  {
+    "at": "2026-10-06T00:00:02+00:00",
+    "event": "queue-expired",
+    "mono": 2.0,
+    "owner": "old",
+    "ticket_id": "expired"
+  },
+  {
+    "at": "2026-10-06T00:00:02+00:00",
+    "event": "queue-choice",
+    "mono": 2.0,
+    "owner": "fixture-execution:fixture-attempt:a14b718c756d4a098b19e9de701d7cac",
+    "priority": "backfill",
+    "ticket_id": "b157a4fe97e041eab7313160fc43cf35"
+  },
+  {
+    "at": "2026-10-06T00:00:02+00:00",
+    "event": "queue-choice",
+    "mono": 2.0,
+    "owner": "fixture-execution:fixture-attempt:a14b718c756d4a098b19e9de701d7cac",
+    "priority": "backfill",
+    "ticket_id": "b157a4fe97e041eab7313160fc43cf35"
+  },
+  {
+    "at": "2026-10-06T00:00:02+00:00",
+    "epoch": 1,
+    "event": "acquire",
+    "lease_id": "82210679-4a60-496b-8393-63ec86b70f91",
+    "mono": 2.0,
+    "owner": "fixture-execution:fixture-attempt:a14b718c756d4a098b19e9de701d7cac",
+    "ownership_until": "2026-10-06T00:01:02+00:00"
+  },
+  {
+    "at": "2026-10-06T00:00:02+00:00",
+    "earliest_safe": "2026-10-06T00:00:02+00:00",
+    "epoch": 1,
+    "event": "takeover",
+    "mono": 2.0,
+    "owner": "fixture-execution:fixture-attempt:a14b718c756d4a098b19e9de701d7cac"
+  },
+  {
+    "at": "2026-10-06T00:00:02+00:00",
+    "epoch": 1,
+    "event": "reserve",
+    "mono": 2.0,
+    "next_allowed_at": "2026-10-06T00:00:02.666668+00:00",
+    "owner": "fixture-execution:fixture-attempt:a14b718c756d4a098b19e9de701d7cac",
+    "request_id": "6a1e325473dc4717b851915796ffdb79",
+    "start_before_mono": 2.3333333333333335
+  },
+  {
+    "at": "2026-10-06T00:00:02+00:00",
+    "epoch": 1,
+    "event": "request-start",
+    "mono": 2.0,
+    "owner": "fixture-execution:fixture-attempt:a14b718c756d4a098b19e9de701d7cac",
+    "request_id": "6a1e325473dc4717b851915796ffdb79"
+  },
+  {
+    "at": "2026-10-06T00:00:02+00:00",
+    "epoch": 1,
+    "event": "request-end",
+    "mono": 2.0,
+    "owner": "fixture-execution:fixture-attempt:a14b718c756d4a098b19e9de701d7cac",
+    "request_id": "6a1e325473dc4717b851915796ffdb79"
+  },
+  {
+    "at": "2026-10-06T00:00:02+00:00",
+    "clean_release": true,
+    "drained": true,
+    "epoch": 1,
+    "event": "release",
+    "mono": 2.0,
+    "owner": "fixture-execution:fixture-attempt:a14b718c756d4a098b19e9de701d7cac",
+    "unsafe_until": "2026-10-06T00:00:02+00:00"
+  }
+]

@@ -502,6 +502,15 @@ class CommandResult(Record):
             raise ValueError("ended_at precedes started_at")
         object.__setattr__(self, "gaps", tuple(self.gaps))
 
+    def to_json(self) -> bytes:
+        return canonical_json(self.to_mapping())
+
+    @classmethod
+    def from_json(cls, body: bytes) -> CommandResult:
+        if not isinstance(body, bytes):
+            raise ValueError("result body must be bytes")
+        return cls.from_mapping(parse_json(body))
+
 
 @dataclass(frozen=True, slots=True)
 class Versioned(Record):

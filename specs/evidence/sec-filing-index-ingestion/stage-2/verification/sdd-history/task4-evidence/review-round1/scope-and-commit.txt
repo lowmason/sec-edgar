@@ -1,0 +1,65 @@
+Command: git rev-parse HEAD
+Exit: 0
+1d6f61947fac947d872cf0a395e93bbc252adaa2
+
+Command: git diff --cached --name-only
+Exit: 0
+
+Command: git add -- packages/sec-edgar-ingest/src/sec_edgar_ingest/coordination.py packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py packages/sec-edgar-ingest/tests/test_coordination.py
+Exit: 0
+
+Command: git diff --cached --name-only
+Exit: 0
+packages/sec-edgar-ingest/src/sec_edgar_ingest/coordination.py
+packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py
+packages/sec-edgar-ingest/tests/test_coordination.py
+
+Command: git diff --cached --check
+Exit: 0
+
+Command: git diff --cached --stat
+Exit: 0
+ .../src/sec_edgar_ingest/coordination.py           |  6 +-
+ .../src/sec_edgar_ingest/storage/azure.py          |  5 +-
+ .../sec-edgar-ingest/tests/test_coordination.py    | 89 ++++++++++++++++++++++
+ 3 files changed, 96 insertions(+), 4 deletions(-)
+
+Command: git commit -m fix: keep coordination clock samples paired
+Exit: 0
+[codex/sec-edgar-stage-2 251de56] fix: keep coordination clock samples paired
+ 3 files changed, 96 insertions(+), 4 deletions(-)
+
+Command: git rev-parse HEAD
+Exit: 0
+251de56f44bcc7dda4e56aa034ea78cf7057d9e6
+
+Command: git diff 1d6f61947fac947d872cf0a395e93bbc252adaa2 251de56f44bcc7dda4e56aa034ea78cf7057d9e6 --check
+Exit: 0
+
+Command: git diff --name-only 1d6f61947fac947d872cf0a395e93bbc252adaa2 251de56f44bcc7dda4e56aa034ea78cf7057d9e6
+Exit: 0
+packages/sec-edgar-ingest/src/sec_edgar_ingest/coordination.py
+packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py
+packages/sec-edgar-ingest/tests/test_coordination.py
+
+Command: git show --format=fuller --stat HEAD
+Exit: 0
+commit 251de56f44bcc7dda4e56aa034ea78cf7057d9e6
+Author:     Lowell Mason <mason.lowell@mac.com>
+AuthorDate: Tue Oct 6 11:24:46 2026 -0400
+Commit:     Lowell Mason <mason.lowell@mac.com>
+CommitDate: Tue Oct 6 11:24:46 2026 -0400
+
+    fix: keep coordination clock samples paired
+
+ .../src/sec_edgar_ingest/coordination.py           |  6 +-
+ .../src/sec_edgar_ingest/storage/azure.py          |  5 +-
+ .../sec-edgar-ingest/tests/test_coordination.py    | 89 ++++++++++++++++++++++
+ 3 files changed, 96 insertions(+), 4 deletions(-)
+
+Command: git status --short
+Exit: 0
+ D packages/sec-edgar-index-ingest/README.md
+ D packages/sec-edgar-index-ingest/pyproject.toml
+ D packages/sec-edgar-index-ingest/src/sec_edgar_index_ingest/__init__.py
+ D packages/sec-edgar-index-ingest/src/sec_edgar_index_ingest/py.typed

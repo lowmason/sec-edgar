@@ -1,0 +1,56 @@
+COMMAND: uv run --offline --frozen --package sec-edgar-ingest python -m unittest discover -s packages/sec-edgar-ingest/tests -p test_state.py -v
+EXIT: 1
+test_attempts_reopen_unfinished_and_finish_idempotently_without_erasure (test_state.StateTests.test_attempts_reopen_unfinished_and_finish_idempotently_without_erasure) ... ok
+test_binding_requires_snapshot_and_cas_conflicts_are_bounded (test_state.StateTests.test_binding_requires_snapshot_and_cas_conflicts_are_bounded) ... ok
+test_discovery_and_later_failure_preserve_success_and_existing_pin (test_state.StateTests.test_discovery_and_later_failure_preserve_success_and_existing_pin) ... FAIL
+test_first_pin_survives_reopen_and_newer_snapshot (test_state.StateTests.test_first_pin_survives_reopen_and_newer_snapshot) ... ok
+test_independent_processes_observe_absence_then_race_first_pin (test_state.StateTests.test_independent_processes_observe_absence_then_race_first_pin) ... ok
+test_mismatched_observed_source_address_is_not_remembered (test_state.StateTests.test_mismatched_observed_source_address_is_not_remembered) ... FAIL
+test_older_receipt_and_out_of_order_discovery_never_move_pointers_back (test_state.StateTests.test_older_receipt_and_out_of_order_discovery_never_move_pointers_back) ... FAIL
+test_pending_sources_include_old_failed_and_all_pages (test_state.StateTests.test_pending_sources_include_old_failed_and_all_pages) ... ok
+test_request_attempts_are_immutable_auditable_and_bounded (test_state.StateTests.test_request_attempts_are_immutable_auditable_and_bounded) ... ok
+test_snapshot_durable_boundary_can_be_replayed_without_erasing_raw_or_success (test_state.StateTests.test_snapshot_durable_boundary_can_be_replayed_without_erasing_raw_or_success) ... ok
+
+======================================================================
+FAIL: test_discovery_and_later_failure_preserve_success_and_existing_pin (test_state.StateTests.test_discovery_and_later_failure_preserve_success_and_existing_pin)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_state.py", line 93, in test_discovery_and_later_failure_preserve_success_and_existing_pin
+    self.assertEqual(value["acquisition_status"], "downloaded")
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'failed' != 'downloaded'
+- failed
++ downloaded
+
+
+======================================================================
+FAIL: test_mismatched_observed_source_address_is_not_remembered (test_state.StateTests.test_mismatched_observed_source_address_is_not_remembered)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_state.py", line 220, in test_mismatched_observed_source_address_is_not_remembered
+    self.assertEqual(tuple(self.store.scan("Snapshot", {})), ())
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Tuples differ: (Versioned(value=FrozenMapping(_items=mapp[544 chars]b'),) != ()
+
+First tuple contains 1 additional elements.
+First extra element 0:
+Versioned(value=FrozenMapping(_items=mappingproxy({'byte_count': 5, 'envelope_version': 'sec-quarterly-envelope-v1', 'raw_path': 'raw/sec/indexes/kind=quarterly/period=2015Q2/sha256=277089d91c0bdf4f2e6862ba7e4a07605119431f5d13f726dd352b06f1b206a9/master.zip', 'received_at': '2026-10-06T00:00:00+00:00', 'representation': 'zip', 'sha256': '277089d91c0bdf4f2e6862ba7e4a07605119431f5d13f726dd352b06f1b206a9', 'source_id': 'f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998', 'validators': FrozenMapping(_items=mappingproxy({}))})), version='4d67e2577d424911a94e6d9ad01f87fb')
+
+Diff is 990 characters long. Set self.maxDiff to None to see it.
+
+======================================================================
+FAIL: test_older_receipt_and_out_of_order_discovery_never_move_pointers_back (test_state.StateTests.test_older_receipt_and_out_of_order_discovery_never_move_pointers_back)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_state.py", line 110, in test_older_receipt_and_out_of_order_discovery_never_move_pointers_back
+    self.assertEqual(value["latest_downloaded_snapshot"], new.sha256)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'cba06b5736faf67e54b07b561eae94395e774c517a7d910a54369e1263ccfbd4' != '11507a0e2f5e69d5dfa40a62a1bd7b6ee57e6bcd85c67c9b8431b36fff21c437'
+- cba06b5736faf67e54b07b561eae94395e774c517a7d910a54369e1263ccfbd4
++ 11507a0e2f5e69d5dfa40a62a1bd7b6ee57e6bcd85c67c9b8431b36fff21c437
+
+
+----------------------------------------------------------------------
+Ran 10 tests in 0.202s
+
+FAILED (failures=3)

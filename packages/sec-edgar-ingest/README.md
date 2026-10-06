@@ -1,75 +1,88 @@
 # sec-edgar-ingest
 
-`sec-edgar-ingest` is the sole SEC filing-index acquisition implementation in this
-workspace. It requires Python 3.14 or newer and exposes the `sec_edgar_ingest`
-import package, the `sec-edgar-ingest` console entry point, and
-`python -m sec_edgar_ingest`.
-
-At this milestone the CLI provides help and version `0.1.0`. Invoking it without
-arguments prints help. `discover` and `collect` are not implemented yet;
-acquisition completion is a later milestone.
+`sec-edgar-ingest` acquires immutable SEC filing-index originals on Python 3.14+.
+It exposes the `sec_edgar_ingest` import package, `sec-edgar-ingest` console entry
+point, and `python -m sec_edgar_ingest`. Invoking it without arguments prints help.
+`discover` freezes a source workset; `collect` resolves that workset's members to
+write-once snapshot pins and emits a separate snapshot workset when complete.
 
 From the repository root:
 
 ```sh
-uv run --frozen --package sec-edgar-ingest sec-edgar-ingest --help
-uv run --frozen --package sec-edgar-ingest python -m sec_edgar_ingest --version
+uv run --offline --frozen --package sec-edgar-ingest sec-edgar-ingest --help
+uv run --offline --frozen --package sec-edgar-ingest python -m sec_edgar_ingest --version
+uv build --offline --all-packages
+scripts/check-sec-edgar-ingest.sh
 ```
 
-The package pins Requests and the Azure identity, Blob Storage, and Table Storage
-SDKs for the approved acquisition boundary. The root constrains their accepted
-transitive versions, and `uv.lock` records the workspace resolution. A local
-package build does not establish container compatibility or worker capacity.
+Build/dependency requirements were cached during the accepted setup. Installation
+uses the lock's exact 20 runtime versions and the four direct pins in this package.
+Offline checks refuse a missing cache. This local macOS build does not establish
+Linux container compatibility or worker capacity.
 
-The client and download scaffolds are preserved as references, outside the
-workspace and runtime dependency graph. This milestone performs no live SEC
-requests or Azure operations.
+The configuration filename is YAML, but its supported syntax is strict **JSON**,
+a subset of YAML 1.2. Duplicate keys, nonfinite values, unsupported fields, missing
+identity/version pins, invalid storage bindings, and unsafe paths are refused.
+Loading/validating configuration constructs no external clients. The checked-in
+file selects `local-fixture`, relative `.fixture-state`, synthetic parser/image
+provenance and the accepted SEC User-Agent. Every fixture invocation must supply
+`--fixture-pack PATH`. Fixture manifests bind canonical SEC URLs to explicit
+original body files and SHA-256 values; missing/exhausted responses never fetch
+the URL. Fixture-only durable response cursors let a new process advance a
+scripted 404 to its later valid response.
 
-Configuration v1 in `conf/sec-edgar-ingest.yaml` uses **JSON syntax**, a subset
-of YAML 1.2. The stdlib JSON loader rejects general YAML, duplicate keys and
-nonfinite values. `Settings.from_mapping` validates settings without constructing
-credentials, clients or transports; `load_config` only reads the selected file.
-`pin_context` resolves `open` once from the explicit run-start date and freezes
-the complete effective configuration, its SHA-256, image/parser/schema provenance
-and finite UTC command deadline into the workset context.
+Every acquisition command requires `--config`, `--run-id`, `--execution-id`,
+`--attempt-id`, and an aware UTC `--deadline`. `discover` requires `--mode
+quarterly|daily` and `--discovery-id`; `--refresh` freezes explicit acquisition
+refresh. `collect --workset REF` accepts the exact immutable source object path,
+`worksets/sec/source/sha256=<id>/workset.json`. Help describes the full arguments.
+Identifier path segments are checked before any backend construction.
 
-The checked-in configuration explicitly selects `local-fixture`, the ignored
-`.fixture-state/` root, synthetic parser provenance and an all-zero fixture image
-digest. Loading it creates no state directory. Fixture storage initialization is
-responsible for creating that root later, and all contenders must share the same
-root and binding. Fixture-only HTTP caps can be smaller for bounded generated
-streams; `fixture.allow_clock_override` and `fixture.allow_deadline_override`
-explicitly label test overrides. Azure refuses these override markers, synthetic
-provenance and the all-zero digest. No real image digest, principal or endpoint
-configuration is supplied by the fixture file.
+`--state-dir PATH` is fixture-only: it selects the base directory beneath which
+relative `storage.root` is placed. The actual durable root is
+`PATH / storage.root`, and its resolved path is part of the shared deployment
+registry. Contenders must use the same root and binding. The config hash continues
+to include its unchanged relative root. `--today YYYY-MM-DD` requires the explicit
+`fixture.allow_clock_override` marker; distant fixture deadlines require
+`fixture.allow_deadline_override`. Arbitrary input configurations do not receive
+implicit override markers. Azure rejects fixture packs, state/date overrides,
+these marker fields, synthetic versions, all-zero images, and distant deadlines.
 
-Azure configuration must explicitly name the accepted `secedgardevb8617` account,
-its credential-free Blob/Table HTTPS endpoints, `raw`, `worksets`, `quarantine`
-and `locks` containers, `SourceState` and `Attempts`, Blob API `2026-04-06` and
-Table API `2020-12-06`, immutable image provenance and parser/schema identifiers.
-All workflows bind to namespace `sec-owner-lowell-mason`, lock blob
-`sec-owner-lowell-mason/sentinel.json` and binding registry blob
-`sec-owner-lowell-mason/binding.json` in `locks`. The later storage adapter must
-conditionally create/check the registry; settings validation creates no lane or
-resource. Lease 60 seconds, renewal every 20 seconds and clock uncertainty at
-most 2 seconds are application mechanics. The adapter must derive actual
-server-time bounds and fail closed when they exceed the configured uncertainty.
+Pinning resolves `end_quarter=open` once at command start and freezes the exact
+configuration, its SHA-256, actual pin date, image digest, parser/schema versions,
+and deadline. Daily discovery needs an endpoint containing the current quarter.
+A closed historical-quarter config cannot admit October 2026 daily sources.
+Fixture subsets do not revise the accepted development/intended historical range.
 
-The accepted starting values are 2015 Q1 through the run's open quarter for
-initial development, daily handoff `2026-10-01`, 3 SEC requests per second with
-no bursts, one active collector, five total HTTP attempts, exponential jitter
-from 2 seconds capped at 120 seconds while honoring longer server delays,
-15/60-second connect/read timeouts, a 90-second complete exchange, 67,108,864
-received bytes and 536,870,912 expanded IDX bytes. Job retry limit is zero and
-orchestration permits at most one confirmed-transient replay. The intended full
-historical range starts in 2010 Q1. Daily scheduling starts at 05:00 Eastern every
-day; reconciliation starts Sunday at 06:00 Eastern. Trigger definitions and
-activation belong to later stages. These defaults establish no coverage,
-recovery horizon, worker capacity or SLA.
+All collectors share namespace `sec-owner-lowell-mason`, one finite leased Blob
+sentinel and one request budget across discovery, downloads, retries, and
+reconciliation. Azure uses the explicitly configured accepted account
+`secedgardevb8617`, containers `raw`, `worksets`, `quarantine`, `locks`, tables
+`SourceState`, `Attempts`, Blob API `2026-04-06`, Table API `2020-12-06`, and fixed
+sentinel/registry keys in `locks`. Construction checks the durable binding;
+it provisions nothing. Lease/server time uncertainty fails closed.
 
-Workset JSON uses `sec-acquisition-v1`; schema provenance remains `sec-index-v1`.
-Source members and directory outcomes are sorted deterministically, and strict
-decoders verify their content hash and exact membership. Snapshots name each
-source and its immutable raw hash/path. The selected acquisition envelope
-identifiers are `sec-quarterly-envelope-v1` for ZIP and `sec-daily-envelope-v1`
-for IDX. `parser_version` remains provenance; no row parser is implemented here.
+Accepted starting values are 2015 Q1 through the run's open quarter for initial
+development, intended history from 2010 Q1, daily handoff `2026-10-01`, 3 requests
+per second without bursts, one active collector, five total request attempts,
+exponential jitter from 2 seconds capped at 120 while honoring longer server
+delays, connect/read timeouts 15/60 seconds, and guards of 90 seconds per complete
+exchange, 67,108,864 received bytes, and 536,870,912 expanded IDX bytes. Job retry
+limit is zero; at most one positively confirmed transient orchestration replay
+is a later contract. These values establish no coverage, recovery horizon,
+capacity, or SLA.
+
+The selected acquisition envelopes are one DEFLATE `master.idx` in a quarterly
+ZIP and plain daily IDX. Original archives remain raw ZIP bytes. Worksets use
+`sec-acquisition-v1`; schema is `sec-index-v1`; envelope identifiers are
+`sec-quarterly-envelope-v1` and `sec-daily-envelope-v1`. Parser version is pinned
+provenance. No row parser is implemented.
+
+Stdout is one JSON object with outcome, result reference, and source/snapshot
+workset references. Stderr is structured command logging. Durable results live at
+`runs/sec/<run-id>/<command>/<attempt-id>/result.json`. Exactly matching completed
+attempts replay that result without HTTP; a new attempt continues terminal
+incomplete work using the existing frozen workset. See the
+[runbook](../../docs/runbooks/sec-edgar-ingest-acquisition.md) for exit codes,
+quarantine/pending work, result repair, stopped ownership, and the conservative
+Azure clean-release guard.

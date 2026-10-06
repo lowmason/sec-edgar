@@ -1,0 +1,22 @@
+Command: uv run --offline --frozen --package sec-edgar-ingest python -m unittest discover -s packages/sec-edgar-ingest/tests -p test_coordination.py -k test_local_constructor_recovers -v
+Exit: 1
+test_local_constructor_recovers_real_wal_transition_contention_and_skips_warm_transition (test_coordination.JournalContractTests.test_local_constructor_recovers_real_wal_transition_contention_and_skips_warm_transition) ... ERROR
+
+======================================================================
+ERROR: test_local_constructor_recovers_real_wal_transition_contention_and_skips_warm_transition (test_coordination.JournalContractTests.test_local_constructor_recovers_real_wal_transition_contention_and_skips_warm_transition)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_coordination.py", line 222, in test_local_constructor_recovers_real_wal_transition_contention_and_skips_warm_transition
+    recovered = LocalStateStore(root)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py", line 152, in __init__
+    connection.execute("PRAGMA journal_mode=WAL")
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_coordination.py", line 211, in execute
+    return self.actual.execute(sql, *args)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+sqlite3.OperationalError: database is locked
+
+----------------------------------------------------------------------
+Ran 1 test in 0.013s
+
+FAILED (errors=1)

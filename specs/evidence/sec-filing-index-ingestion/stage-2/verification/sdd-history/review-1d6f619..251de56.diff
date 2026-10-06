@@ -1,0 +1,266 @@
+# Review package: 1d6f61947fac947d872cf0a395e93bbc252adaa2..251de56f44bcc7dda4e56aa034ea78cf7057d9e6
+
+## Commits
+251de56 fix: keep coordination clock samples paired
+
+## Files changed
+ .../src/sec_edgar_ingest/coordination.py           |  6 +-
+ .../src/sec_edgar_ingest/storage/azure.py          |  5 +-
+ .../sec-edgar-ingest/tests/test_coordination.py    | 89 ++++++++++++++++++++++
+ 3 files changed, 96 insertions(+), 4 deletions(-)
+
+## Diff
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/coordination.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/coordination.py
+index 576a673..fa113a4 100644
+--- a/packages/sec-edgar-ingest/src/sec_edgar_ingest/coordination.py
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/coordination.py
+@@ -183,24 +183,25 @@ class Coordinator:
+         chosen = min(valid, key=lambda ticket: (ticket.priority != "daily", ticket.enqueued_at, ticket.ticket_id))
+         self._trace("queue-choice", owner=chosen.owner_id, priority=chosen.priority, ticket_id=chosen.ticket_id)
+         return chosen.ticket_id
+ 
+     @contextmanager
+     def turn(self, owner_id: str, priority: str, deadline: datetime):
+         require_text(owner_id, "owner_id")
+         require_utc(deadline, "deadline")
+         if self._active is not None:
+             raise ValueError("a coordinator can have one active turn")
++        mono = self.clock.monotonic()
+         remaining = (deadline - self.clock.now()).total_seconds()
+         if remaining <= 0:
+             raise TimeoutError("turn deadline has expired")
+-        deadline_mono = self.clock.monotonic() + remaining
++        deadline_mono = mono + remaining
+         bounds = self._time()
+         ticket = QueueTicket(uuid.uuid4().hex, owner_id, priority, bounds.upper,
+                              bounds.lower + timedelta(seconds=remaining))
+         self.store.insert("QueueTicket", ticket.ticket_id, {**ticket.to_mapping(), "status": "waiting"})
+         self._trace("enqueue", owner=owner_id, priority=priority, ticket_id=ticket.ticket_id)
+         current = None
+         try:
+             while current is None:
+                 if self.clock.monotonic() >= deadline_mono:
+                     raise TimeoutError("queue wait exhausted turn deadline")
+@@ -314,21 +315,21 @@ class Turn:
+     def next_allowed_at(self) -> datetime:
+         last = utc_value(self._value["last_start"]) if self._value["last_start"] is not None else None
+         return next_start(last, utc_value(self._value["not_before"]), self.earliest_safe,
+                           self.coordinator.settings.sec.requests_per_second)
+ 
+     def _future_guard(self) -> datetime:
+         return reservation_guard(self.handle.ownership_until_upper, self.exchange_seconds, self.uncertainty)
+ 
+     def _validity_mono(self, handle: LeaseHandle) -> float:
+         bounds = handle.observation.at(self.coordinator.clock.monotonic())
+-        return self.coordinator.clock.monotonic() + (handle.observed_until-bounds.upper).total_seconds()
++        return bounds.monotonic_at + (handle.observed_until-bounds.upper).total_seconds()
+ 
+     def _lose(self, reason: str) -> None:
+         with self._lock:
+             if self.loss_reason is None:
+                 self.loss_reason = reason
+                 self.coordinator._trace("loss", owner=self.handle.owner_id, epoch=self.epoch, reason=reason)
+             self.cancelled.set()
+             self._stop.set()
+             self._wake.set()
+ 
+@@ -414,20 +415,21 @@ class Turn:
+                     delay = (target-bounds.lower).total_seconds()
+                     if delay <= 0:
+                         break
+                     remaining = min(self.deadline_mono-self.coordinator.clock.monotonic(),
+                                     self._renew_at-self.coordinator.clock.monotonic())
+                     if remaining <= 0:
+                         self._require_live()
+                         continue
+                     self.coordinator.clock.sleep(min(delay, remaining))
+                 mono = self.coordinator.clock.monotonic()
++                bounds = bounds.at(mono)
+                 # Charge the latest admissible dispatch, not just the reservation instant.
+                 dispatch_seconds = 1 / self.coordinator.settings.sec.requests_per_second
+                 deadline_mono = min(self.deadline_mono, mono+self.exchange_seconds)
+                 start_before_mono = min(mono+dispatch_seconds, deadline_mono)
+                 dispatch_upper = bounds.upper + timedelta(microseconds=math.ceil((start_before_mono-mono)*1_000_000))
+                 if start_before_mono <= mono:
+                     raise OwnershipLost("no positive dispatch window remains")
+                 end_upper = min(bounds.upper+timedelta(seconds=deadline_mono-mono), dispatch_upper+timedelta(seconds=self.exchange_seconds))
+                 self._value.update(last_start=dispatch_upper.isoformat(), request_id=request_id, clean_release=False,
+                                    unsafe_until=max(utc_value(self._value["unsafe_until"]), self._future_guard(), end_upper+timedelta(seconds=self.uncertainty)).isoformat())
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py
+index a482a2e..b332f0f 100644
+--- a/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py
+@@ -255,35 +255,36 @@ class AzureLeaseStore:
+                     server_date = parsedate_to_datetime(observed["date"] or "")
+                     require_utc(server_date, "Storage Date")
+                 except (ValueError, TypeError, IndexError) as error:
+                     raise ClockUncertain("Storage response has no usable server Date") from error
+                 observed["server_date"] = server_date
+         return capture
+ 
+     def _observation(self, before: datetime, mono: float, observed: dict) -> TimeBounds:
+         after = self.clock.now()
+         require_utc(after, "clock.now")
+-        elapsed = self.clock.monotonic() - mono
++        received_mono = self.clock.monotonic()
++        elapsed = received_mono - mono
+         try:
+             server_date = observed.get("server_date")
+             require_utc(server_date, "Storage Date")
+         except (ValueError, TypeError, IndexError) as error:
+             raise ClockUncertain("Storage response has no usable server Date") from error
+         uncertainty = timedelta(seconds=self.uncertainty_seconds)
+         if (not math.isfinite(elapsed) or elapsed < 0 or elapsed > self.uncertainty_seconds or after < before
+                 or abs((after - before).total_seconds() - elapsed) > self.uncertainty_seconds
+                 or server_date > after + uncertainty or server_date + timedelta(seconds=1) < before - uncertainty):
+             raise ClockUncertain("Storage server observation exceeds the accepted uncertainty")
+         # Date is rounded to whole seconds. The entire measured operation RTT bounds response transit.
+         if 1 + elapsed > self.uncertainty_seconds:
+             raise ClockUncertain("Storage Date precision plus RTT exceeds the accepted uncertainty")
+-        return TimeBounds(server_date, server_date + timedelta(seconds=1 + elapsed), self.clock.monotonic())
++        return TimeBounds(server_date, server_date + timedelta(seconds=1 + elapsed), received_mono)
+ 
+     def _bounded_until(self, before: datetime, mono: float, observed: dict) -> datetime:
+         bounds = self._observation(before, mono, observed)
+         return min(before, bounds.lower) + timedelta(seconds=self.lease_seconds - self.uncertainty_seconds)
+ 
+     def _current(self, handle: LeaseHandle) -> None:
+         require_utc(self.clock.now(), "clock.now")
+         if self.clock.now() >= handle.observed_until:
+             raise OwnershipLost("observed lease window has expired")
+ 
+diff --git a/packages/sec-edgar-ingest/tests/test_coordination.py b/packages/sec-edgar-ingest/tests/test_coordination.py
+index f08895e..db72917 100644
+--- a/packages/sec-edgar-ingest/tests/test_coordination.py
++++ b/packages/sec-edgar-ingest/tests/test_coordination.py
+@@ -73,20 +73,40 @@ class JournalContractTests(unittest.TestCase):
+             if request.headers.get("x-ms-lease-action") == "acquire":
+                 clock.advance(0.5)
+             return send(request, **kwargs)
+         transport.send = measured_send
+         handle = leases.acquire("one", 60)
+         self.assertEqual(handle.observed_until, FixtureClock().now()+timedelta(seconds=58))
+         self.assertEqual(getattr(handle, "acquired_upper", None), FixtureClock().now()+timedelta(seconds=1.5),
+                          "Expiry/takeover need the server upper bound, never the lower observed_until")
+         self.assertEqual(handle.ownership_until_upper, FixtureClock().now()+timedelta(seconds=61.5))
+ 
++    def test_azure_receive_sample_must_anchor_the_interval_without_unmeasured_delay(self):
++        clock = FixtureClock()
++        origin = clock.now()
++        clock.advance(0.95)
++        leases, _ = self.azure_leases([], clock)
++        original_monotonic = clock.monotonic
++        samples = 0
++        def receive_sample():
++            nonlocal samples
++            samples += 1
++            if samples == 2:
++                clock.advance(0.25)
++            return original_monotonic()
++        clock.monotonic = receive_sample
++        bounds = leases._observation(origin+timedelta(seconds=0.9), 0.9, {"server_date": origin})
++        current = bounds.at(clock.monotonic())
++        self.assertLessEqual(current.lower, clock.now())
++        self.assertGreaterEqual(current.upper, clock.now(),
++                                "A later monotonic anchor must not omit elapsed time from the accepted server interval")
++
+     def test_date_precision_plus_rtt_must_fit_two_second_bound(self):
+         from sec_edgar_ingest.storage.contracts import ClockUncertain
+         from test_azure_contracts import response
+         clock = FixtureClock()
+         leases, transport = self.azure_leases([response(201), response(201, headers={"x-ms-lease-id": "real"})], clock)
+         send = transport.send
+         def measured_send(request, **kwargs):
+             if request.headers.get("x-ms-lease-action") == "acquire":
+                 clock.advance(1.01)
+             return send(request, **kwargs)
+@@ -300,20 +320,89 @@ class CoordinationTests(unittest.TestCase):
+         self.assertGreaterEqual(guard, old_end)
+         self.assertGreaterEqual(guard, clock.now()+timedelta(seconds=92))
+         clock.advance((old_end-clock.now()).total_seconds()-1)
+         self.assertEqual([owner for owner, _ in h.starts], ["backfill-a"])
+         h.finish_request("backfill-a")
+         clock.advance(2)
+         h.reserve("daily-b")
+         self.assertEqual(h.maximum_active, 1)
+         self.assertEqual([owner for owner, _ in h.starts], ["backfill-a", "daily-b"])
+ 
++    def test_refresh_return_pause_cannot_compress_actual_transport_starts(self):
++        from support import fixture_clock
++        directory = self.enterContext(tempfile.TemporaryDirectory())
++        clock = fixture_clock()
++        h = self.harness(Path(directory), clock)
++        self.addCleanup(h.close)
++        h.start("one", "backfill")
++        turn = h.turns["one"]
++        original_refresh = turn._refresh
++        def paused_after_refresh():
++            bounds = original_refresh()
++            turn._refresh = original_refresh
++            clock.advance(0.25)
++            return bounds
++        turn._refresh = paused_after_refresh
++        permit = turn.reserve("paused-return")
++        clock.advance(permit.start_before_mono-clock.monotonic()-0.00001)
++        h.dispatch("one", permit)
++        h.finish_request("one")
++        h.start("two", "daily")
++        h.reserve("two")
++        spacing = (h.starts[1][1]-h.starts[0][1]).total_seconds()
++        self.assertGreaterEqual(spacing, 1/3,
++                                "Latest permissible dispatch UTC must advance through a pause after refresh returned")
++
++    def test_turn_deadline_conversion_cannot_add_the_delay_after_utc_sampling(self):
++        from support import fixture_clock
++        directory = self.enterContext(tempfile.TemporaryDirectory())
++        clock = fixture_clock()
++        coordinator, _ = self.build(Path(directory), clock)
++        deadline = clock.now()+timedelta(seconds=1)
++        expected = clock.monotonic()+1
++        original_now = clock.now
++        def paused_after_wall_sample():
++            instant = original_now()
++            clock.now = original_now
++            clock.advance(0.25)
++            return instant
++        clock.now = paused_after_wall_sample
++        with coordinator.turn("bounded-turn", "daily", deadline) as turn:
++            self.assertLessEqual(turn.deadline_mono, expected,
++                                 "A turn deadline must not extend an absolute UTC deadline by a later mono sample")
++
++    def test_validity_conversion_cannot_add_the_delay_between_monotonic_samples(self):
++        from support import fixture_clock
++        directory = self.enterContext(tempfile.TemporaryDirectory())
++        clock = fixture_clock()
++        h = self.harness(Path(directory), clock)
++        self.addCleanup(h.close)
++        h.start("one", "daily")
++        turn = h.turns["one"]
++        observation = turn.handle.observation
++        expected = observation.monotonic_at + (turn.handle.observed_until-observation.upper).total_seconds()
++        original_monotonic = clock.monotonic
++        samples = 0
++        def delayed_second_sample():
++            nonlocal samples
++            samples += 1
++            if samples == 2:
++                clock.advance(0.25)
++            return original_monotonic()
++        clock.monotonic = delayed_second_sample
++        try:
++            validity = turn._validity_mono(turn.handle)
++        finally:
++            clock.monotonic = original_monotonic
++        self.assertLessEqual(validity, expected,
++                             "Conservative validity must not extend the confirmed UTC expiry by a second sample delay")
++
+     def test_delayed_dispatch_cannot_compress_actual_socket_starts(self):
+         from support import fixture_clock
+         directory = self.enterContext(tempfile.TemporaryDirectory())
+         clock = fixture_clock()
+         h = self.harness(Path(directory), clock)
+         self.addCleanup(h.close)
+         h.start("one", "backfill")
+         permit = h.turns["one"].reserve("delayed")
+         clock.advance(permit.start_before_mono-clock.monotonic()-0.00001)
+         h.dispatch("one", permit)

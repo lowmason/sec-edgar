@@ -1,0 +1,22 @@
+command=[".venv/bin/python", "-m", "unittest", "-v", "test_collection.CollectionTests.test_multiple_failed_prefixes_remain_distinct_when_recovered"]
+environment=PYTHONPATH=packages/sec-edgar-ingest/tests PYTHONDONTWRITEBYTECODE=1
+stdout:
+
+stderr:
+test_multiple_failed_prefixes_remain_distinct_when_recovered (test_collection.CollectionTests.test_multiple_failed_prefixes_remain_distinct_when_recovered) ... FAIL
+
+======================================================================
+FAIL: test_multiple_failed_prefixes_remain_distinct_when_recovered (test_collection.CollectionTests.test_multiple_failed_prefixes_remain_distinct_when_recovered)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 585, in test_multiple_failed_prefixes_remain_distinct_when_recovered
+    self.assertTrue((h.objects.directory / path).is_file(), 'each failed prefix must precede the success checkpoint')
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : each failed prefix must precede the success checkpoint
+
+----------------------------------------------------------------------
+Ran 1 test in 0.100s
+
+FAILED (failures=1)
+
+exit_code=1

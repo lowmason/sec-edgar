@@ -1,0 +1,15 @@
+test_five_uncertain_crashes_exhaust_budget_and_new_attempt_audits_them (test_download.DownloadTests.test_five_uncertain_crashes_exhaust_budget_and_new_attempt_audits_them) ... FAIL
+
+======================================================================
+FAIL: test_five_uncertain_crashes_exhaust_budget_and_new_attempt_audits_them (test_download.DownloadTests.test_five_uncertain_crashes_exhaust_budget_and_new_attempt_audits_them)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_download.py", line 105, in test_five_uncertain_crashes_exhaust_budget_and_new_attempt_audits_them
+    self.assertTrue(row.value["prior_exhaustion"], "five uncertain pre-dispatch rows are an exhausted prior budget")
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: () is not true : five uncertain pre-dispatch rows are an exhausted prior budget
+
+----------------------------------------------------------------------
+Ran 1 test in 0.064s
+
+FAILED (failures=1)

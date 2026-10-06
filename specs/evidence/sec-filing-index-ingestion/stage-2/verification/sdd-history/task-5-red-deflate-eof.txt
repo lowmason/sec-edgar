@@ -1,0 +1,18 @@
+test_full_deflate_end_marker_is_required_even_with_matching_size_and_crc (test_validation.ValidationTests.test_full_deflate_end_marker_is_required_even_with_matching_size_and_crc) ... FAIL
+
+======================================================================
+FAIL: test_full_deflate_end_marker_is_required_even_with_matching_size_and_crc (test_validation.ValidationTests.test_full_deflate_end_marker_is_required_even_with_matching_size_and_crc)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_validation.py", line 191, in test_full_deflate_end_marker_is_required_even_with_matching_size_and_crc
+    self.invalid("zip-missing-deflate-eof", bytes(truncated), "invalid_archive")
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_validation.py", line 43, in invalid
+    self.fail("invalid envelope was accepted: "+name)
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: invalid envelope was accepted: zip-missing-deflate-eof
+
+----------------------------------------------------------------------
+Ran 1 test in 0.014s
+
+FAILED (failures=1)

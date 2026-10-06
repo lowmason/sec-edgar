@@ -1,0 +1,70 @@
+test_malformed_result_and_unexpected_child_exception_retain_partial_failure (test_download.BoundedProcessTests.test_malformed_result_and_unexpected_child_exception_retain_partial_failure) ... 
+  test_malformed_result_and_unexpected_child_exception_retain_partial_failure (test_download.BoundedProcessTests.test_malformed_result_and_unexpected_child_exception_retain_partial_failure) (name='malformed-metadata') ... FAIL
+  test_malformed_result_and_unexpected_child_exception_retain_partial_failure (test_download.BoundedProcessTests.test_malformed_result_and_unexpected_child_exception_retain_partial_failure) (name='unexpected-child-exception') ... FAIL
+
+======================================================================
+FAIL: test_malformed_result_and_unexpected_child_exception_retain_partial_failure (test_download.BoundedProcessTests.test_malformed_result_and_unexpected_child_exception_retain_partial_failure) (name='malformed-metadata')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/download.py", line 586, in send
+    receipt, unsafe = self._receipt(transport, reason=reason)
+                      ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/download.py", line 549, in _receipt
+    problem = metadata.get("error")
+              ^^^^^^^^^^^^
+AttributeError: 'list' object has no attribute 'get'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_download.py", line 395, in test_malformed_result_and_unexpected_child_exception_retain_partial_failure
+    self.send(server, target=target)
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_download.py", line 233, in send
+    return sender.send(server.url, real_context(self.clock, self.settings), permit, cancellation=cancellation)
+           ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/download.py", line 601, in send
+    receipt, _ = self._receipt(transport, reason="sender_unverified")
+                 ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/download.py", line 549, in _receipt
+    problem = metadata.get("error")
+              ^^^^^^^^^^^^
+AttributeError: 'list' object has no attribute 'get'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_download.py", line 397, in test_malformed_result_and_unexpected_child_exception_retain_partial_failure
+    self.assertIsInstance(error, self.download.SenderFailure, "an invalid child result must still expose its retained receipt")
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AttributeError("'list' object has no attribute 'get'") is not an instance of <class 'sec_edgar_ingest.download.SenderFailure'> : an invalid child result must still expose its retained receipt
+
+======================================================================
+FAIL: test_malformed_result_and_unexpected_child_exception_retain_partial_failure (test_download.BoundedProcessTests.test_malformed_result_and_unexpected_child_exception_retain_partial_failure) (name='unexpected-child-exception')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_download.py", line 395, in test_malformed_result_and_unexpected_child_exception_retain_partial_failure
+    self.send(server, target=target)
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_download.py", line 233, in send
+    return sender.send(server.url, real_context(self.clock, self.settings), permit, cancellation=cancellation)
+           ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/download.py", line 589, in send
+    raise SenderFailure("HTTP child has an unconfirmed result; retain unsafe guard", receipt)
+sec_edgar_ingest.download.SenderFailure: HTTP child has an unconfirmed result; retain unsafe guard
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_download.py", line 398, in test_malformed_result_and_unexpected_child_exception_retain_partial_failure
+    self.assertEqual(error.receipt.error.code, expected_code)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'ipc_loss' != 'sender_internal'
+- ipc_loss
++ sender_internal
+
+
+----------------------------------------------------------------------
+Ran 1 test in 0.142s
+
+FAILED (failures=2)

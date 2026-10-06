@@ -1,0 +1,109 @@
+[
+  {
+    "at": "2026-10-06T00:00:00+00:00",
+    "event": "enqueue",
+    "mono": 0.0,
+    "owner": "fixture-execution:fixture-attempt:0a92928957a54df398b77f637813e796",
+    "priority": "backfill",
+    "ticket_id": "b4ea9513a680456785457cb763b7c164"
+  },
+  {
+    "at": "2026-10-06T00:00:00+00:00",
+    "event": "queue-choice",
+    "mono": 0.0,
+    "owner": "fixture-execution:fixture-attempt:0a92928957a54df398b77f637813e796",
+    "priority": "backfill",
+    "ticket_id": "b4ea9513a680456785457cb763b7c164"
+  },
+  {
+    "at": "2026-10-06T00:00:00+00:00",
+    "event": "queue-choice",
+    "mono": 0.0,
+    "owner": "fixture-execution:fixture-attempt:0a92928957a54df398b77f637813e796",
+    "priority": "backfill",
+    "ticket_id": "b4ea9513a680456785457cb763b7c164"
+  },
+  {
+    "at": "2026-10-06T00:00:00+00:00",
+    "epoch": 1,
+    "event": "acquire",
+    "lease_id": "83c32335-3184-4197-9a46-e0cc199fc9ea",
+    "mono": 0.0,
+    "owner": "fixture-execution:fixture-attempt:0a92928957a54df398b77f637813e796",
+    "ownership_until": "2026-10-06T00:01:00+00:00"
+  },
+  {
+    "at": "2026-10-06T00:00:00+00:00",
+    "earliest_safe": "2026-10-06T00:00:00+00:00",
+    "epoch": 1,
+    "event": "takeover",
+    "mono": 0.0,
+    "owner": "fixture-execution:fixture-attempt:0a92928957a54df398b77f637813e796"
+  },
+  {
+    "at": "2026-10-06T00:00:00+00:00",
+    "epoch": 1,
+    "event": "reserve",
+    "mono": 0.0,
+    "next_allowed_at": "2026-10-06T00:00:00.666668+00:00",
+    "owner": "fixture-execution:fixture-attempt:0a92928957a54df398b77f637813e796",
+    "request_id": "99eb0e19e5e1469faed0d3a7a18afe07",
+    "start_before_mono": 0.3333333333333333
+  },
+  {
+    "at": "2026-10-06T00:00:00+00:00",
+    "epoch": 1,
+    "event": "request-start",
+    "mono": 0.0,
+    "owner": "fixture-execution:fixture-attempt:0a92928957a54df398b77f637813e796",
+    "request_id": "99eb0e19e5e1469faed0d3a7a18afe07"
+  },
+  {
+    "at": "2026-10-06T00:00:20+00:00",
+    "epoch": 1,
+    "event": "renew",
+    "mono": 20.0,
+    "owner": "fixture-execution:fixture-attempt:0a92928957a54df398b77f637813e796",
+    "ownership_until": "2026-10-06T00:01:20+00:00"
+  },
+  {
+    "at": "2026-10-06T00:00:40+00:00",
+    "epoch": 1,
+    "event": "renew",
+    "mono": 40.0,
+    "owner": "fixture-execution:fixture-attempt:0a92928957a54df398b77f637813e796",
+    "ownership_until": "2026-10-06T00:01:40+00:00"
+  },
+  {
+    "at": "2026-10-06T00:01:00+00:00",
+    "epoch": 1,
+    "event": "renew",
+    "mono": 60.0,
+    "owner": "fixture-execution:fixture-attempt:0a92928957a54df398b77f637813e796",
+    "ownership_until": "2026-10-06T00:02:00+00:00"
+  },
+  {
+    "at": "2026-10-06T00:01:20+00:00",
+    "epoch": 1,
+    "event": "renew",
+    "mono": 80.0,
+    "owner": "fixture-execution:fixture-attempt:0a92928957a54df398b77f637813e796",
+    "ownership_until": "2026-10-06T00:02:20+00:00"
+  },
+  {
+    "at": "2026-10-06T00:01:30+00:00",
+    "epoch": 1,
+    "event": "loss",
+    "mono": 90.0,
+    "owner": "fixture-execution:fixture-attempt:0a92928957a54df398b77f637813e796",
+    "reason": "turn/lease/exchange monotonic window expired"
+  },
+  {
+    "at": "2026-10-06T00:01:30+00:00",
+    "epoch": 1,
+    "event": "request-end",
+    "mono": 90.0,
+    "owner": "fixture-execution:fixture-attempt:0a92928957a54df398b77f637813e796",
+    "request_id": "99eb0e19e5e1469faed0d3a7a18afe07"
+  }
+]

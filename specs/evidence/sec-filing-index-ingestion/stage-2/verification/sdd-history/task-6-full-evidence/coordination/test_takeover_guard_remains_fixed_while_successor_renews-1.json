@@ -1,0 +1,162 @@
+[
+  {
+    "at": "2026-10-06T00:00:00+00:00",
+    "event": "enqueue",
+    "mono": 0.0,
+    "owner": "old",
+    "priority": "backfill",
+    "ticket_id": "245dbfed3dcf452b905d485a4174feda"
+  },
+  {
+    "at": "2026-10-06T00:00:00+00:00",
+    "event": "queue-choice",
+    "mono": 0.0,
+    "owner": "old",
+    "priority": "backfill",
+    "ticket_id": "245dbfed3dcf452b905d485a4174feda"
+  },
+  {
+    "at": "2026-10-06T00:00:00+00:00",
+    "event": "queue-choice",
+    "mono": 0.0,
+    "owner": "old",
+    "priority": "backfill",
+    "ticket_id": "245dbfed3dcf452b905d485a4174feda"
+  },
+  {
+    "at": "2026-10-06T00:00:00+00:00",
+    "epoch": 1,
+    "event": "acquire",
+    "lease_id": "68cb543b-fce4-47c0-a7b4-0eb10b082130",
+    "mono": 0.0,
+    "owner": "old",
+    "ownership_until": "2026-10-06T00:01:00+00:00"
+  },
+  {
+    "at": "2026-10-06T00:00:00+00:00",
+    "earliest_safe": "2026-10-06T00:00:00+00:00",
+    "epoch": 1,
+    "event": "takeover",
+    "mono": 0.0,
+    "owner": "old"
+  },
+  {
+    "at": "2026-10-06T00:00:00+00:00",
+    "epoch": 1,
+    "event": "reserve",
+    "mono": 0.0,
+    "next_allowed_at": "2026-10-06T00:00:00.666668+00:00",
+    "owner": "old",
+    "request_id": "old-request",
+    "start_before_mono": 0.3333333333333333
+  },
+  {
+    "at": "2026-10-06T00:00:00+00:00",
+    "epoch": 1,
+    "event": "request-start",
+    "owner": "old"
+  },
+  {
+    "at": "2026-10-06T00:00:00+00:00",
+    "epoch": 1,
+    "event": "loss",
+    "mono": 0.0,
+    "owner": "old",
+    "reason": "turn exited with an unconfirmed exchange outcome"
+  },
+  {
+    "at": "2026-10-06T00:01:00+00:00",
+    "event": "enqueue",
+    "mono": 60.0,
+    "owner": "new",
+    "priority": "daily",
+    "ticket_id": "03f46b82eff441499206554b5a38ccfb"
+  },
+  {
+    "at": "2026-10-06T00:01:00+00:00",
+    "event": "queue-choice",
+    "mono": 60.0,
+    "owner": "new",
+    "priority": "daily",
+    "ticket_id": "03f46b82eff441499206554b5a38ccfb"
+  },
+  {
+    "at": "2026-10-06T00:01:00+00:00",
+    "event": "queue-choice",
+    "mono": 60.0,
+    "owner": "new",
+    "priority": "daily",
+    "ticket_id": "03f46b82eff441499206554b5a38ccfb"
+  },
+  {
+    "at": "2026-10-06T00:01:00+00:00",
+    "epoch": 2,
+    "event": "acquire",
+    "lease_id": "7f502f76-0b96-4503-85f1-3fd3c4cf7249",
+    "mono": 60.0,
+    "owner": "new",
+    "ownership_until": "2026-10-06T00:02:00+00:00"
+  },
+  {
+    "at": "2026-10-06T00:01:00+00:00",
+    "earliest_safe": "2026-10-06T00:02:32+00:00",
+    "epoch": 2,
+    "event": "takeover",
+    "mono": 60.0,
+    "owner": "new"
+  },
+  {
+    "at": "2026-10-06T00:01:20+00:00",
+    "epoch": 2,
+    "event": "renew",
+    "mono": 80.0,
+    "owner": "new",
+    "ownership_until": "2026-10-06T00:02:20+00:00"
+  },
+  {
+    "at": "2026-10-06T00:01:20+00:00",
+    "epoch": 1,
+    "event": "request-end",
+    "owner": "old"
+  },
+  {
+    "at": "2026-10-06T00:01:40+00:00",
+    "epoch": 2,
+    "event": "renew",
+    "mono": 100.0,
+    "owner": "new",
+    "ownership_until": "2026-10-06T00:02:40+00:00"
+  },
+  {
+    "at": "2026-10-06T00:02:00+00:00",
+    "epoch": 2,
+    "event": "renew",
+    "mono": 120.0,
+    "owner": "new",
+    "ownership_until": "2026-10-06T00:03:00+00:00"
+  },
+  {
+    "at": "2026-10-06T00:02:20+00:00",
+    "epoch": 2,
+    "event": "renew",
+    "mono": 140.0,
+    "owner": "new",
+    "ownership_until": "2026-10-06T00:03:20+00:00"
+  },
+  {
+    "at": "2026-10-06T00:02:32+00:00",
+    "epoch": 2,
+    "event": "reserve",
+    "mono": 152.0,
+    "next_allowed_at": "2026-10-06T00:02:32.666668+00:00",
+    "owner": "new",
+    "request_id": "new-request",
+    "start_before_mono": 152.33333333333334
+  },
+  {
+    "at": "2026-10-06T00:02:32+00:00",
+    "epoch": 2,
+    "event": "request-start",
+    "owner": "new"
+  }
+]

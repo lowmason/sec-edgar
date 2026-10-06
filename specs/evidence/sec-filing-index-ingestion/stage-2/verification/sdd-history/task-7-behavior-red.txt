@@ -1,0 +1,458 @@
+command=["/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/bin/python", "-m", "unittest", "discover", "-s", "packages/sec-edgar-ingest/tests", "-p", "test_collection.py", "-v"]
+stdout:
+
+stderr:
+test_access_denial_and_policy_block_stop_remaining_members (test_collection.CollectionTests.test_access_denial_and_policy_block_stop_remaining_members) ... ok
+test_bad_envelope_continues_safe_independent_member (test_collection.CollectionTests.test_bad_envelope_continues_safe_independent_member) ... FAIL
+test_collector_current_context_and_snapshot_workset_origin_are_distinct (test_collection.CollectionTests.test_collector_current_context_and_snapshot_workset_origin_are_distinct) ... ERROR
+test_each_durable_boundary_forced_process_exit_recovers_without_sender (test_collection.CollectionTests.test_each_durable_boundary_forced_process_exit_recovers_without_sender) ... 
+  test_each_durable_boundary_forced_process_exit_recovers_without_sender (test_collection.CollectionTests.test_each_durable_boundary_forced_process_exit_recovers_without_sender) (point='after_receipt_checkpoint') ... FAIL
+  test_each_durable_boundary_forced_process_exit_recovers_without_sender (test_collection.CollectionTests.test_each_durable_boundary_forced_process_exit_recovers_without_sender) (point='after_raw_promotion') ... FAIL
+  test_each_durable_boundary_forced_process_exit_recovers_without_sender (test_collection.CollectionTests.test_each_durable_boundary_forced_process_exit_recovers_without_sender) (point='after_promotion_receipt') ... FAIL
+  test_each_durable_boundary_forced_process_exit_recovers_without_sender (test_collection.CollectionTests.test_each_durable_boundary_forced_process_exit_recovers_without_sender) (point='after_snapshot_record') ... FAIL
+  test_each_durable_boundary_forced_process_exit_recovers_without_sender (test_collection.CollectionTests.test_each_durable_boundary_forced_process_exit_recovers_without_sender) (point='after_binding') ... FAIL
+  test_each_durable_boundary_forced_process_exit_recovers_without_sender (test_collection.CollectionTests.test_each_durable_boundary_forced_process_exit_recovers_without_sender) (point='after_snapshot_workset_write') ... FAIL
+  test_each_durable_boundary_forced_process_exit_recovers_without_sender (test_collection.CollectionTests.test_each_durable_boundary_forced_process_exit_recovers_without_sender) (point='before_result_write') ... FAIL
+test_incomplete_discovery_retains_successful_member_without_snapshot_workset (test_collection.CollectionTests.test_incomplete_discovery_retains_successful_member_without_snapshot_workset) ... FAIL
+test_invalid_source_workset_digest_and_retained_path_are_refused (test_collection.CollectionTests.test_invalid_source_workset_digest_and_retained_path_are_refused) ... ok
+test_mismatched_config_parser_image_or_client_refuses_before_request (test_collection.CollectionTests.test_mismatched_config_parser_image_or_client_refuses_before_request) ... ok
+test_new_workset_reuses_accepted_and_explicit_refresh_fetches_new_original (test_collection.CollectionTests.test_new_workset_reuses_accepted_and_explicit_refresh_fetches_new_original) ... ERROR
+test_partial_success_404_then_only_unresolved_member_fetches (test_collection.CollectionTests.test_partial_success_404_then_only_unresolved_member_fetches) ... FAIL
+test_pinned_missing_or_corrupt_raw_refuses_repair_and_fetch (test_collection.CollectionTests.test_pinned_missing_or_corrupt_raw_refuses_repair_and_fetch) ... 
+  test_pinned_missing_or_corrupt_raw_refuses_repair_and_fetch (test_collection.CollectionTests.test_pinned_missing_or_corrupt_raw_refuses_repair_and_fetch) (corruption='missing') ... ERROR
+  test_pinned_missing_or_corrupt_raw_refuses_repair_and_fetch (test_collection.CollectionTests.test_pinned_missing_or_corrupt_raw_refuses_repair_and_fetch) (corruption='corrupt') ... ERROR
+test_quarantine_retains_original_receipt_and_partial_bytes (test_collection.CollectionTests.test_quarantine_retains_original_receipt_and_partial_bytes) ... FAIL
+test_real_discover_to_collect_verifies_approved_source_path_and_digest (test_collection.CollectionTests.test_real_discover_to_collect_verifies_approved_source_path_and_digest) ... FAIL
+test_refresh_same_hash_retains_first_receipt_metadata (test_collection.CollectionTests.test_refresh_same_hash_retains_first_receipt_metadata) ... ERROR
+test_retry_preserves_first_member_pin (test_collection.CollectionTests.test_retry_preserves_first_member_pin) ... ERROR
+test_snapshot_assembly_checks_actual_source_period (test_collection.CollectionTests.test_snapshot_assembly_checks_actual_source_period) ... ERROR
+test_snapshot_workset_immutable_collision_returns_failure (test_collection.CollectionTests.test_snapshot_workset_immutable_collision_returns_failure) ... ERROR
+test_stage_receipt_without_reservation_fails_closed (test_collection.CollectionTests.test_stage_receipt_without_reservation_fails_closed) ... ok
+test_successful_empty_and_failed_empty_have_distinct_results (test_collection.CollectionTests.test_successful_empty_and_failed_empty_have_distinct_results) ... ok
+test_two_independent_collectors_race_changed_originals_and_adopt_one_pin (test_collection.CollectionTests.test_two_independent_collectors_race_changed_originals_and_adopt_one_pin) ... Process SpawnProcess-1:
+Traceback (most recent call last):
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/multiprocessing/process.py", line 320, in _bootstrap
+    self.run()
+    ~~~~~~~~^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/support.py", line 1219, in collection_race_entry
+    trace('adopted', snapshots=h.snapshot_workset(result).to_mapping()['snapshots'])
+                               ~~~~~~~~~~~~~~~~~~^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/support.py", line 1070, in snapshot_workset
+    return decode_snapshot_workset(self.objects.read(result.snapshot_workset_ref))
+                                   ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py", line 112, in read
+    with self._open(path) as stream:
+         ~~~~~~~~~~^^^^^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/contextlib.py", line 141, in __enter__
+    return next(self.gen)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py", line 66, in _open
+    with self._parent(path) as (parent, name):
+         ~~~~~~~~~~~~^^^^^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/contextlib.py", line 141, in __enter__
+    return next(self.gen)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py", line 42, in _parent
+    segments = safe_relative_path(path, "object path").split("/")
+               ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py", line 94, in safe_relative_path
+    require_text(value, label)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py", line 60, in require_text
+    raise ValueError(f"{label} must be a nonempty safe string")
+ValueError: object path must be a nonempty safe string
+Process SpawnProcess-2:
+Traceback (most recent call last):
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/multiprocessing/process.py", line 320, in _bootstrap
+    self.run()
+    ~~~~~~~~^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/support.py", line 1219, in collection_race_entry
+    trace('adopted', snapshots=h.snapshot_workset(result).to_mapping()['snapshots'])
+                               ~~~~~~~~~~~~~~~~~~^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/support.py", line 1070, in snapshot_workset
+    return decode_snapshot_workset(self.objects.read(result.snapshot_workset_ref))
+                                   ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py", line 112, in read
+    with self._open(path) as stream:
+         ~~~~~~~~~~^^^^^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/contextlib.py", line 141, in __enter__
+    return next(self.gen)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py", line 66, in _open
+    with self._parent(path) as (parent, name):
+         ~~~~~~~~~~~~^^^^^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/contextlib.py", line 141, in __enter__
+    return next(self.gen)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py", line 42, in _parent
+    segments = safe_relative_path(path, "object path").split("/")
+               ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py", line 94, in safe_relative_path
+    require_text(value, label)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py", line 60, in require_text
+    raise ValueError(f"{label} must be a nonempty safe string")
+ValueError: object path must be a nonempty safe string
+ERROR
+
+======================================================================
+ERROR: test_collector_current_context_and_snapshot_workset_origin_are_distinct (test_collection.CollectionTests.test_collector_current_context_and_snapshot_workset_origin_are_distinct)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 155, in test_collector_current_context_and_snapshot_workset_origin_are_distinct
+    self.assertEqual(h.snapshot_workset(result).context, origin)
+                     ~~~~~~~~~~~~~~~~~~^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/support.py", line 1070, in snapshot_workset
+    return decode_snapshot_workset(self.objects.read(result.snapshot_workset_ref))
+                                   ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py", line 112, in read
+    with self._open(path) as stream:
+         ~~~~~~~~~~^^^^^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/contextlib.py", line 141, in __enter__
+    return next(self.gen)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py", line 66, in _open
+    with self._parent(path) as (parent, name):
+         ~~~~~~~~~~~~^^^^^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/contextlib.py", line 141, in __enter__
+    return next(self.gen)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py", line 42, in _parent
+    segments = safe_relative_path(path, "object path").split("/")
+               ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py", line 94, in safe_relative_path
+    require_text(value, label)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py", line 60, in require_text
+    raise ValueError(f"{label} must be a nonempty safe string")
+ValueError: object path must be a nonempty safe string
+
+======================================================================
+ERROR: test_new_workset_reuses_accepted_and_explicit_refresh_fetches_new_original (test_collection.CollectionTests.test_new_workset_reuses_accepted_and_explicit_refresh_fetches_new_original)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 73, in test_new_workset_reuses_accepted_and_explicit_refresh_fetches_new_original
+    first = h.snapshot_workset(h.collect(self.workset)).snapshots[0]
+            ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/support.py", line 1070, in snapshot_workset
+    return decode_snapshot_workset(self.objects.read(result.snapshot_workset_ref))
+                                   ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py", line 112, in read
+    with self._open(path) as stream:
+         ~~~~~~~~~~^^^^^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/contextlib.py", line 141, in __enter__
+    return next(self.gen)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py", line 66, in _open
+    with self._parent(path) as (parent, name):
+         ~~~~~~~~~~~~^^^^^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/contextlib.py", line 141, in __enter__
+    return next(self.gen)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py", line 42, in _parent
+    segments = safe_relative_path(path, "object path").split("/")
+               ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py", line 94, in safe_relative_path
+    require_text(value, label)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py", line 60, in require_text
+    raise ValueError(f"{label} must be a nonempty safe string")
+ValueError: object path must be a nonempty safe string
+
+======================================================================
+ERROR: test_pinned_missing_or_corrupt_raw_refuses_repair_and_fetch (test_collection.CollectionTests.test_pinned_missing_or_corrupt_raw_refuses_repair_and_fetch) (corruption='missing')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 123, in test_pinned_missing_or_corrupt_raw_refuses_repair_and_fetch
+    snapshot = h.snapshot_workset(first).snapshots[0]
+               ~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/support.py", line 1070, in snapshot_workset
+    return decode_snapshot_workset(self.objects.read(result.snapshot_workset_ref))
+                                   ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py", line 112, in read
+    with self._open(path) as stream:
+         ~~~~~~~~~~^^^^^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/contextlib.py", line 141, in __enter__
+    return next(self.gen)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py", line 66, in _open
+    with self._parent(path) as (parent, name):
+         ~~~~~~~~~~~~^^^^^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/contextlib.py", line 141, in __enter__
+    return next(self.gen)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py", line 42, in _parent
+    segments = safe_relative_path(path, "object path").split("/")
+               ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py", line 94, in safe_relative_path
+    require_text(value, label)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py", line 60, in require_text
+    raise ValueError(f"{label} must be a nonempty safe string")
+ValueError: object path must be a nonempty safe string
+
+======================================================================
+ERROR: test_pinned_missing_or_corrupt_raw_refuses_repair_and_fetch (test_collection.CollectionTests.test_pinned_missing_or_corrupt_raw_refuses_repair_and_fetch) (corruption='corrupt')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 123, in test_pinned_missing_or_corrupt_raw_refuses_repair_and_fetch
+    snapshot = h.snapshot_workset(first).snapshots[0]
+               ~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/support.py", line 1070, in snapshot_workset
+    return decode_snapshot_workset(self.objects.read(result.snapshot_workset_ref))
+                                   ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py", line 112, in read
+    with self._open(path) as stream:
+         ~~~~~~~~~~^^^^^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/contextlib.py", line 141, in __enter__
+    return next(self.gen)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py", line 66, in _open
+    with self._parent(path) as (parent, name):
+         ~~~~~~~~~~~~^^^^^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/contextlib.py", line 141, in __enter__
+    return next(self.gen)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py", line 42, in _parent
+    segments = safe_relative_path(path, "object path").split("/")
+               ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py", line 94, in safe_relative_path
+    require_text(value, label)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py", line 60, in require_text
+    raise ValueError(f"{label} must be a nonempty safe string")
+ValueError: object path must be a nonempty safe string
+
+======================================================================
+ERROR: test_refresh_same_hash_retains_first_receipt_metadata (test_collection.CollectionTests.test_refresh_same_hash_retains_first_receipt_metadata)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 87, in test_refresh_same_hash_retains_first_receipt_metadata
+    first = h.snapshot_workset(h.collect(self.workset)).snapshots[0]
+            ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/support.py", line 1070, in snapshot_workset
+    return decode_snapshot_workset(self.objects.read(result.snapshot_workset_ref))
+                                   ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py", line 112, in read
+    with self._open(path) as stream:
+         ~~~~~~~~~~^^^^^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/contextlib.py", line 141, in __enter__
+    return next(self.gen)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py", line 66, in _open
+    with self._parent(path) as (parent, name):
+         ~~~~~~~~~~~~^^^^^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/contextlib.py", line 141, in __enter__
+    return next(self.gen)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py", line 42, in _parent
+    segments = safe_relative_path(path, "object path").split("/")
+               ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py", line 94, in safe_relative_path
+    require_text(value, label)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py", line 60, in require_text
+    raise ValueError(f"{label} must be a nonempty safe string")
+ValueError: object path must be a nonempty safe string
+
+======================================================================
+ERROR: test_retry_preserves_first_member_pin (test_collection.CollectionTests.test_retry_preserves_first_member_pin)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 41, in test_retry_preserves_first_member_pin
+    old = h.snapshot_workset(first).snapshots[0]
+          ~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/support.py", line 1070, in snapshot_workset
+    return decode_snapshot_workset(self.objects.read(result.snapshot_workset_ref))
+                                   ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py", line 112, in read
+    with self._open(path) as stream:
+         ~~~~~~~~~~^^^^^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/contextlib.py", line 141, in __enter__
+    return next(self.gen)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py", line 66, in _open
+    with self._parent(path) as (parent, name):
+         ~~~~~~~~~~~~^^^^^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/contextlib.py", line 141, in __enter__
+    return next(self.gen)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py", line 42, in _parent
+    segments = safe_relative_path(path, "object path").split("/")
+               ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py", line 94, in safe_relative_path
+    require_text(value, label)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py", line 60, in require_text
+    raise ValueError(f"{label} must be a nonempty safe string")
+ValueError: object path must be a nonempty safe string
+
+======================================================================
+ERROR: test_snapshot_assembly_checks_actual_source_period (test_collection.CollectionTests.test_snapshot_assembly_checks_actual_source_period)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 181, in test_snapshot_assembly_checks_actual_source_period
+    first = h.snapshot_workset(h.collect(self.workset)).snapshots[0]
+            ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/support.py", line 1070, in snapshot_workset
+    return decode_snapshot_workset(self.objects.read(result.snapshot_workset_ref))
+                                   ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py", line 112, in read
+    with self._open(path) as stream:
+         ~~~~~~~~~~^^^^^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/contextlib.py", line 141, in __enter__
+    return next(self.gen)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py", line 66, in _open
+    with self._parent(path) as (parent, name):
+         ~~~~~~~~~~~~^^^^^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/contextlib.py", line 141, in __enter__
+    return next(self.gen)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py", line 42, in _parent
+    segments = safe_relative_path(path, "object path").split("/")
+               ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py", line 94, in safe_relative_path
+    require_text(value, label)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py", line 60, in require_text
+    raise ValueError(f"{label} must be a nonempty safe string")
+ValueError: object path must be a nonempty safe string
+
+======================================================================
+ERROR: test_snapshot_workset_immutable_collision_returns_failure (test_collection.CollectionTests.test_snapshot_workset_immutable_collision_returns_failure)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 173, in test_snapshot_workset_immutable_collision_returns_failure
+    (h.objects.directory / first.snapshot_workset_ref).write_bytes(b'collision')
+     ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+TypeError: unsupported operand type(s) for /: 'PosixPath' and 'NoneType'
+
+======================================================================
+ERROR: test_two_independent_collectors_race_changed_originals_and_adopt_one_pin (test_collection.CollectionTests.test_two_independent_collectors_race_changed_originals_and_adopt_one_pin)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 307, in test_two_independent_collectors_race_changed_originals_and_adopt_one_pin
+    results = [output.get(timeout=40) for _ in processes]
+               ~~~~~~~~~~^^^^^^^^^^^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/multiprocessing/queues.py", line 112, in get
+    raise Empty
+_queue.Empty
+
+======================================================================
+FAIL: test_bad_envelope_continues_safe_independent_member (test_collection.CollectionTests.test_bad_envelope_continues_safe_independent_member)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 212, in test_bad_envelope_continues_safe_independent_member
+    self.assertEqual(result.outcome, 'incomplete')
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'state_conflict' != 'incomplete'
+- state_conflict
++ incomplete
+
+
+======================================================================
+FAIL: test_each_durable_boundary_forced_process_exit_recovers_without_sender (test_collection.CollectionTests.test_each_durable_boundary_forced_process_exit_recovers_without_sender) (point='after_receipt_checkpoint')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 271, in test_each_durable_boundary_forced_process_exit_recovers_without_sender
+    self.assertEqual(crash['exit_code'], 73, crash)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 0 != 73 : {'command': ['/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/bin/python', '-c', 'from support import collection_process_entry; import sys; collection_process_entry(sys.argv[1], None if sys.argv[2] == "none" else sys.argv[2], raw_only=sys.argv[3] == "yes")', '/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/tmp3m9xhz_6', 'after_receipt_checkpoint', 'no'], 'exit_code': 0, 'stdout': '', 'stderr': ''}
+
+======================================================================
+FAIL: test_each_durable_boundary_forced_process_exit_recovers_without_sender (test_collection.CollectionTests.test_each_durable_boundary_forced_process_exit_recovers_without_sender) (point='after_raw_promotion')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 271, in test_each_durable_boundary_forced_process_exit_recovers_without_sender
+    self.assertEqual(crash['exit_code'], 73, crash)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 0 != 73 : {'command': ['/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/bin/python', '-c', 'from support import collection_process_entry; import sys; collection_process_entry(sys.argv[1], None if sys.argv[2] == "none" else sys.argv[2], raw_only=sys.argv[3] == "yes")', '/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/tmpfqzv7aub', 'after_raw_promotion', 'no'], 'exit_code': 0, 'stdout': '', 'stderr': ''}
+
+======================================================================
+FAIL: test_each_durable_boundary_forced_process_exit_recovers_without_sender (test_collection.CollectionTests.test_each_durable_boundary_forced_process_exit_recovers_without_sender) (point='after_promotion_receipt')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 271, in test_each_durable_boundary_forced_process_exit_recovers_without_sender
+    self.assertEqual(crash['exit_code'], 73, crash)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 0 != 73 : {'command': ['/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/bin/python', '-c', 'from support import collection_process_entry; import sys; collection_process_entry(sys.argv[1], None if sys.argv[2] == "none" else sys.argv[2], raw_only=sys.argv[3] == "yes")', '/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/tmpbhnfipjw', 'after_promotion_receipt', 'no'], 'exit_code': 0, 'stdout': '', 'stderr': ''}
+
+======================================================================
+FAIL: test_each_durable_boundary_forced_process_exit_recovers_without_sender (test_collection.CollectionTests.test_each_durable_boundary_forced_process_exit_recovers_without_sender) (point='after_snapshot_record')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 271, in test_each_durable_boundary_forced_process_exit_recovers_without_sender
+    self.assertEqual(crash['exit_code'], 73, crash)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 0 != 73 : {'command': ['/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/bin/python', '-c', 'from support import collection_process_entry; import sys; collection_process_entry(sys.argv[1], None if sys.argv[2] == "none" else sys.argv[2], raw_only=sys.argv[3] == "yes")', '/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/tmp1rwz1m19', 'after_snapshot_record', 'no'], 'exit_code': 0, 'stdout': '', 'stderr': ''}
+
+======================================================================
+FAIL: test_each_durable_boundary_forced_process_exit_recovers_without_sender (test_collection.CollectionTests.test_each_durable_boundary_forced_process_exit_recovers_without_sender) (point='after_binding')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 271, in test_each_durable_boundary_forced_process_exit_recovers_without_sender
+    self.assertEqual(crash['exit_code'], 73, crash)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 0 != 73 : {'command': ['/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/bin/python', '-c', 'from support import collection_process_entry; import sys; collection_process_entry(sys.argv[1], None if sys.argv[2] == "none" else sys.argv[2], raw_only=sys.argv[3] == "yes")', '/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/tmpaj07i95s', 'after_binding', 'no'], 'exit_code': 0, 'stdout': '', 'stderr': ''}
+
+======================================================================
+FAIL: test_each_durable_boundary_forced_process_exit_recovers_without_sender (test_collection.CollectionTests.test_each_durable_boundary_forced_process_exit_recovers_without_sender) (point='after_snapshot_workset_write')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 271, in test_each_durable_boundary_forced_process_exit_recovers_without_sender
+    self.assertEqual(crash['exit_code'], 73, crash)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 0 != 73 : {'command': ['/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/bin/python', '-c', 'from support import collection_process_entry; import sys; collection_process_entry(sys.argv[1], None if sys.argv[2] == "none" else sys.argv[2], raw_only=sys.argv[3] == "yes")', '/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/tmpm5_yafyi', 'after_snapshot_workset_write', 'no'], 'exit_code': 0, 'stdout': '', 'stderr': ''}
+
+======================================================================
+FAIL: test_each_durable_boundary_forced_process_exit_recovers_without_sender (test_collection.CollectionTests.test_each_durable_boundary_forced_process_exit_recovers_without_sender) (point='before_result_write')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 272, in test_each_durable_boundary_forced_process_exit_recovers_without_sender
+    self.assertEqual(crash['stderr'], '')
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+AssertionError: "/Users/lowell/.local/share/uv/python/cpy[285 chars]n(\n" != ''
+- /Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/multiprocessing/resource_tracker.py:297: UserWarning: resource_tracker: There appear to be 5 leaked semaphore objects to clean up at shutdown: {'/mp-cvbeogvg', '/mp-b9hzrcfp', '/mp-rggphnr4', '/mp-runonjn8', '/mp-e6p3xpz5'}
+-   warnings.warn(
+
+
+======================================================================
+FAIL: test_incomplete_discovery_retains_successful_member_without_snapshot_workset (test_collection.CollectionTests.test_incomplete_discovery_retains_successful_member_without_snapshot_workset)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 112, in test_incomplete_discovery_retains_successful_member_without_snapshot_workset
+    self.assertEqual(result.outcome, 'incomplete')
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'state_conflict' != 'incomplete'
+- state_conflict
++ incomplete
+
+
+======================================================================
+FAIL: test_partial_success_404_then_only_unresolved_member_fetches (test_collection.CollectionTests.test_partial_success_404_then_only_unresolved_member_fetches)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 57, in test_partial_success_404_then_only_unresolved_member_fetches
+    self.assertEqual(first.outcome, 'incomplete')
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'state_conflict' != 'incomplete'
+- state_conflict
++ incomplete
+
+
+======================================================================
+FAIL: test_quarantine_retains_original_receipt_and_partial_bytes (test_collection.CollectionTests.test_quarantine_retains_original_receipt_and_partial_bytes)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 193, in test_quarantine_retains_original_receipt_and_partial_bytes
+    self.assertEqual(result.quarantined, 1)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 0 != 1
+
+======================================================================
+FAIL: test_real_discover_to_collect_verifies_approved_source_path_and_digest (test_collection.CollectionTests.test_real_discover_to_collect_verifies_approved_source_path_and_digest)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 254, in test_real_discover_to_collect_verifies_approved_source_path_and_digest
+    self.assertEqual(result.outcome, 'success')
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'state_conflict' != 'success'
+- state_conflict
++ success
+
+
+----------------------------------------------------------------------
+Ran 19 tests in 41.746s
+
+FAILED (failures=12, errors=9)
+
+exit_code=1

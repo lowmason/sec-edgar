@@ -1,0 +1,19 @@
+Command: uv run --offline --frozen --package sec-edgar-ingest python -m unittest discover -s packages/sec-edgar-ingest/tests -p test_coordination.py -k test_real_monitor_wakes -v
+Exit: 1
+test_real_monitor_wakes_when_reservation_installs_short_exchange_deadline (test_coordination.CoordinationTests.test_real_monitor_wakes_when_reservation_installs_short_exchange_deadline) ... FAIL
+
+======================================================================
+FAIL: test_real_monitor_wakes_when_reservation_installs_short_exchange_deadline (test_coordination.CoordinationTests.test_real_monitor_wakes_when_reservation_installs_short_exchange_deadline)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_coordination.py", line 576, in test_real_monitor_wakes_when_reservation_installs_short_exchange_deadline
+    self.assertTrue(turn.cancelled.wait(1),
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+                    "A permit deadline must wake the monitor already waiting for the 20-second renewal")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : A permit deadline must wake the monitor already waiting for the 20-second renewal
+
+----------------------------------------------------------------------
+Ran 1 test in 1.025s
+
+FAILED (failures=1)

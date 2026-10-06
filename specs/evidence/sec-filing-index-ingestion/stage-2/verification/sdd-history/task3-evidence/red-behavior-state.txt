@@ -1,0 +1,49 @@
+COMMAND: uv run --offline --frozen --package sec-edgar-ingest python -m unittest discover -s packages/sec-edgar-ingest/tests -p test_state.py -v
+EXIT: 1
+test_attempts_reopen_unfinished_and_finish_idempotently_without_erasure (test_state.StateTests.test_attempts_reopen_unfinished_and_finish_idempotently_without_erasure) ... FAIL
+test_binding_requires_snapshot_and_cas_conflicts_are_bounded (test_state.StateTests.test_binding_requires_snapshot_and_cas_conflicts_are_bounded) ... ok
+test_discovery_and_later_failure_preserve_success_and_existing_pin (test_state.StateTests.test_discovery_and_later_failure_preserve_success_and_existing_pin) ... FAIL
+test_first_pin_survives_reopen_and_newer_snapshot (test_state.StateTests.test_first_pin_survives_reopen_and_newer_snapshot) ... ok
+test_independent_processes_observe_absence_then_race_first_pin (test_state.StateTests.test_independent_processes_observe_absence_then_race_first_pin) ... ok
+test_older_receipt_and_out_of_order_discovery_never_move_pointers_back (test_state.StateTests.test_older_receipt_and_out_of_order_discovery_never_move_pointers_back) ... FAIL
+test_pending_sources_include_old_failed_and_all_pages (test_state.StateTests.test_pending_sources_include_old_failed_and_all_pages) ... ok
+test_request_attempts_are_immutable_auditable_and_bounded (test_state.StateTests.test_request_attempts_are_immutable_auditable_and_bounded) ... ok
+test_snapshot_durable_boundary_can_be_replayed_without_erasing_raw_or_success (test_state.StateTests.test_snapshot_durable_boundary_can_be_replayed_without_erasing_raw_or_success) ... ok
+
+======================================================================
+FAIL: test_attempts_reopen_unfinished_and_finish_idempotently_without_erasure (test_state.StateTests.test_attempts_reopen_unfinished_and_finish_idempotently_without_erasure)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_state.py", line 145, in test_attempts_reopen_unfinished_and_finish_idempotently_without_erasure
+    self.assertEqual(finished.value["result"], result.to_mapping())
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: FrozenMapping(_items=mappingproxy({'conte[3049 chars] 0})) != {'context': {'run_id': 'fixture-run', 'ex[2472 chars]:00'}
+
+======================================================================
+FAIL: test_discovery_and_later_failure_preserve_success_and_existing_pin (test_state.StateTests.test_discovery_and_later_failure_preserve_success_and_existing_pin)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_state.py", line 93, in test_discovery_and_later_failure_preserve_success_and_existing_pin
+    self.assertEqual(value["acquisition_status"], "downloaded")
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'failed' != 'downloaded'
+- failed
++ downloaded
+
+
+======================================================================
+FAIL: test_older_receipt_and_out_of_order_discovery_never_move_pointers_back (test_state.StateTests.test_older_receipt_and_out_of_order_discovery_never_move_pointers_back)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_state.py", line 110, in test_older_receipt_and_out_of_order_discovery_never_move_pointers_back
+    self.assertEqual(value["latest_downloaded_snapshot"], new.sha256)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'cba06b5736faf67e54b07b561eae94395e774c517a7d910a54369e1263ccfbd4' != '11507a0e2f5e69d5dfa40a62a1bd7b6ee57e6bcd85c67c9b8431b36fff21c437'
+- cba06b5736faf67e54b07b561eae94395e774c517a7d910a54369e1263ccfbd4
++ 11507a0e2f5e69d5dfa40a62a1bd7b6ee57e6bcd85c67c9b8431b36fff21c437
+
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.193s
+
+FAILED (failures=3)

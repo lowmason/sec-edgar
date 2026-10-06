@@ -1289,3 +1289,389 @@ def collection_race_entry(root, company, staged_barrier, binding_barrier, output
                     'candidate_sha256': __import__('hashlib').sha256(valid_idx_response('daily', company).body).hexdigest()})
     finally:
         h.close()
+
+
+ACQUISITION_PACK = Path(__file__).parent / 'fixtures/acquisition/manifest.json'
+
+
+def block_external_network():
+    """Tests admit only expressly selected loopback sockets and never ambient auth."""
+    import socket
+    original = socket.socket.connect
+    def connect(sock, address):
+        if not isinstance(address, tuple) or address[0] not in ('127.0.0.1', '::1'):
+            raise AssertionError('offline acquisition tests refuse external network')
+        return original(sock, address)
+    socket.socket.connect = connect
+
+
+def cli_process_entry():
+    import sys
+    import sec_edgar_ingest.cli as cli
+    from sec_edgar_ingest.storage import open_stores
+    block_external_network()
+    def audited_open(*args, **kwargs):
+        audit = Path.cwd() / 'constructions.json'
+        count = json.loads(audit.read_text()) if audit.exists() else 0
+        audit.write_text(json.dumps(count + 1))
+        return open_stores(*args, **kwargs)
+    cli.open_stores = audited_open
+    raise SystemExit(cli.main(sys.argv[1:]))
+
+
+class CliHarness:
+    """Actual argument parser in independent Python processes, durable local stores."""
+    def __init__(self, fixture, missing_user_agent=False):
+        import tempfile
+        self.temporary = tempfile.TemporaryDirectory(prefix='sec-cli-')
+        self.root = Path(self.temporary.name)
+        self.config_path = self.root / 'config.json'
+        self.pack_path = self.root / 'manifest.json'
+        config = json.loads(FIXTURE_CONFIG.read_text())
+        config['backfill'] = {'start_quarter': '2015Q1', 'end_quarter': '2015Q1'}
+        config['fixture'] = {'allow_clock_override': True, 'allow_deadline_override': True}
+        config['http']['retry_base_seconds'] = 0.001
+        config['http']['retry_cap_seconds'] = 0.001
+        if missing_user_agent:
+            del config['sec']['user_agent']
+        self.config_path.write_text(json.dumps(config))
+        manifest = json.loads(ACQUISITION_PACK.read_text())
+        for responses in manifest['responses'].values():
+            for response in responses:
+                response['body_path'] = str(Path('bodies') / Path(response['body_path']).name)
+        import shutil
+        shutil.copytree(ACQUISITION_PACK.parent / 'bodies', self.root / 'bodies')
+        self.fixture = fixture
+        quarter = fixture_source().canonical_url
+        quarter_listing = quarter.rsplit('/', 1)[0] + '/index.json'
+        if fixture == 'failed-earlier-quarter':
+            manifest['responses'][quarter_listing] = [self.response(404)]
+        elif fixture == 'valid-empty':
+            empty = listing_response('2015Q1', [], family='full-index')
+            manifest['responses'][quarter_listing] = [self.response(200, empty.body)]
+        elif fixture in ('pending', 'retry-exhausted', 'access-blocked', 'quarantined', 'ownership-lost', 'deferred'):
+            spec = {'pending': (404, b''), 'retry-exhausted': (503, b'failure'),
+                    'access-blocked': (403, b'access denied'), 'quarantined': (200, b'invalid index'),
+                    'ownership-lost': (200, b'prefix'), 'deferred': (503, b'failure')}[fixture]
+            response = self.response(*spec)
+            if fixture == 'ownership-lost':
+                response['fault'] = 'ownership_lost'
+            if fixture == 'deferred':
+                response['headers']['Retry-After'] = '9' * 400
+            manifest['responses'][quarter] = [response] * (5 if fixture == 'retry-exhausted' else 1)
+        self.pack_path.write_text(json.dumps(manifest))
+        self.common = ['--config', str(self.config_path), '--fixture-pack', str(self.pack_path),
+                       '--state-dir', str(self.root), '--today', '2026-10-06',
+                       '--deadline', '2099-01-01T00:00:00Z', '--run-id', 'cli-run']
+        self.calls = []
+
+    def response(self, status, body=b''):
+        import hashlib
+        digest = hashlib.sha256(body).hexdigest()
+        path = self.root / 'bodies' / (digest + '.body')
+        path.write_bytes(body)
+        return {'status': status, 'headers': {}, 'body_path': 'bodies/' + path.name, 'body_sha256': digest}
+
+    @property
+    def external_client_constructions(self):
+        path = self.root / 'constructions.json'
+        return json.loads(path.read_text()) if path.exists() else 0
+
+    @property
+    def state_root(self):
+        return self.root / '.fixture-state'
+
+    def invoke(self, command, arguments, *, common=None):
+        import os
+        import subprocess
+        import sys
+        env = {**os.environ, 'PYTHONPATH': str(Path(__file__).parent), 'PYTHONDONTWRITEBYTECODE': '1'}
+        argv = [sys.executable, '-c', 'from support import cli_process_entry; cli_process_entry()',
+                command, *(self.common if common is None else common), *arguments]
+        completed = subprocess.run(argv, cwd=self.root, env=env, capture_output=True, text=True, timeout=30)
+        self.calls.append({'argv': argv, 'exit': completed.returncode,
+                           'stdout': completed.stdout, 'stderr': completed.stderr})
+        return completed
+
+    def discover(self):
+        return self.invoke('discover', ['--mode', 'quarterly', '--discovery-id', 'cli-discovery',
+                                       '--execution-id', 'cli-discover', '--attempt-id', 'discover-1'])
+
+    def collect(self, workset_ref, *, attempt='collect-1', execution='cli-collect'):
+        return self.invoke('collect', ['--workset', workset_ref, '--execution-id', execution, '--attempt-id', attempt])
+
+    def read_durable_result(self, ref):
+        from sec_edgar_ingest.models import CommandResult
+        return CommandResult.from_json((self.state_root / 'objects' / ref).read_bytes())
+
+    def close(self):
+        import os
+        import shutil
+        destination = os.environ.get('SEC_EDGAR_TASK8_TRACE_DIR')
+        if destination:
+            target = Path(destination) / 'cli-files' / self.root.name
+            self.root.joinpath('calls.json').write_text(json.dumps(self.calls, indent=2, sort_keys=True) + '\n')
+            shutil.copytree(self.root, target, dirs_exist_ok=True)
+            (target / 'retention-map.json').write_text(json.dumps({'original_root': str(self.root), 'retained_root': str(target)}) + '\n')
+        self.temporary.cleanup()
+
+
+def cli_harness(fixture: str, missing_user_agent: bool = False) -> CliHarness:
+    return CliHarness(fixture, missing_user_agent)
+
+
+def result_crash_entry(point, *argv):
+    """Interrupt actual result object/Attempt transitions in an independent CLI process."""
+    import gc
+    import os
+    import sec_edgar_ingest.cli as cli
+    original = cli.write_result
+    class Objects:
+        def __init__(self, objects): self.objects = objects
+        def __getattr__(self, name): return getattr(self.objects, name)
+        def put_once(self, path, body):
+            if path.endswith('/result.json') and point == 'before_result_object':
+                gc.collect()
+                os._exit(74)
+            value = self.objects.put_once(path, body)
+            if path.endswith('/result.json') and point == 'after_result_object':
+                gc.collect()
+                os._exit(74)
+            return value
+    class State:
+        def __init__(self, state): self.state = state
+        def __getattr__(self, name): return getattr(self.state, name)
+        def finish_attempt(self, result):
+            if point == 'before_attempt_finish':
+                gc.collect()
+                os._exit(74)
+            self.state.finish_attempt(result)
+            if point == 'after_attempt_finish':
+                gc.collect()
+                os._exit(74)
+    def writer(result, objects, state):
+        return original(result, Objects(objects), State(state))
+    cli.write_result = writer
+    if point == 'unexpected_error':
+        def failure(*args, **kwargs): raise RuntimeError('explicit unexpected CLI fixture failure')
+        cli.collect = failure
+    if point == 'unexpected_sender':
+        class ExplodingSender:
+            def send(self, *args, **kwargs): raise RuntimeError('explicit unexpected sender fixture failure')
+        cli.FixturePack.sender = lambda self, state: ExplodingSender()
+    block_external_network()
+    raise SystemExit(cli.main(list(argv)))
+
+
+def retain_acquisition_proof(name, value):
+    import os
+    destination = os.environ.get('SEC_EDGAR_TASK8_TRACE_DIR')
+    if destination:
+        root = Path(destination)
+        root.mkdir(parents=True, exist_ok=True)
+        (root / (name + '.json')).write_text(json.dumps(value, indent=2, sort_keys=True) + '\n')
+
+
+def acquisition_race_entry(root, company, request_barrier, staged_barrier, binding_barrier, output):
+    import os
+    import time
+    from dataclasses import replace
+    from sec_edgar_ingest.collection import collect
+    from sec_edgar_ingest.coordination import Clock
+    from sec_edgar_ingest.results import write_result
+    from sec_edgar_ingest.worksets import decode_source_workset
+    root = Path(root)
+    clock = Clock()
+    h = CollectionHarness(root, [valid_idx_response('daily', company='process-' + company)], clock=clock)
+    h.context = replace(real_context(clock, h.settings), execution_id='process-' + company,
+                        attempt_id='process-' + company, deadline=clock.now() + timedelta(seconds=30))
+    events = []
+    def trace(event, **details):
+        events.append({'event': event, 'pid': os.getpid(), 'monotonic_ns': time.monotonic_ns(),
+                       'at': clock.now().isoformat(), **details})
+    def observe(event):
+        details = dict(event)
+        trace(details.pop('event'), **details)
+    h.coordinator.observer = observe
+    def staged():
+        trace('receipt_checkpoint')
+        staged_barrier.wait(timeout=20)
+    h.faults.at('after_receipt_checkpoint', staged)
+    h.source_state.store = CollectionRaceStore(h.store, binding_barrier, trace)
+    workset = decode_source_workset((root / 'input-workset.json').read_bytes())
+    try:
+        trace('request_barrier_ready')
+        request_barrier.wait(timeout=20)
+        trace('request_barrier_released')
+        result = collect(workset, h.context, h.settings, h.client, h.source_state, h.objects, h.faults)
+        reference = write_result(result, h.objects, h.source_state)
+        trace('result_written', result_ref=reference)
+        output.put({'result': result.to_mapping(), 'result_ref': reference, 'events': events,
+                    'candidate_sha256': __import__('hashlib').sha256(valid_idx_response('daily', company='process-' + company).body).hexdigest(),
+                    'result_hex': h.objects.read(reference).hex()})
+    finally:
+        h.close()
+
+
+def _integrated_settings():
+    return fixture_settings(http={'exchange_deadline_seconds': 0.8},
+                            coordination={'lease_seconds': 2, 'renew_every_seconds': 1, 'clock_uncertainty_seconds': 0.05})
+
+
+def _append_process_event(path, event, **fields):
+    import os
+    import time
+    with Path(path).open('a') as stream:
+        stream.write(json.dumps({'event': event, 'pid': os.getpid(), 'monotonic': time.monotonic(),
+                                 'at': datetime.now(timezone.utc).isoformat(), **fields}, sort_keys=True) + '\n')
+        stream.flush()
+        os.fsync(stream.fileno())
+
+
+def integrated_old_sender(root, url, origin, cancellation):
+    import gc
+    from sec_edgar_ingest.coordination import Clock, Coordinator
+    root = Path(root)
+    clock, settings = Clock(), _integrated_settings()
+    store, objects, leases = store_bundle(root / 'state', clock=clock)
+    coordinator = Coordinator(settings, store, leases, clock)
+    coordinator.observer = lambda event: _append_process_event(root / 'old-events.jsonl', 'coordinator', value=event)
+    sender = loopback_sender(settings, clock, origin, spool=root / 'old-sender')
+    context = real_context(clock, settings)
+    with coordinator.turn('integrated-old-owner', 'backfill', context.deadline) as turn:
+        turn.cancelled = cancellation
+        gc.collect()
+        permit = turn.reserve('integrated-old-request')
+        _append_process_event(root / 'old-events.jsonl', 'permit', permit=permit.to_mapping(),
+                              journal=leases.read_journal(turn.handle).to_mapping())
+        turn.assert_current(permit)
+        receipt = sender.send(url, context, permit, cancellation=cancellation)
+        turn.complete(permit, drained=True)
+    raise AssertionError('hostile fixture parent should have been killed')
+
+
+def integrated_successor(root, priority, servers, ready):
+    from dataclasses import replace
+    from sec_edgar_ingest.coordination import Clock, Coordinator
+    from sec_edgar_ingest.download import RequestClient
+    from sec_edgar_ingest.state import AcquisitionState
+    root = Path(root)
+    clock, settings = Clock(), _integrated_settings()
+    store, objects, leases = store_bundle(root / 'state', clock=clock)
+    state = AcquisitionState(store, clock=clock)
+    coordinator = Coordinator(settings, store, leases, clock)
+    trace_path = root / (priority + '-events.jsonl')
+    def observed(event):
+        _append_process_event(trace_path, 'coordinator', value=event)
+        if event['event'] == 'enqueue': ready.set()
+    coordinator.observer = observed
+    class MappedSender:
+        def __init__(self): self.index = 0
+        def send(self, url, context, permit, *, cancellation):
+            selected = servers[self.index]
+            self.index += 1
+            target = root / (priority + '-sender-' + str(self.index))
+            bounded = loopback_sender(settings, clock, selected['origin'], spool=target)
+            _append_process_event(trace_path, 'request-dispatch', permit=permit.to_mapping(), url=url)
+            receipt = bounded.send(selected['url'], context, permit, cancellation=cancellation)
+            return replace(receipt, url=url)
+    sender = MappedSender()
+    client = RequestClient(settings, coordinator, sender, state, clock)
+    client.jitter = lambda: 0
+    context = replace(real_context(clock, settings), run_id='integrated-' + priority,
+                      execution_id='integrated-' + priority, attempt_id='integrated-' + priority,
+                      priority=priority, deadline=clock.now() + timedelta(seconds=20))
+    try:
+        if priority == 'daily':
+            listing = client.fetch('https://www.sec.gov/Archives/edgar/daily-index/2026/QTR4/index.json', context)
+            _append_process_event(trace_path, 'listing-received', receipt=listing.to_mapping(), body_hex=listing.temporary_path.read_bytes().hex())
+            source = fixture_source('2026-10-01', 'daily')
+        else:
+            source = fixture_source()
+        receipt = client.fetch(source.canonical_url, context, source)
+        _append_process_event(trace_path, 'source-received', receipt=receipt.to_mapping(), body_hex=receipt.temporary_path.read_bytes().hex())
+        _append_process_event(trace_path, 'request-history', rows=[row.to_mapping() for row in store.scan('TransportAttempt', {})])
+    finally:
+        leases.close()
+        store.close()
+
+
+def integrated_takeover_proof():
+    import multiprocessing
+    import subprocess
+    import tempfile
+    import time
+    import shutil
+    import os
+    spawn = multiprocessing.get_context('spawn')
+    with tempfile.TemporaryDirectory(prefix='sec-integrated-takeover-') as temporary:
+        root = Path(temporary)
+        old = LoopbackServer(mode='blocked-headers')
+        listing = listing_response('2026Q4', ['master.20261001.idx'])
+        specs = [LoopbackServer(b'retry prefix', status=503, headers={'Retry-After': '1'}),
+                 LoopbackServer(listing.body), LoopbackServer(valid_idx_response('daily').body),
+                 LoopbackServer(valid_idx_response('quarterly').body)]
+        cancellation = spawn.Event()
+        old_process = spawn.Process(target=integrated_old_sender, args=(str(root), old.url, old.origin, cancellation))
+        processes = [old_process]
+        try:
+            old_process.start()
+            if not old.connected.wait(3): raise AssertionError('old child did not reach held loopback')
+            old_process.terminate()
+            old_process.join(2)
+            killed = time.monotonic()
+            old_events = [json.loads(line) for line in (root / 'old-events.jsonl').read_text().splitlines()]
+            reservation = next(event for event in old_events if event['event'] == 'permit')
+            permit = reservation['permit']
+            unsafe_mono = reservation['monotonic'] + (datetime.fromisoformat(permit['takeover_after']) - datetime.fromisoformat(reservation['at'])).total_seconds()
+            # Backfill queues first; the subsequently queued daily client must get the next turn.
+            backfill_ready, daily_ready = spawn.Event(), spawn.Event()
+            mapping = [{'url': server.url, 'origin': server.origin} for server in specs]
+            backfill = spawn.Process(target=integrated_successor, args=(str(root), 'backfill', mapping[3:], backfill_ready))
+            daily = spawn.Process(target=integrated_successor, args=(str(root), 'daily', mapping[:3], daily_ready))
+            processes += [backfill, daily]
+            backfill.start()
+            if not backfill_ready.wait(2): raise AssertionError('backfill client failed to queue')
+            daily.start()
+            if not daily_ready.wait(2): raise AssertionError('daily client failed to queue')
+            observations = []
+            while time.monotonic() < unsafe_mono - 0.02:
+                observations.append({'monotonic': time.monotonic(), 'successor_requests': sum(len(server.requests) for server in specs)})
+                if observations[-1]['successor_requests']: raise AssertionError('successor reached loopback inside persisted unsafe interval')
+                time.sleep(min(0.025, max(0, unsafe_mono - 0.02 - time.monotonic())))
+            for process in (daily, backfill):
+                process.join(10)
+                if process.exitcode != 0: raise AssertionError('integrated successor failed: ' + str(process.exitcode))
+            if not old.closed.wait(1): raise AssertionError('orphan old child socket did not drain')
+            old_transport = [json.loads(line) for line in (root / 'old-sender/transport.jsonl').read_text().splitlines()]
+            armed = next(event for event in old_transport if event['event'] == 'alarm-armed')
+            status = subprocess.run(['ps', '-o', 'stat=', '-p', str(armed['pid'])], capture_output=True, text=True, timeout=1)
+            drained = status.returncode == 1 or not status.stdout.strip() or status.stdout.strip().startswith('Z')
+            daily_events = [json.loads(line) for line in (root / 'daily-events.jsonl').read_text().splitlines()]
+            backfill_events = [json.loads(line) for line in (root / 'backfill-events.jsonl').read_text().splitlines()]
+            starts = sorted([{'priority': 'daily' if index < 3 else 'backfill', **event} for index, server in enumerate(specs) for event in server.events if event['event'] == 'request-received'], key=lambda event: event['monotonic'])
+            for before, after in zip(starts, starts[1:]):
+                if after['monotonic'] - before['monotonic'] < 1 / 3: raise AssertionError('shared wire pacing compressed across listing/retry/download')
+            child_traces = {path.relative_to(root).as_posix(): [json.loads(line) for line in path.read_text().splitlines()] for path in root.rglob('transport.jsonl')}
+            proof = {'parent_pid': old_process.pid, 'parent_exit': old_process.exitcode, 'killed_at': killed,
+                     'successor_exit': daily.exitcode, 'successor_processes': [{'pid': process.pid, 'exit': process.exitcode} for process in (daily, backfill)],
+                     'old_permit': permit, 'old_journal': reservation['journal'], 'unsafe_until_mono': unsafe_mono,
+                     'unsafe_observations': observations, 'zero_successor_through_guard': bool(observations) and all(item['successor_requests'] == 0 for item in observations),
+                     'successor_first_start': starts[0]['monotonic'], 'old_socket_closed': next(event['monotonic'] for event in old.events if event['event'] == 'socket-closed'),
+                     'ordered_priorities': [item['priority'] for item in starts], 'all_wire_starts': starts,
+                     'child_alarm_disposition': armed['alarm_disposition'], 'old_child_drained': drained,
+                     'orphan_status': {'argv': status.args, 'stdout': status.stdout, 'stderr': status.stderr, 'exit': status.returncode},
+                     'old_server': old.events, 'old_events': old_events, 'daily_events': daily_events,
+                     'backfill_events': backfill_events, 'child_traces': child_traces,
+                     'servers': [{'events': server.events, 'requests': server.requests, 'body_hex': server.body.hex(), 'body_sha256': __import__('hashlib').sha256(server.body).hexdigest()} for server in specs]}
+            return proof
+        finally:
+            destination = os.environ.get('SEC_EDGAR_TASK8_TRACE_DIR')
+            if destination:
+                target = Path(destination) / 'integrated-takeover-files'
+                shutil.copytree(root, target, dirs_exist_ok=True)
+                (target / 'retention-map.json').write_text(json.dumps({'original_root': str(root), 'retained_root': str(target)}) + '\n')
+            for process in processes:
+                if process.is_alive(): process.terminate(); process.join(2)
+            old.close()
+            for server in specs: server.close()

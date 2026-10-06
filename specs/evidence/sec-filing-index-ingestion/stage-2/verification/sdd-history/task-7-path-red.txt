@@ -1,0 +1,38 @@
+command=["/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/bin/python", "-m", "unittest", "-v", "test_collection.CollectionTests.test_path_components_are_refused_before_request"]
+stdout:
+
+stderr:
+test_path_components_are_refused_before_request (test_collection.CollectionTests.test_path_components_are_refused_before_request) ... 
+  test_path_components_are_refused_before_request (test_collection.CollectionTests.test_path_components_are_refused_before_request) (field='run_id') ... FAIL
+  test_path_components_are_refused_before_request (test_collection.CollectionTests.test_path_components_are_refused_before_request) (field='attempt_id') ... FAIL
+
+======================================================================
+FAIL: test_path_components_are_refused_before_request (test_collection.CollectionTests.test_path_components_are_refused_before_request) (field='run_id')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 382, in test_path_components_are_refused_before_request
+    self.assertEqual(result.outcome, 'configuration')
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'success' != 'configuration'
+- success
++ configuration
+
+
+======================================================================
+FAIL: test_path_components_are_refused_before_request (test_collection.CollectionTests.test_path_components_are_refused_before_request) (field='attempt_id')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 382, in test_path_components_are_refused_before_request
+    self.assertEqual(result.outcome, 'configuration')
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'success' != 'configuration'
+- success
++ configuration
+
+
+----------------------------------------------------------------------
+Ran 1 test in 0.090s
+
+FAILED (failures=2)
+
+exit_code=1

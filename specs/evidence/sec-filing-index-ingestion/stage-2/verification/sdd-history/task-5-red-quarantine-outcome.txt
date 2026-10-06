@@ -1,0 +1,15 @@
+test_html_200_fetch_reports_quarantine_outcome_and_preserves_original (test_download.DownloadTests.test_html_200_fetch_reports_quarantine_outcome_and_preserves_original) ... FAIL
+
+======================================================================
+FAIL: test_html_200_fetch_reports_quarantine_outcome_and_preserves_original (test_download.DownloadTests.test_html_200_fetch_reports_quarantine_outcome_and_preserves_original)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_download.py", line 113, in test_html_200_fetch_reports_quarantine_outcome_and_preserves_original
+    self.assertEqual(quarantined.exception.error.details.get("outcome"), "quarantined")
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: None != 'quarantined'
+
+----------------------------------------------------------------------
+Ran 1 test in 0.046s
+
+FAILED (failures=1)

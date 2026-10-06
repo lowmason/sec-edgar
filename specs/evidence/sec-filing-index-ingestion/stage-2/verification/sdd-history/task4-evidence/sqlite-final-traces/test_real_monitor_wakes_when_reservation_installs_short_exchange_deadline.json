@@ -1,0 +1,61 @@
+[
+  {
+    "at": "2026-10-06T14:51:59.792489+00:00",
+    "event": "enqueue",
+    "mono": 2737583.708312625,
+    "owner": "short-exchange",
+    "priority": "daily",
+    "ticket_id": "08e1d92c224f4469be8b52e0edf11605"
+  },
+  {
+    "at": "2026-10-06T14:51:59.793342+00:00",
+    "event": "queue-choice",
+    "mono": 2737583.709165708,
+    "owner": "short-exchange",
+    "priority": "daily",
+    "ticket_id": "08e1d92c224f4469be8b52e0edf11605"
+  },
+  {
+    "at": "2026-10-06T14:51:59.795481+00:00",
+    "event": "queue-choice",
+    "mono": 2737583.711305083,
+    "owner": "short-exchange",
+    "priority": "daily",
+    "ticket_id": "08e1d92c224f4469be8b52e0edf11605"
+  },
+  {
+    "at": "2026-10-06T14:51:59.796904+00:00",
+    "epoch": 1,
+    "event": "acquire",
+    "lease_id": "f0f6e1ab-6374-4b17-b83b-d128913c52e0",
+    "mono": 2737583.7127275,
+    "owner": "short-exchange",
+    "ownership_until": "2026-10-06T14:52:59.793346+00:00"
+  },
+  {
+    "at": "2026-10-06T14:51:59.796907+00:00",
+    "earliest_safe": "2026-10-06T14:51:59.795943+00:00",
+    "epoch": 1,
+    "event": "takeover",
+    "mono": 2737583.712729541,
+    "owner": "short-exchange"
+  },
+  {
+    "at": "2026-10-06T14:51:59.798563+00:00",
+    "epoch": 1,
+    "event": "reserve",
+    "mono": 2737583.714386458,
+    "next_allowed_at": "2026-10-06T14:52:00.464561+00:00",
+    "owner": "short-exchange",
+    "request_id": "short-deadline",
+    "start_before_mono": 2737584.0470495415
+  },
+  {
+    "at": "2026-10-06T14:52:00.203074+00:00",
+    "epoch": 1,
+    "event": "loss",
+    "mono": 2737584.118934291,
+    "owner": "short-exchange",
+    "reason": "turn/lease/exchange monotonic window expired"
+  }
+]

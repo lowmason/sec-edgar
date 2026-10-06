@@ -671,3 +671,107 @@ class BoundedSender:
         finally:
             reader.close()
             writer.close()
+
+
+class FixtureError(ValueError):
+    """Missing, corrupt or exhausted explicit fixture inputs never authorize HTTP."""
+
+
+@dataclass(frozen=True)
+class FixturePack:
+    responses: dict[str, tuple[ResponseSpec, ...]]
+    manifest_sha256: str
+    provenance: str
+
+    @classmethod
+    def load(cls, path: Path) -> FixturePack:
+        from .models import canonical_json, parse_json, require_hash, safe_relative_path
+        root = Path(path).resolve().parent
+        value = parse_json(Path(path).read_bytes())
+        if not isinstance(value, dict) or set(value) != {'fixture_version', 'provenance', 'responses'}:
+            raise FixtureError('fixture manifest requires the exact v1 fields')
+        if value['fixture_version'] != 'sec-acquisition-fixture-v1' or value['provenance'] not in ('synthetic', 'retained-stage-1'):
+            raise FixtureError('unsupported fixture version or provenance')
+        if not isinstance(value['responses'], dict) or not value['responses']:
+            raise FixtureError('fixture responses must be a nonempty URL mapping')
+        responses = {}
+        for url, items in value['responses'].items():
+            try:
+                _canonical_request_url(url)
+            except (ValueError, TypeError) as error:
+                raise FixtureError('fixture response URL must be a canonical SEC identity') from error
+            if not isinstance(items, list) or not items:
+                raise FixtureError('fixture URL requires a nonempty response sequence')
+            parsed = []
+            for spec in items:
+                required = {'status', 'headers', 'body_path', 'body_sha256'}
+                if not isinstance(spec, dict) or not required <= spec.keys() or set(spec) - required - {'fault'}:
+                    raise FixtureError('fixture response has unsupported fields')
+                if type(spec['status']) is not int or not 100 <= spec['status'] <= 599:
+                    raise FixtureError('fixture status must be an HTTP integer')
+                if not isinstance(spec['headers'], dict) or any(not isinstance(key, str) or not isinstance(item, str) for key, item in spec['headers'].items()):
+                    raise FixtureError('fixture headers require string keys and values')
+                fault = spec.get('fault')
+                if fault is not None and fault not in ('read_timeout', 'connection_failed', 'incomplete_body', 'ownership_lost'):
+                    raise FixtureError('unsupported explicit fixture fault')
+                relative = safe_relative_path(spec['body_path'], 'fixture body_path')
+                file = (root / relative).resolve()
+                if not file.is_relative_to(root) or not file.is_file():
+                    raise FixtureError('fixture body must be a file beneath the manifest directory')
+                require_hash(spec['body_sha256'], 'fixture body_sha256')
+                body = file.read_bytes()
+                if hashlib.sha256(body).hexdigest() != spec['body_sha256']:
+                    raise FixtureError('fixture body hash differs from explicit manifest')
+                parsed.append(ResponseSpec(spec['status'], body, dict(spec['headers']), fault))
+            responses[url] = tuple(parsed)
+        return cls(responses, hashlib.sha256(canonical_json(value)).hexdigest(), value['provenance'])
+
+    def sender(self, state) -> Sender:
+        return _FixtureSender(self, state)
+
+
+class _FixtureSender:
+    def __init__(self, pack: FixturePack, state):
+        self.pack, self.state = pack, state
+        self.clock = Clock()
+        self.directory = tempfile.TemporaryDirectory(prefix='sec-fixture-')
+
+    def send(self, url: str, context: RunContext, permit: Permit, *, cancellation) -> BodyReceipt:
+        from .models import canonical_json
+        from .storage.contracts import AlreadyExists, CAS_ATTEMPTS, Conflict
+        if context.effective_config.get('storage', {}).get('backend') != 'local-fixture':
+            raise FixtureError('fixture transport refuses a production context')
+        if cancellation.is_set() or self.clock.monotonic() >= permit.start_before_mono:
+            raise OwnershipLost('fixture transport refuses a cancelled or expired permit')
+        sequence = self.pack.responses.get(url)
+        if sequence is None:
+            raise FixtureError('fixture has no mapping for ' + url)
+        key = hashlib.sha256(canonical_json({'manifest_sha256': self.pack.manifest_sha256, 'url': url})).hexdigest()
+        for _ in range(CAS_ATTEMPTS):
+            row = self.state.get('FixtureResponseCursor', key)
+            previous = row.to_mapping()['value'] if row is not None else {
+                'fixture_only': True, 'manifest_sha256': self.pack.manifest_sha256, 'url': url, 'cursor': 0}
+            if set(previous) != {'fixture_only', 'manifest_sha256', 'url', 'cursor'} or previous['fixture_only'] is not True or previous['manifest_sha256'] != self.pack.manifest_sha256 or previous['url'] != url or type(previous['cursor']) is not int or previous['cursor'] < 0:
+                raise FixtureError('durable fixture cursor has conflicting provenance')
+            cursor = previous['cursor']
+            if cursor >= len(sequence):
+                raise FixtureError('fixture response mapping is exhausted: ' + url)
+            changed = {**previous, 'cursor': cursor + 1}
+            try:
+                if row is None:
+                    self.state.insert('FixtureResponseCursor', key, changed)
+                else:
+                    self.state.replace('FixtureResponseCursor', key, changed, row.version)
+                break
+            except (AlreadyExists, Conflict):
+                continue
+        else:
+            raise FixtureError('fixture response cursor exhausted conditional races')
+        spec = sequence[cursor]
+        error = Error(spec.fault, 'explicit fixture transport fault: ' + spec.fault,
+                      spec.fault != 'ownership_lost', None, {}) if spec.fault else None
+        return _new_receipt(url, spec.body, spec.status, spec.headers, self.clock.now(),
+                            complete=error is None, error=error, root=self.directory.name)
+
+    def close(self):
+        self.directory.cleanup()

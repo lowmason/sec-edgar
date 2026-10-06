@@ -1,0 +1,90 @@
+Command: git rev-parse HEAD
+Exit: 0
+129ca3a16dafdb82013a8fd28d3d653b58831112
+
+Command: git diff --cached --name-only
+Exit: 0
+packages/sec-edgar-ingest/src/sec_edgar_ingest/coordination.py
+packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py
+packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py
+packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/contracts.py
+packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py
+packages/sec-edgar-ingest/tests/support.py
+packages/sec-edgar-ingest/tests/test_coordination.py
+
+Command: git add -- packages/sec-edgar-ingest/src/sec_edgar_ingest/coordination.py packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/contracts.py packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py packages/sec-edgar-ingest/tests/test_coordination.py packages/sec-edgar-ingest/tests/support.py
+Exit: 0
+
+Command: git diff --cached --name-only
+Exit: 0
+packages/sec-edgar-ingest/src/sec_edgar_ingest/coordination.py
+packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py
+packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py
+packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/contracts.py
+packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py
+packages/sec-edgar-ingest/tests/support.py
+packages/sec-edgar-ingest/tests/test_coordination.py
+
+Command: git diff --cached --check
+Exit: 0
+
+Command: git diff --cached --stat
+Exit: 0
+ .../src/sec_edgar_ingest/coordination.py           | 525 +++++++++++++
+ .../src/sec_edgar_ingest/models.py                 |   3 +
+ .../src/sec_edgar_ingest/storage/azure.py          |  73 +-
+ .../src/sec_edgar_ingest/storage/contracts.py      |  39 +-
+ .../src/sec_edgar_ingest/storage/local.py          | 124 +++-
+ packages/sec-edgar-ingest/tests/support.py         | 390 ++++++++++
+ .../sec-edgar-ingest/tests/test_coordination.py    | 818 +++++++++++++++++++++
+ 7 files changed, 1954 insertions(+), 18 deletions(-)
+
+Command: git commit -m feat: coordinate collector ownership pacing and takeover
+Exit: 0
+[codex/sec-edgar-stage-2 1d6f619] feat: coordinate collector ownership pacing and takeover
+ 7 files changed, 1954 insertions(+), 18 deletions(-)
+ create mode 100644 packages/sec-edgar-ingest/src/sec_edgar_ingest/coordination.py
+ create mode 100644 packages/sec-edgar-ingest/tests/test_coordination.py
+
+Command: git rev-parse HEAD
+Exit: 0
+1d6f61947fac947d872cf0a395e93bbc252adaa2
+
+Command: git diff 129ca3a16dafdb82013a8fd28d3d653b58831112 1d6f61947fac947d872cf0a395e93bbc252adaa2 --check
+Exit: 0
+
+Command: git diff --name-only 129ca3a16dafdb82013a8fd28d3d653b58831112 1d6f61947fac947d872cf0a395e93bbc252adaa2
+Exit: 0
+packages/sec-edgar-ingest/src/sec_edgar_ingest/coordination.py
+packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py
+packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py
+packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/contracts.py
+packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py
+packages/sec-edgar-ingest/tests/support.py
+packages/sec-edgar-ingest/tests/test_coordination.py
+
+Command: git show --format=fuller --stat HEAD
+Exit: 0
+commit 1d6f61947fac947d872cf0a395e93bbc252adaa2
+Author:     Lowell Mason <mason.lowell@mac.com>
+AuthorDate: Tue Oct 6 10:55:47 2026 -0400
+Commit:     Lowell Mason <mason.lowell@mac.com>
+CommitDate: Tue Oct 6 10:55:47 2026 -0400
+
+    feat: coordinate collector ownership pacing and takeover
+
+ .../src/sec_edgar_ingest/coordination.py           | 525 +++++++++++++
+ .../src/sec_edgar_ingest/models.py                 |   3 +
+ .../src/sec_edgar_ingest/storage/azure.py          |  73 +-
+ .../src/sec_edgar_ingest/storage/contracts.py      |  39 +-
+ .../src/sec_edgar_ingest/storage/local.py          | 124 +++-
+ packages/sec-edgar-ingest/tests/support.py         | 390 ++++++++++
+ .../sec-edgar-ingest/tests/test_coordination.py    | 818 +++++++++++++++++++++
+ 7 files changed, 1954 insertions(+), 18 deletions(-)
+
+Command: git status --short
+Exit: 0
+ D packages/sec-edgar-index-ingest/README.md
+ D packages/sec-edgar-index-ingest/pyproject.toml
+ D packages/sec-edgar-index-ingest/src/sec_edgar_index_ingest/__init__.py
+ D packages/sec-edgar-index-ingest/src/sec_edgar_index_ingest/py.typed

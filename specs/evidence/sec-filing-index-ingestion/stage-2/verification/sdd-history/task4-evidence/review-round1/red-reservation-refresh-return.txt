@@ -1,0 +1,20 @@
+HEAD: 1d6f61947fac947d872cf0a395e93bbc252adaa2
+Command: uv run --offline --frozen --package sec-edgar-ingest python -m unittest discover -s packages/sec-edgar-ingest/tests -p test_coordination.py -k test_refresh_return_pause_cannot_compress -v
+Exit: 1
+test_refresh_return_pause_cannot_compress_actual_transport_starts (test_coordination.CoordinationTests.test_refresh_return_pause_cannot_compress_actual_transport_starts) ... FAIL
+
+======================================================================
+FAIL: test_refresh_return_pause_cannot_compress_actual_transport_starts (test_coordination.CoordinationTests.test_refresh_return_pause_cannot_compress_actual_transport_starts)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_coordination.py", line 352, in test_refresh_return_pause_cannot_compress_actual_transport_starts
+    self.assertGreaterEqual(spacing, 1/3,
+    ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^
+                            "Latest permissible dispatch UTC must advance through a pause after refresh returned")
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 0.083345 not greater than or equal to 0.3333333333333333 : Latest permissible dispatch UTC must advance through a pause after refresh returned
+
+----------------------------------------------------------------------
+Ran 1 test in 0.038s
+
+FAILED (failures=1)

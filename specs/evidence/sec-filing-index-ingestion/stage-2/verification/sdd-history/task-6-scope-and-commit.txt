@@ -1,0 +1,33 @@
+$ git show --format=fuller --stat HEAD
+commit c51fe3b3350d71195ed94880359304ab3634aca9
+Author:     Lowell Mason <mason.lowell@mac.com>
+AuthorDate: Tue Oct 6 14:09:22 2026 -0400
+Commit:     Lowell Mason <mason.lowell@mac.com>
+CommitDate: Tue Oct 6 14:09:22 2026 -0400
+
+    feat: discover durable source worksets without hiding gaps
+
+ .../src/sec_edgar_ingest/discovery.py              | 341 +++++++++++++
+ .../sec-edgar-ingest/src/sec_edgar_ingest/state.py | 176 ++++++-
+ .../tests/fixtures/listings/empty.json             |   8 +
+ .../tests/fixtures/listings/late-daily.json        |  16 +
+ .../tests/fixtures/listings/leap-day.json          |  16 +
+ .../tests/fixtures/listings/malformed.json         |   6 +
+ .../tests/fixtures/listings/unsafe.json            |  16 +
+ packages/sec-edgar-ingest/tests/support.py         | 139 +++++
+ packages/sec-edgar-ingest/tests/test_discovery.py  | 565 +++++++++++++++++++++
+ 9 files changed, 1281 insertions(+), 2 deletions(-)
+exit_code=0
+
+$ git status --short
+ D packages/sec-edgar-index-ingest/README.md
+ D packages/sec-edgar-index-ingest/pyproject.toml
+ D packages/sec-edgar-index-ingest/src/sec_edgar_index_ingest/__init__.py
+ D packages/sec-edgar-index-ingest/src/sec_edgar_index_ingest/py.typed
+exit_code=0
+
+$ git diff --cached --name-only
+exit_code=0
+
+$ git -c core.whitespace=cr-at-eol diff --check 50b2756330cbef91b5c664a5f4cc72c2f5c35626 HEAD
+exit_code=0

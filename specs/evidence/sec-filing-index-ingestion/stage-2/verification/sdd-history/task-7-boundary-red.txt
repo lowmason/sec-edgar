@@ -1,0 +1,84 @@
+command=["/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/bin/python", "-m", "unittest", "-v", "test_collection.CollectionTests.test_existing_pin_does_not_consult_broken_mutable_latest", "test_collection.CollectionTests.test_staged_only_recovery_accounts_missing_receipt_as_next_request", "test_collection.CollectionTests.test_promoted_missing_or_corrupt_raw_cannot_be_repaired_from_staging", "test_collection.CollectionTests.test_checkpoint_tampering_does_not_invent_transport_provenance", "test_collection.CollectionTests.test_each_failed_retry_prefix_is_quarantined_before_success_result", "test_collection.CollectionTests.test_fatal_halt_still_counts_later_existing_pin_as_complete", "test_collection.CollectionTests.test_repeated_attempt_identity_with_changed_context_returns_state_conflict"]
+stdout:
+
+stderr:
+test_existing_pin_does_not_consult_broken_mutable_latest (test_collection.CollectionTests.test_existing_pin_does_not_consult_broken_mutable_latest) ... FAIL
+test_staged_only_recovery_accounts_missing_receipt_as_next_request (test_collection.CollectionTests.test_staged_only_recovery_accounts_missing_receipt_as_next_request) ... ok
+test_promoted_missing_or_corrupt_raw_cannot_be_repaired_from_staging (test_collection.CollectionTests.test_promoted_missing_or_corrupt_raw_cannot_be_repaired_from_staging) ... ok
+test_checkpoint_tampering_does_not_invent_transport_provenance (test_collection.CollectionTests.test_checkpoint_tampering_does_not_invent_transport_provenance) ... FAIL
+test_each_failed_retry_prefix_is_quarantined_before_success_result (test_collection.CollectionTests.test_each_failed_retry_prefix_is_quarantined_before_success_result) ... FAIL
+test_fatal_halt_still_counts_later_existing_pin_as_complete (test_collection.CollectionTests.test_fatal_halt_still_counts_later_existing_pin_as_complete) ... FAIL
+test_repeated_attempt_identity_with_changed_context_returns_state_conflict (test_collection.CollectionTests.test_repeated_attempt_identity_with_changed_context_returns_state_conflict) ... ERROR
+
+======================================================================
+ERROR: test_repeated_attempt_identity_with_changed_context_returns_state_conflict (test_collection.CollectionTests.test_repeated_attempt_identity_with_changed_context_returns_state_conflict)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 360, in test_repeated_attempt_identity_with_changed_context_returns_state_conflict
+    result = self.collection.collect(self.workset, changed, h.settings, h.client, h.source_state, h.objects, h.faults)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/collection.py", line 240, in collect
+    state.begin_attempt(context)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/state.py", line 379, in begin_attempt
+    raise Conflict("attempt identity has conflicting provenance")
+sec_edgar_ingest.storage.contracts.Conflict: attempt identity has conflicting provenance
+
+======================================================================
+FAIL: test_existing_pin_does_not_consult_broken_mutable_latest (test_collection.CollectionTests.test_existing_pin_does_not_consult_broken_mutable_latest)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 271, in test_existing_pin_does_not_consult_broken_mutable_latest
+    self.assertEqual(result.outcome, 'success')
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'state_conflict' != 'success'
+- state_conflict
++ success
+
+
+======================================================================
+FAIL: test_checkpoint_tampering_does_not_invent_transport_provenance (test_collection.CollectionTests.test_checkpoint_tampering_does_not_invent_transport_provenance)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 320, in test_checkpoint_tampering_does_not_invent_transport_provenance
+    self.assertEqual(result.outcome, 'state_conflict')
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'success' != 'state_conflict'
+- success
++ state_conflict
+
+
+======================================================================
+FAIL: test_each_failed_retry_prefix_is_quarantined_before_success_result (test_collection.CollectionTests.test_each_failed_retry_prefix_is_quarantined_before_success_result)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 330, in test_each_failed_retry_prefix_is_quarantined_before_success_result
+    self.assertEqual(result.quarantined, 1)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 0 != 1
+
+======================================================================
+FAIL: test_fatal_halt_still_counts_later_existing_pin_as_complete (test_collection.CollectionTests.test_fatal_halt_still_counts_later_existing_pin_as_complete)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 352, in test_fatal_halt_still_counts_later_existing_pin_as_complete
+    self.assertEqual((result.pending, result.unchanged, result.failed), (1, 1, 1))
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Tuples differ: (2, 0, 1) != (1, 1, 1)
+
+First differing element 0:
+2
+1
+
+- (2, 0, 1)
+?  ^  ^
+
++ (1, 1, 1)
+?  ^  ^
+
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.530s
+
+FAILED (failures=4, errors=1)
+
+exit_code=1

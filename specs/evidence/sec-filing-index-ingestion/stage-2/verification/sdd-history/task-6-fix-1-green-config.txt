@@ -1,0 +1,20 @@
+$ uv run --offline --frozen --package sec-edgar-ingest python -m unittest discover -s packages/sec-edgar-ingest/tests -p test_config.py -v
+test_azure_deadlines_and_two_callers_share_one_binding (test_config.ConfigTests.test_azure_deadlines_and_two_callers_share_one_binding) ... ok
+test_azure_explicit_binding_and_credential_free_endpoints (test_config.ConfigTests.test_azure_explicit_binding_and_credential_free_endpoints) ... ok
+test_clock_override_is_fixture_only_and_explicit (test_config.ConfigTests.test_clock_override_is_fixture_only_and_explicit) ... ok
+test_config_parser_rejects_duplicate_keys_and_non_utf8 (test_config.ConfigTests.test_config_parser_rejects_duplicate_keys_and_non_utf8) ... ok
+test_fixture_overrides_are_explicit_and_validated (test_config.ConfigTests.test_fixture_overrides_are_explicit_and_validated) ... ok
+test_invalid_configuration_precedes_external_factories (test_config.ConfigTests.test_invalid_configuration_precedes_external_factories) ... ok
+test_json_yaml_subset_loads_without_creating_fixture_root (test_config.ConfigTests.test_json_yaml_subset_loads_without_creating_fixture_root) ... ok
+test_mapping_is_detached_and_typed_settings_are_frozen (test_config.ConfigTests.test_mapping_is_detached_and_typed_settings_are_frozen) ... ok
+test_pin_context_checks_range_identity_and_deadline (test_config.ConfigTests.test_pin_context_checks_range_identity_and_deadline) ... ok
+test_pinning_retains_exact_date_without_changing_run_start (test_config.ConfigTests.test_pinning_retains_exact_date_without_changing_run_start) ... ok
+test_rejects_configuration_matrix (test_config.ConfigTests.test_rejects_configuration_matrix) ... ok
+test_second_collector_is_refused (test_config.ConfigTests.test_second_collector_is_refused) ... ok
+
+----------------------------------------------------------------------
+Ran 12 tests in 0.214s
+
+OK
+
+exit_code=0

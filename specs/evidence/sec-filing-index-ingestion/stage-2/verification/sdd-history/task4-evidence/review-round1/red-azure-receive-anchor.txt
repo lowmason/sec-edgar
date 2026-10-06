@@ -1,0 +1,20 @@
+HEAD: 1d6f61947fac947d872cf0a395e93bbc252adaa2
+Command: uv run --offline --frozen --package sec-edgar-ingest python -m unittest discover -s packages/sec-edgar-ingest/tests -p test_coordination.py -k test_azure_receive_sample_must_anchor -v
+Exit: 1
+test_azure_receive_sample_must_anchor_the_interval_without_unmeasured_delay (test_coordination.JournalContractTests.test_azure_receive_sample_must_anchor_the_interval_without_unmeasured_delay) ... FAIL
+
+======================================================================
+FAIL: test_azure_receive_sample_must_anchor_the_interval_without_unmeasured_delay (test_coordination.JournalContractTests.test_azure_receive_sample_must_anchor_the_interval_without_unmeasured_delay)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_coordination.py", line 100, in test_azure_receive_sample_must_anchor_the_interval_without_unmeasured_delay
+    self.assertGreaterEqual(current.upper, clock.now(),
+    ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                            "A later monotonic anchor must not omit elapsed time from the accepted server interval")
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: datetime.datetime(2026, 10, 6, 0, 0, 1, 50000, tzinfo=datetime.timezone.utc) not greater than or equal to datetime.datetime(2026, 10, 6, 0, 0, 1, 200000, tzinfo=datetime.timezone.utc) : A later monotonic anchor must not omit elapsed time from the accepted server interval
+
+----------------------------------------------------------------------
+Ran 1 test in 0.082s
+
+FAILED (failures=1)

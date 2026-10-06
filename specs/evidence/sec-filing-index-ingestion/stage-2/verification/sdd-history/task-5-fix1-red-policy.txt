@@ -1,0 +1,53 @@
+test_calendar_overflow_retains_receipt_and_blocks_all_successor_runs (test_download.PolicyHandoffTests.test_calendar_overflow_retains_receipt_and_blocks_all_successor_runs) ... ERROR
+test_queued_caller_cannot_dispatch_after_another_client_persists_denial (test_download.PolicyHandoffTests.test_queued_caller_cannot_dispatch_after_another_client_persists_denial) ... FAIL
+test_retry_after_is_published_before_original_owner_hands_off (test_download.PolicyHandoffTests.test_retry_after_is_published_before_original_owner_hands_off) ... FAIL
+
+======================================================================
+ERROR: test_calendar_overflow_retains_receipt_and_blocks_all_successor_runs (test_download.PolicyHandoffTests.test_calendar_overflow_retains_receipt_and_blocks_all_successor_runs)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_download.py", line 334, in test_calendar_overflow_retains_receipt_and_blocks_all_successor_runs
+    first.fetch_response_only()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/support.py", line 567, in fetch_response_only
+    return self.client.fetch(url or "https://www.sec.gov/Archives/edgar/full-index/2015/QTR1/index.json", self.context)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/download.py", line 237, in fetch
+    retry, next_allowed = self._retry_metadata(receipt, audited.permit, ordinal)
+                          ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/download.py", line 195, in _retry_metadata
+    not_before = bounds.upper+timedelta(seconds=delay)
+                 ~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~
+OverflowError: date value out of range
+
+======================================================================
+FAIL: test_queued_caller_cannot_dispatch_after_another_client_persists_denial (test_download.PolicyHandoffTests.test_queued_caller_cannot_dispatch_after_another_client_persists_denial)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_download.py", line 302, in test_queued_caller_cannot_dispatch_after_another_client_persists_denial
+    self.assertEqual(second.starts, [], "serialized admission must recheck a durable run halt before ordinal and transport")
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: [0.666668] != []
+
+First list contains 1 additional elements.
+First extra element 0:
+0.666668
+
+- [0.666668]
++ [] : serialized admission must recheck a durable run halt before ordinal and transport
+
+======================================================================
+FAIL: test_retry_after_is_published_before_original_owner_hands_off (test_download.PolicyHandoffTests.test_retry_after_is_published_before_original_owner_hands_off)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_download.py", line 323, in test_retry_after_is_published_before_original_owner_hands_off
+    self.assertGreaterEqual(second.starts[0]-first.starts[0], 180,
+    ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                            "already queued next owner must see the server delay at the first release")
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 0.666668 not greater than or equal to 180 : already queued next owner must see the server delay at the first release
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.161s
+
+FAILED (failures=2, errors=1)

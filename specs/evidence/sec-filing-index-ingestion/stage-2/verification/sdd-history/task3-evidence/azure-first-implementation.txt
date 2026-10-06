@@ -1,0 +1,348 @@
+COMMAND: uv run --offline --frozen --package sec-edgar-ingest python -m unittest discover -s packages/sec-edgar-ingest/tests -p test_azure_contracts.py -v
+EXIT: 1
+test_attempt_rows_use_only_attempts_table (test_azure_contracts.AzureContractTests.test_attempt_rows_use_only_attempts_table) ... ok
+test_blob_collision_verifies_equal_content_and_preserves_different_content (test_azure_contracts.AzureContractTests.test_blob_collision_verifies_equal_content_and_preserves_different_content) ... 
+  test_blob_collision_verifies_equal_content_and_preserves_different_content (test_azure_contracts.AzureContractTests.test_blob_collision_verifies_equal_content_and_preserves_different_content) (succeeds=True) ... ERROR
+  test_blob_collision_verifies_equal_content_and_preserves_different_content (test_azure_contracts.AzureContractTests.test_blob_collision_verifies_equal_content_and_preserves_different_content) (succeeds=False) ... ERROR
+test_blob_create_is_explicit_version_and_if_none_match (test_azure_contracts.AzureContractTests.test_blob_create_is_explicit_version_and_if_none_match) ... ok
+test_blob_errors_do_not_retry_or_become_immutable_success (test_azure_contracts.AzureContractTests.test_blob_errors_do_not_retry_or_become_immutable_success) ... ERROR
+test_blob_stage_promote_uses_blob_create_without_dfs_rename (test_azure_contracts.AzureContractTests.test_blob_stage_promote_uses_blob_create_without_dfs_rename) ... ERROR
+test_factory_conditions_fixed_registry_before_authority_clients (test_azure_contracts.AzureContractTests.test_factory_conditions_fixed_registry_before_authority_clients) ... ERROR
+test_installed_pins_are_exact (test_azure_contracts.AzureContractTests.test_installed_pins_are_exact) ... ok
+test_lease_acquire_renew_and_release_use_service_id_and_pinned_version (test_azure_contracts.AzureContractTests.test_lease_acquire_renew_and_release_use_service_id_and_pinned_version) ... ok
+test_lease_conflict_loss_expiry_and_unbounded_clock_fail_closed (test_azure_contracts.AzureContractTests.test_lease_conflict_loss_expiry_and_unbounded_clock_fail_closed) ... 
+  test_lease_conflict_loss_expiry_and_unbounded_clock_fail_closed (test_azure_contracts.AzureContractTests.test_lease_conflict_loss_expiry_and_unbounded_clock_fail_closed) (headers={'Date': ''}) ... ERROR
+test_lease_owned_check_rewrites_same_journal_with_exact_etag_and_actual_id (test_azure_contracts.AzureContractTests.test_lease_owned_check_rewrites_same_journal_with_exact_etag_and_actual_id) ... ERROR
+test_table_create_conflict_stale_replace_and_not_found_map_exactly (test_azure_contracts.AzureContractTests.test_table_create_conflict_stale_replace_and_not_found_map_exactly) ... ok
+test_table_get_uses_raw_header_never_timestamp_fabricated_etag (test_azure_contracts.AzureContractTests.test_table_get_uses_raw_header_never_timestamp_fabricated_etag) ... ok
+test_table_insert_is_atomic_create_and_returns_actual_write_etag (test_azure_contracts.AzureContractTests.test_table_insert_is_atomic_create_and_returns_actual_write_etag) ... ok
+test_table_query_exhausts_continuations_including_empty_page (test_azure_contracts.AzureContractTests.test_table_query_exhausts_continuations_including_empty_page) ... ok
+test_table_query_missing_service_etag_and_unknown_errors_fail_closed (test_azure_contracts.AzureContractTests.test_table_query_missing_service_etag_and_unknown_errors_fail_closed) ... ok
+test_table_replace_uses_put_and_exact_opaque_if_match (test_azure_contracts.AzureContractTests.test_table_replace_uses_put_and_exact_opaque_if_match) ... ok
+
+======================================================================
+ERROR: test_blob_collision_verifies_equal_content_and_preserves_different_content (test_azure_contracts.AzureContractTests.test_blob_collision_verifies_equal_content_and_preserves_different_content) (succeeds=True)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py", line 167, in _upload
+    blob.upload_blob(stream, length=byte_count, overwrite=False, match_condition=MatchConditions.IfMissing)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/core/tracing/decorator.py", line 119, in wrapper_use_tracer
+    return func(*args, **kwargs)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/storage/blob/_blob_client.py", line 636, in upload_blob
+    return upload_block_blob(**options)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/storage/blob/_upload_helpers.py", line 204, in upload_block_blob
+    process_storage_error(error)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/storage/blob/_shared/response_handlers.py", line 198, in process_storage_error
+    raise error from None
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/storage/blob/_upload_helpers.py", line 102, in upload_block_blob
+    response = client.upload(
+        body=data,  # type: ignore [arg-type]
+    ...<12 lines>...
+        **kwargs,
+    )
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/core/tracing/decorator.py", line 119, in wrapper_use_tracer
+    return func(*args, **kwargs)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/storage/blob/_generated/operations/_block_blob_operations.py", line 916, in upload
+    map_error(status_code=response.status_code, response=response, error_map=error_map)
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/core/exceptions.py", line 163, in map_error
+    raise error
+azure.core.exceptions.ResourceExistsError: offline contract failure
+ErrorCode:BlobAlreadyExists
+Content: <Error><Code>BlobAlreadyExists</Code><Message>offline contract failure</Message></Error>
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_azure_contracts.py", line 148, in test_blob_collision_verifies_equal_content_and_preserves_different_content
+    self.assertEqual(objects.put_once("raw/immutable", b"accepted"), "raw/immutable")
+                     ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py", line 178, in put_once
+    return self._upload(path, body, hashlib.sha256(body).hexdigest(), len(body))
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py", line 171, in _upload
+    self.verify(path, sha256, byte_count)
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py", line 202, in verify
+    for chunk in self._blob(path).download_blob(max_concurrency=1).chunks():
+                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/core/tracing/decorator.py", line 119, in wrapper_use_tracer
+    return func(*args, **kwargs)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/storage/blob/_blob_client.py", line 784, in download_blob
+    return StorageStreamDownloader(**options)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/storage/blob/_download.py", line 424, in __init__
+    self._response = self._initial_request()
+                     ~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/storage/blob/_download.py", line 489, in _initial_request
+    self._clients.blob.download(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        range=range_header,
+        ^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+        **self._request_options,
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+    ),
+    ^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/core/tracing/decorator.py", line 119, in wrapper_use_tracer
+    return func(*args, **kwargs)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/storage/blob/_generated/operations/_blob_operations.py", line 1890, in download
+    return cls(pipeline_response, deserialized, response_headers)  # type: ignore
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/storage/blob/_deserialize.py", line 96, in deserialize_blob_stream
+    obj.properties = blob_properties
+    ^^^^^^^^^^^^^^
+AttributeError: 'tuple_iterator' object has no attribute 'properties' and no __dict__ for setting new attributes
+
+======================================================================
+ERROR: test_blob_collision_verifies_equal_content_and_preserves_different_content (test_azure_contracts.AzureContractTests.test_blob_collision_verifies_equal_content_and_preserves_different_content) (succeeds=False)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py", line 167, in _upload
+    blob.upload_blob(stream, length=byte_count, overwrite=False, match_condition=MatchConditions.IfMissing)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/core/tracing/decorator.py", line 119, in wrapper_use_tracer
+    return func(*args, **kwargs)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/storage/blob/_blob_client.py", line 636, in upload_blob
+    return upload_block_blob(**options)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/storage/blob/_upload_helpers.py", line 204, in upload_block_blob
+    process_storage_error(error)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/storage/blob/_shared/response_handlers.py", line 198, in process_storage_error
+    raise error from None
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/storage/blob/_upload_helpers.py", line 102, in upload_block_blob
+    response = client.upload(
+        body=data,  # type: ignore [arg-type]
+    ...<12 lines>...
+        **kwargs,
+    )
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/core/tracing/decorator.py", line 119, in wrapper_use_tracer
+    return func(*args, **kwargs)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/storage/blob/_generated/operations/_block_blob_operations.py", line 916, in upload
+    map_error(status_code=response.status_code, response=response, error_map=error_map)
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/core/exceptions.py", line 163, in map_error
+    raise error
+azure.core.exceptions.ResourceExistsError: offline contract failure
+ErrorCode:BlobAlreadyExists
+Content: <Error><Code>BlobAlreadyExists</Code><Message>offline contract failure</Message></Error>
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_azure_contracts.py", line 151, in test_blob_collision_verifies_equal_content_and_preserves_different_content
+    objects.put_once("raw/immutable", b"accepted")
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py", line 178, in put_once
+    return self._upload(path, body, hashlib.sha256(body).hexdigest(), len(body))
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py", line 171, in _upload
+    self.verify(path, sha256, byte_count)
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py", line 202, in verify
+    for chunk in self._blob(path).download_blob(max_concurrency=1).chunks():
+                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/core/tracing/decorator.py", line 119, in wrapper_use_tracer
+    return func(*args, **kwargs)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/storage/blob/_blob_client.py", line 784, in download_blob
+    return StorageStreamDownloader(**options)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/storage/blob/_download.py", line 424, in __init__
+    self._response = self._initial_request()
+                     ~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/storage/blob/_download.py", line 489, in _initial_request
+    self._clients.blob.download(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        range=range_header,
+        ^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+        **self._request_options,
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+    ),
+    ^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/core/tracing/decorator.py", line 119, in wrapper_use_tracer
+    return func(*args, **kwargs)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/storage/blob/_generated/operations/_blob_operations.py", line 1890, in download
+    return cls(pipeline_response, deserialized, response_headers)  # type: ignore
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/storage/blob/_deserialize.py", line 96, in deserialize_blob_stream
+    obj.properties = blob_properties
+    ^^^^^^^^^^^^^^
+AttributeError: 'tuple_iterator' object has no attribute 'properties' and no __dict__ for setting new attributes
+
+======================================================================
+ERROR: test_blob_errors_do_not_retry_or_become_immutable_success (test_azure_contracts.AzureContractTests.test_blob_errors_do_not_retry_or_become_immutable_success)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_azure_contracts.py", line 181, in test_blob_errors_do_not_retry_or_become_immutable_success
+    self.azure.AzureObjectStore(service).read("raw/absent")
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py", line 182, in read
+    return self._blob(path).download_blob(max_concurrency=1).readall()
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/core/tracing/decorator.py", line 119, in wrapper_use_tracer
+    return func(*args, **kwargs)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/storage/blob/_blob_client.py", line 784, in download_blob
+    return StorageStreamDownloader(**options)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/storage/blob/_download.py", line 424, in __init__
+    self._response = self._initial_request()
+                     ~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/storage/blob/_download.py", line 489, in _initial_request
+    self._clients.blob.download(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        range=range_header,
+        ^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+        **self._request_options,
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+    ),
+    ^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/core/tracing/decorator.py", line 119, in wrapper_use_tracer
+    return func(*args, **kwargs)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/storage/blob/_generated/operations/_blob_operations.py", line 1683, in download
+    response.read()  # Load the body in memory and close the socket
+    ^^^^^^^^^^^^^
+AttributeError: 'ScriptedResponse' object has no attribute 'read'
+
+======================================================================
+ERROR: test_blob_stage_promote_uses_blob_create_without_dfs_rename (test_azure_contracts.AzureContractTests.test_blob_stage_promote_uses_blob_create_without_dfs_rename)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_azure_contracts.py", line 166, in test_blob_stage_promote_uses_blob_create_without_dfs_rename
+    self.assertEqual(objects.promote(temporary, snapshot.raw_path, snapshot.sha256, len(body)), snapshot.raw_path)
+                     ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py", line 214, in promote
+    self.verify(temporary_ref, sha256, byte_count)
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py", line 202, in verify
+    for chunk in self._blob(path).download_blob(max_concurrency=1).chunks():
+                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/core/tracing/decorator.py", line 119, in wrapper_use_tracer
+    return func(*args, **kwargs)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/storage/blob/_blob_client.py", line 784, in download_blob
+    return StorageStreamDownloader(**options)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/storage/blob/_download.py", line 424, in __init__
+    self._response = self._initial_request()
+                     ~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/storage/blob/_download.py", line 489, in _initial_request
+    self._clients.blob.download(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        range=range_header,
+        ^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+        **self._request_options,
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+    ),
+    ^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/core/tracing/decorator.py", line 119, in wrapper_use_tracer
+    return func(*args, **kwargs)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/storage/blob/_generated/operations/_blob_operations.py", line 1890, in download
+    return cls(pipeline_response, deserialized, response_headers)  # type: ignore
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/storage/blob/_deserialize.py", line 96, in deserialize_blob_stream
+    obj.properties = blob_properties
+    ^^^^^^^^^^^^^^
+AttributeError: 'tuple_iterator' object has no attribute 'properties' and no __dict__ for setting new attributes
+
+======================================================================
+ERROR: test_factory_conditions_fixed_registry_before_authority_clients (test_azure_contracts.AzureContractTests.test_factory_conditions_fixed_registry_before_authority_clients)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_azure_contracts.py", line 312, in test_factory_conditions_fixed_registry_before_authority_clients
+    settings = fixture_settings(storage={"backend": "azure", "root": None, "account_name": "secedgardevb8617",
+                                         "blob_endpoint": BLOB_ENDPOINT, "table_endpoint": TABLE_ENDPOINT},
+                                etl={"parser_version": "sec-envelope-v1"},
+                                worker={"image_digest": "sha256:" + "1" * 64, "provenance": "configured-image"})
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/support.py", line 22, in fixture_settings
+    return Settings.from_mapping(value)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/config.py", line 203, in from_mapping
+    raise ValueError(f"azure storage missing explicit bindings: {sorted(required - value['storage'].keys())}")
+ValueError: azure storage missing explicit bindings: ['binding_registry_blob', 'lock_blob', 'lock_container', 'quarantine_container', 'raw_container', 'workset_container']
+
+======================================================================
+ERROR: test_lease_conflict_loss_expiry_and_unbounded_clock_fail_closed (test_azure_contracts.AzureContractTests.test_lease_conflict_loss_expiry_and_unbounded_clock_fail_closed) (headers={'Date': ''})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/storage/blob/_generated/_utils/serialization.py", line 1662, in deserialize_data
+    data_val = self.deserialize_type[data_type](data)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/storage/blob/_generated/_utils/serialization.py", line 1977, in deserialize_rfc
+    *parsed_date[:6], tzinfo=datetime.timezone(datetime.timedelta(minutes=(parsed_date[9] or 0) / 60))
+     ~~~~~~~~~~~^^^^
+TypeError: 'NoneType' object is not subscriptable
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_azure_contracts.py", line 309, in test_lease_conflict_loss_expiry_and_unbounded_clock_fail_closed
+    self.azure.AzureLeaseStore(service, clock=FixtureClock()).acquire("owner", 60)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py", line 290, in acquire
+    lease.acquire(lease_duration=seconds, raw_response_hook=self._capture(observed))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/core/tracing/decorator.py", line 119, in wrapper_use_tracer
+    return func(*args, **kwargs)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/storage/blob/_lease.py", line 109, in acquire
+    response: Any = self._client.acquire_lease(
+                    ~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        timeout=kwargs.pop("timeout", None),
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+        **kwargs
+        ^^^^^^^^
+    )
+    ^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/core/tracing/decorator.py", line 119, in wrapper_use_tracer
+    return func(*args, **kwargs)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/storage/blob/_generated/operations/_blob_operations.py", line 3068, in acquire_lease
+    response_headers["Date"] = self._deserialize("rfc-1123", response.headers.get("Date"))
+                               ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/storage/blob/_generated/_utils/serialization.py", line 1415, in __call__
+    return self._deserialize(target_obj, data)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/storage/blob/_generated/_utils/serialization.py", line 1450, in _deserialize
+    return self.deserialize_data(data, response)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/storage/blob/_generated/_utils/serialization.py", line 1678, in deserialize_data
+    raise DeserializationError(msg) from err
+azure.core.exceptions.DeserializationError: Unable to deserialize response data. Data: , rfc-1123
+
+======================================================================
+ERROR: test_lease_owned_check_rewrites_same_journal_with_exact_etag_and_actual_id (test_azure_contracts.AzureContractTests.test_lease_owned_check_rewrites_same_journal_with_exact_etag_and_actual_id)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_azure_contracts.py", line 283, in test_lease_owned_check_rewrites_same_journal_with_exact_etag_and_actual_id
+    leases.assert_owned(handle)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py", line 334, in assert_owned
+    body = self.blob.download_blob(lease=handle.lease_id, etag=version, match_condition=MatchConditions.IfNotModified,
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                   max_concurrency=1, raw_response_hook=hook).readall()
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/core/tracing/decorator.py", line 119, in wrapper_use_tracer
+    return func(*args, **kwargs)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/storage/blob/_blob_client.py", line 784, in download_blob
+    return StorageStreamDownloader(**options)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/storage/blob/_download.py", line 424, in __init__
+    self._response = self._initial_request()
+                     ~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/storage/blob/_download.py", line 489, in _initial_request
+    self._clients.blob.download(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        range=range_header,
+        ^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+        **self._request_options,
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+    ),
+    ^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/core/tracing/decorator.py", line 119, in wrapper_use_tracer
+    return func(*args, **kwargs)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/storage/blob/_generated/operations/_blob_operations.py", line 1890, in download
+    return cls(pipeline_response, deserialized, response_headers)  # type: ignore
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/storage/blob/_deserialize.py", line 96, in deserialize_blob_stream
+    obj.properties = blob_properties
+    ^^^^^^^^^^^^^^
+AttributeError: 'tuple_iterator' object has no attribute 'properties' and no __dict__ for setting new attributes
+
+----------------------------------------------------------------------
+Ran 16 tests in 0.051s
+
+FAILED (errors=7)

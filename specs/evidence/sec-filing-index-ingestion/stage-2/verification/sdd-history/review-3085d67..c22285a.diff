@@ -1,0 +1,2073 @@
+# Review package: 3085d67..c22285a
+
+## Commits
+c22285a fix: use host errno for immutable object path guards
+2012866 feat: add durable acquisition stores and source state
+
+## Files changed
+ .../sec-edgar-ingest/src/sec_edgar_ingest/state.py | 191 ++++++++++
+ .../src/sec_edgar_ingest/storage/__init__.py       |  20 ++
+ .../src/sec_edgar_ingest/storage/azure.py          | 374 +++++++++++++++++++
+ .../src/sec_edgar_ingest/storage/contracts.py      | 134 +++++++
+ .../src/sec_edgar_ingest/storage/local.py          | 290 +++++++++++++++
+ packages/sec-edgar-ingest/tests/support.py         |  50 ++-
+ .../sec-edgar-ingest/tests/test_azure_contracts.py | 394 +++++++++++++++++++++
+ packages/sec-edgar-ingest/tests/test_state.py      | 233 ++++++++++++
+ packages/sec-edgar-ingest/tests/test_storage.py    | 197 +++++++++++
+ .../stage-2/sdk-signatures.json                    |  82 +++++
+ 10 files changed, 1964 insertions(+), 1 deletion(-)
+
+## Diff
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/state.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/state.py
+new file mode 100644
+index 0000000..9dbf305
+--- /dev/null
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/state.py
+@@ -0,0 +1,191 @@
++"""Durable source observations, accepted receipts, first pins and attempt audit."""
++from __future__ import annotations
++
++import hashlib
++from datetime import datetime, timezone
++
++from .models import Binding, BodyReceipt, CommandResult, Error, Permit, RunContext, Snapshot, Source, Versioned, canonical_json, require_number, require_text, require_utc
++from .storage.contracts import AlreadyExists, CAS_ATTEMPTS, Conflict, StateStore
++
++
++def attempt_key(context: RunContext) -> str:
++    return hashlib.sha256(canonical_json({name: getattr(context, name) for name in
++        ("run_id", "execution_id", "command", "attempt_id", "image_digest")})).hexdigest()
++
++
++class AcquisitionState:
++    def __init__(self, store: StateStore, *, clock=None):
++        self.store = store
++        self.clock = clock
++        self.active_context = None
++
++    def _now(self) -> datetime:
++        instant = self.clock.now() if self.clock is not None else datetime.now(timezone.utc)
++        require_utc(instant, "clock.now")
++        return instant
++
++    def _update_source(self, source: Source, change) -> Versioned:
++        for _ in range(CAS_ATTEMPTS):
++            current = self.get_source(source.source_id)
++            value = current.to_mapping()["value"] if current is not None else {
++                "source": source.to_mapping(), "first_discovered_at": None, "last_discovered_at": None,
++                "discovery_status": "unobserved", "acquisition_status": "pending", "needs_acquisition": True,
++                "latest_downloaded_snapshot": None, "latest_received_at": None, "last_error": None,
++            }
++            if Source.from_mapping(value["source"]) != source:
++                raise Conflict("source identity has conflicting metadata")
++            change(value)
++            try:
++                if current is None:
++                    return self.store.insert("Source", source.source_id, value)
++                return self.store.replace("Source", source.source_id, value, current.version)
++            except (AlreadyExists, Conflict):
++                continue
++        raise Conflict("source update exhausted conditional races")
++
++    def observe(self, source: Source, at: datetime, discovery_status: str) -> None:
++        require_utc(at, "discovery time")
++        require_text(discovery_status, "discovery_status")
++        def change(value):
++            first = value["first_discovered_at"]
++            last = value["last_discovered_at"]
++            value["first_discovered_at"] = min(at, datetime.fromisoformat(first)).isoformat() if first else at.isoformat()
++            if last is None or at >= datetime.fromisoformat(last):
++                value["last_discovered_at"] = at.isoformat()
++                value["discovery_status"] = discovery_status
++        self._update_source(source, change)
++
++    def get_source(self, source_id: str) -> Versioned | None:
++        return self.store.get("Source", source_id)
++
++    def pending_sources(self) -> tuple[Source, ...]:
++        return tuple(Source.from_mapping(row.to_mapping()["value"]["source"])
++                     for row in self.store.scan("Source", {"needs_acquisition": True}))
++
++    def remember_snapshot(self, snapshot: Snapshot) -> Snapshot:
++        row = self.get_source(snapshot.source_id)
++        source = None if row is None else Source.from_mapping(row.to_mapping()["value"]["source"])
++        if source is not None:
++            expected = f"raw/sec/indexes/kind={source.kind}/period={source.period}/sha256={snapshot.sha256}/master.{source.representation}"
++            if snapshot.raw_path != expected:
++                raise Conflict("snapshot address disagrees with observed source")
++        key = snapshot.source_id + ":" + snapshot.sha256
++        try:
++            self.store.insert("Snapshot", key, snapshot.to_mapping())
++            accepted = snapshot
++        except AlreadyExists:
++            accepted = self.snapshot(snapshot.source_id, snapshot.sha256)
++            if (accepted.raw_path, accepted.byte_count, accepted.representation, accepted.envelope_version) != (
++                    snapshot.raw_path, snapshot.byte_count, snapshot.representation, snapshot.envelope_version):
++                raise Conflict("same snapshot hash has conflicting immutable metadata")
++        if source is not None:
++            def change(value):
++                latest = value["latest_received_at"]
++                is_newer = latest is None or snapshot.received_at > datetime.fromisoformat(latest)
++                is_current = latest is not None and snapshot.received_at == datetime.fromisoformat(latest) and value["latest_downloaded_snapshot"] == accepted.sha256
++                if is_newer or is_current:
++                    value["latest_downloaded_snapshot"] = accepted.sha256
++                    value["latest_received_at"] = snapshot.received_at.isoformat()
++                    value["acquisition_status"] = "downloaded"
++                    value["needs_acquisition"] = False
++            self._update_source(source, change)
++        return accepted
++
++    def snapshot(self, source_id: str, sha256: str) -> Snapshot:
++        row = self.store.get("Snapshot", source_id + ":" + sha256)
++        if row is None:
++            raise Conflict("snapshot is not durably remembered")
++        return Snapshot.from_mapping(row.to_mapping()["value"])
++
++    def binding(self, workset_id: str, source_id: str) -> Binding | None:
++        row = self.store.get("Binding", workset_id + ":" + source_id)
++        return None if row is None else Binding.from_mapping(row.to_mapping()["value"])
++
++    def bind_once(self, binding: Binding) -> Binding:
++        existing = self.binding(binding.source_workset_id, binding.source_id)
++        if existing is not None:
++            return existing
++        self.snapshot(binding.source_id, binding.snapshot_sha256)
++        try:
++            self.store.insert("Binding", binding.source_workset_id + ":" + binding.source_id, binding.to_mapping())
++            return binding
++        except AlreadyExists:
++            winner = self.binding(binding.source_workset_id, binding.source_id)
++            if winner is None:
++                raise Conflict("binding vanished after create conflict")
++            return winner
++
++    def _insert_immutable(self, kind: str, key: str, value: dict[str, object]) -> None:
++        try:
++            self.store.insert(kind, key, value)
++        except AlreadyExists:
++            existing = self.store.get(kind, key)
++            if existing is None or existing.to_mapping()["value"] != value:
++                raise Conflict("immutable audit row differs after create conflict")
++
++    def begin_attempt(self, context: RunContext) -> None:
++        key = attempt_key(context)
++        existing = self.store.get("Attempt", key)
++        if existing is None:
++            value = {"context": context.to_mapping(), "started_at": context.started_at.isoformat(),
++                     "ended_at": None, "outcome": "in_progress", "result": None, "structured_errors": []}
++            try:
++                self.store.insert("Attempt", key, value)
++            except AlreadyExists:
++                existing = self.store.get("Attempt", key)
++                if existing is None:
++                    raise Conflict("attempt vanished after create conflict")
++        if existing is not None and existing.to_mapping()["value"]["context"] != context.to_mapping():
++            raise Conflict("attempt identity has conflicting provenance")
++        self.active_context = context
++
++    def finish_attempt(self, result: CommandResult) -> None:
++        key = attempt_key(result.context)
++        for _ in range(CAS_ATTEMPTS):
++            existing = self.store.get("Attempt", key)
++            if existing is None:
++                raise Conflict("attempt was never begun")
++            value = existing.to_mapping()["value"]
++            if value["context"] != result.context.to_mapping():
++                raise Conflict("result context differs from begun attempt")
++            if value["result"] is not None:
++                if value["result"] != result.to_mapping():
++                    raise Conflict("finished attempt cannot be replaced")
++                return
++            value.update(ended_at=result.ended_at.isoformat(), outcome=result.outcome,
++                         result=result.to_mapping(), structured_errors=[gap.to_mapping() for gap in result.gaps])
++            try:
++                self.store.replace("Attempt", key, value, existing.version)
++                return
++            except Conflict:
++                continue
++        raise Conflict("attempt finish exhausted conditional races")
++
++    def record_failure(self, source: Source, error: Error) -> None:
++        if error.source_id is not None and error.source_id != source.source_id:
++            raise ValueError("failure belongs to a different source")
++        at = self._now()
++        value = {"source_id": source.source_id, "error": error.to_mapping(), "recorded_at": at.isoformat(),
++                 "attempt_key": attempt_key(self.active_context) if self.active_context is not None else None}
++        key = hashlib.sha256(canonical_json(value)).hexdigest()
++        self._insert_immutable("Failure", key, value)
++        def change(value):
++            value["last_error"] = error.to_mapping()
++            value["needs_acquisition"] = True
++            if value["latest_downloaded_snapshot"] is None:
++                value["acquisition_status"] = "failed"
++        self._update_source(source, change)
++
++    def request_attempt(self, context: RunContext, receipt: BodyReceipt, permit: Permit, ordinal: int) -> None:
++        require_number(ordinal, "request ordinal", positive=True, integer=True)
++        if ordinal > 5:
++            raise ValueError("request ordinal exceeds five total attempts")
++        next_allowed_at = getattr(permit, "next_allowed_at", None)
++        if next_allowed_at is not None:
++            require_utc(next_allowed_at, "next_allowed_at")
++        value = {"attempt_key": attempt_key(context), "context": context.to_mapping(), "request_id": permit.request_id,
++                 "ordinal": ordinal, "url": receipt.url, "status": receipt.status, "byte_count": receipt.byte_count,
++                 "ownership_epoch": permit.epoch, "next_allowed_at": next_allowed_at.isoformat() if next_allowed_at is not None else None,
++                 "receipt": receipt.to_mapping(), "permit": permit.to_mapping()}
++        key = hashlib.sha256(canonical_json([attempt_key(context), permit.request_id, ordinal])).hexdigest()
++        self._insert_immutable("TransportAttempt", key, value)
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/__init__.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/__init__.py
+new file mode 100644
+index 0000000..d6b5819
+--- /dev/null
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/__init__.py
+@@ -0,0 +1,20 @@
++"""Open one validated deployment's durable state, immutable objects and fixed lease."""
++from pathlib import Path
++
++from ..config import Settings
++from .contracts import (AlreadyExists, ClockUncertain, Conflict, LeaseHandle, LeaseStore,
++                        ObjectStore, OwnershipLost, StateStore, BoundaryObserver, deployment_binding)
++
++
++def open_stores(settings: Settings, *, base_path: Path | None = None, observer: BoundaryObserver | None = None) -> tuple[StateStore, ObjectStore, LeaseStore]:
++    validated = Settings.from_mapping(settings.to_mapping())
++    if validated.storage.backend == "local-fixture":
++        from .local import LocalLeaseStore, LocalObjectStore, LocalStateStore
++        root = (base_path if base_path is not None else Path.cwd()) / validated.storage.root
++        binding = deployment_binding(validated, root=root)
++        objects = LocalObjectStore(root, observer=observer, binding=binding)
++        state = LocalStateStore(root, observer=observer, binding=binding)
++        leases = LocalLeaseStore(root, observer=observer, binding=binding)
++        return state, objects, leases
++    from .azure import open_azure_stores
++    return open_azure_stores(validated, observer=observer)
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py
+new file mode 100644
+index 0000000..4137f01
+--- /dev/null
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py
+@@ -0,0 +1,374 @@
++"""Pinned Blob/Table SDK adapters using conditional Storage operations only."""
++from __future__ import annotations
++
++import hashlib
++import math
++import time
++from collections.abc import Iterator
++from datetime import datetime, timedelta, timezone
++from email.utils import parsedate_to_datetime
++from pathlib import Path
++from urllib.parse import quote, urlsplit
++
++from azure.core import MatchConditions
++from azure.core.exceptions import HttpResponseError, ResourceExistsError, ResourceModifiedError, ResourceNotFoundError
++from azure.data.tables import TableClient, TableServiceClient, UpdateMode
++from azure.identity import ManagedIdentityCredential
++from azure.storage.blob import BlobLeaseClient, BlobServiceClient
++
++from ..config import ACCOUNT_NAME, LOCK_BLOB, Settings
++from ..models import Versioned, parse_json, require_hash, require_number, require_text, require_utc, safe_relative_path
++from .contracts import (AlreadyExists, BoundaryObserver, ClockUncertain, Conflict, FILE_CHUNK_BYTES,
++                        LeaseHandle, OwnershipLost, REGISTRY_PATH, deployment_binding, exact_version,
++                        identity, observe, payload_bytes, table_for, validate_raw_address)
++
++RETRY_OPTIONS = dict(retry_total=0, retry_connect=0, retry_read=0, retry_status=0)
++STORAGE_CONNECTION_TIMEOUT_SECONDS = 5
++STORAGE_READ_TIMEOUT_SECONDS = 10
++CONTAINERS = frozenset({"raw", "worksets", "quarantine", "locks"})
++
++
++def _check_endpoint(url: str, kind: str) -> None:
++    parsed = urlsplit(url)
++    if (parsed.scheme != "https" or parsed.netloc != f"{ACCOUNT_NAME}.{kind}.core.windows.net"
++            or parsed.path not in ("", "/") or parsed.query or parsed.fragment):
++        raise ValueError("Storage client must use the fixed credential-free account endpoint")
++
++
++def _row_key(key: str) -> str:
++    require_text(key, "key")
++    return quote(key, safe="-._~")
++
++
++def _etag(version: str | None) -> str:
++    try:
++        exact_version(version)
++    except ValueError as error:
++        raise Conflict("Storage response omitted an actual opaque ETag") from error
++    return version
++
++
++class AzureStateStore:
++    def __init__(self, source_client: TableClient, attempt_client: TableClient, *, observer: BoundaryObserver | None = None):
++        for client, name in ((source_client, "SourceState"), (attempt_client, "Attempts")):
++            _check_endpoint(client.url, "table")
++            if client.table_name != name:
++                raise ValueError("Table client must use the accepted table binding")
++        self.source_client = source_client
++        self.attempt_client = attempt_client
++        self.observer = observer
++
++    def close(self) -> None:
++        self.source_client.close()
++        self.attempt_client.close()
++
++    def _client(self, kind: str) -> TableClient:
++        return self.attempt_client if table_for(kind) == "Attempts" else self.source_client
++
++    def _entity(self, kind: str, key: str, value: dict[str, object]) -> dict[str, str]:
++        partition, key = identity(kind, key)
++        return {"PartitionKey": partition, "RowKey": _row_key(key), "StableKey": key,
++                "Payload": payload_bytes(value).decode("utf-8")}
++
++    def _value(self, entity, partition: str, key: str, version: str) -> Versioned:
++        if entity.get("PartitionKey") != partition or entity.get("RowKey") != _row_key(key) or entity.get("StableKey") != key:
++            raise Conflict("Table entity disagrees with its stable identity")
++        value = parse_json(entity.get("Payload"))
++        if not isinstance(value, dict):
++            raise Conflict("Table payload must be a JSON object")
++        return Versioned(value, _etag(version))
++
++    def get(self, kind: str, key: str) -> Versioned | None:
++        partition, key = identity(kind, key)
++        observed = {}
++        def capture(response):
++            observed["etag"] = response.http_response.headers.get("ETag")
++        try:
++            entity = self._client(kind).get_entity(partition_key=partition, row_key=_row_key(key), raw_response_hook=capture)
++        except ResourceNotFoundError as error:
++            if error.status_code == 404:
++                return None
++            raise
++        return self._value(entity, partition, key, observed.get("etag"))
++
++    def insert(self, kind: str, key: str, value: dict[str, object]) -> Versioned:
++        entity = self._entity(kind, key, value)
++        observed = {}
++        def capture(response):
++            observed["etag"] = response.http_response.headers.get("ETag")
++        try:
++            self._client(kind).create_entity(entity=entity, raw_response_hook=capture)
++        except ResourceExistsError as error:
++            if error.status_code == 409:
++                raise AlreadyExists("Table state identity already exists") from error
++            raise
++        result = Versioned(parse_json(entity["Payload"]), _etag(observed.get("etag")))
++        observe(self.observer, "state.after_insert")
++        return result
++
++    def replace(self, kind: str, key: str, value: dict[str, object], version: str) -> Versioned:
++        exact_version(version)
++        entity = self._entity(kind, key, value)
++        observed = {}
++        def capture(response):
++            observed["etag"] = response.http_response.headers.get("ETag")
++        try:
++            self._client(kind).update_entity(entity=entity, mode=UpdateMode.REPLACE, etag=version,
++                                            match_condition=MatchConditions.IfNotModified, raw_response_hook=capture)
++        except (ResourceModifiedError, ResourceNotFoundError) as error:
++            if error.status_code in (404, 412):
++                raise Conflict("Table row absent or ETag changed") from error
++            raise
++        result = Versioned(parse_json(entity["Payload"]), _etag(observed.get("etag")))
++        observe(self.observer, "state.after_replace")
++        return result
++
++    def scan(self, kind: str, filters: dict[str, object]) -> Iterator[Versioned]:
++        partition, _ = identity(kind, "scan")
++        detached_filters = parse_json(payload_bytes(filters))
++        versions = {}
++        def capture(response):
++            versions.clear()
++            body = parse_json(response.http_response.body())
++            for entity in body.get("value", []):
++                versions[entity["RowKey"]] = entity.get("odata.etag")
++        escaped_partition = partition.replace("'", "''")
++        pages = self._client(kind).query_entities(query_filter=f"PartitionKey eq '{escaped_partition}'",
++                                                results_per_page=128, raw_response_hook=capture).by_page()
++        for page in pages:
++            for entity in page:
++                key = entity.get("StableKey")
++                version = versions.get(entity.get("RowKey"))
++                row = self._value(entity, partition, key, version)
++                value = row.to_mapping()["value"]
++                if all(name in value and value[name] == expected for name, expected in detached_filters.items()):
++                    yield row
++
++
++class AzureObjectStore:
++    def __init__(self, service: BlobServiceClient, *, observer: BoundaryObserver | None = None):
++        _check_endpoint(service.url, "blob")
++        self.service = service
++        self.observer = observer
++
++    def close(self) -> None:
++        self.service.close()
++
++    def _blob(self, path: str):
++        segments = safe_relative_path(path, "object path").split("/", 1)
++        if len(segments) != 2 or segments[0] not in CONTAINERS:
++            raise ValueError("object path must name an accepted Blob container")
++        return self.service.get_blob_client(container=segments[0], blob=segments[1])
++
++    def _upload(self, path: str, stream, sha256: str, byte_count: int) -> str:
++        blob = self._blob(path)
++        observe(self.observer, "object.before_upload")
++        try:
++            blob.upload_blob(stream, length=byte_count, overwrite=False, match_condition=MatchConditions.IfMissing)
++        except (ResourceExistsError, ResourceModifiedError) as error:
++            if error.status_code not in (409, 412):
++                raise
++            self.verify(path, sha256, byte_count)
++        observe(self.observer, "object.after_upload")
++        return path
++
++    def put_once(self, path: str, body: bytes) -> str:
++        if not isinstance(body, bytes):
++            raise ValueError("immutable object body must be bytes")
++        return self._upload(path, body, hashlib.sha256(body).hexdigest(), len(body))
++
++    def read(self, path: str) -> bytes:
++        try:
++            return self._blob(path).download_blob(max_concurrency=1).readall()
++        except ResourceNotFoundError as error:
++            if error.status_code == 404:
++                raise FileNotFoundError(path) from error
++            raise
++
++    def stage(self, path: str, body: Path) -> str:
++        digest, byte_count = hashlib.sha256(), 0
++        with Path(body).open("rb") as stream:
++            while chunk := stream.read(FILE_CHUNK_BYTES):
++                digest.update(chunk)
++                byte_count += len(chunk)
++            stream.seek(0)
++            return self._upload(path, stream, digest.hexdigest(), byte_count)
++
++    def verify(self, path: str, sha256: str, byte_count: int) -> None:
++        require_hash(sha256, "sha256")
++        require_number(byte_count, "byte_count", integer=True)
++        digest, actual_bytes = hashlib.sha256(), 0
++        try:
++            for chunk in self._blob(path).download_blob(max_concurrency=1).chunks():
++                digest.update(chunk)
++                actual_bytes += len(chunk)
++        except ResourceNotFoundError as error:
++            if error.status_code == 404:
++                raise FileNotFoundError(path) from error
++            raise
++        if digest.hexdigest() != sha256 or actual_bytes != byte_count:
++            raise Conflict("immutable Blob differs from expected hash or length")
++
++    def promote(self, temporary_ref: str, raw_path: str, sha256: str, byte_count: int) -> str:
++        validate_raw_address(raw_path, sha256, byte_count)
++        self.verify(temporary_ref, sha256, byte_count)
++        observe(self.observer, "object.before_promote")
++        reference = self.put_once(raw_path, self.read(temporary_ref))
++        self.verify(reference, sha256, byte_count)
++        observe(self.observer, "object.after_promote")
++        return reference
++
++
++class _WallClock:
++    def now(self) -> datetime:
++        return datetime.now(timezone.utc)
++
++    def monotonic(self) -> float:
++        return time.monotonic()
++
++
++class AzureLeaseStore:
++    def __init__(self, service: BlobServiceClient, *, lease_seconds: int = 60, uncertainty_seconds: float = 2,
++                 clock=None, observer: BoundaryObserver | None = None):
++        _check_endpoint(service.url, "blob")
++        require_number(lease_seconds, "lease_seconds", integer=True)
++        require_number(uncertainty_seconds, "uncertainty_seconds")
++        if not 15 <= lease_seconds <= 60 or uncertainty_seconds > 2:
++            raise ValueError("finite Azure lease/clock bounds exceed the accepted policy")
++        self.blob = service.get_blob_client(container="locks", blob=LOCK_BLOB)
++        self.lease_seconds = lease_seconds
++        self.uncertainty_seconds = uncertainty_seconds
++        self.clock = clock or _WallClock()
++        self.observer = observer
++
++    def _start(self):
++        before = self.clock.now()
++        require_utc(before, "clock.now")
++        return before, self.clock.monotonic(), {}
++
++    def _capture(self, observed):
++        def capture(response):
++            observed["date"] = response.http_response.headers.get("Date")
++            if response.http_response.status_code < 400:
++                try:
++                    server_date = parsedate_to_datetime(observed["date"] or "")
++                    require_utc(server_date, "Storage Date")
++                except (ValueError, TypeError, IndexError) as error:
++                    raise ClockUncertain("Storage response has no usable server Date") from error
++                observed["server_date"] = server_date
++        return capture
++
++    def _bounded_until(self, before: datetime, mono: float, observed: dict) -> datetime:
++        after = self.clock.now()
++        require_utc(after, "clock.now")
++        elapsed = self.clock.monotonic() - mono
++        try:
++            server_date = observed.get("server_date")
++            require_utc(server_date, "Storage Date")
++        except (ValueError, TypeError, IndexError) as error:
++            raise ClockUncertain("Storage response has no usable server Date") from error
++        uncertainty = timedelta(seconds=self.uncertainty_seconds)
++        if (not math.isfinite(elapsed) or elapsed < 0 or elapsed > self.uncertainty_seconds or after < before
++                or abs((after - before).total_seconds() - elapsed) > self.uncertainty_seconds
++                or server_date > after + uncertainty or server_date + timedelta(seconds=1) < before - uncertainty):
++            raise ClockUncertain("Storage server observation exceeds the accepted uncertainty")
++        return min(before, server_date) + timedelta(seconds=self.lease_seconds) - uncertainty
++
++    def _current(self, handle: LeaseHandle) -> None:
++        require_utc(self.clock.now(), "clock.now")
++        if self.clock.now() >= handle.observed_until:
++            raise OwnershipLost("observed lease window has expired")
++
++    def _ensure_sentinel(self) -> None:
++        try:
++            self.blob.upload_blob(b"{}", overwrite=False, match_condition=MatchConditions.IfMissing)
++        except (ResourceExistsError, ResourceModifiedError) as error:
++            if error.status_code not in (409, 412):
++                raise
++
++    def acquire(self, owner: str, seconds: int) -> LeaseHandle:
++        require_text(owner, "owner")
++        require_number(seconds, "lease seconds", integer=True)
++        if seconds != self.lease_seconds:
++            raise ValueError("lease duration must equal the one configured deployment duration")
++        self._ensure_sentinel()
++        before, mono, observed = self._start()
++        lease = BlobLeaseClient(self.blob)
++        try:
++            lease.acquire(lease_duration=seconds, raw_response_hook=self._capture(observed))
++        except HttpResponseError as error:
++            if error.status_code in (409, 412):
++                raise Conflict("fixed sentinel is already leased or changed") from error
++            raise
++        if not lease.id:
++            raise OwnershipLost("Storage did not return an actual acquired lease ID")
++        until = self._bounded_until(before, mono, observed)
++        observe(self.observer, "lease.after_acquire")
++        return LeaseHandle(owner, lease.id, until)
++
++    def renew(self, handle: LeaseHandle) -> LeaseHandle:
++        self._current(handle)
++        before, mono, observed = self._start()
++        lease = BlobLeaseClient(self.blob, lease_id=handle.lease_id)
++        try:
++            lease.renew(raw_response_hook=self._capture(observed))
++        except HttpResponseError as error:
++            if error.status_code in (404, 409, 412):
++                raise OwnershipLost("fixed sentinel lease changed during renewal") from error
++            raise
++        if lease.id != handle.lease_id:
++            raise OwnershipLost("Storage renewal did not confirm the actual lease ID")
++        until = self._bounded_until(before, mono, observed)
++        observe(self.observer, "lease.after_renew")
++        return LeaseHandle(handle.owner_id, lease.id, until)
++
++    def release(self, handle: LeaseHandle) -> None:
++        self._current(handle)
++        try:
++            BlobLeaseClient(self.blob, lease_id=handle.lease_id).release()
++        except HttpResponseError as error:
++            if error.status_code in (404, 409, 412):
++                raise OwnershipLost("fixed sentinel lease changed during release") from error
++            raise
++        observe(self.observer, "lease.after_release")
++
++    def assert_owned(self, handle: LeaseHandle) -> None:
++        self._current(handle)
++        before, mono, observed = self._start()
++        hook = self._capture(observed)
++        try:
++            properties = self.blob.get_blob_properties(lease=handle.lease_id, raw_response_hook=hook)
++            version = _etag(properties.etag)
++            body = self.blob.download_blob(lease=handle.lease_id, etag=version, match_condition=MatchConditions.IfNotModified,
++                                           max_concurrency=1, raw_response_hook=hook).readall()
++            self.blob.upload_blob(body, overwrite=True, lease=handle.lease_id, etag=version,
++                                  match_condition=MatchConditions.IfNotModified, raw_response_hook=hook)
++        except HttpResponseError as error:
++            if error.status_code in (404, 409, 412):
++                raise OwnershipLost("fixed sentinel no longer recognizes the actual lease") from error
++            raise
++        self._bounded_until(before, mono, observed)
++        self._current(handle)
++
++
++def open_azure_stores(settings: Settings, *, observer: BoundaryObserver | None = None):
++    validated = Settings.from_mapping(settings.to_mapping())
++    if validated.storage.backend != "azure":
++        raise ValueError("Azure factory requires validated Azure settings")
++    if not validated.coordination.lease_seconds.is_integer():
++        raise ValueError("Azure finite lease duration must use whole seconds")
++    credential = ManagedIdentityCredential()
++    storage = validated.storage
++    options = {**RETRY_OPTIONS, "connection_timeout": STORAGE_CONNECTION_TIMEOUT_SECONDS,
++               "read_timeout": STORAGE_READ_TIMEOUT_SECONDS}
++    blob_service = BlobServiceClient(account_url=storage.blob_endpoint, credential=credential,
++                                    api_version=storage.blob_api_version, **options)
++    objects = AzureObjectStore(blob_service, observer=observer)
++    objects.put_once(REGISTRY_PATH, payload_bytes(deployment_binding(validated)))
++    tables = TableServiceClient(endpoint=storage.table_endpoint, credential=credential,
++                               api_version=storage.table_api_version, **options)
++    state = AzureStateStore(tables.get_table_client(storage.source_table), tables.get_table_client(storage.attempt_table),
++                            observer=observer)
++    leases = AzureLeaseStore(blob_service, lease_seconds=int(validated.coordination.lease_seconds),
++                             uncertainty_seconds=validated.coordination.clock_uncertainty_seconds, observer=observer)
++    return state, objects, leases
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/contracts.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/contracts.py
+new file mode 100644
+index 0000000..fb142d6
+--- /dev/null
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/contracts.py
+@@ -0,0 +1,134 @@
++"""Durable acquisition primitives and one deployment binding."""
++from __future__ import annotations
++
++from collections.abc import Callable, Iterator, Mapping
++from dataclasses import dataclass
++from datetime import date, datetime
++from pathlib import Path
++from typing import Protocol
++
++from ..config import ACCOUNT_NAME, BINDING_REGISTRY_BLOB, COORDINATION_NAMESPACE, LOCK_BLOB, Settings
++from ..models import RAW_SNAPSHOT_PATH, Versioned, canonical_json, quarter_value, require_hash, require_number, require_text, require_utc, safe_relative_path, to_mapping_value
++
++CAS_ATTEMPTS = 5
++FILE_CHUNK_BYTES = 1024 * 1024
++ATTEMPT_KINDS = frozenset({"Attempt", "TransportAttempt", "Failure"})
++REGISTRY_PATH = "locks/" + BINDING_REGISTRY_BLOB
++SENTINEL_PATH = "locks/" + LOCK_BLOB
++BoundaryObserver = Callable[[str], None]
++
++
++class AlreadyExists(Exception):
++    """An atomic create lost to an existing identity."""
++
++
++class Conflict(Exception):
++    """A stale version, immutable collision, or unresolved conditional race."""
++
++
++class OwnershipLost(Exception):
++    """The fixed sentinel no longer recognizes the lease handle."""
++
++
++class ClockUncertain(Exception):
++    """Storage server time could not be bounded by the configured uncertainty."""
++
++
++@dataclass(frozen=True, slots=True)
++class LeaseHandle:
++    owner_id: str
++    lease_id: str
++    observed_until: datetime
++
++    def __post_init__(self):
++        require_text(self.owner_id, "owner_id")
++        require_text(self.lease_id, "lease_id")
++        require_utc(self.observed_until, "observed_until")
++
++
++class StateStore(Protocol):
++    def get(self, kind: str, key: str) -> Versioned | None: ...
++    def insert(self, kind: str, key: str, value: dict[str, object]) -> Versioned: ...
++    def replace(self, kind: str, key: str, value: dict[str, object], version: str) -> Versioned: ...
++    def scan(self, kind: str, filters: dict[str, object]) -> Iterator[Versioned]: ...
++
++
++class ObjectStore(Protocol):
++    def put_once(self, path: str, body: bytes) -> str: ...
++    def read(self, path: str) -> bytes: ...
++    def stage(self, path: str, body: Path) -> str: ...
++    def promote(self, temporary_ref: str, raw_path: str, sha256: str, byte_count: int) -> str: ...
++    def verify(self, path: str, sha256: str, byte_count: int) -> None: ...
++
++
++class LeaseStore(Protocol):
++    def acquire(self, owner: str, seconds: int) -> LeaseHandle: ...
++    def renew(self, handle: LeaseHandle) -> LeaseHandle: ...
++    def release(self, handle: LeaseHandle) -> None: ...
++    def assert_owned(self, handle: LeaseHandle) -> None: ...
++
++
++def observe(observer: BoundaryObserver | None, point: str) -> None:
++    if observer is not None:
++        observer(point)
++
++
++def exact_version(version: str) -> None:
++    require_text(version, "version")
++    if version == "*":
++        raise ValueError("exact service ETag or local revision required")
++
++
++def identity(kind: str, key: str) -> tuple[str, str]:
++    require_text(kind, "kind")
++    require_text(key, "key")
++    return COORDINATION_NAMESPACE + ":" + kind, key
++
++
++def table_for(kind: str) -> str:
++    return "Attempts" if kind in ATTEMPT_KINDS else "SourceState"
++
++
++def payload_bytes(value: Mapping[str, object]) -> bytes:
++    if not isinstance(value, Mapping):
++        raise ValueError("state payload must be a mapping")
++    return canonical_json(to_mapping_value(value))
++
++
++def validate_raw_address(path: str, sha256: str, byte_count: int) -> None:
++    safe_relative_path(path, "raw_path")
++    require_hash(sha256, "sha256")
++    require_number(byte_count, "byte_count", integer=True)
++    address = RAW_SNAPSHOT_PATH.fullmatch(path)
++    if address is None:
++        raise ValueError("raw_path must use the approved snapshot address")
++    if address[3] != sha256:
++        raise Conflict("raw address hash differs from promoted content")
++    expected_file = "master.zip" if address[1] == "quarterly" else "master.idx"
++    if address[4] != expected_file:
++        raise ValueError("raw kind and filename conflict")
++    if address[1] == "quarterly":
++        quarter_value(address[2])
++    elif date.fromisoformat(address[2]).isoformat() != address[2]:
++        raise ValueError("raw period must be a canonical date")
++
++
++def deployment_binding(settings: Settings | None = None, *, root: Path | None = None) -> dict[str, object]:
++    """Only shared issuer/storage policy participates, never a command or worker ID."""
++    if settings is None:
++        sec = {"user_agent": "Lowell Mason sec-edgar-ingest mason.lowell@mac.com", "requests_per_second": 3.0, "max_active_collectors": 1}
++        coordination = {"lease_seconds": 60.0, "renew_every_seconds": 20.0, "namespace": COORDINATION_NAMESPACE, "clock_uncertainty_seconds": 2.0}
++        storage = {"backend": "local-fixture", "source_table": "SourceState", "attempt_table": "Attempts",
++                   "blob_api_version": "2026-04-06", "table_api_version": "2020-12-06",
++                   "account_name": None, "blob_endpoint": None, "table_endpoint": None,
++                   "raw_container": "raw", "workset_container": "worksets", "quarantine_container": "quarantine",
++                   "lock_container": "locks", "lock_blob": LOCK_BLOB, "binding_registry_blob": BINDING_REGISTRY_BLOB}
++    else:
++        validated = Settings.from_mapping(settings.to_mapping())
++        sec = validated.sec.to_mapping()
++        coordination = validated.coordination.to_mapping()
++        storage = validated.storage.to_mapping()
++        storage.pop("root")
++    storage["local_root"] = str(root.resolve()) if root is not None else None
++    return {"binding_version": "sec-owner-binding-v1", "account": ACCOUNT_NAME,
++            "namespace": COORDINATION_NAMESPACE, "sec": sec, "coordination": coordination, "storage": storage}
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py
+new file mode 100644
+index 0000000..580b3ea
+--- /dev/null
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py
+@@ -0,0 +1,290 @@
++"""SQLite CAS and durable write-once files for offline acquisition fixtures."""
++from __future__ import annotations
++
++import errno
++import hashlib
++import io
++import os
++import sqlite3
++import stat
++import uuid
++from collections.abc import Iterator
++from contextlib import contextmanager
++from datetime import datetime, timedelta, timezone
++from pathlib import Path
++
++from ..config import LOCK_BLOB
++from ..models import Versioned, parse_json, require_hash, require_number, require_text, require_utc, safe_relative_path
++from .contracts import (AlreadyExists, BoundaryObserver, CAS_ATTEMPTS, Conflict, FILE_CHUNK_BYTES,
++                        LeaseHandle, OwnershipLost, REGISTRY_PATH, SENTINEL_PATH, deployment_binding,
++                        exact_version, identity, observe, payload_bytes, table_for, validate_raw_address)
++
++DIRECTORY_FLAGS = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
++FILE_FLAGS = os.O_RDONLY | os.O_NOFOLLOW
++
++
++class LocalObjectStore:
++    def __init__(self, root: Path, *, observer: BoundaryObserver | None = None, binding=None):
++        self.root = Path(root).resolve()
++        self.root.mkdir(parents=True, exist_ok=True)
++        self.directory = self.root / "objects"
++        self.directory.mkdir(exist_ok=True)
++        if self.directory.is_symlink():
++            raise ValueError("object root must not be a symlink")
++        self.observer = observer
++        self._write_once(REGISTRY_PATH, io.BytesIO(payload_bytes(binding or deployment_binding(root=self.root))), notify=False)
++
++    @contextmanager
++    def _parent(self, path: str, *, create: bool = False):
++        segments = safe_relative_path(path, "object path").split("/")
++        descriptor = os.open(self.directory, DIRECTORY_FLAGS)
++        try:
++            for segment in segments[:-1]:
++                if create:
++                    try:
++                        os.mkdir(segment, dir_fd=descriptor)
++                        os.fsync(descriptor)
++                    except FileExistsError:
++                        pass
++                try:
++                    child = os.open(segment, DIRECTORY_FLAGS, dir_fd=descriptor)
++                except OSError as error:
++                    if error.errno in (errno.ENOTDIR, errno.ELOOP):
++                        raise ValueError("object parents must be real directories") from error
++                    raise
++                os.close(descriptor)
++                descriptor = child
++            yield descriptor, segments[-1]
++        finally:
++            os.close(descriptor)
++
++    @contextmanager
++    def _open(self, path: str):
++        with self._parent(path) as (parent, name):
++            try:
++                descriptor = os.open(name, FILE_FLAGS, dir_fd=parent)
++            except OSError as error:
++                if error.errno == errno.ELOOP:
++                    raise ValueError("object must not be a symlink") from error
++                raise
++            with os.fdopen(descriptor, "rb") as stream:
++                if not stat.S_ISREG(os.fstat(stream.fileno()).st_mode):
++                    raise ValueError("object must be a regular file")
++                yield stream
++
++    def _write_once(self, path: str, stream, *, notify: bool = True) -> str:
++        with self._parent(path, create=True) as (parent, name):
++            temporary = ".pending-" + uuid.uuid4().hex
++            descriptor = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600, dir_fd=parent)
++            digest, byte_count = hashlib.sha256(), 0
++            try:
++                with os.fdopen(descriptor, "wb") as target:
++                    while chunk := stream.read(FILE_CHUNK_BYTES):
++                        target.write(chunk)
++                        digest.update(chunk)
++                        byte_count += len(chunk)
++                    target.flush()
++                    os.fsync(target.fileno())
++                if notify:
++                    observe(self.observer, "object.after_fsync")
++                    observe(self.observer, "object.before_link")
++                try:
++                    os.link(temporary, name, src_dir_fd=parent, dst_dir_fd=parent, follow_symlinks=False)
++                except FileExistsError:
++                    self.verify(path, digest.hexdigest(), byte_count)
++                os.fsync(parent)
++                if notify:
++                    observe(self.observer, "object.after_link")
++            finally:
++                os.unlink(temporary, dir_fd=parent)
++                os.fsync(parent)
++        return path
++
++    def put_once(self, path: str, body: bytes) -> str:
++        if not isinstance(body, bytes):
++            raise ValueError("immutable object body must be bytes")
++        return self._write_once(path, io.BytesIO(body))
++
++    def read(self, path: str) -> bytes:
++        with self._open(path) as stream:
++            return stream.read()
++
++    def stage(self, path: str, body: Path) -> str:
++        with Path(body).open("rb") as stream:
++            return self._write_once(path, stream)
++
++    def verify(self, path: str, sha256: str, byte_count: int) -> None:
++        require_hash(sha256, "sha256")
++        require_number(byte_count, "byte_count", integer=True)
++        digest, actual_bytes = hashlib.sha256(), 0
++        with self._open(path) as stream:
++            while chunk := stream.read(FILE_CHUNK_BYTES):
++                digest.update(chunk)
++                actual_bytes += len(chunk)
++        if digest.hexdigest() != sha256 or actual_bytes != byte_count:
++            raise Conflict("immutable object differs from expected hash or length")
++
++    def promote(self, temporary_ref: str, raw_path: str, sha256: str, byte_count: int) -> str:
++        validate_raw_address(raw_path, sha256, byte_count)
++        self.verify(temporary_ref, sha256, byte_count)
++        observe(self.observer, "object.before_promote")
++        with self._open(temporary_ref) as stream:
++            reference = self._write_once(raw_path, stream)
++        self.verify(reference, sha256, byte_count)
++        observe(self.observer, "object.after_promote")
++        return reference
++
++
++class LocalStateStore:
++    def __init__(self, root: Path, *, page_size: int = 128, observer: BoundaryObserver | None = None, binding=None):
++        require_number(page_size, "page_size", positive=True, integer=True)
++        self.root = Path(root).resolve()
++        LocalObjectStore(self.root, binding=binding)
++        self.database = self.root / "state.sqlite3"
++        if self.database.is_symlink():
++            raise ValueError("state database must not be a symlink")
++        self.page_size = page_size
++        self.observer = observer
++        self._closed = False
++        with self._connection() as connection:
++            connection.execute("PRAGMA journal_mode=WAL")
++            connection.execute("CREATE TABLE IF NOT EXISTS records (table_name TEXT NOT NULL, partition TEXT NOT NULL, key TEXT NOT NULL, value TEXT NOT NULL, version TEXT NOT NULL, PRIMARY KEY(table_name, partition, key))")
++            connection.commit()
++
++    @contextmanager
++    def _connection(self):
++        if self._closed:
++            raise ValueError("state client is closed")
++        connection = sqlite3.connect(self.database, timeout=5)
++        try:
++            connection.execute("PRAGMA synchronous=FULL")
++            yield connection
++        finally:
++            connection.close()
++
++    def close(self) -> None:
++        self._closed = True
++
++    def get(self, kind: str, key: str) -> Versioned | None:
++        partition, key = identity(kind, key)
++        with self._connection() as connection:
++            row = connection.execute("SELECT value, version FROM records WHERE table_name=? AND partition=? AND key=?", (table_for(kind), partition, key)).fetchone()
++        return None if row is None else Versioned(parse_json(row[0]), row[1])
++
++    def insert(self, kind: str, key: str, value: dict[str, object]) -> Versioned:
++        partition, key = identity(kind, key)
++        body, version = payload_bytes(value).decode("utf-8"), uuid.uuid4().hex
++        try:
++            with self._connection() as connection:
++                connection.execute("BEGIN IMMEDIATE")
++                connection.execute("INSERT INTO records VALUES (?, ?, ?, ?, ?)", (table_for(kind), partition, key, body, version))
++                connection.commit()
++        except sqlite3.IntegrityError as error:
++            raise AlreadyExists("state identity already exists") from error
++        observe(self.observer, "state.after_insert")
++        return Versioned(parse_json(body), version)
++
++    def replace(self, kind: str, key: str, value: dict[str, object], version: str) -> Versioned:
++        exact_version(version)
++        partition, key = identity(kind, key)
++        body, next_version = payload_bytes(value).decode("utf-8"), uuid.uuid4().hex
++        with self._connection() as connection:
++            connection.execute("BEGIN IMMEDIATE")
++            count = connection.execute("UPDATE records SET value=?, version=? WHERE table_name=? AND partition=? AND key=? AND version=?", (body, next_version, table_for(kind), partition, key, version)).rowcount
++            if count != 1:
++                connection.rollback()
++                raise Conflict("state row absent or revision changed")
++            connection.commit()
++        observe(self.observer, "state.after_replace")
++        return Versioned(parse_json(body), next_version)
++
++    def scan(self, kind: str, filters: dict[str, object]) -> Iterator[Versioned]:
++        partition, _ = identity(kind, "scan")
++        detached_filters = parse_json(payload_bytes(filters))
++        last_key = ""
++        while True:
++            with self._connection() as connection:
++                rows = connection.execute("SELECT key, value, version FROM records WHERE table_name=? AND partition=? AND key>? ORDER BY key LIMIT ?", (table_for(kind), partition, last_key, self.page_size)).fetchall()
++            if not rows:
++                return
++            for key, body, version in rows:
++                value = parse_json(body)
++                if all(name in value and value[name] == expected for name, expected in detached_filters.items()):
++                    yield Versioned(value, version)
++                last_key = key
++
++
++class _WallClock:
++    def now(self) -> datetime:
++        return datetime.now(timezone.utc)
++
++
++class LocalLeaseStore:
++    def __init__(self, root: Path, *, clock=None, observer: BoundaryObserver | None = None, binding=None):
++        self.store = LocalStateStore(root, observer=observer, binding=binding)
++        self.objects = LocalObjectStore(root, binding=binding)
++        try:
++            self.objects.read(SENTINEL_PATH)
++        except FileNotFoundError:
++            try:
++                self.objects.put_once(SENTINEL_PATH, b"{}")
++            except Conflict:
++                self.objects.read(SENTINEL_PATH)
++        self.clock = clock or _WallClock()
++
++    def close(self) -> None:
++        self.store.close()
++
++    def acquire(self, owner: str, seconds: int) -> LeaseHandle:
++        require_text(owner, "owner")
++        require_number(seconds, "lease seconds", positive=True, integer=True)
++        for _ in range(CAS_ATTEMPTS):
++            now = self.clock.now()
++            require_utc(now, "clock.now")
++            current = self.store.get("_Lease", LOCK_BLOB)
++            if current is not None and datetime.fromisoformat(current.value["expires_at"]) > now:
++                raise Conflict("fixed sentinel is already leased")
++            lease_id = str(uuid.uuid4())
++            until = now + timedelta(seconds=seconds)
++            value = {"owner_id": owner, "lease_id": lease_id, "seconds": seconds, "expires_at": until.isoformat()}
++            try:
++                if current is None:
++                    self.store.insert("_Lease", LOCK_BLOB, value)
++                else:
++                    self.store.replace("_Lease", LOCK_BLOB, value, current.version)
++                return LeaseHandle(owner, lease_id, until)
++            except (AlreadyExists, Conflict):
++                continue
++        raise Conflict("lease acquisition exhausted conditional races")
++
++    def _owned(self, handle: LeaseHandle) -> Versioned:
++        now = self.clock.now()
++        require_utc(now, "clock.now")
++        row = self.store.get("_Lease", LOCK_BLOB)
++        if (row is None or row.value["owner_id"] != handle.owner_id or row.value["lease_id"] != handle.lease_id
++                or datetime.fromisoformat(row.value["expires_at"]) <= now):
++            raise OwnershipLost("fixed sentinel lease is absent, expired, or replaced")
++        return row
++
++    def assert_owned(self, handle: LeaseHandle) -> None:
++        self._owned(handle)
++
++    def renew(self, handle: LeaseHandle) -> LeaseHandle:
++        row = self._owned(handle)
++        until = self.clock.now() + timedelta(seconds=row.value["seconds"])
++        value = row.to_mapping()["value"]
++        value["expires_at"] = until.isoformat()
++        try:
++            self.store.replace("_Lease", LOCK_BLOB, value, row.version)
++        except Conflict as error:
++            raise OwnershipLost("lease changed during renewal") from error
++        return LeaseHandle(handle.owner_id, handle.lease_id, until)
++
++    def release(self, handle: LeaseHandle) -> None:
++        row = self._owned(handle)
++        value = row.to_mapping()["value"]
++        value["expires_at"] = self.clock.now().isoformat()
++        try:
++            self.store.replace("_Lease", LOCK_BLOB, value, row.version)
++        except Conflict as error:
++            raise OwnershipLost("lease changed during release") from error
+diff --git a/packages/sec-edgar-ingest/tests/support.py b/packages/sec-edgar-ingest/tests/support.py
+index d0ee6d6..08935ce 100644
+--- a/packages/sec-edgar-ingest/tests/support.py
++++ b/packages/sec-edgar-ingest/tests/support.py
+@@ -1,19 +1,21 @@
+ """Validated builders shared by offline acquisition tests."""
+ import json
++from collections.abc import Callable
+ from datetime import date, datetime, timedelta, timezone
+ from pathlib import Path
+ from typing import TYPE_CHECKING
+ 
+ if TYPE_CHECKING:
+     from sec_edgar_ingest.config import Settings
+-    from sec_edgar_ingest.models import RunContext, Source, SourceWorkset
++    from sec_edgar_ingest.models import RunContext, Source, SourceWorkset, Snapshot
++    from sec_edgar_ingest.storage.contracts import StateStore, ObjectStore, LeaseStore, BoundaryObserver
+ 
+ FIXTURE_CONFIG = Path(__file__).parent / "fixtures/config/local.json"
+ 
+ 
+ def fixture_settings(**overrides: object) -> "Settings":
+     from sec_edgar_ingest.config import Settings
+     value = json.loads(FIXTURE_CONFIG.read_text())
+     for key, override in overrides.items():
+         if isinstance(override, dict) and isinstance(value.get(key), dict):
+             value[key].update(override)
+@@ -69,10 +71,56 @@ def fixture_workset(members: tuple["Source", ...], discovery_complete: bool = Tr
+         for url, group in by_directory.items()
+     )
+     if not discovery_complete:
+         failed = DirectoryOutcome(
+             "https://www.sec.gov/Archives/edgar/full-index/2015/QTR2/index.json",
+             "2015Q2", "discovery_failed", None, (), Error("listing", "failed", True, None, {}),
+         )
+         directories += (failed,)
+     return make_source_workset(fixture_context(), "2026Q4", "fixture-discovery",
+                                tuple(members), directories, date(2026, 10, 1))
++
++
++def fixture_snapshot(source: "Source", body: bytes) -> "Snapshot":
++    import hashlib
++    from sec_edgar_ingest.models import Snapshot, QUARTERLY_ENVELOPE_VERSION, DAILY_ENVELOPE_VERSION
++    digest = hashlib.sha256(body).hexdigest()
++    envelope = QUARTERLY_ENVELOPE_VERSION if source.kind == "quarterly" else DAILY_ENVELOPE_VERSION
++    return Snapshot(source.source_id, digest,
++                    f"raw/sec/indexes/kind={source.kind}/period={source.period}/sha256={digest}/master.{source.representation}",
++                    len(body), fixture_context().started_at, {}, source.representation, envelope)
++
++
++class Faults:
++    """One-shot observers interrupt the real durable transition at a named boundary."""
++    def __init__(self):
++        self._actions = {}
++
++    def at(self, point: str, action: Callable[[], None]) -> None:
++        self._actions[point] = action
++
++    def __call__(self, point: str) -> None:
++        action = self._actions.pop(point, None)
++        if action is not None:
++            action()
++
++
++class FixtureClock:
++    def __init__(self):
++        self.instant = datetime(2026, 10, 6, tzinfo=timezone.utc)
++        self.elapsed = 0.0
++
++    def now(self) -> datetime:
++        return self.instant
++
++    def monotonic(self) -> float:
++        return self.elapsed
++
++    def advance(self, seconds: float) -> None:
++        self.instant += timedelta(seconds=seconds)
++        self.elapsed += seconds
++
++
++def store_bundle(root: Path, *, observer: "BoundaryObserver | None" = None, clock=None) -> tuple["StateStore", "ObjectStore", "LeaseStore"]:
++    from sec_edgar_ingest.storage.local import LocalStateStore, LocalObjectStore, LocalLeaseStore
++    return (LocalStateStore(root, observer=observer), LocalObjectStore(root, observer=observer),
++            LocalLeaseStore(root, observer=observer, clock=clock))
+diff --git a/packages/sec-edgar-ingest/tests/test_azure_contracts.py b/packages/sec-edgar-ingest/tests/test_azure_contracts.py
+new file mode 100644
+index 0000000..ef6a05d
+--- /dev/null
++++ b/packages/sec-edgar-ingest/tests/test_azure_contracts.py
+@@ -0,0 +1,394 @@
++"""Real pinned SDK request construction with an in-memory HTTP transport only."""
++import hashlib
++import importlib
++import importlib.util
++import json
++import tempfile
++import unittest
++from collections import deque
++from datetime import timedelta
++from importlib.metadata import version
++from pathlib import Path
++from unittest.mock import patch
++from urllib.parse import parse_qs, urlsplit
++
++from azure.core.credentials import AzureSasCredential
++from azure.core.exceptions import DeserializationError, HttpResponseError
++from azure.core.pipeline.transport import HttpResponse, HttpTransport
++from azure.data.tables import TableServiceClient
++from azure.storage.blob import BlobServiceClient
++from requests.structures import CaseInsensitiveDict
++
++from support import FixtureClock, fixture_settings, fixture_snapshot, fixture_source
++
++BLOB_ENDPOINT = "https://secedgardevb8617.blob.core.windows.net"
++TABLE_ENDPOINT = "https://secedgardevb8617.table.core.windows.net"
++DATE = "Tue, 06 Oct 2026 00:00:00 GMT"
++RETRY = dict(retry_total=0, retry_connect=0, retry_read=0, retry_status=0)
++
++
++class ScriptedStream:
++    def __init__(self, response):
++        self.response = response
++        self.content_length = int(response.headers["Content-Length"])
++        self._chunks = iter((response.body(),))
++
++    def __iter__(self):
++        return self
++
++    def __next__(self):
++        return next(self._chunks)
++
++
++class ScriptedResponse(HttpResponse):
++    def __init__(self, request, status, headers, body):
++        super().__init__(request, None)
++        self.status_code = status
++        self.headers = CaseInsensitiveDict(headers)
++        self.reason = "scripted offline response"
++        self.content_type = self.headers.get("Content-Type")
++        self._body = body
++        self.location_mode = "primary"
++
++    def read(self):
++        return self._body
++
++    def close(self):
++        pass
++
++    def body(self):
++        return self._body
++
++    def text(self, encoding=None):
++        return self._body.decode(encoding or "utf-8")
++
++    def stream_download(self, pipeline, **kwargs):
++        return ScriptedStream(self)
++
++
++class ScriptedTransport(HttpTransport):
++    def __init__(self, responses):
++        self.responses = deque(responses)
++        self.requests = []
++
++    def open(self):
++        pass
++
++    def close(self):
++        pass
++
++    def __enter__(self):
++        return self
++
++    def __exit__(self, *args):
++        self.close()
++
++    def send(self, request, **kwargs):
++        self.requests.append(request)
++        if not self.responses:
++            raise AssertionError("unscripted HTTP request; network transport is forbidden")
++        status, headers, body = self.responses.popleft()
++        if request.method == "GET" and ".blob.core.windows.net" in request.url and status == 200 and body:
++            headers = {**headers, "Content-Range": f"bytes 0-{len(body) - 1}/{len(body)}"}
++            status = 206
++        return ScriptedResponse(request, status, headers, body)
++
++
++def response(status=200, *, etag='"opaque-service-etag"', body=b"", headers=None):
++    result = {"Date": DATE, "Content-Length": str(len(body)), "Content-Type": "application/octet-stream"}
++    if etag is not None:
++        result["ETag"] = etag
++    result.update(headers or {})
++    return status, result, body
++
++
++def entity(key="identity", value=None, etag='W/"exact-observed-opaque"', kind="Source"):
++    return {"PartitionKey": "sec-owner-lowell-mason:" + kind, "RowKey": key,
++            "StableKey": key, "Payload": json.dumps(value if value is not None else {"count": 1}),
++            "Timestamp": "2026-10-06T00:00:00Z", **({"odata.etag": etag} if etag is not None else {})}
++
++
++def table_response(status=200, *, value=None, headers=None, etag='W/"actual-read-etag"'):
++    body = json.dumps(value if value is not None else entity()).encode()
++    return response(status, etag=etag, body=body, headers={"Content-Type": "application/json", **(headers or {})})
++
++
++def blob_error(status, code):
++    return response(status, body=f"<Error><Code>{code}</Code><Message>offline contract failure</Message></Error>".encode(),
++                    headers={"Content-Type": "application/xml", "x-ms-error-code": code})
++
++
++def table_error(status, code):
++    return table_response(status, value={"odata.error": {"code": code, "message": {"lang": "en-US", "value": "offline failure"}}})
++
++
++class AzureContractTests(unittest.TestCase):
++    def setUp(self):
++        self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.storage.azure"),
++                             "Pinned SDK adapters must issue conditional storage HTTP requests")
++        self.azure = importlib.import_module("sec_edgar_ingest.storage.azure")
++        self.contracts = importlib.import_module("sec_edgar_ingest.storage.contracts")
++
++    def blobs(self, responses):
++        transport = ScriptedTransport(responses)
++        service = BlobServiceClient(BLOB_ENDPOINT, api_version="2026-04-06", transport=transport, **RETRY)
++        self.addCleanup(service.close)
++        return service, transport
++
++    def tables(self, responses):
++        transport = ScriptedTransport(responses)
++        # Synthetic SAS only satisfies the SDK's pure constructor; every send uses this transport.
++        service = TableServiceClient(TABLE_ENDPOINT, credential=AzureSasCredential("sv=offline&sig=synthetic"),
++                                     api_version="2020-12-06", transport=transport, **RETRY)
++        self.addCleanup(service.close)
++        store = self.azure.AzureStateStore(service.get_table_client("SourceState"), service.get_table_client("Attempts"))
++        return store, transport
++
++    def test_installed_pins_are_exact(self):
++        self.assertEqual(version("azure-storage-blob"), "12.31.0")
++        self.assertEqual(version("azure-data-tables"), "12.7.0")
++        self.assertEqual(version("azure-core"), "1.41.0")
++
++    def test_blob_create_is_explicit_version_and_if_none_match(self):
++        service, transport = self.blobs([response(201)])
++        objects = self.azure.AzureObjectStore(service)
++        self.assertEqual(objects.put_once("worksets/source/identity.json", b"manifest"), "worksets/source/identity.json")
++        request = transport.requests[0]
++        self.assertEqual(request.method, "PUT")
++        self.assertEqual(request.headers["x-ms-version"], "2026-04-06")
++        self.assertEqual(request.headers["If-None-Match"], "*")
++        self.assertNotIn("If-Match", request.headers)
++        self.assertEqual(request.body, b"manifest")
++        self.assertTrue(request.url.startswith(BLOB_ENDPOINT + "/worksets/source/identity.json"))
++        self.assertFalse(transport.responses)
++
++    def test_blob_collision_verifies_equal_content_and_preserves_different_content(self):
++        for body, succeeds in ((b"accepted", True), (b"different", False)):
++            with self.subTest(succeeds=succeeds):
++                service, transport = self.blobs([blob_error(409, "BlobAlreadyExists"), response(body=body)])
++                objects = self.azure.AzureObjectStore(service)
++                if succeeds:
++                    self.assertEqual(objects.put_once("raw/immutable", b"accepted"), "raw/immutable")
++                else:
++                    with self.assertRaises(self.contracts.Conflict):
++                        objects.put_once("raw/immutable", b"accepted")
++                self.assertEqual([request.method for request in transport.requests], ["PUT", "GET"])
++                self.assertEqual(transport.requests[0].headers["If-None-Match"], "*")
++                self.assertFalse(transport.responses)
++
++    def test_blob_stage_promote_uses_blob_create_without_dfs_rename(self):
++        body = b"staged bytes"
++        snapshot = fixture_snapshot(fixture_source(), body)
++        service, transport = self.blobs([response(201), response(body=body), response(body=body),
++                                        response(201), response(body=body)])
++        objects = self.azure.AzureObjectStore(service)
++        with tempfile.TemporaryDirectory() as directory:
++            path = Path(directory) / "receipt"
++            path.write_bytes(body)
++            temporary = objects.stage("raw/.staging/body", path)
++            self.assertEqual(objects.promote(temporary, snapshot.raw_path, snapshot.sha256, len(body)), snapshot.raw_path)
++        writes = [request for request in transport.requests if request.method == "PUT"]
++        self.assertEqual(len(writes), 2)
++        self.assertTrue(all(request.headers["If-None-Match"] == "*" for request in writes))
++        self.assertTrue(all(".blob.core.windows.net/" in request.url for request in transport.requests))
++        self.assertFalse(any("rename" in request.url or "copy" in request.headers for request in transport.requests))
++        self.assertFalse(transport.responses)
++
++    def test_blob_errors_do_not_retry_or_become_immutable_success(self):
++        service, transport = self.blobs([blob_error(500, "InternalError")])
++        with self.assertRaises(HttpResponseError):
++            self.azure.AzureObjectStore(service).put_once("raw/identity", b"body")
++        self.assertEqual(len(transport.requests), 1)
++        service, transport = self.blobs([blob_error(404, "BlobNotFound")])
++        with self.assertRaises(FileNotFoundError):
++            self.azure.AzureObjectStore(service).read("raw/absent")
++        self.assertEqual(len(transport.requests), 1)
++
++    def test_table_insert_is_atomic_create_and_returns_actual_write_etag(self):
++        store, transport = self.tables([response(204, etag='W/"write-response-version"')])
++        row = store.insert("Source", "identity", {"count": 1})
++        self.assertEqual(row.version, 'W/"write-response-version"')
++        request = transport.requests[0]
++        self.assertEqual(request.method, "POST")
++        self.assertEqual(request.headers["x-ms-version"], "2020-12-06")
++        self.assertNotIn("If-Match", request.headers)
++        payload = json.loads(request.body)
++        self.assertEqual(payload["PartitionKey"], "sec-owner-lowell-mason:Source")
++        self.assertEqual(payload["RowKey"], "identity")
++        self.assertEqual(json.loads(payload["Payload"]), {"count": 1})
++        self.assertIn("/SourceState", request.url)
++
++    def test_table_replace_uses_put_and_exact_opaque_if_match(self):
++        store, transport = self.tables([response(204, etag='W/"updated-service-version"')])
++        row = store.replace("Source", "identity", {"count": 2}, 'W/"opaque-original-version"')
++        self.assertEqual(row.version, 'W/"updated-service-version"')
++        request = transport.requests[0]
++        self.assertEqual(request.method, "PUT")
++        self.assertEqual(request.headers["If-Match"], 'W/"opaque-original-version"')
++        self.assertEqual(request.headers["x-ms-version"], "2020-12-06")
++        self.assertNotIn("If-None-Match", request.headers)
++        for invalid in ("", "*"):
++            with self.subTest(invalid=invalid), self.assertRaises(ValueError):
++                store.replace("Source", "identity", {}, invalid)
++        self.assertEqual(len(transport.requests), 1)
++
++    def test_table_create_conflict_stale_replace_and_not_found_map_exactly(self):
++        store, transport = self.tables([table_error(409, "EntityAlreadyExists"), table_error(412, "UpdateConditionNotSatisfied"), table_error(404, "ResourceNotFound")])
++        with self.assertRaises(self.contracts.AlreadyExists):
++            store.insert("Source", "identity", {})
++        with self.assertRaises(self.contracts.Conflict):
++            store.replace("Source", "identity", {}, 'W/"stale"')
++        self.assertIsNone(store.get("Source", "absent"))
++        self.assertEqual(len(transport.requests), 3)
++
++    def test_table_get_uses_raw_header_never_timestamp_fabricated_etag(self):
++        store, transport = self.tables([table_response(value=entity(etag=None), etag='W/"real-header-only"'),
++                                        table_response(value=entity(etag=None), etag=None)])
++        row = store.get("Source", "identity")
++        self.assertEqual(row.version, 'W/"real-header-only"')
++        self.assertEqual(row.value["count"], 1)
++        with self.assertRaises(self.contracts.Conflict):
++            store.get("Source", "identity")
++        self.assertEqual(len(transport.requests), 2)
++
++    def test_table_query_exhausts_continuations_including_empty_page(self):
++        page1 = table_response(value={"value": [entity("one", {"pending": True}, 'W/"page-one"')]},
++                               headers={"x-ms-continuation-NextPartitionKey": "partition", "x-ms-continuation-NextRowKey": "row1"})
++        page2 = table_response(value={"value": []}, headers={"x-ms-continuation-NextPartitionKey": "partition", "x-ms-continuation-NextRowKey": "row2"})
++        page3 = table_response(value={"value": [entity("two", {"pending": True}, 'W/"page-three"'), entity("three", {"pending": False})]})
++        store, transport = self.tables([page1, page2, page3])
++        rows = tuple(store.scan("Source", {"pending": True}))
++        self.assertEqual([row.version for row in rows], ['W/"page-one"', 'W/"page-three"'])
++        self.assertEqual(len(transport.requests), 3)
++        self.assertEqual(parse_qs(urlsplit(transport.requests[1].url).query)["NextRowKey"], ["row1"])
++        self.assertEqual(parse_qs(urlsplit(transport.requests[2].url).query)["NextRowKey"], ["row2"])
++        self.assertTrue(all(request.headers["x-ms-version"] == "2020-12-06" for request in transport.requests))
++
++    def test_table_query_missing_service_etag_and_unknown_errors_fail_closed(self):
++        store, transport = self.tables([table_response(value={"value": [entity(etag=None)]}), table_error(500, "InternalError")])
++        with self.assertRaises(self.contracts.Conflict):
++            tuple(store.scan("Source", {}))
++        with self.assertRaises(HttpResponseError):
++            store.insert("Source", "identity", {})
++        self.assertEqual(len(transport.requests), 2)
++
++    def test_attempt_rows_use_only_attempts_table(self):
++        store, transport = self.tables([response(204), response(204), response(204)])
++        for kind in ("Attempt", "TransportAttempt", "Failure"):
++            store.insert(kind, "key", {"kind": kind})
++        self.assertTrue(all("/Attempts" in request.url for request in transport.requests))
++        self.assertTrue(all(request.method == "POST" for request in transport.requests))
++
++    def test_lease_acquire_renew_and_release_use_service_id_and_pinned_version(self):
++        service, transport = self.blobs([response(201), response(201, headers={"x-ms-lease-id": "actual-server-lease"}),
++                                        response(headers={"x-ms-lease-id": "actual-server-lease", "Date": "Tue, 06 Oct 2026 00:00:20 GMT"}), response()])
++        clock = FixtureClock()
++        leases = self.azure.AzureLeaseStore(service, clock=clock)
++        handle = leases.acquire("owner", 60)
++        self.assertEqual(handle.lease_id, "actual-server-lease")
++        self.assertEqual(handle.observed_until, clock.now() + timedelta(seconds=58))
++        clock.advance(20)
++        renewed = leases.renew(handle)
++        self.assertEqual(renewed.lease_id, "actual-server-lease")
++        self.assertEqual(renewed.observed_until, clock.now() + timedelta(seconds=58))
++        leases.release(renewed)
++        self.assertTrue(all(request.headers["x-ms-version"] == "2026-04-06" for request in transport.requests))
++        self.assertTrue(all("/locks/sec-owner-lowell-mason/sentinel.json" in request.url for request in transport.requests))
++        self.assertEqual(transport.requests[1].headers["x-ms-lease-action"], "acquire")
++        for request in transport.requests[2:]:
++            self.assertEqual(request.headers["x-ms-lease-id"], "actual-server-lease")
++        self.assertFalse(transport.responses)
++
++    def test_lease_owned_check_rewrites_same_journal_with_exact_etag_and_actual_id(self):
++        journal = b'{"epoch":7,"not_before":"2026-10-06T00:00:30Z"}'
++        service, transport = self.blobs([response(etag='"sentinel-etag"'), response(etag='"sentinel-etag"', body=journal), response(201)])
++        clock = FixtureClock()
++        leases = self.azure.AzureLeaseStore(service, clock=clock)
++        handle = self.contracts.LeaseHandle("owner", "actual-server-lease", clock.now() + timedelta(seconds=58))
++        leases.assert_owned(handle)
++        request = transport.requests[-1]
++        self.assertEqual(request.method, "PUT")
++        self.assertEqual(request.headers["x-ms-lease-id"], handle.lease_id)
++        self.assertEqual(request.headers["If-Match"], '"sentinel-etag"')
++        self.assertNotIn("If-None-Match", request.headers)
++        self.assertEqual(request.body, journal)
++
++    def test_lease_conflict_loss_expiry_and_unbounded_clock_fail_closed(self):
++        service, transport = self.blobs([response(201), blob_error(409, "LeaseAlreadyPresent")])
++        clock = FixtureClock()
++        with self.assertRaises(self.contracts.Conflict):
++            self.azure.AzureLeaseStore(service, clock=clock).acquire("owner", 60)
++        service, transport = self.blobs([blob_error(412, "LeaseIdMismatchWithLeaseOperation")])
++        leases = self.azure.AzureLeaseStore(service, clock=clock)
++        handle = self.contracts.LeaseHandle("owner", "old-server-lease", clock.now() + timedelta(seconds=58))
++        with self.assertRaises(self.contracts.OwnershipLost):
++            leases.renew(handle)
++        clock.advance(60)
++        with self.assertRaises(self.contracts.OwnershipLost):
++            leases.assert_owned(handle)
++        self.assertEqual(len(transport.requests), 1)
++        for headers in ({"Date": ""}, {"Date": "Tue, 06 Oct 2026 00:00:20 GMT"}):
++            with self.subTest(headers=headers):
++                service, transport = self.blobs([response(201), response(201, headers={**headers, "x-ms-lease-id": "real-id"})])
++                with self.assertRaises(self.contracts.ClockUncertain):
++                    try:
++                        self.azure.AzureLeaseStore(service, clock=FixtureClock()).acquire("owner", 60)
++                    except DeserializationError as error:
++                        self.fail(f"Raw server Date must be rejected as ClockUncertain before SDK deserialization: {error}")
++
++    def test_factory_conditions_fixed_registry_before_authority_clients(self):
++        settings = fixture_settings(storage={"backend": "azure", "root": None, "account_name": "secedgardevb8617",
++                                             "blob_endpoint": BLOB_ENDPOINT, "table_endpoint": TABLE_ENDPOINT,
++                                             "raw_container": "raw", "workset_container": "worksets",
++                                             "quarantine_container": "quarantine", "lock_container": "locks",
++                                             "lock_blob": "sec-owner-lowell-mason/sentinel.json",
++                                             "binding_registry_blob": "sec-owner-lowell-mason/binding.json"},
++                                    etl={"parser_version": "sec-envelope-v1"},
++                                    worker={"image_digest": "sha256:" + "1" * 64, "provenance": "configured-image"})
++        service, transport = self.blobs([response(201)])
++        with patch.object(self.azure, "ManagedIdentityCredential") as credential, patch.object(self.azure, "BlobServiceClient", return_value=service) as blob_factory, patch.object(self.azure, "TableServiceClient") as table_factory:
++            tables = table_factory.return_value
++            source = tables.get_table_client.return_value
++            source.url = TABLE_ENDPOINT
++            tables.get_table_client.side_effect = lambda name: self._factory_table(name)
++            self.azure.open_azure_stores(settings)
++            credential.assert_called_once_with()
++            self.assertEqual(blob_factory.call_args.kwargs["api_version"], "2026-04-06")
++            self.assertEqual(table_factory.call_args.kwargs["api_version"], "2020-12-06")
++            for factory in (blob_factory, table_factory):
++                self.assertEqual({key: factory.call_args.kwargs[key] for key in RETRY}, RETRY)
++        request = transport.requests[0]
++        self.assertIn("/locks/sec-owner-lowell-mason/binding.json", request.url)
++        self.assertEqual(request.headers["If-None-Match"], "*")
++        registry = json.loads(request.body)
++        self.assertEqual(registry["namespace"], "sec-owner-lowell-mason")
++        self.assertEqual(registry["account"], "secedgardevb8617")
++        different = json.dumps({"namespace": "other"}).encode()
++        service, transport = self.blobs([blob_error(409, "BlobAlreadyExists"), response(body=different)])
++        with patch.object(self.azure, "ManagedIdentityCredential"), patch.object(self.azure, "BlobServiceClient", return_value=service), patch.object(self.azure, "TableServiceClient") as table_factory:
++            with self.assertRaises(self.contracts.Conflict):
++                self.azure.open_azure_stores(settings)
++            table_factory.assert_not_called()
++
++    def _factory_table(self, name):
++        from unittest.mock import Mock
++        return Mock(url=TABLE_ENDPOINT, table_name=name)
++
++    def test_lease_observation_rejects_clock_jump_nonfinite_and_excess_latency(self):
++        for fault in ("wall_jump", "nonfinite", "slow"):
++            with self.subTest(fault=fault):
++                service, transport = self.blobs([response(201), response(201, headers={"x-ms-lease-id": "actual-server-lease"})])
++                clock = FixtureClock()
++                send = transport.send
++                def advance_clock(request, **kwargs):
++                    if request.headers.get("x-ms-lease-action") == "acquire":
++                        if fault == "wall_jump":
++                            clock.instant += timedelta(seconds=20)
++                        elif fault == "nonfinite":
++                            clock.elapsed = float("nan")
++                        else:
++                            clock.advance(3)
++                    return send(request, **kwargs)
++                transport.send = advance_clock
++                with self.assertRaises(self.contracts.ClockUncertain):
++                    self.azure.AzureLeaseStore(service, clock=clock).acquire("owner", 60)
+diff --git a/packages/sec-edgar-ingest/tests/test_state.py b/packages/sec-edgar-ingest/tests/test_state.py
+new file mode 100644
+index 0000000..16ca12a
+--- /dev/null
++++ b/packages/sec-edgar-ingest/tests/test_state.py
+@@ -0,0 +1,233 @@
++import importlib
++import importlib.util
++import multiprocessing
++import tempfile
++import unittest
++from dataclasses import replace
++from datetime import timedelta
++from pathlib import Path
++
++from sec_edgar_ingest.models import Binding, BodyReceipt, CommandResult, Error, Permit
++from support import Faults, FixtureClock, fixture_context, fixture_snapshot, fixture_source, store_bundle
++
++
++def pin_in_process(root, barrier, output, body):
++    from sec_edgar_ingest.state import AcquisitionState
++    store = store_bundle(Path(root))[0]
++    state = AcquisitionState(store)
++    source = fixture_source()
++    snapshot = fixture_snapshot(source, body)
++    state.remember_snapshot(snapshot)
++    candidate = Binding("a" * 64, source.source_id, snapshot.sha256)
++    assert state.binding(candidate.source_workset_id, source.source_id) is None
++    barrier.wait(timeout=20)
++    winner = state.bind_once(candidate)
++    output.put(winner.to_mapping())
++    store.close()
++
++
++class StateTests(unittest.TestCase):
++    def setUp(self):
++        self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.state"),
++                             "First pins and attempt failures require durable state transitions")
++        self.state_module = importlib.import_module("sec_edgar_ingest.state")
++        self.contracts = importlib.import_module("sec_edgar_ingest.storage.contracts")
++        self.directory = tempfile.TemporaryDirectory()
++        self.addCleanup(self.directory.cleanup)
++        self.root = Path(self.directory.name)
++        self.store, self.objects, self.leases = store_bundle(self.root)
++        self.addCleanup(self.store.close)
++        self.clock = FixtureClock()
++        self.state = self.state_module.AcquisitionState(self.store, clock=self.clock)
++        self.source = fixture_source()
++
++    def test_first_pin_survives_reopen_and_newer_snapshot(self):
++        old = fixture_snapshot(self.source, b"original")
++        new = replace(fixture_snapshot(self.source, b"changed"), received_at=old.received_at + timedelta(seconds=5))
++        self.state.remember_snapshot(old)
++        winner = self.state.bind_once(Binding("a" * 64, self.source.source_id, old.sha256))
++        self.state.remember_snapshot(new)
++        self.store.close()
++        reopened_store = store_bundle(self.root)[0]
++        self.addCleanup(reopened_store.close)
++        reopened = self.state_module.AcquisitionState(reopened_store)
++        loser = reopened.bind_once(Binding("a" * 64, self.source.source_id, new.sha256))
++        self.assertEqual(loser, winner)
++        self.assertEqual(reopened.snapshot(self.source.source_id, winner.snapshot_sha256), old)
++
++    def test_independent_processes_observe_absence_then_race_first_pin(self):
++        context = multiprocessing.get_context("spawn")
++        barrier = context.Barrier(2)
++        output = context.Queue()
++        processes = [context.Process(target=pin_in_process, args=(str(self.root), barrier, output, body))
++                     for body in (b"first", b"second")]
++        for process in processes:
++            process.start()
++        try:
++            results = [output.get(timeout=30) for _ in processes]
++        finally:
++            for process in processes:
++                process.join(timeout=30)
++                if process.is_alive():
++                    process.terminate()
++                    process.join(timeout=5)
++        self.assertEqual([process.exitcode for process in processes], [0, 0])
++        self.assertEqual(results[0], results[1])
++        winner = self.state.binding("a" * 64, self.source.source_id)
++        self.assertEqual(winner.to_mapping(), results[0])
++        self.state.snapshot(self.source.source_id, winner.snapshot_sha256)
++
++    def test_discovery_and_later_failure_preserve_success_and_existing_pin(self):
++        at = self.clock.now()
++        self.state.observe(self.source, at, "available")
++        snapshot = fixture_snapshot(self.source, b"accepted")
++        self.state.remember_snapshot(snapshot)
++        binding = self.state.bind_once(Binding("a" * 64, self.source.source_id, snapshot.sha256))
++        self.clock.advance(5)
++        self.state.observe(self.source, self.clock.now(), "discovery_failed")
++        error = Error("http", "later refresh failed", True, self.source.source_id, {"status": 503})
++        self.state.record_failure(self.source, error)
++        value = self.state.get_source(self.source.source_id).value
++        self.assertEqual(value["first_discovered_at"], at.isoformat())
++        self.assertEqual(value["last_discovered_at"], self.clock.now().isoformat())
++        self.assertEqual(value["acquisition_status"], "downloaded")
++        self.assertEqual(value["latest_downloaded_snapshot"], snapshot.sha256)
++        self.assertEqual(value["last_error"]["code"], "http")
++        self.assertEqual(self.state.binding("a" * 64, self.source.source_id), binding)
++        self.assertEqual(self.state.pending_sources(), (self.source,))
++        self.assertEqual(self.state.snapshot(self.source.source_id, snapshot.sha256), snapshot)
++        self.assertEqual(len(tuple(self.store.scan("Failure", {}))), 1)
++
++    def test_older_receipt_and_out_of_order_discovery_never_move_pointers_back(self):
++        at = self.clock.now()
++        self.state.observe(self.source, at + timedelta(seconds=10), "available")
++        self.state.observe(self.source, at, "available")
++        old = fixture_snapshot(self.source, b"old")
++        new = replace(fixture_snapshot(self.source, b"new"), received_at=at + timedelta(seconds=10))
++        self.state.remember_snapshot(new)
++        self.state.remember_snapshot(old)
++        value = self.state.get_source(self.source.source_id).value
++        self.assertEqual(value["latest_downloaded_snapshot"], new.sha256)
++        self.assertEqual(value["first_discovered_at"], at.isoformat())
++        self.assertEqual(value["last_discovered_at"], new.received_at.isoformat())
++        self.assertEqual(self.state.remember_snapshot(replace(old, received_at=at + timedelta(seconds=20))), old)
++        receipt = self.state.get_source(self.source.source_id).value
++        self.assertEqual(receipt["latest_downloaded_snapshot"], old.sha256)
++        self.assertEqual(receipt["latest_received_at"], (at + timedelta(seconds=20)).isoformat())
++
++    def test_pending_sources_include_old_failed_and_all_pages(self):
++        sources = [fixture_source(f"2015Q{ordinal}") for ordinal in range(1, 5)]
++        daily = fixture_source("2026-10-01", "daily")
++        sources.append(daily)
++        for source in sources:
++            self.state.observe(source, self.clock.now(), "available")
++        self.state.record_failure(sources[0], Error("failed", "old failure", True, sources[0].source_id, {}))
++        self.state.remember_snapshot(fixture_snapshot(daily, b"downloaded"))
++        paged_store = importlib.import_module("sec_edgar_ingest.storage.local").LocalStateStore(self.root, page_size=2)
++        self.addCleanup(paged_store.close)
++        pending = self.state_module.AcquisitionState(paged_store).pending_sources()
++        self.assertEqual(set(pending), set(sources[:-1]))
++
++    def test_attempts_reopen_unfinished_and_finish_idempotently_without_erasure(self):
++        context = fixture_context()
++        self.state.begin_attempt(context)
++        unfinished = tuple(self.store.scan("Attempt", {}))
++        self.assertEqual(len(unfinished), 1)
++        self.assertEqual(unfinished[0].value["outcome"], "in_progress")
++        reopened_store = store_bundle(self.root)[0]
++        self.addCleanup(reopened_store.close)
++        reopened = self.state_module.AcquisitionState(reopened_store)
++        reopened.begin_attempt(context)
++        self.assertEqual(tuple(reopened_store.scan("Attempt", {})), unfinished)
++        error = Error("timeout", "interrupted body", True, self.source.source_id, {})
++        result = CommandResult(context, "failed", None, None, 1, 0, 0, 1, 1, 0, (error,),
++                               context.started_at, context.started_at + timedelta(seconds=10))
++        reopened.finish_attempt(result)
++        finished = tuple(self.store.scan("Attempt", {}))[0]
++        self.assertEqual(finished.to_mapping()["value"]["result"], result.to_mapping())
++        self.assertEqual(finished.value["structured_errors"][0]["code"], "timeout")
++        reopened.finish_attempt(result)
++        self.assertEqual(tuple(self.store.scan("Attempt", {}))[0], finished)
++        with self.assertRaises(self.contracts.Conflict):
++            reopened.finish_attempt(replace(result, outcome="success", gaps=()))
++
++    def test_request_attempts_are_immutable_auditable_and_bounded(self):
++        context = fixture_context()
++        self.state.begin_attempt(context)
++        receipt = BodyReceipt(self.source.canonical_url, 503, {"Retry-After": "120"}, self.root / "body",
++                              context.started_at, 0, "0" * 64, False,
++                              Error("http", "unavailable", True, self.source.source_id, {}))
++        permit = Permit("owner", 3, "request", context.started_at + timedelta(seconds=1),
++                        context.started_at + timedelta(seconds=90), context.started_at + timedelta(seconds=92),
++                        1.0, 90.0)
++        self.state.request_attempt(context, receipt, permit, 1)
++        self.state.request_attempt(context, receipt, permit, 1)
++        rows = tuple(self.store.scan("TransportAttempt", {}))
++        self.assertEqual(len(rows), 1)
++        self.assertEqual(rows[0].value["ownership_epoch"], 3)
++        self.assertEqual(rows[0].value["request_id"], "request")
++        self.assertEqual(rows[0].value["status"], 503)
++        self.assertIsNone(rows[0].value["next_allowed_at"])
++        with self.assertRaises(self.contracts.Conflict):
++            self.state.request_attempt(context, replace(receipt, status=200), permit, 1)
++        for ordinal in (0, 6, True):
++            with self.subTest(ordinal=ordinal), self.assertRaises(ValueError):
++                self.state.request_attempt(context, receipt, permit, ordinal)
++
++    def test_snapshot_durable_boundary_can_be_replayed_without_erasing_raw_or_success(self):
++        self.state.observe(self.source, self.clock.now(), "available")
++        snapshot = fixture_snapshot(self.source, b"accepted bytes")
++        self.objects.put_once(snapshot.raw_path, b"accepted bytes")
++        faults = Faults()
++        local = importlib.import_module("sec_edgar_ingest.storage.local")
++        interrupted = local.LocalStateStore(self.root, observer=faults)
++        self.addCleanup(interrupted.close)
++        def crash():
++            raise RuntimeError("snapshot committed, source not updated")
++        faults.at("state.after_insert", crash)
++        state = self.state_module.AcquisitionState(interrupted)
++        with self.assertRaisesRegex(RuntimeError, "snapshot committed"):
++            state.remember_snapshot(snapshot)
++        self.objects.verify(snapshot.raw_path, snapshot.sha256, snapshot.byte_count)
++        self.assertEqual(self.state.snapshot(self.source.source_id, snapshot.sha256), snapshot)
++        self.state.remember_snapshot(snapshot)
++        self.assertEqual(self.state.get_source(self.source.source_id).value["latest_downloaded_snapshot"], snapshot.sha256)
++
++    def test_binding_requires_snapshot_and_cas_conflicts_are_bounded(self):
++        snapshot = fixture_snapshot(self.source, b"accepted")
++        with self.assertRaises(self.contracts.Conflict):
++            self.state.bind_once(Binding("a" * 64, self.source.source_id, snapshot.sha256))
++        self.state.observe(self.source, self.clock.now(), "available")
++        class ConflictingStore:
++            def __init__(inner):
++                inner.replaces = 0
++            def get(inner, kind, key):
++                return self.store.get(kind, key)
++            def replace(inner, kind, key, value, version):
++                inner.replaces += 1
++                raise self.contracts.Conflict("concurrent writer")
++        conflicting = ConflictingStore()
++        state = self.state_module.AcquisitionState(conflicting)
++        with self.assertRaises(self.contracts.Conflict):
++            state.observe(self.source, self.clock.now(), "available")
++        self.assertGreater(conflicting.replaces, 0)
++        self.assertLessEqual(conflicting.replaces, 5)
++
++    def test_mismatched_observed_source_address_is_not_remembered(self):
++        self.state.observe(self.source, self.clock.now(), "available")
++        snapshot = fixture_snapshot(self.source, b"bytes")
++        mismatched = replace(snapshot, raw_path=snapshot.raw_path.replace("period=2015Q1", "period=2015Q2"))
++        with self.assertRaises(self.contracts.Conflict):
++            self.state.remember_snapshot(mismatched)
++        self.assertEqual(tuple(self.store.scan("Snapshot", {})), ())
++
++    def test_existing_pin_wins_even_if_a_retry_candidate_is_unremembered(self):
++        snapshot = fixture_snapshot(self.source, b"accepted")
++        self.state.remember_snapshot(snapshot)
++        winner = self.state.bind_once(Binding("a" * 64, self.source.source_id, snapshot.sha256))
++        candidate = Binding("a" * 64, self.source.source_id, "b" * 64)
++        try:
++            actual = self.state.bind_once(candidate)
++        except self.contracts.Conflict as error:
++            self.fail(f"A durable existing pin must win before validating a retry candidate: {error}")
++        self.assertEqual(actual, winner)
+diff --git a/packages/sec-edgar-ingest/tests/test_storage.py b/packages/sec-edgar-ingest/tests/test_storage.py
+new file mode 100644
+index 0000000..c011040
+--- /dev/null
++++ b/packages/sec-edgar-ingest/tests/test_storage.py
+@@ -0,0 +1,197 @@
++import hashlib
++import importlib
++import importlib.util
++import tempfile
++import unittest
++from pathlib import Path
++from unittest.mock import patch
++
++from support import Faults, FixtureClock, fixture_settings, fixture_snapshot, fixture_source, store_bundle
++
++
++class StorageTests(unittest.TestCase):
++    def setUp(self):
++        self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.storage"),
++                             "Durable conditional stores must preserve restart and race semantics")
++        self.contracts = importlib.import_module("sec_edgar_ingest.storage.contracts")
++        self.local = importlib.import_module("sec_edgar_ingest.storage.local")
++        self.directory = tempfile.TemporaryDirectory()
++        self.addCleanup(self.directory.cleanup)
++        self.root = Path(self.directory.name)
++        self.store, self.objects, self.leases = store_bundle(self.root)
++        self.addCleanup(self.store.close)
++
++    def test_create_conflict_preserves_first_value_and_reopens(self):
++        first = self.store.insert("Source", "identity", {"nested": {"value": [1]}})
++        with self.assertRaises(self.contracts.AlreadyExists):
++            self.store.insert("Source", "identity", {"nested": {"value": [2]}})
++        self.store.close()
++        reopened = self.local.LocalStateStore(self.root)
++        self.addCleanup(reopened.close)
++        self.assertEqual(reopened.get("Source", "identity"), first)
++        exported = first.to_mapping()
++        exported["value"]["nested"]["value"].append(2)
++        self.assertEqual(reopened.get("Source", "identity").value["nested"]["value"], (1,))
++
++    def test_stale_cas_and_missing_rows_cannot_replace(self):
++        first = self.store.insert("Source", "identity", {"count": 1})
++        other = self.local.LocalStateStore(self.root)
++        self.addCleanup(other.close)
++        current = other.replace("Source", "identity", {"count": 2}, first.version)
++        self.assertNotEqual(first.version, current.version)
++        with self.assertRaises(self.contracts.Conflict):
++            self.store.replace("Source", "identity", {"count": 3}, first.version)
++        with self.assertRaises(self.contracts.Conflict):
++            self.store.replace("Source", "absent", {}, first.version)
++        for version in ("", "*"):
++            with self.subTest(version=version), self.assertRaises(ValueError):
++                self.store.replace("Source", "identity", {}, version)
++        self.assertEqual(self.store.get("Source", "identity"), current)
++
++    def test_scan_reads_all_pages_and_filters_detached_values(self):
++        for ordinal in range(9):
++            self.store.insert("Source", f"key-{ordinal}", {"ordinal": ordinal, "pending": ordinal % 2 == 0})
++        self.store.insert("Attempt", "unrelated", {"pending": True})
++        paged = self.local.LocalStateStore(self.root, page_size=2)
++        self.addCleanup(paged.close)
++        rows = tuple(paged.scan("Source", {"pending": True}))
++        self.assertEqual([row.value["ordinal"] for row in rows], [0, 2, 4, 6, 8])
++        self.assertEqual(tuple(paged.scan("Missing", {})), ())
++        with self.assertRaises(TypeError):
++            rows[0].value["ordinal"] = 10
++
++    def test_write_once_same_bytes_are_idempotent_different_bytes_are_corruption(self):
++        path = "worksets/source/identity.json"
++        reference = self.objects.put_once(path, b"first")
++        self.assertEqual(self.objects.put_once(path, b"first"), reference)
++        with self.assertRaises(self.contracts.Conflict):
++            self.objects.put_once(path, b"second")
++        self.assertEqual(self.local.LocalObjectStore(self.root).read(path), b"first")
++        self.objects.verify(path, hashlib.sha256(b"first").hexdigest(), 5)
++        with self.assertRaises(self.contracts.Conflict):
++            self.objects.verify(path, "0" * 64, 5)
++        with self.assertRaises(self.contracts.Conflict):
++            self.objects.verify(path, hashlib.sha256(b"first").hexdigest(), 4)
++
++    def test_stage_promote_verified_bytes_before_raw_reference(self):
++        body = b"staged bytes"
++        source = self.root / "receipt"
++        source.write_bytes(body)
++        snapshot = fixture_snapshot(fixture_source(), body)
++        temporary = self.objects.stage("raw/.staging/attempt/body", source)
++        with self.assertRaises(self.contracts.Conflict):
++            self.objects.promote(temporary, snapshot.raw_path, "0" * 64, len(body))
++        self.assertEqual(self.objects.read(temporary), body)
++        raw = self.objects.promote(temporary, snapshot.raw_path, snapshot.sha256, len(body))
++        self.assertEqual(raw, snapshot.raw_path)
++        self.objects.verify(raw, snapshot.sha256, len(body))
++        self.assertEqual(self.objects.promote(temporary, raw, snapshot.sha256, len(body)), raw)
++
++    def test_unsafe_paths_and_symlinks_cannot_escape_object_root(self):
++        for path in ("../escape", "/absolute", "raw//empty", "raw/./dot", "raw/a\\b", "raw/a%2fb"):
++            with self.subTest(path=path), self.assertRaises(ValueError):
++                self.objects.put_once(path, b"bad")
++        outside = self.root / "outside"
++        outside.mkdir()
++        (self.root / "objects" / "raw").symlink_to(outside, target_is_directory=True)
++        with self.assertRaises(ValueError):
++            self.objects.put_once("raw/escape", b"bad")
++        self.assertFalse((outside / "escape").exists())
++
++    def test_object_fault_before_and_after_link_is_restart_safe(self):
++        faults = Faults()
++        objects = self.local.LocalObjectStore(self.root, observer=faults)
++        def crash():
++            raise RuntimeError("simulated crash")
++        faults.at("object.before_link", crash)
++        with self.assertRaisesRegex(RuntimeError, "simulated"):
++            objects.put_once("raw/before", b"bytes")
++        with self.assertRaises(FileNotFoundError):
++            self.objects.read("raw/before")
++        faults.at("object.after_link", crash)
++        with self.assertRaisesRegex(RuntimeError, "simulated"):
++            objects.put_once("raw/after", b"bytes")
++        self.assertEqual(self.objects.read("raw/after"), b"bytes")
++        self.assertEqual(objects.put_once("raw/after", b"bytes"), "raw/after")
++
++    def test_committed_insert_survives_observer_exception(self):
++        faults = Faults()
++        store = self.local.LocalStateStore(self.root, observer=faults)
++        self.addCleanup(store.close)
++        def crash():
++            raise RuntimeError("after durable insert")
++        faults.at("state.after_insert", crash)
++        with self.assertRaisesRegex(RuntimeError, "durable"):
++            store.insert("Source", "first", {"value": 1})
++        self.assertEqual(self.store.get("Source", "first").value["value"], 1)
++
++    def test_shared_finite_lease_expiry_renewal_and_stale_handles(self):
++        clock = FixtureClock()
++        one = self.local.LocalLeaseStore(self.root, clock=clock)
++        two = self.local.LocalLeaseStore(self.root, clock=clock)
++        first = one.acquire("first", 60)
++        with self.assertRaises(self.contracts.Conflict):
++            two.acquire("second", 60)
++        one.assert_owned(first)
++        clock.advance(20)
++        renewed = one.renew(first)
++        self.assertGreater(renewed.observed_until, first.observed_until)
++        clock.advance(61)
++        second = two.acquire("second", 60)
++        self.assertNotEqual(first.lease_id, second.lease_id)
++        for operation in (one.assert_owned, one.renew, one.release):
++            with self.subTest(operation=operation.__name__), self.assertRaises(self.contracts.OwnershipLost):
++                operation(renewed)
++        two.assert_owned(second)
++        two.release(second)
++        one.acquire("third", 60)
++        for seconds in (0, -1, True):
++            with self.subTest(seconds=seconds), self.assertRaises(ValueError):
++                one.acquire("invalid", seconds)
++
++    def test_fixed_registry_is_conditional_and_factory_shares_root_and_budget(self):
++        storage = importlib.import_module("sec_edgar_ingest.storage")
++        settings = fixture_settings(storage={"root": "shared"})
++        first = storage.open_stores(settings, base_path=self.root)
++        self.addCleanup(first[0].close)
++        first[0].insert("Source", "same", {"value": 1})
++        second = storage.open_stores(settings, base_path=self.root)
++        self.addCleanup(second[0].close)
++        self.assertEqual(second[0].get("Source", "same").value["value"], 1)
++        registry = "locks/sec-owner-lowell-mason/binding.json"
++        before = first[1].read(registry)
++        conflicting = fixture_settings(storage={"root": "shared"}, sec={"requests_per_second": 1})
++        with self.assertRaises(self.contracts.Conflict):
++            storage.open_stores(conflicting, base_path=self.root)
++        self.assertEqual(first[1].read(registry), before)
++        lease = first[2].acquire("one", 60)
++        with self.assertRaises(self.contracts.Conflict):
++            second[2].acquire("two", 60)
++        first[2].release(lease)
++        self.assertTrue((self.root / "shared" / "objects" / "locks/sec-owner-lowell-mason/sentinel.json").is_file())
++
++    def test_reopening_lease_client_preserves_existing_sentinel_journal(self):
++        sentinel = self.root / "objects/locks/sec-owner-lowell-mason/sentinel.json"
++        journal = b'{"epoch":12,"not_before":"2026-10-06T00:00:30+00:00"}'
++        sentinel.write_bytes(journal)
++        try:
++            reopened = self.local.LocalLeaseStore(self.root)
++        except self.contracts.Conflict as error:
++            self.fail(f"Reopening a lease client must preserve the mutable sentinel journal: {error}")
++        self.addCleanup(reopened.close)
++        self.assertEqual(sentinel.read_bytes(), journal)
++
++    def test_symlink_object_collision_cannot_follow_a_leaf_link(self):
++        target = self.root / "outside-object-root"
++        target.write_bytes(b"protected")
++        parent = self.root / "objects/quarantine"
++        parent.mkdir()
++        link = parent / "leaf"
++        link.symlink_to(target)
++        with self.assertRaises(ValueError):
++            try:
++                self.objects.put_once("quarantine/leaf", b"replacement")
++            except OSError as error:
++                self.fail(f"Symlink rejection must use the host errno and raise ValueError, got errno {error.errno}")
++        self.assertTrue(link.is_symlink())
++        self.assertEqual(target.read_bytes(), b"protected")
+diff --git a/specs/evidence/sec-filing-index-ingestion/stage-2/sdk-signatures.json b/specs/evidence/sec-filing-index-ingestion/stage-2/sdk-signatures.json
+new file mode 100644
+index 0000000..2c328f0
+--- /dev/null
++++ b/specs/evidence/sec-filing-index-ingestion/stage-2/sdk-signatures.json
+@@ -0,0 +1,82 @@
++{
++  "confirmed_semantics": {
++    "api_versions": "Explicit Blob api_version=2026-04-06 and Table api_version=2020-12-06 are supported. Blob default is 2026-10-06 so explicit pin is mandatory. _serialize.py:66,166; Tables _base_client.py:47,154",
++    "blob_immutable_create": "upload_blob(data, overwrite=False, match_condition=MatchConditions.IfMissing) emits If-None-Match: *; _serialize.py:88-89; _upload_helpers.py:76",
++    "etag_observation": "Table get raw_response_hook must capture actual response ETag; missing odata.etag otherwise permits synthesized Timestamp ETag in _deserialize.py:191-199. Query page service odata.etag is actual per-entity version; absence fails closed.",
++    "lease_id": "BlobLeaseClient.acquire/renew/release return None; acquired/renewed .id is service-returned. Sentinel upload public keyword lease=actual_id emits x-ms-lease-id. _lease.py:119,167,176,221; _serialize.py:98-103",
++    "pagination": "query_entities is lazy ItemPaged; by_page exhausts all continuations including an empty continued page. _models.py:348; azure/core/paging.py:134",
++    "retry_policy": "retry_total=0,retry_connect=0,retry_read=0,retry_status=0 disable Storage pipeline replay. Installed Blob download content processing separately uses bounded three-attempt idempotent loops (_download.py:237-261,484-556); they cannot authorize SEC retries.",
++    "server_time": "raw_response_hook receives PipelineResponse; http_response.headers Date is observed per Storage operation. Missing/excess-latency/skew observation must fail closed.",
++    "table_create": "create_entity is atomic Insert Entity POST; duplicate 409 maps ResourceExistsError. No If-None-Match parameter is required for insert. _table_client.py:394-411; generated/_operations.py:384,424,1652",
++    "table_replace": "update_entity(entity, mode=UpdateMode.REPLACE, etag=actual_opaque_etag, match_condition=MatchConditions.IfNotModified) emits PUT with exact If-Match; no wildcard/upsert. _table_client.py:447-469; _serialize.py:20"
++  },
++  "corrections": [
++    "Use installed plural MatchConditions.",
++    "Use service-returned lease.id after acquire/renew, not the None method result.",
++    "Do not trust Table synthesized ETag fallback.",
++    "Blob conditional create uses If-None-Match; Table atomic Insert Entity uses conditional create semantics without an invented If-None-Match header."
++  ],
++  "enum_values": {
++    "IfMissing": 5,
++    "IfNotModified": 2,
++    "UpdateMode.REPLACE": "replace"
++  },
++  "http_contract_tests": "packages/sec-edgar-ingest/tests/test_azure_contracts.py",
++  "inspection": "Installed metadata, public signatures and source only; no client/credential construction or network.",
++  "signatures": {
++    "azure.data.tables._table_client.TableClient": "(endpoint: str, table_name: str, *, credential: azure.core.credentials.AzureSasCredential | azure.core.credentials.AzureNamedKeyCredential | azure.core.credentials.TokenCredential | None = None, audience: str | Literal['https://storage.azure.com', 'https://storage.azure.us', 'https://storage.azure.cn', 'https://cosmos.azure.com', 'https://cosmos.azure.us', 'https://cosmos.azure.cn'] | None = None, api_version: str | None = None, **kwargs: Any) -> None",
++    "azure.data.tables._table_client.TableClient.create_entity": "(self, entity: azure.data.tables._entity.TableEntity | Mapping[str, Any], **kwargs) -> Dict[str, Any]",
++    "azure.data.tables._table_client.TableClient.get_entity": "(self, partition_key: str, row_key: str, *, select: str | List[str] | None = None, **kwargs) -> azure.data.tables._entity.TableEntity",
++    "azure.data.tables._table_client.TableClient.query_entities": "(self, query_filter: str, *, results_per_page: int | None = None, select: str | List[str] | None = None, parameters: Dict[str, Any] | None = None, **kwargs) -> azure.core.paging.ItemPaged[azure.data.tables._entity.TableEntity]",
++    "azure.data.tables._table_client.TableClient.update_entity": "(self, entity: azure.data.tables._entity.TableEntity | Mapping[str, Any], mode: azure.data.tables._models.UpdateMode = <UpdateMode.MERGE: 'merge'>, *, etag: str | None = None, match_condition: azure.core._match_conditions.MatchConditions | None = None, **kwargs) -> Dict[str, Any]",
++    "azure.data.tables._table_service_client.TableServiceClient": "(endpoint: str, *, credential: azure.core.credentials.AzureSasCredential | azure.core.credentials.AzureNamedKeyCredential | azure.core.credentials.TokenCredential | None = None, api_version: str | None = None, audience: str | Literal['https://storage.azure.com', 'https://storage.azure.us', 'https://storage.azure.cn', 'https://cosmos.azure.com', 'https://cosmos.azure.us', 'https://cosmos.azure.cn'] | None = None, **kwargs: Any) -> None",
++    "azure.data.tables._table_service_client.TableServiceClient.get_table_client": "(self, table_name: str, **kwargs: Any) -> azure.data.tables._table_client.TableClient",
++    "azure.storage.blob._blob_client.BlobClient": "(account_url: str, container_name: str, blob_name: str, snapshot: Dict[str, Any] | str | None = None, credential: str | Dict[str, str] | ForwardRef('AzureNamedKeyCredential') | ForwardRef('AzureSasCredential') | ForwardRef('TokenCredential') | None = None, **kwargs: Any) -> None",
++    "azure.storage.blob._blob_client.BlobClient.acquire_lease": "(self, lease_duration: int = -1, lease_id: str | None = None, **kwargs: Any) -> azure.storage.blob._lease.BlobLeaseClient",
++    "azure.storage.blob._blob_client.BlobClient.download_blob": "(self, offset: int | None = None, length: int | None = None, *, encoding: str | None = None, **kwargs: Any) -> azure.storage.blob._download.StorageStreamDownloader[str] | azure.storage.blob._download.StorageStreamDownloader[bytes]",
++    "azure.storage.blob._blob_client.BlobClient.get_blob_properties": "(self, **kwargs: Any) -> azure.storage.blob._models.BlobProperties",
++    "azure.storage.blob._blob_client.BlobClient.upload_blob": "(self, data: bytes | str | Iterable[~AnyStr] | IO[bytes], blob_type: str | azure.storage.blob._models.BlobType = <BlobType.BLOCKBLOB: 'BlockBlob'>, length: int | None = None, metadata: Dict[str, str] | None = None, **kwargs: Any) -> Dict[str, Any]",
++    "azure.storage.blob._blob_service_client.BlobServiceClient": "(account_url: str, credential: str | Dict[str, str] | ForwardRef('AzureNamedKeyCredential') | ForwardRef('AzureSasCredential') | ForwardRef('TokenCredential') | None = None, **kwargs: Any) -> None",
++    "azure.storage.blob._blob_service_client.BlobServiceClient.get_blob_client": "(self, container: azure.storage.blob._models.ContainerProperties | str, blob: str, snapshot: Dict[str, Any] | str | None = None, *, version_id: str | None = None) -> azure.storage.blob._blob_client.BlobClient",
++    "azure.storage.blob._lease.BlobLeaseClient": "(client: ForwardRef('BlobClient') | ForwardRef('ContainerClient'), lease_id: str | None = None) -> None",
++    "azure.storage.blob._lease.BlobLeaseClient.acquire": "(self, lease_duration: int = -1, **kwargs: Any) -> None",
++    "azure.storage.blob._lease.BlobLeaseClient.release": "(self, **kwargs: Any) -> None",
++    "azure.storage.blob._lease.BlobLeaseClient.renew": "(self, **kwargs: Any) -> None"
++  },
++  "source_root": "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages",
++  "source_sha256": {
++    "azure/core/_match_conditions.py": "dd32216f8bc13b58417bb31a4304bff62f9dea9ee8e239f92fa33e3a241a8648",
++    "azure/core/paging.py": "0372ca1b9b5e822095f80f22cfcb5b5cef18c54a464f881874c734bfb7db979d",
++    "azure/core/pipeline/policies/_custom_hook.py": "99aec487bb1736b78b4d91a3d8c1fdbaf7083fc7f394c159ab409d177837f746",
++    "azure/core/pipeline/policies/_retry.py": "23439b098cfd8569dd4ea702097680ad440c5933a04a41075e1fc034005c9967",
++    "azure/data/tables/_base_client.py": "b99462979ecbdaa8af019c20d7f1ecedf0e8d57064fa38f291e32e239f6cf83b",
++    "azure/data/tables/_deserialize.py": "0d904ccc3b24959a77346143987bfebc1b6311c418e53213c20ebf5bec4fd354",
++    "azure/data/tables/_entity.py": "c02cdd15a9e3bb0064e3632ceb286deb5429223180c7eba1938bf760061d266b",
++    "azure/data/tables/_generated/operations/_operations.py": "9686c87498fc4edc82e5be6a05da4830f4d5eb1ba827a0e970eb5e19527a0154",
++    "azure/data/tables/_models.py": "9de1d84bed9d2e979f044a48a92a09c3a0555e3e4587f989f4eca31fdc9bfb28",
++    "azure/data/tables/_policies.py": "cc8be7cda52ca3c17a7abb1f055b5acfbc270205fd876d8d030e4e2436c5544a",
++    "azure/data/tables/_serialize.py": "4ddf52fbc94ca9ec8bb1d49605723a2849dcac6494d1f86e856b0c7df3a3f305",
++    "azure/data/tables/_table_client.py": "370beff55f3db6930f4253bac49606aa6b0c4a08210187edab25d6be14233ff1",
++    "azure/data/tables/_table_service_client.py": "ce67601e07dc03b1e489f99b150d0905b76f06d8ea92044cec8c9b5d38f291b2",
++    "azure/storage/blob/_blob_client.py": "d9a8839d0ba04b0fb9cb3e9d266f5f90afdd0aa0c8a25e859cffb770e2f8c976",
++    "azure/storage/blob/_blob_client_helpers.py": "7249c8b70b27660be4889502e2f79f8851853fa8c434781d88fe2aeadf612648",
++    "azure/storage/blob/_blob_service_client.py": "a3b6f4e01058f01bd219619c772f4ebcd8eb85fae7ee95472f3b6d8b4737f1a8",
++    "azure/storage/blob/_deserialize.py": "49e111366713a1cc826e58ab7a86ff5c2a1f48086dfc7162e4b7f2c8e17a89c0",
++    "azure/storage/blob/_download.py": "712b54b3f2640c97a78c63578c4903c3758de79b2c0da72e479ed5da22a62530",
++    "azure/storage/blob/_generated/operations/_blob_operations.py": "9fec00f231d4035487dff7ad4f339040c973bd66b9e9465926047d78d4987f60",
++    "azure/storage/blob/_generated/operations/_block_blob_operations.py": "4bdb479216221f600592442270697c594fb65df8f379f36c2ce0b558e2d986a6",
++    "azure/storage/blob/_lease.py": "77bb448badcec1daf632eb5e72ce02fc0c301d38f0a5150746adc6122f8def15",
++    "azure/storage/blob/_models.py": "acbab88e8ea8352187d656d8f43668a49f082b034c07ff65b2e3796c559755f5",
++    "azure/storage/blob/_serialize.py": "823c83e68c4cffac06ff998e7094d14d4ffb1ad8b6d12dbf2f91ae8b10800ca0",
++    "azure/storage/blob/_shared/base_client.py": "2a9723be1a2717c32ff5148eb6b4c9a0cd84fb057143fe00af007f0c077d609e",
++    "azure/storage/blob/_shared/policies.py": "6bf7f67fdd6d57de708e39721aa59b5b69e2e0a9a69630570cb2e82efb734719",
++    "azure/storage/blob/_shared/response_handlers.py": "f6b3bb8c5e1d5369a1ae97e08368b088e5517ff9ea5ba2d19ac475ed3b94b53c",
++    "azure/storage/blob/_upload_helpers.py": "e42c09e4da9f85421e55a727057344e804e734ba920075ecc43e71d8cff25f44"
++  },
++  "versions": {
++    "azure-core": "1.41.0",
++    "azure-data-tables": "12.7.0",
++    "azure-identity": "1.26.0",
++    "azure-storage-blob": "12.31.0"
++  }
++}

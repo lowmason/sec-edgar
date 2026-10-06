@@ -1,0 +1,18 @@
+test_server_clock_offset_cannot_sleep_past_command_deadline (test_download.DownloadTests.test_server_clock_offset_cannot_sleep_past_command_deadline) ... FAIL
+
+======================================================================
+FAIL: test_server_clock_offset_cannot_sleep_past_command_deadline (test_download.DownloadTests.test_server_clock_offset_cannot_sleep_past_command_deadline)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_download.py", line 208, in test_server_clock_offset_cannot_sleep_past_command_deadline
+    self.assertEqual(raised.exception.error.code, "deferred")
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'sender_unverified' != 'deferred'
+- sender_unverified
++ deferred
+
+
+----------------------------------------------------------------------
+Ran 1 test in 0.057s
+
+FAILED (failures=1)

@@ -1,0 +1,175 @@
+test_absence_does_not_erase_pending_or_accepted_snapshot (test_discovery.DiscoveryTests.test_absence_does_not_erase_pending_or_accepted_snapshot) ... ok
+test_delayed_file_requires_fresh_session_and_old_bytes_stay_immutable (test_discovery.DiscoveryTests.test_delayed_file_requires_fresh_session_and_old_bytes_stay_immutable) ... ok
+test_failed_ancestor_never_constructs_child_requests (test_discovery.DiscoveryTests.test_failed_ancestor_never_constructs_child_requests) ... ok
+test_first_daily_run_replays_handoff_and_preceding_quarter (test_discovery.DiscoveryTests.test_first_daily_run_replays_handoff_and_preceding_quarter) ... ok
+test_later_success_cannot_cross_a_failed_directory (test_discovery.DiscoveryTests.test_later_success_cannot_cross_a_failed_directory) ... ERROR
+test_malformed_untrusted_and_unsupported_listing_remain_gaps (test_discovery.DiscoveryTests.test_malformed_untrusted_and_unsupported_listing_remain_gaps) ... 
+  test_malformed_untrusted_and_unsupported_listing_remain_gaps (test_discovery.DiscoveryTests.test_malformed_untrusted_and_unsupported_listing_remain_gaps) (body=b'<html>untrusted</html>') ... ERROR
+  test_malformed_untrusted_and_unsupported_listing_remain_gaps (test_discovery.DiscoveryTests.test_malformed_untrusted_and_unsupported_listing_remain_gaps) (body=b'<directory/>') ... ERROR
+  test_malformed_untrusted_and_unsupported_listing_remain_gaps (test_discovery.DiscoveryTests.test_malformed_untrusted_and_unsupported_listing_remain_gaps) (body=b'{') ... ERROR
+  test_malformed_untrusted_and_unsupported_listing_remain_gaps (test_discovery.DiscoveryTests.test_malformed_untrusted_and_unsupported_listing_remain_gaps) (body=b'{"directory": {"name": "daily-index/2026/QTR4/", "parent-dir": "../", ') ... ERROR
+  test_malformed_untrusted_and_unsupported_listing_remain_gaps (test_discovery.DiscoveryTests.test_malformed_untrusted_and_unsupported_listing_remain_gaps) (body=b'{"directory": {"name": "daily-index/2026/QTR4/", "parent-dir": "../", ') ... ERROR
+test_missing_requested_quarter_is_gap_not_empty_child (test_discovery.DiscoveryTests.test_missing_requested_quarter_is_gap_not_empty_child) ... ok
+test_multi_quarter_outage_includes_entire_boundary_range (test_discovery.DiscoveryTests.test_multi_quarter_outage_includes_entire_boundary_range) ... ERROR
+test_pending_old_source_is_revisited_without_handoff_filter (test_discovery.DiscoveryTests.test_pending_old_source_is_revisited_without_handoff_filter) ... ok
+test_restart_reuses_verified_success_and_retries_failure (test_discovery.DiscoveryTests.test_restart_reuses_verified_success_and_retries_failure) ... ERROR
+test_same_session_refuses_changed_refresh_or_configuration (test_discovery.DiscoveryTests.test_same_session_refuses_changed_refresh_or_configuration) ... ok
+test_supported_representation_retains_ignored_codec_reason (test_discovery.DiscoveryTests.test_supported_representation_retains_ignored_codec_reason) ... ERROR
+test_valid_empty_listing_has_a_distinct_outcome (test_discovery.DiscoveryTests.test_valid_empty_listing_has_a_distinct_outcome) ... ERROR
+test_filename_calendar_and_hierarchy_validation_including_leap_day (test_discovery.ListingTests.test_filename_calendar_and_hierarchy_validation_including_leap_day) ... ERROR
+test_quarter_functions_rollover_and_contiguous_boundary (test_discovery.ListingTests.test_quarter_functions_rollover_and_contiguous_boundary) ... ok
+test_rejects_wrong_directory_duplicate_unsafe_missing_or_wrong_typed_fields (test_discovery.ListingTests.test_rejects_wrong_directory_duplicate_unsafe_missing_or_wrong_typed_fields) ... ok
+test_retained_originals_parse_with_verified_manifest_provenance (test_discovery.ListingTests.test_retained_originals_parse_with_verified_manifest_provenance) ... ok
+
+======================================================================
+ERROR: test_later_success_cannot_cross_a_failed_directory (test_discovery.DiscoveryTests.test_later_success_cannot_cross_a_failed_directory)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_discovery.py", line 28, in test_later_success_cannot_cross_a_failed_directory
+    workset = h.run('daily', date(2026, 10, 6), 'outage-a')
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/support.py", line 954, in run
+    return discover(self.settings, context, mode, discovery_id, self.client, self.state, self.objects, today, refresh)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/discovery.py", line 314, in discover
+    state.advance_boundary(candidate, discovery_id, directories)
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/state.py", line 187, in advance_boundary
+    raise Conflict("boundary candidate differs from its pinned daily discovery")
+sec_edgar_ingest.storage.contracts.Conflict: boundary candidate differs from its pinned daily discovery
+
+======================================================================
+ERROR: test_malformed_untrusted_and_unsupported_listing_remain_gaps (test_discovery.DiscoveryTests.test_malformed_untrusted_and_unsupported_listing_remain_gaps) (body=b'<html>untrusted</html>')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_discovery.py", line 89, in test_malformed_untrusted_and_unsupported_listing_remain_gaps
+    workset = h.run_single_directory('2026Q4')
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/support.py", line 967, in run_single_directory
+    context, _ = pin_context(self.settings, context, day)
+                 ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/config.py", line 266, in pin_context
+    raise ValueError("fixture clock override must be explicitly labelled")
+ValueError: fixture clock override must be explicitly labelled
+
+======================================================================
+ERROR: test_malformed_untrusted_and_unsupported_listing_remain_gaps (test_discovery.DiscoveryTests.test_malformed_untrusted_and_unsupported_listing_remain_gaps) (body=b'<directory/>')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_discovery.py", line 89, in test_malformed_untrusted_and_unsupported_listing_remain_gaps
+    workset = h.run_single_directory('2026Q4')
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/support.py", line 967, in run_single_directory
+    context, _ = pin_context(self.settings, context, day)
+                 ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/config.py", line 266, in pin_context
+    raise ValueError("fixture clock override must be explicitly labelled")
+ValueError: fixture clock override must be explicitly labelled
+
+======================================================================
+ERROR: test_malformed_untrusted_and_unsupported_listing_remain_gaps (test_discovery.DiscoveryTests.test_malformed_untrusted_and_unsupported_listing_remain_gaps) (body=b'{')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_discovery.py", line 89, in test_malformed_untrusted_and_unsupported_listing_remain_gaps
+    workset = h.run_single_directory('2026Q4')
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/support.py", line 967, in run_single_directory
+    context, _ = pin_context(self.settings, context, day)
+                 ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/config.py", line 266, in pin_context
+    raise ValueError("fixture clock override must be explicitly labelled")
+ValueError: fixture clock override must be explicitly labelled
+
+======================================================================
+ERROR: test_malformed_untrusted_and_unsupported_listing_remain_gaps (test_discovery.DiscoveryTests.test_malformed_untrusted_and_unsupported_listing_remain_gaps) (body=b'{"directory": {"name": "daily-index/2026/QTR4/", "parent-dir": "../", ')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_discovery.py", line 89, in test_malformed_untrusted_and_unsupported_listing_remain_gaps
+    workset = h.run_single_directory('2026Q4')
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/support.py", line 967, in run_single_directory
+    context, _ = pin_context(self.settings, context, day)
+                 ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/config.py", line 266, in pin_context
+    raise ValueError("fixture clock override must be explicitly labelled")
+ValueError: fixture clock override must be explicitly labelled
+
+======================================================================
+ERROR: test_malformed_untrusted_and_unsupported_listing_remain_gaps (test_discovery.DiscoveryTests.test_malformed_untrusted_and_unsupported_listing_remain_gaps) (body=b'{"directory": {"name": "daily-index/2026/QTR4/", "parent-dir": "../", ')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_discovery.py", line 89, in test_malformed_untrusted_and_unsupported_listing_remain_gaps
+    workset = h.run_single_directory('2026Q4')
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/support.py", line 967, in run_single_directory
+    context, _ = pin_context(self.settings, context, day)
+                 ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/config.py", line 266, in pin_context
+    raise ValueError("fixture clock override must be explicitly labelled")
+ValueError: fixture clock override must be explicitly labelled
+
+======================================================================
+ERROR: test_multi_quarter_outage_includes_entire_boundary_range (test_discovery.DiscoveryTests.test_multi_quarter_outage_includes_entire_boundary_range)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_discovery.py", line 61, in test_multi_quarter_outage_includes_entire_boundary_range
+    workset = h.run('daily', date(2026, 10, 6), 'long-outage')
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/support.py", line 954, in run
+    return discover(self.settings, context, mode, discovery_id, self.client, self.state, self.objects, today, refresh)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/discovery.py", line 314, in discover
+    state.advance_boundary(candidate, discovery_id, directories)
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/state.py", line 187, in advance_boundary
+    raise Conflict("boundary candidate differs from its pinned daily discovery")
+sec_edgar_ingest.storage.contracts.Conflict: boundary candidate differs from its pinned daily discovery
+
+======================================================================
+ERROR: test_restart_reuses_verified_success_and_retries_failure (test_discovery.DiscoveryTests.test_restart_reuses_verified_success_and_retries_failure)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_discovery.py", line 129, in test_restart_reuses_verified_success_and_retries_failure
+    final = resumed.run('daily', date(2026, 10, 7), 'resume')
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/support.py", line 953, in run
+    context, _ = pin_context(self.settings, context, today)
+                 ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/config.py", line 266, in pin_context
+    raise ValueError("fixture clock override must be explicitly labelled")
+ValueError: fixture clock override must be explicitly labelled
+
+======================================================================
+ERROR: test_supported_representation_retains_ignored_codec_reason (test_discovery.DiscoveryTests.test_supported_representation_retains_ignored_codec_reason)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_discovery.py", line 99, in test_supported_representation_retains_ignored_codec_reason
+    workset = h.run_single_directory('2026Q4')
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/support.py", line 967, in run_single_directory
+    context, _ = pin_context(self.settings, context, day)
+                 ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/config.py", line 266, in pin_context
+    raise ValueError("fixture clock override must be explicitly labelled")
+ValueError: fixture clock override must be explicitly labelled
+
+======================================================================
+ERROR: test_valid_empty_listing_has_a_distinct_outcome (test_discovery.DiscoveryTests.test_valid_empty_listing_has_a_distinct_outcome)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_discovery.py", line 36, in test_valid_empty_listing_has_a_distinct_outcome
+    workset = h.run_single_directory('2026Q4')
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/support.py", line 967, in run_single_directory
+    context, _ = pin_context(self.settings, context, day)
+                 ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/config.py", line 266, in pin_context
+    raise ValueError("fixture clock override must be explicitly labelled")
+ValueError: fixture clock override must be explicitly labelled
+
+======================================================================
+ERROR: test_filename_calendar_and_hierarchy_validation_including_leap_day (test_discovery.ListingTests.test_filename_calendar_and_hierarchy_validation_including_leap_day)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_discovery.py", line 209, in test_filename_calendar_and_hierarchy_validation_including_leap_day
+    self.assertEqual(h.run_single_directory('2024Q1').members[0].period, '2024-02-29')
+                     ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/support.py", line 967, in run_single_directory
+    context, _ = pin_context(self.settings, context, day)
+                 ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/config.py", line 266, in pin_context
+    raise ValueError("fixture clock override must be explicitly labelled")
+ValueError: fixture clock override must be explicitly labelled
+
+----------------------------------------------------------------------
+Ran 17 tests in 1.757s
+
+FAILED (errors=11)

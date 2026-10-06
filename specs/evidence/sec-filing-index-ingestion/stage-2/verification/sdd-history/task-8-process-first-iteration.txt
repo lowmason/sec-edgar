@@ -1,0 +1,34 @@
+argv=['.venv/bin/python', '-m', 'unittest', 'discover', '-s', 'packages/sec-edgar-ingest/tests', '-p', 'test_acquisition_processes.py', '-v']
+stdout:
+
+stderr:
+test_held_socket_parent_death_zero_successor_unsafe_interval_and_daily_next (test_acquisition_processes.AcquisitionProcessTests.test_held_socket_parent_death_zero_successor_unsafe_interval_and_daily_next) ... FAIL
+test_stale_sender_awakened_after_allowed_start_sends_zero (test_acquisition_processes.AcquisitionProcessTests.test_stale_sender_awakened_after_allowed_start_sends_zero) ... ok
+test_three_independent_collectors_barrier_request_and_actual_binding_race (test_acquisition_processes.AcquisitionProcessTests.test_three_independent_collectors_barrier_request_and_actual_binding_race) ... ok
+
+======================================================================
+FAIL: test_held_socket_parent_death_zero_successor_unsafe_interval_and_daily_next (test_acquisition_processes.AcquisitionProcessTests.test_held_socket_parent_death_zero_successor_unsafe_interval_and_daily_next)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_acquisition_processes.py", line 80, in test_held_socket_parent_death_zero_successor_unsafe_interval_and_daily_next
+    self.assertEqual(proof['ordered_priorities'], ['daily', 'backfill'])
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: ['daily', 'daily'] != ['daily', 'backfill']
+
+First differing element 1:
+'daily'
+'backfill'
+
+- ['daily', 'daily']
+?            ^   ^
+
++ ['daily', 'backfill']
+?            ^ +++  ^
+
+
+----------------------------------------------------------------------
+Ran 3 tests in 12.241s
+
+FAILED (failures=1)
+
+exit_code=1

@@ -1,0 +1,5 @@
+[
+  "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-wheel-5ufv5ml9/fresh-env/bin/python",
+  "-c",
+  "import importlib.metadata as m, json, platform, sys\nimport sec_edgar_ingest, sec_edgar_ingest.cli\nprint(json.dumps({'python': sys.version, 'platform': platform.platform(), 'prefix': sys.prefix,\n'package_file': sec_edgar_ingest.__file__, 'cli_file': sec_edgar_ingest.cli.__file__,\n'version': sec_edgar_ingest.__version__, 'versions': {dist.metadata['Name']: dist.version for dist in m.distributions()}}))\n"
+]

@@ -1,0 +1,39 @@
+COMMAND: uv run --offline --frozen --package sec-edgar-ingest python -m unittest discover -s packages/sec-edgar-ingest/tests -p test_*.py -v
+EXIT: 0
+test_azure_deadlines_and_two_callers_share_one_binding (test_config.ConfigTests.test_azure_deadlines_and_two_callers_share_one_binding) ... ok
+test_azure_explicit_binding_and_credential_free_endpoints (test_config.ConfigTests.test_azure_explicit_binding_and_credential_free_endpoints) ... ok
+test_clock_override_is_fixture_only_and_explicit (test_config.ConfigTests.test_clock_override_is_fixture_only_and_explicit) ... ok
+test_config_parser_rejects_duplicate_keys_and_non_utf8 (test_config.ConfigTests.test_config_parser_rejects_duplicate_keys_and_non_utf8) ... ok
+test_fixture_overrides_are_explicit_and_validated (test_config.ConfigTests.test_fixture_overrides_are_explicit_and_validated) ... ok
+test_invalid_configuration_precedes_external_factories (test_config.ConfigTests.test_invalid_configuration_precedes_external_factories) ... ok
+test_json_yaml_subset_loads_without_creating_fixture_root (test_config.ConfigTests.test_json_yaml_subset_loads_without_creating_fixture_root) ... ok
+test_mapping_is_detached_and_typed_settings_are_frozen (test_config.ConfigTests.test_mapping_is_detached_and_typed_settings_are_frozen) ... ok
+test_pin_context_checks_range_identity_and_deadline (test_config.ConfigTests.test_pin_context_checks_range_identity_and_deadline) ... ok
+test_rejects_configuration_matrix (test_config.ConfigTests.test_rejects_configuration_matrix) ... ok
+test_second_collector_is_refused (test_config.ConfigTests.test_second_collector_is_refused) ... ok
+test_conflicting_or_escaping_child_is_refused (test_urls.UrlTests.test_conflicting_or_escaping_child_is_refused) ... ok
+test_listing_hierarchy_and_immediate_children (test_urls.UrlTests.test_listing_hierarchy_and_immediate_children) ... ok
+test_source_shapes_and_stable_identity (test_urls.UrlTests.test_source_shapes_and_stable_identity) ... ok
+test_unsafe_source_matrix (test_urls.UrlTests.test_unsafe_source_matrix) ... ok
+test_body_receipt_and_snapshot_envelopes_are_explicit (test_worksets.WorksetTests.test_body_receipt_and_snapshot_envelopes_are_explicit) ... ok
+test_changed_context_or_content_changes_identity (test_worksets.WorksetTests.test_changed_context_or_content_changes_identity) ... ok
+test_common_records_have_complete_detached_mapping_round_trips (test_worksets.WorksetTests.test_common_records_have_complete_detached_mapping_round_trips) ... ok
+test_common_records_reject_mutable_wrong_typed_fields (test_worksets.WorksetTests.test_common_records_reject_mutable_wrong_typed_fields) ... ok
+test_decoder_rejects_versions_unknown_fields_timestamps_and_hashes (test_worksets.WorksetTests.test_decoder_rejects_versions_unknown_fields_timestamps_and_hashes) ... ok
+test_detached_serializers_and_deep_immutability (test_worksets.WorksetTests.test_detached_serializers_and_deep_immutability) ... ok
+test_duplicate_sources_and_directory_identity_are_refused (test_worksets.WorksetTests.test_duplicate_sources_and_directory_identity_are_refused) ... ok
+test_empty_complete_requires_successful_directory_evidence (test_worksets.WorksetTests.test_empty_complete_requires_successful_directory_evidence) ... ok
+test_member_order_does_not_change_workset_identity (test_worksets.WorksetTests.test_member_order_does_not_change_workset_identity) ... ok
+test_snapshot_requires_exact_members_and_immutable_raw_reference (test_worksets.WorksetTests.test_snapshot_requires_exact_members_and_immutable_raw_reference) ... ok
+test_version_and_directory_content_are_part_of_identity (test_worksets.WorksetTests.test_version_and_directory_content_are_part_of_identity) ... ok
+test_installed_distribution_exposes_the_cli (test_workspace.CliTests.test_installed_distribution_exposes_the_cli) ... ok
+test_main_help_and_version_exit_successfully (test_workspace.CliTests.test_main_help_and_version_exit_successfully) ... ok
+test_main_without_arguments_prints_help (test_workspace.CliTests.test_main_without_arguments_prints_help) ... ok
+test_module_and_console_invocations (test_workspace.CliTests.test_module_and_console_invocations) ... ok
+test_unimplemented_commands_are_rejected (test_workspace.CliTests.test_unimplemented_commands_are_rejected) ... ok
+test_only_ingest_is_a_workspace_member (test_workspace.WorkspaceTests.test_only_ingest_is_a_workspace_member) ... ok
+
+----------------------------------------------------------------------
+Ran 32 tests in 1.616s
+
+OK

@@ -1,0 +1,16 @@
+command=[".venv/bin/python", "-m", "unittest", "-v", "test_collection.CollectionTests.test_retry_prefix_quarantine_precedes_every_success_crash_boundary", "test_collection.CollectionTests.test_recovery_verifies_original_quarantine_without_failed_spool", "test_collection.CollectionTests.test_multiple_failed_prefixes_remain_distinct_when_recovered", "test_collection.CollectionTests.test_each_failed_retry_prefix_is_quarantined_before_success_result"]
+environment=PYTHONPATH=packages/sec-edgar-ingest/tests PYTHONDONTWRITEBYTECODE=1 SEC_EDGAR_TASK7_TRACE_DIR=/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.sdd/2-sec-filing-index-ingestion-stage-2-spec/task-7-fix1-focused-traces
+stdout:
+
+stderr:
+test_retry_prefix_quarantine_precedes_every_success_crash_boundary (test_collection.CollectionTests.test_retry_prefix_quarantine_precedes_every_success_crash_boundary) ... ok
+test_recovery_verifies_original_quarantine_without_failed_spool (test_collection.CollectionTests.test_recovery_verifies_original_quarantine_without_failed_spool) ... ok
+test_multiple_failed_prefixes_remain_distinct_when_recovered (test_collection.CollectionTests.test_multiple_failed_prefixes_remain_distinct_when_recovered) ... ok
+test_each_failed_retry_prefix_is_quarantined_before_success_result (test_collection.CollectionTests.test_each_failed_retry_prefix_is_quarantined_before_success_result) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 2.788s
+
+OK
+
+exit_code=0

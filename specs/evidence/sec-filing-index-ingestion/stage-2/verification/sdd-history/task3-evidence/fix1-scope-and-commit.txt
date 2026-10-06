@@ -1,0 +1,48 @@
+COMMAND: git diff --cached --name-only
+EXIT: 0
+
+
+COMMAND: git diff --check
+EXIT: 0
+
+
+COMMAND: git add -- packages/sec-edgar-ingest/tests/test_state.py
+EXIT: 0
+
+
+COMMAND: git diff --cached --name-only
+EXIT: 0
+packages/sec-edgar-ingest/tests/test_state.py
+
+
+COMMAND: git diff --cached --check
+EXIT: 0
+
+
+COMMAND: git commit -m 'test: make first-pin process conflict deterministic'
+EXIT: 0
+[codex/sec-edgar-stage-2 129ca3a] test: make first-pin process conflict deterministic
+ 1 file changed, 105 insertions(+), 15 deletions(-)
+
+
+COMMAND: git rev-parse HEAD
+EXIT: 0
+129ca3a16dafdb82013a8fd28d3d653b58831112
+
+
+COMMAND: git diff --name-only c22285a 129ca3a16dafdb82013a8fd28d3d653b58831112
+EXIT: 0
+packages/sec-edgar-ingest/tests/test_state.py
+
+
+COMMAND: git diff --check c22285a 129ca3a16dafdb82013a8fd28d3d653b58831112
+EXIT: 0
+
+
+COMMAND: git status --short
+EXIT: 0
+ D packages/sec-edgar-index-ingest/README.md
+ D packages/sec-edgar-index-ingest/pyproject.toml
+ D packages/sec-edgar-index-ingest/src/sec_edgar_index_ingest/__init__.py
+ D packages/sec-edgar-index-ingest/src/sec_edgar_index_ingest/py.typed
+
