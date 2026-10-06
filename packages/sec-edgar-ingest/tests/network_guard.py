@@ -34,8 +34,8 @@ def _guard_loaded_auth() -> None:
             if not isinstance(value, type) or value in _AUTH_CLASSES:
                 continue
             is_credential = name.startswith('azure.identity') and label.endswith('Credential') and value.__module__.startswith('azure.identity')
-            is_application = name == 'msal' and label.endswith('Application') and value.__module__.startswith('msal')
-            if not (is_credential or is_application):
+            is_msal_provider = name == 'msal' and (label.endswith('Application') or label == 'ManagedIdentityClient') and value.__module__.startswith('msal')
+            if not (is_credential or is_msal_provider):
                 continue
             _AUTH_CLASSES.add(value)
             value.__init__ = _deny_auth

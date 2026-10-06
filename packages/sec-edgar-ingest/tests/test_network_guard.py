@@ -37,6 +37,10 @@ for name in ('PublicClientApplication', 'ConfidentialClientApplication'):
     cls.__init__ = record('msal_constructor')
     cls.acquire_token_silent = record('msal_token', 'recorded token')
 old_msal = object.__new__(msal.PublicClientApplication)
+managed_client = msal.ManagedIdentityClient
+managed_client.__init__ = record('managed_identity_constructor')
+managed_client.acquire_token_for_client = record('managed_identity_token', 'recorded managed token')
+old_managed_client = object.__new__(managed_client)
 def blocked(operation):
     try:
         operation()
@@ -55,7 +59,7 @@ def guarded_spawn_probe(selected, output):
     import network_guard
     network_guard.install()
     with network_guard.selected_origin(selected):
-        exec("with socket.socket() as sock:\n    denied = [blocked(lambda: sock.connect(('198.51.100.1', 443))), blocked(lambda: sock.connect_ex(('127.0.0.1', 42422))), blocked(lambda: socket.getaddrinfo('unapproved.invalid', 443)), blocked(lambda: identity.DefaultAzureCredential()), blocked(lambda: old_credential.get_token('scope'))]\n    sock.connect(('127.0.0.1', 42421))", namespace)
+        exec("with socket.socket() as sock:\n    denied = [blocked(lambda: sock.connect(('198.51.100.1', 443))), blocked(lambda: sock.connect_ex(('127.0.0.1', 42422))), blocked(lambda: socket.getaddrinfo('unapproved.invalid', 443)), blocked(lambda: identity.DefaultAzureCredential()), blocked(lambda: old_credential.get_token('scope')), blocked(lambda: msal.ManagedIdentityClient({'fixture': True}, http_client=object())), blocked(lambda: old_managed_client.acquire_token_for_client(resource='synthetic-resource'))]\n    sock.connect(('127.0.0.1', 42421))", namespace)
     output.put({'guard_available': True, 'denied': namespace['denied'], 'calls': namespace['calls'], 'pid': os.getpid()})
 
 
@@ -148,6 +152,19 @@ print(json.dumps({'denied': proof, 'calls': calls}))
         self.assertEqual(proof['denied'], [True] * 7)
         self.assertEqual(proof['calls'], [])
 
+    def test_public_managed_identity_constructor_and_existing_tokens_never_reach_stubs(self):
+        proof = self.probe("""
+from msal.managed_identity import ManagedIdentityClient
+import support
+denied = [blocked(lambda: msal.ManagedIdentityClient({'fixture': True}, http_client=object())),
+          blocked(lambda: old_managed_client.acquire_token_for_client(resource='synthetic-resource')),
+          blocked(lambda: ManagedIdentityClient({'fixture': True}, http_client=object())),
+          blocked(lambda: object.__new__(ManagedIdentityClient).acquire_token_for_client(resource='synthetic-resource'))]
+print(json.dumps({'denied': denied, 'calls': calls}))
+""")
+        self.assertEqual(proof['denied'], [True] * 4)
+        self.assertEqual(proof['calls'], [])
+
     def test_suite_runner_installs_guard_before_unittest_executes(self):
         self.assertTrue(import_available(), 'the test runner must install denial before discovery')
         proof = self.probe("""
@@ -175,7 +192,7 @@ print(json.dumps(captured))
             self.retain({'pid': process.pid, 'exit': process.exitcode, 'proof': proof})
             self.assertEqual(process.exitcode, 0)
             self.assertTrue(proof['guard_available'], 'spawned fixture needs an explicit installed guard')
-            self.assertEqual(proof['denied'], [True] * 5)
+            self.assertEqual(proof['denied'], [True] * 7)
             self.assertEqual(proof['calls'], ['connect'])
             self.assertNotEqual(proof['pid'], os.getpid())
         finally:

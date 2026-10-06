@@ -1,0 +1,41 @@
+{
+  "class": "ManagedIdentityClient",
+  "concrete_family_auth_operations": [
+    "__init__",
+    "acquire_token_for_client"
+  ],
+  "earlier_inspection_only_error": "Constructing a new ast.FunctionDef for unparse omitted lineno and raised AttributeError before provider method inspection; corrected by inspecting existing AST argument/body nodes. No test/provider operation was executed by that failed read-only helper.",
+  "inspection": "AST-only inspection of the locally pinned msal1.39.0 provider; no imports/constructor/auth activity",
+  "methods": [
+    {
+      "arguments": "self, managed_identity: Union[dict, ManagedIdentity, SystemAssignedManagedIdentity, UserAssignedManagedIdentity], *, http_client, token_cache=None, http_cache=None, client_capabilities: Optional[List[str]]=None",
+      "line": 165,
+      "name": "__init__",
+      "non_docstring_implementation": [
+        "if not ManagedIdentity.is_managed_identity(managed_identity):\n    raise ManagedIdentityError(f'Incorrect managed_identity: {managed_identity}')",
+        "self._managed_identity = managed_identity",
+        "self._http_client = _ThrottledHttpClient(http_client, http_cache=http_cache)",
+        "self._token_cache = token_cache or TokenCache()",
+        "self._client_capabilities = client_capabilities"
+      ]
+    },
+    {
+      "arguments": "self, *, resource: str, claims_challenge: Optional[str]=None",
+      "line": 274,
+      "name": "acquire_token_for_client",
+      "non_docstring_implementation": [
+        "access_token_to_refresh = None",
+        "access_token_from_cache = None",
+        "client_id_in_cache = self._managed_identity.get(ManagedIdentity.ID, 'SYSTEM_ASSIGNED_MANAGED_IDENTITY')",
+        "now = time.time()",
+        "if True:\n    matches = self._token_cache.search(self._token_cache.CredentialType.ACCESS_TOKEN, target=[resource], query=dict(client_id=client_id_in_cache, environment=self.__instance, realm=self._tenant, home_account_id=None))\n    for entry in matches:\n        expires_in = int(entry['expires_on']) - now\n        if expires_in < 5 * 60:\n            continue\n        if claims_challenge and (not access_token_to_refresh):\n            access_token_to_refresh = entry['secret']\n            break\n        logger.debug('Cache hit an AT')\n        access_token_from_cache = {'access_token': entry['secret'], 'token_type': entry.get('token_type', 'Bearer'), 'expires_in': int(expires_in), self._TOKEN_SOURCE: self._TOKEN_SOURCE_CACHE}\n        if 'refresh_on' in entry:\n            access_token_from_cache['refresh_on'] = int(entry['refresh_on'])\n            if int(entry['refresh_on']) < now:\n                break\n        return access_token_from_cache",
+        "try:\n    result = _obtain_token(self._http_client, self._managed_identity, resource, access_token_sha256_to_refresh=hashlib.sha256(access_token_to_refresh.encode('utf-8')).hexdigest() if access_token_to_refresh else None, client_capabilities=self._client_capabilities)\n    if 'access_token' in result:\n        expires_in = result.get('expires_in', 3600)\n        if 'refresh_in' not in result and expires_in >= 7200:\n            result['refresh_in'] = int(expires_in / 2)\n        self._token_cache.add(dict(client_id=client_id_in_cache, scope=[resource], token_endpoint='https://{}/{}'.format(self.__instance, self._tenant), response=result, params={}, data={}))\n        if 'refresh_in' in result:\n            result['refresh_on'] = int(now + result['refresh_in'])\n        result[self._TOKEN_SOURCE] = self._TOKEN_SOURCE_IDP\n    if result and 'error' not in result or not access_token_from_cache:\n        return result\nexcept:\n    if not access_token_from_cache:\n        raise",
+        "return access_token_from_cache"
+      ]
+    }
+  ],
+  "provider_path": "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/msal/managed_identity.py",
+  "provider_sha256": "4aec0d6af568daac874d72da2e451327f5f5becd46154fa0c3e9d295c591e822",
+  "public_alias_source_path": "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/msal/__init__.py",
+  "public_alias_source_sha256": "a4be74ac38de161395254147be545b9770736b4c310571a223c1188f4297e8d8"
+}
