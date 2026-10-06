@@ -7,8 +7,11 @@ from collections.abc import Callable
 from datetime import date, datetime, timezone
 
 from .config import HTTP_ATTEMPT_LIMIT
-from .models import Binding, BodyReceipt, CommandResult, DirectoryOutcome, Error, Permit, RunContext, Snapshot, Source, Versioned, canonical_json, require_number, require_text, require_utc
+from .models import Binding, BodyReceipt, CommandResult, DirectoryOutcome, Error, Permit, RunContext, Snapshot, Source, Versioned, canonical_json, require_hash, require_number, require_text, require_utc, safe_relative_path
 from .storage.contracts import AlreadyExists, CAS_ATTEMPTS, Conflict, StateStore
+
+
+HTTP_SUCCESS = 200
 
 
 def attempt_key(context: RunContext) -> str:
@@ -263,6 +266,73 @@ class AcquisitionState:
                     value["needs_acquisition"] = False
             self._update_source(source, change)
         return accepted
+
+    def reusable_snapshot(self, source: Source, envelope_version: str) -> Snapshot | None:
+        row = self.get_source(source.source_id)
+        if row is None:
+            return None
+        value = row.to_mapping()["value"]
+        if Source.from_mapping(value["source"]) != source:
+            raise Conflict("reusable source has conflicting immutable identity")
+        digest = value["latest_downloaded_snapshot"]
+        if digest is None:
+            return None
+        snapshot = self.snapshot(source.source_id, digest)
+        if snapshot.envelope_version != envelope_version:
+            return None
+        expected = f"raw/sec/indexes/kind={source.kind}/period={source.period}/sha256={snapshot.sha256}/master.{source.representation}"
+        if snapshot.raw_path != expected or snapshot.representation != source.representation:
+            raise Conflict("reusable snapshot differs from its exact source address")
+        return snapshot
+
+    def staged_receipt(self, workset_id: str, source_id: str) -> dict[str, object] | None:
+        require_hash(workset_id, "workset_id")
+        require_hash(source_id, "source_id")
+        entries = [row.to_mapping()["value"] for row in self.store.scan("StagedReceipt", {
+            "workset_id": workset_id, "source_id": source_id})]
+        entries.sort(key=lambda value: (value["receipt"]["received_at"], value["checkpoint_id"]))
+        return {"workset_id": workset_id, "source_id": source_id, "receipts": entries} if entries else None
+
+    def record_receipt(self, workset_id: str, source: Source, receipt: BodyReceipt, temporary_ref: str) -> None:
+        require_hash(workset_id, "workset_id")
+        safe_relative_path(temporary_ref, "temporary_ref")
+        context = self.active_context
+        if context is None:
+            raise Conflict("staged receipt requires a begun audited request context")
+        rows = self.request_history(context, source.canonical_url)
+        if not rows:
+            raise Conflict("staged receipt requires an actual recorded request reservation")
+        request = rows[-1].to_mapping()["value"]
+        expected = f"staging/sec/{context.run_id}/{context.attempt_id}/{source.source_id}/{request['request_id']}/body"
+        if (request["receipt"] != receipt.to_mapping() or request["source_id"] != source.source_id
+                or request["ended_at"] is None or request["outcome"] != "received"
+                or temporary_ref != expected or receipt.url != source.canonical_url
+                or receipt.status != HTTP_SUCCESS or not receipt.complete or receipt.error is not None):
+            raise Conflict("staged receipt differs from the exact finalized accepted request")
+        value = {"workset_id": workset_id, "source_id": source.source_id, "source": source.to_mapping(),
+                 "context": context.to_mapping(), "receipt": receipt.to_mapping(), "temporary_ref": temporary_ref,
+                 "request_id": request["request_id"], "transport_attempt": request}
+        checkpoint = hashlib.sha256(canonical_json(value)).hexdigest()
+        self._insert_immutable("StagedReceipt", checkpoint, {**value, "checkpoint_id": checkpoint})
+
+    def promotion_receipt(self, workset_id: str, source_id: str) -> dict[str, object] | None:
+        require_hash(workset_id, "workset_id")
+        require_hash(source_id, "source_id")
+        entries = [row.to_mapping()["value"] for row in self.store.scan("PromotionReceipt", {
+            "workset_id": workset_id, "source_id": source_id})]
+        entries.sort(key=lambda value: (value["snapshot"]["received_at"], value["checkpoint_id"]))
+        return {"workset_id": workset_id, "source_id": source_id,
+                "snapshots": [value["snapshot"] for value in entries]} if entries else None
+
+    def record_promotion(self, workset_id: str, snapshot: Snapshot) -> None:
+        require_hash(workset_id, "workset_id")
+        staged = self.staged_receipt(workset_id, snapshot.source_id)
+        if staged is None or not any(entry["receipt"]["sha256"] == snapshot.sha256
+                and entry["receipt"]["byte_count"] == snapshot.byte_count for entry in staged["receipts"]):
+            raise Conflict("promotion checkpoint requires the exact durable received entity")
+        value = {"workset_id": workset_id, "source_id": snapshot.source_id, "snapshot": snapshot.to_mapping()}
+        checkpoint = hashlib.sha256(canonical_json(value)).hexdigest()
+        self._insert_immutable("PromotionReceipt", checkpoint, {**value, "checkpoint_id": checkpoint})
 
     def snapshot(self, source_id: str, sha256: str) -> Snapshot:
         row = self.store.get("Snapshot", source_id + ":" + sha256)

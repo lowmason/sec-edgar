@@ -1,6 +1,6 @@
 """Validated builders shared by offline acquisition tests."""
 import json
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from sec_edgar_ingest.config import Settings
     from sec_edgar_ingest.download import ResponseSpec
-    from sec_edgar_ingest.models import RunContext, Source, SourceWorkset, Snapshot
+    from sec_edgar_ingest.models import RunContext, Source, SourceWorkset, Snapshot, SnapshotWorkset, CommandResult
     from sec_edgar_ingest.storage.contracts import StateStore, ObjectStore, LeaseStore, BoundaryObserver
 
 FIXTURE_CONFIG = Path(__file__).parent / "fixtures/config/local.json"
@@ -98,6 +98,9 @@ class Faults:
 
     def at(self, point: str, action: Callable[[], None]) -> None:
         self._actions[point] = action
+
+    def hit(self, point: str) -> None:
+        self(point)
 
     def __call__(self, point: str) -> None:
         action = self._actions.pop(point, None)
@@ -983,3 +986,268 @@ class DiscoveryHarness:
 
 def discovery_harness(root: Path | None, responses: dict[str, list["ResponseSpec"]]) -> DiscoveryHarness:
     return DiscoveryHarness(root, responses)
+
+
+# Collection uses the same local stores, audited client and fixed coordinator as discovery.
+def valid_idx_response(kind: str, company: str = 'Fixture Co') -> "ResponseSpec":
+    from sec_edgar_ingest.download import ResponseSpec
+    ending = '\r\n' if kind == 'quarterly' else '\n'
+    filename = 'Filename' if kind == 'quarterly' else 'File Name'
+    text = ending.join(('Synthetic SEC acquisition envelope',
+        f'CIK|Company Name|Form Type|Date Filed|{filename}', '-' * 70,
+        f'123456|{company}|10-K|2026-10-01|edgar/data/123456/fixture.txt', ''))
+    body = text.encode('ascii')
+    if kind == 'quarterly':
+        body = zip_bytes(body)
+    return ResponseSpec(200, body, {'Content-Length': str(len(body)),
+        'Content-Type': 'application/zip' if kind == 'quarterly' else 'text/plain',
+        'ETag': '"synthetic-'+company+'"', 'X-Fixture': 'synthetic'})
+
+
+class CollectionCrash(BaseException):
+    pass
+
+
+class CollectionHarness:
+    def __init__(self, root: Path, responses: Sequence["ResponseSpec"], *, clock=None):
+        from sec_edgar_ingest.coordination import Coordinator
+        from sec_edgar_ingest.download import RequestClient, ScriptedSender
+        from sec_edgar_ingest.state import AcquisitionState
+        self.root = Path(root)
+        self.clock = clock or fixture_clock()
+        self.settings = fixture_settings()
+        self.store, self.objects, self.leases = store_bundle(self.root, clock=self.clock)
+        self.source_state = AcquisitionState(self.store, clock=self.clock)
+        self.coordinator = Coordinator(self.settings, self.store, self.leases, self.clock)
+        harness = self
+        class CollectionSender(ScriptedSender):
+            def send(self, url, context, permit, *, cancellation):
+                harness.trace('fetch', url=url, context=context.to_mapping(), request_id=permit.request_id)
+                if harness.forbid_fetch:
+                    raise AssertionError('recovery must not call the sender')
+                return super().send(url, context, permit, cancellation=cancellation)
+        self.sender = CollectionSender(responses)
+        self.sender.clock = self.clock
+        self.client = RequestClient(self.settings, self.coordinator, self.sender, self.source_state, self.clock)
+        self.client.jitter = lambda: 0.0
+        self.faults = Faults()
+        self.forbid_fetch = False
+        self.context = fixture_context()
+        self.invocations = 0
+        self.closed = False
+
+    def trace(self, event, **details):
+        import os
+        from sec_edgar_ingest.models import canonical_json
+        path = self.root / 'collection-events.jsonl'
+        with path.open('ab') as stream:
+            stream.write(canonical_json({'event': event, 'pid': os.getpid(), **details}) + b'\n')
+            stream.flush()
+            os.fsync(stream.fileno())
+
+    @property
+    def fetch_count(self):
+        return len(tuple(self.store.scan('TransportAttempt', {})))
+
+    @staticmethod
+    def source_workset_path(workset):
+        return f'worksets/sec/source/sha256={workset.workset_id}/workset.json'
+
+    def collect(self, workset: "SourceWorkset") -> "CommandResult":
+        from dataclasses import replace
+        from sec_edgar_ingest.collection import collect
+        from sec_edgar_ingest.worksets import encode_workset
+        self.invocations += 1
+        context = replace(self.context, attempt_id=f'collect-{self.invocations}',
+                          execution_id=f'collection-{self.invocations}')
+        self.objects.put_once(self.source_workset_path(workset), encode_workset(workset))
+        result = collect(workset, context, self.settings, self.client, self.source_state, self.objects, self.faults)
+        self.trace('result', result=result.to_mapping())
+        return result
+
+    def snapshot_workset(self, result: "CommandResult") -> "SnapshotWorkset":
+        from sec_edgar_ingest.worksets import decode_snapshot_workset
+        return decode_snapshot_workset(self.objects.read(result.snapshot_workset_ref))
+
+    def fail_at(self, point: str) -> None:
+        def fail():
+            self.trace('injected_crash', point=point)
+            raise CollectionCrash(point)
+        self.faults.at(point, fail)
+
+    def reopen(self) -> "CollectionHarness":
+        remaining = list(self.sender.responses)
+        invocations = self.invocations
+        context, settings, clock = self.context, self.settings, self.clock
+        self.close()
+        resumed = CollectionHarness(self.root, remaining, clock=clock)
+        resumed.context, resumed.settings = context, settings
+        resumed.client.settings, resumed.coordinator.settings = settings, settings
+        resumed.invocations = invocations
+        resumed.forbid_fetch = self.forbid_fetch
+        return resumed
+
+    def install_newer_snapshot(self, source: "Source", body: bytes) -> "Snapshot":
+        from dataclasses import replace
+        from sec_edgar_ingest.collection import snapshot_for, stage_receipt
+        from sec_edgar_ingest.validation import validate_envelope
+        self.clock.advance(5)
+        receipt = replace(body_receipt(self.root, body), url=source.canonical_url,
+                          received_at=self.clock.now())
+        self.source_state.observe(source, self.clock.now(), 'available')
+        snapshot = snapshot_for(source, validate_envelope(source, receipt, self.settings))
+        # This labelled identity belongs to the fixture install; it claims no HTTP exchange.
+        temporary_ref = stage_receipt(self.objects, self.context, source, receipt,
+                                       request_id='synthetic-fixture-install')
+        self.objects.promote(temporary_ref, snapshot.raw_path, snapshot.sha256, snapshot.byte_count)
+        return self.source_state.remember_snapshot(snapshot)
+
+    def close(self):
+        if self.closed:
+            return
+        self.closed = True
+        self.store.close()
+        self.leases.close()
+        self.sender.close()
+
+
+def collection_harness(root: Path, responses: Sequence["ResponseSpec"]) -> CollectionHarness:
+    return CollectionHarness(root, responses)
+
+
+def retain_collection_proof(name, value):
+    import os
+    destination = os.environ.get('SEC_EDGAR_TASK7_TRACE_DIR')
+    if destination:
+        target = Path(destination)
+        target.mkdir(parents=True, exist_ok=True)
+        (target / (name+'.json')).write_text(json.dumps(value, indent=2, sort_keys=True)+'\n')
+
+
+def collection_process_entry(root, point=None, *, raw_only=False):
+    import os
+    from sec_edgar_ingest.collection import collect
+    from sec_edgar_ingest.worksets import decode_source_workset, make_snapshot_workset
+    root = Path(root)
+    h = collection_harness(root, [valid_idx_response('daily')])
+    workset = decode_source_workset((root / 'input-workset.json').read_bytes())
+    h.forbid_fetch = raw_only
+    h.source_state.begin_attempt(h.context)
+    if point:
+        def terminate():
+            import gc
+            # Completed turns may form cycles; collect their transient semaphores before forced exit.
+            gc.collect()
+            from sec_edgar_ingest.collection import raw_path
+            from sec_edgar_ingest.models import Source
+            staged = [row.to_mapping()['value'] for row in h.store.scan('StagedReceipt', {})]
+            snapshots = [row.to_mapping()['value'] for row in h.store.scan('Snapshot', {})]
+            bindings = [row.to_mapping()['value'] for row in h.store.scan('Binding', {})]
+            promotions = [row.to_mapping()['value'] for row in h.store.scan('PromotionReceipt', {})]
+            raw = []
+            for entry in staged:
+                receipt = entry['receipt']
+                path = raw_path(Source.from_mapping(entry['source']), receipt['sha256'])
+                try:
+                    h.objects.verify(path, receipt['sha256'], receipt['byte_count'])
+                    raw.append({'path': path, 'body_hex': h.objects.read(path).hex(), 'verified': True})
+                except FileNotFoundError:
+                    raw.append({'path': path, 'verified': False})
+            saved_workset = None
+            if point in ('after_snapshot_workset_write', 'before_result_write'):
+                pinned = tuple(h.source_state.snapshot(source.source_id,
+                    h.source_state.binding(workset.workset_id, source.source_id).snapshot_sha256)
+                    for source in workset.members)
+                frozen = make_snapshot_workset(workset, pinned)
+                path = f'worksets/sec/snapshot/sha256={frozen.workset_id}/workset.json'
+                saved_workset = h.objects.read(path).decode()
+            h.trace('forced_exit', point=point, staged_receipts=staged, snapshots=snapshots,
+                    bindings=bindings, promotions=promotions, raw=raw,
+                    snapshot_workset_bytes=saved_workset, fetch_count=h.fetch_count)
+            os._exit(73)
+        h.faults.at(point, terminate)
+    result = collect(workset, h.context, h.settings, h.client, h.source_state, h.objects, h.faults)
+    h.trace('process_result', result=result.to_mapping())
+    (root / 'final-result.json').write_text(json.dumps(result.to_mapping(), sort_keys=True))
+    if result.snapshot_workset_ref:
+        (root / 'final-snapshot-workset.json').write_bytes(h.objects.read(result.snapshot_workset_ref))
+    h.close()
+
+
+def run_collection_process(root, point=None, *, raw_only=False):
+    import os
+    import subprocess
+    import sys
+    command = [sys.executable, '-c',
+        'from support import collection_process_entry; import sys; '
+        'collection_process_entry(sys.argv[1], None if sys.argv[2] == "none" else sys.argv[2], raw_only=sys.argv[3] == "yes")',
+        str(root), point or 'none', 'yes' if raw_only else 'no']
+    completed = subprocess.run(command, capture_output=True, text=True, timeout=45,
+                               env={**os.environ, 'PYTHONPATH': str(Path(__file__).parent)})
+    return {'command': command, 'exit_code': completed.returncode,
+            'stdout': completed.stdout, 'stderr': completed.stderr}
+
+
+class CollectionRaceStore:
+    """Synchronize the internal absent read used by the real bind_once insert."""
+    def __init__(self, store, barrier, trace):
+        self.store, self.barrier, self.trace = store, barrier, trace
+        self.binding_reads = 0
+
+    def get(self, kind, key):
+        row = self.store.get(kind, key)
+        if kind == 'Binding':
+            self.binding_reads += 1
+            if row is None and self.binding_reads == 2:
+                self.trace('bind_read_absent', key=key)
+                self.barrier.wait(timeout=20)
+            elif row is not None:
+                self.trace('bind_read_winner', snapshot_sha256=row.value['snapshot_sha256'])
+        return row
+
+    def insert(self, kind, key, value):
+        from sec_edgar_ingest.storage.contracts import AlreadyExists
+        if kind != 'Binding':
+            return self.store.insert(kind, key, value)
+        self.trace('bind_insert_attempt', snapshot_sha256=value['snapshot_sha256'])
+        try:
+            row = self.store.insert(kind, key, value)
+        except AlreadyExists:
+            self.trace('bind_insert_conflict')
+            raise
+        self.trace('bind_insert_success', snapshot_sha256=value['snapshot_sha256'])
+        return row
+
+    def replace(self, kind, key, value, version):
+        return self.store.replace(kind, key, value, version)
+
+    def scan(self, kind, filters):
+        return self.store.scan(kind, filters)
+
+
+def collection_race_entry(root, company, staged_barrier, binding_barrier, output):
+    import os
+    from dataclasses import replace
+    from sec_edgar_ingest.collection import collect
+    from sec_edgar_ingest.worksets import decode_source_workset
+    root = Path(root)
+    h = collection_harness(root, [valid_idx_response('daily', company=company)])
+    h.context = replace(h.context, execution_id='race-'+company, attempt_id='race-'+company)
+    workset = decode_source_workset((root / 'input-workset.json').read_bytes())
+    events = []
+    def trace(event, **details):
+        import time
+        events.append({'event': event, 'pid': os.getpid(), 'monotonic_ns': time.monotonic_ns(),
+                       'at': datetime.now(timezone.utc).isoformat(), **details})
+    def await_staging():
+        trace('receipt_checkpoint')
+        staged_barrier.wait(timeout=20)
+    h.faults.at('after_receipt_checkpoint', await_staging)
+    h.source_state.store = CollectionRaceStore(h.store, binding_barrier, trace)
+    try:
+        result = collect(workset, h.context, h.settings, h.client, h.source_state, h.objects, h.faults)
+        trace('adopted', snapshots=h.snapshot_workset(result).to_mapping()['snapshots'])
+        output.put({'result': result.to_mapping(), 'events': events,
+                    'candidate_sha256': __import__('hashlib').sha256(valid_idx_response('daily', company).body).hexdigest()})
+    finally:
+        h.close()

@@ -5,7 +5,7 @@ from datetime import date
 from typing import Literal
 
 from .config import Settings, pin_context
-from .models import (FORMAT_VERSION, DirectoryOutcome, RunContext, Snapshot, SnapshotWorkset,
+from .models import (FORMAT_VERSION, DAILY_ENVELOPE_VERSION, QUARTERLY_ENVELOPE_VERSION, DirectoryOutcome, RunContext, Snapshot, SnapshotWorkset,
                      Source, SourceWorkset, canonical_json, parse_json, quarter_for, quarter_value,
                      require_hash, require_text)
 
@@ -153,6 +153,16 @@ def make_snapshot_workset(source: SourceWorkset, snapshots: tuple[Snapshot, ...]
     _validate_source(source)
     if not source.discovery_complete:
         raise ValueError("cannot snapshot an incomplete source workset")
+    members = {member.source_id: member for member in source.members}
+    for snapshot in snapshots:
+        member = members.get(snapshot.source_id)
+        if member is None:
+            raise ValueError("snapshot must belong to an exact source member")
+        expected_path = f"raw/sec/indexes/kind={member.kind}/period={member.period}/sha256={snapshot.sha256}/master.{member.representation}"
+        expected_envelope = QUARTERLY_ENVELOPE_VERSION if member.kind == "quarterly" else DAILY_ENVELOPE_VERSION
+        if (snapshot.raw_path, snapshot.representation, snapshot.envelope_version) != (
+                expected_path, member.representation, expected_envelope):
+            raise ValueError("snapshot address/period/envelope differs from its exact source member")
     workset = SnapshotWorkset("0" * 64, source.workset_id, source.context,
                              tuple(sorted(snapshots, key=lambda snapshot: snapshot.source_id)),
                              source.pinned_end_quarter, source.directories, source.overlap_from,
