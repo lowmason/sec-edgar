@@ -129,6 +129,14 @@ def _validated_saved_receipt(workset: SourceWorkset, source: Source, entry: dict
     return receipt
 
 
+def _recover_saved_receipt(workset: SourceWorkset, source: Source, entry: dict[str, object],
+                           state: AcquisitionState, objects: ObjectStore) -> BodyReceipt:
+    receipt = _validated_saved_receipt(workset, source, entry, state)
+    original_context = RunContext.from_mapping(entry['context'])
+    _retain_attempt_failures(objects, state, original_context, source)
+    return receipt
+
+
 def _validate_retained(objects: ObjectStore, reference: str, source: Source, receipt: BodyReceipt,
                        settings: Settings) -> Snapshot:
     objects.verify(reference, receipt.sha256, receipt.byte_count)
@@ -154,13 +162,13 @@ def recover_promoted(workset: SourceWorkset, source: Source, state: AcquisitionS
                         and entry['receipt']['headers'] == snapshot.to_mapping()['validators']]
             if not matching:
                 raise Conflict('promotion checkpoint lacks its exact staged original receipt')
-            receipt = _validated_saved_receipt(workset, source, matching[0], state)
+            receipt = _recover_saved_receipt(workset, source, matching[0], state, objects)
             validated = _validate_retained(objects, snapshot.raw_path, source, receipt, settings)
             if validated != snapshot:
                 raise Conflict('promotion metadata differs from the exact validated original receipt')
         return state.remember_snapshot(Snapshot.from_mapping(promoted['snapshots'][0]))
     for entry in entries:
-        receipt = _validated_saved_receipt(workset, source, entry, state)
+        receipt = _recover_saved_receipt(workset, source, entry, state, objects)
         reference = raw_path(source, receipt.sha256)
         try:
             snapshot = _validate_retained(objects, reference, source, receipt, settings)
@@ -183,7 +191,13 @@ def collect_member(workset: SourceWorkset, source: Source, context: RunContext, 
         raise Conflict('collection member is not in the immutable source workset')
     pinned = state.binding(workset.workset_id, source.source_id)
     if pinned is not None:
-        return _verify_snapshot(state.snapshot(source.source_id, pinned.snapshot_sha256), source, objects)
+        accepted = _verify_snapshot(state.snapshot(source.source_id, pinned.snapshot_sha256), source, objects)
+        staged = state.staged_receipt(workset.workset_id, source.source_id)
+        if staged is not None:
+            for entry in staged['receipts']:
+                if entry['receipt']['sha256'] == accepted.sha256:
+                    _recover_saved_receipt(workset, source, entry, state, objects)
+        return accepted
     snapshot = recover_promoted(workset, source, state, objects)
     if snapshot is None and workset.acquisition_mode == 'reuse_accepted':
         snapshot = state.reusable_snapshot(source, expected_envelope(source))
@@ -191,6 +205,7 @@ def collect_member(workset: SourceWorkset, source: Source, context: RunContext, 
             _verify_snapshot(snapshot, source, objects)
     if snapshot is None:
         receipt = client.fetch(source.canonical_url, context, source)
+        _retain_attempt_failures(objects, state, context, source)
         validated = validate_envelope(source, receipt, settings)
         request = _receipt_attempt(state, context, source, receipt)
         temporary_ref = stage_receipt(objects, context, source, receipt, request_id=request['request_id'])
@@ -226,8 +241,11 @@ def _retain_attempt_failures(objects, state, context, source, *, override=None):
                 or permit.request_id != request['request_id']):
             raise Conflict('quarantine requires its exact finalized original request and permit')
         path = f'quarantine/sec/{context.run_id}/{source.source_id}/{context.attempt_id}/{request["request_id"]}/body'
-        objects.stage(path, receipt.temporary_path)
-        objects.verify(path, receipt.sha256, receipt.byte_count)
+        try:
+            objects.verify(path, receipt.sha256, receipt.byte_count)
+        except FileNotFoundError:
+            objects.stage(path, receipt.temporary_path)
+            objects.verify(path, receipt.sha256, receipt.byte_count)
         objects.put_once(path.rsplit('/', 1)[0]+'/receipt.json', canonical_json({
             'receipt': receipt.to_mapping(), 'error': error.to_mapping(), 'context': context.to_mapping(),
             'source': source.to_mapping(), 'request_id': request['request_id'], 'body_path': path}))

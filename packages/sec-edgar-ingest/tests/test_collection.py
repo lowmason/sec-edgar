@@ -502,6 +502,140 @@ class CollectionTests(unittest.TestCase):
                 retain_collection_proof('crash-'+point, {'crash': crash, 'recovered': recovered, 'repeated': repeated,
                     'events': events, 'snapshot_workset_bytes': completed_bytes.decode(), 'prior_snapshot_bytes': before})
 
+    def test_retry_prefix_quarantine_precedes_every_success_crash_boundary(self):
+        for point in CRASH_POINTS:
+            with self.subTest(point=point), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                h = collection_harness(root, [])
+                h.objects.put_once(h.source_workset_path(self.workset), encode_workset(self.workset))
+                h.close()
+                (root / 'input-workset.json').write_bytes(encode_workset(self.workset))
+                crash = run_collection_process(root, point, retry_prefix=True)
+                recovered = run_collection_process(root, raw_only=True, retry_prefix=True)
+                recovered_snapshot_bytes = (root / 'final-snapshot-workset.json').read_bytes()
+                repeated = run_collection_process(root, raw_only=True, retry_prefix=True)
+                events = [json.loads(line) for line in (root / 'collection-events.jsonl').read_text().splitlines()]
+                checkpoint = next(event for event in events if event['event'] == 'forced_exit')
+                before = checkpoint['retry_evidence'][0]
+                body_path = root / 'objects' / before['path']
+                sidecar_path = body_path.with_name('receipt.json')
+                after = {'body_hex': body_path.read_bytes().hex() if body_path.exists() else None,
+                         'sidecar_bytes': sidecar_path.read_text() if sidecar_path.exists() else None,
+                         'old_temporary_exists': Path(before['request']['receipt']['temporary_path']).exists()}
+                result = json.loads((root / 'final-result.json').read_bytes())
+                snapshot_bytes = (root / 'final-snapshot-workset.json').read_bytes()
+                retain_collection_proof('retry-prefix-crash-'+point, {'crash': crash, 'recovered': recovered,
+                    'repeated': repeated, 'events': events, 'after': after, 'result': result,
+                    'recovered_snapshot_workset_bytes': recovered_snapshot_bytes.decode(),
+                    'snapshot_workset_bytes': snapshot_bytes.decode()})
+                self.assertEqual([process['exit_code'] for process in (crash, recovered, repeated)], [73, 0, 0])
+                self.assertTrue(all(process[stream] == '' for process in (crash, recovered, repeated)
+                                    for stream in ('stdout', 'stderr')))
+                self.assertTrue(before['verified'], 'failed retry prefix must be durable before '+point)
+                self.assertEqual(before['temporary_body_hex'], b'retained retry prefix'.hex())
+                self.assertEqual(before['body_hex'], b'retained retry prefix'.hex())
+                self.assertFalse(before['temporary_exists_after'])
+                self.assertFalse(after['old_temporary_exists'])
+                self.assertEqual(after['body_hex'], before['body_hex'])
+                self.assertEqual(after['sidecar_bytes'], before['sidecar_bytes'])
+                request = before['request']
+                metadata = json.loads(after['sidecar_bytes'])
+                self.assertEqual(metadata['receipt'], request['receipt'])
+                self.assertEqual(metadata['error'], request['error'])
+                self.assertEqual(metadata['context'], request['context'])
+                self.assertEqual(metadata['request_id'], request['request_id'])
+                self.assertEqual(request['permit']['request_id'], request['request_id'])
+                self.assertEqual(metadata['body_path'], before['path'])
+                self.assertEqual(metadata['receipt']['sha256'], hashlib.sha256(b'retained retry prefix').hexdigest())
+                self.assertEqual(metadata['receipt']['headers'], {'X-Fixture': 'partial'})
+                self.assertEqual((metadata['receipt']['byte_count'], metadata['receipt']['complete']), (21, False))
+                self.assertEqual((result['outcome'], result['downloaded'], result['unchanged'], result['pending'],
+                                  result['failed'], result['quarantined']), ('success', 0, 1, 0, 0, 0))
+                self.assertEqual(result['gaps'], [])
+                self.assertEqual((result['context']['run_id'], result['context']['execution_id'],
+                                  result['context']['attempt_id']),
+                                 ('successor-run', 'successor-execution', 'successor-attempt'))
+                fetches = [event for event in events if event['event'] == 'fetch']
+                self.assertEqual(len(fetches), 2)
+                self.assertEqual({event['pid'] for event in fetches}, {checkpoint['pid']})
+                self.assertEqual(len({event['pid'] for event in events}), 3)
+                self.assertEqual(snapshot_bytes, recovered_snapshot_bytes)
+                snapshot = decode_snapshot_workset(snapshot_bytes)
+                self.assertEqual(snapshot.context, self.workset.context)
+                self.assertEqual(snapshot.snapshots[0].sha256, hashlib.sha256(valid_idx_response('daily').body).hexdigest())
+                self.assertEqual((root / 'objects' / snapshot.snapshots[0].raw_path).read_bytes(), valid_idx_response('daily').body)
+                if checkpoint['snapshot_workset_bytes'] is not None:
+                    self.assertEqual(snapshot_bytes.decode(), checkpoint['snapshot_workset_bytes'])
+
+    def test_multiple_failed_prefixes_remain_distinct_when_recovered(self):
+        from sec_edgar_ingest.download import ResponseSpec
+        prefixes = (ResponseSpec(200, b'retained first prefix', {'X-Fixture': 'first'}, 'read_timeout'),
+                    ResponseSpec(503, b'retained second prefix', {'X-Fixture': 'second'}))
+        h = self.harness([*prefixes, valid_idx_response('daily')])
+        h.fail_at('after_receipt_checkpoint')
+        with self.assertRaises(CollectionCrash):
+            h.collect(self.workset)
+        original = h.source_state.active_context
+        rows = h.source_state.request_history(original, self.source.canonical_url)
+        self.assertEqual([row.value['outcome'] for row in rows], ['retry', 'retry', 'received'])
+        retained = []
+        for row, response in zip(rows, prefixes):
+            request = row.to_mapping()['value']
+            path = f'quarantine/sec/{original.run_id}/{self.source.source_id}/{original.attempt_id}/{request["request_id"]}/body'
+            self.assertTrue((h.objects.directory / path).is_file(), 'each failed prefix must precede the success checkpoint')
+            body = h.objects.read(path)
+            sidecar = h.objects.read(path.rsplit('/', 1)[0]+'/receipt.json')
+            self.assertEqual(body, response.body)
+            self.assertEqual(json.loads(sidecar)['receipt']['headers'], response.headers)
+            retained.append((path, body, sidecar))
+            Path(request['receipt']['temporary_path']).unlink()
+        self.assertNotEqual(retained[0][0], retained[1][0])
+        h.forbid_fetch = True
+        resumed = h.reopen()
+        self.addCleanup(resumed.close)
+        result = resumed.collect(self.workset)
+        self.assertEqual((result.outcome, result.downloaded, result.unchanged, result.quarantined), ('success', 0, 1, 0))
+        self.assertEqual(resumed.fetch_count, 3)
+        for path, body, sidecar in retained:
+            self.assertEqual(resumed.objects.read(path), body)
+            self.assertEqual(resumed.objects.read(path.rsplit('/', 1)[0]+'/receipt.json'), sidecar)
+
+    def test_recovery_verifies_original_quarantine_without_failed_spool(self):
+        from sec_edgar_ingest.download import ResponseSpec
+        from sec_edgar_ingest.models import canonical_json
+        for corruption in ('body', 'sidecar', 'missing'):
+            with self.subTest(corruption=corruption), tempfile.TemporaryDirectory() as directory:
+                h = collection_harness(Path(directory), [ResponseSpec(200, b'retained retry prefix',
+                    {'X-Fixture': 'partial'}, 'read_timeout'), valid_idx_response('daily')])
+                self.addCleanup(h.close)
+                h.fail_at('after_receipt_checkpoint')
+                with self.assertRaises(CollectionCrash):
+                    h.collect(self.workset)
+                original = h.source_state.active_context
+                request = h.source_state.request_history(original, self.source.canonical_url)[0].to_mapping()['value']
+                path = f'quarantine/sec/{original.run_id}/{self.source.source_id}/{original.attempt_id}/{request["request_id"]}/body'
+                # Install exact audited fixture evidence so this refusal test is independent of retention ordering.
+                h.objects.stage(path, Path(request['receipt']['temporary_path']))
+                h.objects.put_once(path.rsplit('/', 1)[0]+'/receipt.json', canonical_json({
+                    'receipt': request['receipt'], 'error': request['error'], 'context': original.to_mapping(),
+                    'source': self.source.to_mapping(), 'request_id': request['request_id'], 'body_path': path}))
+                Path(request['receipt']['temporary_path']).unlink()
+                retained = h.objects.directory / path
+                target = retained.with_name('receipt.json') if corruption == 'sidecar' else retained
+                target.unlink() if corruption == 'missing' else target.write_bytes(b'damaged quarantine')
+                current = replace(original, run_id='successor-run', execution_id='successor-execution',
+                                  attempt_id='successor-attempt')
+                h.forbid_fetch = True
+                result = self.collection.collect(self.workset, current, h.settings, h.client,
+                                                 h.source_state, h.objects, h.faults)
+                self.assertEqual(result.outcome, 'state_conflict')
+                self.assertIsNone(result.snapshot_workset_ref)
+                self.assertEqual(h.fetch_count, 2)
+                self.assertEqual(h.source_state.request_history(current, self.source.canonical_url), ())
+                self.assertIsNone(h.source_state.binding(self.workset.workset_id, self.source.source_id))
+                if corruption != 'missing':
+                    self.assertEqual(target.read_bytes(), b'damaged quarantine')
+
     def test_two_independent_collectors_race_changed_originals_and_adopt_one_pin(self):
         h = self.harness([])
         h.objects.put_once(h.source_workset_path(self.workset), encode_workset(self.workset))

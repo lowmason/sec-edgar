@@ -1124,14 +1124,22 @@ def retain_collection_proof(name, value):
         (target / (name+'.json')).write_text(json.dumps(value, indent=2, sort_keys=True)+'\n')
 
 
-def collection_process_entry(root, point=None, *, raw_only=False):
+def collection_process_entry(root, point=None, *, raw_only=False, retry_prefix=False):
     import os
     from sec_edgar_ingest.collection import collect
     from sec_edgar_ingest.worksets import decode_source_workset, make_snapshot_workset
     root = Path(root)
-    h = collection_harness(root, [valid_idx_response('daily')])
+    responses = [valid_idx_response('daily')]
+    if retry_prefix:
+        from sec_edgar_ingest.download import ResponseSpec
+        responses.insert(0, ResponseSpec(200, b'retained retry prefix', {'X-Fixture': 'partial'}, 'read_timeout'))
+    h = collection_harness(root, responses)
     workset = decode_source_workset((root / 'input-workset.json').read_bytes())
     h.forbid_fetch = raw_only
+    if retry_prefix and raw_only:
+        from dataclasses import replace
+        h.context = replace(h.context, run_id='successor-run', execution_id='successor-execution',
+                            attempt_id='successor-attempt')
     h.source_state.begin_attempt(h.context)
     if point:
         def terminate():
@@ -1161,8 +1169,37 @@ def collection_process_entry(root, point=None, *, raw_only=False):
                 frozen = make_snapshot_workset(workset, pinned)
                 path = f'worksets/sec/snapshot/sha256={frozen.workset_id}/workset.json'
                 saved_workset = h.objects.read(path).decode()
+            retry_evidence = []
+            if retry_prefix:
+                import shutil
+                from sec_edgar_ingest.models import canonical_json
+                for source in workset.members:
+                    for row in h.source_state.request_history(h.context, source.canonical_url):
+                        request = row.to_mapping()['value']
+                        if request['error'] is None or request['receipt'] is None:
+                            continue
+                        path = f'quarantine/sec/{h.context.run_id}/{source.source_id}/{h.context.attempt_id}/{request["request_id"]}/body'
+                        expected = canonical_json({'receipt': request['receipt'], 'error': request['error'],
+                            'context': h.context.to_mapping(), 'source': source.to_mapping(),
+                            'request_id': request['request_id'], 'body_path': path})
+                        try:
+                            h.objects.verify(path, request['receipt']['sha256'], request['receipt']['byte_count'])
+                            retained_body = h.objects.read(path).hex()
+                            sidecar = h.objects.read(path.rsplit('/', 1)[0]+'/receipt.json').decode()
+                            verified = sidecar.encode() == expected
+                        except FileNotFoundError:
+                            retained_body = sidecar = None
+                            verified = False
+                        retry_evidence.append({'request': request, 'path': path, 'body_hex': retained_body,
+                            'sidecar_bytes': sidecar, 'verified': verified,
+                            'temporary_body_hex': Path(request['receipt']['temporary_path']).read_bytes().hex()})
+                # Remove only this synthetic sender's temporary fixture spool after verified retention.
+                if retry_evidence and all(entry['verified'] for entry in retry_evidence):
+                    shutil.rmtree(h.sender.directory.name)
+                for entry in retry_evidence:
+                    entry['temporary_exists_after'] = Path(entry['request']['receipt']['temporary_path']).exists()
             h.trace('forced_exit', point=point, staged_receipts=staged, snapshots=snapshots,
-                    bindings=bindings, promotions=promotions, raw=raw,
+                    bindings=bindings, promotions=promotions, raw=raw, retry_evidence=retry_evidence,
                     snapshot_workset_bytes=saved_workset, fetch_count=h.fetch_count)
             os._exit(73)
         h.faults.at(point, terminate)
@@ -1174,14 +1211,15 @@ def collection_process_entry(root, point=None, *, raw_only=False):
     h.close()
 
 
-def run_collection_process(root, point=None, *, raw_only=False):
+def run_collection_process(root, point=None, *, raw_only=False, retry_prefix=False):
     import os
     import subprocess
     import sys
     command = [sys.executable, '-c',
         'from support import collection_process_entry; import sys; '
-        'collection_process_entry(sys.argv[1], None if sys.argv[2] == "none" else sys.argv[2], raw_only=sys.argv[3] == "yes")',
-        str(root), point or 'none', 'yes' if raw_only else 'no']
+        'collection_process_entry(sys.argv[1], None if sys.argv[2] == "none" else sys.argv[2], '
+        'raw_only=sys.argv[3] == "yes", retry_prefix=sys.argv[4] == "yes")',
+        str(root), point or 'none', 'yes' if raw_only else 'no', 'yes' if retry_prefix else 'no']
     completed = subprocess.run(command, capture_output=True, text=True, timeout=45,
                                env={**os.environ, 'PYTHONPATH': str(Path(__file__).parent)})
     return {'command': command, 'exit_code': completed.returncode,
