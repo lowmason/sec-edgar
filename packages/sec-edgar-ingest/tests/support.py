@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from sec_edgar_ingest.config import Settings
+    from sec_edgar_ingest.download import ResponseSpec
     from sec_edgar_ingest.models import RunContext, Source, SourceWorkset, Snapshot
     from sec_edgar_ingest.storage.contracts import StateStore, ObjectStore, LeaseStore, BoundaryObserver
 
@@ -844,3 +845,141 @@ def delayed_adapter_child(transport, cancellation, channel):
         return send(adapter, request, **kwargs)
     requests.adapters.HTTPAdapter.send = delayed_send
     download._child_exchange(transport, cancellation, channel)
+
+
+# These JSON listings are synthetic offline fixtures, distinct from retained SEC evidence.
+def listing_response(period: str, names: list[str], *, family: str = 'daily-index') -> "ResponseSpec":
+    from sec_edgar_ingest.download import ResponseSpec
+    if period in ('daily-index', 'full-index'):
+        path = period+'/'
+    elif 'Q' in period:
+        year, quarter = period.split('Q')
+        path = f'{family}/{year}/QTR{quarter}/'
+    else:
+        path = f'{family}/{period}/'
+    items = [{'name': name.rstrip('/'), 'href': name, 'type': 'dir' if name.endswith('/') else 'file',
+              'size': '', 'last-modified': 'synthetic fixture label'} for name in names]
+    return ResponseSpec(200, json.dumps({'directory': {'name': path, 'parent-dir': '../', 'item': items}}).encode(),
+                        {'Content-Type': 'application/json', 'X-Fixture': 'synthetic'})
+
+
+def failed_response(status: int) -> "ResponseSpec":
+    from sec_edgar_ingest.download import ResponseSpec
+    return ResponseSpec(status, b'synthetic fixture HTTP failure', {})
+
+
+class DiscoveryHarness:
+    def __init__(self, root, responses):
+        import tempfile
+        from sec_edgar_ingest.coordination import Coordinator
+        from sec_edgar_ingest.download import RequestClient, ScriptedSender
+        from sec_edgar_ingest.state import AcquisitionState
+        self.directory = tempfile.TemporaryDirectory(prefix='sec-discovery-') if root is None else None
+        self.root = Path(self.directory.name) if root is None else Path(root)
+        self.clock = fixture_clock()
+        self.settings = fixture_settings(fixture={"allow_clock_override": True})
+        self.store, self.objects, self.leases = store_bundle(self.root, clock=self.clock)
+        self.state = AcquisitionState(self.store, clock=self.clock)
+        self.coordinator = Coordinator(self.settings, self.store, self.leases, self.clock)
+        self.responses = {key: list(value) for key, value in responses.items()}
+        self.attempted_urls = []
+        self.family = 'daily-index'
+        harness = self
+        class ListingSender(ScriptedSender):
+            def send(self, url, context, permit, *, cancellation):
+                harness.attempted_urls.append(url)
+                key = harness.key(url)
+                supplied = harness.responses.get(url, harness.responses.get(key))
+                if supplied:
+                    spec = supplied[0]
+                    if (spec.status == 200 and spec.fault is None) or len(supplied) > 1:
+                        supplied.pop(0)
+                elif supplied is not None:
+                    raise AssertionError('synthetic response sequence exhausted for '+url)
+                elif key in ('daily-index', 'full-index'):
+                    years = sorted({str(y) for y in range(2010, 2028)})
+                    spec = listing_response(key, [year+'/' for year in years], family=key)
+                elif len(key) == 4:
+                    spec = listing_response(key, ['QTR1/', 'QTR2/', 'QTR3/', 'QTR4/'], family=url.split('/edgar/')[1].split('/')[0])
+                else:
+                    spec = listing_response(key, [], family=url.split('/edgar/')[1].split('/')[0])
+                self.responses = [spec]
+                return super().send(url, context, permit, cancellation=cancellation)
+        self.sender = ListingSender([])
+        self.sender.clock = self.clock
+        self.client = RequestClient(self.settings, self.coordinator, self.sender, self.state, self.clock)
+        self.client.jitter = lambda: 0.0
+        self.closed = False
+        self.invocations = 0
+
+    @staticmethod
+    def key(url):
+        path = url.split('/edgar/')[1].split('/')[:-1]
+        return path[0] if len(path) == 1 else path[1] if len(path) == 2 else path[1]+'Q'+path[2][3:]
+
+    def url(self, key):
+        prefix = 'https://www.sec.gov/Archives/edgar/'
+        if key in ('daily-index', 'full-index'):
+            return prefix+key+'/index.json'
+        path = key.replace('Q', '/QTR')
+        return prefix+self.family+'/'+path+'/index.json'
+
+    @property
+    def requested_quarters(self):
+        return tuple(sorted({self.key(url) for url in self.attempted_urls if 'QTR' in url}))
+
+    @property
+    def boundary(self):
+        return self.state.daily_boundary()
+
+    def seed_boundary(self, day: date) -> None:
+        self.store.insert('DiscoveryBoundary', 'daily', {'day': day.isoformat(), 'gaps': {}})
+
+    def add_pending(self, source: "Source") -> None:
+        self.state.observe(source, self.clock.now(), 'available')
+
+    @staticmethod
+    def workset_path(workset):
+        return f'worksets/source/{workset.workset_id}.json'
+
+    def run(self, mode: str, today: date, discovery_id: str, *, refresh: bool = False) -> "SourceWorkset":
+        from dataclasses import replace
+        from sec_edgar_ingest.discovery import discover
+        from sec_edgar_ingest.config import pin_context
+        self.family = 'daily-index' if mode == 'daily' else 'full-index'
+        self.invocations += 1
+        context = replace(fixture_context(command='discover', priority='daily' if mode == 'daily' else 'backfill'),
+                          attempt_id=f'discover-{self.invocations}', execution_id=f'discover-{today}',
+                          config_sha256=self.settings.config_sha256, pinned_on=None)
+        context, _ = pin_context(self.settings, context, today)
+        return discover(self.settings, context, mode, discovery_id, self.client, self.state, self.objects, today, refresh)
+
+    def run_single_directory(self, period: str) -> "SourceWorkset":
+        year, quarter = period.split('Q')
+        day = date(int(year), (int(quarter)-1)*3+1, 1)
+        self.settings = fixture_settings(backfill={'start_quarter': period, 'end_quarter': 'open'}, daily={'start_date': day.isoformat()}, fixture={'allow_clock_override': True})
+        # The explicit fixture clock override pins this selected historical test quarter.
+        from dataclasses import replace
+        from sec_edgar_ingest.config import pin_context
+        from sec_edgar_ingest.discovery import discover
+        self.coordinator.settings = self.settings
+        self.client.settings = self.settings
+        context = replace(fixture_context('discover', 'daily'), config_sha256=self.settings.config_sha256, pinned_on=None)
+        context, _ = pin_context(self.settings, context, day)
+        self.seed_boundary(day)
+        # Daily always includes preceding overlap; synthesize the other leaf as valid empty.
+        return discover(self.settings, context, 'daily', 'single-'+period, self.client, self.state, self.objects, day)
+
+    def close(self):
+        if self.closed:
+            return
+        self.closed = True
+        self.store.close()
+        self.leases.close()
+        self.sender.close()
+        if self.directory is not None:
+            self.directory.cleanup()
+
+
+def discovery_harness(root: Path | None, responses: dict[str, list["ResponseSpec"]]) -> DiscoveryHarness:
+    return DiscoveryHarness(root, responses)

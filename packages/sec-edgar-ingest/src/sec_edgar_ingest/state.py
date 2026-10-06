@@ -2,10 +2,12 @@
 from __future__ import annotations
 
 import hashlib
-from datetime import datetime, timezone
+import uuid
+from collections.abc import Callable
+from datetime import date, datetime, timezone
 
 from .config import HTTP_ATTEMPT_LIMIT
-from .models import Binding, BodyReceipt, CommandResult, Error, Permit, RunContext, Snapshot, Source, Versioned, canonical_json, require_number, require_text, require_utc
+from .models import Binding, BodyReceipt, CommandResult, DirectoryOutcome, Error, Permit, RunContext, Snapshot, Source, Versioned, canonical_json, require_number, require_text, require_utc
 from .storage.contracts import AlreadyExists, CAS_ATTEMPTS, Conflict, StateStore
 
 
@@ -62,6 +64,176 @@ class AcquisitionState:
     def pending_sources(self) -> tuple[Source, ...]:
         return tuple(Source.from_mapping(row.to_mapping()["value"]["source"])
                      for row in self.store.scan("Source", {"needs_acquisition": True}))
+
+    def discovery_session(self, discovery_id: str) -> Versioned | None:
+        require_text(discovery_id, "discovery_id")
+        return self.store.get("DiscoverySession", hashlib.sha256(discovery_id.encode()).hexdigest())
+
+    def begin_discovery(self, discovery_id: str, frozen: dict[str, object], context: RunContext,
+                        mode: str, acquisition_mode: str) -> Versioned:
+        key = hashlib.sha256(discovery_id.encode()).hexdigest()
+        value = {"discovery_id": discovery_id, "frozen": frozen, "workset_id": None,
+                 "predecessor_workset_id": None, "history": [], "registered": False}
+        try:
+            session = self.store.insert("DiscoverySession", key, value)
+        except AlreadyExists:
+            session = self.discovery_session(discovery_id)
+        saved = session.to_mapping()["value"]["frozen"]
+        original = RunContext.from_mapping(saved["context"])
+        if (_run_provenance(original) != _run_provenance(context) or original.command != context.command
+                or saved["mode"] != mode or saved["acquisition_mode"] != acquisition_mode):
+            raise Conflict("discovery session has conflicting frozen provenance or acquisition mode")
+        required = {unit["url"]: unit for unit in saved["units"]}
+        if len(required) != len(saved["units"]) or not required:
+            raise Conflict("discovery session requires unique directory units")
+        if session.value["registered"]:
+            return session
+        def register(value):
+            for url, unit in required.items():
+                progress = self.directory_progress(discovery_id, url)
+                successful = progress is not None and progress.value["outcome"]["outcome"] != "discovery_failed"
+                if url not in value["gaps"] and not successful:
+                    pending = DirectoryOutcome(url, unit["period"], "discovery_failed", None, (),
+                        Error("discovery_pending", "required directory has not completed", True, None, {}))
+                    value["gaps"][url] = {"token": hashlib.sha256(canonical_json([discovery_id, url])).hexdigest(),
+                                          "discovery_id": discovery_id, "outcome": pending.to_mapping()}
+        self._change_boundary(register)
+        for _ in range(CAS_ATTEMPTS):
+            current = self.discovery_session(discovery_id)
+            value = current.to_mapping()["value"]
+            if value["registered"]:
+                return current
+            value["registered"] = True
+            try:
+                return self.store.replace("DiscoverySession", key, value, current.version)
+            except Conflict:
+                continue
+        raise Conflict("discovery registration exhausted conditional races")
+
+    def _change_boundary(self, change: Callable[[dict[str, object]], None]) -> Versioned:
+        for _ in range(CAS_ATTEMPTS):
+            row = self.store.get("DiscoveryBoundary", "daily")
+            value = row.to_mapping()["value"] if row else {"day": None, "gaps": {}}
+            change(value)
+            try:
+                if row is None:
+                    return self.store.insert("DiscoveryBoundary", "daily", value)
+                return self.store.replace("DiscoveryBoundary", "daily", value, row.version)
+            except (AlreadyExists, Conflict):
+                continue
+        raise Conflict("discovery boundary exhausted conditional races")
+
+    def directory_gap(self, url: str) -> str | None:
+        row = self.store.get("DiscoveryBoundary", "daily")
+        gap = None if row is None else row.to_mapping()["value"]["gaps"].get(url)
+        return gap["token"] if gap else None
+
+    def directory_progress(self, discovery_id: str, url: str) -> Versioned | None:
+        return self.store.get("DirectoryProgress", hashlib.sha256(canonical_json([discovery_id, url])).hexdigest())
+
+    def record_directory(self, discovery_id: str, outcome: DirectoryOutcome, members: tuple[Source, ...], *,
+                         evidence: dict[str, object] | None = None, selection: dict[str, object] | None = None,
+                         expected_gap: str | None = None) -> None:
+        if tuple(sorted(member.source_id for member in members)) != outcome.source_ids:
+            raise Conflict("directory outcome must name its exact members")
+        if any(member.canonical_url.rsplit("/", 1)[0] + "/index.json" != outcome.url for member in members):
+            raise Conflict("source member must originate from its immediate directory")
+        failed = outcome.outcome == "discovery_failed"
+        if not failed and (evidence is None or evidence.get("sha256") != outcome.listing_sha256):
+            raise Conflict("successful directory progress requires durable original evidence")
+        if failed:
+            audit = {"discovery_id": discovery_id, "outcome": outcome.to_mapping(), "recorded_at": self._now().isoformat(), "event_id": uuid.uuid4().hex,
+                     "attempt_key": attempt_key(self.active_context) if self.active_context is not None else None,
+                     "context": self.active_context.to_mapping() if self.active_context is not None else None}
+            token = hashlib.sha256(canonical_json(audit)).hexdigest()
+            def add_gap(value):
+                value["gaps"][outcome.url] = {"token": token, "discovery_id": discovery_id, "outcome": outcome.to_mapping()}
+            # The shared CAS gap is durable before a failure row can appear complete elsewhere.
+            self._change_boundary(add_gap)
+            self._insert_immutable("Failure", token, audit)
+        key = hashlib.sha256(canonical_json([discovery_id, outcome.url])).hexdigest()
+        value = {"discovery_id": discovery_id, "outcome": outcome.to_mapping(),
+                 "members": [member.to_mapping() for member in members], "evidence": evidence,
+                 "selection": selection or {"ignored": []}, "observed_gap_token": expected_gap}
+        for _ in range(CAS_ATTEMPTS):
+            current = self.directory_progress(discovery_id, outcome.url)
+            if current is not None and current.value["outcome"]["outcome"] != "discovery_failed":
+                if current.to_mapping()["value"] != value:
+                    raise Conflict("successful directory progress is immutable within a session")
+                break
+            try:
+                if current is None:
+                    self.store.insert("DirectoryProgress", key, value)
+                else:
+                    self.store.replace("DirectoryProgress", key, value, current.version)
+                break
+            except (AlreadyExists, Conflict):
+                continue
+        else:
+            raise Conflict("directory progress exhausted conditional races")
+        if not failed:
+            def resolve(value):
+                gap = value["gaps"].get(outcome.url)
+                if gap and expected_gap is not None and gap["token"] == expected_gap:
+                    del value["gaps"][outcome.url]
+            self._change_boundary(resolve)
+
+    def failed_directories(self) -> tuple[DirectoryOutcome, ...]:
+        row = self.store.get("DiscoveryBoundary", "daily")
+        gaps = {} if row is None else row.to_mapping()["value"]["gaps"]
+        return tuple(DirectoryOutcome.from_mapping(gaps[url]["outcome"]) for url in sorted(gaps))
+
+    def daily_boundary(self) -> date | None:
+        row = self.store.get("DiscoveryBoundary", "daily")
+        day = None if row is None else row.value["day"]
+        return date.fromisoformat(day) if day else None
+
+    def advance_boundary(self, candidate: date, discovery_id: str,
+                         outcomes: tuple[DirectoryOutcome, ...]) -> None:
+        if type(candidate) is not date:
+            raise ValueError("boundary candidate must be a date")
+        session = self.discovery_session(discovery_id)
+        if session is None:
+            raise Conflict("boundary requires a registered discovery session")
+        if not session.value["registered"]:
+            raise Conflict("required discovery gaps were never registered")
+        frozen = session.to_mapping()["value"]["frozen"]
+        if frozen["mode"] != "daily" or candidate != date.fromisoformat(frozen["today"]):
+            raise Conflict("boundary candidate differs from its pinned daily discovery")
+        supplied = {outcome.url: outcome for outcome in outcomes}
+        required = {unit["url"] for unit in frozen["units"]}
+        if len(supplied) != len(outcomes) or set(supplied) != required:
+            raise Conflict("boundary requires the complete exact required-unit outcome set")
+        for url, outcome in supplied.items():
+            progress = self.directory_progress(discovery_id, url)
+            if progress is None or progress.to_mapping()["value"]["outcome"] != outcome.to_mapping():
+                raise Conflict("boundary outcome lacks its exact durable directory progress")
+        def advance(value):
+            if value["gaps"] or any(outcome.outcome == "discovery_failed" for outcome in outcomes):
+                return
+            previous = date.fromisoformat(value["day"]) if value["day"] else None
+            value["day"] = (max(previous, candidate) if previous else candidate).isoformat()
+        self._change_boundary(advance)
+
+    def finish_discovery(self, discovery_id: str, workset_id: str, context: RunContext) -> None:
+        key = hashlib.sha256(discovery_id.encode()).hexdigest()
+        for _ in range(CAS_ATTEMPTS):
+            row = self.discovery_session(discovery_id)
+            if row is None:
+                raise Conflict("discovery session was never begun")
+            value = row.to_mapping()["value"]
+            if value["workset_id"] == workset_id:
+                return
+            predecessor = value["workset_id"]
+            value.update(workset_id=workset_id, predecessor_workset_id=predecessor)
+            value["history"].append({"workset_id": workset_id, "predecessor_workset_id": predecessor,
+                                     "resumed_by": context.to_mapping()})
+            try:
+                self.store.replace("DiscoverySession", key, value, row.version)
+                return
+            except Conflict:
+                continue
+        raise Conflict("discovery checkpoint exhausted conditional races")
 
     def remember_snapshot(self, snapshot: Snapshot) -> Snapshot:
         row = self.get_source(snapshot.source_id)
