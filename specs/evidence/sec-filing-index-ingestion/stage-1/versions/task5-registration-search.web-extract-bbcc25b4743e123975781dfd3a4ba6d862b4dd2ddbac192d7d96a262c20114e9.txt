@@ -1,0 +1,722 @@
+Azure permissions for Compute - Azure RBAC | Microsoft Learn (https://learn.microsoft.com/en-us/azure/role-based-access-control/permissions/compute)
+citeturn50search0 [wordlim: 200] Crawled: 2 weeks ago; `microsoft.app/register/action`  | Register microsoft.app resource provider for the subscription
+
+# Azure permissions for Compute
+
+Feedback
+
+Summarize this article for me
+
+## In this article
+
+  1. microsoft.app
+  2. Microsoft.AppPlatform
+  3. Microsoft.AVS
+  4. Microsoft.AzureFleet
+  5. Microsoft.Batch
+  6. Microsoft.Compute
+  7. Microsoft.ComputeLimit
+  8. Microsoft.ComputeSchedule
+  9. microsoft.connectedvmwarevsphere
+  10. Microsoft.DesktopVirtualization
+  11. Microsoft.Quantum
+  12. Microsoft.ServiceFabric
+  13. Next steps
+Show 9 more
+
+This article lists the permissions for the Azure resource providers in the Compute category. You can use these permissions in your own Azure custom roles to provide granular access control to resources in Azure. Permission strings have the following format: `{Company}.{ProviderName}/{resourceType}/{action}`
+
+## microsoft.app
+
+Azure service: Azure Container Apps
+
+Expand table
+
+Action  | Description
+--- | ---
+`microsoft.app/register/action`  | Register microsoft.app resource provider for the subscription
+`microsoft.app/unregister/action`  | Unregister microsoft.app resource provider for the subscription
+`microsoft.app/getcustomdomainverificationid/action`  | Get Subscription Verification Id used for verifying custom domains
+`Microsoft.App/agents/read`  | Read SRE Agent properties
+`Microsoft.App/agents/write`  | Create or Update a SRE Agent
+`Microsoft.App/agents/delete`  | Delete a SRE Agent
+`Microsoft.App/agentspaces/read`  | Read SRE AgentSpace properties
+`Microsoft.App/agentspaces/write`  | Create or Update a SRE AgentSpace
+`Microsoft.App/agentspaces/delete`  | Delete a SRE AgentSpace
+`Microsoft.App/agentspaces/join/action`  | Allow to create a SRE Agent in a SRE AgentSpace
+`microsoft.app/artifactapps/write`  | Create or update an artifact app
+`microsoft.app/artifactapps/delete`  | Delete an artifact app
+`microsoft.app/artifactapps/read`  | Get an artifact app
+`Microsoft.App/artifactApps/write`  | Create or update an artifact app resource
+`Microsoft.App/artifactApps/read`  | Get an artifact app resource
+`Microsoft.App/artifactApps/delete`  | Delete an artifact app resource
+`Microsoft.App/artifactApps/replicas/read`  | List replicas of an artifact app
+`microsoft.app/artifacts/write`  | Create or update an artifact
+`microsoft.app/artifacts/delete`  | Delete an artifact
+`microsoft.app/artifacts/read`  | Get an artifact
+`Microsoft.App/artifacts/write`  | Create or update an artifact resource
+`Microsoft.App/artifacts/read`  | Get an artifact resource
+`Microsoft.App/artifacts/delete`  | Delete an artifact resource
+`Microsoft.App/artifacts/versions/read`  | List versions of an artifact resource
+`Microsoft.App/artifacts/versions/cancel/action`  | Cancel an in-flight artifact version build
+`Microsoft.App/artifacts/versions/enable/action`  | Enable an artifact version for use by ArtifactApps
+`Microsoft.App/artifacts/versions/disable/action`  | Disable an artifact version from use by ArtifactApps
+`Microsoft.App/artifacts/versions/operationStatus/read`  | Get the status of an artifact version's build operation
+`microsoft.app/builders/write`  | Create or update a Builder
+`microsoft.app/builders/read`  | Get a Builder
+`microsoft.app/builders/delete`  | Delete a Builder
+`microsoft.app/builds/write`  | Create or update a Build's build
+`microsoft.app/builds/read`  | Get a Builder's Build
+`microsoft.app/builds/delete`  | Delete a Managed Environment's Build
+`microsoft.app/builds/listauthtoken/action`  | Gets the token used to connect to the build endpoints, such as source code upload or build log streaming.
+`microsoft.app/connectedenvironments/join/action`  | Allows to create a Container App or Container Apps Job in a Connected Environment
+`microsoft.app/connectedenvironments/checknameavailability/action`  | Check reource name availability for a Connected Environment
+`microsoft.app/connectedenvironments/write`  | Create or update a Connected Environment
+`microsoft.app/connectedenvironments/delete`  | Delete a Connected Environment
+`microsoft.app/connectedenvironments/read`  | Get a Connected Environment
+`microsoft.app/connectedenvironments/certificates/write`  | Create or update a Connected Environment Certificate
+`microsoft.app/connectedenvironments/certificates/read`  | Get a Connected Environment's Certificate
+`microsoft.app/containerapp/resiliencypolicies/read`  | Get App Resiliency Policy
+`microsoft.app/containerapps/write`  | Create or update a Container App
+`microsoft.app/containerapps/delete`  | Delete a Container App
+`microsoft.app/containerapps/read`  | Get a Container App
+`microsoft.app/containerapps/listsecrets/action`  | List secrets of a container app
+`microsoft.app/containerapps/listcustomhostnameanalysis/action`  | List custom host name analysis result
+`microsoft.app/containerapps/stop/action`  | Stop a Container App
+`microsoft.app/containerapps/start/action`  | Start a Container App
+`microsoft.app/containerapps/authtoken/action`  | Get Auth Token for Container App Dev APIs to get log stream, exec or port forward from a container. This operation will be deprecated.
+`microsoft.app/containerapps/getauthtoken/action`  | Get Auth Token for Container App Dev APIs to get log stream, exec or port forward from a container.
+`microsoft.app/containerapps/authconfigs/read`  | Get auth config of a container app
+`microsoft.app/containerapps/authconfigs/write`  | Create or update auth config of a container app
+`microsoft.app/containerapps/authconfigs/delete`  | Delete auth config of a container app
+`microsoft.app/containerapps/builds/read`  | Get a ContainerApp's Build by Build name
+`microsoft.app/containerapps/builds/delete`  | Delete a Container App's Build
+`microsoft.app/containerapps/detectors/read`  | Get detector of a container app
+`microsoft.app/containerapps/functions/read`  | List functions in a function app (single revision mode only)
+`microsoft.app/containerapps/labelhistory/read`  | Get a Container App's label history
+`microsoft.app/containerapps/labelhistory/delete`  | Delete a Container App's label history for a given label
+`microsoft.app/containerapps/patches/read`  | Get a ContainerApp's Patch
+`microsoft.app/containerapps/patches/delete`  | Delete a ContainerApp's Patch
+`microsoft.app/containerapps/patches/skip/action`  | Skip a ContainerApp's Patch
+`microsoft.app/containerapps/patches/apply/action`  | Apply a ContainerApp's Patch
+`microsoft.app/containerapps/privateendpointconnectionproxies/validate/action`  | Validate Container App Private Endpoint Connection Proxy
+`microsoft.app/containerapps/privateendpointconnectionproxies/write`  | Create or Update Container App Private Endpoint Connection Proxy
+`microsoft.app/containerapps/privateendpointconnectionproxies/read`  | Get Container App Private Endpoint Connection Proxy
+`microsoft.app/containerapps/privateendpointconnectionproxies/delete`  | Delete Container App Private Endpoint Connection Proxy
+`microsoft.app/containerapps/privateendpointconnections/write`  | Create or Update Container App Private Endpoint Connection
+`microsoft.app/containerapps/privateendpointconnections/delete`  | Delete Container App Private Endpoint Connection
+`microsoft.app/containerapps/privateendpointconnections/read`  | Get Container App Private Endpoint Connection
+`microsoft.app/containerapps/privatelinkresources/read`  | Get Container App Private Link Resource
+`microsoft.app/containerapps/resiliencypolicies/write`  | Create or Update App Resiliency Policy
+`microsoft.app/containerapps/resiliencypolicies/delete`  | Delete App Resiliency Policy
+`microsoft.app/containerapps/revisions/read`  | Get revision of a container app
+`microsoft.app/containerapps/revisions/restart/action`  | Restart a container app revision
+`microsoft.app/containerapps/revisions/activate/action`  | Activate a container app revision
+`microsoft.app/containerapps/revisions/deactivate/action`  | Deactivate a container app revision
+## Microsoft.AppPlatform
+
+A fully managed Spring Cloud service, built and operated with Pivotal.
+
+Azure service: Azure Spring Apps
+
+Expand table
+
+Action  | Description
+--- | ---
+`Microsoft.AppPlatform/register/action`  | Register the subscription to the Microsoft.AppPlatform resource provider
+`Microsoft.AppPlatform/unregister/action`  | Unregister the subscription from the Microsoft.AppPlatform resource provider
+`Microsoft.AppPlatform/locations/checkNameAvailability/action`  | Check resource name availability
+`Microsoft.AppPlatform/locations/operationResults/Spring/read`  | Read resource operation result
+`Microsoft.AppPlatform/locations/operationStatus/operationId/read`  | Read resource operation status
+`Microsoft.AppPlatform/operations/read`  | List available operations of Microsoft Azure Spring Apps
+`Microsoft.AppPlatform/runtimeVersions/read`  | Get runtime versions of Microsoft Azure Spring Apps
+`Microsoft.AppPlatform/skus/read`  | List available skus of Microsoft Azure Spring Apps
+`Microsoft.AppPlatform/Spring/write`  | Create or Update a specific Azure Spring Apps service instance
+--------------------------------------------------------------------------------
+Trying to Create Custom Role - Microsoft Q&A (https://learn.microsoft.com/en-us/answers/questions/5903482/trying-to-create-custom-role)
+citeturn50search1 [wordlim: 200] Published: 4 months ago; Crawled: 2 months ago; `"Microsoft.Resources/subscriptions/providers/register/action"`
+
+# Trying to Create Custom Role
+
+_DA Mukul Kumar 0 Reputation points
+
+May 27, 2026, 3:15 AM
+
+I am trying to add custom role to a newly added subscription for vendor but some of the listed roles are giving me error and i am not finding a reason for error.
+
+Need some help in reviewing the JSON file and advise why some of the roles not working for me and any alternative to achieve it.
+
+{
+
+"properties": {
+
+"roleName": "XX",
+
+"type": "CustomRole",
+
+"description": "XX",
+
+"assignableScopes": ["XX"],
+
+"permissions": [
+
+{
+
+"actions": [
+
+YAML
+
+Copy
+    
+    `"Microsoft.Resources/subscriptions/resourceGroups/read",
+    
+    "Microsoft.Resources/subscriptions/resourceGroups/write",
+    
+    "Microsoft.Resources/subscriptions/resourceGroups/delete",
+    
+    "Microsoft.Storage/storageAccounts/read",
+    
+    "Microsoft.Storage/storageAccounts/write",
+    
+    "Microsoft.Storage/storageAccounts/delete",
+    
+    "Microsoft.Storage/storageAccounts/listKeys/action",
+    
+    "Microsoft.Storage/storageAccounts/blobServices/read",
+    
+    "Microsoft.Storage/storageAccounts/blobServices/write",
+    
+    "Microsoft.Storage/storageAccounts/blobServices/containers/read",
+    
+    "Microsoft.Storage/storageAccounts/blobServices/containers/write",
+    
+    "Microsoft.Storage/storageAccounts/blobServices/containers/delete",
+    
+    "Microsoft.ManagedIdentity/userAssignedIdentities/read",
+    
+    "Microsoft.ManagedIdentity/userAssignedIdentities/write",
+    
+    "Microsoft.ManagedIdentity/userAssignedIdentities/delete",
+    
+    "Microsoft.ManagedIdentity/userAssignedIdentities/federatedIdentityCredentials/read",
+    
+    "Microsoft.ManagedIdentity/userAssignedIdentities/federatedIdentityCredentials/write",
+    
+    "Microsoft.ManagedIdentity/userAssignedIdentities/federatedIdentityCredentials/delete",
+    
+    "Microsoft.Authorization/roleAssignments/read",
+    
+    "Microsoft.Authorization/roleAssignments/write",
+    
+    "Microsoft.Authorization/roleAssignments/delete",
+    
+    "Microsoft.Authorization/roleDefinitions/read",
+    
+    "Microsoft.Subscription/resourceProviders/register/action",
+    
+    "Microsoft.Subscription/resourceProviders/read"
+    ```],
+    
+    "notActions": [],
+    
+    "DataActions": [],
+    
+    "NotDataActions": []
+    
+    }
+    
+    ]
+    
+    }
+    
+    }
+    
+    `
+
+2 comments Hide comments for this question Report
+
+I have the same question (0)
+
+  1. Rukmini •
+
+[Button: Follow ]
+
+43,815 Reputation points • Microsoft External Staff • Moderator
+
+May 27, 2026, 3:46 AM
+
+Hello @_DA Mukul Kumar To fix the error, try the below:
+
+Replace:
+
+`"Microsoft.Subscription/resourceProviders/register/action"`
+
+With:
+
+`"Microsoft.Resources/subscriptions/providers/register/action"`
+
+And also remove the below actions from the custom role:
+
+`"Microsoft.Authorization/roleAssignments/write",`
+
+`"Microsoft.Authorization/roleAssignments/delete"`
+
+also change the
+
+`"dataActions": [],`
+
+`"notDataActions": []`
+
+Let me know if any further queries - feel free to reach out!
+
+0 votes Report
+
+  2. Rukmini •
+
+[Button: Follow ]
+
+43,815 Reputation points • Microsoft External Staff • Moderator
+
+May 28, 2026, 4:30 AM
+
+Hello @_DA Mukul Kumar
+
+Following up to see if the above provided information was helpful. If you have any further queries do let us know.
+
+0 votes Report--------------------------------------------------------------------------------
+alguém sabe porque dá erro todas vez que eu tento criar um machine learning? (ssinatura selecionada não tem permissões para registrar o provedor de recursos) - Microsoft Q&A (https://learn.microsoft.com/pt-br/answers/questions/2262344/algu-m-sabe-porque-d-erro-todas-vez-que-eu-tento-c)
+citeturn50search2 [wordlim: 200] Published: 1.4 years ago; Crawled: last month; O erro: "A assinatura selecionada não tem permissões para registrar o provedor de recursos" - Indica que o usuário ou grupo não tem a permissão `Microsoft.Resources/subscriptions/providers/register/action`, que é necessária para registrar provedores de recursos na assinatura.
+
+O erro: "A assinatura selecionada não tem permissões para registrar o provedor de recursos" - Indica que o usuário ou grupo não tem a permissão `Microsoft.Resources/subscriptions/providers/register/action`, que é necessária para registrar provedores de recursos na assinatura.
+
+* * *
+
+Como resolver
+
+    1. Verifique se você tem a função necessária na assinatura Você precisa ter uma das seguintes funções:
+       * Owner (Proprietário)
+       * Contributor + permissão específica
+       * User Access Administrator
+Essas funções permitem registrar provedores de recursos na assinatura.
+    2. Peça para um administrador registrar o provedor manualmente Se você não tem as permissões necessárias, peça para alguém com permissão rodar este comando no Azure CLI ou PowerShell:
+
+Copiar
+        
+        `
+           az provider register --namespace Microsoft.MachineLearningServices
+        
+        `
+
+ou registre pelo portal:
+       * Vá até "Assinaturas"
+       * Selecione sua assinatura
+       * Clique em "Provedores de recursos"
+       * Procure por Microsoft.MachineLearningServices
+       * Clique em Registrar
+    3. Confirme com o administrador da assinatura se sua conta tem acesso correto Se estiver usando uma conta corporativa ou educacional, pode ser que o Azure esteja com restrições de política que bloqueiam a criação de certos tipos de recursos.
+
+Esta resposta foi útil?
+
+Yes No--------------------------------------------------------------------------------
+İşlem için Azure izinleri - Azure RBAC | Microsoft Learn (https://learn.microsoft.com/tr-tr/azure/role-based-access-control/permissions/compute)
+citeturn50search3 [wordlim: 200] Published: 3 months ago; Crawled: 2 months ago; `microsoft.app/register/action`  | Abonelik için microsoft.app kaynak sağlayıcısını kaydetme
+
+# İşlem için Azure izinleri
+
+Geri Bildirim
+
+## Bu makalede
+
+Bu makalede, İşlem kategorisindeki Azure kaynak sağlayıcılarının izinleri listelenir. bu izinleri kendi Azure özel rollerinizde kullanarak Azure'daki kaynaklara ayrıntılı erişim denetimi sağlayabilirsiniz. İzin dizeleri aşağıdaki biçime sahiptir: `{Company}.{ProviderName}/{resourceType}/{action}`
+
+## microsoft.app
+
+Azure hizmeti: Azure Container Apps
+
+Eylem  | Açıklama
+--- | ---
+`microsoft.app/register/action`  | Abonelik için microsoft.app kaynak sağlayıcısını kaydetme
+`microsoft.app/unregister/action`  | Abonelik için microsoft.app kaynak sağlayıcısının kaydını kaldırma
+`microsoft.app/getcustomdomainverificationid/action`  | Özel etki alanlarını doğrulamak için kullanılan Abonelik Doğrulama Kimliğini alma
+`Microsoft.App/agents/read`  | SRE Aracısı özelliklerini okuma
+`Microsoft.App/agents/write`  | SRE Aracısı Oluşturma veya Güncelleştirme
+`Microsoft.App/agents/delete`  | SRE Aracısını Silme
+`Microsoft.App/artifacts/write`  | Bir eser kaynağı oluşturun veya güncelleyin
+`Microsoft.App/artifacts/read`  | Bir eser kaynağı alın
+`Microsoft.App/artifacts/delete`  | Bir artefakt kaynağını sil
+`Microsoft.App/artifacts/versions/read`  | Bir eser kaynağının liste sürümleri
+`Microsoft.App/artifacts/versions/cancel/action`  | Uçuş sırasında bir artefakt versiyon derlemesini iptal edin
+`Microsoft.App/artifacts/versions/enable/action`  | ArtifactApps tarafından kullanılmak üzere bir artefakt sürümünü etkinleştir
+`Microsoft.App/artifacts/versions/disable/action`  | ArtifactApps tarafından kullanılmayan bir artefakt versiyonunu devre dışı bırak
+`Microsoft.App/artifacts/versions/operationStatus/read`  | Bir eser sürümünün oluşturma işleminin durumunu öğrenin
+`microsoft.app/builders/write`  | Oluşturucu oluşturma veya güncelleştirme
+`microsoft.app/builders/read`  | Oluşturucu Edinin
+`microsoft.app/builders/delete`  | Oluşturucu Silme
+`microsoft.app/builds/write`  | Derlemenin derlemesini oluşturma veya güncelleştirme
+`microsoft.app/builds/read`  | OluşturucuNun Derlemesini Alma
+`microsoft.app/builds/delete`  | Yönetilen Ortamın Derlemesini Silme
+`microsoft.app/builds/listauthtoken/action`  | Kaynak kodu karşıya yükleme veya derleme günlüğü akışı gibi derleme uç noktalarına bağlanmak için kullanılan belirteci alır.
+`microsoft.app/connectedenvironments/join/action`  | Bağlı Bir Ortamda Kapsayıcı Uygulaması veya Container Apps İşi oluşturmaya izin verir
+`microsoft.app/connectedenvironments/checknameavailability/action`  | Bağlı Ortam için kaynak adı kullanılabilirliğini denetleme
+`microsoft.app/connectedenvironments/write`  | Bağlı Ortam oluşturma veya güncelleştirme
+`microsoft.app/connectedenvironments/delete`  | Bağlı Ortamı Silme
+--------------------------------------------------------------------------------
+Authorization Error - Microsoft Q&A (https://learn.microsoft.com/en-us/answers/questions/2070934/authorization-error)
+citeturn50search4 [wordlim: 200] Published: 2.1 years ago; Crawled: last month; The client 'live.com#******@gmail.com' with object id '36f32195-30d2-46b8-8333-328a293c9ce9' does not have authorization to perform action 'microsoft.app/register/action' over scope '/subscriptions/ad6d4767-abfb-4459-938a-55a306750cfa' or the sc
+
+# Authorization Error
+
+Aadarsh Moudgil 10 Reputation points
+
+Sep 16, 2024, 12:15 AM
+
+The client 'live.com#******@gmail.com' with object id '36f32195-30d2-46b8-8333-328a293c9ce9' does not have authorization to perform action 'microsoft.app/register/action' over scope '/subscriptions/ad6d4767-abfb-4459-938a-55a306750cfa' or the sc
+
+This question is related to the following Learning Module
+
+Azure | Azure Training
+
+Azure | Azure Training
+
+Training: Instruction to develop new skills.
+
+
+## 1 answer
+
+Sort by: Most helpful
+
+Most helpful Newest Oldest
+
+  1. Anonymous
+
+Sep 16, 2024, 1:23 AM
+
+Hi Aadarsh Moudgil,
+
+Thank you for reaching out to us on Microsoft Q&A forum.  
+
+This appears to be an authorization error. In short, your development team is trying to create a managed identity, but the corresponding resource provider is not registered.
+
+Use an account with the Owner role in the subscription to register the Microsoft.ManagedIdentity provider
+
+Follow https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/resource-providers-and-types#register-resource-provider
+
+f the above response helps answer your question, remember to "Accept Answer or Upvote" so that others in the community facing similar issues can easily find the solution. Your contribution is highly appreciated.
+
+Was this answer helpful?
+
+Yes No
+
+10 comments Show comments for this answer Report--------------------------------------------------------------------------------
+The "Create" button is grayed out when publishing an Azure Function project. - Microsoft Q&A (https://learn.microsoft.com/en-us/answers/questions/5638091/the-create-button-is-grayed-out-when-publishing-an)
+citeturn50search5 [wordlim: 200] Published: 10 months ago; Crawled: 2 months ago;     `The client 'XXX.om' with object id 'cdXXee0be' does not have authorization to perform action 'Microsoft.App/register/action' over scope '/subscriptions/5XXX88f855' or the scope is invalid.
+
+Thanks for reaching out to Microsoft Q&A.
+
+You can't create function App because your account lacks the required subscription-level permissions to register resource providers or create Function App resources.
+
+If you have Contributor/Owner permission at subscription level, you can create the function app directly. If you have the owner/contributor access on the subscription and still facing issue, try logging out and re-login to your subscription and check.
+
+  * I have tested the same from my end and faced the same issue. You will not be able to create function App with only Contributor role at resource group even through portal:
+
+YAML
+
+Copy
+    
+    `The client 'XXX.om' with object id 'cdXXee0be' does not have authorization to perform action 'Microsoft.App/register/action' over scope '/subscriptions/5XXX88f855' or the scope is invalid. If access was recently granted, please refresh your credentials. (Code: AuthorizationFailed) (Code: AuthorizationFailed)
+    `
+
+  * Even if you have access at the resource group level, actions like `Microsoft.App/register/action` can only be performed at the subscription scope.
+  * Assigning Contributor or Owner at the subscription level allows creating and registering resources. After the role is added, refresh your credentials and retry publishing.
+
+--------------------------------------------------------------------------------
+Getting error while creating Azure Function all at a sudden - Microsoft Q&A (https://learn.microsoft.com/en-us/answers/questions/2087762/getting-error-while-creating-azure-function-all-at)
+citeturn50search6 [wordlim: 200] Published: 2.0 years ago; Crawled: last month; The client 'xxxx' with object id 'xxxx' does not have authorization to perform action 'Microsoft.App/register/action' over scope '/subscriptions/xxxx' or the scope is invalid.
+
+# Getting error while creating Azure Function all at a sudden
+
+Zhu, Ning (CTR) 0 Reputation points
+
+Oct 4, 2024, 10:45 AM
+
+I have been able to create Azure functions for a long time, however, today I am getting an error message.
+
+The client 'xxxx' with object id 'xxxx' does not have authorization to perform action 'Microsoft.App/register/action' over scope '/subscriptions/xxxx' or the scope is invalid. If access was recently granted, please refresh your credentials. (Code: AuthorizationFailed) (Code: AuthorizationFailed)
+
+I do not require an app registration for the Azure function no idea what is going on. Any help is highly appreciated!
+
+Azure Functions
+
+Azure Functions
+
+An Azure service that provides an event-driven serverless compute platform.
+
+
+## 2 answers
+
+Sort by: Most helpful
+
+Most helpful Newest Oldest
+
+  1. Image
+
+LeelaRajeshSayana-MSFT •
+
+[Button: Follow ]
+
+17,871 Reputation points • Moderator
+
+Oct 7, 2024, 6:55 PM
+
+Hi @Zhu, Ning (CTR) I'm glad that you were able to resolve your issue and thank you for letting us know what worked for you so that others experiencing the same thing can easily reference this! I'll repost your solution in case you'd like to accept the answer.
+
+Error Message:
+
+The client 'xxxx' with object id 'xxxx' does not have authorization to perform action 'Microsoft.App/register/action' over scope '/subscriptions/xxxx' or the scope is invalid. If access was recently granted, please refresh your credentials. (Code: AuthorizationFailed) (Code: AuthorizationFailed)
+
+Issue:
+
+Trying to create an Azure function inside a GCC cloud environment and stumbled into the above-mentioned error
+
+Solution:
+
+You need to 'register' the Microsoft.App resource with your subscription.
+
+     * Select the subscription you're using.
+     * Go to Resource Providers.
+     * Search for `Microsoft.App` and click Register.
+
+If I missed anything please let me know and I'd be happy to add it to my answer, or feel free to comment below with any additional information.
+
+I hope this helps!
+
+If you have any other questions, please let me know. Thank you again for your time and patience throughout this issue.
+
+Was this answer helpful?
+
+Yes No
+
+1 person found this answer helpful.
+
+0 comments Report
+
+* * *
+
+  2. Image
+
+Vahid Ghafarpour •
+
+[Button: Follow ]
+
+23,605 Reputation points
+
+Oct 4, 2024, 10:57 AM
+
+Did these threads help you?
+
+https://learn.microsoft.com/en-us/answers/questions/1276746/the-client-with-object-id-does-not-have-authorizat
+
+https://learn.microsoft.com/en-us/answers/questions/1163701/getting-does-not-have-authorization-to-perform-act
+
+Was this answer helpful?
+
+Yes No
+
+2 comments Show comments for this answer Report
+
+    1. Zhu, Ning (CTR) •
+
+[Button: Follow ]
+
+0 Reputation points
+
+Oct 5, 2024, 9:43 AM
+
+No, after more testing, we believe that is a bug in GCC cloud.
+
+In GCC cloud, Azure Function needs a service provider Microsoft.App registered, which is NOT documented anywhere, and we tested the same settings (no registration for Microsoft.App) for commercial cloud and no such issues.
+
+0 votes Report
+
+    2. Zhu, Ning (CTR) •
+
+[Button: Follow ]
+
+0 Reputation points
+
+Oct 5, 2024, 9:47 AM
+
+No, after more testing we believe there is a bug inside GCC cloud.
+
+Azure function, inside GCC cloud, requires a service provider Microsoft.App registration, which is not documented anywhere.
+
+We tested the same settings for commercial cloud (without Microsoft.App regrstration), it all worked all.
+
+0 votes Report--------------------------------------------------------------------------------
+Hi, I cannot create a function app in the sandbox that is created in this page. - Microsoft Q&A (https://learn.microsoft.com/en-us/answers/questions/2085174/hi-i-cannot-create-a-function-app-in-the-sandbox-t)
+citeturn50search7 [wordlim: 200] Published: 2.0 years ago; Crawled: last month;     `The client 'live.com#******@outlook.com' with object id '335ed292-8867-4314-b6d4-a2af1fcf1e19' does not have authorization to perform action 'Microsoft.App/register/action' over scope '/subscriptions/031d9fea-e9b5-42fb-a5d2-1a3939a5393c' or the scope is invalid.
+
+# Hi, I cannot create a function app in the sandbox that is created in this page.
+
+Tijs van Erpers Roijaards 0 Reputation points
+
+Oct 1, 2024, 3:11 AM
+
+Hi, I cannot create a function app in the sandbox that is created in this page. I've tried with different accounts, several times under different accounts but I always get the same error:
+
+YAML
+
+Copy
+    
+    `The client 'live.com#******@outlook.com' with object id '335ed292-8867-4314-b6d4-a2af1fcf1e19' does not have authorization to perform action 'Microsoft.App/register/action' over scope '/subscriptions/031d9fea-e9b5-42fb-a5d2-1a3939a5393c' or the scope is invalid. If access was recently granted, please refresh your credentials. (Code: AuthorizationFailed) (Code: AuthorizationFailed)
+    `
+
+This question is related to the following Learning Module
+
+  1. Anonymous
+
+Oct 4, 2024, 1:35 AM
+
+Hi Tijs van Erpers Roijaards,
+
+We sincerely apologize for the inconvenience you experienced due to the suspension of your Learn Account Sandbox. --------------------------------------------------------------------------------
+Why am I not able to create an Azure Function app within the Azure portal, but I can in Visual Code? - Microsoft Q&A (https://learn.microsoft.com/en-us/answers/questions/2068175/why-am-i-not-able-to-create-an-azure-function-app)
+citeturn50search8 [wordlim: 200] Published: 2.1 years ago; Crawled: 2 months ago; {"code":"AuthorizationFailed","message":"The client '******@archive-it.nl' with object id '[REDACTED]' does not have authorization to perform action 'Microsoft.App/register/action' over scope '/subscriptions/[REDACTED]' or the scope is invalid.
+
+# Why am I not able to create an Azure Function app within the Azure portal, but I can in Visual Code?
+
+John van Lennep 0 Reputation points
+
+Sep 12, 2024, 5:59 AM
+
+I used to be able to create an Azure Function App within both the Azure portal and Visual Code.
+Now I am no longer able to create an Azure Function App in the Azure portal anymore. Whenever I want to create an Azure Function App within the portal I get the following error message:
+{"code":"AuthorizationFailed","message":"The client '******@archive-it.nl' with object id '[REDACTED]' does not have authorization to perform action 'Microsoft.App/register/action' over scope '/subscriptions/[REDACTED]' or the scope is invalid. If access was recently granted, please refresh your credentials. (Code: AuthorizationFailed)"}
+I perform the following steps:
+
+  * Create a function app (Consumption) within one of my Resource groups
+
+  1. Runtime stack: .Net
+  2. Version: 8 (LTS), in-process model
+  3. Region: West Europe
+  4. Operating System: Windows
+--------------------------------------------------------------------------------
+Azure compute -Azure RBAC-engedélyek | Microsoft Learn (https://learn.microsoft.com/hu-hu/azure/role-based-access-control/permissions/compute)
+citeturn50search9 [wordlim: 200] Published: 3 months ago; Crawled: 2 months ago; `microsoft.app/register/action`  | Microsoft.app erőforrás-szolgáltató regisztrálása az előfizetéshez
+  10. Microsoft. DesktopVirtualization
+  11. Microsoft. Quantum
+  12. Microsoft. ServiceFabric
+  13. Következő lépések
+További 9 megjelenítése
+
+Ez a cikk a Számítási kategória Azure erőforrás-szolgáltatóinak engedélyeit sorolja fel. Ezeket az engedélyeket saját Azure egyéni szerepkörökben használhatja, hogy részletes hozzáférés-vezérlést biztosítson Azure erőforrásaihoz. Az engedélysztringek formátuma a következő: `{Company}.{ProviderName}/{resourceType}/{action}`
+
+## microsoft.app
+
+Azure szolgáltatás: Azure Container Apps
+
+Táblázat kibontása
+
+Művelet  | Leírás
+--- | ---
+`microsoft.app/register/action`  | Microsoft.app erőforrás-szolgáltató regisztrálása az előfizetéshez
+`microsoft.app/unregister/action`  | Microsoft.app erőforrás-szolgáltató regisztrációjának törlése az előfizetéshez
+`microsoft.app/getcustomdomainverificationid/action`  | Az egyéni tartományok ellenőrzéséhez használt előfizetés-ellenőrzési azonosító lekérése
+--------------------------------------------------------------------------------
+I can't use Microsoft learn sandbox - Microsoft Q&A (https://learn.microsoft.com/en-us/answers/questions/2077653/i-cant-use-microsoft-learn-sandbox)
+citeturn50search10 [wordlim: 200] Published: 2.0 years ago; Crawled: 5 months ago; Additional details from the underlying API that might be helpful: The client 'live.com#***@gmail.com' with object id '0f57619e-434c-42ce-8fe6-e836b0d4f09d' does not have authorization to perform action 'Microsoft.App/register/action' over scope '/subscriptions/194f7c75-8e8a-4c4e-bae3-50cf598ca586' or the scope is invalid.
+
+0 votes Report a concern
+
+  2. Alvar Gran •
+
+[Button: Follow ]
+
+5 Reputation points
+
+2024-09-24T17:58:30.2766667+00:00
+
+Registering the resource providers has failed. Additional details from the underlying API that might be helpful: The client 'live.com#***@gmail.com' with object id '0f57619e-434c-42ce-8fe6-e836b0d4f09d' does not have authorization to perform action 'Microsoft.App/register/action' over scope '/subscriptions/194f7c75-8e8a-4c4e-bae3-50cf598ca586' or the scope is invalid. If access was recently granted, please refresh your credentials. (Code: AuthorizationFailed)
+
+0 votes Report a concern
+
+  3. Alvar Gran •
+
+[Button: Follow ]
+
+5 Reputation points
+
+2024-09-24T17:59:21.12+00:00
+
+Image: User's image
+
+0 votes Report a concern
+
+  4. VarunTha •
+
+[Button: Follow ]
+
+14,980 Reputation points • Microsoft External Staff • Moderator
+
+2024-09-25T16:01:16.7833333+00:00
+
+Hi Alvar Gran,
+Thanks for bringing this to our notice, we will reach out internally and resolve the issue at the earliest.
+
+0 votes Report a concern
+
+  5. Alvar Gran •
+
+[Button: Follow ]
+
+5 Reputation points
+
+2024-09-26T08:38:57.2066667+00:00
+
+Still waiting :(
+
+0 votes Report a concern
+
+  6. VarunTha •
+
+[Button: Follow ]
+
+14,980 Reputation points • Microsoft External Staff • Moderator
+
+2024-09-26T15:08:41.39+00:00
+
+Hi Alvar Gran,
+Our internal team is actively working on the issue.
+
+0 votes Report a concern--------------------------------------------------------------------------------
+Error Container Apps: No Authorization "Microsoft.App/register/action" - Microsoft Q&A (https://learn.microsoft.com/de-de/answers/questions/2121180/error-container-apps-no-authorization-microsoft-ap)
+citeturn50search11 [wordlim: 200] Published: 1.9 years ago; Crawled: last month; # Error Container Apps: No Authorization "Microsoft.App/register/action"
+
+# Error Container Apps: No Authorization "Microsoft.App/register/action"
+
+Timon Sebastian Klann 0 Zuverlässigkeitspunkte
+
+20. Nov. 2024, 13:52
+
+Hi,
+
+when I try to create an Azure Container App I am getting the error that I have no authorization on
+
+YAML
+
+Kopieren
+    
+    `"Microsoft.App/register/action"
+    `
+
+but I don't find the corresponding rights so I can contact the subscription admin.
+
+Which rights do I have to get so I am able to create a container app?
+
+Thanks in advance
+
+Community Center | Wird nicht überwacht
+
+Community Center | Wird nicht überwacht
+
+Dieses Tag wird nicht von Microsoft überwacht.

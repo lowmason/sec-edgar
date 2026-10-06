@@ -1,0 +1,182 @@
+Role Definitions - Create Or Update - REST API (Azure Authorization) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/authorization/role-definitions/create-or-update?view=rest-authorization-2022-04-01)
+citeturn76view0 [wordlim: 200] Crawled: today; Content type: text/html; Source: find({"ref_id":"https://learn.microsoft.com/en-us/rest/api/authorization/role-definitions/create-or-update?view=rest-authorization-2022-04-01","pattern":"200 OK"}); Total lines: 192
+No matching text found for "200 OK"--------------------------------------------------------------------------------
+Role Definitions - Get - REST API (Azure Authorization) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/authorization/role-definitions/get?view=rest-authorization-2022-04-01)
+citeturn76view1 [wordlim: 200] Crawled: today; Content type: text/html; Source: find({"ref_id":"https://learn.microsoft.com/en-us/rest/api/authorization/role-definitions/get?view=rest-authorization-2022-04-01","pattern":"200 OK"}); Total lines: 180
+L0: cite0†Skip to main content cite1†Skip to in-page navigation cite2†Skip to Ask Learn chat experience L1: 
+L2: This browser is no longer supported.
+L3: 
+L4: Upgrade to Microsoft Edge to take advantage of the latest features, security updates, and technical support.
+L5: 
+L6: cite3†Download Microsoft Edge†go.microsoft.com cite4†More info about Internet Explorer and Microsoft Edge L7: 
+L8: Table of contents Exit editor mode
+L9: 
+L10: Ask Learn Ask Learn
+L11: 
+L12: Reading mode Table of contents cite2†Read in English Add Add to Plans cite5†Edit†github.com L13: 
+L14: * * *
+L15: Copy Markdown Print
+L16: 
+L17: * * *
+L18: 
+L19: Note
+L20: 
+L21: Access to this page requires authorization. You can try cite2†signing in or changing directories.
+L22: 
+L23: Access to this page requires authorization. You can try changing directories.
+L24: # Role Definitions - Get
+L25: 
+L26: Service:
+L27:     Authorization
+L28: 
+L29: API Version:
+L30:     2022-04-01
+L31: 
+L32: ##
+L33: 
+L34: Get role definition by name (GUID).
+L35: 
+L36:     `GET https://management.azure.com/{scope}/providers/Microsoft.Authorization/roleDefinitions/{roleDefinitionId}?api-version=2022-04-01`
+L37: ## URI Parameters
+L38: 
+L39: Name  | In  | Required  | Type  | Description
+L40: --- | --- | --- | --- | ---
+L41: roleDefinitionId  | path  | True  | string  | The ID of the role definition.
+L42: scope  | path  | True  | string  | The scope of the role definition.
+L43: api-version  | query  | True  | string minLength: 1  | The API version to use for this operation.
+L44: ## Responses
+L45: 
+L46: Name  | Type  | Description
+L47: --- | --- | ---
+L48: 200 OK  | cite6†RoleDefinition | OK - Returns information about the role definition.
+L49: Other Status Codes  | cite7†ErrorResponse | Error response describing why the operation failed.
+L50: 
+L51: ## Security
+L52: 
+L53: ### azure_auth
+L54: 
+L55: Azure Active Directory OAuth2 Flow
+L56: 
+L57: Type: oauth2
+L58: Flow: implicit
+L59: Authorization URL: https://login.microsoftonline.com/common/oauth2/authorize
+L60: 
+L61: #### Scopes
+L62: 
+L63: Name  | Description
+L64: --- | ---
+L65: user_impersonation  | impersonate your user account
+L66: ## Examples
+L67: 
+L68: ### Get role definition by name
+L69: 
+L70: #### Sample request
+L71: 
+L72:   * cite8†HTTP L73: 
+L74:     `GET https://management.azure.com/scope/providers/Microsoft.Authorization/roleDefinitions/roleDefinitionId?api-version=2022-04-01
+L75:     `
+L76: #### Sample response
+L77: Status code:
+L78:     200
+L79: 
+L80:     `{
+L81:       "properties": {
+L82:         "roleName": "Role name",
+L83:         "type": "roletype",
+L84:         "description": "Role description",
+L85:         "assignableScopes": [
+L86:           "/subscriptions/subId"
+L87:         ],
+L88:         "permissions": [
+L89:           {
+L90:             "actions": [
+L91:               "action"
+L92:             ],
+L93:             "notActions": [],
+L94:             "dataActions": [
+L95:               "dataAction"
+L96:             ],
+L97:             "notDataActions": []
+L98:           }
+L99:         ]
+L100:       },
+L101:       "id": "/subscriptions/subID/providers/Microsoft.Authorization/roleDefinitions/roleDefinitionId",
+L102:       "type": "Microsoft.Authorization/roleDefinitions",
+L103:       "name": "roleDefinitionId"
+L104:     }`
+L105: ## Definitions
+L106: 
+L107: Name  | Description
+L108: --- | ---
+L109: cite9†ErrorAdditionalInfo | The resource management error additional info.
+L110: cite10†ErrorDetail | The error detail.
+L111: cite7†ErrorResponse | Error response
+L112: cite11†Permission | Role definition permissions.
+L113: cite6†RoleDefinition | Role definition.
+L114: 
+L115: ### ErrorAdditionalInfo
+L116: 
+L117: Object
+L118: 
+L119: The resource management error additional info.
+L120: 
+L121: Name  | Type  | Description
+L122: --- | --- | ---
+L123: info  | object  | The additional info.
+L124: type  | string  | The additional info type.
+L125: ### ErrorDetail
+L126: 
+L127: Object
+L128: 
+L129: The error detail.
+L130: 
+L131: Name  | Type  | Description
+L132: --- | --- | ---
+L133: additionalInfo  | cite9†ErrorAdditionalInfo []  | The error additional info.
+L134: code  | string  | The error code.
+L135: details  | cite10†ErrorDetail []  | The error details.
+L136: message  | string  | The error message.
+L137: target  | string  | The error target.
+L138: 
+L139: ### ErrorResponse
+L140: 
+L141: Object
+L142: 
+L143: Error response
+L144: 
+L145: Name  | Type  | Description
+L146: --- | --- | ---
+L147: error  | cite10†ErrorDetail | The error object.
+L148: ### Permission
+L149: 
+L150: Object
+L151: 
+L152: Role definition permissions.
+L153: 
+L154: Name  | Type  | Description
+L155: --- | --- | ---
+L156: actions  | string[]  | Allowed actions.
+L157: dataActions  | string[]  | Allowed Data actions.
+L158: notActions  | string[]  | Denied actions.
+L159: notDataActions  | string[]  | Denied Data actions.
+L160: ### RoleDefinition
+L161: 
+L162: Object
+L163: 
+L164: Role definition.
+L165: Name  | Type  | Description
+L166: --- | --- | ---
+L167: id  | string  | The role definition ID.
+L168: name  | string  | The role definition name.
+L169: properties.assignableScopes  | string[]  | Role definition assignable scopes.
+L170: properties.createdBy  | string  | Id of the user who created the assignment
+L171: properties.createdOn  | string (date-time)  | Time it was created
+L172: properties.description  | string  | The role definition description.
+L173: properties.permissions  | cite11†Permission []  | Role definition permissions.
+L174: properties.roleName  | string  | The role name.
+L175: properties.type  | string  | The role type.
+L176: properties.updatedBy  | string  | Id of the user who updated the assignment
+L177: properties.updatedOn  | string (date-time)  | Time it was updated
+L178: type  | string  | The role definition type.
+L179: ### In this article
+

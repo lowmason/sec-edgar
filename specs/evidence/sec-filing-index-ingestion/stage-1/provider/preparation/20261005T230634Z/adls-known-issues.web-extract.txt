@@ -1,0 +1,121 @@
+Known issues with Azure Data Lake Storage - Azure Storage | Microsoft Learn (https://learn.microsoft.com/en-us/azure/storage/blobs/data-lake-storage-known-issues)
+citeturn8view0 [wordlim: 200] Crawled: today; Content type: text/html; Source: open({"ref_id":"https://learn.microsoft.com/en-us/azure/storage/blobs/data-lake-storage-known-issues","lineno":null}); Total lines: 131
+L0: cite0†Skip to main content cite1†Skip to Ask Learn chat experience L1: 
+L2: This browser is no longer supported.
+L3: 
+L4: Upgrade to Microsoft Edge to take advantage of the latest features, security updates, and technical support.
+L5: 
+L6: cite2†Download Microsoft Edge†go.microsoft.com cite3†More info about Internet Explorer and Microsoft Edge L7: 
+L8: Table of contents Exit editor mode
+L9: 
+L10: Ask Learn Ask Learn
+L11: 
+L12: Reading mode Table of contents cite1†Read in English Add Add to Plans cite4†Edit†github.com L13: 
+L14: * * *
+L15: 
+L16: Copy Markdown Print
+L17: 
+L18: * * *
+L19: 
+L20: Note
+L21: Access to this page requires authorization. You can try cite1†signing in or changing directories.
+L22: 
+L23: Access to this page requires authorization. You can try changing directories.
+L24: # Known issues with Azure Data Lake Storage
+L25: 
+L26: Feedback
+L27: 
+L28: Summarize this article for me
+L29: ## In this article
+L30: 
+L31: This article describes known issues and limitations of Azure Data Lake Storage for accounts that have the hierarchical namespace feature enabled. Use this information to manage your data workflows and avoid potential pitfalls when using various APIs and integrations.
+L32: 
+L33: Note
+L34: Some of the features described in this article might not be supported in accounts that have Network File System (NFS) 3.0 support enabled. To view a table that shows the impact of feature support when various capabilities are enabled, see cite5†Blob Storage feature support in Azure Storage accounts .
+L35: ## Feature, service, and platform support
+L36: 
+L37: Most Blob storage features, Azure service integrations, and open-source platforms are supported in accounts that have a hierarchical namespace. For complete lists, see:
+L38: 
+L39:   * cite5†Blob Storage features available in Azure Data Lake Storage L40:   * cite6†Azure services that support Azure Data Lake Storage L41:   * cite7†Open-source platforms that support Azure Data Lake Storage L42: ## Blob storage APIs
+L43: 
+L44: Data Lake Storage APIs, NFS 3.0, and Blob APIs can operate on the same data.
+L45: 
+L46: This section describes issues and limitations with using blob APIs, NFS 3.0, and Data Lake Storage APIs to operate on the same data.
+L47:   * You can't use blob APIs, NFS 3.0, and Data Lake Storage APIs to write to the same instance of a file. If you write to a file by using Data Lake Storage APIs or NFS 3.0, then that file's blocks aren't visible to calls to the cite8†Get Block List blob API. The only exception is when you're overwriting. You can overwrite a file or blob by using either API or by using NFS 3.0 with the zero-truncate option (a POSIX-style operation that truncates the file to zero bytes before writing).
+L48: You can't overwrite blobs that are created by using a Data Lake Storage operation such as the cite9†Path - Create operation by using cite10†PutBlock or cite11†PutBlockList operations. However, you can overwrite these blobs by using a cite12†PutBlob operation, subject to the maximum permitted blob size imposed by the corresponding api-version that PutBlob uses.
+L49:   * When you use the cite13†List Blobs operation without specifying a delimiter, the results include both directories and blobs. If you choose to use a delimiter, use only a forward slash (`/`). This is the only supported delimiter.
+L50: 
+L51:   * If you use the cite14†Delete Blob API to delete a directory, the directory is deleted only if it's empty. This condition means that you can't use the Blob API to delete directories recursively.
+L52: 
+L53: These Blob REST APIs aren't supported:
+L54:   * cite12†Put Blob (Page) L55:   * cite15†Put Page L56:   * cite16†Get Page Ranges L57:   * cite17†Incremental Copy Blob L58:   * cite18†Put Page from URL L59:   * cite19†Append Blob Seal L60: 
+L61: Unmanaged VM disks aren't supported in accounts that have a hierarchical namespace. If you want to enable a hierarchical namespace on a storage account, place unmanaged VM disks into a storage account that doesn't have the hierarchical namespace feature enabled.
+L62: ## Support for setting access control lists (ACLs) recursively in Azure Data Lake Storage
+L63: 
+L64: The ability to apply ACL changes recursively from parent directory to child items is generally available. In the current release of this capability, you can apply ACL changes by using Azure Storage Explorer, PowerShell, Azure CLI, and the .NET, Java, Python, and Node.js SDKs. Support isn't yet available for the Azure portal.
+L65: ## Access control lists (ACL) and anonymous read access
+L66: 
+L67: If cite20†anonymous read access is granted to a container, then ACLs have no effect on that container or the files in that container. This restriction only affects read requests. Write requests still honor the ACLs. Require authorization for all requests to blob data.
+L68: ## Private endpoints for Azure Data Lake Storage
+L69: If you're using private endpoints to access Azure Data Lake Storage (a storage account with hierarchical namespace enabled), you need to create one for both the blob and dfs sub-resources. Operations that target the Data Lake Storage (dfs) endpoint can be redirected to the Blob endpoint, and some operations (such as managing ACLs, creating directories, and deleting directories) require a DFS private endpoint.
+L70: Creating private endpoints for both sub-resources ensures that all operations complete successfully. For more information, see cite21†Use private endpoints for Azure Storage .
+L71: ## AzCopy with Azure Data Lake Storage
+L72: 
+L73: When you use AzCopy with accounts that have a hierarchical namespace enabled, only AzCopy v10 supports the required Data Lake Storage APIs. Use only the latest version of AzCopy (cite22†AzCopy v10 ). Earlier versions, such as AzCopy v8.1, aren't supported.
+L74: ## Azure Storage Explorer with Azure Data Lake Storage
+L75: 
+L76: When you use Azure Storage Explorer with storage accounts that have a hierarchical namespace enabled, use only versions `1.6.0` or higher. Earlier versions don't support the hierarchical namespace APIs required to manage files and directories.
+L77: ## Storage browser in the Azure portal
+L78: 
+L79: In the storage browser that appears in the Azure portal, you can't access a file or folder by specifying a path. Instead, you must browse through folders to reach a file. Therefore, if an ACL grants a user read access to a file but not read access to all folders leading up to the file, that user can't view the file in storage browser.
+L80: ## Third-party applications
+L81: 
+L82: Third-party applications that use REST APIs to work continue to work if you use them with Data Lake Storage. Applications that call Blob APIs are likely to work.
+L83: ## Windows Azure Storage Blob (WASB) driver
+L84: 
+L85: Currently, the WASB driver, which was designed to work with the Blob API only, encounters problems in a few common scenarios. Specifically, when it's a client to a hierarchical namespace enabled storage account. Multi-protocol access on Data Lake Storage doesn't mitigate these issues.
+L86: Using the WASB driver as a client to a hierarchical namespace enabled storage account isn't supported. Instead, use the cite23†Azure Blob File System (ABFS) driver in your Hadoop environment. If you're trying to migrate off of an on-premises Hadoop environment with a version earlier than Hadoop branch-3, open an Azure Support ticket for help determining the right path forward for your organization.
+L87: ## Soft delete for blobs in Azure Data Lake Storage
+L88: 
+L89: In storage accounts that have a hierarchical namespace, if you rename parent directories for soft-deleted files or directories, the Azure portal might not display the soft-deleted items correctly. In such cases, use cite24†PowerShell or cite25†Azure CLI to list and restore the soft-deleted items.
+L90: ## Event subscriptions in Azure Data Lake Storage
+L91: 
+L92: In storage accounts that have a hierarchical namespace, if your account has an event subscription, read operations on the secondary endpoint (the read-only replica in geo-redundant storage accounts) result in an error. To resolve this issue, remove event subscriptions. Using the Data Lake Storage endpoint (abfss://URI) for non-hierarchical namespace enabled accounts doesn't generate events, but the blob endpoint (wasb:// URI) generates events.
+L93: 
+L94: Tip
+L95: Read access to the secondary endpoint is available only when you enable read-access geo-redundant storage (RA-GRS) or read-access geo-zone-redundant storage (RA-GZRS).
+L96: 
+L97: * * *
+L98: ## Feedback
+L99: 
+L100: Was this page helpful?
+L101: 
+L102: Yes No No
+L103: 
+L104: Need help with this topic?
+L105: 
+L106: Want to try using Ask Learn to clarify or guide you through this topic?
+L107: 
+L108: Ask Learn Ask Learn
+L109: 
+L110: Suggest a fix?
+L111: 
+L112: * * *
+L113: 
+L114: ## Additional resources
+L115: 
+L116: * * *
+L117: 
+L118:   * Last updated on 2026-07-06
+L119: 
+L120: ### In this article
+L121: 
+L122: Was this page helpful?
+L123: 
+L124: Need help with this topic?
+L125: 
+L126: Want to try using Ask Learn to clarify or guide you through this topic?
+L127: 
+L128: Ask Learn Ask Learn
+L129: 
+L130: Suggest a fix?

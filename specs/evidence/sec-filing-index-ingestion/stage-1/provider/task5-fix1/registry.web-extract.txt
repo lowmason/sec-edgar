@@ -1,0 +1,563 @@
+Registries - Create - REST API (Azure Container Registry) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/container-registry/registries/create?view=rest-container-registry-2025-11-01)
+citeturn77view0 [wordlim: 200] Crawled: 5 days ago; Content type: text/html; Source: find({"ref_id":"https://learn.microsoft.com/en-us/rest/api/container-registry/registries/create?view=rest-container-registry-2025-11-01","pattern":"200 OK"}); Total lines: 1816
+L0: cite0†Skip to main content cite1†Skip to in-page navigation cite2†Skip to Ask Learn chat experience L1: 
+L2: This browser is no longer supported.
+L3: 
+L4: Upgrade to Microsoft Edge to take advantage of the latest features, security updates, and technical support.
+L5: 
+L6: cite3†Download Microsoft Edge†go.microsoft.com cite4†More info about Internet Explorer and Microsoft Edge L7: 
+L8: Table of contents Exit editor mode
+L9: 
+L10: Ask Learn Ask Learn
+L11: 
+L12: Reading mode Table of contents cite2†Read in English Add Add to Plans cite5†Edit†github.com L13: 
+L14: * * *
+L15: Copy Markdown Print
+L16: 
+L17: * * *
+L18: 
+L19: Note
+L20: 
+L21: Access to this page requires authorization. You can try cite2†signing in or changing directories.
+L22: 
+L23: Access to this page requires authorization. You can try changing directories.
+L24: # Registries - Create
+L25: 
+L26: Service:
+L27:     Container Registry
+L28: 
+L29: API Version:
+L30:     2025-11-01
+L31: 
+L32: ##
+L33: 
+L34: Creates a container registry with the specified parameters.
+L35: 
+L36:     `PUT https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ContainerRegistry/registries/{registryName}?api-version=2025-11-01`
+L37: ## URI Parameters
+L38: Name  | In  | Required  | Type  | Description
+L39: --- | --- | --- | --- | ---
+L40: registryName  | path  | True  | string minLength: 5
+L41: maxLength: 50
+L42: pattern: ^[a-zA-Z0-9]*$  | The name of the container registry.
+L43: resourceGroupName  | path  | True  | string minLength: 1
+L44: maxLength: 90  | The name of the resource group. The name is case insensitive.
+L45: subscriptionId  | path  | True  | string (uuid)  | The ID of the target subscription. The value must be an UUID.
+L46: api-version  | query  | True  | string minLength: 1  | The API version to use for this operation.
+L47: ## Request Body
+L48: Name  | Required  | Type  | Description
+L49: --- | --- | --- | ---
+L50: location  | True  | string  | The geo-location where the resource lives
+L51: sku  | True  | cite6†Sku | The SKU of the container registry.
+L52: identity  |  | cite7†IdentityProperties | The identity of the container registry.
+L53: properties.adminUserEnabled  |  | boolean  | The value that indicates whether the admin user is enabled.
+L54: properties.anonymousPullEnabled  |  | boolean  | Enables registry-wide pull from unauthenticated clients.
+L55: properties.dataEndpointEnabled  |  | boolean  | Enable a single data endpoint per region for serving data.
+L56: properties.encryption  |  | cite8†EncryptionProperty | The encryption settings of container registry.
+L57: properties.networkRuleBypassAllowedForTasks  |  | boolean  | Whether or not Tasks allowed to bypass the network rules for this container registry.
+L58: properties.networkRuleBypassOptions  |  | cite9†NetworkRuleBypassOptions | Whether to allow trusted Azure services to access a network restricted registry.
+L59: properties.networkRuleSet  |  | cite10†NetworkRuleSet | The network rule set for a container registry.
+L60: properties.policies  |  | cite11†Policies | The policies for a container registry.
+L61: properties.publicNetworkAccess  |  | cite12†PublicNetworkAccess | Whether or not public network access is allowed for the container registry.
+L62: properties.roleAssignmentMode  |  | cite13†RoleAssignmentMode | Determines registry role assignment mode.
+L63: properties.zoneRedundancy  |  | cite14†ZoneRedundancy | Whether or not zone redundancy is enabled for this container registry
+L64: tags  |  | object  | Resource tags.
+L65: ## Responses
+L66: 
+L67: Name  | Type  | Description
+L68: --- | --- | ---
+L69: 200 OK  | cite15†Registry | Resource 'Registry' update operation succeeded
+L70: 201 Created  | cite15†Registry | Resource 'Registry' create operation succeeded Headers
+L71: 
+L72:   * Azure-AsyncOperation: string
+L73:   * Retry-After: integer
+L74: Other Status Codes  | cite16†ErrorResponse | An unexpected error response.
+L75: 
+L76: ## Security
+L77: ### azure_auth
+L78: 
+L79: Azure Active Directory OAuth2 Flow.
+L80: 
+L81: Type: oauth2
+L82: Flow: implicit
+L83: Authorization URL: https://login.microsoftonline.com/common/oauth2/authorize
+L84: 
+L85: #### Scopes
+L86: 
+L87: Name  | Description
+L88: --- | ---
+L89: user_impersonation  | impersonate your user account
+L90: 
+L91: ## Examples
+L92: 
+L93: cite17†RegistryCreate L94: cite18†RegistryCreateAbac L95: cite19†RegistryCreateZoneRedundant L96: 
+L97: ### RegistryCreate
+L98: #### Sample request
+L99:   * cite20†HTTP L100:   * cite21†Java L101:   * cite22†Python L102:   * cite23†Go L103:   * cite24†JavaScript L104:   * cite25†dotnet L105: 
+L106:     `PUT https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.ContainerRegistry/registries/myRegistry?api-version=2025-11-01
+L107: 
+L108:     {
+L109:       "location": "westus",
+L110:       "tags": {
+L111:         "key": "value"
+L112:       },
+L113:       "sku": {
+L114:         "name": "Standard"
+L115:       },
+L116:       "properties": {
+L117:         "adminUserEnabled": true
+L118:       }
+L119:     }
+L120:     `
+L121: 
+L122:     `
+L123:     import com.azure.resourcemanager.containerregistry.fluent.models.RegistryInner;
+L124:     import com.azure.resourcemanager.containerregistry.models.Sku;
+L125:     import com.azure.resourcemanager.containerregistry.models.SkuName;
+L126:     import java.util.HashMap;
+L127:     import java.util.Map;
+L128: 
+L129:     /**
+L130:      * Samples for Registries Create.
+L131:      */
+L132:     public final class Main {
+L133:         /*
+L134:          * x-ms-original-file: 2025-11-01/RegistryCreate.json
+L135:          */
+L136:         /**
+L137:          * Sample code: RegistryCreate.
+L138:          *
+L139:          * @param manager Entry point to ContainerRegistryManager.
+L140:          */
+L141:         public static void registryCreate(com.azure.resourcemanager.containerregistry.ContainerRegistryManager manager) {
+L142:             manager.serviceClient().getRegistries().create("myResourceGroup", "myRegistry",
+L143:                 new RegistryInner().withLocation("westus").withTags(mapOf("key", "fakeTokenPlaceholder"))
+L144:                     .withSku(new Sku().withName(SkuName.STANDARD)).withAdminUserEnabled(true),
+L145:                 com.azure.core.util.Context.NONE);
+L146:         }
+L147: 
+L148:         // Use "Map.of" if available
+L149:         @SuppressWarnings("unchecked")
+L150:         private static <T> Map<String, T> mapOf(Object... inputs) {
+L151:             Map<String, T> map = new HashMap<>();
+L152:             for (int i = 0; i < inputs.length; i += 2) {
+L153:                 String key = (String) inputs[i];
+L154:                 T value = (T) inputs[i + 1];
+L155:                 map.put(key, value);
+L156:             }
+L157:             return map;
+L158:         }
+L159:     }
+L160: 
+L161:     `
+L162: To use the Azure SDK library in your project, see cite26†this documentation†github.com . To provide feedback on this code sample, cite27†open a GitHub issue†github.com L163: 
+L164:     `from azure.identity import DefaultAzureCredential
+L165: 
+L166:     from azure.mgmt.containerregistry import ContainerRegistryManagementClient
+L167: 
+L168:     """
+L169:     # PREREQUISITES
+L170:         pip install azure-identity
+L171:         pip install azure-mgmt-containerregistry
+L172:     # USAGE
+L173:         python registry_create.py
+L174:         Before run the sample, please set the values of the client ID, tenant ID and client secret
+L175:         of the AAD application as environment variables: AZURE_CLIENT_ID, AZURE_TENANT_ID,
+L176:         AZURE_CLIENT_SECRET. For more info about how to get the value, please see:
+L177:         https://docs.microsoft.com/azure/active-directory/develop/howto-create-service-principal-portal
+L178:     """
+L179: 
+L180: 
+L181:     def main():
+L182:         client = ContainerRegistryManagementClient(
+L183:             credential=DefaultAzureCredential(),
+L184:             subscription_id="SUBSCRIPTION_ID",
+L185:         )
+L186: 
+L187:         response = client.registries.begin_create(
+L188:             resource_group_name="myResourceGroup",
+L189:             registry_name="myRegistry",
+L190:             registry={
+L191:                 "location": "westus",
+L192:                 "properties": {"adminUserEnabled": True},
+L193:                 "sku": {"name": "Standard"},
+L194:                 "tags": {"key": "value"},
+L195:             },
+L196:         ).result()
+L197:         print(response)
+L198:     # x-ms-original-file: 2025-11-01/RegistryCreate.json
+L199:     if __name__ == "__main__":
+L200:         main()
+L201: 
+L202:     `
+L203: To use the Azure SDK library in your project, see cite28†this documentation†github.com . To provide feedback on this code sample, cite27†open a GitHub issue†github.com L204: 
+L205:     `package armcontainerregistry_test
+L206: 
+L207:     import (
+L208:     	"context"
+L209:     	"log"
+L210: 
+L211:     	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
+L212:     	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+L213:     	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerregistry/armcontainerregistry/v3"
+L214:     )
+L215:     // Generated from example definition: 2025-11-01/RegistryCreate.json
+L216:     func ExampleRegistriesClient_BeginCreate_registryCreate() {
+L217:     	cred, err := azidentity.NewDefaultAzureCredential(nil)
+L218:     	if err != nil {
+L219:     		log.Fatalf("failed to obtain a credential: %v", err)
+L220:     	}
+L221:     	ctx := context.Background()
+L222:     	clientFactory, err := armcontainerregistry.NewClientFactory("00000000-0000-0000-0000-000000000000", cred, nil)
+L223:     	if err != nil {
+L224:     		log.Fatalf("failed to create client: %v", err)
+L225:     	}
+L226:     	poller, err := clientFactory.NewRegistriesClient().BeginCreate(ctx, "myResourceGroup", "myRegistry", armcontainerregistry.Registry{
+L227:     		Location: to.Ptr("westus"),
+L228:     		Tags: map[string]*string{
+L229:     			"key": to.Ptr("value"),
+L230:     		},
+L231:     		SKU: &armcontainerregistry.SKU{
+L232:     			Name: to.Ptr(armcontainerregistry.SKUNameStandard),
+L233:     		},
+L234:     		Properties: &armcontainerregistry.RegistryProperties{
+L235:     			AdminUserEnabled: to.Ptr(true),
+L236:     		},
+L237:     	}, nil)
+L238:     	if err != nil {
+L239:     		log.Fatalf("failed to finish the request: %v", err)
+L240:     	}
+L241:     	res, err := poller.PollUntilDone(ctx, nil)
+L242:     	if err != nil {
+L243:     		log.Fatalf("failed to pull the result: %v", err)
+L244:     	}
+L245:     	// You could use response here. We use blank identifier for just demo purposes.
+L246:     	_ = res
+L247:     	// If the HTTP response code is 200 as defined in example definition, your response structure would look as follows. Please pay attention that all the values in the output are fake values for just demo purposes.
+L248:     	// res = armcontainerregistry.RegistriesClientCreateResponse{
+L249:     	// 	Registry: &armcontainerregistry.Registry{
+L250:     	// 		ID: to.Ptr("/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.ContainerRegistry/registries/myRegistry"),
+L251:     	// 		Name: to.Ptr("myRegistry"),
+L252:     	// 		Type: to.Ptr("Microsoft.ContainerRegistry/registries"),
+L253:     	// 		Location: to.Ptr("westus"),
+L254:     	// 		Tags: map[string]*string{
+L255:     	// 			"key": to.Ptr("value"),
+L256:     	// 		},
+L257:     	// 		SKU: &armcontainerregistry.SKU{
+L258:     	// 			Name: to.Ptr(armcontainerregistry.SKUNameStandard),
+L259:     	// 			Tier: to.Ptr(armcontainerregistry.SKUTierStandard),
+L260:     	// 		},
+L261:     	// 		Properties: &armcontainerregistry.RegistryProperties{
+L262:     	// 			LoginServer: to.Ptr("myRegistry.azurecr.io"),
+L263:     	// 			CreationDate: to.Ptr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2021-06-15T21:38:26.1537861Z"); return t}()),
+L264:     	// 			ProvisioningState: to.Ptr(armcontainerregistry.ProvisioningStateSucceeded),
+L265:     	// 			AdminUserEnabled: to.Ptr(true),
+L266:     	// 			NetworkRuleSet: &armcontainerregistry.NetworkRuleSet{
+L267:     	// 				DefaultAction: to.Ptr(armcontainerregistry.DefaultActionAllow),
+L268:     	// 				IPRules: []*armcontainerregistry.IPRule{
+L269:     	// 				},
+L270:     	// 			},
+L271:     	// 			Policies: &armcontainerregistry.Policies{
+L272:     	// 				QuarantinePolicy: &armcontainerregistry.QuarantinePolicy{
+L273:     	// 					Status: to.Ptr(armcontainerregistry.PolicyStatusDisabled),
+L274:     	// 				},
+L275:     	// 				TrustPolicy: &armcontainerregistry.TrustPolicy{
+L276:     	// 					Type: to.Ptr(armcontainerregistry.TrustPolicyTypeNotary),
+L277:     	// 					Status: to.Ptr(armcontainerregistry.PolicyStatusDisabled),
+L278:     	// 				},
+L279:     	// 				RetentionPolicy: &armcontainerregistry.RetentionPolicy{
+L280:     	// 					Days: to.Ptr[int32](7),
+L281:     	// 					LastUpdatedTime: to.Ptr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2021-06-15T21:40:12.8506835+00:00"); return t}()),
+L282:     	// 					Status: to.Ptr(armcontainerregistry.PolicyStatusDisabled),
+L283:     	// 				},
+L284:     	// 				ExportPolicy: &armcontainerregistry.ExportPolicy{
+L285:     	// 					Status: to.Ptr(armcontainerregistry.ExportPolicyStatusEnabled),
+L286:     	// 				},
+L287:     	// 				AzureADAuthenticationAsArmPolicy: &armcontainerregistry.AzureADAuthenticationAsArmPolicy{
+L288:     	// 					Status: to.Ptr(armcontainerregistry.AzureADAuthenticationAsArmPolicyStatusEnabled),
+L289:     	// 				},
+L290:     	// 			},
+L291:     	// 			Encryption: &armcontainerregistry.EncryptionProperty{
+L292:     	// 				Status: to.Ptr(armcontainerregistry.EncryptionStatusDisabled),
+L293:     	// 			},
+L294:     	// 			DataEndpointEnabled: to.Ptr(false),
+L295:     	// 			DataEndpointHostNames: []*string{
+L296:     	// 			},
+L297:     	// 			PrivateEndpointConnections: []*armcontainerregistry.PrivateEndpointConnection{
+L298:     	// 			},
+L299:     	// 			PublicNetworkAccess: to.Ptr(armcontainerregistry.PublicNetworkAccessEnabled),
+L300:     	// 			NetworkRuleBypassOptions: to.Ptr(armcontainerregistry.NetworkRuleBypassOptionsAzureServices),
+L301:     	// 			NetworkRuleBypassAllowedForTasks: to.Ptr(false),
+L302:     	// 			ZoneRedundancy: to.Ptr(armcontainerregistry.ZoneRedundancyDisabled),
+L303:     	// 			AnonymousPullEnabled: to.Ptr(false),
+L304:     	// 			RoleAssignmentMode: to.Ptr(armcontainerregistry.RoleAssignmentModeLegacyRegistryPermissions),
+L305:     	// 		},
+L306:     	// 	},
+L307:     	// }
+L308:     }
+L309: 
+L310:     `
+--------------------------------------------------------------------------------
+Registries - Get - REST API (Azure Container Registry) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/container-registry/registries/get?view=rest-container-registry-2025-11-01)
+citeturn77view1 [wordlim: 200] Crawled: today; Content type: text/html; Source: find({"ref_id":"https://learn.microsoft.com/en-us/rest/api/container-registry/registries/get?view=rest-container-registry-2025-11-01","pattern":"200 OK"}); Total lines: 861
+L0: cite0†Skip to main content cite1†Skip to in-page navigation cite2†Skip to Ask Learn chat experience L1: 
+L2: This browser is no longer supported.
+L3: 
+L4: Upgrade to Microsoft Edge to take advantage of the latest features, security updates, and technical support.
+L5: 
+L6: cite3†Download Microsoft Edge†go.microsoft.com cite4†More info about Internet Explorer and Microsoft Edge L7: 
+L8: Table of contents Exit editor mode
+L9: 
+L10: Ask Learn Ask Learn
+L11: 
+L12: Reading mode Table of contents cite2†Read in English Add Add to Plans cite5†Edit†github.com L13: 
+L14: * * *
+L15: Copy Markdown Print
+L16: 
+L17: * * *
+L18: 
+L19: Note
+L20: 
+L21: Access to this page requires authorization. You can try cite2†signing in or changing directories.
+L22: 
+L23: Access to this page requires authorization. You can try changing directories.
+L24: # Registries - Get
+L25: 
+L26: Service:
+L27:     Container Registry
+L28: 
+L29: API Version:
+L30:     2025-11-01
+L31: 
+L32: ##
+L33: 
+L34: Gets the properties of the specified container registry.
+L35: 
+L36:     `GET https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ContainerRegistry/registries/{registryName}?api-version=2025-11-01`
+L37: ## URI Parameters
+L38: Name  | In  | Required  | Type  | Description
+L39: --- | --- | --- | --- | ---
+L40: registryName  | path  | True  | string minLength: 5
+L41: maxLength: 50
+L42: pattern: ^[a-zA-Z0-9]*$  | The name of the container registry.
+L43: resourceGroupName  | path  | True  | string minLength: 1
+L44: maxLength: 90  | The name of the resource group. The name is case insensitive.
+L45: subscriptionId  | path  | True  | string (uuid)  | The ID of the target subscription. The value must be an UUID.
+L46: api-version  | query  | True  | string minLength: 1  | The API version to use for this operation.
+L47: ## Responses
+L48: 
+L49: Name  | Type  | Description
+L50: --- | --- | ---
+L51: 200 OK  | cite6†Registry | Azure operation completed successfully.
+L52: Other Status Codes  | cite7†ErrorResponse | An unexpected error response.
+L53: 
+L54: ## Security
+L55: 
+L56: ### azure_auth
+L57: 
+L58: Azure Active Directory OAuth2 Flow.
+L59: 
+L60: Type: oauth2
+L61: Flow: implicit
+L62: Authorization URL: https://login.microsoftonline.com/common/oauth2/authorize
+L63: 
+L64: #### Scopes
+L65: 
+L66: Name  | Description
+L67: --- | ---
+L68: user_impersonation  | impersonate your user account
+L69: 
+L70: ## Examples
+L71: 
+L72: ### RegistryGet
+L73: #### Sample request
+L74:   * cite8†HTTP L75:   * cite9†Java L76:   * cite10†Python L77:   * cite11†Go L78:   * cite12†JavaScript L79:   * cite13†dotnet L80: 
+L81:     `GET https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.ContainerRegistry/registries/myRegistry?api-version=2025-11-01
+L82:     `
+L83: 
+L84:     `
+L85:     /**
+L86:      * Samples for Registries GetByResourceGroup.
+L87:      */
+L88:     public final class Main {
+L89:         /*
+L90:          * x-ms-original-file: 2025-11-01/RegistryGet.json
+L91:          */
+L92:         /**
+L93:          * Sample code: RegistryGet.
+L94:          *
+L95:          * @param manager Entry point to ContainerRegistryManager.
+L96:          */
+L97:         public static void registryGet(com.azure.resourcemanager.containerregistry.ContainerRegistryManager manager) {
+L98:             manager.serviceClient().getRegistries().getByResourceGroupWithResponse("myResourceGroup", "myRegistry",
+L99:                 com.azure.core.util.Context.NONE);
+L100:         }
+L101:     }
+L102: 
+L103:     `
+L104: To use the Azure SDK library in your project, see cite14†this documentation†github.com . To provide feedback on this code sample, cite15†open a GitHub issue†github.com L105: 
+L106:     `from azure.identity import DefaultAzureCredential
+L107: 
+L108:     from azure.mgmt.containerregistry import ContainerRegistryManagementClient
+L109: 
+L110:     """
+L111:     # PREREQUISITES
+L112:         pip install azure-identity
+L113:         pip install azure-mgmt-containerregistry
+L114:     # USAGE
+L115:         python registry_get.py
+L116:         Before run the sample, please set the values of the client ID, tenant ID and client secret
+L117:         of the AAD application as environment variables: AZURE_CLIENT_ID, AZURE_TENANT_ID,
+L118:         AZURE_CLIENT_SECRET. For more info about how to get the value, please see:
+L119:         https://docs.microsoft.com/azure/active-directory/develop/howto-create-service-principal-portal
+L120:     """
+L121: 
+L122: 
+L123:     def main():
+L124:         client = ContainerRegistryManagementClient(
+L125:             credential=DefaultAzureCredential(),
+L126:             subscription_id="SUBSCRIPTION_ID",
+L127:         )
+L128: 
+L129:         response = client.registries.get(
+L130:             resource_group_name="myResourceGroup",
+L131:             registry_name="myRegistry",
+L132:         )
+L133:         print(response)
+L134: 
+L135: 
+L136:     # x-ms-original-file: 2025-11-01/RegistryGet.json
+L137:     if __name__ == "__main__":
+L138:         main()
+L139: 
+L140:     `
+L141: To use the Azure SDK library in your project, see cite16†this documentation†github.com . To provide feedback on this code sample, cite15†open a GitHub issue†github.com L142: 
+L143:     `package armcontainerregistry_test
+L144: 
+L145:     import (
+L146:     	"context"
+L147:     	"log"
+L148: 
+L149:     	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+L150:     	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerregistry/armcontainerregistry/v3"
+L151:     )
+L152: 
+L153:     // Generated from example definition: 2025-11-01/RegistryGet.json
+L154:     func ExampleRegistriesClient_Get() {
+L155:     	cred, err := azidentity.NewDefaultAzureCredential(nil)
+L156:     	if err != nil {
+L157:     		log.Fatalf("failed to obtain a credential: %v", err)
+L158:     	}
+L159:     	ctx := context.Background()
+L160:     	clientFactory, err := armcontainerregistry.NewClientFactory("00000000-0000-0000-0000-000000000000", cred, nil)
+L161:     	if err != nil {
+L162:     		log.Fatalf("failed to create client: %v", err)
+L163:     	}
+L164:     	res, err := clientFactory.NewRegistriesClient().Get(ctx, "myResourceGroup", "myRegistry", nil)
+L165:     	if err != nil {
+L166:     		log.Fatalf("failed to finish the request: %v", err)
+L167:     	}
+L168:     	// You could use response here. We use blank identifier for just demo purposes.
+L169:     	_ = res
+L170:     	// If the HTTP response code is 200 as defined in example definition, your response structure would look as follows. Please pay attention that all the values in the output are fake values for just demo purposes.
+L171:     	// res = armcontainerregistry.RegistriesClientGetResponse{
+L172:     	// 	Registry: &armcontainerregistry.Registry{
+L173:     	// 		ID: to.Ptr("/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.ContainerRegistry/registries/myRegistry"),
+L174:     	// 		Name: to.Ptr("myRegistry"),
+L175:     	// 		Type: to.Ptr("Microsoft.ContainerRegistry/registries"),
+L176:     	// 		Location: to.Ptr("westus"),
+L177:     	// 		Tags: map[string]*string{
+L178:     	// 			"key": to.Ptr("value"),
+L179:     	// 		},
+L180:     	// 		SKU: &armcontainerregistry.SKU{
+L181:     	// 			Name: to.Ptr(armcontainerregistry.SKUNameStandard),
+L182:     	// 			Tier: to.Ptr(armcontainerregistry.SKUTierStandard),
+L183:     	// 		},
+L184:     	// 		Properties: &armcontainerregistry.RegistryProperties{
+L185:     	// 			LoginServer: to.Ptr("myRegistry.azurecr.io"),
+L186:     	// 			CreationDate: to.Ptr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2021-06-15T21:38:26.1537861Z"); return t}()),
+L187:     	// 			ProvisioningState: to.Ptr(armcontainerregistry.ProvisioningStateSucceeded),
+L188:     	// 			AdminUserEnabled: to.Ptr(false),
+L189:     	// 			NetworkRuleSet: &armcontainerregistry.NetworkRuleSet{
+L190:     	// 				DefaultAction: to.Ptr(armcontainerregistry.DefaultActionAllow),
+L191:     	// 				IPRules: []*armcontainerregistry.IPRule{
+L192:     	// 				},
+L193:     	// 			},
+L194:     	// 			Policies: &armcontainerregistry.Policies{
+L195:     	// 				QuarantinePolicy: &armcontainerregistry.QuarantinePolicy{
+L196:     	// 					Status: to.Ptr(armcontainerregistry.PolicyStatusDisabled),
+L197:     	// 				},
+L198:     	// 				TrustPolicy: &armcontainerregistry.TrustPolicy{
+L199:     	// 					Type: to.Ptr(armcontainerregistry.TrustPolicyTypeNotary),
+L200:     	// 					Status: to.Ptr(armcontainerregistry.PolicyStatusDisabled),
+L201:     	// 				},
+L202:     	// 				RetentionPolicy: &armcontainerregistry.RetentionPolicy{
+L203:     	// 					Days: to.Ptr[int32](7),
+L204:     	// 					LastUpdatedTime: to.Ptr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2021-06-15T21:40:12.8506835+00:00"); return t}()),
+L205:     	// 					Status: to.Ptr(armcontainerregistry.PolicyStatusDisabled),
+L206:     	// 				},
+L207:     	// 				ExportPolicy: &armcontainerregistry.ExportPolicy{
+L208:     	// 					Status: to.Ptr(armcontainerregistry.ExportPolicyStatusEnabled),
+L209:     	// 				},
+L210:     	// 				AzureADAuthenticationAsArmPolicy: &armcontainerregistry.AzureADAuthenticationAsArmPolicy{
+L211:     	// 					Status: to.Ptr(armcontainerregistry.AzureADAuthenticationAsArmPolicyStatusEnabled),
+L212:     	// 				},
+L213:     	// 			},
+L214:     	// 			Encryption: &armcontainerregistry.EncryptionProperty{
+L215:     	// 				Status: to.Ptr(armcontainerregistry.EncryptionStatusDisabled),
+L216:     	// 			},
+L217:     	// 			DataEndpointEnabled: to.Ptr(false),
+L218:     	// 			DataEndpointHostNames: []*string{
+L219:     	// 			},
+L220:     	// 			PrivateEndpointConnections: []*armcontainerregistry.PrivateEndpointConnection{
+L221:     	// 			},
+L222:     	// 			PublicNetworkAccess: to.Ptr(armcontainerregistry.PublicNetworkAccessEnabled),
+L223:     	// 			NetworkRuleBypassOptions: to.Ptr(armcontainerregistry.NetworkRuleBypassOptionsAzureServices),
+L224:     	// 			NetworkRuleBypassAllowedForTasks: to.Ptr(false),
+L225:     	// 			ZoneRedundancy: to.Ptr(armcontainerregistry.ZoneRedundancyDisabled),
+L226:     	// 			AnonymousPullEnabled: to.Ptr(false),
+L227:     	// 			RoleAssignmentMode: to.Ptr(armcontainerregistry.RoleAssignmentModeLegacyRegistryPermissions),
+L228:     	// 		},
+L229:     	// 	},
+L230:     	// }
+L231:     }
+L232: 
+L233:     `
+L234: To use the Azure SDK library in your project, see cite17†this documentation†github.com . To provide feedback on this code sample, cite15†open a GitHub issue†github.com L235: 
+L236:     `const { ContainerRegistryManagementClient } = require("@azure/arm-containerregistry");
+L237:     const { DefaultAzureCredential } = require("@azure/identity");
+L238: 
+L239:     /**
+L240:      * This sample demonstrates how to gets the properties of the specified container registry.
+L241:      *
+L242:      * @summary gets the properties of the specified container registry.
+L243:      * x-ms-original-file: 2025-11-01/RegistryGet.json
+L244:      */
+L245:     async function registryGet() {
+L246:       const credential = new DefaultAzureCredential();
+L247:       const subscriptionId = "00000000-0000-0000-0000-000000000000";
+L248:       const client = new ContainerRegistryManagementClient(credential, subscriptionId);
+L249:       const result = await client.registries.get("myResourceGroup", "myRegistry");
+L250:       console.log(result);
+L251:     }
+L252: 
+L253:     `
+L254: To use the Azure SDK library in your project, see cite18†this documentation†github.com . To provide feedback on this code sample, cite15†open a GitHub issue†github.com L255: 
+L256:     `using Azure;
+L257:     using Azure.ResourceManager;
+L258:     using System;
+L259:     using System.Threading.Tasks;
+L260:     using Azure.Core;
+L261:     using Azure.Identity;
+L262:     using Azure.ResourceManager.ContainerRegistry.Models;
+L263:     using Azure.ResourceManager.Resources;
+L264:     using Azure.ResourceManager.ContainerRegistry;
+L265:     // Generated from example definition: specification/containerregistry/resource-manager/Microsoft.ContainerRegistry/Registry/stable/2025-11-01/examples/RegistryGet.json
+L266:     // this example is just showing the usage of "Registries_Get" operation, for the dependent resources, they will have to be created separately.
+L267:     // get your azure access token, for more details of how Azure SDK get your access token, please refer to https://learn.microsoft.com/en-us/dotnet/azure/sdk/authentication?tabs=command-line
+L268:     TokenCredential cred = new DefaultAzureCredential();
+L269:     // authenticate your client
+L270:     ArmClient client = new ArmClient(cred);
+L271: 
+L272:     // this example assumes you already have this ResourceGroupResource created on azure
+

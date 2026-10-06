@@ -1,0 +1,481 @@
+Availability zones in Azure Monitor - Azure Monitor | Microsoft Learn (https://learn.microsoft.com/en-us/azure/azure-monitor/logs/availability-zones)
+citeturn64search0 [wordlim: 200] Crawled: 4 days ago; They provide in-region protection with no configuration required and enhance the resilience of Azure Monitor features that rely on a Log Analytics workspace. ... Azure Monitor Logs availability zones are zone-redundant, which means that Microsoft manages spreading service requests and replicating data across different zones in supported regions. ... East US 2 ^{1}  |  | ✅  | ✅ ... Israel Central  | ✅  | ✅  | ✅ ... If your Log Analytics workspace isn't in one of the regions that support availability zones for shared clusters, link your workspace to a dedicated cluster.
+
+# Enhance data and service resilience in Azure Monitor Logs with availability zones
+
+Feedback
+
+Summarize this article for me
+
+## In this article
+
+  1. Prerequisites
+  2. How availability zones enhance data and service resilience in Azure Monitor Logs
+  3. Supported regions
+  4. Migrate a Log Analytics workspace to availability zone support
+  5. Next steps
+
+Azure availability zones are an Azure feature that protects applications and data from datacenter failures. They provide in-region protection with no configuration required and enhance the resilience of Azure Monitor features that rely on a Log Analytics workspace. In some regions, availability zones protect all Log Analytics workspaces by default. In other regions, you need to link your workspace to a dedicated cluster for availability zone protection. This article describes the data and service resilience benefits Azure Monitor availability zones provide and lists the level of support provided in each region.
+
+For cross-region resilience against region-wide incidents, see workspace replication, and for a comprehensive overview of all resiliency options, see Reliability in Azure Monitor Logs.
+
+Note
+
+Application Insights resources can use availability zones only if they're workspace-based. Classic Application Insights resources can't use availability zones.
+
+## Prerequisites
+
+  * A Log Analytics workspace linked to a shared or dedicated cluster. Azure Monitor creates Log Analytics workspaces in a shared cluster, unless you set up a dedicated cluster for your workspaces.
+
+## How availability zones enhance data and service resilience in Azure Monitor Logs
+
+Each Azure region that supports availability zones is made of one or more datacenters, or zones, equipped with independent power, cooling, and networking infrastructure.
+
+Azure Monitor Logs availability zones are zone-redundant, which means that Microsoft manages spreading service requests and replicating data across different zones in supported regions. If an incident affects one zone, Microsoft manages failover to a different availability zone in the region automatically. You don't need to take any action because switching between zones is seamless.
+
+A subset of the availability zones that support data resilience currently also support service resilience for Azure Monitor Logs. In regions that support service resilience, Azure Monitor Logs service operations - for example, log ingestion, queries, and alerts - can continue in the event of a zone failure. In regions that only support data resilience, your stored data is protected against zonal failures, but service operations might be impacted by regional incidents.
+
+Note
+
+Moving to a dedicated cluster in a region that supports availability zones protects data ingested after the move, not historical data.
+
+## Supported regions
+
+Expand table
+
+Region  | Data resilience - Shared clusters (default)  | Data resilience - Dedicated clusters  | Service resilience
+--- | --- | --- | ---
+Africa  |  |  | 
+South Africa North  |  | ✅  | 
+Americas  |  |  | 
+Brazil South  |  | ✅  | 
+Canada Central  | ✅  | ✅  | 
+Central US  |  | ✅  | 
+East US  |  | ✅  | 
+East US 2 ^{1}  |  | ✅  | ✅
+Mexico Central  | ✅  | ✅  | ✅
+South Central US  | ✅  | ✅  | 
+West US 2 ^{1}  |  | ✅  | ✅
+West US 3  | ✅  | ✅  | 
+Asia Pacific  |  |  | 
+Australia East  | ✅  | ✅  | 
+Central India  | ✅  | ✅  | 
+East Asia  |  | ✅  | 
+Japan East  |  | ✅  | 
+Korea Central  |  | ✅  | 
+Southeast Asia  | ✅  | ✅  | 
+Europe  |  |  | 
+France Central  | ✅  | ✅  | 
+Germany West Central  |  | ✅  | 
+Italy North  | ✅  | ✅  | ✅
+North Europe ^{1}  | ✅  | ✅  | ✅
+Norway East  | ✅  | ✅  | 
+Poland Central  | ✅  | ✅  | 
+Spain Central  | ✅  | ✅  | ✅
+Sweden Central  | ✅  | ✅  | 
+Switzerland North  |  | ✅  | 
+UK South  | ✅  | ✅  | ✅
+West Europe  |  | ✅  | 
+Middle East  |  |  | 
+Israel Central  | ✅  | ✅  | ✅
+Qatar Central  |  | ✅  | 
+UAE North  | ✅  | ✅  | 
+
+^{1} Ingestion from Event Hubs feature is not resilient to zone outages in these regions.
+
+## Migrate a Log Analytics workspace to availability zone support
+
+If your Log Analytics workspace isn't in one of the regions that support availability zones for shared clusters, link your workspace to a dedicated cluster.
+
+Linking your workspace to a dedicated cluster:
+
+  * Requires a commitment tier starting at 100 GB a day.
+  * Protects new data you ingest to your Log Analytics workspace. Data you ingest before you link your workspace to a dedicated cluster remains in the shared cluster.
+--------------------------------------------------------------------------------
+Dynamic sessions in Azure Container Apps | Microsoft Learn (https://learn.microsoft.com/azure/container-apps/sessions)
+citeturn64search1 [wordlim: 200] Crawled: last week; # Dynamic sessions in Azure Container Apps ... Both code interpreter and custom container sessions are supported in all listed regions. ... Americas  | Europe  | Asia Pacific  | Middle East & Africa ... Central US  | Italy North  | East Asia  |
+Language and protocol  | Limited to the built-in runtimes and the REST API surface provided by the code interpreter.  | Any language or stack supported by your container, with any TCP protocol you choose to expose.
+Image requirement  | None—uses platform built‑in interpreter environments.  | Required—supply your own container image URI.
+
+For more information, see Usage.
+
+## Supported regions
+
+Dynamic sessions are available in the following regions. Both code interpreter and custom container sessions are supported in all listed regions.
+
+Expand table
+
+Americas  | Europe  | Asia Pacific  | Middle East & Africa
+--- | --- | --- | ---
+Brazil South  | France Central  | Australia East  | South Africa North
+Canada Central  | France South  | Australia Southeast  | UAE North
+Canada East  | Germany West Central  | Central India  | 
+Central US  | Italy North  | East Asia  | 
+East US  | North Europe  | Japan East  | 
+East US 2  | Norway East  | Japan West  | 
+North Central US  | Poland Central  | Jio India West  | 
+South Central US  | Spain Central  | Korea Central  | 
+West Central US  | Sweden Central  | South India  | 
+West US  | Switzerland North  | Southeast Asia  | 
+West US 2  | Switzerland West  |  | 
+West US 3  | UK South  |  | 
+ | UK West  |  | 
+ | West Europe  |  | 
+
+Note
+
+Regional availability may change. To verify current availability, check the Location dropdown when creating a session pool in the Azure portal.
+
+## Security
+
+Dynamic sessions are designed to run untrusted code in isolated environments. For information about securing your sessions, see Security.
+
+## Billing
+
+Custom container sessions are billed based on the resources consumed by the session pool. For more information, see Azure Container Apps billing.--------------------------------------------------------------------------------
+List of Azure regions | Microsoft Learn (https://learn.microsoft.com/azure/reliability/availability-zones-region-support)
+citeturn64search2 [wordlim: 200] Crawled: 4 days ago; This article contains a list of all regions in the Azure public cloud, their paired region status, physical location, geography, and availability zone support. ... Central US  | 3  | East US 2  | Iowa  | United States  | centralus ... East US 2  | 4 Image: Icon that shows that availability zone support in this region is coming soon. ... North Europe  | 3  | West Europe  | Ireland  | Europe  | northeurope
+Canada Central  | 3  | Canada East  | Toronto  | Canada  | canadacentral
+Canada East  | N/A  | Canada Central  | Quebec  | Canada  | canadaeast
+Central India  | 3  | South India  | Pune  | India  | centralindia
+Central US  | 3  | East US 2  | Iowa  | United States  | centralus
+Chile Central  | 3  | N/A  | Santiago  | Chile  | chilecentral
+Denmark East  | 3  | N/A  | Copenhagen  | Denmark  | denmarkeast
+East Asia  | 3  | Southeast Asia  | Hong Kong  | Asia Pacific  | eastasia
+East US  | 3  | West US  | Virginia  | United States  | eastus
+East US 2  | 4 Image: Icon that shows that availability zone support in this region is coming soon.  | Central US  | Virginia  | United States  | eastus2
+France Central  | 3  | Image: Icon that shows that access to this region is restricted to support specific customer scenarios, such as disaster recovery within a specific geographic area. France South  | Paris  | France  | francecentral
+Image: Icon that shows that access to this region is restricted to support specific customer scenarios, such as disaster recovery within a specific geographic area. France South  | N/A  | France Central  | Marseille  | France  | francesouth
+Image: Icon that shows that access to this region is restricted to support specific customer scenarios, such as disaster recovery within a specific geographic area. Germany North  | N/A  | Germany West Central  | Berlin  | Germany  | germanynorth
+Germany West Central  | 3  | Image: Icon that shows that access to this region is restricted to support specific customer scenarios, such as disaster recovery within a specific geographic area. Germany North  | Frankfurt  | Germany  | germanywestcentral
+India South Central  | 3  | Central India  | Hyderabad  | India  | indiasouthcentral
+Indonesia Central  | 3  | N/A  | Jakarta  | Indonesia  | indonesiacentral
+Israel Central  | 3  | N/A  | Israel  | Israel  | israelcentral
+Italy North  | 3  | N/A  | Milan  | Italy  | italynorth
+South India  | N/A  | Central India  | Chennai  | India  | southindia
+Southeast Asia  | 3  | East Asia  | Singapore  | Asia Pacific  | southeastasia
+Spain Central  | 3  | N/A  | Madrid  | Spain  | spaincentral
+Sweden Central  | 3  | Image: Icon that shows that access to this region is restricted to support specific customer scenarios, such as disaster recovery within a specific geographic area. Sweden South  | Gävle  | Sweden  | swedencentral
+Switzerland North  | 3  | Image: Icon that shows that access to this region is restricted to support specific customer scenarios, such as disaster recovery within a specific geographic area. Switzerland West  | Zurich  | Switzerland  | switzerlandnorth
+Image: Icon that shows that access to this region is restricted to support specific customer scenarios, such as disaster recovery within a specific geographic area. Switzerland West  | N/A  | Switzerland North  | Geneva  | Switzerland  | switzerlandwest
+Image: Icon that shows that access to this region is restricted to support specific customer scenarios, such as disaster recovery within a specific geographic area. UAE Central  | N/A  | UAE North  | Abu Dhabi  | UAE  | uaecentral
+UAE North  | 3  | Image: Icon that shows that access to this region is restricted to support specific customer scenarios, such as disaster recovery within a specific geographic area. UAE Central  | Dubai  | UAE  | uaenorth
+UK South  | 3  | UK West  | London  | United Kingdom  | uksouth
+UK West  | N/A  | UK South  | Cardiff  | United Kingdom  | ukwest
+West Central US  | N/A  | West US 2  | Wyoming  | United States  | westcentralus
+West Europe  | 3  | North Europe  | Netherlands  | Europe  | westeurope
+West India  | N/A  | South India  | Mumbai  | India  | westindia
+West US  | N/A  | East US  | California  | United States  | westus
+West US 2  | 3  | West Central US  | Washington  | United States  | westus2
+West US 3  | 3  | East US  | Phoenix  | United States  | westus3
+
+Brazil Southeast  | N/A  | Brazil South  | Rio  | Brazil  | brazilsoutheast
+Canada Central  | 3  | Canada East  | Toronto  | Canada  | canadacentral
+Canada East  | N/A  | Canada Central  | Quebec  | Canada  | canadaeast
+Central US  | 3  | East US 2  | Iowa  | United States  | centralus
+Chile Central  | 3  | N/A  | Santiago  | Chile  | chilecentral
+East US  | 3  | West US  | Virginia  | United States  | eastus
+East US 2  | 4 Image: Icon that shows that availability zone support in this region is coming soon.  | Central US  | Virginia  | United States  | eastus2
+Mexico Central  | 3  | N/A  | Querétaro State  | Mexico  | mexicocentral
+North Central US  | 3 Image: Icon that shows that availability zone support in this region is coming soon.  | South Central US  | Illinois  | United States  | northcentralus
+South Central US  | 3  | North Central US  | Texas  | United States  | southcentralus
+West Central US  | N/A  | West US 2  | Wyoming  | United States  | westcentralus
+West US  | N/A  | East US  | California  | United States  | westus
+West US 2  | 3  | West Central US  | Washington  | United States  | westus2
+West US 3  | 3  | East US  | Phoenix  | United States  | westus3
+
+--------------------------------------------------------------------------------
+Container Insights Region Mappings - Azure Monitor | Microsoft Learn (https://learn.microsoft.com/en-us/azure/azure-monitor/containers/container-insights-region-mapping)
+citeturn64search3 [wordlim: 200] Crawled: 2 weeks ago;   2. ... The tables in the following sections specify region mappings supported for Container insights, Log Analytics workspace, and custom metrics. ... Azure Kubernetes Service (AKS)  | All regions supported by AKS, as specified in Azure products by region. ... WestCentralUS  | EastUS ... For a list of regions where Azure Monitor workspace is available, see Region availability of Azure Monitor workspace.
+
+# Regions supported by Container insights
+
+Feedback
+
+Summarize this article for me
+
+## In this article
+
+  1. Kubernetes cluster region
+  2. Log Analytics workspace region
+  3. Azure Monitor workspace regions
+  4. Related content
+
+The tables in the following sections specify region mappings supported for Container insights, Log Analytics workspace, and custom metrics.
+
+## Kubernetes cluster region
+
+The following table specifies the regions that are supported for Container insights on various platforms.
+
+Expand table
+
+Platform  | Regions
+--- | ---
+Azure Kubernetes Service (AKS)  | All regions supported by AKS, as specified in Azure products by region.
+Azure Arc-enabled Kubernetes  | All public regions supported by Azure Arc-enabled Kubernetes, as specified in Azure products by region.
+
+## Log Analytics workspace region
+
+The Log Analytics workspace that supports Container insights must be in the same region, except for the regions listed in the following table.
+
+Cluster region  | Log Analytics Workspace region
+--- | ---
+Africa  | 
+SouthAfricaNorth  | WestEurope
+SouthAfricaWest  | WestEurope
+Australia  | 
+AustraliaCentral2  | AustraliaCentral
+Brazil  | 
+BrazilSouth  | SouthCentralUS
+Canada  | 
+CanadaEast  | CanadaCentral
+Europe  | 
+FranceSouth  | FranceCentral
+UKWest  | UKSouth
+India  | 
+SouthIndia  | CentralIndia
+WestIndia  | CentralIndia
+Japan  | 
+JapanWest  | JapanEast
+Korea  | 
+KoreaSouth  | KoreaCentral
+US  | 
+WestCentralUS  | EastUS
+
+## Azure Monitor workspace regions
+
+For a list of regions where Azure Monitor workspace is available, see Region availability of Azure Monitor workspace.
+
+## Related content
+
+  * To understand the requirements and available methods for monitoring your cluster, see Enable monitoring for Kubernetes clusters.
+
+  * Last updated on 01/28/2026--------------------------------------------------------------------------------
+Azure Monitor workspace overview - Azure Monitor | Microsoft Learn (https://learn.microsoft.com/en-Us/azure/azure-monitor/essentials/azure-monitor-workspace-overview?tabs=azure-portal)
+citeturn64search4 [wordlim: 200] Crawled: yesterday; Log Analytics workspaces contain logs and metrics data from multiple Azure resources, whereas Azure Monitor workspaces currently contain only metrics related to Prometheus. ... This limit can be increased by opening a support ticket. ...   * Compliance or regulatory requirements that mandate storage of data in specific regions: Create an Azure Monitor workspace per region as per requirements. ...   * Data is encrypted at rest using a Microsoft-managed key ... Australia  | Australia Central, Australia East, Australia Southeast, Australia Central 2 ... US  | Central US, East US, East US 2, South Central US, West Central US, West US, West US 2, West US 3
+Several considerations exist specific to data stored in the Azure Monitor Workspace:
+
+  * Data is physically stored in the same region that the Azure Monitor Workspace is provisioned in
+  * Data is encrypted at rest using a Microsoft-managed key
+  * Data is retained for 18 months
+
+The use of Azure Monitor to manage and host Prometheus is intended for storing information about the service health of customer machines and applications. It's not intended for storing any personal data. Ensure that you don't send any sensitive information, PII/EUII, such as usernames and credit card numbers, into Azure Monitor-hosted Prometheus fields like metric names, label names, or label values.
+
+## Regional availability
+
+When you create a new Azure Monitor workspace, you provide a region which sets the location in which the data is stored. Currently Azure Monitor Workspace is available in the below regions.
+
+Expand table
+
+Geo  | Regions
+--- | ---
+Africa  | South Africa North
+Asia Pacific  | East Asia, Southeast Asia
+Australia  | Australia Central, Australia East, Australia Southeast, Australia Central 2
+Brazil  | Brazil South, Brazil Southeast
+Canada  | Canada Central, Canada East
+Chile  | Chile Central
+China  | China North 3 (Preview)^{1}, China East 3 (Preview)^{1}
+Europe  | North Europe, West Europe
+France  | France Central, France South
+Germany  | Germany West Central
+India  | Central India, South India
+Indonesia  | Indonesia Central
+Israel  | Israel Central
+Italy  | Italy North
+Japan  | Japan East, Japan West
+Korea  | Korea Central, Korea South
+Malaysia  | Malaysia West
+Mexico  | Mexico Central
+New Zealand  | New Zealand North
+Norway  | Norway East, Norway West
+Poland  | Poland Central
+Spain  | Spain Central
+Sweden  | Sweden South, Sweden Central
+Switzerland  | Switzerland North, Switzerland West
+Taiwan  | Taiwan North, Taiwan North West
+UAE  | UAE North, UAE Central
+UK  | UK South, UK West
+US  | Central US, East US, East US 2, South Central US, West Central US, West US, West US 2, West US 3
+US Government  | USGov Virginia^{1}, USGov Texas^{1}
+
+^{1} Managed Prometheus for Arc-Enabled Kubernetes clusters is still in preview in these regions.
+--------------------------------------------------------------------------------
+Azure Container Apps express overview | Microsoft Learn (https://learn.microsoft.com/nb-no/azure/container-apps/express-overview)
+citeturn64search5 [wordlim: 200] Crawled: yesterday; Default ingress domain  | ✅ Supported: Microsoft-managed `azurecontainerapps.io` domain ... Regional availability  | ✅ Supported in the regions listed below ... Express doesn't support the following capabilities: ... ## Region availability ...   * East US 2 EUAP ...   * Germany West Central ... Deploy an express container app using the Azure CLI
+## Region availability
+
+Express is available in the following Azure regions:
+
+  * Australia East
+  * Austria East
+  * Brazil South
+  * Canada Central
+  * Canada East
+  * Central India
+  * Central US
+  * Chile Central
+  * East Asia
+  * East US
+  * East US 2
+  * East US 2 EUAP
+  * France Central
+  * Germany West Central
+  * Indonesia Central
+  * Italy North
+  * Japan East
+  * Japan West
+  * Jio India Central
+  * Korea Central
+  * Malaysia West
+  * Mexico Central
+  * New Zealand North
+  * North Central US
+  * North Europe
+  * Norway East
+  * Poland Central
+  * South Africa North
+  * South Central US
+  * South India
+  * Southeast Asia
+  * Spain Central
+  * Sweden Central
+  * Switzerland North
+  * Switzerland West
+  * UAE North
+  * UK South
+  * UK West
+  * West Central US
+  * West Europe
+  * West US
+  * West US 2
+  * West US 3
+
+## Next steps
+
+Deploy an express container app using the Azure CLI
+
+  * Last updated on 23.09.2026--------------------------------------------------------------------------------
+Ingest events from Azure Event Hubs into Azure Monitor Logs (Preview) - Azure Monitor | Microsoft Learn (https://learn.microsoft.com/da-dk/azure/azure-monitor/logs/ingest-logs-event-hub)
+citeturn64search6 [wordlim: 200] Crawled: 4 days ago; ## Supported regionsAzure Monitor currently supports ingestion from Event Hubs in these regions: ... East US 2  | UK South  |  |  | Japan East ... West US  | West Europe  |  |  | Korea Central ... The Log Analytics workspace can be in any region, but the Data Collection Rule (DCR) and Data Collection Endpoint (DCE) must be in the same region as the Log Analytics workspace. ... Ingest data into custom tables or Azure tables that support the Logs ingestion API.
+## Supported regions
+
+Azure Monitor currently supports ingestion from Event Hubs in these regions:
+
+Udvid tabel
+
+Americas  | Europe  | Middle East  | Africa  | Asia Pacific
+--- | --- | --- | --- | ---
+Brazil South  | France Central  | UAE North  | South Africa North  | Australia Central
+Brazil Southeast  | North Europe  |  |  | Australia East
+Canada Central  | Norway East  |  |  | Australia Southeast
+Canada East  | Switzerland North  |  |  | Central India
+East US  | Switzerland West  |  |  | East Asia
+East US 2  | UK South  |  |  | Japan East
+South Central US  | UK West  |  |  | Jio India West
+West US  | West Europe  |  |  | Korea Central
+West US 3  |  |  |  | Southeast Asia
+
+You need to create your Data Collection Rule Association (DCRA) in the same region as the Event Hub. The Log Analytics workspace can be in any region, but the Data Collection Rule (DCR) and Data Collection Endpoint (DCE) must be in the same region as the Log Analytics workspace.
+
+For minimum latency, we recommend placing all resources in the same region.
+--------------------------------------------------------------------------------
+Unable to create log analytics account in East US EUAP Region - Microsoft Q&A (https://learn.microsoft.com/en-us/answers/questions/5813835/unable-to-create-log-analytics-account-in-east-us)
+citeturn64search7 [wordlim: 200] Published: 7 months ago; Crawled: 2 months ago; East US EUAP regions don’t support creating a Storage Discovery workspace or similar monitoring workspaces directly in EUAP. ... Create the Log Analytics workspace in a supported, non‑EUAP region (for example, a standard East US region that’s available to the tenant). ... Enhance resilience by replicating your Log Analytics workspace across regions - Azure Monitor | Microsoft Learn
+The same pattern applies: keep the workspace in a supported region and use it to collect and analyze data from EUAP‑hosted resources.
+
+If no suitable non‑EUAP region is available due to regional access policies, follow the region access/optimization guidance and open a support request in the Azure portal to request access to an appropriate region.
+
+* * *
+
+References:
+
+  * Frequently Asked Questions (FAQs) for Azure Storage Discovery
+  * Relocate Azure Monitor - Log Analytics workspace to another region
+  * Resolve location ineligible errors
+  * Region optimization for Microsoft Azure customers
+
+
+  1. Bharath Y P •
+
+[Button: Follow ]
+
+10,355 Reputation points • Microsoft External Staff • Moderator
+
+Mar 9, 2026, 6:28 AM
+
+Hello Suraj Pudale, you’re seeing this because East US EUAP is an EUAP (Early Update Access Program), and Log Analytics workspace creation is not supported in EUAP regions. This is by design, not a permissions or AME-tenant issue.
+
+You can create the Log Analytics workspace in a non‑EUAP (standard) region:
+
+     * For example: East US, East US 2, or any other region available to your AME tenant.
+     * EUAP regions are not intended to host monitoring control‑plane resources like Log Analytics workspaces.
+
+Resources running in East US EUAP can still send logs and metrics to a Log Analytics workspace created in a standard region. This includes: Diagnostic settings, Azure Monitor Agent (AMA) and VM Insights / platform logs. Cross‑region ingestion is a supported pattern for EUAP scenarios.
+
+Log Analytics workspace overview - Azure Monitor | Microsoft Learn
+
+Enhance resilience by replicating your Log Analytics workspace across regions - Azure Monitor | Microsoft Learn--------------------------------------------------------------------------------
+Azure Container Apps express - Frequently asked questions | Microsoft Learn (https://learn.microsoft.com/en-us/azure/container-apps/express-faq)
+citeturn64search8 [wordlim: 200] Crawled: 2 weeks ago; You can create an express app using the Azure CLI or the new Azure Container Apps portal at containerapps.azure.com. ...   * East Asia  * West Central US ... If you receive an `ExpressEnvironmentNotAvailableInRegion` error, that region isn't yet supported. ... Express doesn't yet support the full Azure Container Apps feature set.
+## Regions
+
+### Which Azure regions support express?
+
+Express is available in the following regions during preview:
+
+  * East Asia
+  * West Central US
+
+Region availability is expanding throughout the preview period.
+
+### Why can't I create an express environment in my preferred region?
+
+During preview, express is available in a specific set of regions. The portal and CLI may display regions where express isn't yet supported. If you receive an `ExpressEnvironmentNotAvailableInRegion` error, that region isn't yet supported. Region availability is expanding as the preview progresses.
+
+## Pricing and billing
+
+### How is express billed?
+
+Express uses the existing Azure Container Apps consumption pricing model: per-second vCPU and memory billing with scale-to-zero. There's no environment provisioning fee. You benefit from the same free grant that applies to consumption workloads today. Express is the most cost-effective way to run web applications and APIs on Azure Container Apps. For detailed pricing, see the Azure Container Apps pricing page.
+--------------------------------------------------------------------------------
+Ingesta de eventos desde Azure Event Hubs en los registros de Azure Monitor (versión preliminar) - Azure Monitor | Microsoft Learn (https://learn.microsoft.com/es-es/azure/azure-monitor/logs/ingest-logs-event-hub)
+citeturn64search9 [wordlim: 200] Published: 2 months ago; Crawled: last month; Azure Monitor actualmente admite la ingestión desde Event Hubs en estas regiones: ... 2  | Sur de Reino Unido  |  |  | Japón Oriental ... El área de trabajo de Log Analytics puede estar en cualquier región, pero la regla de recopilación de datos (DCR) y el punto de conexión de recopilación de datos (DCE) deben estar en la misma región que el área de trabajo de Log Analytics.
+## Regiones compatibles
+
+Azure Monitor actualmente admite la ingestión desde Event Hubs en estas regiones:
+
+Expandir tabla
+
+América  | Europa  | Oriente Medio  | África  | Asia Pacífico
+--- | --- | --- | --- | ---
+Sur de Brasil  | Centro de Francia  | Norte de Emiratos Árabes Unidos  | Norte de Sudáfrica  | Centro de Australia
+Sur de Brasil  | Norte de Europa  |  |  | Este de Australia
+Centro de Canadá  | Este de Noruega  |  |  | Sudeste de Australia
+Este de Canadá  | Norte de Suiza  |  |  | Centro de la India
+Este de EE. UU.  | Oeste de Suiza  |  |  | Este de Asia
+Este de EE. UU. 2  | Sur de Reino Unido  |  |  | Japón Oriental
+Centro-sur de EE. UU.  | Oeste de Reino Unido  |  |  | JIO del Oeste de la India
+Oeste de EE. UU.  | Oeste de Europa  |  |  | Centro de Corea del Sur
+Oeste de EE. UU. 3  |  |  |  | Sudeste de Asia
+
+Debe crear la Asociación de reglas de recopilación de datos (DCRA) en la misma región que el centro de eventos. El área de trabajo de Log Analytics puede estar en cualquier región, pero la regla de recopilación de datos (DCR) y el punto de conexión de recopilación de datos (DCE) deben estar en la misma región que el área de trabajo de Log Analytics.
+--------------------------------------------------------------------------------
+When will Azure Monitor Investigator be supported in all regions? - Microsoft Q&A (https://learn.microsoft.com/en-us/answers/questions/5507793/when-will-azure-monitor-investigator-be-supported)
+citeturn64search10 [wordlim: 200] Published: 1.2 years ago; Crawled: last month; # When will Azure Monitor Investigator be supported in all regions? ... I initially was using it in SouthCentralUS, but now i have a message that "No registered resource provider found for location 'southcentralus' and API version '2025-03-01-preview' for type 'issue ... eastus2euap ... https://learn.microsoft.com/en-us/azure/azure-monitor/aiops/aiops-issue-and-investigation-overview#regionsMicrosoft will update the public documentation once the region becomes available.
+--------------------------------------------------------------------------------
+Lista de regiões de Azure | Microsoft Learn (https://learn.microsoft.com/pt-br/azure/reliability/regions-list)
+citeturn64search11 [wordlim: 200] Crawled: 2 weeks ago; Para solicitar acesso a uma região restrita para sua assinatura de Azure, consulte Azure processo de solicitação de acesso à região. ... Leste dos EUA 2  | Image: Yes  | EUA Central  | Virgínia  | Estados Unidos  | eastus2
+--------------------------------------------------------------------------------
+Many Azure regions are paired with another region within the same geography; together they make a regional pair in a geography. These regions are typically hundreds of kilometers apart within the same geography. This pairing provides geographic separation within a country, and provides long-distance disaster recovery (DR) within a country. Additional details are available in *Business continuity and disaster recovery (BCDR): Azure Paired Regions*. (https://azure.microsoft.com/mediahandler/files/resourcefiles/achieving-compliant-data-residency-and-security-with-azure/Enabling_Data_Residency_and_Data_Protection_in_Microsoft_Azure_Regions.pdf)
+citeturn64search12 [wordlim: 200] Published: 6.2 years ago; Azure also has geographies with single regions; for example, Qatar Central is a single region in the Qatar geography.The Qatar geography still provides data residency, although disaster recovery has to be managed either within the single region, or as out-of-country DR (through connecting to other Azure regions). ... <td>East US - West US<br>East US 2 - Central US<br>North Central US - South Central US<br>West US 2 - West Central US</td> ... <td>North Europe - West Europe</td> ... <td>China (dedicated sovereign cloud with special data residency)</td>
+--------------------------------------------------------------------------------
+<table id="e1"> (https://azure.microsoft.com/mediahandler/files/resourcefiles/achieving-compliant-data-residency-and-security-with-azure/Enabling_Data_Residency_and_Data_Protection_in_Azure_Regions-2021.pdf)
+citeturn64search13 [wordlim: 200] Published: 5.5 years ago; <tr><th>Azure geography and data residency boundary</th><th>Azure regions</th></tr> ... <tr><td>United States</td><td>Central US<br>East US<br>East US 2<br>East US 3 (announced)<br>North Central US<br>South Central US<br>West Central US<br>West US<br>West US 2<br>West US 3 (announced)</td></tr> ... - Disaster recovery via multiple zones in a region, a second region in the Azure geo, or pairing to a region outside of an Azure geo
+--------------------------------------------------------------------------------
+Data Residency, Data Sovereignty, and Compliance in the Microsoft Cloud (https://azure.microsoft.com/mediahandler/files/resourcefiles/data-residency-data-sovereignty-and-compliance-in-the-microsoft-cloud/Data_Residency_Data_Sovereignty_Compliance_Microsoft_Cloud.pdf)
+citeturn64search14 [wordlim: 200] Published: 4.2 years ago; The physical component comprises over 200 physical datacenters (each datacenter houses a set of networked computer servers) organized into regions and geographies, which are then linked by one of the largest interconnected networks on the planet. ... <tr><td>200+</td><td>Datacenters</td><td>60+</td><td>Datacenter regions</td><td>35+</td><td>Countries with data</td><td>● Available region</td><td>○ Announced region</td></tr> ... Labeled regions include: West US 2, West Central US, West US, West US 3, Central US, East US 2, East US, East US 3, Mexico Central, Canada East, Canada Central, North Central US, Belgium West Europe, UK South, UK West, France Central, Spain Central, Norway East, Finland, Sweden Central, Denmark East, Poland Central, Germany West Central, Switzerland North, Italy North, Greece Central, Israel Central, Qatar Central, UAE North, Central India, West India, South India, Malaysia West, Southeast Asia, Indonesia Central, China North, China North 2, China East, China East 2, East Asia, Korea Central, Korea South, Japan East, Japan West, Taiwan North, South Africa North, Brazil South, Chile Central, Australia East, Australia Central, Australia Southeast, New Zealand North.
+--------------------------------------------------------------------------------
+Microsoft Cloud (https://learn.microsoft.com/en-us/microsoft-365/downloads/msft_cloud_architecture_networking.pdf?view=o365-worldwide)
+citeturn64search15 [wordlim: 200] Published: 6 months ago; Example for three geographically-distributed web apps; diagram showing “Users” on left with arrows to “Microsoft Azure” on right, including “Traffic Manager” and three “Web app” entries labeled “East US”, “West Europe”, “East Asia”; numbered callouts “1” and “2”.
+

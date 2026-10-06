@@ -1,0 +1,908 @@
+{
+  "result": "PASS",
+  "index_rows": 180,
+  "local_reference_hashes_verified": 180,
+  "method": "Each semicolon-delimited local artifact read and independently SHA-256 hashed; remote URLs skipped",
+  "references": [
+    {
+      "evidence_id": "E-BASELINE",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/baseline-commands.json",
+      "sha256": "1328ff541054d88fd764f6615108ae22aa24aecded350293b671c0993dd93034"
+    },
+    {
+      "evidence_id": "E-PROTECTION",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/protected-before-state.json",
+      "sha256": "ecf98573c74ee11b4f33036195901bb6c7f0137ffe5f6c249d0bb251bb4fde60"
+    },
+    {
+      "evidence_id": "E-ENDPOINT",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/baseline.md",
+      "sha256": "c876535e9d95930839a44bda4897c3677e8e8624733d7ee60c3361270284f56e"
+    },
+    {
+      "evidence_id": "E-DECISIONS",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/versions/decisions-345e12bbe0560034c9fee9149ffc063e839900cdf6c9ac5a2f9499cd92a14a18.md",
+      "sha256": "345e12bbe0560034c9fee9149ffc063e839900cdf6c9ac5a2f9499cd92a14a18"
+    },
+    {
+      "evidence_id": "E-ACCESS",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/versions/access-window-3e1079135db1a741fc1d49ddc77d7ee8ae5555e2e43d2872a47105be2923904b.md",
+      "sha256": "3e1079135db1a741fc1d49ddc77d7ee8ae5555e2e43d2872a47105be2923904b"
+    },
+    {
+      "evidence_id": "E-PREREQ",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/prerequisites-initial.json",
+      "sha256": "5570157c29c4cc4fb4307fda7f6e1a537961c35f47aa4b13c077b24f1c202d95"
+    },
+    {
+      "evidence_id": "E-AZCLI",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/azure-cli-verification.json",
+      "sha256": "c4b97e3ca3f73e45f9c8a563bbe2b7d379411aa6509b7281969dc6c7569ff136"
+    },
+    {
+      "evidence_id": "E-AZAUTH",
+      "local_reference": "/Users/lowell/Projects/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-1/azure-auth-root-report.json",
+      "sha256": "f24a634e6b9f9e6a4fd5b709c8734f05327a435c85c6e918ad33c1b504adffc7"
+    },
+    {
+      "evidence_id": "E-OWNERHOST",
+      "local_reference": "/Users/lowell/Projects/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-1/owner-binding-host-direction.json",
+      "sha256": "ec6515805f420ebbef09e2607f7d8a9e5fd90ad4bce0984608cc780d8a0d2592"
+    },
+    {
+      "evidence_id": "E-VMINVENTORY",
+      "local_reference": "/Users/lowell/Projects/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-1/azure-vm-inventory-root-report.json",
+      "sha256": "05755f4b56f0f9c0b0b0dc75f7ddbd74c86615bad782d83ef338f503df6c64d1"
+    },
+    {
+      "evidence_id": "E-TEMPPROBE",
+      "local_reference": "/Users/lowell/Projects/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-1/temporary-probe-acceptance-root-report.json",
+      "sha256": "4480a66bbb4dddf9b61ea47aa04ba5e2020e7df5214d3307f9bc29dc944b89a9"
+    },
+    {
+      "evidence_id": "E-SECWINDOW",
+      "local_reference": "/Users/lowell/Projects/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-1/sec-window-owner-acceptance.json",
+      "sha256": "497a5ebe7685bf8993fff0ea7fa9538246f0ecfa67a7c3751bfef29d1c25274e"
+    },
+    {
+      "evidence_id": "E-TEMPACCEPTANCE",
+      "local_reference": "/Users/lowell/Projects/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-1/probe-setup/acceptance.json",
+      "sha256": "5d9e9948897fc4f679b2d2c56ac4c5655af5dd20cf457e4414c7480c3032b048"
+    },
+    {
+      "evidence_id": "SEC-0001",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0001.body",
+      "sha256": "e658f0319201d29647e0d35e1416a2c9e5516f798fc692a0a0e03c842dca09c0"
+    },
+    {
+      "evidence_id": "SEC-0002",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0002.body",
+      "sha256": "323453899790aad4c2b6a359cc16e1fe42c0bbe20ef0470359652fb173e75dc2"
+    },
+    {
+      "evidence_id": "SEC-0003",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0003.body",
+      "sha256": "67dfc9c726f4d77949cb93bf270b16664ed0b4f4026b8cec73e08e27104f011c"
+    },
+    {
+      "evidence_id": "SEC-0004",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0004.body",
+      "sha256": "a8b757830dbe2d5ab5dd9ec5245eb9781b21a1822b1aa27bda9095bcb830492e"
+    },
+    {
+      "evidence_id": "SEC-0005",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0005.body",
+      "sha256": "608d49a74052d2a026bac074d02177c6b4723ee4bc2cb470c47671b2f9baac56"
+    },
+    {
+      "evidence_id": "SEC-0006",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0006.body",
+      "sha256": "e140ca707f9cea019f15dbefc2dfd349c1e02da6d93b043a8953d6e3402771fa"
+    },
+    {
+      "evidence_id": "SEC-0007",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0007.body",
+      "sha256": "89fd1ea3ec672e23ee4e3bc3873f359df52b44132960d400e93aa52913fd6425"
+    },
+    {
+      "evidence_id": "SEC-0008",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0008.body",
+      "sha256": "d68dafeed9261fbaf50e34479f529555f6d48e7c46ed77dcdb13315b0eec8491"
+    },
+    {
+      "evidence_id": "SEC-0009",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0009.body",
+      "sha256": "c3382240ca2e4fe88d879f2faa4c8ec6f5b87328bf5bceb157c31c7cad3c9e8c"
+    },
+    {
+      "evidence_id": "SEC-0010",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0010.body",
+      "sha256": "4f0c525237defeadb50745cdf1e43b01df0b2537e38bcbaaf9ac11f563743de7"
+    },
+    {
+      "evidence_id": "SEC-0011",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0011.body",
+      "sha256": "86ea5b5f9ec1248503ccb9a210f0e0bbc4a231f9159322f664ce82627e928de8"
+    },
+    {
+      "evidence_id": "SEC-0012",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0012.body",
+      "sha256": "26538ab74436c5574f8388d3bb9c9a527f391a08ff52403cef2de1b19e5393d4"
+    },
+    {
+      "evidence_id": "SEC-0013",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0013.body",
+      "sha256": "6eac023a8680f38e2402c0e4ddc1fa0aa0338de7040d392b116bb87c2d8bd59a"
+    },
+    {
+      "evidence_id": "SEC-0014",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0014.body",
+      "sha256": "cc8dd7d6bcbb50b3f626c3ddc44b60b91d1c2e62e9500d8242f99044f1fc17b2"
+    },
+    {
+      "evidence_id": "SEC-0015",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0015.body",
+      "sha256": "611bd6e656440c701e671638df30ee60d88bb1604107da16ea80335ee61bd589"
+    },
+    {
+      "evidence_id": "SEC-0016",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0016.body",
+      "sha256": "12f96eff44ad923a2346617dfcafd8796a8c12ef8b2cc8f32386a0698bb4796a"
+    },
+    {
+      "evidence_id": "SEC-0017",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0017.body",
+      "sha256": "6eae48f6f52ed05195e3b5ca0672736df4b7da83d4ae4362903ef428498a3b71"
+    },
+    {
+      "evidence_id": "SEC-0018",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0018.body",
+      "sha256": "0b1b4190e14f93839aaddd0016daabf951eb3d12ba7f6778f76473b88ec4eef1"
+    },
+    {
+      "evidence_id": "SEC-0019",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0019.body",
+      "sha256": "12855c2495f6633a5c9c11e4267ecc4f46e51682f6eb9110ff31d36be1f61d6c"
+    },
+    {
+      "evidence_id": "SEC-0020",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0020.body",
+      "sha256": "2f9b998a452414cf0cbecf040c34e8291c918cb6e91c1cfea1c2aa9d681c64fa"
+    },
+    {
+      "evidence_id": "SEC-0021",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0021.body",
+      "sha256": "b24f0e06690dde838f83b631746ad986ca0238cda104dc4c3a548239a1d9fef0"
+    },
+    {
+      "evidence_id": "SEC-0022",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0022.body",
+      "sha256": "e54f525c86a169fafcb0fdcf7e5b91a9204aa5e5e04be8bb234aa9a5a2e19f74"
+    },
+    {
+      "evidence_id": "SEC-0023",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0023.body",
+      "sha256": "9fd81d0dbc7e83cfc766d86c5df9fa3b68df2cbdd743f7d210eef883ebf344ea"
+    },
+    {
+      "evidence_id": "SEC-0024",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0024.body",
+      "sha256": "d7173da6aeb79eeb15eafb6e0391a117009508122e32814700a5caa39d68ab98"
+    },
+    {
+      "evidence_id": "SEC-0025",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0025.body",
+      "sha256": "e80de3cb3473f8fc8dd4eb1d8fc52cd1c3f8455bde611398ccfc94d9274da4aa"
+    },
+    {
+      "evidence_id": "SEC-0026",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0026.body",
+      "sha256": "efef14fcb7ba1fbd5a9721a90a1fec31df6a26276e3b44936c4e57d0517bb76b"
+    },
+    {
+      "evidence_id": "SEC-0027",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0027.body",
+      "sha256": "69e1b884084e126a129923ebbd9f97dd92c1f50d8477a66c43ccd84783f7b7ec"
+    },
+    {
+      "evidence_id": "SEC-0028",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0028.body",
+      "sha256": "f67b224609da652a129018d9858e6650ee92fdfa5729b27c0f5007f19b0d9c27"
+    },
+    {
+      "evidence_id": "SEC-0029",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0029.body",
+      "sha256": "0667a6e42e432ff911ff4181669d2a9252c8dfbe37206844a672dfc4c5bdcaa4"
+    },
+    {
+      "evidence_id": "SEC-0030",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0030.body",
+      "sha256": "817ab528f6a6e8b8379e8b4a9d08284c6b790c9ea4516525dfa8c81f31a5775a"
+    },
+    {
+      "evidence_id": "SEC-0031",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0031.body",
+      "sha256": "019abb197d64adb4306664ef781361485f7a11e171d743f38024cbaec4693d9f"
+    },
+    {
+      "evidence_id": "SEC-0032",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0032.body",
+      "sha256": "70e943866d63ad56945598dd996f4f1ec481939722c75fe91d2b3d45b79debde"
+    },
+    {
+      "evidence_id": "SEC-0033",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0033.body",
+      "sha256": "a508699e32c7af60652be5f6e13bdf05f7f2673b0d4d0c62f97902358cb59d2f"
+    },
+    {
+      "evidence_id": "SEC-0034",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0034.body",
+      "sha256": "f8383156130ae1ec7a272e8238468ec4b193b22619ca22799af14172442f51ca"
+    },
+    {
+      "evidence_id": "SEC-0035",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0035.body",
+      "sha256": "f01ec5f80b5e1c4d0c7d660e4bb9966234ba543b85b2e2b54c710f7bf86d36ff"
+    },
+    {
+      "evidence_id": "SEC-0036",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0036.body",
+      "sha256": "0d910ed789505fdd17d8ece396ade2da273fd95067e3dcdfe452210c52b122e9"
+    },
+    {
+      "evidence_id": "SEC-0037",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0037.body",
+      "sha256": "edbebd1041688be5af8d4e6a43fa54af3a405729acd44ea0655b505852c0f5ef"
+    },
+    {
+      "evidence_id": "SEC-0038",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0038.body",
+      "sha256": "4e0f6912893f845f41ad3e0795003584b16c733e6349c63bb48ed7246a1f0f42"
+    },
+    {
+      "evidence_id": "SEC-0039",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0039.body",
+      "sha256": "5b8ee0819575b908127492a5d6e19f76583306c0e2955984cf35eeb82626391a"
+    },
+    {
+      "evidence_id": "SEC-0040",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0040.body",
+      "sha256": "750fcf9ed908af8ee5eea54f89538125c806be5886062dbdd1e45ba5d393426f"
+    },
+    {
+      "evidence_id": "SEC-0041",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0041.body",
+      "sha256": "8e16cf6c0b1174ed2ef02448b74e3cfb9e4eca29b398d512613b42f788482eea"
+    },
+    {
+      "evidence_id": "SEC-0042",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0042.body",
+      "sha256": "9abf01b18ec594c4dcfdf29d671c4b8cf94bfdf5a85624590601842179831335"
+    },
+    {
+      "evidence_id": "SEC-0043",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0043.body",
+      "sha256": "f65d367cb96bd58468a918c088d6c372ff1700753ec649b33c8379e4c7fd58dc"
+    },
+    {
+      "evidence_id": "SEC-0044",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0044.body",
+      "sha256": "978fe9a25a4c9aa5b334123f4396235d9c59f90ae64bfe90bd18c980c2bf8ba9"
+    },
+    {
+      "evidence_id": "SEC-0045",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0045.body",
+      "sha256": "abfae07370d834ae9df1e6f21c5e98d3c30bdd3c1c39daee80988f2122cb23ca"
+    },
+    {
+      "evidence_id": "SEC-0046",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0046.body",
+      "sha256": "b8687a982056a07e992c1d94dd2ac250dfd0d5894515f1a229a0845069cb2e77"
+    },
+    {
+      "evidence_id": "SEC-0047",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0047.body",
+      "sha256": "932cd42fd0d7851449b16b94bee40081241d58aa32e2d92284497cf8ca62ce37"
+    },
+    {
+      "evidence_id": "SEC-0048",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0048.body",
+      "sha256": "0f962004a5f9d320d074c5180aa78c2b954b55e72e24623657df3992e553b986"
+    },
+    {
+      "evidence_id": "SEC-0049",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0049.body",
+      "sha256": "1f70c97b40743ade02d860ce59c117c2378a9327d78489fbbbb109b7ffe8a8f7"
+    },
+    {
+      "evidence_id": "SEC-0050",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0050.body",
+      "sha256": "661916c73d40d1585e14595ee747691ad75680b6bcb05db99acf557b4b7c8168"
+    },
+    {
+      "evidence_id": "SEC-0051",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0051.body",
+      "sha256": "45d6fe4156764be474e339d1bd20ce91c768f1569dd41c34df724983d2b3c535"
+    },
+    {
+      "evidence_id": "SEC-0052",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0052.body",
+      "sha256": "aa1bae31417f8e62c67f40cbe224dc28630b54843d6d0a41cc43a80db7213e76"
+    },
+    {
+      "evidence_id": "SEC-0053",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0053.body",
+      "sha256": "36200168d82cfb37206476362f7a916f0a4b62136039d622e7aa4b0ddf53e0b3"
+    },
+    {
+      "evidence_id": "SEC-0054",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0054.body",
+      "sha256": "5ff861d1c3d9ec057a33a329eb11c9d76ef6192a000618d54708f24bc30265da"
+    },
+    {
+      "evidence_id": "SEC-0055",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0055.body",
+      "sha256": "c90bc90d02027327e20ce17a3b38fd4ab008742462ca8ae2b2e839906118a0c7"
+    },
+    {
+      "evidence_id": "SEC-0056",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0056.body",
+      "sha256": "0a7ccda808ea62f868d742ffe1a0c607238e174dd570d045436d6fe1d39bc8f5"
+    },
+    {
+      "evidence_id": "SEC-0057",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0057.body",
+      "sha256": "90bbab0130f5fcaaa0b6c4d89ab56329bc42015eaaf972739c83454072ea4410"
+    },
+    {
+      "evidence_id": "SEC-0058",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0058.body",
+      "sha256": "703297ee6ed30aec521cf2ba199ccb0bec656a73ad1aa4c569541b89a032fe74"
+    },
+    {
+      "evidence_id": "SEC-0059",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0059.body",
+      "sha256": "425ad2f288fd451729b63f8dd9d908310fa2598616ef42ad1061f99437bf30cc"
+    },
+    {
+      "evidence_id": "SEC-0060",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0060.body",
+      "sha256": "686b916437a61a5e4457f00db5f66e9cd56b2b83ac03b26342d2e86b010379b2"
+    },
+    {
+      "evidence_id": "SEC-0061",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0061.body",
+      "sha256": "211fdec59103d158c2759140661c392363413ea7e4c88b60a8fe8ef938a99ef4"
+    },
+    {
+      "evidence_id": "SEC-0062",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0062.body",
+      "sha256": "f0347ff990a6d1f97da6525cb69d5732329cf4d311e2639566f28f3ccb91b3ad"
+    },
+    {
+      "evidence_id": "SEC-0063",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0063.body",
+      "sha256": "08d94e32ea825f5bc56ecb74b8cbb1c68e33c25a7caede129f8687c3e6790d7b"
+    },
+    {
+      "evidence_id": "SEC-0064",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0064.body",
+      "sha256": "f42acc20de098447ebad7105594d24aebfd9dbe85485e4b651dc6df53ac7fc5e"
+    },
+    {
+      "evidence_id": "SEC-0065",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0065.body",
+      "sha256": "935c588571246deb9ca155d31882ddedf70dfd3affbebc6143be1f8459a5d526"
+    },
+    {
+      "evidence_id": "SEC-0066",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0066.body",
+      "sha256": "31f67f111965632cdece90ee3a0e13b02198cf5b9229b70769598c92188905d4"
+    },
+    {
+      "evidence_id": "SEC-0067",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0067.body",
+      "sha256": "384bfafd48d2af67d1c9ceb7489db737244e3d3a3ecc90853f1a02d60f5c3b45"
+    },
+    {
+      "evidence_id": "SEC-0068",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0068.body",
+      "sha256": "83455c7b859dd8c88bb7e8199e0b9073bd6d809fa14e70da28d77ae6fdf00a33"
+    },
+    {
+      "evidence_id": "SEC-0069",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0069.body",
+      "sha256": "c0699bbd220c881d16e6ae12dc7efc828c40f6ae776bb3d6c24fd39f96502723"
+    },
+    {
+      "evidence_id": "SEC-0070",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0070.body",
+      "sha256": "bbad2e657d1976829f5dbe188ed769fc9706d614e247193d457e87b1d64e338e"
+    },
+    {
+      "evidence_id": "SEC-0071",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0071.body",
+      "sha256": "0e8384abdd2a21b86e50524a7a59a532635986e9a43c95d835f7576ffe50265f"
+    },
+    {
+      "evidence_id": "SEC-0072",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0072.body",
+      "sha256": "182e4a0d1ad0caea83ceb12e3afdd34428dddcc35270d9503f2e58084318ba36"
+    },
+    {
+      "evidence_id": "SEC-0073",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0073.body",
+      "sha256": "8ed8293fadf4d6f15463020ed4acef23712a4c4918781c96505e0e6dc1bb2a25"
+    },
+    {
+      "evidence_id": "SEC-0074",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0074.body",
+      "sha256": "c0ce3182268aee1db770a765652d6f081397372f26dfe3505965959247062fdd"
+    },
+    {
+      "evidence_id": "SEC-0075",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0075.body",
+      "sha256": "d4f9f4726f37ff9ac64dcc7d0cae0f1602d4b192cf4b3ecbb4dfe43ffb8632b9"
+    },
+    {
+      "evidence_id": "SEC-0076",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0076.body",
+      "sha256": "367a30d0bdc18120e23d56903651f71ea5620942d9e80d47db0285046b6c02c4"
+    },
+    {
+      "evidence_id": "SEC-0077",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0077.body",
+      "sha256": "8e00afa8cf1de73fa80f0c59cba6259d6992d497cf5c13e2eb7006df45702871"
+    },
+    {
+      "evidence_id": "SEC-0078",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0078.body",
+      "sha256": "15c292c1fb0f71e5e44ca6152ee6f9c8f0468d7c29beef75d536736a6d4829ae"
+    },
+    {
+      "evidence_id": "SEC-0079",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0079.body",
+      "sha256": "e309a15fff4d71b51e6f3ea3e1b7ce794eee28f8a37d88e3c8bcb9c685e756e6"
+    },
+    {
+      "evidence_id": "SEC-0080",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0080.body",
+      "sha256": "595f9b401f8c589f41b011bed7d5f6c2648bff44d14dd0e334c5366f2b25f772"
+    },
+    {
+      "evidence_id": "SEC-0081",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0081.body",
+      "sha256": "892b9c94d410272887218a4e59aa9a3682f34b7ab3bdc842d7a2b6018e29317a"
+    },
+    {
+      "evidence_id": "SEC-0082",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0082.body",
+      "sha256": "74c10478485fe5ccf8740036468d5d6bbed18ddf3d85887ad69a870ce3f5ea4b"
+    },
+    {
+      "evidence_id": "SEC-0083",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0083.body",
+      "sha256": "45546a77ce8d233734f89f0fb3002ec808d9ce9c84ddcb0d158ef510af61aa65"
+    },
+    {
+      "evidence_id": "SEC-0084",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0084.body",
+      "sha256": "ed8c62b5a7087e2b951e29be6801cb4ddc1f5fea931255367e233a502843dc26"
+    },
+    {
+      "evidence_id": "SEC-0085",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0085.body",
+      "sha256": "e3ec6aa82a06ead3ffa7a4d2020653e67ca97a1ad768f227421b4b41c794cc24"
+    },
+    {
+      "evidence_id": "SEC-0086",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0086.body",
+      "sha256": "30bf3acb84a579303ceb0e4bc3526366f70b2e225607f228d4af6729d40b4801"
+    },
+    {
+      "evidence_id": "SEC-0087",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0087.body",
+      "sha256": "50a885e0831f37adc2ef981d9ffe9cb4c732ce6459056f872a2e6168b1cf28ae"
+    },
+    {
+      "evidence_id": "SEC-0088",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0088.body",
+      "sha256": "ed12d9ac7f9a92213275aef20ee80b1c4af41db94087d783bb99622a48b2afcd"
+    },
+    {
+      "evidence_id": "SEC-0089",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0089.body",
+      "sha256": "df157692ebaebb28fa55a630f37da29ad95c347947e8f3ea7fd77e0ab205ce62"
+    },
+    {
+      "evidence_id": "SEC-0090",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0090.body",
+      "sha256": "05a40f80b17ba1e7144eff456fc2b394b0a5964d2d3b5a65c25a90d000382f4f"
+    },
+    {
+      "evidence_id": "SEC-0091",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0091.body",
+      "sha256": "97bc0ce7da0c4d8435cb89cf49d81d0b0786692e1ef060418515745ab9b15afd"
+    },
+    {
+      "evidence_id": "SEC-0092",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0092.body",
+      "sha256": "15c6f6b791698fc293a2c92c5b4f1e0a4400a23fa4c99848d9306b0053daae13"
+    },
+    {
+      "evidence_id": "SEC-0093",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0093.body",
+      "sha256": "8ba35687830773711729cbd7f91da740487e670f42e3c659a6ffb83eb9678994"
+    },
+    {
+      "evidence_id": "SEC-0094",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0094.body",
+      "sha256": "9db5b4b8a568e00b6ca6df7056e5ba595f00e1e7088e226819779e12ccffda2c"
+    },
+    {
+      "evidence_id": "SEC-0095",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0095.body",
+      "sha256": "afbbb2b261cb055705209c685121ce8995d22c030857efbeaf47a4b68b692971"
+    },
+    {
+      "evidence_id": "SEC-0096",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0096.body",
+      "sha256": "0c1642415ba92f8472240e34f54f67cd42447553442443f7af5dc6e39d4a0d93"
+    },
+    {
+      "evidence_id": "SEC-0097",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0097.body",
+      "sha256": "3fd15050a8504833fa18093a4a82bc3305f0b1000161878bb13fb8a0a754f57d"
+    },
+    {
+      "evidence_id": "SEC-0098",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0098.body",
+      "sha256": "82fa213269de1f1d8727b695e59c5fc094ecef8a52d9a8a20d58367da6513e7e"
+    },
+    {
+      "evidence_id": "SEC-0099",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0099.body",
+      "sha256": "7a41351b79fef8ab04e8872393f06ff3aafe63ac58cc42225b4362e2d6aca78d"
+    },
+    {
+      "evidence_id": "SEC-0100",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0100.body",
+      "sha256": "6f9ac0cf5635be082ad16b25522ce1f259a50d2d99bff11368ad4dda31178570"
+    },
+    {
+      "evidence_id": "SEC-0101",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0101.body",
+      "sha256": "375d2ca2c3ea222b80bbadbae87077e051b6543d4b4f839266c2f0188560eccc"
+    },
+    {
+      "evidence_id": "SEC-0102",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0102.body",
+      "sha256": "93ff3c7a8aba8d1aaf8cd302cc8226be0bacdf66c53fbe16acea9fbc1697f7bb"
+    },
+    {
+      "evidence_id": "SEC-0103",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0103.body",
+      "sha256": "d4e1ab2844061e1edea869d83ddb32db75e14d3247deea526f2dceb40f4cdc38"
+    },
+    {
+      "evidence_id": "SEC-0104",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0104.body",
+      "sha256": "127c0245abfd6698302e9dca031d9f8605cbda4017c125954c0b5135aadc9d39"
+    },
+    {
+      "evidence_id": "SEC-0105",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0105.body",
+      "sha256": "3c39bb16ab614af8787df3a91d31a9e6120d06b4840d8f89125945521a6bb60a"
+    },
+    {
+      "evidence_id": "SEC-0106",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0106.body",
+      "sha256": "46c59d109023825f485bf21389b4b412326e88aef9871422fb53a9a724ccdca5"
+    },
+    {
+      "evidence_id": "SEC-0107",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0107.body",
+      "sha256": "47397e6306a0e7d016bc8c085c9ad164b02240a3c8491d0120a362272eb38d2c"
+    },
+    {
+      "evidence_id": "SEC-0108",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0108.body",
+      "sha256": "95203863316c29b963b1bfe79097483de81504f1602cdf5ea623328e96c6fb00"
+    },
+    {
+      "evidence_id": "SEC-0109",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0109.body",
+      "sha256": "0cf988e36c44e76dbdc8f63a0ac8eef445aff7247db5ae3a56be13028da9c1bf"
+    },
+    {
+      "evidence_id": "SEC-0110",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0110.body",
+      "sha256": "93681988410a3fb767be2f87ae95d87d7e7c24d0c52269dd789d4e4d60bc6a6d"
+    },
+    {
+      "evidence_id": "SEC-0111",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0111.body",
+      "sha256": "4b94b1fa8d672e0c8f39622220f90702bd57d86eda97099add8ce24025206cb0"
+    },
+    {
+      "evidence_id": "SEC-0112",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0112.body",
+      "sha256": "d1e4a18aac77c37e5e6f88b6cff8fe89a7231f70fa1f5d141ec1ae8544abbcd7"
+    },
+    {
+      "evidence_id": "SEC-0113",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0113.body",
+      "sha256": "c025e6d08f4a566fd6c548982b8f6021bf048b5993b128f31e194478084926b3"
+    },
+    {
+      "evidence_id": "SEC-0114",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0114.body",
+      "sha256": "63a6a294a19e373fd165391799bd103b048bdb55194d1877b095d6be4341d3c9"
+    },
+    {
+      "evidence_id": "SEC-0115",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0115.body",
+      "sha256": "48e15a2dc90b23d145e3b6e9a763bb157837476df0575519b2edd6b28293713a"
+    },
+    {
+      "evidence_id": "SEC-0116",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0116.body",
+      "sha256": "6ab076466758d182b0a40e41bf695e8dd4d796aca1fadb380fd314f566993047"
+    },
+    {
+      "evidence_id": "SEC-0117",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0117.body",
+      "sha256": "2b33ca8b45c04e6cfdd032b4e5f2249d372cb1dd79ca9806219508336b5ac510"
+    },
+    {
+      "evidence_id": "SEC-0118",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0118.body",
+      "sha256": "8d5bea8297094b1aaa308865cf7752e955b8f175c9dd56c96fd54332e90384ee"
+    },
+    {
+      "evidence_id": "SEC-0119",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0119.body",
+      "sha256": "72e5cd904776c2966d6c77700a9b594dd9c37ea2f0be5aa08e4cd03ea477eecc"
+    },
+    {
+      "evidence_id": "SEC-0120",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0120.body",
+      "sha256": "06cd0913de9b47191684c5f774489bc83e7854c094bf9035b2c767f72f19cb08"
+    },
+    {
+      "evidence_id": "SEC-0121",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0121.body",
+      "sha256": "7383a551d1ff80209b5d9be5d8eb30b4d77a13ed3778c31d269c447fd835d7d1"
+    },
+    {
+      "evidence_id": "SEC-0122",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0122.body",
+      "sha256": "415cf92764a154a202e5580dcda8bb1ab882c9c94002548a1201caf90ff42a6b"
+    },
+    {
+      "evidence_id": "SEC-0123",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0123.body",
+      "sha256": "34fa07d11ed899960ff453167362bc45a4549f8748ce8d45d2a7025c153016ad"
+    },
+    {
+      "evidence_id": "SEC-0124",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0124.body",
+      "sha256": "950328d3ad66620d2f229b1aae325fcdf63ad37c4692d92079f4408fce79ce1a"
+    },
+    {
+      "evidence_id": "SEC-0125",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0125.body",
+      "sha256": "bfef9e76c582618342df43fcabcf8c3ba5a374f6ad623a80b7d7378cf6e2c374"
+    },
+    {
+      "evidence_id": "SEC-0126",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0126.body",
+      "sha256": "f59de756e531ad6bf107a0be8b4c195648a62b1ef2fdfc0939eb26482211b8f3"
+    },
+    {
+      "evidence_id": "SEC-0127",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0127.body",
+      "sha256": "ba81060b91550ea6e94d8c5d471000b4d6faeaecb0bc9270463f35c735178b7b"
+    },
+    {
+      "evidence_id": "SEC-0128",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0128.body",
+      "sha256": "8d5e42e23b429e057908ae0118fd04cdf2f46c87e16478299c027f6f80227a30"
+    },
+    {
+      "evidence_id": "SEC-0129",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0129.body",
+      "sha256": "f13bd66a856fa5a72d215b0474a0a565925843653e14d26ddcb9b960232d620b"
+    },
+    {
+      "evidence_id": "SEC-0130",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0130.body",
+      "sha256": "08e7f0dce0a99aa8601ceb6baeb73629415329aeaa23e5a2bb34ade8be748f5f"
+    },
+    {
+      "evidence_id": "SEC-0131",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0131.body",
+      "sha256": "f36ce144ec0bf6eddea23b37e5e1d36e9c569d0066ef241be9c84cef8f3927d9"
+    },
+    {
+      "evidence_id": "SEC-0132",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0132.body",
+      "sha256": "eae5a70f75570b161729536fe5d8100a163474f3a012247839bf0d81f22409f1"
+    },
+    {
+      "evidence_id": "SEC-0133",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0133.body",
+      "sha256": "166421730142c8703a8fc0fb82d3d62d6a1ec4c35289979de02f40f911c5357a"
+    },
+    {
+      "evidence_id": "SEC-0134",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0134.body",
+      "sha256": "1495e0c921d7d7e7b4d57c2ffca6a849b573ac57c4c855df65856b261b4fa286"
+    },
+    {
+      "evidence_id": "SEC-0135",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0135.body",
+      "sha256": "119bb9e23f278b37628547544db99c728fc7b1ec091c2fffe15f8702145c1603"
+    },
+    {
+      "evidence_id": "SEC-0136",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0136.body",
+      "sha256": "13e5b3e24b7823790d22325660981bd2b0c613641e22b1924a64f2042061fe94"
+    },
+    {
+      "evidence_id": "SEC-0137",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0137.body",
+      "sha256": "cadfdf4c918cf3621f11d52e29db9581c98a40badb2c47f9a17dab9878c6a0fb"
+    },
+    {
+      "evidence_id": "SEC-0138",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0138.body",
+      "sha256": "dbba44f7f3e0cdcabc15f4337daa7f2ba2f42fdcf7d6381719a1e9a3faa2947a"
+    },
+    {
+      "evidence_id": "SEC-0139",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0139.body",
+      "sha256": "bb4e29c64ca74c3ed92b8e27d4f4bc2f421fb3b4ed6f8c329609fc4fc72bf1bb"
+    },
+    {
+      "evidence_id": "SEC-0140",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0140.body",
+      "sha256": "a6cc595409517b30872128da28bef55d6abcc074c5c894621478965e73a66457"
+    },
+    {
+      "evidence_id": "E-T2-COVERAGE",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/inventory-evidence-check.json",
+      "sha256": "a1c2e1099f6c54a97511b57fb8ae65f3e1a3291f7946339cdb2b99d644b2d347"
+    },
+    {
+      "evidence_id": "E-T2-DAILY",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/versions/daily-fb8c5dfa54d56c14a1bc1041475519d4c9138f63f7b79cd652f90ccc47a29bf8.csv",
+      "sha256": "fb8c5dfa54d56c14a1bc1041475519d4c9138f63f7b79cd652f90ccc47a29bf8"
+    },
+    {
+      "evidence_id": "E-T2-CANDIDATES",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/task-2-specimen-candidates.json",
+      "sha256": "46ec51488b585de51de1ea9bd06e4de9c3e224610817728acb8f8da15e42c6ea"
+    },
+    {
+      "evidence_id": "E-T2-DOC-BRIDGE",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/listings/SEC-0140.body",
+      "sha256": "a6cc595409517b30872128da28bef55d6abcc074c5c894621478965e73a66457"
+    },
+    {
+      "evidence_id": "E-T2-NOVELTY",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/task-2-novelty-control.json",
+      "sha256": "71424acbf1cc81709bc7f69c261223dcc039152cff0e5cb4c5aca98134b300af"
+    },
+    {
+      "evidence_id": "E-T3-MATRIX",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/specimens/matrix.json",
+      "sha256": "332cbfe6e6ee2077176c49f6f71e9bb90805f4fc7ad86ff9f58843f035e43177"
+    },
+    {
+      "evidence_id": "E-T3-ASSESS",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/source-assessment.md",
+      "sha256": "fef24f9a127fd14e364df25fd8778abfb9e6615a730dac1231036b97fff67cff"
+    },
+    {
+      "evidence_id": "E-T3-VERIFY",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/specimens/source-verification-command.json",
+      "sha256": "5d55f0ac949de57e42c19f6691ef4537fe7ad00d62845edce0f5b49590c5b0c2"
+    },
+    {
+      "evidence_id": "E-T3-REPAIR",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/specimens/annotation-repair-sequence.json",
+      "sha256": "29f1e21a1b72bc7c600ff9b28535bed3e43111392563410ebe36a1917f4da9c2"
+    },
+    {
+      "evidence_id": "E-ACCESS-CLOSED-T3",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/versions/access-window-389a1525af505463c071a0ffc99d529a5378611fd44a9659819f52e327c4d136.md",
+      "sha256": "389a1525af505463c071a0ffc99d529a5378611fd44a9659819f52e327c4d136"
+    },
+    {
+      "evidence_id": "E-T3-DAILY-CURRENT",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/versions/daily-501cdc2b117ff26e2161390871ab8821fdad3ce2d7967a08eb50d912fbf3e0b1.csv",
+      "sha256": "501cdc2b117ff26e2161390871ab8821fdad3ce2d7967a08eb50d912fbf3e0b1"
+    },
+    {
+      "evidence_id": "E-T4-BASE",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/runtime/base-image.json",
+      "sha256": "6801714df8150253c7f8a80f77dc3302e9051d9e17fb792893303dc5aa351939"
+    },
+    {
+      "evidence_id": "E-T4-DIRECT",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/runtime/requirements.in",
+      "sha256": "e3fc58648d32dfb29ba2439404c653ac5cbedf1ce8d070d06971fed3a638c536"
+    },
+    {
+      "evidence_id": "E-T4-LOCK",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/runtime/requirements.lock",
+      "sha256": "523b2da36079ce4a7c6b11ac06feb0a7992a8c3aef757c32909850685023b5c2"
+    },
+    {
+      "evidence_id": "E-T4-MATRIX",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/runtime/dependency-matrix.csv",
+      "sha256": "19eb11b71aff134b9213feeaf46b0f66b923adee121836f5c25ee4bb02049de0"
+    },
+    {
+      "evidence_id": "E-T4-PROBE",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/runtime/probe.py",
+      "sha256": "d90397d2ba274e7e0f70c6493649b0dda9689eee6668e5e8aac0ac6c0a8566f5"
+    },
+    {
+      "evidence_id": "E-T4-OPERATIONS",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/runtime/operation-map.md",
+      "sha256": "02d83165ea532be0a3356d310518c468a1a9018a5bbf0bdad7b4951be014f2b2"
+    },
+    {
+      "evidence_id": "E-T4-COMMANDS",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/runtime/commands.md",
+      "sha256": "18f66ee00ab04276256f8a07cc4e9164facd43ebeb75c869052244dfda597f5b"
+    },
+    {
+      "evidence_id": "E-T4-PUBLIC-METADATA",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/runtime/public-metadata/receipts.json",
+      "sha256": "bccbeb3c31983e18f7b7be923e4632c386861baccb3fe6f2ad226e43c219fc9a"
+    },
+    {
+      "evidence_id": "E-T4-RESOLVE",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/runtime/results/resolver-verification.json",
+      "sha256": "ef490463d23077e124090705ec0fe984bc635ea7ab88d098e534a70927d3851a"
+    },
+    {
+      "evidence_id": "E-T4-FRESH-VERIFICATION",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/runtime/results/final-runtime-verification.stdout.json",
+      "sha256": "50f2a01663214d8835de61882b0239a74aa4ba6e24fe8b529f31779974067c0f"
+    },
+    {
+      "evidence_id": "E-T4-ROOT-NATIVE",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/runtime/results/root-native-output-verification.json",
+      "sha256": "b060eca459528f5d03e8e840e942f1cec6f184712f21ea61cb6160a877bf9f3c"
+    },
+    {
+      "evidence_id": "E-T4-CLEANUP",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/probe-setup/cleanup-summary.json",
+      "sha256": "5152ccc74a392dfc45c0ad661d43612880d6b1ee1d014d6953fd54603250e4c2"
+    },
+    {
+      "evidence_id": "E-T4-ARTIFACTS",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/runtime/results/task4-artifact-manifest.json",
+      "sha256": "9b01b2e0256a869ae37b8a097e2f7ace9ef25a884157d2fe0afee0fdddbc569b"
+    },
+    {
+      "evidence_id": "E-T4-REPORT",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/runtime/task4-report.md",
+      "sha256": "848f3726e920dd3417652dda0c50a6d58938df01e335f143fbfe4108afa14d6e"
+    },
+    {
+      "evidence_id": "E-T4-METHOD-SOURCES",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/runtime/provider-method/retention.json",
+      "sha256": "dd127a6ec710d8fefcd0558dbcf724e256ad26afb22371b81476bdf0babac92e"
+    },
+    {
+      "evidence_id": "E-T4-DECISIONS",
+      "local_reference": "specs/evidence/sec-filing-index-ingestion/stage-1/versions/decisions-df7b7998b5ad873bd7e1a15a64f6b3282d2923cf66dd7c1527fed39d59542e43.md",
+      "sha256": "df7b7998b5ad873bd7e1a15a64f6b3282d2923cf66dd7c1527fed39d59542e43"
+    }
+  ]
+}

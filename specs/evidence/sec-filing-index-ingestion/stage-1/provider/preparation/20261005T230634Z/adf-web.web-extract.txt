@@ -1,0 +1,333 @@
+Web Activity - Azure Data Factory & Azure Synapse | Microsoft Learn (https://learn.microsoft.com/en-us/azure/data-factory/control-flow-web-activity)
+citeturn4view0 [wordlim: 200] Crawled: today; Content type: text/html; Source: open({"ref_id":"https://learn.microsoft.com/en-us/azure/data-factory/control-flow-web-activity","lineno":null}); Total lines: 339
+L0: cite0†Skip to main content cite1†Skip to Ask Learn chat experience L1: 
+L2: This browser is no longer supported.
+L3: 
+L4: Upgrade to Microsoft Edge to take advantage of the latest features, security updates, and technical support.
+L5: 
+L6: cite2†Download Microsoft Edge†go.microsoft.com cite3†More info about Internet Explorer and Microsoft Edge L7: 
+L8: Table of contents Exit editor mode
+L9: 
+L10: Ask Learn Ask Learn
+L11: 
+L12: Reading mode Table of contents cite1†Read in English Add Add to Plans cite4†Edit†github.com L13: 
+L14: * * *
+L15: 
+L16: Copy Markdown Print
+L17: 
+L18: * * *
+L19: 
+L20: Note
+L21: Access to this page requires authorization. You can try cite1†signing in or changing directories.
+L22: 
+L23: Access to this page requires authorization. You can try changing directories.
+L24: # Web activity in Azure Data Factory and Azure Synapse Analytics
+L25: 
+L26: Feedback
+L27: 
+L28: Summarize this article for me
+L29: ## In this article
+L30: 
+L31: APPLIES TO: cite5†Image Azure Data Factory cite5†Image Azure Synapse Analytics
+L32: 
+L33: Tip
+L34: 
+L35: For the equivalent activity in Data Factory in Microsoft Fabric, see cite6†Web activity .
+L36: 
+L37: Web Activity can be used to call a custom REST endpoint from an Azure Data Factory or Synapse pipeline. You can pass datasets and linked services to be consumed and accessed by the activity.
+L38: 
+L39: Note
+L40: Web Activity is supported for invoking URLs that are hosted in a private virtual network as well by using a self-hosted integration runtime. The integration runtime should have a line of sight to the URL endpoint.
+L41: 
+L42: Note
+L43: 
+L44: The maximum supported output response payload size is 4 MB.
+L45: ## Create a Web activity with UI
+L46: 
+L47: To use a Web activity in a pipeline, complete the following steps:
+L48: 
+L49:   1. Search for Web in the pipeline Activities pane, and drag a Web activity to the pipeline canvas.
+L50: 
+L51:   2. Select the new Web activity on the canvas if it isn't already selected, and its Settings tab, to edit its details.
+L52: 
+L53: cite7†Image: Shows the UI for a Web activity. L54:   3. Specify a URL, which can be a literal URL string, or any combination of dynamic cite8†expressions, functions , cite9†system variables , or cite10†outputs from other activities . Provide other details to be submitted with the request.
+L55: 
+L56:   4. Use the output from the activity as the input to any other activity, and reference the output anywhere dynamic content is supported in the destination activity.
+L57: ## Syntax
+L58: 
+L59:     `{
+L60:        "name":"MyWebActivity",
+L61:        "type":"WebActivity",
+L62:        "typeProperties":{
+L63:           "method":"Post",
+L64:           "url":"<URLEndpoint>",
+L65:           "httpRequestTimeout": "00:01:00"
+L66:           "connectVia": {
+L67:               "referenceName": "<integrationRuntimeName>",
+L68:               "type": "IntegrationRuntimeReference"
+L69:           }
+L70:           "headers":{
+L71:              "Content-Type":"application/json"
+L72:           },
+L73:           "authentication":{
+L74:              "type":"ClientCertificate",
+L75:              "pfx":"****",
+L76:              "password":"****"
+L77:           },
+L78:           "datasets":[
+L79:              {
+L80:                 "referenceName":"<ConsumedDatasetName>",
+L81:                 "type":"DatasetReference",
+L82:                 "parameters":{
+L83:                    ...
+L84:                 }
+L85:              }
+L86:           ],
+L87:           "linkedServices":[
+L88:              {
+L89:                 "referenceName":"<ConsumedLinkedServiceName>",
+L90:                 "type":"LinkedServiceReference"
+L91:              }
+L92:           ]
+L93:        }
+L94:     }
+L95:     `
+L96: ## Type properties
+L97: Property  | Description  | Allowed values  | Required
+L98: --- | --- | --- | ---
+L99: name  | Name of the web activity  | String  | Yes
+L100: type  | Must be set to WebActivity.  | String  | Yes
+L101: method  | REST API method for the target endpoint.  | String.
+L102: Supported Types: "GET", "POST", "PUT", "PATCH", "DELETE"  | Yes
+L103: url  | Target endpoint and path  | String (or expression with resultType of string). The activity will time out at 1 minute with an error if it doesn't receive a response from the endpoint. You can increase this response timeout up to 10 mins by updating the httpRequestTimeout property  | Yes
+L104: httpRequestTimeout  | Response timeout duration  | hh:mm:ss with the max value as 00:10:00. If not explicitly specified defaults to 00:01:00  | No
+L105: headers  | Headers that are sent to the request. For example, to set the language and type on a request: `"headers" : { "Accept-Language": "en-us", "Content-Type": "application/json" }`.  | String (or expression with resultType of string)  | No
+L106: body  | Represents the payload that is sent to the endpoint.  | String (or expression with resultType of string).
+L107: See the schema of the request payload in cite11†Request payload schema section.  | Required for POST/PUT/PATCH methods. Optional for DELETE method.
+L108: authentication  | Authentication method used for calling the endpoint. Supported Types are "Basic, Client Certificate, System-assigned Managed Identity, User-assigned Managed Identity, Service Principal." For more information, see cite12†Authentication section. If authentication isn't required, exclude this property.  | String (or expression with resultType of string)  | No
+L109: turnOffAsync  | Option to disable invoking HTTP GET on location field in the response header of an HTTP 202 Response. If set true, it stops invoking HTTP GET on http location given in response header. If set false then it continues to invoke HTTP GET call on location given in http response headers.  | Allowed values are false (default) and true.  | No
+L110: disableCertValidation  | Removes server side certificate validation (not recommended unless you're connecting to a trusted server that doesn't use a standard CA cert).  | Allowed values are false (default) and true.  | No
+L111: datasets  | List of datasets passed to the endpoint.  | Array of dataset references. Can be an empty array.  | Yes
+L112: linkedServices  | List of linked services passed to endpoint.  | Array of linked service references. Can be an empty array.  | Yes
+L113: connectVia  | The cite13†integration runtime to be used to connect to the data store. You can use the Azure integration runtime or the self-hosted integration runtime (if your data store is in a private network). If this property isn't specified, the service uses the default Azure integration runtime.  | The integration runtime reference.  | No
+L114: Note
+L115: 
+L116: REST endpoints that the web activity invokes must return a response of type JSON. The activity will time out at 1 minute with an error if it doesn't receive a response from the endpoint. For endpoints that support cite14†Asynchronous Request-Reply pattern , the web activity continues to wait without timing out (upto 7 day) or until the endpoints signals completion of the job.
+L117: 
+L118: The following table shows the requirements for JSON content:
+L119: Value type  | Request body  | Response body
+L120: --- | --- | ---
+L121: JSON object  | Supported  | Supported
+L122: JSON array  | Supported
+L123: (Currently, JSON arrays don't work as a result of a bug. A fix is in progress.)  | Unsupported
+L124: JSON value  | Supported  | Unsupported
+L125: Non-JSON type  | Unsupported  | Unsupported
+L126:  |  |
+L127: ## Authentication
+L128: 
+L129: Below are the supported authentication types in the web activity.
+L130: 
+L131: ### None
+L132: 
+L133: If authentication isn't required, don't include the "authentication" property.
+L134: 
+L135: ### Basic
+L136: 
+L137: Specify user name and password to use with the basic authentication.
+L138: 
+L139:     `"authentication":{
+L140:        "type":"Basic",
+L141:        "username":"****",
+L142:        "password":"****"
+L143:     }
+L144:     `
+L145: ### Client certificate
+L146: 
+L147: Specify base64-encoded contents of a PFX file and the password.
+L148: 
+L149:     `"authentication":{
+L150:        "type":"ClientCertificate",
+L151:        "pfx":"****",
+L152:        "password":"****"
+L153:     }
+L154:     `
+L155: Certificate needs to be an x509 certificate. For conversion to PFX file, you can use your favorite utility. For base-64 encoding, you can use following PowerShell snippet.
+L156: 
+L157:     `$fileContentBytes = get-content 'enr.dev.webactivity.pfx' -AsByteStream
+L158: 
+L159:     [System.Convert]::ToBase64String($fileContentBytes) | Out-File ‘pfx-encoded-bytes.txt’
+L160:     `
+L161: ### Managed Identity
+L162: 
+L163: Specify the resource uri for which the access token will be requested using the managed identity for the data factory or Synapse workspace instance. To call the Azure Resource Management API, use `https://management.azure.com/`. For more information about how managed identities works, see the cite15†managed identities for Azure resources overview page .
+L164: 
+L165:     `"authentication": {
+L166:     	"type": "MSI",
+L167:     	"resource": "https://management.azure.com/"
+L168:     }
+L169:     `
+L170: 
+L171: Note
+L172: If your data factory or Synapse workspace is configured with a git repository, you must store your credentials in Azure Key Vault to use basic or client certificate authentication. The service doesn't store passwords in git.
+L173: ### Service principal
+L174: Specify the tenant ID, service principal ID, and service principal key, using a secure string for the client secret.
+L175: 
+L176:     `"authentication": {
+L177:                 "type": "ServicePrincipal",
+L178:                 "tenant": "your_tenant_id",
+L179:                 "servicePrincipalId": "your_client_id",
+L180:                 "servicePrincipalKey": {
+L181:                     "type": "SecureString",
+L182:                     "value": "your_client_secret"
+L183:                 },
+L184:                 "resource": "https://management.azure.com/"
+L185:     }
+L186:     `
+L187: ## Request payload schema
+L188: When you use the POST/PUT method, the body property represents the payload that is sent to the endpoint. You can pass linked services and datasets as part of the payload. Here's the schema for the payload:
+L189: 
+L190:     `{
+L191:         "body": {
+L192:             "myMessage": "Sample",
+L193:             "datasets": [{
+L194:                 "name": "MyDataset1",
+L195:                 "properties": {
+L196:                     ...
+L197:                 }
+L198:             }],
+L199:             "linkedServices": [{
+L200:                 "name": "MyStorageLinkedService1",
+L201:                 "properties": {
+L202:                     ...
+L203:                 }
+L204:             }]
+L205:         }
+L206:     }
+L207:     `
+L208: ## Example
+L209: 
+L210: In this example, the web activity in the pipeline calls a REST end point. It passes an Azure SQL linked service and an Azure SQL dataset to the endpoint. The REST end point uses the Azure SQL connection string to connect to the logical SQL server and returns the name of the instance of SQL server.
+L211: ### Pipeline definition
+L212: 
+L213:     `{
+L214:         "name": "<MyWebActivityPipeline>",
+L215:         "properties": {
+L216:             "activities": [
+L217:                 {
+L218:                     "name": "<MyWebActivity>",
+L219:                     "type": "WebActivity",
+L220:                     "typeProperties": {
+L221:                         "method": "Post",
+L222:                         "url": "@pipeline().parameters.url",
+L223:                         "headers": {
+L224:                             "Content-Type": "application/json"
+L225:                         },
+L226:                         "authentication": {
+L227:                             "type": "ClientCertificate",
+L228:                             "pfx": "*****",
+L229:                             "password": "*****"
+L230:                         },
+L231:                         "datasets": [
+L232:                             {
+L233:                                 "referenceName": "MySQLDataset",
+L234:                                 "type": "DatasetReference",
+L235:                                 "parameters": {
+L236:                                     "SqlTableName": "@pipeline().parameters.sqlTableName"
+L237:                                 }
+L238:                             }
+L239:                         ],
+L240:                         "linkedServices": [
+L241:                             {
+L242:                                 "referenceName": "SqlLinkedService",
+L243:                                 "type": "LinkedServiceReference"
+L244:                             }
+L245:                         ]
+L246:                     }
+L247:                 }
+L248:             ],
+L249:             "parameters": {
+L250:                 "sqlTableName": {
+L251:                     "type": "String"
+L252:                 },
+L253:                 "url": {
+L254:                     "type": "String"
+L255:                 }
+L256:             }
+L257:         }
+L258:     }
+L259: 
+L260:     `
+L261: ### Pipeline parameter values
+L262: 
+L263:     `{
+L264:         "sqlTableName": "department",
+L265:         "url": "https://adftes.azurewebsites.net/api/execute/running"
+L266:     }
+L267: 
+L268:     `
+L269: ### Web service endpoint code
+L270: 
+L271:     `
+L272:     [HttpPost]
+L273:     public HttpResponseMessage Execute(JObject payload)
+L274:     {
+L275:         Trace.TraceInformation("Start Execute");
+L276: 
+L277:         JObject result = new JObject();
+L278:         result.Add("status", "complete");
+L279: 
+L280:         JArray datasets = payload.GetValue("datasets") as JArray;
+L281:         result.Add("sinktable", datasets[0]["properties"]["typeProperties"]["tableName"].ToString());
+L282: 
+L283:         JArray linkedServices = payload.GetValue("linkedServices") as JArray;
+L284:         string connString = linkedServices[0]["properties"]["typeProperties"]["connectionString"].ToString();
+L285: 
+L286:         System.Data.SqlClient.SqlConnection sqlConn = new System.Data.SqlClient.SqlConnection(connString);
+L287: 
+L288:         result.Add("sinkServer", sqlConn.DataSource);
+L289: 
+L290:         Trace.TraceInformation("Stop Execute");
+L291: 
+L292:         return this.Request.CreateResponse(HttpStatusCode.OK, result);
+L293:     }
+L294: 
+L295:     `
+L296: ## Related content
+L297: 
+L298: See other supported control flow activities:
+L299: 
+L300:   * cite16†Execute Pipeline Activity L301:   * cite17†For Each Activity L302:   * cite18†Get Metadata Activity L303:   * cite19†Lookup Activity L304: 
+L305: * * *
+L306: 
+L307: ## Feedback
+L308: 
+L309: Was this page helpful?
+L310: 
+L311: Yes No No
+L312: 
+L313: Need help with this topic?
+L314: 
+L315: Want to try using Ask Learn to clarify or guide you through this topic?
+L316: 
+L317: Ask Learn Ask Learn
+L318: 
+L319: Suggest a fix?
+L320: 
+L321: * * *
+L322: 
+L323: ## Additional resources
+L324: 
+L325: * * *
+L326: 
+L327:   * Last updated on 2026-08-04
+L328: ### In this article
+L329: 
+L330: Was this page helpful?
+L331: 
+L332: Need help with this topic?
+L333: 
+L334: Want to try using Ask Learn to clarify or guide you through this topic?
+L335: 
+L336: Ask Learn Ask Learn
+L337: 
+L338: Suggest a fix?

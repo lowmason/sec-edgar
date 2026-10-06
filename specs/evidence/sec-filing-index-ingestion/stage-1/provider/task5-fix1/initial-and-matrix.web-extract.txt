@@ -1,0 +1,492 @@
+Azure Product by Region | Microsoft Azure (https://azure.microsoft.com/en-us/explore/global-infrastructure/products-by-region/)
+citeturn65view0 [wordlim: 200] Crawled: today; Content type: text/html; Source: open({"ref_id":"https://azure.microsoft.com/en-us/explore/global-infrastructure/products-by-region/","lineno":null}); Total lines: 74
+L0: This is the Trace Id: b7df86549fa000001f63cd79f9c6449c
+L1: 
+L2: cite0†Azure L3: 
+L4: cite1†Image†cdn-dynmedia-1.microsoft.com L5: # Products available by region
+L6: 
+L7: With 60+ announced regions, more than any other cloud provider, Azure makes it easy to choose the datacenter and regions that are right for you and your customers.
+L8: 
+L9: cite2†Get started with Azure cite3†View product availability†go.microsoft.com L10: 
+L11: Products
+L12: 
+L13:   * cite4†Get Started L14: 
+L15: * * *
+L16: 
+L17: cite5†Contact sales cite2†Get started with Azure L18: 
+L19: cite5†Contact sales cite2†Get started with Azure L20: 
+L21: cite6†Image†cdn-dynmedia-1.microsoft.com L22: 
+L23: GET STARTED
+L24: ## Start building with Azure
+L25: 
+L26: If you're new to Azure, create an cite7†Azure free account or cite5†contact Azure Sales to discover a new world of sustainable, trusted cloud infrastructure with Azure.
+L27: 
+L28: cite8†Image: A person with glasses looking at a computer screen†cdn-dynmedia-1.microsoft.com L29: 
+L30: ### Azure portal
+L31: 
+L32: Build, manage, and monitor apps in a single, unified console and see all your service usage on one bill.
+L33: 
+L34: cite9†Get started L35: 
+L36: cite10†Image: A person smiling while holding a phone†cdn-dynmedia-1.microsoft.com L37: #### Azure mobile app
+L38: 
+L39: Keep track of your Azure resources from your mobile device and get alerts on your environment.
+L40: 
+L41: cite11†Get started L42: 
+L43: cite12†Image: Person working on a laptop in a modern office setting†cdn-dynmedia-1.microsoft.com L44: 
+L45: #### Cloud Shell
+L46: 
+L47: Connect to Azure using an authenticated, browser-based shell experience that’s accessible from virtually anywhere.
+L48: 
+L49: cite13†Get started L50: 
+L51: cite14†Image: Three people sitting at a desk and working on laptops.†cdn-dynmedia-1.microsoft.com L52: #### Azure Service Health
+L53: 
+L54: Configure customizable cloud alerts, analyze health issues and monitor your cloud resources with a personalized dashboard.
+L55: 
+L56: cite15†Get started L57: 
+L58: Release dates, features and requirements are subject to change prior to final commercial release of the products/features/software described herein. This list is for informational purposes only. MICROSOFT MAKES NO WARRANTIES, EXPRESSED, IMPLIED, OR STATUTORY, AS TO THE INFORMATION ON THIS PAGE.
+L59: Reserved Access Regions: Certain regions are access restricted to support specific customer scenarios, for example in-country disaster recovery. cite16†See Business continuity and disaster recovery (BCDR)†go.microsoft.com .
+L60: 
+L61: cite17†Explore Azure Portal L62: 
+L63:   * cite18† †go.microsoft.com L64:   * cite19† †go.microsoft.com L65:   * cite20† †go.microsoft.com L66:   * cite21† †go.microsoft.com L67: cite22†What is Azure? cite23†Get started with Azure cite24†Global infrastructure cite25†Datacenter regions cite26†Trust your cloud cite27†Azure Essentials cite28†Customer stories†www.microsoft.com cite29†Products cite30†Azure pricing cite31†Free Azure services cite32†Flexible purchase options cite33†FinOps on Azure cite34†Maximize ROI from AI cite35†Solutions cite36†Resources for accelerating growth cite37†Solution architectures†learn.microsoft.com cite38†Support cite39†Azure demo and live Q&A L68: cite40†Software Development Companies†www.microsoft.com cite41†Microsoft Marketplace†marketplace.microsoft.com cite42†Find a partner cite43†Documentation†learn.microsoft.com cite44†Blog cite45†Developer resources cite46†Students cite47†Events and Webinars cite48†Analyst reports, white papers, and e-books cite49†Videos cite50†What is cloud computing? cite51†What is multicloud? cite52†What is machine learning? cite53†What is deep learning? cite54†What is AIaaS? cite55†What are LLMs? cite56†What is a container? cite57†What is RAG? L69: cite58†English (United States) L70: 
+L71: cite59†Your Privacy Choices†aka.ms cite59†Your Privacy Choices†aka.ms L72: 
+L73: cite60†Consumer Health Privacy†go.microsoft.com cite61†Sitemap†www.microsoft.com cite62†Contact Microsoft†support.microsoft.com cite63†Privacy†go.microsoft.com cite64†Manage cookies cite65†Terms of use†go.microsoft.com cite66†Trademarks†go.microsoft.com cite67†Safety & eco†go.microsoft.com cite68†Recycling†www.microsoft.com cite69†About our ads†choice.microsoft.com --------------------------------------------------------------------------------
+Managed Environments - Create Or Update - REST API (Azure Azure Container Apps) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/resource-manager/containerapps/managed-environments/create-or-update?view=rest-resource-manager-containerapps-2026-07-01)
+citeturn65view1 [wordlim: 200] Crawled: today; Content type: text/html; Source: open({"ref_id":"https://learn.microsoft.com/en-us/rest/api/resource-manager/containerapps/managed-environments/create-or-update?view=rest-resource-manager-containerapps-2026-07-01","lineno":null}); Total lines: 2028
+L0: cite0†Skip to main content cite1†Skip to in-page navigation cite2†Skip to Ask Learn chat experience L1: 
+L2: This browser is no longer supported.
+L3: 
+L4: Upgrade to Microsoft Edge to take advantage of the latest features, security updates, and technical support.
+L5: 
+L6: cite3†Download Microsoft Edge†go.microsoft.com cite4†More info about Internet Explorer and Microsoft Edge L7: 
+L8: Table of contents Exit editor mode
+L9: 
+L10: Ask Learn Ask Learn
+L11: 
+L12: Reading mode Table of contents cite2†Read in English Add Add to Plans cite5†Edit†github.com L13: 
+L14: * * *
+L15: Copy Markdown Print
+L16: 
+L17: * * *
+L18: 
+L19: Note
+L20: 
+L21: Access to this page requires authorization. You can try cite2†signing in or changing directories.
+L22: 
+L23: Access to this page requires authorization. You can try changing directories.
+L24: # Managed Environments - Create Or Update
+L25: 
+L26: Service:
+L27:     Azure Container Apps
+L28: 
+L29: API Version:
+L30:     2026-07-01
+L31: 
+L32: ##
+L33: 
+L34: Creates or updates a Managed Environment used to host container apps.
+L35: 
+L36:     `PUT https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.App/managedEnvironments/{environmentName}?api-version=2026-07-01`
+L37: ## URI Parameters
+L38: Name  | In  | Required  | Type  | Description
+L39: --- | --- | --- | --- | ---
+L40: environmentName  | path  | True  | string pattern: ^[-\w\._\(\)]+$  | Name of the Environment.
+L41: resourceGroupName  | path  | True  | string minLength: 1
+L42: maxLength: 90  | The name of the resource group. The name is case insensitive.
+L43: subscriptionId  | path  | True  | string (uuid)  | The ID of the target subscription. The value must be an UUID.
+L44: api-version  | query  | True  | string minLength: 1  | The API version to use for this operation.
+L45: ## Request Body
+L46: Name  | Required  | Type  | Description
+L47: --- | --- | --- | ---
+L48: location  | True  | string  | The geo-location where the resource lives
+L49: identity  |  | cite6†ManagedServiceIdentity | The managed service identities assigned to this resource.
+L50: kind  |  | string  | Kind of the Environment.
+L51: properties.appInsightsConfiguration  |  | cite7†AppInsightsConfiguration | Environment level Application Insights configuration
+L52: properties.appLogsConfiguration  |  | cite8†AppLogsConfiguration | Cluster configuration which enables the log daemon to export app logs to configured destination
+L53: properties.customDomainConfiguration  |  | cite9†CustomDomainConfiguration | Custom domain configuration for the environment
+L54: properties.daprAIConnectionString  |  | string (password)  | Application Insights connection string used by Dapr to export Service to Service communication telemetry
+L55: properties.daprAIInstrumentationKey  |  | string (password)  | Azure Monitor instrumentation key used by Dapr to export Service to Service communication telemetry
+L56: properties.daprConfiguration  |  | cite10†DaprConfiguration | The configuration of Dapr component.
+L57: properties.environmentMode  |  | cite11†ManagedEnvironmentMode | Mode of the environment. Allowed Values: 'ConsumptionOnly', 'WorkloadProfiles', 'Express', 'Archived'.
+L58: properties.infrastructureResourceGroup  |  | string  | Name of the platform-managed resource group created for the Managed Environment to host infrastructure resources. If a subnet ID is provided, this resource group will be created in the same subscription as the subnet.
+L59: properties.ingressConfiguration  |  | cite12†IngressConfiguration | Ingress configuration for the Managed Environment.
+L60: properties.kedaConfiguration  |  | cite13†KedaConfiguration | The configuration of Keda component.
+L61: properties.openTelemetryConfiguration  |  | cite14†OpenTelemetryConfiguration | Environment Open Telemetry configuration
+L62: properties.peerAuthentication  |  | cite15†ManagedEnvironmentPropertiesPeerAuthentication | Peer authentication settings for the Managed Environment
+L63: properties.peerTrafficConfiguration  |  | cite16†ManagedEnvironmentPropertiesPeerTrafficConfiguration | Peer traffic settings for the Managed Environment
+L64: properties.publicNetworkAccess  |  | cite17†PublicNetworkAccess | Property to allow or block all public traffic. Allowed Values: 'Enabled', 'Disabled'.
+L65: properties.vnetConfiguration  |  | cite18†VnetConfiguration | Vnet configuration for the environment
+L66: properties.workloadProfiles  |  | cite19†WorkloadProfile []  | Workload profiles configured for the Managed Environment.
+L67: properties.zoneRedundant  |  | boolean  | Whether or not this Managed Environment is zone-redundant.
+L68: tags  |  | object  | Resource tags.
+L69: ## Responses
+L70: 
+L71: Name  | Type  | Description
+L72: --- | --- | ---
+L73: 200 OK  | cite20†ManagedEnvironment | Resource 'ManagedEnvironment' update operation succeeded
+L74: 201 Created  | cite20†ManagedEnvironment | Resource 'ManagedEnvironment' create operation succeeded Headers
+L75: 
+L76:   * Location: string
+L77:   * Retry-After: integer
+L78: Other Status Codes  | cite21†ErrorResponse | An unexpected error response.
+L79: 
+L80: ## Security
+L81: ### azure_auth
+L82: 
+L83: Azure Active Directory OAuth2 Flow.
+L84: 
+L85: Type: oauth2
+L86: Flow: implicit
+L87: Authorization URL: https://login.microsoftonline.com/common/oauth2/authorize
+L88: 
+L89: #### Scopes
+L90: 
+L91: Name  | Description
+L92: --- | ---
+L93: user_impersonation  | impersonate your user account
+L94: 
+L95: ## Examples
+L96: 
+L97: cite22†Create environment with custom infrastructureResourceGroup L98: cite23†Create environments L99: 
+L100: ### Create environment with custom infrastructureResourceGroup
+L101: #### Sample request
+L102:   * cite24†HTTP L103:   * cite25†Java L104:   * cite26†Python L105:   * cite27†Go L106:   * cite28†JavaScript L107: 
+L108:     `PUT https://management.azure.com/subscriptions/34adfa4f-cedf-4dc0-ba29-b6d1a69ab345/resourceGroups/examplerg/providers/Microsoft.App/managedEnvironments/testcontainerenv?api-version=2026-07-01
+L109: 
+L110:     {
+L111:       "location": "East US",
+L112:       "properties": {
+L113:         "appLogsConfiguration": {
+L114:           "logAnalyticsConfiguration": {
+L115:             "customerId": "string",
+L116:             "sharedKey": "string"
+L117:           }
+L118:         },
+L119:         "customDomainConfiguration": {
+L120:           "certificatePassword": "1234",
+L121:           "certificateValue": "Y2VydA==",
+L122:           "dnsSuffix": "www.my-name.com"
+L123:         },
+L124:         "daprAIConnectionString": "InstrumentationKey=00000000-0000-0000-0000-000000000000;IngestionEndpoint=https://northcentralus-0.in.applicationinsights.azure.com/",
+L125:         "infrastructureResourceGroup": "myInfrastructureRgName",
+L126:         "vnetConfiguration": {
+L127:           "infrastructureSubnetId": "/subscriptions/34adfa4f-cedf-4dc0-ba29-b6d1a69ab345/resourceGroups/RGName/providers/Microsoft.Network/virtualNetworks/VNetName/subnets/subnetName1"
+L128:         },
+L129:         "workloadProfiles": [
+L130:           {
+L131:             "name": "My-GP-01",
+L132:             "maximumCount": 12,
+L133:             "minimumCount": 3,
+L134:             "workloadProfileType": "GeneralPurpose"
+L135:           },
+L136:           {
+L137:             "name": "My-MO-01",
+L138:             "maximumCount": 6,
+L139:             "minimumCount": 3,
+L140:             "workloadProfileType": "MemoryOptimized"
+L141:           },
+L142:           {
+L143:             "name": "My-CO-01",
+L144:             "maximumCount": 6,
+L145:             "minimumCount": 3,
+L146:             "workloadProfileType": "ComputeOptimized"
+L147:           },
+L148:           {
+L149:             "name": "My-consumption-01",
+L150:             "workloadProfileType": "Consumption"
+L151:           }
+L152:         ],
+L153:         "zoneRedundant": true
+L154:       }
+L155:     }
+L156: 
+L157:     `
+L158: 
+L159:     `
+L160:     import com.azure.resourcemanager.appcontainers.models.AppLogsConfiguration;
+L161:     import com.azure.resourcemanager.appcontainers.models.CustomDomainConfiguration;
+L162:     import com.azure.resourcemanager.appcontainers.models.LogAnalyticsConfiguration;
+L163:     import com.azure.resourcemanager.appcontainers.models.VnetConfiguration;
+L164:     import com.azure.resourcemanager.appcontainers.models.WorkloadProfile;
+L165:     import java.util.Arrays;
+L166:     import java.util.HashMap;
+L167:     import java.util.Map;
+L168: 
+L169:     /**
+L170:      * Samples for ManagedEnvironments CreateOrUpdate.
+L171:      */
+L172:     public final class Main {
+L173:         /*
+L174:          * x-ms-original-file: 2026-07-01/ManagedEnvironments_CustomInfrastructureResourceGroup_Create.json
+L175:          */
+L176:         /**
+L177:          * Sample code: Create environment with custom infrastructureResourceGroup.
+L178:          *
+L179:          * @param manager Entry point to ContainerAppsApiManager.
+L180:          */
+L181:         public static void createEnvironmentWithCustomInfrastructureResourceGroup(
+L182:             com.azure.resourcemanager.appcontainers.ContainerAppsApiManager manager) {
+L183:             manager.managedEnvironments().define("testcontainerenv").withRegion("East US")
+L184:                 .withExistingResourceGroup("examplerg")
+L185:                 .withDaprAIConnectionString(
+L186:                     "InstrumentationKey=00000000-0000-0000-0000-000000000000;IngestionEndpoint=https://northcentralus-0.in.applicationinsights.azure.com/")
+L187:                 .withVnetConfiguration(new VnetConfiguration().withInfrastructureSubnetId(
+L188:                     "/subscriptions/34adfa4f-cedf-4dc0-ba29-b6d1a69ab345/resourceGroups/RGName/providers/Microsoft.Network/virtualNetworks/VNetName/subnets/subnetName1"))
+L189:                 .withAppLogsConfiguration(new AppLogsConfiguration().withLogAnalyticsConfiguration(
+L190:                     new LogAnalyticsConfiguration().withCustomerId("string").withSharedKey("fakeTokenPlaceholder")))
+L191:                 .withZoneRedundant(true)
+L192:                 .withCustomDomainConfiguration(new CustomDomainConfiguration().withDnsSuffix("www.my-name.com")
+L193:                     .withCertificateValue("Y2VydA==".getBytes()).withCertificatePassword("fakeTokenPlaceholder"))
+L194:                 .withWorkloadProfiles(Arrays.asList(
+L195:                     new WorkloadProfile().withName("My-GP-01").withWorkloadProfileType("GeneralPurpose").withMinimumCount(3)
+L196:                         .withMaximumCount(12),
+L197:                     new WorkloadProfile().withName("My-MO-01").withWorkloadProfileType("MemoryOptimized")
+L198:                         .withMinimumCount(3).withMaximumCount(6),
+L199:                     new WorkloadProfile().withName("My-CO-01").withWorkloadProfileType("ComputeOptimized")
+L200:                         .withMinimumCount(3).withMaximumCount(6),
+L201:                     new WorkloadProfile().withName("My-consumption-01").withWorkloadProfileType("Consumption")))
+L202:                 .withInfrastructureResourceGroup("myInfrastructureRgName").create();
+L203:         }
+L204: 
+L205:         // Use "Map.of" if available
+L206:         @SuppressWarnings("unchecked")
+L207:         private static <T> Map<String, T> mapOf(Object... inputs) {
+L208:             Map<String, T> map = new HashMap<>();
+L209:             for (int i = 0; i < inputs.length; i += 2) {
+L210:                 String key = (String) inputs[i];
+L211:                 T value = (T) inputs[i + 1];
+L212:                 map.put(key, value);
+L213:             }
+L214:             return map;
+L215:         }
+L216:     }
+L217: 
+L218:     `
+L219: To use the Azure SDK library in your project, see cite29†this documentation†github.com . To provide feedback on this code sample, cite30†open a GitHub issue†github.com L220: 
+L221:     `from azure.identity import DefaultAzureCredential
+L222: 
+L223:     from azure.mgmt.appcontainers import ContainerAppsAPIClient
+L224: 
+L225:     """
+L226:     # PREREQUISITES
+L227:         pip install azure-identity
+L228:         pip install azure-mgmt-appcontainers
+L229:     # USAGE
+L230:         python managed_environments_custom_infrastructure_resource_group_create.py
+L231:         Before run the sample, please set the values of the client ID, tenant ID and client secret
+L232:         of the AAD application as environment variables: AZURE_CLIENT_ID, AZURE_TENANT_ID,
+L233:         AZURE_CLIENT_SECRET. For more info about how to get the value, please see:
+L234:         https://docs.microsoft.com/azure/active-directory/develop/howto-create-service-principal-portal
+L235:     """
+L236: 
+L237: 
+L238:     def main():
+L239:         client = ContainerAppsAPIClient(
+L240:             credential=DefaultAzureCredential(),
+L241:             subscription_id="SUBSCRIPTION_ID",
+L242:         )
+L243: 
+L244:         response = client.managed_environments.begin_create_or_update(
+L245:             resource_group_name="examplerg",
+L246:             environment_name="testcontainerenv",
+L247:             environment_envelope={
+L248:                 "location": "East US",
+L249:                 "properties": {
+L250:                     "appLogsConfiguration": {"logAnalyticsConfiguration": {"customerId": "string", "sharedKey": "string"}},
+L251:                     "customDomainConfiguration": {
+L252:                         "certificatePassword": "1234",
+L253:                         "certificateValue": "Y2VydA==",
+L254:                         "dnsSuffix": "www.my-name.com",
+L255:                     },
+L256:                     "daprAIConnectionString": "InstrumentationKey=00000000-0000-0000-0000-000000000000;IngestionEndpoint=https://northcentralus-0.in.applicationinsights.azure.com/",
+L257:                     "infrastructureResourceGroup": "myInfrastructureRgName",
+L258:                     "vnetConfiguration": {
+L259:                         "infrastructureSubnetId": "/subscriptions/34adfa4f-cedf-4dc0-ba29-b6d1a69ab345/resourceGroups/RGName/providers/Microsoft.Network/virtualNetworks/VNetName/subnets/subnetName1"
+L260:                     },
+L261:                     "workloadProfiles": [
+L262:                         {
+L263:                             "maximumCount": 12,
+L264:                             "minimumCount": 3,
+L265:                             "name": "My-GP-01",
+L266:                             "workloadProfileType": "GeneralPurpose",
+L267:                         },
+L268:                         {
+L269:                             "maximumCount": 6,
+L270:                             "minimumCount": 3,
+L271:                             "name": "My-MO-01",
+L272:                             "workloadProfileType": "MemoryOptimized",
+L273:                         },
+L274:                         {
+L275:                             "maximumCount": 6,
+L276:                             "minimumCount": 3,
+L277:                             "name": "My-CO-01",
+L278:                             "workloadProfileType": "ComputeOptimized",
+L279:                         },
+L280:                         {"name": "My-consumption-01", "workloadProfileType": "Consumption"},
+L281:                     ],
+L282:                     "zoneRedundant": True,
+L283:                 },
+L284:             },
+L285:         ).result()
+L286:         print(response)
+L287: 
+L288: 
+L289:     # x-ms-original-file: 2026-07-01/ManagedEnvironments_CustomInfrastructureResourceGroup_Create.json
+L290:     if __name__ == "__main__":
+L291:         main()
+L292: 
+L293:     `
+L294: To use the Azure SDK library in your project, see cite31†this documentation†github.com . To provide feedback on this code sample, cite30†open a GitHub issue†github.com L295: 
+L296:     `package armappcontainers_test
+L297: 
+L298:     import (
+L299:     	"context"
+L300:     	"log"
+L301: 
+L302:     	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
+L303:     	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+L304:     	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/appcontainers/armappcontainers/v5"
+L305:     )
+L306:     // Generated from example definition: 2026-07-01/ManagedEnvironments_CustomInfrastructureResourceGroup_Create.json
+L307:     func ExampleManagedEnvironmentsClient_BeginCreateOrUpdate_createEnvironmentWithCustomInfrastructureResourceGroup() {
+L308:     	cred, err := azidentity.NewDefaultAzureCredential(nil)
+L309:     	if err != nil {
+L310:     		log.Fatalf("failed to obtain a credential: %v", err)
+L311:     	}
+L312:     	ctx := context.Background()
+L313:     	clientFactory, err := armappcontainers.NewClientFactory("34adfa4f-cedf-4dc0-ba29-b6d1a69ab345", cred, nil)
+L314:     	if err != nil {
+L315:     		log.Fatalf("failed to create client: %v", err)
+L316:     	}
+L317:     	poller, err := clientFactory.NewManagedEnvironmentsClient().BeginCreateOrUpdate(ctx, "examplerg", "testcontainerenv", armappcontainers.ManagedEnvironment{
+L318:     		Location: to.Ptr("East US"),
+L319:     		Properties: &armappcontainers.ManagedEnvironmentProperties{
+L320:     			AppLogsConfiguration: &armappcontainers.AppLogsConfiguration{
+L321:     				LogAnalyticsConfiguration: &armappcontainers.LogAnalyticsConfiguration{
+L322:     					CustomerID: to.Ptr("string"),
+L323:     					SharedKey:  to.Ptr("string"),
+L324:     				},
+L325:     			},
+L326:     			CustomDomainConfiguration: &armappcontainers.CustomDomainConfiguration{
+L327:     				CertificatePassword: to.Ptr("1234"),
+L328:     				CertificateValue:    []byte("Y2VydA=="),
+L329:     				DNSSuffix:           to.Ptr("www.my-name.com"),
+L330:     			},
+L331:     			DaprAIConnectionString:      to.Ptr("InstrumentationKey=00000000-0000-0000-0000-000000000000;IngestionEndpoint=https://northcentralus-0.in.applicationinsights.azure.com/"),
+L332:     			InfrastructureResourceGroup: to.Ptr("myInfrastructureRgName"),
+L333:     			VnetConfiguration: &armappcontainers.VnetConfiguration{
+L334:     				InfrastructureSubnetID: to.Ptr("/subscriptions/34adfa4f-cedf-4dc0-ba29-b6d1a69ab345/resourceGroups/RGName/providers/Microsoft.Network/virtualNetworks/VNetName/subnets/subnetName1"),
+L335:     			},
+L336:     			WorkloadProfiles: []*armappcontainers.WorkloadProfile{
+L337:     				{
+L338:     					Name:                to.Ptr("My-GP-01"),
+L339:     					MaximumCount:        to.Ptr[int32](12),
+L340:     					MinimumCount:        to.Ptr[int32](3),
+L341:     					WorkloadProfileType: to.Ptr("GeneralPurpose"),
+L342:     				},
+L343:     				{
+L344:     					Name:                to.Ptr("My-MO-01"),
+L345:     					MaximumCount:        to.Ptr[int32](6),
+L346:     					MinimumCount:        to.Ptr[int32](3),
+L347:     					WorkloadProfileType: to.Ptr("MemoryOptimized"),
+L348:     				},
+L349:     				{
+L350:     					Name:                to.Ptr("My-CO-01"),
+L351:     					MaximumCount:        to.Ptr[int32](6),
+L352:     					MinimumCount:        to.Ptr[int32](3),
+L353:     					WorkloadProfileType: to.Ptr("ComputeOptimized"),
+L354:     				},
+L355:     				{
+L356:     					Name:                to.Ptr("My-consumption-01"),
+L357:     					WorkloadProfileType: to.Ptr("Consumption"),
+L358:     				},
+L359:     			},
+L360:     			ZoneRedundant: to.Ptr(true),
+L361:     		},
+L362:     	}, nil)
+L363:     	if err != nil {
+L364:     		log.Fatalf("failed to finish the request: %v", err)
+L365:     	}
+L366:     	res, err := poller.PollUntilDone(ctx, nil)
+L367:     	if err != nil {
+L368:     		log.Fatalf("failed to poll the result: %v", err)
+L369:     	}
+L370:     	// You could use response here. We use blank identifier for just demo purposes.
+L371:     	_ = res
+L372:     	// If the HTTP response code is 200 as defined in example definition, your response structure would look as follows. Please pay attention that all the values in the output are fake values for just demo purposes.
+L373:     	// res = armappcontainers.ManagedEnvironmentsClientCreateOrUpdateResponse{
+L374:     	// 	ManagedEnvironment: armappcontainers.ManagedEnvironment{
+L375:     	// 		Name: to.Ptr("testcontainerenv"),
+L376:     	// 		Type: to.Ptr("Microsoft.App/managedEnvironments"),
+L377:     	// 		ID: to.Ptr("/subscriptions/34adfa4f-cedf-4dc0-ba29-b6d1a69ab345/resourceGroups/examplerg/providers/Microsoft.App/managedEnvironments/testcontainerenv"),
+L378:     	// 		Location: to.Ptr("East US"),
+L379:     	// 		Properties: &armappcontainers.ManagedEnvironmentProperties{
+L380:     	// 			AppLogsConfiguration: &armappcontainers.AppLogsConfiguration{
+L381:     	// 				LogAnalyticsConfiguration: &armappcontainers.LogAnalyticsConfiguration{
+L382:     	// 					CustomerID: to.Ptr("string"),
+L383:     	// 				},
+L384:     	// 			},
+L385:     	// 			CustomDomainConfiguration: &armappcontainers.CustomDomainConfiguration{
+L386:     	// 				CustomDomainVerificationID: to.Ptr("custom domain verification id"),
+L387:     	// 				DNSSuffix: to.Ptr("www.my-name.com"),
+L388:     	// 				ExpirationDate: to.Ptr(time.Date(2022, time.November, 6, 4, 0, 0, 0, time.UTC)),
+L389:     	// 				SubjectName: to.Ptr("CN=www.my-name.com"),
+L390:     	// 				Thumbprint: to.Ptr("CERTIFICATE_THUMBPRINT"),
+L391:     	// 			},
+L392:     	// 			DefaultDomain: to.Ptr("testcontainerenv.k4apps.io"),
+L393:     	// 			EventStreamEndpoint: to.Ptr("testEndpoint"),
+L394:     	// 			InfrastructureResourceGroup: to.Ptr("myInfrastructureRgName"),
+L395:     	// 			ProvisioningState: to.Ptr(armappcontainers.EnvironmentProvisioningStateSucceeded),
+L396:     	// 			StaticIP: to.Ptr("1.2.3.4"),
+L397:     	// 			VnetConfiguration: &armappcontainers.VnetConfiguration{
+L398:     	// 				InfrastructureSubnetID: to.Ptr("/subscriptions/34adfa4f-cedf-4dc0-ba29-b6d1a69ab345/resourceGroups/RGName/providers/Microsoft.Network/virtualNetworks/VNetName/subnets/subnetName1"),
+L399:     	// 			},
+L400:     	// 			WorkloadProfiles: []*armappcontainers.WorkloadProfile{
+L401:     	// 				{
+L402:     	// 					Name: to.Ptr("My-GP-01"),
+L403:     	// 					MaximumCount: to.Ptr[int32](12),
+L404:     	// 					MinimumCount: to.Ptr[int32](3),
+L405:     	// 					WorkloadProfileType: to.Ptr("GeneralPurpose"),
+L406:     	// 				},
+L407:     	// 				{
+L408:     	// 					Name: to.Ptr("My-MO-01"),
+L409:     	// 					MaximumCount: to.Ptr[int32](6),
+L410:     	// 					MinimumCount: to.Ptr[int32](3),
+L411:     	// 					WorkloadProfileType: to.Ptr("MemoryOptimized"),
+L412:     	// 				},
+L413:     	// 				{
+L414:     	// 					Name: to.Ptr("My-CO-01"),
+L415:     	// 					MaximumCount: to.Ptr[int32](6),
+L416:     	// 					MinimumCount: to.Ptr[int32](3),
+L417:     	// 					WorkloadProfileType: to.Ptr("ComputeOptimized"),
+L418:     	// 				},
+L419:     	// 				{
+L420:     	// 					Name: to.Ptr("My-consumption-01"),
+L421:     	// 					WorkloadProfileType: to.Ptr("Consumption"),
+L422:     	// 				},
+L423:     	// 			},
+L424:     	// 			ZoneRedundant: to.Ptr(true),
+L425:     	// 		},
+L426:     	// 	},
+L427:     	// }
+L428:     }
+L429: 
+L430:     `
+L431: To use the Azure SDK library in your project, see cite32†this documentation†github.com . To provide feedback on this code sample, cite30†open a GitHub issue†github.com L432: 
+L433:     `const { ContainerAppsAPIClient } = require("@azure/arm-appcontainers");
+L434:     const { DefaultAzureCredential } = require("@azure/identity");
+L435: 
+L436:     /**
+L437:      * This sample demonstrates how to creates or updates a Managed Environment used to host container apps.
+L438:      *
+L439:      * @summary creates or updates a Managed Environment used to host container apps.
+L440:      * x-ms-original-file: 2026-07-01/ManagedEnvironments_CustomInfrastructureResourceGroup_Create.json
+L441:      */
+L442:     async function createEnvironmentWithCustomInfrastructureResourceGroup() {
+L443:       const credential = new DefaultAzureCredential();
+--------------------------------------------------------------------------------
+Factories - Create Or Update - REST API (Azure Data Factory) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/datafactory/factories/create-or-update?view=rest-datafactory-2018-06-01)
+citeturn65view2 [wordlim: 200] Crawled: today; Content type: text/html; Source: open({"ref_id":"https://learn.microsoft.com/en-us/rest/api/datafactory/factories/create-or-update?view=rest-datafactory-2018-06-01","lineno":null}); Total lines: 518
+--------------------------------------------------------------------------------
+Internal Error ()
+citeturn65view3 [wordlim: 200] Source: open({"ref_id":"https://learn.microsoft.com/en-us/rest/api/storage/storage-accounts/create?view=rest-storage-2025-06-01","lineno":null}); Total lines: 1
+

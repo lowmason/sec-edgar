@@ -1,0 +1,538 @@
+Internal Error ()
+citeturn43view0 [wordlim: 200] Source: open({"ref_id":"https://raw.githubusercontent.com/Azure/azure-sdk-for-python/azure-data-tables_12.7.0/sdk/tables/azure-data-tables/azure/data/tables/_generated/_configuration.py","lineno":null}); Total lines: 1
+L0: Failed to fetch https://raw.githubusercontent.com/Azure/azure-sdk-for-python/azure-data-tables_12.7.0/sdk/tables/azure-data-tables/azure/data/tables/_generated/_configuration.py: Cache miss
+--------------------------------------------------------------------------------
+ (https://raw.githubusercontent.com/Azure/azure-sdk-for-python/azure-data-tables_12.7.0/sdk/tables/azure-data-tables/azure/data/tables/_base_client.py)
+citeturn43view1 [wordlim: 200] Crawled: today; Content type: text/plain; Source: open({"ref_id":"https://raw.githubusercontent.com/Azure/azure-sdk-for-python/azure-data-tables_12.7.0/sdk/tables/azure-data-tables/azure/data/tables/_base_client.py","lineno":null}); Total lines: 397
+L0: # -------------------------------------------------------------------------
+L1: # Copyright (c) Microsoft Corporation. All rights reserved.
+L2: # Licensed under the MIT License. See License.txt in the project root for
+L3: # license information.
+L4: # --------------------------------------------------------------------------
+L5: 
+L6: import os
+L7: from uuid import uuid4
+L8: from urllib.parse import parse_qs, quote, urlparse
+L9: from typing import Any, List, Optional, Mapping, Union, Literal
+L10: from typing_extensions import Self
+L11: from azure.core.credentials import AzureSasCredential, AzureNamedKeyCredential, TokenCredential
+L12: from azure.core.utils import parse_connection_string
+L13: from azure.core.rest import HttpRequest
+L14: from azure.core.pipeline.transport import HttpTransport
+L15: from azure.core.pipeline.policies import (
+L16:     RedirectPolicy,
+L17:     ContentDecodePolicy,
+L18:     ProxyPolicy,
+L19:     DistributedTracingPolicy,
+L20:     HttpLoggingPolicy,
+L21:     UserAgentPolicy,
+L22:     NetworkTraceLoggingPolicy,
+L23:     CustomHookPolicy,
+L24:     RequestIdPolicy,
+L25: )
+L26: from ._generated import AzureTable
+L27: from ._common_conversion import _is_cosmos_endpoint, _get_account
+L28: from ._shared_access_signature import QueryStringConstants
+L29: from ._constants import (
+L30:     DEFAULT_COSMOS_ENDPOINT_SUFFIX,
+L31:     DEFAULT_STORAGE_ENDPOINT_SUFFIX,
+L32: )
+L33: from ._error import RequestTooLargeError, TableTransactionError, _decode_error, _validate_tablename_error
+L34: from ._models import LocationMode
+L35: from ._authentication import _configure_credential
+L36: from ._policies import (
+L37:     CosmosPatchTransformPolicy,
+L38:     StorageHeadersPolicy,
+L39:     StorageHosts,
+L40:     TablesRetryPolicy,
+L41: )
+L42: from ._sdk_moniker import SDK_MONIKER
+L43: _SUPPORTED_API_VERSIONS = ["2019-02-02", "2019-07-07", "2020-12-06"]
+L44: # cspell:disable-next-line
+L45: _DEV_CONN_STRING = "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;TableEndpoint=http://127.0.0.1:10002/devstoreaccount1"  # pylint: disable=line-too-long
+L46: AudienceType = Union[
+L47:     str,
+L48:     Literal[
+L49:         "https://storage.azure.com",
+L50:         "https://storage.azure.us",
+L51:         "https://storage.azure.cn",
+L52:         "https://cosmos.azure.com",
+L53:         "https://cosmos.azure.us",
+L54:         "https://cosmos.azure.cn",
+L55:     ],
+L56: ]
+L57: 
+L58: def get_api_version(api_version: Optional[str], default: str) -> str:
+L59:     if api_version and api_version not in _SUPPORTED_API_VERSIONS:
+L60:         versions = "\n".join(_SUPPORTED_API_VERSIONS)
+L61:         raise ValueError(f"Unsupported API version '{api_version}'. Please select from:\n{versions}")
+L62:     return api_version or default
+L63: 
+L64: 
+L65: class TablesBaseClient:  # pylint: disable=too-many-instance-attributes
+L66:     """Base class for TableClient
+L67:     :ivar str account_name: The name of the Tables account.
+L68:     :ivar str scheme: The scheme component in the full URL to the Tables account.
+L69:     :ivar str url: The storage endpoint.
+L70:     :ivar str api_version: The service API version.
+L71:     """
+L72:     def __init__(  # pylint: disable=missing-client-constructor-parameter-credential, too-many-statements
+L73:         self,
+L74:         endpoint: str,
+L75:         *,
+L76:         credential: Optional[Union[AzureSasCredential, AzureNamedKeyCredential, TokenCredential]] = None,
+L77:         api_version: Optional[str] = None,
+L78:         audience: Optional[AudienceType] = None,
+L79:         **kwargs: Any,
+L80:     ) -> None:
+L81:         """
+L82:         :param str endpoint: A URL to an Azure Tables account.
+L83:         :keyword credential:
+L84:             The credentials with which to authenticate. This is optional if the
+L85:             account URL already has a SAS token. The value can be one of AzureNamedKeyCredential (azure-core),
+L86:             AzureSasCredential (azure-core), or a TokenCredential implementation from azure-identity.
+L87:         :paramtype credential:
+L88:             ~azure.core.credentials.AzureNamedKeyCredential or
+L89:             ~azure.core.credentials.AzureSasCredential or
+L90:             ~azure.core.credentials.TokenCredential or None
+L91:         :keyword audience: Optional audience to use for Microsoft Entra ID authentication. If not specified,
+L92:             the public cloud audience will be used.
+L93:         :paramtype audience: str or None
+L94:         :keyword api_version: Specifies the version of the operation to use for this request. Default value
+L95:             is "2019-02-02".
+L96:         :paramtype api_version: str or None
+L97:         """
+L98:         try:
+L99:             if not endpoint.lower().startswith("http"):
+L100:                 endpoint = "https://" + endpoint
+L101:         except AttributeError as exc:
+L102:             raise ValueError("Account URL must be a string.") from exc
+L103:         parsed_url = urlparse(endpoint.rstrip("/"))
+L104:         if not parsed_url.netloc:
+L105:             raise ValueError(f"Invalid URL: {endpoint}")
+L106:         _, sas_token = parse_query(parsed_url.query)
+L107:         if not sas_token and not credential:
+L108:             raise ValueError("You need to provide either an AzureSasCredential or AzureNamedKeyCredential")
+L109:         self._query_str, credential = format_query_string(sas_token, credential)
+L110:         self._location_mode = kwargs.get("location_mode", LocationMode.PRIMARY)
+L111:         self.scheme = parsed_url.scheme
+L112:         self._cosmos_endpoint = _is_cosmos_endpoint(parsed_url)
+L113:         account, self.account_name = _get_account(parsed_url)
+L114:         secondary_hostname = None
+L115:         self.credential = credential
+L116:         if self.scheme.lower() != "https" and hasattr(self.credential, "get_token"):
+L117:             raise ValueError("Token credential is only supported with HTTPS.")
+L118:         if isinstance(self.credential, AzureNamedKeyCredential):
+L119:             self.account_name = self.credential.named_key.name
+L120:             endpoint_suffix = os.getenv("TABLES_STORAGE_ENDPOINT_SUFFIX", DEFAULT_STORAGE_ENDPOINT_SUFFIX)
+L121:             secondary_hostname = f"{self.account_name}-secondary.table.{endpoint_suffix}"
+L122:         _hosts = kwargs.get("_hosts")
+L123:         if not _hosts:
+L124:             if len(account) > 1:
+L125:                 secondary_hostname = parsed_url.netloc.replace(
+L126:                     account[0], account[0] + "-secondary"
+L127:                 ) + parsed_url.path.replace(account[0], account[0] + "-secondary").rstrip("/")
+L128:             if kwargs.get("secondary_hostname"):
+L129:                 secondary_hostname = kwargs["secondary_hostname"]
+L130:             primary_hostname = (parsed_url.netloc + parsed_url.path).rstrip("/")
+L131:             _hosts = {
+L132:                 LocationMode.PRIMARY: primary_hostname,
+L133:                 LocationMode.SECONDARY: secondary_hostname,
+L134:             }
+L135:         self._hosts = _hosts
+L136:         self._policies = self._configure_policies(audience=audience, hosts=self._hosts, **kwargs)
+L137:         if self._cosmos_endpoint:
+L138:             self._policies.insert(0, CosmosPatchTransformPolicy())
+L139:         self._client = AzureTable(self.url, policies=kwargs.pop("policies", self._policies), **kwargs)
+L140:         # Incompatible assignment when assigning a str value to a Literal type variable
+L141:         self._client._config.version = get_api_version(
+L142:             api_version, self._client._config.version
+L143:         )  # type: ignore[assignment]
+L144: 
+L145:     @property
+L146:     def url(self) -> str:
+L147:         """The full endpoint URL to this entity, including SAS token if used.
+L148:         This could be either the primary endpoint,
+L149:         or the secondary endpoint depending on the current :func:`location_mode`.
+L150: 
+L151:         :return: The full endpoint URL including SAS token if used.
+L152:         :rtype: str
+L153:         """
+L154:         return self._format_url(self._hosts[self._location_mode])
+L155: 
+L156:     @property
+L157:     def _primary_endpoint(self):
+L158:         """The full primary endpoint URL.
+L159:         :return: The full primary endpoint URL.
+L160:         :rtype: str
+L161:         """
+L162:         return self._format_url(self._hosts[LocationMode.PRIMARY])
+L163: 
+L164:     @property
+L165:     def _primary_hostname(self):
+L166:         """The hostname of the primary endpoint.
+L167: 
+L168:         :return: The hostname of the primary endpoint.
+L169:         :type: str
+L170:         """
+L171:         return self._hosts[LocationMode.PRIMARY]
+L172: 
+L173:     @property
+L174:     def _secondary_endpoint(self):
+L175:         """The full secondary endpoint URL if configured.
+L176:         If not available a ValueError will be raised. To explicitly specify a secondary hostname, use the optional
+L177:         `secondary_hostname` keyword argument on instantiation.
+L178:         :return: The full secondary endpoint URL.
+L179:         :type: str
+L180:         :raise ValueError: If the secondary endpoint URL is not configured.
+L181:         """
+L182:         if not self._hosts[LocationMode.SECONDARY]:
+L183:             raise ValueError("No secondary host configured.")
+L184:         return self._format_url(self._hosts[LocationMode.SECONDARY])
+L185: 
+L186:     @property
+L187:     def _secondary_hostname(self):
+L188:         """The hostname of the secondary endpoint.
+L189:         If not available this will be None. To explicitly specify a secondary hostname, use the optional
+L190:         `secondary_hostname` keyword argument on instantiation.
+L191: 
+L192:         :return: The hostname of the secondary endpoint.
+L193:         :type: str or None
+L194:         """
+L195:         return self._hosts[LocationMode.SECONDARY]
+L196: 
+L197:     @property
+L198:     def api_version(self) -> str:
+L199:         """The version of the Storage API used for requests.
+L200:         :return: The Storage API version.
+L201:         :type: str
+L202:         """
+L203:         return self._client._config.version  # pylint: disable=protected-access
+L204: 
+L205:     def __enter__(self) -> Self:
+L206:         self._client.__enter__()
+L207:         return self
+L208: 
+L209:     def __exit__(self, *args: Any) -> None:
+L210:         self._client.__exit__(*args)
+L211: 
+L212:     def _format_url(self, hostname):
+L213:         """Format the endpoint URL according to the current location
+L214:         mode hostname.
+L215:         :param str hostname: The current location mode hostname.
+L216:         :returns: The full URL to the Tables account.
+L217:         :rtype: str
+L218:         """
+L219:         return f"{self.scheme}://{hostname}{self._query_str}"
+L220:     def _configure_policies(self, *, audience: Optional[str] = None, **kwargs: Any) -> List[Any]:
+L221:         credential_policy = _configure_credential(
+L222:             self.credential, cosmos_endpoint=self._cosmos_endpoint, audience=audience
+L223:         )
+L224:         return [
+L225:             RequestIdPolicy(**kwargs),
+L226:             StorageHeadersPolicy(**kwargs),
+L227:             UserAgentPolicy(sdk_moniker=SDK_MONIKER, **kwargs),
+L228:             ProxyPolicy(**kwargs),
+L229:             credential_policy,
+L230:             ContentDecodePolicy(response_encoding="utf-8"),
+L231:             RedirectPolicy(**kwargs),
+L232:             StorageHosts(**kwargs),
+L233:             TablesRetryPolicy(**kwargs),
+L234:             CustomHookPolicy(**kwargs),
+L235:             NetworkTraceLoggingPolicy(**kwargs),
+L236:             DistributedTracingPolicy(**kwargs),
+L237:             HttpLoggingPolicy(**kwargs),
+L238:         ]
+L239:     def _batch_send(self, table_name: str, *reqs: HttpRequest, **kwargs) -> List[Mapping[str, Any]]:
+L240:         # pylint:disable=docstring-should-be-keyword
+L241:         """Given a series of request, do a Storage batch call.
+L242:         :param table_name: The table name.
+L243:         :type table_name: str
+L244:         :param reqs: The HTTP request.
+L245:         :type reqs: ~azure.core.pipeline.rest.HttpRequest
+L246:         :return: A list of batch part metadata in response.
+L247:         :rtype: list[Mapping[str, Any]]
+L248:         """
+L249:         # Pop it here, so requests doesn't feel bad about additional kwarg
+L250:         policies = [StorageHeadersPolicy()]
+L251:         changeset = HttpRequest("POST", "")
+L252:         changeset.set_multipart_mixed(*reqs, policies=policies, boundary=f"changeset_{uuid4()}")
+L253:         request = HttpRequest(
+L254:             method="POST",
+L255:             url=f"{self.scheme}://{self._primary_hostname}/$batch",
+L256:             headers={
+L257:                 "x-ms-version": self.api_version,
+L258:                 "DataServiceVersion": "3.0",
+L259:                 "MaxDataServiceVersion": "3.0;NetFx",
+L260:                 "Content-Type": "application/json",
+L261:                 "Accept": "application/json",
+L262:             },
+L263:         )
+L264:         request.set_multipart_mixed(
+L265:             changeset,
+L266:             policies=policies,
+L267:             enforce_https=False,
+L268:             boundary=f"batch_{uuid4()}",
+L269:         )
+L270:         response = self._client.send_request(request, stream=True, **kwargs)
+L271:         if response.status_code == 413:
+L272:             raise _decode_error(
+L273:                 response, error_message="The transaction request was too large", error_type=RequestTooLargeError
+L274:             )
+L275:         if response.status_code != 202:
+L276:             decoded = _decode_error(response)
+L277:             _validate_tablename_error(decoded, table_name)
+L278:             raise decoded
+L279:         # The parts() method is defined on the back-compat mixin, not the protocol.
+L280:         parts = list(response.parts())  # type: ignore[attr-defined]
+L281:         error_parts = [p for p in parts if not 200 <= p.status_code < 300]
+L282:         if any(error_parts):
+L283:             if error_parts[0].status_code == 413:
+L284:                 raise _decode_error(
+L285:                     response, error_message="The transaction request was too large", error_type=RequestTooLargeError
+L286:                 )
+L287:             decoded = _decode_error(response=error_parts[0], error_type=TableTransactionError)
+L288:             _validate_tablename_error(decoded, table_name)
+L289:             raise decoded
+L290:         return [extract_batch_part_metadata(p) for p in parts]
+L291:     def close(self) -> None:
+L292:         """This method is to close the sockets opened by the client.
+L293:         It need not be used when using with a context manager.
+L294:         """
+L295:         self._client.close()
+L296: 
+L297: 
+L298: class TransportWrapper(HttpTransport):
+L299:     """Wrapper class that ensures that an inner client created
+L300:     by a `get_client` method does not close the outer transport for the parent
+L301:     when used in a context manager.
+L302:     :param transport: The Http Transport instance
+L303:     :type transport: ~azure.core.pipeline.transport.HttpTransport
+L304:     """
+L305: 
+L306:     def __init__(self, transport):
+L307:         self._transport = transport
+L308: 
+L309:     def send(self, request, **kwargs):
+L310:         return self._transport.send(request, **kwargs)
+L311: 
+L312:     def open(self):
+L313:         pass
+L314: 
+L315:     def close(self):
+L316:         pass
+L317: 
+L318:     def __enter__(self):
+L319:         pass
+L320: 
+L321:     def __exit__(self, *args):  # pylint: disable=arguments-differ
+L322:         pass
+L323: 
+L324: def parse_connection_str(
+L325:     conn_str: str,
+L326:     credential: Optional[Union[AzureNamedKeyCredential, AzureSasCredential, TokenCredential]],
+L327:     keyword_args: Any,
+L328: ):
+L329:     if conn_str.lower() == "usedevelopmentstorage=true":
+L330:         conn_str = _DEV_CONN_STRING
+L331:     conn_settings = parse_connection_string(conn_str)
+L332:     primary = None
+L333:     secondary = None
+L334:     # TODO: kwarg "endpoint_type" may not necessary as we can tell the type from endpoint itself
+L335:     endpoint_type = keyword_args.pop("endpoint_type", None)
+L336:     if not credential:
+L337:         try:
+L338:             credential = AzureNamedKeyCredential(name=conn_settings["accountname"], key=conn_settings["accountkey"])
+L339:         except KeyError as exc:
+L340:             sas_token = conn_settings.get("sharedaccesssignature", None)
+L341:             if not sas_token:
+L342:                 raise ValueError("Connection string missing required connection details.") from exc
+L343:             credential = AzureSasCredential(sas_token)
+L344:     primary = conn_settings.get("tableendpoint")
+L345:     secondary = conn_settings.get("tablesecondaryendpoint")
+L346:     if not primary:
+L347:         if secondary:
+L348:             raise ValueError("Connection string specifies only secondary endpoint.")
+L349:         try:
+L350:             primary = f"{conn_settings['defaultendpointsprotocol']}://{conn_settings['accountname']}.table.{conn_settings['endpointsuffix']}"  # pylint: disable=line-too-long
+L351:             secondary = f"{conn_settings['accountname']}-secondary.table.{conn_settings['endpointsuffix']}"
+L352:         except KeyError:
+L353:             pass
+L354:     if not primary:
+L355:         if endpoint_type and endpoint_type == "cosmos":
+L356:             endpoint_suffix = os.getenv("TABLES_COSMOS_ENDPOINT_SUFFIX", DEFAULT_COSMOS_ENDPOINT_SUFFIX)
+L357:         else:
+L358:             endpoint_suffix = os.getenv("TABLES_STORAGE_ENDPOINT_SUFFIX", DEFAULT_STORAGE_ENDPOINT_SUFFIX)
+L359:         try:
+L360:             primary = f"https://{conn_settings['accountname']}.table.{conn_settings.get('endpointsuffix', endpoint_suffix)}"  # pylint: disable=line-too-long
+L361:         except KeyError as exc:
+L362:             raise ValueError("Connection string missing required connection details.") from exc
+L363:     if "secondary_hostname" not in keyword_args:
+L364:         keyword_args["secondary_hostname"] = secondary
+L365: 
+L366:     return primary, credential
+L367: 
+L368: 
+L369: def extract_batch_part_metadata(response_part):
+L370:     metadata = {}
+L371:     if "Etag" in response_part.headers:
+L372:         metadata["etag"] = response_part.headers["Etag"]
+L373:     return metadata
+L374: 
+L375: def format_query_string(sas_token, credential):
+L376:     query_str = "?"
+L377:     if sas_token and isinstance(credential, AzureSasCredential):
+L378:         raise ValueError(
+L379:             "You cannot use AzureSasCredential when the resource URI also contains a Shared Access Signature."
+L380:         )
+L381:     if sas_token and not credential:
+L382:         query_str += sas_token
+L383:     elif credential:
+L384:         return "", credential
+L385:     return query_str.rstrip("?&"), None
+L386: 
+L387: def parse_query(query_str):
+L388:     sas_values = QueryStringConstants.to_list()
+L389:     parsed_query = {k: v[0] for k, v in parse_qs(query_str).items()}
+L390:     sas_params = [f"{k}={quote(v, safe='')}" for k, v in parsed_query.items() if k in sas_values]
+L391:     sas_token = None
+L392:     if sas_params:
+L393:         sas_token = "&".join(sas_params)
+L394: 
+L395:     snapshot = parsed_query.get("snapshot") or parsed_query.get("sharesnapshot")
+L396:     return snapshot, sas_token
+--------------------------------------------------------------------------------
+Versioning for Azure Storage | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/storageservices/versioning-for-the-azure-storage-services)
+citeturn43view2 [wordlim: 200] Crawled: today; Content type: text/html; Source: open({"ref_id":"https://learn.microsoft.com/en-us/rest/api/storageservices/versioning-for-the-azure-storage-services","lineno":null}); Total lines: 230
+L0: cite0†Skip to main content cite1†Skip to Ask Learn chat experience L1: 
+L2: This browser is no longer supported.
+L3: 
+L4: Upgrade to Microsoft Edge to take advantage of the latest features, security updates, and technical support.
+L5: 
+L6: cite2†Download Microsoft Edge†go.microsoft.com cite3†More info about Internet Explorer and Microsoft Edge L7: 
+L8: Table of contents Exit editor mode
+L9: 
+L10: Ask Learn Ask Learn
+L11: 
+L12: Reading mode Table of contents cite1†Read in English Add Add to Plans cite4†Edit†github.com L13: 
+L14: * * *
+L15: 
+L16: Copy Markdown Print
+L17: 
+L18: * * *
+L19: 
+L20: Note
+L21: Access to this page requires authorization. You can try cite1†signing in or changing directories.
+L22: 
+L23: Access to this page requires authorization. You can try changing directories.
+L24: # Versioning for Azure Storage
+L25: 
+L26: Feedback
+L27: 
+L28: Summarize this article for me
+L29: ## In this article
+L30: 
+L31: Azure Storage supports multiple versions. To make a request against the storage services, you must specify the version that you want to use for that operation, unless the request is anonymous.
+L32: 
+L33: As of September 23, 2026, the latest fully deployed version of the Azure Storage service is `2026-04-06`. `2026-06-06` and `2026-10-06` are globally enabled, with the exception of a small number of tenants in useast2euap and uscentraleuap.
+L34: The latest GA versions of the SDKs default to `2026-10-06`.
+L35: 
+L36: If the table below indicates an `x-ms-version` is enabled in a region, all previous `x-ms-versions` are also enabled. Attempting to use a service version that isn't fully deployed in your storage account's region might generate a cite5†x-ms-version mismatch error .
+L37: Region  | `x-ms-version`
+L38: --- | ---
+L39: asiaeast  | 2026-10-06
+L40: asiasoutheast  | 2026-10-06
+L41: australiac  | 2026-10-06
+L42: australiac2  | 2026-10-06
+L43: australiaeast  | 2026-10-06
+L44: australiasoutheast  | 2026-10-06
+L45: austriae  | 2026-10-06
+L46: belgiumc  | 2026-10-06
+L47: brazilse  | 2026-10-06
+L48: brazilsouth  | 2026-10-06
+L49: canadacentral  | 2026-10-06
+L50: canadaeast  | 2026-10-06
+L51: chilec  | 2026-10-06
+L52: denmarke  | 2026-10-06
+L53: europenorth  | 2026-10-06
+L54: europewest  | 2026-10-06
+L55: eusslv  | 2026-10-06
+L56: francec  | 2026-10-06
+L57: frances  | 2026-10-06
+L58: germanyn  | 2026-10-06
+L59: germanywc  | 2026-10-06
+L60: indiacentral  | 2026-10-06
+L61: indiasc  | 2026-10-06
+L62: indiasouth  | 2026-10-06
+L63: indiawest  | 2026-10-06
+L64: indonesiac  | 2026-10-06
+L65: israelc  | 2026-10-06
+L66: israelnw  | 2026-10-06
+L67: italyn  | 2026-10-06
+L68: japaneast  | 2026-10-06
+L69: japanwest  | 2026-10-06
+L70: jioinc  | 2026-10-06
+L71: jioinw  | 2026-10-06
+L72: koreacentral  | 2026-10-06
+L73: koreasouth  | 2026-10-06
+L74: malaysias  | 2026-10-06
+L75: malaysiaw  | 2026-10-06
+L76: mexicoc  | 2026-10-06
+L77: newzealandn  | 2026-10-06
+L78: norwaye  | 2026-10-06
+L79: norwayw  | 2026-10-06
+L80: polandc  | 2026-10-06
+L81: qatarc  | 2026-10-06
+L82: saudiarabiaeast  | 2026-10-06
+L83: southafrican  | 2026-10-06
+L84: southafricaw  | 2026-10-06
+L85: spainc  | 2026-10-06
+L86: swedenc  | 2026-10-06
+L87: swedens  | 2026-10-06
+L88: switzerlandn  | 2026-10-06
+L89: switzerlandw  | 2026-10-06
+L90: taiwann  | 2026-10-06
+L91: taiwannw  | 2026-10-06
+L92: uaec  | 2026-10-06
+L93: uaen  | 2026-10-06
+L94: uksouth  | 2026-10-06
+L95: ukwest  | 2026-10-06
+L96: uscentral  | 2026-10-06
+L97: uscentraleuap  | 2026-04-06
+L98: useast  | 2026-10-06
+L99: useast2  | 2026-10-06
+L100: useast2euap  | 2026-04-06
+L101: useast3  | 2026-10-06
+L102: usnorth  | 2026-10-06
+L103: usnortheast5  | 2026-10-06
+L104: ussouth  | 2026-10-06
+L105: ussouth2  | 2026-10-06
+L106: ussoutheast  | 2026-10-06
+L107: ussoutheast3  | 2026-10-06
+L108: ussoutheast5  | 2026-10-06
+L109: ussouthwest  | 2026-10-06
+L110: uswcfre  | 2026-10-06
+L111: uswest  | 2026-10-06
+L112: uswest2  | 2026-10-06
+L113: uswest3  | 2026-10-06
+L114: uswestcentral  | 2026-10-06
+L115: The default `x-ms-version` being used by the Azure Storage data plane SDKs can be found in the changelogs in the following table:
+L116:  | cite6†Blob Service | cite7†ADLS Gen 2 | cite8†Files Service | cite9†Queue Service L117: --- | --- | --- | --- | ---
+L118: .NET  | cite10†Azure.Storage.Blobs†github.com | cite11†Azure.Storage.Files.DataLake†github.com | cite12†Azure.Storage.Files.Shares†github.com | cite13†Azure.Storage.Queues†github.com L119: Java  | cite14†azure-storage-blob†github.com | cite15†azure-storage-file-datalake†github.com | cite16†azure-storage-file-share†github.com | cite17†azure-storage-queue†github.com L120: Python  | cite18†azure-storage-blob†github.com | cite19†azure-storage-file-datalake†github.com | cite20†azure-storage-file-share†github.com | cite21†azure-storage-queue†github.com L121: JavaScript  | cite22†storage-blob†github.com | cite23†storage-file-datalake†github.com | cite24†storage-file-share†github.com | cite25†storage-queue†github.com L122: C++  | cite26†azure-storage-blobs†github.com | cite27†azure-storage-files-datalake†github.com | cite28†azure-storage-files-shares†github.com | cite29†azure-storage-queues†github.com L123: GoLang  | cite30†azblob†github.com | cite31†azdatalake†github.com | cite32†azfile†github.com | cite33†azqueue†github.com L124: The data plane Storage SDKs don't perform GA releases to the other official package feeds until the default `x-ms-version` for the release in question has full rollout in all regions. Therefore, the latest GA SDK release from the official package managers can safely be used in any region.
+L125: 
+L126: For a list of all other supported versions, and for information about using each version, see cite34†Previous Azure Storage service versions .
+L127: 
+L128: The 2026-10-06 service version includes the following features:
+L129:   * Added support for paginated to cite35†File List Ranges via the new `marker` and `maxresults` query parameters.
+L130:   * The `x-ms-content-crc64` response header will now be returned if the `x-ms-source-content-md5` request header is specificed for the following APIs:
+L131:     * cite36†Append Blob from URL L132:     * cite37†Append Blob L133:     * cite38†Put Block from URL L134:     * cite39†Put Block L135:     * cite40†Put Page from URL L136:     * cite41†Put Page L137: ## Specify service versions in requests
+L138: 
+L139: How you specify the version of the storage services to use for a request relates to how that request is authorized. The following sections describe authorization options and how the service version is specified for each.
+L140:   * Requests that use an OAuth 2.0 token from Microsoft Entra: To authorize a request with Microsoft Entra ID, pass the `x-ms-version` header on the request with a service version of 2017-11-09 or higher. For more information, see Call storage operations with OAuth tokens in cite42†Authorize with Microsoft Entra ID .
+L141:   * Requests that use Shared Key or Shared Key Lite: To authorize a request with Shared Key or Shared Key Lite, pass the `x-ms-version` header on the request. When using Azure Blob Storage, you can specify the default version for all requests by calling cite43†Set Blob Service Properties .
+L142:   * Requests that use a shared access signature (SAS): You can specify two versioning options on a shared access signature. The optional `api-version` header indicates which service version to use to execute the API operation. The required `SignedVersion (sv)` parameter specifies the service version to use to authorize the request made with the SAS. If the `api-version` header isn't specified, the value of the `SignedVersion (sv)` parameter also indicates the version to use to execute the API operation.
+L143:   * Requests that use anonymous access: When utilizing anonymous access against Blob Storage, no version is passed in. The heuristics for determining which version to use for the request are described in the next sections.
+--------------------------------------------------------------------------------
+Internal Error ()
+citeturn43view3 [wordlim: 200] Source: open({"ref_id":"https://learn.microsoft.com/en-us/rest/api/resource-manager/containerapps/operations/get?view=rest-resource-manager-containerapps-2026-07-01","lineno":null}); Total lines: 1
+

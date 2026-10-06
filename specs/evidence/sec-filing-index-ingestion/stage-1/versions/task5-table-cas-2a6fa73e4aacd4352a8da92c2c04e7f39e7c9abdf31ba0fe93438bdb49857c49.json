@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "evidence_id": "T5-PERM-table-cas",
+  "source_url": "https://learn.microsoft.com/en-us/rest/api/storageservices/update-entity2",
+  "retrieved_at_utc": "2026-10-06T01:11:54Z",
+  "source_version": "Last updated 2023-06-27; Update Entity REST reference",
+  "retrieval_method": "public Microsoft Learn via web.run; curated extract",
+  "status": "success via corrected official URL after failed original",
+  "extract": "PUT https://myaccount.table.core.windows.net/mytable(PartitionKey='myPartitionKey', RowKey='myRowKey').\nIf-Match uses current opaque ETag for optimistic concurrency; mismatch yields 412 Precondition Failed. If-Match:* overrides concurrency. Missing If-Match in version 2011-08-18 or later causes Insert Or Replace (upsert). JSON only for 2015-12-11 or later. This is concurrency behavior, not a separate Azure RBAC permission.",
+  "limitations": "Documentation evidence only. No Azure authorization or live operation tested."
+}

@@ -1,0 +1,234 @@
+{
+  "status": "Raw preparation, no approvals or deployment claims",
+  "claims": [
+    {
+      "id": "jobs-create",
+      "category": "Verified documentation",
+      "claim": "Create/update reference identifies 2026-07-01 PUT, request configuration/environment/template fields, and 200/201 responses with asynchronous-operation headers.",
+      "official_url": "https://learn.microsoft.com/en-us/rest/api/resource-manager/containerapps/jobs/create-or-update?view=rest-resource-manager-containerapps-2026-07-01",
+      "access_time": "2026-10-05 23:06:50 UTC",
+      "line_ranges": [
+        [
+          24,
+          65
+        ]
+      ],
+      "extract": "L24: # Jobs - Create Or Update\nL25: \nL26: Service:\nL27:     Azure Container Apps\nL28: \nL29: API Version:\nL30:     2026-07-01\nL31: \nL32: ##\nL33: \nL34: Create or Update a Container Apps Job.\nL35: \nL36:     `PUT https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.App/jobs/{jobName}?api-version=2026-07-01`\nL37: ## URI Parameters\nL38: \nL39: Name  | In  | Required  | Type  | Description\nL40: --- | --- | --- | --- | ---\nL41: jobName  | path  | True  | string pattern: ^[-\\w\\._\\(\\)]+$  | Job Name\nL42: resourceGroupName  | path  | True  | string minLength: 1\nL43: maxLength: 90  | The name of the resource group. The name is case insensitive.\nL44: subscriptionId  | path  | True  | string (uuid)  | The ID of the target subscription. The value must be an UUID.\nL45: api-version  | query  | True  | string minLength: 1  | The API version to use for this operation.\nL46: ## Request Body\nL47: Name  | Required  | Type  | Description\nL48: --- | --- | --- | ---\nL49: location  | True  | string  | The geo-location where the resource lives\nL50: identity  |  | \ue200cite\ue2026\u2020ManagedServiceIdentity\ue201 | The managed service identities assigned to this resource.\nL51: properties.configuration  |  | \ue200cite\ue2027\u2020JobConfiguration\ue201 | Container Apps Job configuration properties.\nL52: properties.environmentId  |  | string  | Resource ID of environment.\nL53: properties.template  |  | \ue200cite\ue2028\u2020JobTemplate\ue201 | Container Apps job definition.\nL54: properties.workloadProfileName  |  | string  | Workload profile name to pin for container apps job execution.\nL55: tags  |  | object  | Resource tags.\nL56: ## Responses\nL57: \nL58: Name  | Type  | Description\nL59: --- | --- | ---\nL60: 200 OK  | \ue200cite\ue2029\u2020Job\ue201 | Resource 'Job' update operation succeeded\nL61: 201 Created  | \ue200cite\ue2029\u2020Job\ue201 | Resource 'Job' create operation succeeded Headers\nL62: \nL63:   * Azure-AsyncOperation: string\nL64:   * Retry-After: integer\nL65: Other Status Codes  | \ue200cite\ue20210\u2020DefaultErrorResponse\ue201 | An unexpected error response.",
+      "limitation": "No resource creation, Bicep compatibility, permissions, or response observed."
+    },
+    {
+      "id": "jobs-start",
+      "category": "Verified documentation",
+      "claim": "Start reference identifies 2026-07-01 POST, a 200 execution-base response, and 202 Location/Retry-After headers.",
+      "official_url": "https://learn.microsoft.com/en-us/rest/api/resource-manager/containerapps/jobs/start?view=rest-resource-manager-containerapps-2026-07-01",
+      "access_time": "2026-10-05 23:06:51 UTC",
+      "line_ranges": [
+        [
+          24,
+          60
+        ],
+        [
+          303,
+          318
+        ],
+        [
+          383,
+          402
+        ]
+      ],
+      "extract": "L24: # Jobs - Start\nL25: \nL26: Service:\nL27:     Azure Container Apps\nL28: \nL29: API Version:\nL30:     2026-07-01\nL31: \nL32: ##\nL33: \nL34: Start a Container Apps Job\nL35: \nL36:     `POST https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.App/jobs/{jobName}/start?api-version=2026-07-01`\nL37: ## URI Parameters\nL38: \nL39: Name  | In  | Required  | Type  | Description\nL40: --- | --- | --- | --- | ---\nL41: jobName  | path  | True  | string pattern: ^[-\\w\\._\\(\\)]+$  | Job Name\nL42: resourceGroupName  | path  | True  | string minLength: 1\nL43: maxLength: 90  | The name of the resource group. The name is case insensitive.\nL44: subscriptionId  | path  | True  | string (uuid)  | The ID of the target subscription. The value must be an UUID.\nL45: api-version  | query  | True  | string minLength: 1  | The API version to use for this operation.\nL46: ## Request Body\nL47: \nL48: Name  | Type  | Description\nL49: --- | --- | ---\nL50: containers  | \ue200cite\ue2026\u2020JobExecutionContainer\ue201 []  | List of container definitions for the Container Apps Job.\nL51: initContainers  | \ue200cite\ue2026\u2020JobExecutionContainer\ue201 []  | List of specialized containers that run before job containers.\nL52: ## Responses\nL53: \nL54: Name  | Type  | Description\nL55: --- | --- | ---\nL56: 200 OK  | \ue200cite\ue2027\u2020JobExecutionBase\ue201 | Azure operation completed successfully.\nL57: 202 Accepted  |  | Resource operation accepted. Headers\nL58: \nL59:   * Location: string\nL60:   * Retry-After: integer\nL303: To use the Azure SDK library in your project, see \ue200cite\ue20218\u2020this documentation\u2020github.com\ue201 . To provide feedback on this code sample, \ue200cite\ue20215\u2020open a GitHub issue\u2020github.com\ue201 L304: #### Sample response\nL305: \nL306: Status code:\nL307:     200\nL308: \nL309:     `{\nL310:       \"name\": \"testcontainerAppsJob0-pjxhsye\",\nL311:       \"id\": \"/subscriptions/34adfa4f-cedf-4dc0-ba29-b6d1a69ab345/resourceGroups/rg/providers/Microsoft.App/jobs/{containerAppsJobName}/executions/{jobExecutionName}\"\nL312:     }`\nL313: \nL314: Status code:\nL315:     202\nL316: \nL317:     `Location: location`\nL318: ## Definitions\nL383: secretRef  | string  | Name of the Container App secret from which to pull the environment variable value.\nL384: value  | string  | Non-secret environment variable value.\nL385: ### JobExecutionBase\nL386: \nL387: Object\nL388: \nL389: Container App's Job execution name.\nL390: \nL391: Name  | Type  | Description\nL392: --- | --- | ---\nL393: id  | string  | Job execution Id.\nL394: name  | string  | Job execution name.\nL395: ### JobExecutionContainer\nL396: \nL397: Object\nL398: \nL399: Container Apps Jobs execution container definition.\nL400: \nL401: Name  | Type  | Description\nL402: --- | --- | ---",
+      "limitation": "200/202 documentation is not observed response behavior; uncertain starts, exact correlation, and replay safety remain unresolved deployment checks."
+    },
+    {
+      "id": "execution-get",
+      "category": "Verified documentation",
+      "claim": "Exact execution-name GET and seven status enum values are documented.",
+      "official_url": "https://learn.microsoft.com/en-us/rest/api/resource-manager/containerapps/job-execution/job-execution?view=rest-resource-manager-containerapps-2026-07-01",
+      "access_time": "2026-10-05 23:06:52 UTC",
+      "line_ranges": [
+        [
+          29,
+          51
+        ],
+        [
+          415,
+          432
+        ],
+        [
+          447,
+          461
+        ]
+      ],
+      "extract": "L29: API Version:\nL30:     2026-07-01\nL31: \nL32: ##\nL33: \nL34: Get details of a single job execution\nL35: \nL36:     `GET https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.App/jobs/{jobName}/executions/{jobExecutionName}?api-version=2026-07-01`\nL37: ## URI Parameters\nL38: Name  | In  | Required  | Type  | Description\nL39: --- | --- | --- | --- | ---\nL40: jobExecutionName  | path  | True  | string pattern: ^[-\\w\\._\\(\\)]+$  | Job execution name.\nL41: jobName  | path  | True  | string pattern: ^[-\\w\\._\\(\\)]+$  | Job Name\nL42: resourceGroupName  | path  | True  | string minLength: 1\nL43: maxLength: 90  | The name of the resource group. The name is case insensitive.\nL44: subscriptionId  | path  | True  | string (uuid)  | The ID of the target subscription. The value must be an UUID.\nL45: api-version  | query  | True  | string minLength: 1  | The API version to use for this operation.\nL46: ## Responses\nL47: \nL48: Name  | Type  | Description\nL49: --- | --- | ---\nL50: 200 OK  | \ue200cite\ue2026\u2020JobExecution\ue201 | Azure operation completed successfully.\nL51: Other Status Codes  | \ue200cite\ue2027\u2020DefaultErrorResponse\ue201 | An unexpected error response.\nL415: ### JobExecution\nL416: \nL417: Object\nL418: \nL419: Container Apps Job execution.\nL420: Name  | Type  | Description\nL421: --- | --- | ---\nL422: id  | string (arm-id)  | Fully qualified resource ID for the resource. E.g. \"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}\"\nL423: name  | string  | The name of the resource\nL424: properties.detailedStatus  | \ue200cite\ue20224\u2020ExecutionStatus\ue201 | Detailed status of the job execution.\nL425: properties.endTime  | string (date-time)  | Job execution end time.\nL426: properties.message  | string  | Human readable message indicating details about the current condition of the job execution.\nL427: properties.reason  | string  | Reason for the current condition of job execution.\nL428: properties.startTime  | string (date-time)  | Job execution start time.\nL429: properties.status  | \ue200cite\ue20226\u2020JobExecutionRunningState\ue201 | Current running State of the job\nL430: properties.template  | \ue200cite\ue20227\u2020JobExecutionTemplate\ue201 | Job's execution container.\nL431: systemData  | \ue200cite\ue20229\u2020systemData\ue201 | Azure Resource Manager metadata containing createdBy and modifiedBy information.\nL432: type  | string  | The type of the resource. E.g. \"Microsoft.Compute/virtualMachines\" or \"Microsoft.Storage/storageAccounts\"\nL447: ### JobExecutionRunningState\nL448: \nL449: Enumeration\nL450: \nL451: Current running State of the job\nL452: \nL453: Value  | Description\nL454: --- | ---\nL455: Running  | Running\nL456: Processing  | Processing\nL457: Stopped  | Stopped\nL458: Degraded  | Degraded\nL459: Failed  | Failed\nL460: Unknown  | Unknown\nL461: Succeeded  | Succeeded",
+      "limitation": "Status descriptions repeat names and do not establish terminal semantics for every state; sample simultaneously contains Running, endTime, and BackoffLimitExceeded.",
+      "sample_discrepancy_extract": "L273:         \"endTime\": \"2023-02-13T20:47:30+00:00\",\nL274:         \"message\": \"Job has reached the specified backoff limit\",\nL275:         \"reason\": \"BackoffLimitExceeded\",\nL276:         \"startTime\": \"2023-02-13T20:37:30+00:00\",\nL277:         \"status\": \"Running\","
+    },
+    {
+      "id": "execution-list-corrected",
+      "category": "Verified documentation",
+      "claim": "Jobs Executions List reference identifies 2026-07-01 GET, optional filter, and nextLink.",
+      "official_url": "https://learn.microsoft.com/en-us/rest/api/resource-manager/containerapps/jobs-executions/list?view=rest-resource-manager-containerapps-2026-07-01",
+      "access_time": "2026-10-05 23:07:27 UTC",
+      "line_ranges": [
+        [
+          24,
+          54
+        ],
+        [
+          358,
+          371
+        ]
+      ],
+      "extract": "L24: # Jobs Executions - List\nL25: \nL26: Service:\nL27:     Azure Container Apps\nL28: \nL29: API Version:\nL30:     2026-07-01\nL31: ##\nL32: \nL33: Get a Container Apps Job's executions\nL34: \nL35:     `GET https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.App/jobs/{jobName}/executions?api-version=2026-07-01`\nL36: \nL37: With optional parameters:\nL38: \nL39:     `GET https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.App/jobs/{jobName}/executions?api-version=2026-07-01&$filter={$filter}`\nL40: ## URI Parameters\nL41: Name  | In  | Required  | Type  | Description\nL42: --- | --- | --- | --- | ---\nL43: jobName  | path  | True  | string pattern: ^[-\\w\\._\\(\\)]+$  | Job Name\nL44: resourceGroupName  | path  | True  | string minLength: 1\nL45: maxLength: 90  | The name of the resource group. The name is case insensitive.\nL46: subscriptionId  | path  | True  | string (uuid)  | The ID of the target subscription. The value must be an UUID.\nL47: api-version  | query  | True  | string minLength: 1  | The API version to use for this operation.\nL48: $filter  | query  |  | string  | The filter to apply on the operation.\nL49: ## Responses\nL50: \nL51: Name  | Type  | Description\nL52: --- | --- | ---\nL53: 200 OK  | \ue200cite\ue2026\u2020ContainerAppJobExecutions\ue201 | Azure operation completed successfully.\nL54: Other Status Codes  | \ue200cite\ue2027\u2020DefaultErrorResponse\ue201 | An unexpected error response.\nL358: \ue200cite\ue20230\u2020systemData\ue201 | Metadata pertaining to creation and last modification of the resource.\nL359: ### ContainerAppJobExecutions\nL360: \nL361: Object\nL362: \nL363: Container App executions collection ARM resource.\nL364: \nL365: Name  | Type  | Description\nL366: --- | --- | ---\nL367: nextLink  | string (uri)  | The link to the next page of items\nL368: value  | \ue200cite\ue20225\u2020JobExecution\ue201 []  | The JobExecution items on this page\nL369: ### ContainerExecutionStatus\nL370: \nL371: Object",
+      "limitation": "Filter grammar/ordering/correlation are not established; a listed execution alone does not prove which start caused it."
+    },
+    {
+      "id": "adf-web",
+      "category": "Verified documentation",
+      "claim": "Web activity documents 202 Location GET following by default, configurable response timeout, async wait, output cap, and managed-identity ARM resource URI.",
+      "official_url": "https://learn.microsoft.com/en-us/azure/data-factory/control-flow-web-activity",
+      "access_time": "2026-10-05 23:07:02 UTC",
+      "line_ranges": [
+        [
+          38,
+          44
+        ],
+        [
+          99,
+          116
+        ],
+        [
+          159,
+          169
+        ]
+      ],
+      "extract": "L38: \nL39: Note\nL40: Web Activity is supported for invoking URLs that are hosted in a private virtual network as well by using a self-hosted integration runtime. The integration runtime should have a line of sight to the URL endpoint.\nL41: \nL42: Note\nL43: \nL44: The maximum supported output response payload size is 4 MB.\nL99: name  | Name of the web activity  | String  | Yes\nL100: type  | Must be set to WebActivity.  | String  | Yes\nL101: method  | REST API method for the target endpoint.  | String.\nL102: Supported Types: \"GET\", \"POST\", \"PUT\", \"PATCH\", \"DELETE\"  | Yes\nL103: url  | Target endpoint and path  | String (or expression with resultType of string). The activity will time out at 1 minute with an error if it doesn't receive a response from the endpoint. You can increase this response timeout up to 10 mins by updating the httpRequestTimeout property  | Yes\nL104: httpRequestTimeout  | Response timeout duration  | hh:mm:ss with the max value as 00:10:00. If not explicitly specified defaults to 00:01:00  | No\nL105: headers  | Headers that are sent to the request. For example, to set the language and type on a request: `\"headers\" : { \"Accept-Language\": \"en-us\", \"Content-Type\": \"application/json\" }`.  | String (or expression with resultType of string)  | No\nL106: body  | Represents the payload that is sent to the endpoint.  | String (or expression with resultType of string).\nL107: See the schema of the request payload in \ue200cite\ue20211\u2020Request payload schema\ue201 section.  | Required for POST/PUT/PATCH methods. Optional for DELETE method.\nL108: authentication  | Authentication method used for calling the endpoint. Supported Types are \"Basic, Client Certificate, System-assigned Managed Identity, User-assigned Managed Identity, Service Principal.\" For more information, see \ue200cite\ue20212\u2020Authentication\ue201 section. If authentication isn't required, exclude this property.  | String (or expression with resultType of string)  | No\nL109: turnOffAsync  | Option to disable invoking HTTP GET on location field in the response header of an HTTP 202 Response. If set true, it stops invoking HTTP GET on http location given in response header. If set false then it continues to invoke HTTP GET call on location given in http response headers.  | Allowed values are false (default) and true.  | No\nL110: disableCertValidation  | Removes server side certificate validation (not recommended unless you're connecting to a trusted server that doesn't use a standard CA cert).  | Allowed values are false (default) and true.  | No\nL111: datasets  | List of datasets passed to the endpoint.  | Array of dataset references. Can be an empty array.  | Yes\nL112: linkedServices  | List of linked services passed to endpoint.  | Array of linked service references. Can be an empty array.  | Yes\nL113: connectVia  | The \ue200cite\ue20213\u2020integration runtime\ue201 to be used to connect to the data store. You can use the Azure integration runtime or the self-hosted integration runtime (if your data store is in a private network). If this property isn't specified, the service uses the default Azure integration runtime.  | The integration runtime reference.  | No\nL114: Note\nL115: \nL116: REST endpoints that the web activity invokes must return a response of type JSON. The activity will time out at 1 minute with an error if it doesn't receive a response from the endpoint. For endpoints that support \ue200cite\ue20214\u2020Asynchronous Request-Reply pattern\ue201 , the web activity continues to wait without timing out (upto 7 day) or until the endpoints signals completion of the job.\nL159:     [System.Convert]::ToBase64String($fileContentBytes) | Out-File \u2018pfx-encoded-bytes.txt\u2019\nL160:     `\nL161: ### Managed Identity\nL162: \nL163: Specify the resource uri for which the access token will be requested using the managed identity for the data factory or Synapse workspace instance. To call the Azure Resource Management API, use `https://management.azure.com/`. For more information about how managed identities works, see the \ue200cite\ue20215\u2020managed identities for Azure resources overview page\ue201 .\nL164: \nL165:     `\"authentication\": {\nL166:     \t\"type\": \"MSI\",\nL167:     \t\"resource\": \"https://management.azure.com/\"\nL168:     }\nL169:     `",
+      "limitation": "HTTP operation success is separate from job execution and matched durable result; deployment identity authorization untested."
+    },
+    {
+      "id": "adf-schedule",
+      "category": "Verified documentation",
+      "claim": "Day and higher recurrence adjusts for DST; timeZone affects times/schedule; non-UTC timestamp format omits Z.",
+      "official_url": "https://learn.microsoft.com/en-us/azure/data-factory/how-to-create-schedule-trigger",
+      "access_time": "2026-10-05 23:07:03 UTC",
+      "line_ranges": [
+        [
+          73,
+          79
+        ],
+        [
+          459,
+          477
+        ]
+      ],
+      "extract": "L73:     3. Specify the time zone in which the trigger is created. The time zone setting applies to Start Date, End Date, and Schedule Execution Times in Advanced recurrence options. Changing the Time Zone setting doesn't automatically change your start date. Make sure the start date is correct in the specified time zone. The Scheduled Execution time of Trigger is considered post the start date.\nL74: (Ensure that the start date is at least 1 minute less than the execution time or else it triggers the pipeline in the next recurrence.)\nL75: Note\nL76: \nL77: For time zones that observe daylight saving, trigger time auto-adjusts for the twice-a-year change, if the recurrence is set to Days or above. To opt out of the daylight saving change, select a time zone that doesn't observe daylight saving, for instance, UTC.\nL78: \nL79: Daylight saving adjustment only happens for a trigger with the recurrence set to Days or above. If the trigger is set to Hours or Minutes frequency, it continues to fire at regular intervals.\nL459: `startTime`  | A Date-Time value. For simple schedules, the value of the `startTime` property applies to the first occurrence. For complex schedules, the trigger starts no sooner than the specified `startTime` value.\nL460: For the UTC time zone, the format is `'yyyy-MM-ddTHH:mm:ssZ'`. For other time zones, the format is `yyyy-MM-ddTHH:mm:ss`.\nL461: `endTime`  | The end date and time for the trigger. The trigger doesn't execute after the specified end date and time. The value for the property can't be in the past. This property is optional.\nL462: For the UTC time zone, the format is `'yyyy-MM-ddTHH:mm:ssZ'`. For other time zones, the format is `yyyy-MM-ddTHH:mm:ss`.\nL463: `timeZone`  | The time zone in which the trigger is created. This setting affects `startTime`, `endTime`, and `schedule`. See a \ue200cite\ue20257\u2020list of supported time zones\ue201 .\nL464: `recurrence`  | A recurrence object that specifies the recurrence rules for the trigger. The recurrence object supports the `frequency`, `interval`, `endTime`, `count`, and `schedule` elements. When a recurrence object is defined, the `frequency` element is required. The other elements of the recurrence object are optional.\nL465: `frequency`  | The unit of frequency at which the trigger recurs. The supported values include `minute,` `hour,` `day`, `week`, and `month`.\nL466: `interval`  | A positive integer that denotes the interval for the `frequency` value, which determines how often the trigger runs. For example, if the `interval` is `3` and the `frequency` is `week`, the trigger recurs every 3 weeks.\nL467: `schedule`  | The recurrence schedule for the trigger. A trigger with a specified `frequency` value alters its recurrence based on a recurrence schedule. The `schedule` property contains modifications for the recurrence that are based on minutes, hours, weekdays, month days, and week number.\nL468: Important\nL469: \nL470: For the UTC time zone, `startTime` and `endTime` need to follow the format `yyyy-MM-ddTHH:mm:ss`Z. For other time zones, `startTime` and `endTime` follow the `yyyy-MM-ddTHH:mm:ss` format.\nL471: \nL472: Per the ISO 8601 standard, the Z suffix is used to timestamp mark the datetime to the UTC time zone and render the `timeZone` field useless. If the Z suffix is missing for the UTC time zone, the result is an error upon trigger activation.\nL473: ### Schema defaults, limits, and examples",
+      "limitation": "Source also shows offset-bearing non-UTC examples, requiring explicit serialization choice in later finding; this preparation selects no trigger."
+    },
+    {
+      "id": "adf-schedule-timezones-tail",
+      "category": "Verified documentation",
+      "claim": "Eastern Standard Time is listed with DST observation; weekly schedules support weekDays.",
+      "official_url": "https://learn.microsoft.com/en-us/azure/data-factory/how-to-create-schedule-trigger",
+      "access_time": "2026-10-05 23:07:55 UTC",
+      "line_ranges": [
+        [
+          486,
+          497
+        ],
+        [
+          529,
+          536
+        ]
+      ],
+      "extract": "L486: Here are some of the time zones supported for schedule triggers.\nL487: Time zone  | UTC offset (Non-daylight saving)  | timeZone value  | Observe daylight saving  | Time stamp format\nL488: --- | --- | --- | --- | ---\nL489: Coordinated Universal Time  | 0  | `UTC`  | No  | `'yyyy-MM-ddTHH:mm:ssZ'`\nL490: Pacific Time (PT)  | -8  | `Pacific Standard Time`  | Yes  | `'yyyy-MM-ddTHH:mm:ss'`\nL491: Central Time (CT)  | -6  | `Central Standard Time`  | Yes  | `'yyyy-MM-ddTHH:mm:ss'`\nL492: Eastern Time (ET)  | -5  | `Eastern Standard Time`  | Yes  | `'yyyy-MM-ddTHH:mm:ss'`\nL493: Greenwich Mean Time (GMT)  | 0  | `GMT Standard Time`  | Yes  | `'yyyy-MM-ddTHH:mm:ss'`\nL494: Central European Standard Time  | +1  | `W. Europe Standard Time`  | Yes  | `'yyyy-MM-ddTHH:mm:ss'`\nL495: India Standard Time (IST)  | +5:30  | `India Standard Time`  | No  | `'yyyy-MM-ddTHH:mm:ss'`\nL496: China Standard Time  | +8  | `China Standard Time`  | No  | `'yyyy-MM-ddTHH:mm:ss'`\nL497: This list is incomplete. For a complete list of time-zone options, see the \ue200cite\ue20258\u2020Trigger creation page\ue201 in the portal.\nL529: `hours`  | Hours of the day at which the trigger runs.  |\nL530: \nL531:   * Integer\nL532:   * Array of integers\nL533: `weekDays`  | Days of the week on which the trigger runs. The value can be specified with a weekly frequency only.  |\nL534:   * Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday.\nL535:   * Array of day values (maximum array size is 7).\nL536:   * Day values aren't case sensitive.",
+      "limitation": "Only partial supported zone list; actual trigger behavior and both transition checks reserved for Stage 7."
+    },
+    {
+      "id": "blob-lease",
+      "category": "Verified documentation",
+      "claim": "Blob lease protects write/delete on its blob; finite duration 15\u201360 seconds; relevant writes require active lease ID.",
+      "official_url": "https://learn.microsoft.com/en-us/rest/api/storageservices/lease-blob",
+      "access_time": "2026-10-05 23:07:04 UTC",
+      "line_ranges": [
+        [
+          29,
+          41
+        ],
+        [
+          80,
+          89
+        ],
+        [
+          221,
+          245
+        ]
+      ],
+      "extract": "L29: ## In this article\nL30: \nL31: The `Lease Blob` operation creates and manages a lock on a blob for write and delete operations. The lock duration can be 15 to 60 seconds, or can be infinite. In versions prior to 2012-02-12, the lock duration is 60 seconds.\nL32: \nL33: Important\nL34: Starting in version 2012-02-12, some behaviors of the `Lease Blob` operation differ from previous versions. For example, in previous versions, you could renew a lease after releasing it. Starting in version 2012-02-12, this lease request fails, but calls that use older versions of `Lease Blob` still succeed. For a list of changes to the behavior of this operation, see the \"Remarks\" section later in this article.\nL35: \nL36: You can call the `Lease Blob` operation in one of the following modes:\nL37:   * `Acquire`, to request a new lease.\nL38: \nL39:   * `Renew`, to renew an existing lease.\nL40: \nL41:   * `Change`, to change the ID of an existing lease.\nL80: `x-ms-lease-action: <acquire \u00a6 renew \u00a6 change \u00a6 release \u00a6 break>`  | `acquire`: Requests a new lease. If the blob doesn't have an active lease, Blob Storage creates a lease on the blob, and returns a new lease ID. If the blob has an active lease, you can only request a new lease by using the active lease ID. You can, however, specify a new `x-ms-lease-duration`, including negative one (-1) for a lease that never expires.\nL81: `renew`: Renews the lease. You can renew the lease if the lease ID specified on the request matches that associated with the blob. Note that the lease can be renewed even if it has expired, as long as the blob hasn't been modified or leased again since the expiration of that lease. When you renew a lease, the lease duration clock resets.\nL82: `change`: Version 2012-02-12 and later. Changes the lease ID of an active lease. A `change` must include the current lease ID in `x-ms-lease-id`, and a new lease ID in `x-ms-proposed-lease-id`.\nL83: `release`: Releases the lease. You can release the lease if the lease ID specified on the request matches that associated with the blob. Releasing the lease allows another client to immediately acquire the lease for the blob, as soon as the release is complete.\nL84: `break`: Breaks the lease, if the blob has an active lease. After a lease is broken, it can't be renewed. Any authorized request can break the lease; the request isn't required to specify a matching lease ID. When a lease is broken, the lease break period is allowed to elapse, during which time `break` and `release` are the only lease operations you can perform on the blob. When a lease is successfully broken, the response indicates the interval in seconds until a new lease can be acquired.\nL85: A lease that has been broken can also be released, in which case another client can immediately acquire the lease on the blob.\nL86: `x-ms-lease-break-period: N`  | Optional. Version 2012-02-12 and later. For a `break` operation, this is the proposed duration of seconds that the lease should continue before it is broken, between 0 and 60 seconds. This break period is only used if it's shorter than the time remaining on the lease. If longer, the time remaining on the lease is used. A new lease will not be available before the break period has expired, but the lease can be held for longer than the break period.\nL87: If this header doesn't appear with a `break` operation, a fixed-duration lease breaks after the remaining lease period elapses, and an infinite lease breaks immediately.\nL88: `x-ms-lease-duration: -1 \u00a6 n seconds`  | Version 2012-02-12 and later. Only allowed and required on an `acquire` operation. Specifies the duration of the lease, in seconds, or negative one (-1) for a lease that never expires. A non-infinite lease can be between 15 and 60 seconds. A lease duration can't be changed by using `renew` or `change`.\nL89: `x-ms-proposed-lease-id: <ID>`  | Version 2012-02-12 and later. Optional for `acquire`, and required for `change`. Proposed lease ID, in a GUID string format. Blob Storage returns `400 (Invalid request)` if the proposed lease ID isn't in the correct format. See \ue200cite\ue2029\u2020Guid Constructor (String)\u2020msdn.microsoft.com\ue201 for a list of valid formats.\nL221: ## Remarks\nL222: \nL223: A lease on a blob provides exclusive write and delete access to the blob. To write to a blob with an active lease, a client must include the active lease ID with the write request. The lease is granted for the duration specified when the lease is acquired. This duration can be between 15 and 60 seconds, or an infinite duration.\nL224: When a client acquires a lease, a lease ID is returned. Blob Storage generates a lease ID if one isn't specified in the acquire request. The client can use this lease ID to renew the lease, change its lease ID, or release the lease.\nL225: \nL226: When a lease is active, the lease ID must be included in the request for any of the following operations:\nL227: \nL228:   * \ue200cite\ue20233\u2020Put Blob\ue201 L229: \nL230:   * \ue200cite\ue20234\u2020Set Blob Metadata\ue201 L231: \nL232:   * \ue200cite\ue20235\u2020Set Blob Properties\ue201 L233: \nL234:   * \ue200cite\ue20236\u2020Delete Blob\ue201 L235: \nL236:   * \ue200cite\ue20237\u2020Put Block\ue201 L237: \nL238:   * \ue200cite\ue20238\u2020Put Block List\ue201 L239: \nL240:   * \ue200cite\ue20239\u2020Put Page\ue201 L241:   * \ue200cite\ue20240\u2020Append Block\ue201 L242: \nL243:   * \ue200cite\ue20241\u2020Copy Blob\ue201 (lease ID needed for destination blob)\nL244: \nL245: If the lease ID isn't included, these operations fail on a leased blob, with `412 \u2013 Precondition failed`.",
+      "limitation": "This primitive does not itself fence SEC network calls, and does not create Blob/Table atomicity. No live lease obtained."
+    },
+    {
+      "id": "table-update",
+      "category": "Verified documentation",
+      "claim": "Table Update Entity uses matching ETag/If-Match; mismatch returns 412; wildcard bypasses optimistic concurrency; absent If-Match on newer versions upserts.",
+      "official_url": "https://learn.microsoft.com/en-us/rest/api/storageservices/update-entity2",
+      "access_time": "2026-10-05 23:07:05 UTC",
+      "line_ranges": [
+        [
+          61,
+          68
+        ],
+        [
+          190,
+          199
+        ]
+      ],
+      "extract": "L61: `Authorization`  | Required. Specifies the authorization scheme, account name, and signature. For more information, see \ue200cite\ue2028\u2020Authorize requests to Azure Storage\ue201 .\nL62: `Date` or `x-ms-date`  | Required. Specifies the Coordinated Universal Time (UTC) for the request. For more information, see \ue200cite\ue2028\u2020Authorize requests to Azure Storage\ue201 .\nL63: `x-ms-version`  | Optional. Specifies the version of the operation to use for this request. For more information, see \ue200cite\ue2029\u2020Versioning for the Azure Storage services\ue201 .\nL64: `Content-Type`  | Required. Specifies the content type of the payload. Possible values are `application/atom+xml` and `application/json`.\nL65: For more information about valid content types, see \ue200cite\ue20210\u2020Payload format for Table Storage operations\ue201 .\nL66: `Content-Length`  | Required. The length of the request body.\nL67: `If-Match`  | Required. The client can specify the `ETag` for the entity on the request, to compare to the `ETag` maintained by the service for the purpose of optimistic concurrency. The update operation is performed only if the `ETag` sent by the client matches the value maintained by the server. This match indicates that the entity hasn't been modified since it was retrieved by the client.\nL68: To force an unconditional update, set `If-Match` to the wildcard character (*).\nL190: ## Remarks\nL191: \nL192: When you update an entity, you must specify the `PartitionKey` and `RowKey` system properties as part of the update operation.\nL193: An entity's `ETag` provides default optimistic concurrency for update operations. The `ETag` value is opaque, and should not be read or relied upon. Before an update operation occurs, Table Storage verifies that the entity's current `ETag` value is identical to the `ETag` value included with the update request in the `If-Match` header. If the values are identical, Table Storage determines that the entity hasn't been modified since it was retrieved, and the update operation proceeds.\nL194: If the entity's `ETag` differs from that specified with the update request, the update operation fails with status code 412 (Precondition Failed). This error indicates that the entity has been changed on the server since it was retrieved. To resolve this error, retrieve the entity again and reissue the request.\nL195: To force an unconditional update operation, set the value of the `If-Match` header to the wildcard character (*) on the request. Passing this value to the operation overrides the default optimistic concurrency, and ignores any mismatch in `ETag` values.\nL196: \nL197: If the `If-Match` header is missing from the request in version 2011-08-18 or later, the service performs an \ue200cite\ue20217\u2020Insert Or Replace Entity\ue201 (upsert) operation. In versions earlier than 2011-08-18, the service returns status code 400 (Bad Request).\nL198: Table Storage doesn't persist `null` values for properties. Specifying a property with a `null` value is equivalent to omitting that property in the request.\nL199: ",
+      "limitation": "Conditional entity write alone does not make Blob publication and Table update transactional. No CAS operation performed."
+    },
+    {
+      "id": "adls-known-issues",
+      "category": "Verified documentation",
+      "claim": "Known issues restrict mixing Blob/DFS/NFS writes to the same file and constrain overwrite operations.",
+      "official_url": "https://learn.microsoft.com/en-us/azure/storage/blobs/data-lake-storage-known-issues",
+      "access_time": "2026-10-05 23:07:06 UTC",
+      "line_ranges": [
+        [
+          43,
+          60
+        ]
+      ],
+      "extract": "L43: \nL44: Data Lake Storage APIs, NFS 3.0, and Blob APIs can operate on the same data.\nL45: \nL46: This section describes issues and limitations with using blob APIs, NFS 3.0, and Data Lake Storage APIs to operate on the same data.\nL47:   * You can't use blob APIs, NFS 3.0, and Data Lake Storage APIs to write to the same instance of a file. If you write to a file by using Data Lake Storage APIs or NFS 3.0, then that file's blocks aren't visible to calls to the \ue200cite\ue2028\u2020Get Block List\ue201 blob API. The only exception is when you're overwriting. You can overwrite a file or blob by using either API or by using NFS 3.0 with the zero-truncate option (a POSIX-style operation that truncates the file to zero bytes before writing).\nL48: You can't overwrite blobs that are created by using a Data Lake Storage operation such as the \ue200cite\ue2029\u2020Path - Create\ue201 operation by using \ue200cite\ue20210\u2020PutBlock\ue201 or \ue200cite\ue20211\u2020PutBlockList\ue201 operations. However, you can overwrite these blobs by using a \ue200cite\ue20212\u2020PutBlob\ue201 operation, subject to the maximum permitted blob size imposed by the corresponding api-version that PutBlob uses.\nL49:   * When you use the \ue200cite\ue20213\u2020List Blobs\ue201 operation without specifying a delimiter, the results include both directories and blobs. If you choose to use a delimiter, use only a forward slash (`/`). This is the only supported delimiter.\nL50: \nL51:   * If you use the \ue200cite\ue20214\u2020Delete Blob\ue201 API to delete a directory, the directory is deleted only if it's empty. This condition means that you can't use the Blob API to delete directories recursively.\nL52: \nL53: These Blob REST APIs aren't supported:\nL54:   * \ue200cite\ue20212\u2020Put Blob (Page)\ue201 L55:   * \ue200cite\ue20215\u2020Put Page\ue201 L56:   * \ue200cite\ue20216\u2020Get Page Ranges\ue201 L57:   * \ue200cite\ue20217\u2020Incremental Copy Blob\ue201 L58:   * \ue200cite\ue20218\u2020Put Page from URL\ue201 L59:   * \ue200cite\ue20219\u2020Append Blob Seal\ue201 L60: ",
+      "limitation": "Later selected operations must map to these restrictions; no SDK sequence or HNS account behavior tested."
+    },
+    {
+      "id": "jobs-guidance",
+      "category": "Verified documentation",
+      "claim": "Zero replica retries is documented; maintenance guidance recommends at least one retry for long-running replicas.",
+      "official_url": "https://learn.microsoft.com/en-us/azure/container-apps/jobs",
+      "access_time": "2026-10-05 23:07:07 UTC",
+      "line_ranges": [
+        [
+          453,
+          469
+        ]
+      ],
+      "extract": "L453: \nL454: The following table includes the job settings that you can configure:\nL455: Setting  | Azure Resource Manager property  | CLI parameter  | Description\nL456: --- | --- | --- | ---\nL457: Job type  | `triggerType`  | `--trigger-type`  | The type of job (`Manual`, `Schedule`, or `Event`).\nL458: Replica timeout  | `replicaTimeout`  | `--replica-timeout`  | The maximum time in seconds to wait for a replica to complete.\nL459: Polling interval  | `pollingInterval`  | `--polling-interval`  | The time in seconds to wait between polling for events. The default is 30 seconds.\nL460: Replica retry limit  | `replicaRetryLimit`  | `--replica-retry-limit`  | The maximum number of times to retry a failed replica. To fail a replica without retrying, set the value to `0`. The `replicaTimeout` setting takes precedence if it expires before all retries occur.\nL461: Parallelism  | `parallelism`  | `--parallelism`  | The number of replicas to run per execution. For most jobs, set the value to `1`.\nL462: Replica completion count  | `replicaCompletionCount`  | `--replica-completion-count`  | The number of replicas to complete successfully for the execution to succeed. Most be equal to or less than the parallelism. For most jobs, set the value to `1`.\nL463: ### Long-running jobs\nL464: \nL465: Note\nL466: \nL467: Platform maintenance, including routine security updates and upgrades, might interrupt long-running job replicas. Set the replica retry limit to at least `1`, and design your workload for at-least-once processing so that retries can safely complete the work.\nL468: ### Example\nL469: ",
+      "limitation": "Accepted parent zero-retry policy requires explicit rationale and Stage 7 maintenance recovery validation; this preparation does not revise it."
+    },
+    {
+      "id": "storage-mounts",
+      "category": "Verified documentation",
+      "claim": "Container Apps storage page documents CPU-linked ephemeral quota (over 1 CPU: 8 GiB), replica lifetime, and lack of Blob mounts.",
+      "official_url": "https://learn.microsoft.com/en-us/azure/container-apps/storage-mounts",
+      "access_time": "2026-10-05 23:07:08 UTC",
+      "line_ranges": [
+        [
+          31,
+          70
+        ]
+      ],
+      "extract": "L31: A container app has access to different types of storage. A single app can take advantage of more than one type of storage if necessary.\nL32: \nL33: Note\nL34: \nL35: Avoid using special characters in volume names to prevent deployment failures. For example, a volume named `credentials.json` contains a special character (`.`) which results in a deployment error.\nL36: Storage type  | Description  | Persistence  | Usage example\nL37: --- | --- | --- | ---\nL38: \ue200cite\ue2025\u2020Container-scoped storage\ue201 | Ephemeral storage available to a running container  | Data is available until container shuts down  | Writing a local app cache.\nL39: \ue200cite\ue2026\u2020Replica-scoped storage\ue201 | Ephemeral storage for sharing files between containers in the same replica  | Data is available until replica shuts down  | The main app container writing log files that a sidecar container processes.\nL40: \ue200cite\ue2027\u2020Azure Files\ue201 | Permanent storage  | Data is persisted to Azure Files  | Writing files to a file share to make data accessible by other systems.\nL41: Note\nL42: \nL43: Azure Container Apps doesn't support mounting file shares from Azure NetApp Files or Azure Blob Storage.\nL44: ## Ephemeral storage\nL45: \nL46: A container app can read and write temporary data to ephemeral storage. Ephemeral storage can be scoped to a container or a replica. The total amount of container-scoped and replica-scoped storage available to each replica depends on the total number of vCPUs allocated to the replica.\nL47: \nL48: vCPUs  | Total ephemeral storage\nL49: --- | ---\nL50: 0.25 or lower  | 1 GiB\nL51: 0.5 or lower  | 2 GiB\nL52: 1 or lower  | 4 GiB\nL53: Over 1  | 8 GiB\nL54: ### Container-scoped storage\nL55: \nL56: A container can write to its own file system.\nL57: \nL58: Container file system storage has the following characteristics:\nL59: \nL60:   * The storage is temporary and disappears when the container shuts down or restarts.\nL61:   * Only processes running in the current container can see files written to this storage.\nL62: ### Replica-scoped storage\nL63: \nL64: You can mount an ephemeral, temporary volume that's equivalent to \ue200cite\ue2028\u2020EmptyDir\u2020kubernetes.io\ue201 (empty directory) in Kubernetes. This storage is scoped to a single replica. Use an `EmptyDir` volume to share data between containers in the same replica.\nL65: \nL66: Replica-scoped storage has the following characteristics:\nL67:   * Files persist for the lifetime of the replica.\nL68:     * If a container in a replica restarts, the files in the volume remain.\nL69:   * Any init or app containers in the replica can mount the same volume.\nL70:   * A container can mount multiple `EmptyDir` volumes.",
+      "limitation": "Page is generic Container Apps guidance; precise selected Jobs configuration applicability and actual capacity/use remain unverified."
+    }
+  ]
+}

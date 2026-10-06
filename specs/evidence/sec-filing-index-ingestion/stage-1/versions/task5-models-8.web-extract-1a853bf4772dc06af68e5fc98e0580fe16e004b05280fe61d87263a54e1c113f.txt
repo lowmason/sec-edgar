@@ -1,0 +1,638 @@
+Role Assignments - Get - REST API (Azure Authorization) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/authorization/role-assignments/get?view=rest-authorization-2022-04-01)
+citeturn91view0 [wordlim: 200] Crawled: today; Content type: text/html; Source: find({"ref_id":"https://learn.microsoft.com/en-us/rest/api/authorization/role-assignments/get?view=rest-authorization-2022-04-01","pattern":"### RoleAssignment"}); Total lines: 317
+L242: ### ErrorDetail
+L243: 
+L244: Object
+L245: 
+L246: The error detail.
+L247: 
+L248: Name  | Type  | Description
+L249: --- | --- | ---
+L250: additionalInfo  | cite18†ErrorAdditionalInfo []  | The error additional info.
+L251: code  | string  | The error code.
+L252: details  | cite19†ErrorDetail []  | The error details.
+L253: message  | string  | The error message.
+L254: target  | string  | The error target.
+L255: 
+L256: ### ErrorResponse
+L257: 
+L258: Object
+L259: 
+L260: Error response
+L261: 
+L262: Name  | Type  | Description
+L263: --- | --- | ---
+L264: error  | cite19†ErrorDetail | The error object.
+L265: ### PrincipalType
+L266: 
+L267: Enumeration
+L268: 
+L269: The principal type of the assigned principal ID.
+L270: 
+L271: Value  | Description
+L272: --- | ---
+L273: User  | User
+L274: Group  | Group
+L275: ServicePrincipal  | ServicePrincipal
+L276: ForeignGroup  | ForeignGroup
+L277: Device  | Device
+L278: AgentUser  | Agent identity derived from a user.
+L279: AgentServicePrincipal  | Agent identity derived from a service principal.
+L280: ### RoleAssignment
+L281: 
+L282: Object
+L283: 
+L284: Role Assignments
+L285: Name  | Type  | Default value  | Description
+L286: --- | --- | --- | ---
+L287: id  | string (arm-id)  |  | Fully qualified resource ID for the resource. E.g. "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}"
+L288: name  | string  |  | The name of the resource
+L289: properties.condition  | string  |  | The conditions on the role assignment. This limits the resources it can be assigned to. e.g.: @Resource[Microsoft.Storage/storageAccounts/blobServices/containers:ContainerName] StringEqualsIgnoreCase 'foo_storage_container'
+L290: properties.conditionVersion  | string  |  | Version of the condition. Currently the only accepted value is '2.0'
+L291: properties.createdBy  | string  |  | Id of the user who created the assignment
+L292: properties.createdOn  | string (date-time)  |  | Time it was created
+L293: properties.delegatedManagedIdentityResourceId  | string  |  | Id of the delegated managed identity resource
+L294: properties.description  | string  |  | Description of role assignment
+L295: properties.principalId  | string  |  | The principal ID.
+L296: properties.principalType  | cite20†PrincipalType | User  | The principal type of the assigned principal ID.
+L297: properties.roleDefinitionId  | string  |  | The role definition ID.
+--------------------------------------------------------------------------------
+Role Definitions - Get - REST API (Azure Authorization) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/authorization/role-definitions/get?view=rest-authorization-2022-04-01)
+citeturn91view1 [wordlim: 200] Crawled: today; Content type: text/html; Source: find({"ref_id":"https://learn.microsoft.com/en-us/rest/api/authorization/role-definitions/get?view=rest-authorization-2022-04-01","pattern":"### RoleDefinition"}); Total lines: 180
+L105: ## Definitions
+L106: 
+L107: Name  | Description
+L108: --- | ---
+L109: cite9†ErrorAdditionalInfo | The resource management error additional info.
+L125: ### ErrorDetail
+L126: 
+L127: Object
+L128: 
+L129: The error detail.
+L130: 
+L131: Name  | Type  | Description
+L132: --- | --- | ---
+L133: additionalInfo  | cite9†ErrorAdditionalInfo []  | The error additional info.
+L134: code  | string  | The error code.
+L135: details  | cite10†ErrorDetail []  | The error details.
+L136: message  | string  | The error message.
+L137: target  | string  | The error target.
+L138: 
+L139: ### ErrorResponse
+L140: 
+L141: Object
+L142: 
+L143: Error response
+L144: 
+L145: Name  | Type  | Description
+L146: --- | --- | ---
+L147: error  | cite10†ErrorDetail | The error object.
+L148: ### Permission
+L149: 
+L150: Object
+L151: 
+L152: Role definition permissions.
+L153: 
+L154: Name  | Type  | Description
+L155: --- | --- | ---
+L156: actions  | string[]  | Allowed actions.
+L157: dataActions  | string[]  | Allowed Data actions.
+L158: notActions  | string[]  | Denied actions.
+L159: notDataActions  | string[]  | Denied Data actions.
+L160: ### RoleDefinition
+L161: 
+L162: Object
+L163: 
+L164: Role definition.
+L165: Name  | Type  | Description
+L166: --- | --- | ---
+L167: id  | string  | The role definition ID.
+L168: name  | string  | The role definition name.
+L169: properties.assignableScopes  | string[]  | Role definition assignable scopes.
+L170: properties.createdBy  | string  | Id of the user who created the assignment
+L171: properties.createdOn  | string (date-time)  | Time it was created
+L172: properties.description  | string  | The role definition description.
+L173: properties.permissions  | cite11†Permission []  | Role definition permissions.
+L174: properties.roleName  | string  | The role name.
+L175: properties.type  | string  | The role type.
+L176: properties.updatedBy  | string  | Id of the user who updated the assignment
+L177: properties.updatedOn  | string (date-time)  | Time it was updated
+L178: type  | string  | The role definition type.
+L179: ### In this article
+--------------------------------------------------------------------------------
+Registries - Get - REST API (Azure Container Registry) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/container-registry/registries/get?view=rest-container-registry-2025-11-01)
+citeturn91view2 [wordlim: 200] Crawled: today; Content type: text/html; Source: find({"ref_id":"https://learn.microsoft.com/en-us/rest/api/container-registry/registries/get?view=rest-container-registry-2025-11-01","pattern":"### Registry"}); Total lines: 861
+L377: cite32†ExportPolicyStatus | The value that indicates whether the policy is enabled or not.
+L378: cite33†IdentityProperties | Managed identity for the resource.
+L379: cite34†IPRule | IP rule with specific IP or IP range in CIDR format.
+L380: cite35†KeyVaultProperties |
+L381: cite36†NetworkRuleBypassOptions | Whether to allow trusted Azure services to access a network restricted registry.
+L382: cite37†NetworkRuleSet | The network rule set for a container registry.
+L383: cite38†Policies | The policies for a container registry.
+L384: cite39†PolicyStatus | The value that indicates whether the policy is enabled or not.
+L385: cite40†PrivateEndpoint | The Private Endpoint resource.
+L386: cite41†PrivateEndpointConnection | An object that represents a private endpoint connection for a container registry.
+L387: cite42†PrivateLinkServiceConnectionState | The state of a private link service connection.
+L388: cite43†ProvisioningState | The provisioning state of the archive at the time the operation was called.
+L389: cite44†PublicNetworkAccess | Whether or not public network access is allowed for the container registry.
+L390: cite45†QuarantinePolicy | The quarantine policy for a container registry.
+L391: cite6†Registry | An object that represents a container registry.
+L392: cite46†ResourceIdentityType | The identity type.
+L393: cite47†RetentionPolicy | The retention policy for a container registry.
+L394: cite48†RoleAssignmentMode | Determines registry role assignment mode.
+L395: cite49†Sku | The SKU of a container registry.
+L396: cite50†SkuName | The SKU name of the container registry. Required for registry creation.
+L397: cite51†SkuTier | The SKU tier based on the SKU name.
+L398: cite52†Status | The status of an Azure resource at the time the operation was called.
+L399: cite53†systemData | Metadata pertaining to creation and last modification of the resource.
+L400: cite54†TrustPolicy | The content trust policy for a container registry.
+L401: cite55†TrustPolicyType | The type of trust policy.
+L402: cite56†UserIdentityProperties |
+L403: cite57†ZoneRedundancy | Whether or not zone redundancy is enabled for this container registry
+L404: ### Action
+L405: 
+L406: Enumeration
+L407: 
+L408: The action of IP ACL rule.
+L409: 
+L410: Value  | Description
+L411: --- | ---
+L412: Allow  |
+L413: 
+L414: ### ActionsRequired
+L415: 
+L416: Enumeration
+L417: 
+L418: A message indicating if changes on the service provider require any updates on the consumer.
+L419: 
+L420: Value  | Description
+L421: --- | ---
+L422: None  |
+L423: Recreate  |
+L424: ### AzureADAuthenticationAsArmPolicy
+L425: 
+L426: Object
+L427: 
+L428: The policy for using Azure Resource Manager audience token for a container registry.
+L429: 
+L430: Name  | Type  | Default value  | Description
+L431: --- | --- | --- | ---
+L432: status  | cite23†AzureADAuthenticationAsArmPolicyStatus | enabled  | The value that indicates whether the policy is enabled or not.
+L433: 
+L434: ### AzureADAuthenticationAsArmPolicyStatus
+L435: 
+L436: Enumeration
+L437: 
+L438: The value that indicates whether the policy is enabled or not.
+L439: 
+L440: Value  | Description
+L441: --- | ---
+L442: enabled  |
+L443: disabled  |
+L480: ### EncryptionProperty
+L481: 
+L482: Object
+L483: 
+L484: Name  | Type  | Description
+L485: --- | --- | ---
+L486: keyVaultProperties  | cite35†KeyVaultProperties | Key vault properties.
+L487: status  | cite28†EncryptionStatus | Indicates whether or not the encryption is enabled for container registry.
+L488: 
+L489: ### EncryptionStatus
+L490: 
+L491: Enumeration
+L492: 
+L493: Indicates whether or not the encryption is enabled for container registry.
+L494: 
+L495: Value  | Description
+L496: --- | ---
+L497: enabled  |
+L498: disabled  |
+L576: Name  | Type  | Description
+L577: --- | --- | ---
+L578: identity  | string  | The client id of the identity which will be used to access key vault.
+L579: keyIdentifier  | string  | Key vault uri to access the encryption key.
+L580: keyRotationEnabled  | boolean  | Auto key rotation status for a CMK enabled registry.
+L581: lastKeyRotationTimestamp  | string (date-time)  | Timestamp of the last successful key rotation.
+L582: versionedKeyIdentifier  | string  | The fully qualified key identifier that includes the version of the key that is actually used for encryption.
+L583: ### NetworkRuleBypassOptions
+L584: 
+L585: Enumeration
+L586: 
+L587: Whether to allow trusted Azure services to access a network restricted registry.
+L588: 
+L589: Value  | Description
+L590: --- | ---
+L591: AzureServices  |
+L592: None  |
+L593: 
+L594: ### NetworkRuleSet
+L595: 
+L596: Object
+L597: 
+L598: The network rule set for a container registry.
+L599: 
+L600: Name  | Type  | Default value  | Description
+L601: --- | --- | --- | ---
+L602: defaultAction  | cite26†DefaultAction | Allow  | The default action of allow or deny when no other rules match.
+L603: ipRules  | cite34†IPRule []  |  | The IP ACL rules.
+L604: ### Policies
+L605: 
+L606: Object
+L607: 
+L608: The policies for a container registry.
+L609: Name  | Type  | Description
+L610: --- | --- | ---
+L611: azureADAuthenticationAsArmPolicy  | cite22†AzureADAuthenticationAsArmPolicy | The policy for using Azure Resource Manager audience token for a container registry.
+L612: exportPolicy  | cite31†ExportPolicy | The export policy for a container registry.
+L613: quarantinePolicy  | cite45†QuarantinePolicy | The quarantine policy for a container registry.
+L614: retentionPolicy  | cite47†RetentionPolicy | The retention policy for a container registry.
+L615: trustPolicy  | cite54†TrustPolicy | The content trust policy for a container registry.
+L616: ### PolicyStatus
+L617: 
+L618: Enumeration
+L619: 
+L620: The value that indicates whether the policy is enabled or not.
+L621: 
+L622: Value  | Description
+L623: --- | ---
+L624: enabled  |
+L625: disabled  |
+L626: 
+L627: ### PrivateEndpoint
+L628: 
+L629: Object
+L630: 
+L631: The Private Endpoint resource.
+L632: 
+L633: Name  | Type  | Description
+L634: --- | --- | ---
+L635: id  | string  | This is private endpoint resource created with Microsoft.Network resource provider.
+L636: ### PrivateEndpointConnection
+L637: 
+L638: Object
+L639: 
+L640: An object that represents a private endpoint connection for a container registry.
+L641: Name  | Type  | Description
+L642: --- | --- | ---
+L643: id  | string (arm-id)  | Fully qualified resource ID for the resource. E.g. "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}"
+L644: name  | string  | The name of the resource
+L645: properties.privateEndpoint  | cite40†PrivateEndpoint | The resource of private endpoint.
+L646: properties.privateLinkServiceConnectionState  | cite42†PrivateLinkServiceConnectionState | A collection of information about the state of the connection between service consumer and provider.
+L647: properties.provisioningState  | cite43†ProvisioningState | The provisioning state of private endpoint connection resource.
+L648: systemData  | cite53†systemData | Azure Resource Manager metadata containing createdBy and modifiedBy information.
+L649: type  | string  | The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or "Microsoft.Storage/storageAccounts"
+L650: ### PrivateLinkServiceConnectionState
+L651: 
+L652: Object
+L653: 
+L654: The state of a private link service connection.
+L655: 
+L656: Name  | Type  | Description
+L657: --- | --- | ---
+L658: actionsRequired  | cite21†ActionsRequired | A message indicating if changes on the service provider require any updates on the consumer.
+L659: description  | string  | The description for connection status. For example if connection is rejected it can indicate reason for rejection.
+L660: status  | cite24†ConnectionStatus | The private link service connection status.
+L661: ### ProvisioningState
+L662: 
+L663: Enumeration
+L664: 
+L665: The provisioning state of the archive at the time the operation was called.
+L666: 
+L667: Value  | Description
+L668: --- | ---
+L669: Creating  |
+L670: Updating  |
+L671: Deleting  |
+L672: Succeeded  |
+L673: Failed  |
+L674: Canceled  |
+L675: 
+L676: ### PublicNetworkAccess
+L677: 
+L678: Enumeration
+L679: 
+L680: Whether or not public network access is allowed for the container registry.
+L681: 
+L682: Value  | Description
+L683: --- | ---
+L684: Enabled  |
+L685: Disabled  |
+L686: ### QuarantinePolicy
+L687: 
+L688: Object
+L689: 
+L690: The quarantine policy for a container registry.
+L691: 
+L692: Name  | Type  | Default value  | Description
+L693: --- | --- | --- | ---
+L694: status  | cite39†PolicyStatus | disabled  | The value that indicates whether the policy is enabled or not.
+L695: ### Registry
+L696: 
+L697: Object
+L698: 
+L699: An object that represents a container registry.
+L700: Name  | Type  | Default value  | Description
+L701: --- | --- | --- | ---
+L702: id  | string (arm-id)  |  | Fully qualified resource ID for the resource. E.g. "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}"
+L703: identity  | cite33†IdentityProperties |  | The identity of the container registry.
+L704: location  | string  |  | The geo-location where the resource lives
+L705: name  | string  |  | The name of the resource
+L706: properties.adminUserEnabled  | boolean  | False  | The value that indicates whether the admin user is enabled.
+L707: properties.anonymousPullEnabled  | boolean  | False  | Enables registry-wide pull from unauthenticated clients.
+L708: properties.creationDate  | string (date-time)  |  | The creation date of the container registry in ISO8601 format.
+L709: properties.dataEndpointEnabled  | boolean  |  | Enable a single data endpoint per region for serving data.
+L710: properties.dataEndpointHostNames  | string[]  |  | List of host names that will serve data when dataEndpointEnabled is true.
+L711: properties.encryption  | cite27†EncryptionProperty |  | The encryption settings of container registry.
+L712: properties.loginServer  | string  |  | The URL that can be used to log into the container registry.
+L713: properties.networkRuleBypassAllowedForTasks  | boolean  | False  | Whether or not Tasks allowed to bypass the network rules for this container registry.
+L714: properties.networkRuleBypassOptions  | cite36†NetworkRuleBypassOptions | AzureServices  | Whether to allow trusted Azure services to access a network restricted registry.
+L715: properties.networkRuleSet  | cite37†NetworkRuleSet |  | The network rule set for a container registry.
+L716: properties.policies  | cite38†Policies |  | The policies for a container registry.
+L717: properties.privateEndpointConnections  | cite41†PrivateEndpointConnection []  |  | List of private endpoint connections for a container registry.
+L718: properties.provisioningState  | cite43†ProvisioningState |  | The provisioning state of the container registry at the time the operation was called.
+L719: properties.publicNetworkAccess  | cite44†PublicNetworkAccess | Enabled  | Whether or not public network access is allowed for the container registry.
+L720: properties.roleAssignmentMode  | cite48†RoleAssignmentMode | LegacyRegistryPermissions  | Determines registry role assignment mode.
+L721: properties.status  | cite52†Status |  | The status of the container registry at the time the operation was called.
+L722: properties.zoneRedundancy  | cite57†ZoneRedundancy | Disabled  | Whether or not zone redundancy is enabled for this container registry
+L723: sku  | cite49†Sku |  | The SKU of the container registry.
+L724: systemData  | cite53†systemData |  | Azure Resource Manager metadata containing createdBy and modifiedBy information.
+L725: tags  | object  |  | Resource tags.
+L726: type  | string  |  | The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or "Microsoft.Storage/storageAccounts"
+L727: ### ResourceIdentityType
+L728: 
+L729: Enumeration
+L730: 
+L731: The identity type.
+L732: 
+L733: Value  | Description
+L734: --- | ---
+L735: SystemAssigned  |
+L736: UserAssigned  |
+L737: SystemAssigned, UserAssigned  |
+L738: None  |
+L739: ### RetentionPolicy
+L740: 
+L741: Object
+L742: 
+L743: The retention policy for a container registry.
+L744: 
+L745: Name  | Type  | Default value  | Description
+L746: --- | --- | --- | ---
+L747: days  | integer (int32)  | 7  | The number of days to retain an untagged manifest after which it gets purged.
+L748: lastUpdatedTime  | string (date-time)  |  | The timestamp when the policy was last updated.
+L749: status  | cite39†PolicyStatus | disabled  | The value that indicates whether the policy is enabled or not.
+L750: ### RoleAssignmentMode
+L751: 
+L752: Enumeration
+L753: 
+L754: Determines registry role assignment mode.
+L755: 
+L756: Value  | Description
+L757: --- | ---
+L758: AbacRepositoryPermissions  |
+L759: LegacyRegistryPermissions  |
+L760: 
+L761: ### Sku
+L762: 
+L763: Object
+L764: 
+L765: The SKU of a container registry.
+L766: 
+L767: Name  | Type  | Description
+L768: --- | --- | ---
+L769: name  | cite50†SkuName | The SKU name of the container registry. Required for registry creation.
+L770: tier  | cite51†SkuTier | The SKU tier based on the SKU name.
+L771: ### SkuName
+L772: 
+L773: Enumeration
+L774: 
+L775: The SKU name of the container registry. Required for registry creation.
+L776: 
+L777: Value  | Description
+L778: --- | ---
+L779: Classic  |
+L780: Basic  |
+L781: Standard  |
+L782: Premium  |
+L783: 
+L784: ### SkuTier
+L785: 
+L786: Enumeration
+L787: 
+L788: The SKU tier based on the SKU name.
+L789: 
+L790: Value  | Description
+L791: --- | ---
+L792: Classic  |
+L793: Basic  |
+L794: Standard  |
+L795: Premium  |
+L796: ### Status
+L797: 
+L798: Object
+L799: 
+L800: The status of an Azure resource at the time the operation was called.
+L801: 
+L802: Name  | Type  | Description
+L803: --- | --- | ---
+L804: displayStatus  | string  | The short label for the status.
+L805: message  | string  | The detailed message for the status, including alerts and error messages.
+L806: timestamp  | string (date-time)  | The timestamp when the status was changed to the current value.
+L807: ### systemData
+L808: 
+L809: Object
+L810: 
+L811: Metadata pertaining to creation and last modification of the resource.
+L812: Name  | Type  | Description
+L813: --- | --- | ---
+L814: createdAt  | string (date-time)  | The timestamp of resource creation (UTC).
+L815: createdBy  | string  | The identity that created the resource.
+L816: createdByType  | cite25†createdByType | The type of identity that created the resource.
+L817: lastModifiedAt  | string (date-time)  | The timestamp of resource last modification (UTC)
+L818: lastModifiedBy  | string  | The identity that last modified the resource.
+--------------------------------------------------------------------------------
+Workspaces - Get - REST API (Azure Log Analytics) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/loganalytics/workspaces/get?view=rest-loganalytics-2025-07-01)
+citeturn91view3 [wordlim: 200] Crawled: today; Content type: text/html; Source: find({"ref_id":"https://learn.microsoft.com/en-us/rest/api/loganalytics/workspaces/get?view=rest-loganalytics-2025-07-01","pattern":"### Workspace"}); Total lines: 554
+L271: cite30†WorkspaceFailoverProperties | The failover state of the replication.
+L272: cite31†WorkspaceFailoverState | The failover state of the replication.
+L273: cite32†WorkspaceFeatures | Workspace features.
+L274: cite33†WorkspaceReplicationProperties | Workspace replication properties.
+L275: cite34†WorkspaceReplicationState | The provisioning state of the replication.
+L276: cite35†WorkspaceSku | The SKU (tier) of a workspace.
+L277: cite36†WorkspaceSkuNameEnum | The name of the SKU.
+L290: ### DataIngestionStatus
+L291: 
+L292: Enumeration
+L293: 
+L294: The status of data ingestion for this workspace.
+L385: Name  | Type  | Description
+L386: --- | --- | ---
+L387: createdAt  | string (date-time)  | The timestamp of resource creation (UTC).
+L388: createdBy  | string  | The identity that created the resource.
+L389: createdByType  | cite18†createdByType | The type of identity that created the resource.
+L390: lastModifiedAt  | string (date-time)  | The timestamp of resource last modification (UTC)
+L391: lastModifiedBy  | string  | The identity that last modified the resource.
+L392: lastModifiedByType  | cite18†createdByType | The type of identity that last modified the resource.
+L393: ### UserIdentityProperties
+L394: 
+L395: Object
+L396: 
+L397: User assigned identity properties.
+L398: 
+L399: Name  | Type  | Description
+L400: --- | --- | ---
+L401: clientId  | string  | The client id of user assigned identity.
+L402: principalId  | string  | The principal id of user assigned identity.
+L403: ### Workspace
+L404: 
+L405: Object
+L406: 
+L407: The top level Workspace resource container.
+L408: Name  | Type  | Default value  | Description
+L409: --- | --- | --- | ---
+L410: etag  | string  |  | The etag of the workspace.
+L411: id  | string (arm-id)  |  | Fully qualified resource ID for the resource. E.g. "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}"
+L412: identity  | cite22†Identity |  | The identity of the resource.
+L413: location  | string  |  | The geo-location where the resource lives
+L414: name  | string  |  | The name of the resource
+L415: properties.createdDate  | string (date-time)  |  | Workspace creation date.
+L416: properties.customerId  | string  |  | This is a read-only property. Represents the ID associated with the workspace.
+L417: properties.defaultDataCollectionRuleResourceId  | string  |  | The resource ID of the default Data Collection Rule to use for this workspace. Expected format is - /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Insights/dataCollectionRules/{dcrName}.
+L418: properties.failover  | cite30†WorkspaceFailoverProperties |  | workspace failover properties.
+L419: properties.features  | cite32†WorkspaceFeatures |  | Workspace features.
+L420: properties.forceCmkForQuery  | boolean  |  | Indicates whether customer managed storage is mandatory for query management.
+L421: properties.modifiedDate  | string (date-time)  |  | Workspace modification date.
+L422: properties.privateLinkScopedResources  | cite24†PrivateLinkScopedResource []  |  | List of linked private link scope resources.
+L423: properties.provisioningState  | cite29†WorkspaceEntityStatus |  | The provisioning state of the workspace.
+L424: properties.publicNetworkAccessForIngestion  | cite25†PublicNetworkAccessType | Enabled  | The network access type for accessing Log Analytics ingestion.
+L425: properties.publicNetworkAccessForQuery  | cite25†PublicNetworkAccessType | Enabled  | The network access type for accessing Log Analytics query.
+L426: properties.replication  | cite33†WorkspaceReplicationProperties |  | workspace replication properties.
+L427: properties.retentionInDays  | integer (int32)  |  | The workspace data retention in days. Allowed values are per pricing plan. See pricing tiers documentation for details.
+L428: properties.sku  | cite35†WorkspaceSku |  | The SKU of the workspace.
+L429: properties.workspaceCapping  | cite28†WorkspaceCapping |  | The daily volume cap for ingestion.
+L430: systemData  | cite26†systemData |  | Azure Resource Manager metadata containing createdBy and modifiedBy information.
+L431: tags  | object  |  | Resource tags.
+L432: type  | string  |  | The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or "Microsoft.Storage/storageAccounts"
+L433: ### WorkspaceCapping
+L434: 
+L435: Object
+L436: 
+L437: The daily volume cap for ingestion.
+L438: 
+L439: Name  | Type  | Description
+L440: --- | --- | ---
+L441: dailyQuotaGb  | number (double)  | The workspace daily quota for ingestion.
+L442: dataIngestionStatus  | cite19†DataIngestionStatus | The status of data ingestion for this workspace.
+L443: quotaNextResetTime  | string  | The time when the quota will be rest.
+L444: ### WorkspaceEntityStatus
+L445: 
+L446: Enumeration
+L447: 
+L448: The provisioning state of the workspace.
+L449: 
+L450: Value  | Description
+L451: --- | ---
+L452: Creating  | Creating
+L453: Succeeded  | Succeeded
+L454: Failed  | Failed
+L455: Canceled  | Canceled
+L456: Deleting  | Deleting
+L457: ProvisioningAccount  | ProvisioningAccount
+L458: Updating  | Updating
+L459: ### WorkspaceFailoverProperties
+L460: 
+L461: Object
+L462: 
+L463: The failover state of the replication.
+L464: 
+L465: Name  | Type  | Description
+L466: --- | --- | ---
+L467: lastModifiedDate  | string (date-time)  | The last time when the failover state was updated.
+L468: state  | cite31†WorkspaceFailoverState | The failover state of the replication.
+L469: ### WorkspaceFailoverState
+L470: 
+L471: Enumeration
+L472: 
+L473: The failover state of the replication.
+L474: 
+L475: Value  | Description
+L476: --- | ---
+L477: Inactive  | Inactive
+L478: Activating  | Activating
+L479: Active  | Active
+L480: Deactivating  | Deactivating
+L481: Failed  | Failed
+L482: ### WorkspaceFeatures
+L483: 
+L484: Object
+L485: 
+L486: Workspace features.
+L487: Name  | Type  | Description
+L488: --- | --- | ---
+L489: associations  | string[]  | List of associations for the workspace. Indicates if the workspace is associated with any of the following experiences: MDC, Sentinel, SentinelGraph, etc.
+L490: clusterResourceId  | string  | Dedicated LA cluster resourceId that is linked to the workspaces.
+L491: disableLocalAuth  | boolean  | Disable Non-AAD based Auth.
+L492: enableDataExport  | boolean  | Flag that indicate if data should be exported.
+L493: enableLogAccessUsingOnlyResourcePermissions  | boolean  | Flag that indicate which permission to use - resource or workspace or both.
+L494: immediatePurgeDataOn30Days  | boolean  | Flag that describes if we want to remove the data after 30 days.
+L495: unifiedSentinelBillingOnly  | boolean  | An indication if the specify workspace is limited to sentinel's unified billing model only.
+L496: ### WorkspaceReplicationProperties
+L497: 
+L498: Object
+L499: 
+L500: Workspace replication properties.
+L501: Name  | Type  | Description
+L502: --- | --- | ---
+L503: createdDate  | string (date-time)  | The last time when the replication was enabled.
+L504: enabled  | boolean  | Specifies whether the replication is enabled or not. When true, workspace configuration and data is replicated to the specified location. If replication is been enabled, location must be provided.
+L505: lastModifiedDate  | string (date-time)  | The last time when the replication was updated.
+L506: location  | string  | The location of the replication.
+L507: provisioningState  | cite34†WorkspaceReplicationState | The provisioning state of the replication.
+L508: ### WorkspaceReplicationState
+L509: 
+L510: Enumeration
+L511: 
+L512: The provisioning state of the replication.
+L513: 
+L514: Value  | Description
+L515: --- | ---
+L516: Succeeded  | Succeeded
+L517: EnableRequested  | EnableRequested
+L518: Enabling  | Enabling
+L519: DisableRequested  | DisableRequested
+L520: Disabling  | Disabling
+L521: RollbackRequested  | RollbackRequested
+L522: RollingBack  | RollingBack
+L523: Failed  | Failed
+L524: Canceled  | Canceled
+L525: ### WorkspaceSku
+L526: 
+L527: Object
+L528: 
+L529: The SKU (tier) of a workspace.
+L530: 
+L531: Name  | Type  | Description
+L532: --- | --- | ---
+L533: capacityReservationLevel  | integer (int32)  | The capacity reservation level in GB for this workspace, when CapacityReservation sku is selected.
+L534: lastSkuUpdate  | string (date-time)  | The last time when the sku was updated.
+L535: name  | cite36†WorkspaceSkuNameEnum | The name of the SKU.
+L536: ### WorkspaceSkuNameEnum
+L537: 
+L538: Enumeration
+L539: 
+L540: The name of the SKU.
+L541: 
+L542: Value  | Description
+L543: --- | ---
+L544: Free  | Free
+L545: Standard  | Standard
+L546: Premium  | Premium
+L547: PerNode  | PerNode
+L548: PerGB2018  | PerGB2018
+L549: Standalone  | Standalone
+L550: CapacityReservation  | CapacityReservation
+L551: LACluster  | LACluster
+L552: 
+L553: ### In this article
+

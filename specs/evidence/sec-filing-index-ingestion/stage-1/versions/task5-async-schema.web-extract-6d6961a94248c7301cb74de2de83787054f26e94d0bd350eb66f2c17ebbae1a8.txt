@@ -1,0 +1,677 @@
+Internal Error ()
+citeturn44view0 [wordlim: 200] Source: open({"ref_id":"https://learn.microsoft.com/en-us/rest/api/resource-manager/containerapps/container-apps-job-operation-results/get?view=rest-resource-manager-containerapps-2026-07-01","lineno":null}); Total lines: 1
+--------------------------------------------------------------------------------
+Internal Error ()
+citeturn44view1 [wordlim: 200] Source: open({"ref_id":"https://learn.microsoft.com/en-us/rest/api/resource-manager/containerapps/container-apps-job-operation-statuses/get?view=rest-resource-manager-containerapps-2026-07-01","lineno":null}); Total lines: 1
+--------------------------------------------------------------------------------
+Web Activity - Azure Data Factory & Azure Synapse | Microsoft Learn (https://learn.microsoft.com/en-us/azure/data-factory/control-flow-web-activity)
+citeturn44view2 [wordlim: 200] Crawled: today; Content type: text/html; Source: find({"ref_id":"turn34view3","pattern":"httpRequestTimeout"}); Total lines: 339
+L57: ## Syntax
+L58: 
+L59:     `{
+L60:        "name":"MyWebActivity",
+L61:        "type":"WebActivity",
+L62:        "typeProperties":{
+L63:           "method":"Post",
+L64:           "url":"<URLEndpoint>",
+L65:           "httpRequestTimeout": "00:01:00"
+L66:           "connectVia": {
+L67:               "referenceName": "<integrationRuntimeName>",
+L68:               "type": "IntegrationRuntimeReference"
+L69:           }
+L70:           "headers":{
+L71:              "Content-Type":"application/json"
+L72:           },
+L73:           "authentication":{
+L74:              "type":"ClientCertificate",
+L75:              "pfx":"****",
+L76:              "password":"****"
+L77:           },
+L78:           "datasets":[
+L79:              {
+L80:                 "referenceName":"<ConsumedDatasetName>",
+L81:                 "type":"DatasetReference",
+L82:                 "parameters":{
+L83:                    ...
+L84:                 }
+L85:              }
+L86:           ],
+L87:           "linkedServices":[
+L88:              {
+L89:                 "referenceName":"<ConsumedLinkedServiceName>",
+L90:                 "type":"LinkedServiceReference"
+L91:              }
+L92:           ]
+L93:        }
+L94:     }
+L95:     `
+L96: ## Type properties
+L97: Property  | Description  | Allowed values  | Required
+L98: --- | --- | --- | ---
+L99: name  | Name of the web activity  | String  | Yes
+L100: type  | Must be set to WebActivity.  | String  | Yes
+L101: method  | REST API method for the target endpoint.  | String.
+L102: Supported Types: "GET", "POST", "PUT", "PATCH", "DELETE"  | Yes
+L103: url  | Target endpoint and path  | String (or expression with resultType of string). The activity will time out at 1 minute with an error if it doesn't receive a response from the endpoint. You can increase this response timeout up to 10 mins by updating the httpRequestTimeout property  | Yes
+L104: httpRequestTimeout  | Response timeout duration  | hh:mm:ss with the max value as 00:10:00. If not explicitly specified defaults to 00:01:00  | No
+L105: headers  | Headers that are sent to the request. For example, to set the language and type on a request: `"headers" : { "Accept-Language": "en-us", "Content-Type": "application/json" }`.  | String (or expression with resultType of string)  | No
+L106: body  | Represents the payload that is sent to the endpoint.  | String (or expression with resultType of string).
+L107: See the schema of the request payload in cite11†Request payload schema section.  | Required for POST/PUT/PATCH methods. Optional for DELETE method.
+L108: authentication  | Authentication method used for calling the endpoint. Supported Types are "Basic, Client Certificate, System-assigned Managed Identity, User-assigned Managed Identity, Service Principal." For more information, see cite12†Authentication section. If authentication isn't required, exclude this property.  | String (or expression with resultType of string)  | No
+--------------------------------------------------------------------------------
+Microsoft.DataFactory/factories/triggers 2018-06-01 - Bicep, ARM template & Terraform AzAPI reference | Microsoft Learn (https://learn.microsoft.com/en-us/azure/templates/microsoft.datafactory/2018-06-01/factories/triggers)
+citeturn44view3 [wordlim: 200] Crawled: 3 days ago; Content type: text/html; Source: find({"ref_id":"turn36view2","pattern":"frequency"}); Total lines: 1744
+L84:             type: 'PipelineReference'
+L85:           }
+L86:         }
+L87:         type: 'TumblingWindowTrigger'
+L88:         typeProperties: {
+L89:           frequency: 'Minute'
+L90:           interval: 15
+L91:           maxConcurrency: 50
+L92:           startTime: '2022-09-21T00:00:00Z'
+L93:         }
+L94:       }
+L95:     }
+L96:     `
+L249: For ScheduleTrigger, use:
+L250: 
+L251:     `{
+L252:       pipelines: [
+L253:         {
+L254:           parameters: {
+L255:             {customized property}: any(...)
+L256:           }
+L257:           pipelineReference: {
+L258:             name: 'string'
+L259:             referenceName: 'string'
+L260:             type: 'string'
+L261:           }
+L262:         }
+L263:       ]
+L264:       type: 'ScheduleTrigger'
+L265:       typeProperties: {
+L266:         recurrence: {
+L267:           endTime: 'string'
+L268:           frequency: 'string'
+L269:           interval: int
+L270:           schedule: {
+L271:             hours: [
+L272:               int
+L273:             ]
+L274:             minutes: [
+L275:               int
+L276:             ]
+L277:             monthDays: [
+L278:               int
+L279:             ]
+L280:             monthlyOccurrences: [
+L281:               {
+L282:                 day: 'string'
+L283:                 occurrence: int
+L284:               }
+L285:             ]
+L286:             weekDays: [
+L287:               'string'
+L288:             ]
+L289:           }
+L290:           startTime: 'string'
+L291:           timeZone: 'string'
+L292:         }
+L293:       }
+L294:     }
+L295:     `
+L296: For RerunTumblingWindowTrigger, use:
+L297: 
+L298:     `{
+L299:       type: 'RerunTumblingWindowTrigger'
+L300:       typeProperties: {
+L301:         parentTrigger: any(...)
+L302:         requestedEndTime: 'string'
+L303:         requestedStartTime: 'string'
+L304:         rerunConcurrency: int
+L305:       }
+L306:     }
+L307:     `
+L308: For TumblingWindowTrigger, use:
+L309: 
+L310:     `{
+L311:       pipeline: {
+L312:         parameters: {
+L313:           {customized property}: any(...)
+L314:         }
+L315:         pipelineReference: {
+L316:           name: 'string'
+L317:           referenceName: 'string'
+L318:           type: 'string'
+L319:         }
+L320:       }
+L321:       type: 'TumblingWindowTrigger'
+L322:       typeProperties: {
+L323:         delay: any(...)
+L324:         dependsOn: [
+L325:           {
+L326:             type: 'string'
+L327:             // For remaining properties, see DependencyReference objects
+L328:           }
+L329:         ]
+L330:         endTime: 'string'
+L331:         frequency: 'string'
+L332:         interval: int
+L333:         maxConcurrency: int
+L334:         retryPolicy: {
+L335:           count: any(...)
+L336:           intervalInSeconds: int
+L337:         }
+L338:         startTime: 'string'
+L339:       }
+L340:     }
+L341:     `
+L342: ## Property Values
+L343: ### Microsoft.DataFactory/factories/triggers
+L344: Name  | Description  | Value
+L345: --- | --- | ---
+L346: name  | The resource name  | string
+L347: Constraints:
+L348: Min length = 1
+L349: Max length = 260
+L350: Pattern = `^[A-Za-z0-9_][^<>*#.%&:\\+?/]*$` (required)
+L351: parent  | In Bicep, you can specify the parent resource for a child resource. You only need to add this property when the child resource is declared outside of the parent resource.
+L352: For more information, see cite9†Child resource outside parent resource .  | Symbolic name for resource of type: cite10†factories L353: properties  | Properties of the trigger.  | cite11†Trigger (required)
+L354: ### BlobEventsTrigger
+L355: 
+L356: Name  | Description  | Value
+L498: ### ScheduleTriggerRecurrence
+L499: 
+L500: Name  | Description  | Value
+L501: --- | --- | ---
+L502: endTime  | The end time.  | string
+L503: frequency  | The frequency.  | 'Day'
+L504: 'Hour'
+L505: 'Minute'
+L506: 'Month'
+L507: 'NotSpecified'
+L508: 'Week'
+L509: 'Year'
+L510: interval  | The interval.  | int
+L511: schedule  | The recurrence schedule.  | cite25†RecurrenceSchedule L512: startTime  | The start time.  | string
+L513: timeZone  | The time zone.  | string
+L520: Name  | Description  | Value
+L521: --- | --- | ---
+L522: offset  | Timespan applied to the start time of a tumbling window when evaluating dependency.  | string
+L523: Constraints:
+L524: Min length = 8
+L525: Max length = 15
+L526: Pattern = `-((\d+)\.)?(\d\d):(60|([0-5][0-9])):(60|([0-5][0-9]))` (required)
+L527: size  | The size of the window when evaluating the dependency. If undefined the frequency of the tumbling window will be used.  | string
+L528: Constraints:
+L529: Min length = 8
+L530: Max length = 15
+L571: Name  | Description  | Value
+L572: --- | --- | ---
+L573: offset  | Timespan applied to the start time of a tumbling window when evaluating dependency.  | string
+L574: Constraints:
+L575: Min length = 8
+L576: Max length = 15
+L577: Pattern = `-?((\d+)\.)?(\d\d):(60|([0-5][0-9])):(60|([0-5][0-9]))`
+L578: referenceTrigger  | Referenced trigger.  | cite36†TriggerReference (required)
+L579: size  | The size of the window when evaluating the dependency. If undefined the frequency of the tumbling window will be used.  | string
+L580: Constraints:
+L581: Min length = 8
+L590: endTime  | The end time for the time period for the trigger during which events are fired for windows that are ready. Only UTC time is currently supported.  | string
+L591: frequency  | The frequency of the time windows.  | 'Hour'
+L592: 'Minute'
+L593: 'Month' (required)
+L594: interval  | The interval of the time windows. The minimum interval allowed is 15 Minutes.  | int (required)
+L595: maxConcurrency  | The max number of parallel time windows (ready for execution) for which a new run is triggered.  | int
+L596: Constraints:
+L597: Min value = 1
+L755: For ScheduleTrigger, use:
+L756: 
+L757:     `{
+L758:       "pipelines": [
+L759:         {
+L760:           "parameters": {
+L761:             "{customized property}": {}
+L762:           },
+L763:           "pipelineReference": {
+L764:             "name": "string",
+L765:             "referenceName": "string",
+L766:             "type": "string"
+L767:           }
+L768:         }
+L769:       ],
+L770:       "type": "ScheduleTrigger",
+L771:       "typeProperties": {
+L772:         "recurrence": {
+L773:           "endTime": "string",
+L774:           "frequency": "string",
+L775:           "interval": "int",
+L776:           "schedule": {
+L777:             "hours": [ "int" ],
+L778:             "minutes": [ "int" ],
+L779:             "monthDays": [ "int" ],
+L780:             "monthlyOccurrences": [
+L781:               {
+L782:                 "day": "string",
+L783:                 "occurrence": "int"
+L784:               }
+L785:             ],
+L786:             "weekDays": [ "string" ]
+L787:           },
+L788:           "startTime": "string",
+L789:           "timeZone": "string"
+L790:         }
+L791:       }
+L792:     }
+L793:     `
+L794: For RerunTumblingWindowTrigger, use:
+L795: 
+L796:     `{
+L797:       "type": "RerunTumblingWindowTrigger",
+L798:       "typeProperties": {
+L799:         "parentTrigger": {},
+L800:         "requestedEndTime": "string",
+L801:         "requestedStartTime": "string",
+L802:         "rerunConcurrency": "int"
+L803:       }
+L804:     }
+L805:     `
+L806: For TumblingWindowTrigger, use:
+L807: 
+L808:     `{
+L809:       "pipeline": {
+L810:         "parameters": {
+L811:           "{customized property}": {}
+L812:         },
+L813:         "pipelineReference": {
+L814:           "name": "string",
+L815:           "referenceName": "string",
+L816:           "type": "string"
+L817:         }
+L818:       },
+L819:       "type": "TumblingWindowTrigger",
+L820:       "typeProperties": {
+L821:         "delay": {},
+L822:         "dependsOn": [ {
+L823:           "type": "string"
+L824:           // For remaining properties, see DependencyReference objects
+L825:         } ],
+L826:         "endTime": "string",
+L827:         "frequency": "string",
+L828:         "interval": "int",
+L829:         "maxConcurrency": "int",
+L830:         "retryPolicy": {
+L831:           "count": {},
+L832:           "intervalInSeconds": "int"
+L833:         },
+L834:         "startTime": "string"
+L835:       }
+L836:     }
+L837:     `
+L838: ## Property Values
+L839: 
+L840: ### Microsoft.DataFactory/factories/triggers
+L841: 
+L842: Name  | Description  | Value
+L843: --- | --- | ---
+L844: apiVersion  | The api version  | '2018-06-01'
+L845: name  | The resource name  | string
+L846: Constraints:
+L847: Min length = 1
+L848: Max length = 260
+L849: Pattern = `^[A-Za-z0-9_][^<>*#.%&:\\+?/]*$` (required)
+L850: properties  | Properties of the trigger.  | cite40†Trigger (required)
+L851: type  | The resource type  | 'Microsoft.DataFactory/factories/triggers'
+L852: ### BlobEventsTrigger
+L853: 
+L854: Name  | Description  | Value
+L855: --- | --- | ---
+L856: pipelines  | Pipelines that need to be started.  | cite41†TriggerPipelineReference []
+L857: type  | Trigger type.  | 'BlobEventsTrigger' (required)
+L858: typeProperties  | Blob Events Trigger properties.  | cite42†BlobEventsTriggerTypeProperties (required)
+L996: ### ScheduleTriggerRecurrence
+L997: 
+L998: Name  | Description  | Value
+L999: --- | --- | ---
+L1000: endTime  | The end time.  | string
+L1001: frequency  | The frequency.  | 'Day'
+L1002: 'Hour'
+L1003: 'Minute'
+L1004: 'Month'
+L1005: 'NotSpecified'
+L1006: 'Week'
+L1007: 'Year'
+L1008: interval  | The interval.  | int
+L1009: schedule  | The recurrence schedule.  | cite54†RecurrenceSchedule L1010: startTime  | The start time.  | string
+L1011: timeZone  | The time zone.  | string
+L1018: Name  | Description  | Value
+L1019: --- | --- | ---
+L1020: offset  | Timespan applied to the start time of a tumbling window when evaluating dependency.  | string
+L1021: Constraints:
+L1022: Min length = 8
+L1023: Max length = 15
+L1024: Pattern = `-((\d+)\.)?(\d\d):(60|([0-5][0-9])):(60|([0-5][0-9]))` (required)
+L1025: size  | The size of the window when evaluating the dependency. If undefined the frequency of the tumbling window will be used.  | string
+L1026: Constraints:
+L1027: Min length = 8
+L1028: Max length = 15
+L1069: Name  | Description  | Value
+L1070: --- | --- | ---
+L1071: offset  | Timespan applied to the start time of a tumbling window when evaluating dependency.  | string
+L1072: Constraints:
+L1073: Min length = 8
+L1074: Max length = 15
+L1075: Pattern = `-?((\d+)\.)?(\d\d):(60|([0-5][0-9])):(60|([0-5][0-9]))`
+L1076: referenceTrigger  | Referenced trigger.  | cite65†TriggerReference (required)
+L1077: size  | The size of the window when evaluating the dependency. If undefined the frequency of the tumbling window will be used.  | string
+L1078: Constraints:
+L1079: Min length = 8
+L1088: endTime  | The end time for the time period for the trigger during which events are fired for windows that are ready. Only UTC time is currently supported.  | string
+L1089: frequency  | The frequency of the time windows.  | 'Hour'
+L1090: 'Minute'
+L1091: 'Month' (required)
+L1092: interval  | The interval of the time windows. The minimum interval allowed is 15 Minutes.  | int (required)
+L1093: maxConcurrency  | The max number of parallel time windows (ready for execution) for which a new run is triggered.  | int
+L1094: Constraints:
+L1095: Min value = 1
+L1183:             parameters = {
+L1184:             }
+L1185:             pipelineReference = {
+L1186:               referenceName = azapi_resource.pipeline.name
+L1187:               type          = "PipelineReference"
+L1188:             }
+L1189:           }
+L1190:           type = "TumblingWindowTrigger"
+L1191:           typeProperties = {
+L1192:             frequency      = "Minute"
+L1193:             interval       = 15
+L1194:             maxConcurrency = 50
+L1195:             startTime      = "2022-09-21T00:00:00Z"
+L1196:           }
+L1197:         }
+L1198:       }
+L1199:       schema_validation_enabled = false
+L1357: For ScheduleTrigger, use:
+L1358: 
+L1359:     `{
+L1360:       pipelines = [
+L1361:         {
+L1362:           parameters = {
+L1363:             {customized property} = ?
+L1364:           }
+L1365:           pipelineReference = {
+L1366:             name = "string"
+L1367:             referenceName = "string"
+L1368:             type = "string"
+L1369:           }
+L1370:         }
+L1371:       ]
+L1372:       type = "ScheduleTrigger"
+L1373:       typeProperties = {
+L1374:         recurrence = {
+L1375:           endTime = "string"
+L1376:           frequency = "string"
+L1377:           interval = int
+L1378:           schedule = {
+L1379:             hours = [
+L1380:               int
+L1381:             ]
+L1382:             minutes = [
+L1383:               int
+L1384:             ]
+L1385:             monthDays = [
+L1386:               int
+L1387:             ]
+L1388:             monthlyOccurrences = [
+L1389:               {
+L1390:                 day = "string"
+L1391:                 occurrence = int
+L1392:               }
+L1393:             ]
+L1394:             weekDays = [
+L1395:               "string"
+L1396:             ]
+L1397:           }
+L1398:           startTime = "string"
+L1399:           timeZone = "string"
+L1400:         }
+L1401:       }
+L1402:     }
+L1403:     `
+L1404: For RerunTumblingWindowTrigger, use:
+L1405: 
+L1406:     `{
+L1407:       type = "RerunTumblingWindowTrigger"
+L1408:       typeProperties = {
+L1409:         parentTrigger = ?
+L1410:         requestedEndTime = "string"
+L1411:         requestedStartTime = "string"
+L1412:         rerunConcurrency = int
+L1413:       }
+L1414:     }
+L1415:     `
+L1416: For TumblingWindowTrigger, use:
+L1417: 
+L1418:     `{
+L1419:       pipeline = {
+L1420:         parameters = {
+L1421:           {customized property} = ?
+L1422:         }
+L1423:         pipelineReference = {
+L1424:           name = "string"
+L1425:           referenceName = "string"
+L1426:           type = "string"
+L1427:         }
+L1428:       }
+L1429:       type = "TumblingWindowTrigger"
+L1430:       typeProperties = {
+L1431:         delay = ?
+L1432:         dependsOn = [
+L1433:           {
+L1434:             type = "string"
+L1435:             // For remaining properties, see DependencyReference objects
+L1436:           }
+L1437:         ]
+L1438:         endTime = "string"
+L1439:         frequency = "string"
+L1440:         interval = int
+L1441:         maxConcurrency = int
+L1442:         retryPolicy = {
+L1443:           count = ?
+L1444:           intervalInSeconds = int
+L1445:         }
+L1446:         startTime = "string"
+L1447:       }
+L1448:     }
+L1449:     `
+L1450: ## Property Values
+L1451: ### Microsoft.DataFactory/factories/triggers
+L1452: 
+L1453: Name  | Description  | Value
+L1454: --- | --- | ---
+L1455: name  | The resource name  | string
+L1456: Constraints:
+L1457: Min length = 1
+L1458: Max length = 260
+L1459: Pattern = `^[A-Za-z0-9_][^<>*#.%&:\\+?/]*$` (required)
+L1460: parent_id  | The ID of the resource that is the parent for this resource.  | ID for resource of type: cite10†factories L1461: properties  | Properties of the trigger.  | cite68†Trigger (required)
+L1462: type  | The resource type  | "Microsoft.DataFactory/factories/triggers@2018-06-01"
+L1463: ### BlobEventsTrigger
+L1464: 
+L1465: Name  | Description  | Value
+L1466: --- | --- | ---
+L1467: pipelines  | Pipelines that need to be started.  | cite69†TriggerPipelineReference []
+L1468: type  | Trigger type.  | 'BlobEventsTrigger' (required)
+L1469: typeProperties  | Blob Events Trigger properties.  | cite70†BlobEventsTriggerTypeProperties (required)
+L1607: ### ScheduleTriggerRecurrence
+L1608: 
+L1609: Name  | Description  | Value
+L1610: --- | --- | ---
+L1611: endTime  | The end time.  | string
+L1612: frequency  | The frequency.  | 'Day'
+L1613: 'Hour'
+L1614: 'Minute'
+L1615: 'Month'
+L1616: 'NotSpecified'
+L1617: 'Week'
+L1618: 'Year'
+L1619: interval  | The interval.  | int
+L1620: schedule  | The recurrence schedule.  | cite82†RecurrenceSchedule L1621: startTime  | The start time.  | string
+L1622: timeZone  | The time zone.  | string
+L1629: Name  | Description  | Value
+L1630: --- | --- | ---
+L1631: offset  | Timespan applied to the start time of a tumbling window when evaluating dependency.  | string
+L1632: Constraints:
+L1633: Min length = 8
+L1634: Max length = 15
+L1635: Pattern = `-((\d+)\.)?(\d\d):(60|([0-5][0-9])):(60|([0-5][0-9]))` (required)
+L1636: size  | The size of the window when evaluating the dependency. If undefined the frequency of the tumbling window will be used.  | string
+L1637: Constraints:
+L1638: Min length = 8
+L1639: Max length = 15
+L1680: Name  | Description  | Value
+L1681: --- | --- | ---
+L1682: offset  | Timespan applied to the start time of a tumbling window when evaluating dependency.  | string
+L1683: Constraints:
+L1684: Min length = 8
+L1685: Max length = 15
+L1686: Pattern = `-?((\d+)\.)?(\d\d):(60|([0-5][0-9])):(60|([0-5][0-9]))`
+L1687: referenceTrigger  | Referenced trigger.  | cite93†TriggerReference (required)
+L1688: size  | The size of the window when evaluating the dependency. If undefined the frequency of the tumbling window will be used.  | string
+L1689: Constraints:
+L1690: Min length = 8
+L1699: endTime  | The end time for the time period for the trigger during which events are fired for windows that are ready. Only UTC time is currently supported.  | string
+L1700: frequency  | The frequency of the time windows.  | 'Hour'
+L1701: 'Minute'
+L1702: 'Month' (required)
+L1703: interval  | The interval of the time windows. The minimum interval allowed is 15 Minutes.  | int (required)
+L1704: maxConcurrency  | The max number of parallel time windows (ready for execution) for which a new run is triggered.  | int
+L1705: Constraints:
+L1706: Min value = 1
+--------------------------------------------------------------------------------
+Microsoft.DataFactory/factories/pipelines 2018-06-01 - Bicep, ARM template & Terraform AzAPI reference | Microsoft Learn (https://learn.microsoft.com/en-us/azure/templates/microsoft.datafactory/2018-06-01/factories/pipelines)
+citeturn44view4 [wordlim: 200] Crawled: yesterday; Content type: text/html; Source: find({"ref_id":"turn36view1","pattern":"WebActivity"}); Total lines: 22407
+L11584: Set to 'HDInsightPig' for type cite434†HDInsightPigActivity . Set to 'HDInsightSpark' for type cite435†HDInsightSparkActivity . Set to 'HDInsightStreaming' for type cite436†HDInsightStreamingActivity . Set to 'Lookup' for type cite437†LookupActivity . Set to 'Script' for type cite438†ScriptActivity . Set to 'SparkJob' for type cite439†SynapseSparkJobDefinitionActivity . Set to 'SqlServerStoredProcedure' for type cite440†SqlServerStoredProcedureActivity . Set to 'SynapseNotebook' for type cite441†SynapseNotebookActivity .
+L11585: Set to 'WebActivity' for type cite442†WebActivity .  | 'AppendVariable'
+L11586: 'AzureDataExplorerCommand'
+L11587: 'AzureFunctionActivity'
+L11588: 'AzureMLBatchExecution'
+L11589: 'AzureMLExecutePipeline'
+L11590: 'AzureMLUpdateResource'
+L11591: 'Copy'
+L11592: 'Custom'
+L11593: 'DatabricksJob'
+L11594: 'DatabricksNotebook'
+L11595: 'DatabricksSparkJar'
+L11596: 'DatabricksSparkPython'
+L11597: 'DataLakeAnalyticsU-SQL'
+L11598: 'Delete'
+L11599: 'ExecuteDataFlow'
+L11600: 'ExecutePipeline'
+L11601: 'ExecuteSSISPackage'
+L11602: 'ExecuteWranglingDataflow'
+L11603: 'Fail'
+L11604: 'Filter'
+L11605: 'ForEach'
+L11606: 'GetMetadata'
+L11607: 'HDInsightHive'
+L11608: 'HDInsightMapReduce'
+L11609: 'HDInsightPig'
+L11610: 'HDInsightSpark'
+L11611: 'HDInsightStreaming'
+L11612: 'IfCondition'
+L11613: 'Lookup'
+L11614: 'Script'
+L11615: 'SetVariable'
+L11616: 'SparkJob'
+L11617: 'SqlServerStoredProcedure'
+L11618: 'Switch'
+L11619: 'SynapseNotebook'
+L11620: 'Until'
+L11621: 'Validation'
+L11622: 'Wait'
+L11623: 'WebActivity'
+L11624: 'WebHook' (required)
+L11625: userProperties  | Activity user properties.  | cite443†UserProperty []
+L11626: ### ActivityDependency
+L11627: 
+L11628: Name  | Description  | Value
+L11629: --- | --- | ---
+L11630: activity  | Activity name.  | string (required)
+L11631: dependencyConditions  | Match-Condition for the dependency.  | String array containing any of:
+L11632: 'Completed'
+L11633: 'Failed'
+L11634: 'Skipped'
+L11635: 'Succeeded' (required)
+L11636: ### ActivityPolicy
+L11637: Name  | Description  | Value
+L11638: --- | --- | ---
+L11639: retry  | Maximum ordinary retry attempts. Default is 0. Type: integer (or Expression with resultType integer), minimum: 0.  | any
+L11640: retryIntervalInSeconds  | Interval between each retry attempt (in seconds). The default is 30 sec.  | int
+L11641: Constraints:
+L11642: Min value = 30
+L11643: Max value = 86400
+L11644: secureInput  | When set to true, Input from activity is considered as secure and will not be logged to monitoring.  | bool
+L19087: Set to 'HDInsightPig' for type cite817†HDInsightPigActivity . Set to 'HDInsightSpark' for type cite818†HDInsightSparkActivity . Set to 'HDInsightStreaming' for type cite819†HDInsightStreamingActivity . Set to 'Lookup' for type cite820†LookupActivity . Set to 'Script' for type cite821†ScriptActivity . Set to 'SparkJob' for type cite822†SynapseSparkJobDefinitionActivity . Set to 'SqlServerStoredProcedure' for type cite823†SqlServerStoredProcedureActivity . Set to 'SynapseNotebook' for type cite824†SynapseNotebookActivity .
+L19088: Set to 'WebActivity' for type cite825†WebActivity .  | 'AppendVariable'
+L19089: 'AzureDataExplorerCommand'
+L19090: 'AzureFunctionActivity'
+L19091: 'AzureMLBatchExecution'
+L19092: 'AzureMLExecutePipeline'
+L19093: 'AzureMLUpdateResource'
+L19094: 'Copy'
+L19095: 'Custom'
+L19096: 'DatabricksJob'
+L19097: 'DatabricksNotebook'
+L19098: 'DatabricksSparkJar'
+L19099: 'DatabricksSparkPython'
+L19100: 'DataLakeAnalyticsU-SQL'
+L19101: 'Delete'
+L19102: 'ExecuteDataFlow'
+L19103: 'ExecutePipeline'
+L19104: 'ExecuteSSISPackage'
+L19105: 'ExecuteWranglingDataflow'
+L19106: 'Fail'
+L19107: 'Filter'
+L19108: 'ForEach'
+L19109: 'GetMetadata'
+L19110: 'HDInsightHive'
+L19111: 'HDInsightMapReduce'
+L19112: 'HDInsightPig'
+L19113: 'HDInsightSpark'
+L19114: 'HDInsightStreaming'
+L19115: 'IfCondition'
+L19116: 'Lookup'
+L19117: 'Script'
+L19118: 'SetVariable'
+L19119: 'SparkJob'
+L19120: 'SqlServerStoredProcedure'
+L19121: 'Switch'
+L19122: 'SynapseNotebook'
+L19123: 'Until'
+L19124: 'Validation'
+L19125: 'Wait'
+L19126: 'WebActivity'
+L19127: 'WebHook' (required)
+L19128: userProperties  | Activity user properties.  | cite826†UserProperty []
+L19129: ### ActivityDependency
+L19130: 
+L19131: Name  | Description  | Value
+L19132: --- | --- | ---
+L19133: activity  | Activity name.  | string (required)
+L19134: dependencyConditions  | Match-Condition for the dependency.  | String array containing any of:
+L19135: 'Completed'
+L19136: 'Failed'
+L19137: 'Skipped'
+L19138: 'Succeeded' (required)
+L19139: ### ActivityPolicy
+L19140: Name  | Description  | Value
+L19141: --- | --- | ---
+L19142: retry  | Maximum ordinary retry attempts. Default is 0. Type: integer (or Expression with resultType integer), minimum: 0.  | any
+L19143: retryIntervalInSeconds  | Interval between each retry attempt (in seconds). The default is 30 sec.  | int
+L19144: Constraints:
+L19145: Min value = 30
+L19146: Max value = 86400
+L19147: secureInput  | When set to true, Input from activity is considered as secure and will not be logged to monitoring.  | bool
+

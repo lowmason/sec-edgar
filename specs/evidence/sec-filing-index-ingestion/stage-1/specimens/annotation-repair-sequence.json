@@ -1,0 +1,12 @@
+{
+  "actual_failure": "Quarterly field names source_status/selection_reason incorrectly applied to daily schema; DictWriter ValueError after 2172 data rows and four-tail-row omission",
+  "actual_failure_command": "python3 investigation-tools/summarize_source_evidence.py",
+  "actual_failure_observation": "Captured tool output ValueError; independent subsequent command ran because shell commands lacked stop-on-failure; do not infer overall shell exit is individual command success",
+  "initial_regression_fixture": "Synthetic fixture was named SYNTHETIC.inspection.json outside SEC-* glob; no report loaded; both initial red and first attempted green exited 1 at expected outcome assertion",
+  "initial_regression_artifact_loss": "Initial synthetic-fixture stdout/stderr files were overwritten by corrected reproduction output. Exact original stderr bytes are no longer separately retained. Tool transcript and parent message preserve description/known exit 1; no recreated output is presented as original evidence.",
+  "corrected_red": "check_annotation_offline.py --reproduce-old uses explicit retained reconstruction of incorrect annotation algorithm against matching synthetic SEC-* fixture; annotation-red stderr has schema ValueError; exit 1",
+  "corrected_green": "Actual schema-aware fixed code on corrected fixture; retained command/stdout/stderr exit 0",
+  "repair": "Schema-aware daily outcome + explicit inspection columns; temporary-file write then atomic replace, preserving existing source matrix on failure",
+  "tail_recovery": "Exactly four missing tail rows reconstructed from immutable SEC-0138/0139 children; complete frozen Task2diff original-field comparison exit 0",
+  "no_sec_refetch": true
+}

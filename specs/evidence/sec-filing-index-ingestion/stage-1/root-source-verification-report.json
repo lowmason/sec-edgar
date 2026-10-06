@@ -1,0 +1,16 @@
+{
+  "received_at_utc": "2026-10-06T00:09:07.328876+00:00",
+  "method": "Root independently executed these offline checks; tool outputs observed, exact call timestamps not recorded here",
+  "checks": [
+    {
+      "command": "python3 specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/check_source_evidence.py 10",
+      "exit_code": 0,
+      "result": "10 receipts;13 unique originals/derivatives; direct shasum/CRC/rows/date/matrix/root-QTR checks PASS"
+    },
+    {
+      "command": "python3 specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/check_matrix_preservation.py",
+      "exit_code": 0,
+      "result": "372 quarterly/2176 daily rows, original fields/order preserved except10 quarterly and5 daily authorized field changes;4 recoveredtailrows match"
+    }
+  ]
+}

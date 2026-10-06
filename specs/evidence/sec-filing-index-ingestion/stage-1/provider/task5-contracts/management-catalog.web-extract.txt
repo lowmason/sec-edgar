@@ -1,0 +1,194 @@
+Azure permissions for Management and governance - Azure RBAC | Microsoft Learn (https://learn.microsoft.com/en-us/azure/role-based-access-control/permissions/management-and-governance)
+citeturn47view0 [wordlim: 200] Crawled: today; Content type: text/html; Source: open({"ref_id":"https://learn.microsoft.com/en-us/azure/role-based-access-control/permissions/management-and-governance","lineno":null}); Total lines: 1543
+L0: cite0†Skip to main content cite1†Skip to Ask Learn chat experience L1: 
+L2: This browser is no longer supported.
+L3: 
+L4: Upgrade to Microsoft Edge to take advantage of the latest features, security updates, and technical support.
+L5: 
+L6: cite2†Download Microsoft Edge†go.microsoft.com cite3†More info about Internet Explorer and Microsoft Edge L7: 
+L8: Table of contents Exit editor mode
+L9: 
+L10: Ask Learn Ask Learn
+L11: 
+L12: Reading mode Table of contents cite1†Read in English Add Add to Plans cite4†Edit†github.com L13: 
+L14: * * *
+L15: 
+L16: Copy Markdown Print
+L17: 
+L18: * * *
+L19: 
+L20: Note
+L21: Access to this page requires authorization. You can try cite1†signing in or changing directories.
+L22: 
+L23: Access to this page requires authorization. You can try changing directories.
+L24: # Azure permissions for Management and governance
+L25: 
+L26: Feedback
+L27: 
+L28: Summarize this article for me
+L29: 
+L30: ## In this article
+L31: 
+L32: This article lists the permissions for the Azure resource providers in the Management and governance category. You can use these permissions in your own cite5†Azure custom roles to provide granular access control to resources in Azure. Permission strings have the following format: `{Company}.{ProviderName}/{resourceType}/{action}`
+L33: ## Microsoft.Advisor
+L34: 
+L35: Your personalized Azure best practices recommendation engine.
+L36: 
+L37: Azure service: cite6†Azure Advisor L38: Action  | Description
+L39: --- | ---
+L40: `Microsoft.Advisor/generateRecommendations/action`  | Gets generate recommendations status
+L41: `Microsoft.Advisor/register/action`  | Registers the subscription for the Microsoft Advisor
+L42: `Microsoft.Advisor/unregister/action`  | Unregisters the subscription for the Microsoft Advisor
+L43: `Microsoft.Advisor/advisorScore/read`  | Gets the score data for given subscription
+L44: `Microsoft.Advisor/assessments/read`  | Read assessments
+L45: `Microsoft.Advisor/assessments/write`  | Write assessments
+L46: `Microsoft.Advisor/assessmentTypes/read`  | Read assessmentTypes
+L47: `Microsoft.Advisor/configurations/read`  | Get configurations
+L48: `Microsoft.Advisor/configurations/write`  | Creates/updates configuration
+L49: `Microsoft.Advisor/conversations/bootstrap/action`  | Bootstrap Conversation
+L50: `Microsoft.Advisor/generateRecommendations/read`  | Gets generate recommendations status
+L51: `Microsoft.Advisor/metadata/read`  | Get Metadata
+L52: `Microsoft.Advisor/operations/read`  | Gets the operations for the Microsoft Advisor
+L53: `Microsoft.Advisor/recommendations/read`  | Reads recommendations
+L54: `Microsoft.Advisor/recommendations/write`  | Writes recommendations
+L55: `Microsoft.Advisor/recommendations/available/action`  | New recommendation is available in Microsoft Advisor
+L56: `Microsoft.Advisor/recommendations/suppressions/read`  | Gets suppressions
+L57: `Microsoft.Advisor/recommendations/suppressions/write`  | Creates/updates suppressions
+L58: `Microsoft.Advisor/recommendations/suppressions/delete`  | Deletes suppression
+L59: `Microsoft.Advisor/resiliencyReviews/read`  | Read resiliencyReviews
+L60: `Microsoft.Advisor/suppressions/read`  | Gets suppressions
+L61: `Microsoft.Advisor/suppressions/write`  | Creates/updates suppressions
+L62: `Microsoft.Advisor/suppressions/delete`  | Deletes suppression
+L63: `Microsoft.Advisor/triageRecommendations/read`  | Read triageRecommendations
+L64: `Microsoft.Advisor/triageRecommendations/approve/action`  | Approve triageRecommendations
+L65: `Microsoft.Advisor/triageRecommendations/reject/action`  | Reject triageRecommendations
+L66: `Microsoft.Advisor/triageRecommendations/reset/action`  | Reset triageRecommendations
+L67: `Microsoft.Advisor/triageResources/read`  | Read triageResources
+L68: `Microsoft.Advisor/workloads/read`  | Read workloads
+L69: ## Microsoft.Authorization
+L70: 
+L71: Azure service: cite7†Azure Policy , cite8†Azure RBAC , cite9†Azure Resource Manager L72: Action  | Description
+L73: --- | ---
+L74: `Microsoft.Authorization/elevateAccess/action`  | Grants the caller User Access Administrator access at the tenant scope
+L75: `Microsoft.Authorization/acquirePolicyToken/read`  | Acquire a policy token at the specified scope.
+L76: `Microsoft.Authorization/denyAssignments/read`  | Get information about a deny assignment.
+L77: `Microsoft.Authorization/denyAssignments/write`  | Create a deny assignment at the specified scope.
+L78: `Microsoft.Authorization/denyAssignments/delete`  | Delete a deny assignment at the specified scope.
+L79: `Microsoft.Authorization/diagnosticSettings/read`  | Read the information about diagnostics settings
+L80: `Microsoft.Authorization/diagnosticSettings/write`  | Create or update the information of diagnostics settings
+L81: `Microsoft.Authorization/diagnosticSettings/delete`  | Delete diagnostics settings
+L82: `Microsoft.Authorization/diagnosticSettingsCategories/read`  | Get the information about diagnostic settings categories
+L83: `Microsoft.Authorization/locks/read`  | Gets locks at the specified scope.
+L84: `Microsoft.Authorization/locks/write`  | Add locks at the specified scope.
+L85: `Microsoft.Authorization/locks/delete`  | Delete locks at the specified scope.
+L86: `Microsoft.Authorization/operations/read`  | Gets the list of operations
+L87: `Microsoft.Authorization/permissions/read`  | Lists all the permissions the caller has at a given scope.
+L88: `Microsoft.Authorization/policies/audit/action`  | Action taken as a result of evaluation of Azure Policy with 'audit' effect
+L89: `Microsoft.Authorization/policies/auditIfNotExists/action`  | Action taken as a result of evaluation of Azure Policy with 'auditIfNotExists' effect
+L90: `Microsoft.Authorization/policies/deny/action`  | Action taken as a result of evaluation of Azure Policy with 'deny' effect
+L91: `Microsoft.Authorization/policies/deployIfNotExists/action`  | Action taken as a result of evaluation of Azure Policy with 'deployIfNotExists' effect
+L92: `Microsoft.Authorization/policyAssignments/read`  | Get information about a policy assignment.
+L93: `Microsoft.Authorization/policyAssignments/write`  | Create a policy assignment at the specified scope.
+L94: `Microsoft.Authorization/policyAssignments/delete`  | Delete a policy assignment at the specified scope.
+L95: `Microsoft.Authorization/policyAssignments/exempt/action`  | Exempt a policy assignment at the specified scope.
+L96: `Microsoft.Authorization/policyAssignments/privateLinkAssociations/read`  | Get information about private link association.
+L97: `Microsoft.Authorization/policyAssignments/privateLinkAssociations/write`  | Creates or updates a private link association.
+L98: `Microsoft.Authorization/policyAssignments/privateLinkAssociations/delete`  | Deletes a private link association.
+L99: `Microsoft.Authorization/policyAssignments/resourceManagementPrivateLinks/read`  | Get information about resource management private link.
+L100: `Microsoft.Authorization/policyAssignments/resourceManagementPrivateLinks/write`  | Creates or updates a resource management private link.
+L101: `Microsoft.Authorization/policyAssignments/resourceManagementPrivateLinks/delete`  | Deletes a resource management private link.
+L102: `Microsoft.Authorization/policyAssignments/resourceManagementPrivateLinks/privateEndpointConnectionProxies/read`  | Get information about private endpoint connection proxy.
+L103: `Microsoft.Authorization/policyAssignments/resourceManagementPrivateLinks/privateEndpointConnectionProxies/write`  | Creates or updates a private endpoint connection proxy.
+L104: `Microsoft.Authorization/policyAssignments/resourceManagementPrivateLinks/privateEndpointConnectionProxies/delete`  | Deletes a private endpoint connection proxy.
+L105: `Microsoft.Authorization/policyAssignments/resourceManagementPrivateLinks/privateEndpointConnectionProxies/validate/action`  | Validates a private endpoint connection proxy.
+L106: `Microsoft.Authorization/policyAssignments/resourceManagementPrivateLinks/privateEndpointConnections/read`  | Get information about private endpoint connection.
+L107: `Microsoft.Authorization/policyAssignments/resourceManagementPrivateLinks/privateEndpointConnections/write`  | Creates or updates a private endpoint connection.
+L108: `Microsoft.Authorization/policyAssignments/resourceManagementPrivateLinks/privateEndpointConnections/delete`  | Deletes a private endpoint connection.
+L109: `Microsoft.Authorization/policyDefinitions/read`  | Get information about a policy definition.
+L110: `Microsoft.Authorization/policyDefinitions/write`  | Create a custom policy definition.
+L111: `Microsoft.Authorization/policyDefinitions/delete`  | Delete a policy definition.
+L112: `Microsoft.Authorization/policyDefinitions/versions/read`  | Get information about a policy definition version.
+L113: `Microsoft.Authorization/policyDefinitions/versions/write`  | Create a custom policy definition version.
+L114: `Microsoft.Authorization/policyDefinitions/versions/delete`  | Delete a policy definition version.
+L115: `Microsoft.Authorization/policyEnrollments/read`  | Get information about a policy enrollment.
+L116: `Microsoft.Authorization/policyEnrollments/write`  | Create a policy enrollment at the specified scope.
+L117: `Microsoft.Authorization/policyEnrollments/delete`  | Delete a policy enrollment at the specified scope.
+L118: `Microsoft.Authorization/policyExemptions/read`  | Get information about a policy exemption.
+L119: `Microsoft.Authorization/policyExemptions/write`  | Create a policy exemption at the specified scope.
+L120: `Microsoft.Authorization/policyExemptions/delete`  | Delete a policy exemption at the specified scope.
+L121: `Microsoft.Authorization/policySetDefinitions/read`  | Get information about a policy set definition.
+L122: `Microsoft.Authorization/policySetDefinitions/write`  | Create a custom policy set definition.
+L123: `Microsoft.Authorization/policySetDefinitions/delete`  | Delete a policy set definition.
+L124: `Microsoft.Authorization/policySetDefinitions/versions/read`  | Get information about a policy set definition version.
+L125: `Microsoft.Authorization/policySetDefinitions/versions/write`  | Create a custom policy set definition version.
+L126: `Microsoft.Authorization/policySetDefinitions/versions/delete`  | Delete a policy set definition version.
+L127: `Microsoft.Authorization/providerOperations/read`  | Get operations for all resource providers which can be used in role definitions.
+L128: `Microsoft.Authorization/roleAssignments/read`  | Get information about a role assignment.
+L129: `Microsoft.Authorization/roleAssignments/write`  | Create a role assignment at the specified scope.
+L130: `Microsoft.Authorization/roleAssignments/delete`  | Delete a role assignment at the specified scope.
+L131: `Microsoft.Authorization/roleAssignmentScheduleInstances/read`  | Gets the role assignment schedule instances at given scope.
+L132: `Microsoft.Authorization/roleAssignmentScheduleRequests/read`  | Gets the role assignment schedule requests at given scope.
+L133: `Microsoft.Authorization/roleAssignmentScheduleRequests/write`  | Creates a role assignment schedule request at given scope.
+L134: `Microsoft.Authorization/roleAssignmentScheduleRequests/cancel/action`  | Cancels a pending role assignment schedule request.
+L135: `Microsoft.Authorization/roleAssignmentSchedules/read`  | Gets the role assignment schedules at given scope.
+L136: `Microsoft.Authorization/roleDefinitions/read`  | Get information about a role definition.
+L137: `Microsoft.Authorization/roleDefinitions/write`  | Create or update a custom role definition with specified permissions and assignable scopes.
+L138: `Microsoft.Authorization/roleDefinitions/delete`  | Delete the specified custom role definition.
+L139: `Microsoft.Authorization/roleEligibilityScheduleInstances/read`  | Gets the role eligibility schedule instances at given scope.
+L140: `Microsoft.Authorization/roleEligibilityScheduleRequests/read`  | Gets the role eligibility schedule requests at given scope.
+L141: `Microsoft.Authorization/roleEligibilityScheduleRequests/write`  | Creates a role eligibility schedule request at given scope.
+L142: `Microsoft.Authorization/roleEligibilityScheduleRequests/cancel/action`  | Cancels a pending role eligibility schedule request.
+L143: `Microsoft.Authorization/roleEligibilityScheduleRequests/whenApprovalRequired/write`  | Creates a role eligibility schedule request at given scope when approval is required
+L144: `Microsoft.Authorization/roleEligibilitySchedules/read`  | Gets the role eligibility schedules at given scope.
+L145: `Microsoft.Authorization/roleManagementPolicies/read`  | Get Role management policies
+L146: `Microsoft.Authorization/roleManagementPolicies/write`  | Update a role management policy
+L147: `Microsoft.Authorization/roleManagementPolicies/approvalRule/action`  | Update Role Management policy approval rule
+L148: `Microsoft.Authorization/roleManagementPolicyAssignments/read`  | Get role management policy assignments
+L149: ## Microsoft.Automation
+L150: 
+L151: Simplify cloud management with process automation.
+L152: 
+L153: Azure service: cite10†Automation L154: Action  | Description
+L155: --- | ---
+L156: `Microsoft.Automation/register/action`  | Registers the subscription to Azure Automation
+L157: `Microsoft.Automation/automationAccounts/convertGraphRunbookContent/action`  | Convert Graph Runbook Content to its raw serialized format and vice-versa
+L158: `Microsoft.Automation/automationAccounts/read`  | Gets an Azure Automation account
+L159: `Microsoft.Automation/automationAccounts/write`  | Creates or updates an Azure Automation account
+L160: `Microsoft.Automation/automationAccounts/listKeys/action`  | Reads the Keys for the automation account
+L161: `Microsoft.Automation/automationAccounts/delete`  | Deletes an Azure Automation account
+L162: `Microsoft.Automation/automationAccounts/agentRegistrationInformation/read`  | Read an Azure Automation DSC's registration information
+L163: `Microsoft.Automation/automationAccounts/agentRegistrationInformation/regenerateKey/action`  | Writes a request to regenerate Azure Automation DSC keys
+L164: `Microsoft.Automation/automationAccounts/certificates/getCount/action`  | Reads the count of certificates
+L165: `Microsoft.Automation/automationAccounts/certificates/read`  | Gets an Azure Automation certificate asset
+L166: `Microsoft.Automation/automationAccounts/certificates/write`  | Creates or updates an Azure Automation certificate asset
+L167: `Microsoft.Automation/automationAccounts/certificates/delete`  | Deletes an Azure Automation certificate asset
+L168: `Microsoft.Automation/automationAccounts/compilationjobs/write`  | Writes an Azure Automation DSC's Compilation
+L169: `Microsoft.Automation/automationAccounts/compilationjobs/read`  | Reads an Azure Automation DSC's Compilation
+L170: `Microsoft.Automation/automationAccounts/configurations/read`  | Gets an Azure Automation DSC's content
+L171: `Microsoft.Automation/automationAccounts/configurations/getCount/action`  | Reads the count of an Azure Automation DSC's content
+L172: `Microsoft.Automation/automationAccounts/configurations/write`  | Writes an Azure Automation DSC's content
+L173: `Microsoft.Automation/automationAccounts/configurations/delete`  | Deletes an Azure Automation DSC's content
+L174: `Microsoft.Automation/automationAccounts/configurations/content/read`  | Reads the configuration media content
+L175: `Microsoft.Automation/automationAccounts/connections/read`  | Gets an Azure Automation connection asset
+L176: `Microsoft.Automation/automationAccounts/connections/getCount/action`  | Reads the count of connections
+L177: `Microsoft.Automation/automationAccounts/connections/write`  | Creates or updates an Azure Automation connection asset
+L178: `Microsoft.Automation/automationAccounts/connections/delete`  | Deletes an Azure Automation connection asset
+L179: `Microsoft.Automation/automationAccounts/connectionTypes/read`  | Gets an Azure Automation connection type asset
+L180: `Microsoft.Automation/automationAccounts/connectionTypes/write`  | Creates an Azure Automation connection type asset
+L181: `Microsoft.Automation/automationAccounts/connectionTypes/delete`  | Deletes an Azure Automation connection type asset
+L182: `Microsoft.Automation/automationAccounts/credentials/read`  | Gets an Azure Automation credential asset
+L183: `Microsoft.Automation/automationAccounts/credentials/getCount/action`  | Reads the count of credentials
+L184: `Microsoft.Automation/automationAccounts/credentials/write`  | Creates or updates an Azure Automation credential asset
+L185: `Microsoft.Automation/automationAccounts/credentials/delete`  | Deletes an Azure Automation credential asset
+L186: `Microsoft.Automation/automationAccounts/diagnosticSettings/read`  | Gets the diagnostic setting for the resource
+L187: `Microsoft.Automation/automationAccounts/diagnosticSettings/write`  | Sets the diagnostic setting for the resource
+L188: `Microsoft.Automation/automationAccounts/hybridRunbookWorkerGroups/read`  | Reads a Hybrid Runbook Worker Group
+L189: `Microsoft.Automation/automationAccounts/hybridRunbookWorkerGroups/write`  | Creates a Hybrid Runbook Worker Group
+L190: `Microsoft.Automation/automationAccounts/hybridRunbookWorkerGroups/delete`  | Deletes a Hybrid Runbook Worker Group
+L191: `Microsoft.Automation/automationAccounts/hybridRunbookWorkerGroups/hybridRunbookWorkers/read`  | Reads a Hybrid Runbook Worker
+L192: `Microsoft.Automation/automationAccounts/hybridRunbookWorkerGroups/hybridRunbookWorkers/write`  | Creates a Hybrid Runbook Worker
+L193: `Microsoft.Automation/automationAccounts/hybridRunbookWorkerGroups/hybridRunbookWorkers/move/action`  | Moves Hybrid Runbook Worker from one Worker Group to another
+L194: `Microsoft.Automation/automationAccounts/hybridRunbookWorkerGroups/hybridRunbookWorkers/delete`  | Deletes a Hybrid Runbook Worker
+L195: `Microsoft.Automation/automationAccounts/jobs/runbookContent/action`  | Gets the content of the Azure Automation runbook at the time of the job execution
+L196: `Microsoft.Automation/automationAccounts/jobs/read`  | Gets an Azure Automation job
+

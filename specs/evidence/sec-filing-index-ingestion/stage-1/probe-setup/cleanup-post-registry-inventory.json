@@ -1,0 +1,20 @@
+{
+  "argv": [
+    "az",
+    "resource",
+    "list",
+    "--subscription",
+    "3c92a216-8ed6-4897-b741-11ed287b8617",
+    "--resource-group",
+    "rg-sec-edgar-stage1-probe-20261005",
+    "--query",
+    "[].{id:id,type:type,name:name}",
+    "--output",
+    "json"
+  ],
+  "started_utc": "2026-10-06T00:49:28.450136+00:00",
+  "ended_utc": "2026-10-06T00:49:29.299100+00:00",
+  "exit_code": 0,
+  "stdout": "[]\n",
+  "stderr": ""
+}

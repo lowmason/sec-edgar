@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "evidence_id": "T5-PERM-image-pull-arm",
+  "source_url": "https://learn.microsoft.com/en-us/azure/container-apps/managed-identity-image-pull",
+  "retrieved_at_utc": "2026-10-06T01:11:54Z",
+  "source_version": "Rolling Container Apps managed identity pull guide",
+  "retrieval_method": "public Microsoft Learn via web.run; curated extract",
+  "status": "success",
+  "extract": "Your Azure Container Registry must allow ARM audience tokens for authentication in order to use managed identity to pull images.\naz acr config authentication-as-arm show -r <REGISTRY>\naz acr config authentication-as-arm update -r <REGISTRY> --status enabled\nAssign pull permissions to the actual configured registry pull identity.",
+  "limitations": "Documentation evidence only. No Azure authorization or live operation tested."
+}

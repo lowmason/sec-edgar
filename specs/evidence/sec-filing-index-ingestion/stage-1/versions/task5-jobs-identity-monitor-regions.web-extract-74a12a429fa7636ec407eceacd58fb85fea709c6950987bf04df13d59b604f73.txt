@@ -1,0 +1,625 @@
+Create and manage action groups in Azure Monitor - Azure Monitor | Microsoft Learn (https://learn.microsoft.com/en-us/azure/azure-monitor/alerts/action-groups)
+citeturn95search0 [wordlim: 200] Crawled: last week; Global and regional action group processing ... For Action groups to properly function in response to a Service Health Alert, the region of the action group must be set to Global.
+
+# Action groups
+
+Feedback
+
+Summarize this article for me
+
+## In this article
+
+  1. Overview
+  2. Global and regional action group processing
+  3. Notification types
+  4. Action types
+  5. Create in the Azure portal
+  6. Create with a Resource Manager template
+  7. Edit or delete an existing group
+  8. Service limits for notifications
+  9. Email Azure Resource Manager
+  10. SMS
+  11. Voice
+  12. Webhook
+  13. Migrate Runbook action from "Run as account" to "Run as Managed Identity"
+  14. Next steps
+Show 10 more
+
+When Azure Monitor data indicates a potential issue in your infrastructure or application, it triggers an alert. To ensure timely response, you can attach action groups to these alerts, which are collections of notification preferences and automated actions.
+
+Action groups define who gets notified and what actions are taken when an alert fires. Notification types include voice call, SMS, push notifications, and email. Automated actions can trigger a webhook, an Azure Function, or a Logic Apps workflow that posts a message to Microsoft Teams. Use action groups across services like Azure Monitor, Azure Service Health, and Azure Advisor.
+
+Each action is made up of:
+
+  * Type: The kind of notification or automation.
+  * Name: A unique identifier within the action group.
+  * Details: Specific configuration based on the action type.
+
+This article shows you how to create and manage action groups.
+
+## Overview
+
+### Global availability and resilience
+
+Global requests from clients can be processed by action group services in any region. If one region of the action group service is down, the traffic is automatically routed and processed in other regions. As a global service, an action group helps provide a disaster recovery solution.
+
+Note
+
+Regional requests rely on availability zone redundancy to meet privacy requirements and offer a similar disaster recovery solution.
+
+### Reusability and execution
+
+  * You can add up to five action groups to a single alert rule.
+  * Action groups are executed concurrently, in no specific order.
+  * Multiple alert rules can use the same action group.
+  * Action Groups are defined by the unique set of actions and the users to be notified.
+Example: To notify User1, User2 and User3 by email for two different alert rules, you only need to create one action group and apply it to both alert rules.
+
+## Global and regional action group processing
+
+When you create an action group, you select a processing region. The region determines where the action group is stored and processed.
+
+Note
+
+Service Health Alerts are only supported in public clouds within the global region. For Action groups to properly function in response to a Service Health Alert, the region of the action group must be set to Global.
+
+Expand table
+
+Option  | Behavior
+--- | ---
+Global  | The action groups service decides where to store the action group. The action group is persisted in at least two regions to ensure regional resiliency. Processing of actions may be done in any geographic region.
+Voice, SMS, and email actions performed as the result of service health alerts are resilient to Azure live-site incidents.
+Regional  | The action group is stored within the selected region. The action group is zone-redundant. Use this option if you want to ensure that the processing of your action group is performed within a specific geographic boundary.
+You can select one of these regions for regional processing of action groups:
+• East US
+• West US
+• East US2
+• West US2
+• South Central US
+• North Central US
+• Sweden Central
+• Germany West Central
+• India Central
+• India South
+We're continually adding more regions for regional data processing of action groups.
+
+## Notification types
+
+An action group can contain one or more notifications. The following table describes the available notification types that you can configure.
+
+Expand table
+
+Notification type  | Description  | Fields
+--- | --- | ---
+Email Azure Resource Manager role  | Send an email to the subscription members, based on their role.
+See Email.  | Enter the primary email address configured for the Microsoft Entra user. See Email.
+ARM Role Email addresses don't require OTP verification.
+Email  | Ensure that your email filtering and any malware or spam prevention services are configured appropriately.
+Emails are sent from the following email addresses:
+• azure-noreply@microsoft.com
+## Create in the Azure portal
+
+  1. Go to the Azure portal.
+
+  2. Search for and select Monitor. The Monitor pane consolidates all your monitoring settings and data in one view.
+
+  3. Select Alerts, and then select Action groups.
+
+  4. Select Create from the top action bar.
+
+  5. Configure basic action group settings. In the Project details section:
+
+     * Select values for Subscription and Resource group.
+     * Select the region. For details about the differences between Global and Regional processing, see Global and regional action group processing.
+
+The action group is saved in the subscription, region, and resource group that you select.
+
+  6. In the Instance details section, enter values for Action group name and Display name. The display name is used in place of a full action group name when the group is used to send notifications.
+
+  7. Configure notifications. Select Next: Notifications, or select the Notifications tab at the top of the page.
+
+  8. Define a list of notifications to send when an alert is triggered.
+--------------------------------------------------------------------------------
+Configure Azure Monitor with Network Security Perimeter - Azure Monitor | Microsoft Learn (https://learn.microsoft.com/en-us/azure/azure-monitor/fundamentals/network-security-perimeter)
+citeturn95search1 [wordlim: 200] Published: 1.3 years ago; Crawled: 2 months ago;   * Global action groups resources don't support network security perimeters.You must create regional action groups resources that will support network security perimeters.
+
+  * For Log Analytics export scenarios with storage accounts/event hubs, both the Log Analytics workspace and the storage account/event hub must be part of the same perimeter.
+  * Only Azure resources that support network security perimeters can use a diagnostic setting with a destination in a network security perimeter. The resource being monitored also must be in the same network security perimeter as the destination.
+  * When configuring diagnostic settings at the tenant level, the destination resources, such as Log Analytics workspace, Storage Account, and Event Hub, must be located outside the NSP. These resources should not reside within an NSP.
+  * Global action groups resources don't support network security perimeters. You must create regional action groups resources that will support network security perimeters.
+  * Cross-resource queries are blocked for Log Analytics workspaces associated with a network security perimeter. This includes accessing the workspace through an ADX cluster.
+  * Network security perimeter access logs are sampled every 30 minutes.
+  * Replication of Log Analytics workspace isn't supported.
+  * Ingestion of events from Azure Event Hubs isn't supported.
+  * Collection and querying of data with an Azure Monitor workspaces isn't supported.
+
+Note
+
+These limitations also apply to Sentinel-enabled Log Analytics workspaces.
+
+--------------------------------------------------------------------------------
+Criar e gerenciar grupos de ação no Azure Monitor - Azure Monitor | Microsoft Learn (https://learn.microsoft.com/pt-pt/azure/azure-monitor/alerts/action-groups)
+citeturn95search2 [wordlim: 200] Published: 2 months ago; Crawled: last month; Para detalhes sobre as diferenças entre processamento Global e Regional, veja Processamento Global e de grupos de ação regionais. ...                 "/subscriptions/{subscription-id}/resourceGroups/{resource-group-name}" ...                         "Microsoft.Insights/ActionGroups/*"
+
+# Grupos de ação
+
+Comentários
+
+## Neste artigo
+
+  1. Descrição geral
+  2. Processamento de grupos de ação globais e regionais
+  3. Tipos de notificação
+  4. Tipos de ação
+  5. Criar no portal do Azure
+  6. Criar com um modelo do Resource Manager
+  7. Editar ou eliminar um grupo existente
+  8. Limites de serviço para notificações
+  9. Email do Gestor de Recursos do Azure
+  10. SMS
+  11. Voice
+  12. Webhook
+  13. Migrar a ação Runbook de "Executar como conta" para "Executar como identidade gerenciada"
+  14. Próximos passos
+Mostrar mais 10
+
+Quando os dados do Azure Monitor indicam um problema potencial em sua infraestrutura ou aplicativo, ele dispara um alerta. Para garantir uma resposta oportuna, você pode anexar grupos de ação a esses alertas, que são coleções de preferências de notificação e ações automatizadas.
+
+Os grupos de ação definem quem é notificado e quais ações são tomadas quando um alerta é acionado. Os tipos de notificações incluem chamadas de voz, SMS, notificações push e email. Ações automáticas podem ativar um webhook, uma Função do Azure ou um fluxo de trabalho do Logic Apps que publica uma mensagem no Microsoft Teams. Use grupos de ação em serviços como Azure Monitor, Azure Service Health e Assistente do Azure.
+
+Cada ação é composta por:
+
+  * Tipo: O tipo de notificação ou automação.
+  * Nome: um identificador exclusivo dentro do grupo de ações.
+  * Detalhes: Configuração específica com base no tipo de ação.
+
+Este artigo mostra como criar e gerenciar grupos de ações.
+
+## Descrição geral
+
+### Disponibilidade e resiliência globais
+
+As solicitações globais de clientes podem ser processadas por serviços de grupo de ação em qualquer região. Se uma região do serviço do grupo de ações estiver inativa, o tráfego será automaticamente roteado e processado em outras regiões. Como um serviço global, um grupo de ação ajuda a fornecer uma solução de recuperação de desastres.
+
+Nota
+
+As solicitações regionais dependem da redundância da zona de disponibilidade para atender aos requisitos de privacidade e oferecer uma solução semelhante de recuperação de desastres.
+
+### Reutilização e execução
+
+  * Você pode adicionar até cinco grupos de ações a uma única regra de alerta.
+  * Os grupos de ação são executados simultaneamente, sem ordem específica.
+  * Várias regras de alerta podem usar o mesmo grupo de ações.
+  * Os Grupos de Ação são definidos pelo conjunto exclusivo de ações e pelos usuários a serem notificados.
+Exemplo: Para notificar User1, User2 e User3 por e-mail para duas regras de alerta diferentes, você só precisa criar um grupo de ações e aplicá-lo a ambas as regras de alerta.
+
+## Processamento de grupos de ação globais e regionais
+
+Quando crias um grupo de ações, selecionas uma região de processamento. A região determina onde o grupo de ações é armazenado e processado.
+
+Nota
+
+Os Alertas de Estado de Funcionamento do Serviço só são suportados em nuvens públicas na região global. Para que os grupos de Ação funcionem corretamente em resposta a um Alerta de Integridade do Serviço, a região do grupo de ação deve ser definida como Global.
+
+Expandir tabela
+
+Option  | Behavior
+--- | ---
+Global  | O serviço de grupos de ação decide onde armazenar o grupo de ações. O grupo de ação persiste em, pelo menos, duas regiões para assegurar a resiliência regional. O processamento das ações pode ser feito em qualquer região geográfica.
+As ações de voz, SMS e email executadas como resultado de alertas de integridade do serviço são resilientes a incidentes em tempo real do site do Azure.
+Regional  | O grupo de ações é armazenado na região selecionada. O grupo de ação é redundante de zona. Use esta opção se quiser garantir que o processamento do seu grupo de ações seja realizado dentro de um limite geográfico específico.
+Você pode selecionar uma destas regiões para o processamento regional de grupos de ação:
+• Leste dos EUA
+• Oeste dos EUA
+• Leste EUA2
+• Região Oeste US2
+• Centro-Sul dos EUA
+• Centro-Norte dos EUA
+• Suécia Central
+• Alemanha Centro-Oeste
+• Índia Central
+• Índia Sul
+Estamos continuamente adicionando mais regiões para o processamento de dados regionais de grupos de ação.
+
+## Tipos de notificação
+
+Um grupo de ação pode conter uma ou mais notificações. A tabela seguinte descreve os tipos de notificações disponíveis que pode configurar.
+
+Expandir tabela
+
+Tipo de notificação  | Description  | Fields
+--- | --- | ---
+Função de email do Azure Resource Manager  | Envie um e-mail para os membros da assinatura, com base em sua função.
+Veja Email.  ## Criar no portal do Azure
+
+  1. Aceda ao portal do Azure.
+
+  2. Procure e selecione Monitor. O painel Monitor consolida todas as suas configurações e dados de monitoramento em uma única exibição.
+
+  3. Selecione Alertas e, em seguida, selecione Grupos de ação.
+
+  4. Selecione Criar na barra de ações superior.
+
+  5. Defina as configurações básicas do grupo de ações. Na seção Detalhes do projeto:
+
+     * Selecione valores para Assinatura e grupo de recursos.
+     * Selecione a região. Para detalhes sobre as diferenças entre processamento Global e Regional, veja Processamento Global e de grupos de ação regionais.
+
+O grupo de ações é guardado na assinatura, na região e no grupo de recursos que selecionar.
+
+  6. Na seção Detalhes da instância, insira valores para Nome do grupo de ações e Nome para exibição. O nome para exibição é usado no lugar de um nome completo do grupo de ações quando o grupo é usado para enviar notificações.
+
+  7. --------------------------------------------------------------------------------
+Actiegroepen maken en beheren in Azure Monitor - Azure Monitor | Microsoft Learn (https://learn.microsoft.com/nl-nl/azure/azure-monitor/alerts/action-groups)
+citeturn95search3 [wordlim: 200] Published: 2 months ago; Crawled: 2 months ago; Global  | De actiegroepenservice bepaalt waar de actiegroep moet worden opgeslagen. ... Regional  | De actiegroep wordt opgeslagen in de geselecteerde regio.
+U kunt actiegroepen koppelen aan deze waarschuwingen, die verzamelingen meldingsvoorkeuren en geautomatiseerde acties zijn om ervoor te zorgen dat er tijdig wordt gereageerd.
+
+Actiegroepen bepalen wie een melding krijgt en welke acties worden ondernomen wanneer een waarschuwing wordt geactiveerd. Meldingstypen zijn spraakoproep, sms, pushmeldingen en e-mail. Geautomatiseerde acties kunnen een webhook, een Azure-functie of een Logic Apps-werkstroom activeren die een bericht plaatst op Microsoft Teams. Gebruik actiegroepen voor services zoals Azure Monitor, Azure Service Health en Azure Advisor.
+
+Elke actie bestaat uit:
+
+  * Type: Het soort melding of automatisering.
+  * Naam: Een unieke id binnen de actiegroep.
+  * Details: Specifieke configuratie op basis van het actietype.
+
+In dit artikel leest u hoe u actiegroepen maakt en beheert.
+
+## Overzicht
+
+### Wereldwijde beschikbaarheid en tolerantie
+
+Globale aanvragen van clients kunnen worden verwerkt door actiegroepservices in elke regio. Als één regio van de actiegroepservice uitvalt, wordt het verkeer automatisch gerouteerd en verwerkt in andere regio's. Als globale service biedt een actiegroep een oplossing voor herstel na noodgevallen.
+
+Notitie
+
+Regionale aanvragen zijn afhankelijk van redundantie in de beschikbaarheidszone om te voldoen aan de privacyvereisten en bieden een vergelijkbare oplossing voor herstel na noodgevallen.
+
+### Herbruikbaarheid en uitvoering
+
+  * U kunt maximaal vijf actiegroepen toevoegen aan één waarschuwingsregel.
+  * Actiegroepen worden gelijktijdig uitgevoerd, in geen specifieke volgorde.
+  * Meerdere waarschuwingsregels kunnen dezelfde actiegroep gebruiken.
+  * Actiegroepen worden gedefinieerd door de unieke set acties en de gebruikers die op de hoogte moeten worden gesteld.
+Voorbeeld: Als u Gebruiker1, Gebruiker2 en Gebruiker3 per e-mail op de hoogte wilt stellen voor twee verschillende waarschuwingsregels, hoeft u slechts één actiegroep te maken en deze toe te passen op beide waarschuwingsregels.
+
+## Verwerking van wereldwijde en regionale actiegroepen
+
+Wanneer u een actiegroep maakt, selecteert u een verwerkingsregio. De regio bepaalt waar de actiegroep wordt opgeslagen en verwerkt.
+
+Notitie
+
+Service-statuswaarschuwingen worden alleen ondersteund in openbare clouds binnen de wereldwijde regio. Om ervoor te zorgen dat actiegroepen juist functioneren in reactie op een servicegezondheidswaarschuwing, moet de regio van de actiegroep op Globaal worden ingesteld.
+
+Tabel uitvouwen
+
+Option  | Behavior
+--- | ---
+Global  | De actiegroepenservice bepaalt waar de actiegroep moet worden opgeslagen. De actiegroep wordt in ten minste twee regio's bewaard om regionale veerkracht te garanderen. De verwerking van acties kan worden uitgevoerd in elke geografische regio.
+Spraak-, SMS- en e-mailacties die worden uitgevoerd als gevolg van servicestatuswaarschuwingen , zijn tolerant voor live-site-incidenten in Azure.
+Regional  | De actiegroep wordt opgeslagen in de geselecteerde regio. De actiegroep is zone-redundant. Gebruik deze optie als u ervoor wilt zorgen dat de verwerking van uw actiegroep binnen een specifieke geografische grens wordt uitgevoerd.
+U kunt een van deze regio's selecteren voor regionale verwerking van actiegroepen:
+• Oost-USA
+• Westelijk VS
+Oost VS2
+• West-VS2
+• VS - zuid-centraal
+• VS - noord-centraal
+• Zweden - centraal
+• Duitsland - west-centraal
+• India - centraal
+• Zuid-India
+We voegen voortdurend meer regio's toe voor regionale gegevensverwerking van actiegroepen.
+
+## Meldingstypen
+
+Een actiegroep kan een of meer meldingen bevatten. In de volgende tabel worden de beschikbare meldingstypen beschreven die u kunt configureren.
+
+Tabel uitvouwen
+
+Meldingstype  | Description  | Fields
+--- | --- | ---
+Azure Resource Manager-rol e-mailen  | Verzend een e-mailbericht naar de leden van het abonnement op basis van hun rol.
+Zie e-mail.  | Voer het primaire e-mailadres in dat is geconfigureerd voor de Microsoft Entra-gebruiker. ## Maken in de Azure Portal
+
+  1. Ga naar de Azure Portal.
+
+  2. Zoek en selecteer Monitor. In het deelvenster Monitor worden al uw bewakingsinstellingen en -gegevens in één weergave geconsolideerd.
+
+  3. Selecteer Waarschuwingen en selecteer vervolgens Actiegroepen.
+
+  4. Selecteer Maken op de bovenste actiebalk.
+
+  5. Basisinstellingen voor actiegroepen configureren. In de sectie Projectdetails :
+
+     * Selecteer waarden voor abonnement en resourcegroep.
+     * Selecteer de regio. Zie De verwerking van globale en regionale actiegroepen voor meer informatie over de verschillen tussen wereldwijde en regionale verwerking.
+
+De actiegroep wordt opgeslagen in het abonnement, de regio en de resourcegroep die u selecteert.
+
+  6. Voer in de sectie Instantiedetails waarden in voor de naam van de actiegroep en weergavenaam. De weergavenaam wordt gebruikt in plaats van een volledige naam van een actiegroep wanneer de groep wordt gebruikt om meldingen te verzenden.
+
+  7. Configureer meldingen. --------------------------------------------------------------------------------
+Frequently asked questions for Azure Red Hat OpenShift - Azure Red Hat OpenShift | Microsoft Learn (https://learn.microsoft.com/en-us/azure/openshift/openshift-faq)
+citeturn95search4 [wordlim: 200] Crawled: 2 weeks ago; For a list of supported regions for Azure Red Hat OpenShift 4.x, see Available regions. ... You need to create a new cluster that uses a managed identity on an Azure Red Hat OpenShift cluster.For more information, see Create an Azure Red Hat OpenShift cluster with managed identities (preview). ... A cluster can be deployed across multiple availability zones automatically if your cluster is deployed to an Azure region that supports availability zones.
+
+# Azure Red Hat OpenShift FAQ
+
+Feedback
+
+## In this article
+
+  1. Installation and upgrade
+  2. Cluster operations
+  3. Networking
+  4. Permissions
+  5. Storage
+  6. Related content
+Show 2 more
+
+This article answers frequently asked questions (FAQs) about Microsoft Azure Red Hat OpenShift.
+
+## Installation and upgrade
+
+### Where can I find information about pricing and service level agreements?
+
+For pricing information for Azure Red Hat OpenShift with standard architecture and Azure Red Hat OpenShift with hosted control planes, see Azure Red Hat OpenShift pricing.
+
+For Service Level Agreement (SLA) information, see Service Level Agreements for online services.
+
+### Which Azure regions are supported?
+
+For a list of supported regions for Azure Red Hat OpenShift 4.x, see Available regions.
+
+### Can I migrate an existing cluster that uses a service principal to use a managed identity?
+--------------------------------------------------------------------------------
+Configure Azure Monitor with Network Security Perimeter - Azure Monitor | Microsoft Learn (https://learn.microsoft.com/th-th/AZURE/azure-monitor/fundamentals/network-security-perimeter)
+citeturn95search5 [wordlim: 200] Published: 1.3 years ago; Crawled: 2 months ago;   * Global action groups resources don't support network security perimeters.You must create regional action groups resources that will support network security perimeters.
+  * Global action groups resources don't support network security perimeters. You must create regional action groups resources that will support network security perimeters.
+  * Cross-resource queries are blocked for Log Analytics workspaces associated with a network security perimeter. This includes accessing the workspace through an ADX cluster.
+  * Network security perimeter access logs are sampled every 30 minutes.
+  * Replication of Log Analytics workspace isn't supported.
+  * Ingestion of events from Azure Event Hubs isn't supported.
+  * Collection and querying of data with an Azure Monitor workspaces isn't supported.
+
+Note
+
+These limitations also apply to Sentinel-enabled Log Analytics workspaces.
+
+## Supported components
+
+The components of Azure Monitor that are supported with network security perimeters are listed in the following table with their minimum API version. See Onboarded private link resources for a list of the other Azure services that are supported with network security perimeters.
+
+Resource  | Resource type  | API version
+--- | --- | ---
+Data collection endpoint (DCE)  | Microsoft.Insights/dataCollectionEndpoints  | 2023-03-11
+Log Analytics workspace  | Microsoft.OperationalInsights/workspaces  | 2023-09-01
+Log query alerts  | Microsoft.Insights/ScheduledQueryRules  | 2022-08-01-preview
+Action groups ^{1} ^{2}  | Microsoft.Insights/actionGroups  | 2023-05-01
+Diagnostic settings  | Microsoft.Insights/diagnosticSettings  | 2021-05-01-preview
+
+^{1} Network security perimeters only work with regional action groups. Global action groups default to public network access.
+
+^{2} Event Hub is currently the only supported action type for network security perimeters. All other actions default to public network access.
+
+### Unsupported components
+
+The following components of Azure Monitor are not supported with a network security perimeter:
+
+  * Application Insights Profiler for .NET and Snapshot Debugger
+  * Log Analytics customer managed key
+  * Cross-resource queries that include any Log Analytics workspaces associated with a network security perimeter
+--------------------------------------------------------------------------------
+How to manage Microsoft Discovery Supercomputers using REST API | Microsoft Learn (https://learn.microsoft.com/en-us/azure/microsoft-discovery/how-to-manage-supercomputers-rest-api)
+citeturn95search6 [wordlim: 200] Published: 5 months ago; Crawled: 2 months ago;   * A resource group in a supported region. ...   * The following user-assigned managed identities created in your subscription: ... Must have the `ManagedIdentityOperator` role on the cluster identity. ... Supercomputers are currently available in the following Azure regions:
+Node pools are the compute building blocks that run your tasks — each pool defines the VM size, scaling limits, and priority of the underlying virtual machine scale set.
+
+## Prerequisites
+
+Before you begin, make sure you have the following:
+
+  * An Azure subscription. If you don't have one, create a free account.
+  * A resource group in a supported region.
+  * Azure CLI installed, or another tool to make authenticated REST calls (such as `curl` or Postman).
+  * The following user-assigned managed identities created in your subscription:
+    * Cluster identity — used by the Supercomputer control plane.
+    * Kubelet identity — used at the node level to access Azure resources. Must have the `ManagedIdentityOperator` role on the cluster identity.
+  * A virtual network with:
+    * A system subnet for the Supercomputer's managed system node pool.
+    * A management subnet delegated to `Microsoft.ContainerService/managedClusters` for the AKS API server.
+    * One or more node pool subnets for your compute node pools (these must have connectivity to the system subnet).
+  * Sufficient GPU quota in your subscription for the VM sizes you plan to use (for example, `Standard_NC24ads_A100_v4` requires NCads A100 v4-series quota).
+
+### Supported regions
+
+Supercomputers are currently available in the following Azure regions:
+
+  * East US
+  * UK South
+  * Sweden Central
+
+### API version
+
+All examples in this article use API version `2026-02-01-preview`.
+
+### Authentication
+
+All requests require a Microsoft Entra ID bearer token with the `user_impersonation` scope. To acquire a token using Azure CLI:
+
+Bash
+
+Copy
+    
+    `az account get-access-token --resource https://management.azure.com
+    `
+
+Include the token in the `Authorization` header of every request:
+
+HTTP
+
+Copy
+    
+    `Authorization: Bearer <access-token>
+    `
+
+* * *
+
+--------------------------------------------------------------------------------
+Microsoft Entra ID and data residency - Microsoft Entra | Microsoft Learn (https://learn.microsoft.com/en-us/entra/fundamentals/data-residency)
+citeturn95search7 [wordlim: 200] Crawled: 2 weeks ago; Microsoft Entra ID is an Identity as a Service (IDaaS) solution that stores and manages identity and access data in the cloud. ... It’s important to note that the data locations and region availability may differ from those of Microsoft Entra ID, as indicated in this article. ... Microsoft Entra Domain Services  | See regions where Microsoft Entra Domain Services is published on Products available by region. ... Managed identities for Azure resources  | Managed identities for Azure resources with managed identities systems can authenticate to Azure services, without storing credentials.
+It’s important to note that the data locations and region availability may differ from those of Microsoft Entra ID, as indicated in this article.
+
+## Core Store
+
+The Core Store is made up of tenants stored in scale units, each of which contains multiple tenants. Update or retrieval data operations in the Microsoft Entra Core Store relate to a single tenant, based on the user's security token, which achieves tenant isolation. Scale units are assigned to a geo-location. Each geo-location uses two or more Azure regions to store the data. In each Azure region, a scale unit data is replicated in the physical datacenters for resiliency and performance, as described in the Microsoft Entra architecture.
+
+For more information on the Core Store, see Microsoft Entra Core Store Scale Units. For more information on Azure regions, see Azure geographies.
+
+Microsoft Entra ID is available in the following clouds:
+
+  * Public
+  * China (2)
+  * US government (2)
+| In geo location
+Microsoft Entra business-to-business (B2B) collaboration  | Microsoft Entra B2B collaboration has no directory data. Users and other directory objects in a B2B relationship, with another tenant, result in user data copied in other tenants, which might have data residency implications.  | In geo location
+Microsoft Entra ID Protection  | Microsoft Entra ID Protection uses real-time user log-in data, with multiple signals from company and industry sources, to feed its machine-learning systems that detect anomalous logins. Personal data is scrubbed from real-time log-in data before it's passed to the machine learning system. The remaining log-in data identifies potentially risky usernames and logins. After analysis, the data goes to Microsoft reporting systems. Risky logins and usernames appear in reporting for Administrators.  | In geo location
+Managed identities for Azure resources  | Managed identities for Azure resources with managed identities systems can authenticate to Azure services, without storing credentials. Rather than use username and password, managed identities authenticate to Azure services with certificates. The service writes certificates it issues in Azure Cosmos DB in the East US region, which fail over to another region, as needed. Azure Cosmos DB geo-redundancy occurs by global data replication. Database replication puts a read-only copy in each region that Microsoft Entra managed identities runs. To learn more, see Azure services that can use managed identities to access other services. Microsoft isolates each Azure Cosmos DB instance in a Microsoft Entra cloud solution model.
+--------------------------------------------------------------------------------
+Container Apps on Azure Arc Overview | Microsoft Learn (https://learn.microsoft.com/en-us/azure/container-apps/azure-arc-overview)
+citeturn95search8 [wordlim: 200] Crawled: last week; Supported Azure regions  | Australia East, East Asia, East US, North Central US, Southeast Asia, Sweden Central, UK South, West Europe, West US ... Feature: Pull images from ACR with managed identity  | Not available (depends on managed identities)
+## Limitations
+
+The following limitations apply to Azure Container Apps on Azure Arc-enabled Kubernetes.
+
+Expand table
+
+Limitation  | Details
+--- | ---
+Supported Azure regions  | Australia East, East Asia, East US, North Central US, Southeast Asia, Sweden Central, UK South, West Europe, West US
+Cluster networking requirement  | Must support LoadBalancer service type
+Node OS requirement  | Linux only.
+Feature: Managed identities  | Not available
+Feature: Pull images from ACR with managed identity  | Not available (depends on managed identities)
+Feature: Azure Files  | SMB driver (>= v1.18.0) should be installed before using Azure Files SMB storage
+Logs  | Log Analytics must be configured with cluster extension; not per-application
+
+The following features are supported:
+
+  * Labels
+  * Metrics
+  * Easy auth
+  * Log stream
+  * Resilience
+  * Custom domains
+  * Container Apps jobs
+  * Revision management
+  * App container console
+
+Important
+
+Before you install the extension on AKS on Azure Local, configure HAProxy or another supported load balancer and configure custom CoreDNS. --------------------------------------------------------------------------------
+Azure AI starter template - Code Samples | Microsoft Learn (https://learn.microsoft.com/en-us/samples/azure-samples/azd-ai-starter/azd-ai-starter/)
+citeturn95search9 [wordlim: 200] Published: 1.1 years ago; Crawled: last month; This template uses [MODEL 1] and [MODEL 2] which may not be available in all Azure regions.Check for up-to-date region availability and select a region during deployment accordingly ... This template has either Managed Identity or Key Vault built in to eliminate the need for developers to manage these credentials.Applications can use managed identities to obtain Microsoft Entra tokens without having to manage any credentials.
+
+Important
+
+This script needs the [Azure CLI] to be installed in your system or available in your setup.
+
+
+### Region Availability
+
+This template uses [MODEL 1] and [MODEL 2] which may not be available in all Azure regions. Check for up-to-date region availability and select a region during deployment accordingly
+
+  * We recommend using [SUGGESTED REGION]
+
+### Quotas
+
+Apart from making sure the selected model is available in a preferred region, you may need to make sure your subscription has remaining quota available. We provide a tool, in the form of a script, for this purpose.
+
+To use it, change directory to the scripts folder, and locate and run the script called `listAIQuotas`, for your corresponding platform.
+
+Important
+
+This script needs the [Azure CLI] to be installed in your system or available in your setup.
+
+### Costs
+
+You can estimate the cost of this project's architecture with Azure's pricing calculator
+
+### Security
+
+Note
+
+When implementing this template please specify whether the template uses Managed Identity or Key Vault
+
+This template has either Managed Identity or Key Vault built in to eliminate the need for developers to manage these credentials. Applications can use managed identities to obtain Microsoft Entra tokens without having to manage any credentials. Additionally, we have added a GitHub Action tool that scans the infrastructure-as-code files and generates a report containing any detected issues. To ensure best practices in your repo we recommend anyone creating solutions based on our templates ensure that the Github secret scanning setting is enabled in your repos.
+
+  * Link to supporting information
+  * Link to similar sample
+  * Develop Python apps that use Azure AI services
+  * ...--------------------------------------------------------------------------------
+AI Gateway tier (preview) overview - Azure API Management | Microsoft Learn (https://learn.microsoft.com/vi-vn/azUre/api-management/ai-gateway-overview)
+citeturn95search10 [wordlim: 200] Crawled: 3 weeks ago; For backends, the gateway uses managed identity where available (so no secrets are stored) or a provider key that you supply. ... During public preview, the AI Gateway tier is available in the following Azure regions. ... Region availability can vary by subscription, cloud, capacity, feature flag, and preview enrollment. ... Review where each component is deployed, including the gateway, AI backends, tools, logging destinations, managed identities, and client applications.
+A key is gateway-scoped: it reaches every model and tool. For backends, the gateway uses managed identity where available (so no secrets are stored) or a provider key that you supply. Issue one key per application and environment, and grant every identity least privilege.
+
+### Self-service catalog
+
+Developers discover models and tools in a self-service catalog - each with connection details and samples - pin favorites, and jump anywhere with the Ctrl+K (⌘K on macOS) command palette.
+
+## Regional availability
+
+During public preview, the AI Gateway tier is available in the following Azure regions.
+
+Bung rộng bảng
+
+Geography  | Region
+--- | ---
+United States  | East US 2
+Europe  | Sweden Central
+
+Region availability can vary by subscription, cloud, capacity, feature flag, and preview enrollment. If your target region isn't available in the portal or deployment tools, select another supported preview region or contact your Microsoft representative.
+
+Choose the region that best matches your users, applications, AI backends, and network dependencies. --------------------------------------------------------------------------------
+Azure Data Factory baseline architecture in an Azure landing zone - Azure Architecture Center | Microsoft Learn (https://learn.microsoft.com/bs-latn-ba/azure/architecture/databases/architecture/azure-data-factory-on-azure-landing-zones-baseline)
+citeturn95search11 [wordlim: 200] Crawled: 2 weeks ago; Create alert action groups as global resources to ensure continuity in the event of regional service problems.
+
+  * Long-running processes across the solution.
+
+  * SQL Server connection refusals.
+
+  * Power BI usage and, if applicable, Power BI Premium capacity throttling.
+
+  * Log Analytics workspaces for when data collection is high.
+
+Važno
+
+Create alert action groups as global resources to ensure continuity in the event of regional service problems.
+
+### Performance Efficiency
+
+Performance Efficiency is the ability of your workload to meet the demands placed on it by users in an efficient manner. For more information, see Design review checklist for Performance Efficiency.
+
+To addresses performance efficiency, this architecture has:
+
+  * The standard service tiers of various component versions based on the requirements. You can scale up these resources on-demand without any interruption in service levels. You should rigorously test autoscaling before production release.
+
+  * A baseline of compute options that use cloud-native features to support demand, such as:
+
+    * Azure Databricks autoscaling.
+
+    * SQL Server scale up and scale down.
+
+    * Data Factory job configurations for performance and scalability.
+
+Apply guidance available in the following optimization guides across the solution, such as:
+
+  * Azure Databricks.
+
+  * Data Factory data flows and a SHIR.
+
+  * SQL Server.
+
+  * Power BI.
+
+Understand that data solution performance typically degrades over time. Establish the capacity for continuous performance optimization and conduct proactive technical reviews to ensure that the solution remains fit for purpose.
+
+

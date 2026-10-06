@@ -1,0 +1,44 @@
+{
+  "result": "PASS",
+  "manifest_files_verified": 1482,
+  "draft_versions_verified": 19,
+  "finding_sha256": "140f409493cc92c48b14dbe27d47ba5852b5b8c66db5de66d3ffd30c20f5c52c",
+  "evidence_manifest_sha256": "e042f36446bfdd4e236e9286fb901e05c927585b1d7cb44491c93eea16154b10",
+  "acceptance": "pending",
+  "capture_exclusions": {
+    "explicit_paths_found": [
+      "specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/__pycache__/check_annotation_offline.cpython-314.pyc",
+      "specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/__pycache__/check_index_reference_hashes.cpython-314.pyc",
+      "specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/__pycache__/check_matrix_preservation.cpython-314.pyc",
+      "specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/__pycache__/check_source_evidence.cpython-314.pyc",
+      "specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/__pycache__/check_specimen_offline.cpython-314.pyc",
+      "specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/__pycache__/inspect_specimen.cpython-314.pyc",
+      "specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/__pycache__/record_source_inspection.cpython-314.pyc",
+      "specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/__pycache__/sec_inventory.cpython-314.pyc",
+      "specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/__pycache__/summarize_source_evidence.cpython-314.pyc",
+      "specs/evidence/sec-filing-index-ingestion/stage-1/provider/task5-contracts/__pycache__/offline_checks.cpython-314.pyc",
+      "specs/evidence/sec-filing-index-ingestion/stage-1/provider/task5-contracts/__pycache__/update_registers.cpython-314.pyc",
+      "specs/evidence/sec-filing-index-ingestion/stage-1/runtime/__pycache__/check_decode_helper.cpython-314.pyc",
+      "specs/evidence/sec-filing-index-ingestion/stage-1/runtime/__pycache__/check_export_helper.cpython-314.pyc",
+      "specs/evidence/sec-filing-index-ingestion/stage-1/runtime/__pycache__/decode_specimens.cpython-314.pyc",
+      "specs/evidence/sec-filing-index-ingestion/stage-1/runtime/__pycache__/extract_artifacts.cpython-314.pyc",
+      "specs/evidence/sec-filing-index-ingestion/stage-1/runtime/__pycache__/fetch_public_metadata.cpython-314.pyc",
+      "specs/evidence/sec-filing-index-ingestion/stage-1/runtime/__pycache__/import_dependencies.cpython-314.pyc",
+      "specs/evidence/sec-filing-index-ingestion/stage-1/runtime/__pycache__/prepare_context.cpython-314.pyc",
+      "specs/evidence/sec-filing-index-ingestion/stage-1/runtime/__pycache__/probe.cpython-314.pyc",
+      "specs/evidence/sec-filing-index-ingestion/stage-1/runtime/__pycache__/run_probe.cpython-314.pyc",
+      "specs/evidence/sec-filing-index-ingestion/stage-1/runtime/__pycache__/submit_acr_probe.cpython-314.pyc",
+      "specs/evidence/sec-filing-index-ingestion/stage-1/runtime/__pycache__/verify_runtime.cpython-314.pyc",
+      "specs/evidence/sec-filing-index-ingestion/stage-1/task6/draft-freeze.json",
+      "specs/evidence/sec-filing-index-ingestion/stage-1/task6/evidence-manifest.json",
+      "specs/evidence/sec-filing-index-ingestion/stage-1/versions/task5-offline_checks.cpython-314-056995ed0eb435b6453016d6c03a64c4a6cb1f9d1605562da78a7163b700219a.pyc"
+    ],
+    "rules": [
+      "This manifest itself (no circular self-hash)",
+      "task6/draft-freeze.json contains manifest hash and is produced afterward",
+      "task6/checks/final-* and task6/checks/manifest-verification* are independent post-capture receipts",
+      "All __pycache__ and .pyc transient files",
+      "Later review/fix/acceptance/completion receipts outside capture; do not regenerate this generation"
+    ]
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "argv": [
+    "az",
+    "resource",
+    "list",
+    "--resource-group",
+    "rg-sec-edgar-stage1-probe-20261005",
+    "--query",
+    "[].{id:id,type:type,name:name}",
+    "-o",
+    "json",
+    "--subscription",
+    "3c92a216-8ed6-4897-b741-11ed287b8617"
+  ],
+  "started_at_utc": "2026-10-05T23:51:25.435045+00:00",
+  "ended_at_utc": "2026-10-05T23:51:26.342677+00:00",
+  "exit_code": 0,
+  "stdout": "[\n  {\n    \"id\": \"/subscriptions/3c92a216-8ed6-4897-b741-11ed287b8617/resourceGroups/rg-sec-edgar-stage1-probe-20261005/providers/Microsoft.ContainerRegistry/registries/secedgarstage1probe20261005b8617\",\n    \"name\": \"secedgarstage1probe20261005b8617\",\n    \"type\": \"Microsoft.ContainerRegistry/registries\"\n  }\n]\n",
+  "stderr": ""
+}

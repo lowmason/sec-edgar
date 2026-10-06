@@ -1,0 +1,33 @@
+{
+  "corrected_at_utc": "2026-10-06T02:50:25.533320+00:00",
+  "before_path": "specs/evidence/sec-filing-index-ingestion/stage-1/task6/index-before-id-normalization-bf229ea083aaac6f54f8e53be84583940e82e5b4b81962ce13f64df6b3fa0ac6.csv",
+  "before_sha256": "bf229ea083aaac6f54f8e53be84583940e82e5b4b81962ce13f64df6b3fa0ac6",
+  "after_sha256": "8a9094f859cbdec362be0d246d74499b3301b0a278b8d7a12380431fc75995c7",
+  "changed_cells": [
+    {
+      "csv_line": 229,
+      "old_id": "E-T5-DB191FDB98403695",
+      "new_id": "E-T5-DB191FDB98403695-ALIAS",
+      "reason": "Same-content alternate retained path; first existing ID preserved; artifact/claim/hash/timestamp unchanged"
+    },
+    {
+      "csv_line": 254,
+      "old_id": "E-T5-B581320FBE3A6DE7",
+      "new_id": "E-T5-B581320FBE3A6DE7-ALIAS",
+      "reason": "Same-content alternate retained path; first existing ID preserved; artifact/claim/hash/timestamp unchanged"
+    },
+    {
+      "csv_line": 255,
+      "old_id": "E-T5-B389B78A3AE72C90",
+      "new_id": "E-T5-B389B78A3AE72C90-ALIAS",
+      "reason": "Same-content alternate retained path; first existing ID preserved; artifact/claim/hash/timestamp unchanged"
+    },
+    {
+      "csv_line": 256,
+      "old_id": "E-T5-PROPOSAL",
+      "new_id": "E-T5-PROPOSAL-ALIAS",
+      "reason": "Same-content alternate retained path; first existing ID preserved; artifact/claim/hash/timestamp unchanged"
+    }
+  ],
+  "boundary": "Four second-occurrence evidence_id cells only; all other original row bytes preserved; original index immutable. This correction is required by independent index uniqueness check, not a new provider observation."
+}

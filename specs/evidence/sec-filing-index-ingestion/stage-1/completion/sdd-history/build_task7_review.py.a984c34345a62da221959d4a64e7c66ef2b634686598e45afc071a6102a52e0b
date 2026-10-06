@@ -1,0 +1,27 @@
+"""Review Task7 against exact pre-task artifacts, including document moves."""
+from pathlib import Path
+import difflib,hashlib,json
+r=Path('/Users/lowell/Projects/sec-edgar');w=r/'.sdd/1-sec-filing-index-ingestion-stage-1-spec';e=r/'specs/evidence/sec-filing-index-ingestion/stage-1'
+before={x['path']:x for x in json.loads((w/'task-7-before-manifest.json').read_text())['records']}
+paths=[p for p in e.rglob('*') if p.is_file() and '__pycache__' not in p.parts and p.suffix!='.pyc']
+paths += [r/x for x in ['specs/sec-filing-index-ingestion-stage-1-findings.md','specs/sec-filing-index-ingestion-stage-1-spec.md','specs/sec-filing-index-ingestion-roadmap.md','specs/plans/1-sec-filing-index-ingestion-stage-1-spec.md','specs/completed/sec-filing-index-ingestion-stage-1-spec.md','specs/plans/completed/1-sec-filing-index-ingestion-stage-1-spec.md','specs/deferred_items.md'] if (r/x).exists()]
+current={};by_hash={}
+for p in paths:
+ b=p.read_bytes();h=hashlib.sha256(b).hexdigest();rel=str(p.relative_to(r));current[rel]={'path':rel,'bytes':len(b),'sha256':h};by_hash[h]=p
+parts=['# Task7 completion/retirement review\n\nUncommitted delta against task-7-before-manifest.json; original approval HEAD321c93af78b54c7e63efbb0e69252c69a238fec6. Exact accepted F1 source/runtime/provider evidence unchanged; new process metadata and retired documentation reviewed here.\n\n'];changed=[]
+for rel in sorted(set(before)|set(current)):
+ old=before.get(rel);new=current.get(rel)
+ if old and new and old['sha256']==new['sha256']:continue
+ row={'path':rel,'before':old,'after':new};changed.append(row)
+ if new is None:
+  parts.append(f'## Retired original path: {rel}\nBefore SHA256 {old["sha256"]}; exact before bytes must remain retained.\n\n');continue
+ p=r/rel
+ if not (p.suffix in {'.md','.py','.json','.txt','.csv'} and new['bytes']<400000 and 'before' not in p.parts and 'sdd-history' not in p.parts and 'manifest' not in p.name):
+  parts.append(f'## {rel}\nRetained reference: bytes{new["bytes"]}, SHA256{new["sha256"]}.\n\n');continue
+ oldtext=''
+ if old:
+  assert old['sha256'] in by_hash, f'Missing retained pre-task bytes: {rel}'
+  oldtext=by_hash[old['sha256']].read_text()
+ parts.append(f'## {rel}\nSHA256 {new["sha256"]}\n')
+ parts.extend(difflib.unified_diff(oldtext.splitlines(keepends=True),p.read_text().splitlines(keepends=True),fromfile='before/'+rel,tofile='after/'+rel,n=3));parts.append('\n')
+diff=w/'task-7-review.diff';diff.write_text(''.join(parts));h=hashlib.sha256(diff.read_bytes()).hexdigest();manifest=w/'task-7-review.manifest.json';manifest.write_text(json.dumps({'package':str(diff),'sha256':h,'records':changed},indent=2)+'\n');print(json.dumps({'package':str(diff),'bytes':diff.stat().st_size,'sha256':h,'artifacts':len(changed)},indent=2))

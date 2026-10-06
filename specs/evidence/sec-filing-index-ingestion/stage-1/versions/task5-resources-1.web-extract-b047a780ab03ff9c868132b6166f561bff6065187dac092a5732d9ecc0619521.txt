@@ -1,0 +1,594 @@
+Microsoft.DataFactory/factories 2018-06-01 - Bicep, ARM template & Terraform AzAPI reference | Microsoft Learn (https://learn.microsoft.com/en-us/azure/templates/microsoft.datafactory/2018-06-01/factories)
+citeturn36view0 [wordlim: 200] Crawled: today; Content type: text/html; Source: open({"ref_id":"https://learn.microsoft.com/en-us/azure/templates/microsoft.datafactory/2018-06-01/factories","lineno":null}); Total lines: 757
+L0: cite0†Skip to main content cite1†Skip to Ask Learn chat experience L1: 
+L2: This browser is no longer supported.
+L3: 
+L4: Upgrade to Microsoft Edge to take advantage of the latest features, security updates, and technical support.
+L5: 
+L6: cite2†Download Microsoft Edge†go.microsoft.com cite3†More info about Internet Explorer and Microsoft Edge L7: 
+L8: Table of contents Exit editor mode
+L9: 
+L10: Ask Learn Ask Learn
+L11: 
+L12: Reading mode Table of contents cite1†Read in English Add Add to Plans Edit
+L13: 
+L14: * * *
+L15: 
+L16: Copy Markdown Print
+L17: 
+L18: * * *
+L19: 
+L20: Note
+L21: Access to this page requires authorization. You can try cite1†signing in or changing directories.
+L22: 
+L23: Access to this page requires authorization. You can try changing directories.
+L24: # Microsoft.DataFactory factories 2018-06-01
+L25: 
+L26: Feedback
+L27: 
+L28: Summarize this article for me
+L29: 
+L30: ## In this article
+L31: 
+L32:   * cite4†Latest L33:   * cite5†2018-06-01 L34:   * cite6†2017-09-01-preview L35: 
+L36: ## Bicep resource definition
+L37: 
+L38: The factories resource type can be deployed with operations that target:
+L39: 
+L40:   * Resource groups - See cite7†resource group deployment commands L41: 
+L42: For a list of changed properties in each API version, see cite8†change log .
+L43: 
+L44: ## Usage Examples
+L45: ### Bicep Samples
+L46: 
+L47: A basic example of deploying Azure Data Factory (Version 2).
+L48: 
+L49:     `param resourceName string = 'acctest0001'
+L50:     param location string = 'westeurope'
+L51: 
+L52:     resource factory 'Microsoft.DataFactory/factories@2018-06-01' = {
+L53:       name: resourceName
+L54:       location: location
+L55:       properties: {
+L56:         publicNetworkAccess: 'Enabled'
+L57:       }
+L58:     }
+L59:     `
+L60: ### Azure Verified Modules
+L61: 
+L62: The following cite9†Azure Verified Modules†aka.ms can be used to deploy this resource type.
+L63: 
+L64: Module  | Description
+L65: --- | ---
+L66: cite10†Data Factory†github.com | AVM Resource Module for Data Factory
+L67: ### Azure Quickstart Samples
+L68: 
+L69: The following cite11†Azure Quickstart templates†aka.ms contain Bicep samples for deploying this resource type.
+L70: Bicep File  | Description
+L71: --- | ---
+L72: cite12†Azure Data Factory with Git and managed vnet configuration†github.com | This template creates Azure Data Factory with Git configuration and managed virtual network.
+L73: cite13†Create a V2 data factory†github.com | This template creates a V2 data factory that copies data from a folder in an Azure Blob Storage to another folder in the storage.
+L74: cite14†Create an empty data factory†github.com | This template creates an empty data factory
+L75: cite15†Deploy the Sports Analytics on Azure Architecture†github.com | Creates an Azure storage account with ADLS Gen 2 enabled, an Azure Data Factory instance with linked services for the storage account (an the Azure SQL Database if deployed), and an Azure Databricks instance. The AAD identity for the user deploying the template and the managed identity for the ADF instance will be granted the Storage Blob Data Contributor role on the storage account.
+L76: There are also options to deploy an Azure Key Vault instance, an Azure SQL Database, and an Azure Event Hub (for streaming use cases). When an Azure Key Vault is deployed, the data factory managed identity and the AAD identity for the user deploying the template will be granted the Key Vault Secrets User role.
+L77: cite16†FinOps hub†github.com | This template creates a new FinOps hub instance, including Data Explorer, Data Lake storage, and Data Factory.
+L78: cite17†More is possible with Azure Data Factory - One click to try Azure Data Factory†github.com | This template creates a data factory pipeline for a copy activity from Azure Blob into another Azure Blob
+L79: ## Resource format
+L80: To create a Microsoft.DataFactory/factories resource, add the following Bicep to your template.
+L81: 
+L82:     `resource symbolicname 'Microsoft.DataFactory/factories@2018-06-01' = {
+L83:       identity: {
+L84:         type: 'string'
+L85:         userAssignedIdentities: {
+L86:           {customized property}: any(...)
+L87:         }
+L88:       }
+L89:       location: 'string'
+L90:       name: 'string'
+L91:       properties: {
+L92:         encryption: {
+L93:           identity: {
+L94:             userAssignedIdentity: 'string'
+L95:           }
+L96:           keyName: 'string'
+L97:           keyVersion: 'string'
+L98:           vaultBaseUrl: 'string'
+L99:         }
+L100:         globalParameters: {
+L101:           {customized property}: {
+L102:             type: 'string'
+L103:             value: any(...)
+L104:           }
+L105:         }
+L106:         publicNetworkAccess: 'string'
+L107:         purviewConfiguration: {
+L108:           purviewResourceId: 'string'
+L109:         }
+L110:         repoConfiguration: {
+L111:           accountName: 'string'
+L112:           collaborationBranch: 'string'
+L113:           disablePublish: bool
+L114:           lastCommitId: 'string'
+L115:           repositoryName: 'string'
+L116:           rootFolder: 'string'
+L117:           type: 'string'
+L118:           // For remaining properties, see FactoryRepoConfiguration objects
+L119:         }
+L120:       }
+L121:       tags: {
+L122:         {customized property}: 'string'
+L123:       }
+L124:     }
+L125:     `
+L126: ### FactoryRepoConfiguration objects
+L127: 
+L128: Set the type property to specify the type of object.
+L129: 
+L130: For FactoryGitHubConfiguration, use:
+L131: 
+L132:     `{
+L133:       clientId: 'string'
+L134:       clientSecret: {
+L135:         byoaSecretAkvUrl: 'string'
+L136:         byoaSecretName: 'string'
+L137:       }
+L138:       hostName: 'string'
+L139:       type: 'FactoryGitHubConfiguration'
+L140:     }
+L141:     `
+L142: 
+L143: For FactoryVSTSConfiguration, use:
+L144: 
+L145:     `{
+L146:       projectName: 'string'
+L147:       tenantId: 'string'
+L148:       type: 'FactoryVSTSConfiguration'
+L149:     }
+L150:     `
+L151: ## Property Values
+L152: ### Microsoft.DataFactory/factories
+L153: 
+L154: Name  | Description  | Value
+L155: --- | --- | ---
+L156: identity  | Managed service identity of the factory.  | cite18†FactoryIdentity L157: location  | The resource location.  | string
+L158: name  | The resource name  | string
+L159: Constraints:
+L160: Min length = 3
+L161: Max length = 63
+L162: Pattern = `^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$` (required)
+L163: properties  | Properties of the factory.  | cite19†FactoryProperties L164: tags  | Resource tags  | Dictionary of tag names and values. See cite20†Tags in templates L165: ### CMKIdentityDefinition
+L166: 
+L167: Name  | Description  | Value
+L168: --- | --- | ---
+L169: userAssignedIdentity  | The resource id of the user assigned identity to authenticate to customer's key vault.  | string
+L170: ### EncryptionConfiguration
+L171: Name  | Description  | Value
+L172: --- | --- | ---
+L173: identity  | User assigned identity to use to authenticate to customer's key vault. If not provided Managed Service Identity will be used.  | cite21†CMKIdentityDefinition L174: keyName  | The name of the key in Azure Key Vault to use as Customer Managed Key.  | string (required)
+L175: keyVersion  | The version of the key used for CMK. If not provided, latest version will be used.  | string
+L176: vaultBaseUrl  | The url of the Azure Key Vault used for CMK.  | string (required)
+L177: ### FactoryGitHubConfiguration
+L178: 
+L179: Name  | Description  | Value
+L180: --- | --- | ---
+L181: clientId  | GitHub bring your own app client id.  | string
+L182: clientSecret  | GitHub bring your own app client secret information.  | cite22†GitHubClientSecret L183: hostName  | GitHub Enterprise host name. For example: `https://github.mydomain.com`  | string
+L184: type  | Type of repo configuration.  | 'FactoryGitHubConfiguration' (required)
+L185: ### FactoryIdentity
+L186: 
+L187: Name  | Description  | Value
+L188: --- | --- | ---
+L189: type  | The identity type.  | 'SystemAssigned'
+L190: 'SystemAssigned,UserAssigned'
+L191: 'UserAssigned' (required)
+L192: userAssignedIdentities  | List of user assigned identities for the factory.  | cite23†FactoryIdentityUserAssignedIdentities L193: 
+L194: ### FactoryIdentityUserAssignedIdentities
+L195: 
+L196: Name  | Description  | Value
+L197: --- | --- | ---
+L198: ### FactoryProperties
+L199: Name  | Description  | Value
+L200: --- | --- | ---
+L201: encryption  | Properties to enable Customer Managed Key for the factory.  | cite24†EncryptionConfiguration L202: globalParameters  | List of parameters for factory.  | cite25†FactoryPropertiesGlobalParameters L203: publicNetworkAccess  | Whether or not public network access is allowed for the data factory.  | 'Disabled'
+L204: 'Enabled'
+L205: purviewConfiguration  | Purview information of the factory.  | cite26†PurviewConfiguration L206: repoConfiguration  | Git repo information of the factory.  | cite27†FactoryRepoConfiguration L207: ### FactoryPropertiesGlobalParameters
+L208: 
+L209: Name  | Description  | Value
+L210: --- | --- | ---
+L211: ### FactoryRepoConfiguration
+L212: Name  | Description  | Value
+L213: --- | --- | ---
+L214: accountName  | Account name.  | string (required)
+L215: collaborationBranch  | Collaboration branch.  | string (required)
+L216: disablePublish  | Disable manual publish operation in ADF studio to favor automated publish.  | bool
+L217: lastCommitId  | Last commit id.  | string
+L218: repositoryName  | Repository name.  | string (required)
+L219: rootFolder  | Root folder.  | string (required)
+L220: type  | Set to 'FactoryGitHubConfiguration' for type cite28†FactoryGitHubConfiguration . Set to 'FactoryVSTSConfiguration' for type cite29†FactoryVstsConfiguration .  | 'FactoryGitHubConfiguration'
+L221: 'FactoryVSTSConfiguration' (required)
+L222: ### FactoryTags
+L223: 
+L224: Name  | Description  | Value
+L225: --- | --- | ---
+L226: 
+L227: ### FactoryVstsConfiguration
+L228: 
+L229: Name  | Description  | Value
+L230: --- | --- | ---
+L231: projectName  | VSTS project name.  | string (required)
+L232: tenantId  | VSTS tenant id.  | string
+L233: type  | Type of repo configuration.  | 'FactoryVSTSConfiguration' (required)
+L234: ### GitHubClientSecret
+L235: 
+L236: Name  | Description  | Value
+L237: --- | --- | ---
+L238: byoaSecretAkvUrl  | Bring your own app client secret AKV URL.  | string
+L239: byoaSecretName  | Bring your own app client secret name in AKV.  | string
+L240: 
+L241: ### GlobalParameterSpecification
+L242: 
+L243: Name  | Description  | Value
+L244: --- | --- | ---
+L245: type  | Global Parameter type.  | 'Array'
+L246: 'Bool'
+L247: 'Float'
+L248: 'Int'
+L249: 'Object'
+L250: 'String' (required)
+L251: value  | Value of parameter.  | any (required)
+L252: ### PurviewConfiguration
+L253: 
+L254: Name  | Description  | Value
+L255: --- | --- | ---
+L256: purviewResourceId  | Purview resource id.  | string
+L257: 
+L258: ## ARM template resource definition
+L259: 
+L260: The factories resource type can be deployed with operations that target:
+L261: 
+L262:   * Resource groups - See cite30†resource group deployment commands For a list of changed properties in each API version, see cite8†change log .
+L263: 
+L264: ## Usage Examples
+L265: ### Azure Quickstart Templates
+L266: 
+L267: The following cite11†Azure Quickstart templates†aka.ms deploy this resource type.
+L268: Template  | Description
+L269: --- | ---
+L270: cite31†Azure Data Factory with Git and managed vnet configuration†github.com L271:  | This template creates Azure Data Factory with Git configuration and managed virtual network.
+L272: cite32†Bulk copy using Azure Data Factory†github.com L273:  | This template creates a V2 data factory that copies data in bulk an Azure SQL database to an Azure SQL data warehouse.
+L274: cite33†Create a Data Factory, copy from Salesforce to Blob†github.com L275:  | This template uses Azure Data Factory to perform data movement from Salesforce to Azure Blobs
+L276: cite34†Create a V2 data factory†github.com L277:  | This template creates a V2 data factory that copies data from a folder in an Azure Blob Storage to another folder in the storage.
+L278: cite35†Create a V2 data factory (MySQL)†github.com L279:  | This template creates a V2 data factory that copies data from a folder in an Azure Blob Storage to a table in an Azure Database for MySQL.
+L280: cite36†Create a V2 data factory (PostGre)†github.com L281:  | This template creates a V2 data factory that copies data from a folder in an Azure Blob Storage to a table in an Azure Database for PostgreSQL.
+L282: cite37†Create a V2 data factory (Spark)†github.com L283:  | This template creates a V2 data factory that copies data from a folder in an Azure Blob Storage to another folder in the storage.
+L284: cite38†Create a V2 data factory (SQL On-prem)†github.com L285:  | This template creates a V2 data factory that copies data from an on-premises SQL Server to an Azure blob storage
+L286: cite39†Create a V2 data factory (SQL)†github.com L287:  | This template creates a V2 data factory that copies data from a folder in an Azure Blob Storage to a table in an Azure SQL database.
+L288: cite40†Create an empty data factory†github.com L289:  | This template creates an empty data factory
+L290: cite41†Deploy the Sports Analytics on Azure Architecture†github.com L291:  | Creates an Azure storage account with ADLS Gen 2 enabled, an Azure Data Factory instance with linked services for the storage account (an the Azure SQL Database if deployed), and an Azure Databricks instance. The AAD identity for the user deploying the template and the managed identity for the ADF instance will be granted the Storage Blob Data Contributor role on the storage account.
+L292: There are also options to deploy an Azure Key Vault instance, an Azure SQL Database, and an Azure Event Hub (for streaming use cases). When an Azure Key Vault is deployed, the data factory managed identity and the AAD identity for the user deploying the template will be granted the Key Vault Secrets User role.
+L293: cite42†FinOps hub†github.com L294:  | This template creates a new FinOps hub instance, including Data Explorer, Data Lake storage, and Data Factory.
+L295: cite43†More is possible with Azure Data Factory - One click to try Azure Data Factory†github.com L296:  | This template creates a data factory pipeline for a copy activity from Azure Blob into another Azure Blob
+L297: cite44†Provision SSIS runtime in Azure†github.com L298:  | This template creates a V2 data factory and then provisions an Azure SSIS integration runtime
+L299: ## Resource format
+L300: To create a Microsoft.DataFactory/factories resource, add the following JSON to your template.
+L301: 
+L302:     `{
+L303:       "type": "Microsoft.DataFactory/factories",
+L304:       "apiVersion": "2018-06-01",
+L305:       "name": "string",
+L306:       "identity": {
+L307:         "type": "string",
+L308:         "userAssignedIdentities": {
+L309:           "{customized property}": {}
+L310:         }
+L311:       },
+L312:       "location": "string",
+L313:       "properties": {
+L314:         "encryption": {
+L315:           "identity": {
+L316:             "userAssignedIdentity": "string"
+L317:           },
+L318:           "keyName": "string",
+L319:           "keyVersion": "string",
+L320:           "vaultBaseUrl": "string"
+L321:         },
+L322:         "globalParameters": {
+L323:           "{customized property}": {
+L324:             "type": "string",
+L325:             "value": {}
+L326:           }
+L327:         },
+L328:         "publicNetworkAccess": "string",
+L329:         "purviewConfiguration": {
+L330:           "purviewResourceId": "string"
+L331:         },
+L332:         "repoConfiguration": {
+L333:           "accountName": "string",
+L334:           "collaborationBranch": "string",
+L335:           "disablePublish": "bool",
+L336:           "lastCommitId": "string",
+L337:           "repositoryName": "string",
+L338:           "rootFolder": "string",
+L339:           "type": "string"
+L340:           // For remaining properties, see FactoryRepoConfiguration objects
+L341:         }
+L342:       },
+L343:       "tags": {
+L344:         "{customized property}": "string"
+L345:       }
+L346:     }
+L347:     `
+L348: ### FactoryRepoConfiguration objects
+L349: 
+L350: Set the type property to specify the type of object.
+L351: 
+L352: For FactoryGitHubConfiguration, use:
+L353: 
+L354:     `{
+L355:       "clientId": "string",
+L356:       "clientSecret": {
+L357:         "byoaSecretAkvUrl": "string",
+L358:         "byoaSecretName": "string"
+L359:       },
+L360:       "hostName": "string",
+L361:       "type": "FactoryGitHubConfiguration"
+L362:     }
+L363:     `
+L364: For FactoryVSTSConfiguration, use:
+L365: 
+L366:     `{
+L367:       "projectName": "string",
+L368:       "tenantId": "string",
+L369:       "type": "FactoryVSTSConfiguration"
+L370:     }
+L371:     `
+L372: ## Property Values
+L373: ### Microsoft.DataFactory/factories
+L374: Name  | Description  | Value
+L375: --- | --- | ---
+L376: apiVersion  | The api version  | '2018-06-01'
+L377: identity  | Managed service identity of the factory.  | cite45†FactoryIdentity L378: location  | The resource location.  | string
+L379: name  | The resource name  | string
+L380: Constraints:
+L381: Min length = 3
+L382: Max length = 63
+L383: Pattern = `^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$` (required)
+L384: properties  | Properties of the factory.  | cite46†FactoryProperties L385: tags  | Resource tags  | Dictionary of tag names and values. See cite20†Tags in templates L386: type  | The resource type  | 'Microsoft.DataFactory/factories'
+L387: ### CMKIdentityDefinition
+L388: 
+L389: Name  | Description  | Value
+L390: --- | --- | ---
+L391: userAssignedIdentity  | The resource id of the user assigned identity to authenticate to customer's key vault.  | string
+L392: ### EncryptionConfiguration
+L393: Name  | Description  | Value
+L394: --- | --- | ---
+L395: identity  | User assigned identity to use to authenticate to customer's key vault. If not provided Managed Service Identity will be used.  | cite47†CMKIdentityDefinition L396: keyName  | The name of the key in Azure Key Vault to use as Customer Managed Key.  | string (required)
+L397: keyVersion  | The version of the key used for CMK. If not provided, latest version will be used.  | string
+L398: vaultBaseUrl  | The url of the Azure Key Vault used for CMK.  | string (required)
+L399: ### FactoryGitHubConfiguration
+L400: 
+L401: Name  | Description  | Value
+L402: --- | --- | ---
+L403: clientId  | GitHub bring your own app client id.  | string
+L404: clientSecret  | GitHub bring your own app client secret information.  | cite48†GitHubClientSecret L405: hostName  | GitHub Enterprise host name. For example: `https://github.mydomain.com`  | string
+L406: type  | Type of repo configuration.  | 'FactoryGitHubConfiguration' (required)
+L407: ### FactoryIdentity
+L408: 
+L409: Name  | Description  | Value
+L410: --- | --- | ---
+L411: type  | The identity type.  | 'SystemAssigned'
+L412: 'SystemAssigned,UserAssigned'
+L413: 'UserAssigned' (required)
+L414: userAssignedIdentities  | List of user assigned identities for the factory.  | cite49†FactoryIdentityUserAssignedIdentities L415: 
+L416: ### FactoryIdentityUserAssignedIdentities
+L417: 
+L418: Name  | Description  | Value
+L419: --- | --- | ---
+L420: ### FactoryProperties
+L421: Name  | Description  | Value
+L422: --- | --- | ---
+L423: encryption  | Properties to enable Customer Managed Key for the factory.  | cite50†EncryptionConfiguration L424: globalParameters  | List of parameters for factory.  | cite51†FactoryPropertiesGlobalParameters L425: publicNetworkAccess  | Whether or not public network access is allowed for the data factory.  | 'Disabled'
+L426: 'Enabled'
+L427: purviewConfiguration  | Purview information of the factory.  | cite52†PurviewConfiguration L428: repoConfiguration  | Git repo information of the factory.  | cite53†FactoryRepoConfiguration L429: ### FactoryPropertiesGlobalParameters
+L430: 
+L431: Name  | Description  | Value
+L432: --- | --- | ---
+L433: ### FactoryRepoConfiguration
+L434: Name  | Description  | Value
+L435: --- | --- | ---
+L436: accountName  | Account name.  | string (required)
+L437: collaborationBranch  | Collaboration branch.  | string (required)
+L438: disablePublish  | Disable manual publish operation in ADF studio to favor automated publish.  | bool
+L439: lastCommitId  | Last commit id.  | string
+L440: repositoryName  | Repository name.  | string (required)
+L441: rootFolder  | Root folder.  | string (required)
+L442: type  | Set to 'FactoryGitHubConfiguration' for type cite54†FactoryGitHubConfiguration . Set to 'FactoryVSTSConfiguration' for type cite55†FactoryVstsConfiguration .  | 'FactoryGitHubConfiguration'
+L443: 'FactoryVSTSConfiguration' (required)
+L444: ### FactoryTags
+L445: 
+L446: Name  | Description  | Value
+L447: --- | --- | ---
+L448: 
+L449: ### FactoryVstsConfiguration
+L450: 
+L451: Name  | Description  | Value
+L452: --- | --- | ---
+L453: projectName  | VSTS project name.  | string (required)
+L454: tenantId  | VSTS tenant id.  | string
+L455: type  | Type of repo configuration.  | 'FactoryVSTSConfiguration' (required)
+L456: ### GitHubClientSecret
+L457: 
+L458: Name  | Description  | Value
+L459: --- | --- | ---
+L460: byoaSecretAkvUrl  | Bring your own app client secret AKV URL.  | string
+L461: byoaSecretName  | Bring your own app client secret name in AKV.  | string
+L462: 
+L463: ### GlobalParameterSpecification
+L464: 
+L465: Name  | Description  | Value
+L466: --- | --- | ---
+L467: type  | Global Parameter type.  | 'Array'
+L468: 'Bool'
+L469: 'Float'
+L470: 'Int'
+L471: 'Object'
+L472: 'String' (required)
+L473: value  | Value of parameter.  | any (required)
+L474: ### PurviewConfiguration
+L475: 
+L476: Name  | Description  | Value
+L477: --- | --- | ---
+L478: purviewResourceId  | Purview resource id.  | string
+L479: 
+L480: ## Terraform (AzAPI provider) resource definition
+L481: 
+L482: The factories resource type can be deployed with operations that target:
+L483: 
+L484:   * Resource groups For a list of changed properties in each API version, see cite8†change log .
+L485: 
+L486: ## Usage Examples
+L487: ### Terraform Samples
+L488: A basic example of deploying Azure Data Factory (Version 2).
+L489: 
+L490:     `terraform {
+L491:       required_providers {
+L492:         azapi = {
+L493:           source = "Azure/azapi"
+L494:         }
+L495:       }
+L496:     }
+L497: 
+L498:     provider "azapi" {
+L499:       skip_provider_registration = false
+L500:     }
+L501: 
+L502:     variable "resource_name" {
+L503:       type    = string
+L504:       default = "acctest0001"
+L505:     }
+L506: 
+L507:     variable "location" {
+L508:       type    = string
+L509:       default = "westeurope"
+L510:     }
+L511: 
+L512:     resource "azapi_resource" "resourceGroup" {
+L513:       type     = "Microsoft.Resources/resourceGroups@2020-06-01"
+L514:       name     = var.resource_name
+L515:       location = var.location
+L516:     }
+L517: 
+L518:     resource "azapi_resource" "factory" {
+L519:       type      = "Microsoft.DataFactory/factories@2018-06-01"
+L520:       parent_id = azapi_resource.resourceGroup.id
+L521:       name      = var.resource_name
+L522:       location  = var.location
+L523:       body = {
+L524:         properties = {
+L525:           publicNetworkAccess = "Enabled"
+L526:           repoConfiguration   = null
+L527:         }
+L528:       }
+L529:       schema_validation_enabled = false
+L530:       response_export_values    = ["*"]
+L531:     }
+L532:     `
+L533: ### Azure Verified Modules
+L534: 
+L535: The following cite9†Azure Verified Modules†aka.ms can be used to deploy this resource type.
+L536: 
+L537: Module  | Description
+L538: --- | ---
+L539: cite56†Data Factory†github.com | AVM Resource Module for Data Factory
+L540: ## Resource format
+L541: To create a Microsoft.DataFactory/factories resource, add the following Terraform to your template.
+L542: 
+L543:     `resource "azapi_resource" "symbolicname" {
+L544:       type = "Microsoft.DataFactory/factories@2018-06-01"
+L545:       name = "string"
+L546:       parent_id = "string"
+L547:       identity {
+L548:         type = "string"
+L549:         identity_ids = [
+L550:           "string"
+L551:         ]
+L552:       }
+L553:       location = "string"
+L554:       tags = {
+L555:         {customized property} = "string"
+L556:       }
+L557:       body = {
+L558:         properties = {
+L559:           encryption = {
+L560:             identity = {
+L561:               userAssignedIdentity = "string"
+L562:             }
+L563:             keyName = "string"
+L564:             keyVersion = "string"
+L565:             vaultBaseUrl = "string"
+L566:           }
+L567:           globalParameters = {
+L568:             {customized property} = {
+L569:               type = "string"
+L570:               value = ?
+L571:             }
+L572:           }
+L573:           publicNetworkAccess = "string"
+L574:           purviewConfiguration = {
+L575:             purviewResourceId = "string"
+L576:           }
+L577:           repoConfiguration = {
+L578:             accountName = "string"
+L579:             collaborationBranch = "string"
+L580:             disablePublish = bool
+L581:             lastCommitId = "string"
+L582:             repositoryName = "string"
+L583:             rootFolder = "string"
+L584:             type = "string"
+L585:             // For remaining properties, see FactoryRepoConfiguration objects
+L586:           }
+L587:         }
+L588:       }
+L589:     }
+L590:     `
+L591: ### FactoryRepoConfiguration objects
+L592: 
+L593: Set the type property to specify the type of object.
+L594: 
+L595: For FactoryGitHubConfiguration, use:
+L596: 
+L597:     `{
+L598:       clientId = "string"
+L599:       clientSecret = {
+L600:         byoaSecretAkvUrl = "string"
+L601:         byoaSecretName = "string"
+L602:       }
+L603:       hostName = "string"
+L604:       type = "FactoryGitHubConfiguration"
+L605:     }
+L606:     `
+L607: 
+L608: For FactoryVSTSConfiguration, use:
+L609: 
+L610:     `{
+L611:       projectName = "string"
+L612:       tenantId = "string"
+--------------------------------------------------------------------------------
+Microsoft.DataFactory/factories/pipelines 2018-06-01 - Bicep, ARM template & Terraform AzAPI reference | Microsoft Learn (https://learn.microsoft.com/en-us/azure/templates/microsoft.datafactory/2018-06-01/factories/pipelines)
+citeturn36view1 [wordlim: 200] Crawled: yesterday; Content type: text/html; Source: open({"ref_id":"https://learn.microsoft.com/en-us/azure/templates/microsoft.datafactory/2018-06-01/factories/pipelines","lineno":null}); Total lines: 22407
+--------------------------------------------------------------------------------
+Microsoft.DataFactory/factories/triggers 2018-06-01 - Bicep, ARM template & Terraform AzAPI reference | Microsoft Learn (https://learn.microsoft.com/en-us/azure/templates/microsoft.datafactory/2018-06-01/factories/triggers)
+citeturn36view2 [wordlim: 200] Crawled: 3 days ago; Content type: text/html; Source: open({"ref_id":"https://learn.microsoft.com/en-us/azure/templates/microsoft.datafactory/2018-06-01/factories/triggers","lineno":null}); Total lines: 1744
+--------------------------------------------------------------------------------
+Microsoft.App/managedEnvironments 2026-07-01 - Bicep, ARM template & Terraform AzAPI reference | Microsoft Learn (https://learn.microsoft.com/en-us/azure/templates/microsoft.app/2026-07-01/managedenvironments)
+citeturn36view3 [wordlim: 200] Crawled: yesterday; Content type: text/html; Source: open({"ref_id":"https://learn.microsoft.com/en-us/azure/templates/microsoft.app/2026-07-01/managedenvironments","lineno":null}); Total lines: 1276
+--------------------------------------------------------------------------------
+Microsoft.Storage/storageAccounts 2025-06-01 - Bicep, ARM template & Terraform AzAPI reference | Microsoft Learn (https://learn.microsoft.com/en-us/azure/templates/microsoft.storage/2025-06-01/storageaccounts)
+citeturn36view4 [wordlim: 200] Crawled: today; Content type: text/html; Source: open({"ref_id":"https://learn.microsoft.com/en-us/azure/templates/microsoft.storage/2025-06-01/storageaccounts","lineno":null}); Total lines: 2592
+--------------------------------------------------------------------------------
+Microsoft.Storage/storageAccounts/blobServices/containers 2025-06-01 - Bicep, ARM template & Terraform AzAPI reference | Microsoft Learn (https://learn.microsoft.com/en-us/azure/templates/microsoft.storage/2025-06-01/storageaccounts/blobservices/containers)
+citeturn36view5 [wordlim: 200] Crawled: today; Content type: text/html; Source: open({"ref_id":"https://learn.microsoft.com/en-us/azure/templates/microsoft.storage/2025-06-01/storageaccounts/blobservices/containers","lineno":null}); Total lines: 459
+--------------------------------------------------------------------------------
+Microsoft.Storage/storageAccounts/tableServices/tables 2025-06-01 - Bicep, ARM template & Terraform AzAPI reference | Microsoft Learn (https://learn.microsoft.com/en-us/azure/templates/microsoft.storage/2025-06-01/storageaccounts/tableservices/tables)
+citeturn36view6 [wordlim: 200] Crawled: last week; Content type: text/html; Source: open({"ref_id":"https://learn.microsoft.com/en-us/azure/templates/microsoft.storage/2025-06-01/storageaccounts/tableservices/tables","lineno":null}); Total lines: 370
+

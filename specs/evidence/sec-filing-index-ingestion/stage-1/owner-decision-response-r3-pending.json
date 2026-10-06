@@ -1,0 +1,40 @@
+{
+  "category": "Owner decision",
+  "decider": "Lowell Mason",
+  "owner_message": "Pending approved",
+  "received_at_utc": "2026-10-06T02:24:13.281576+00:00",
+  "receipt_date_america_new_york": "2026-10-05",
+  "timestamp_basis": "Root receipt recording time; owner-authored timestamp not supplied",
+  "context": "Reply to last status naming the two pending sets: revision3 D05–D08 registry/build/rollback choices and D18/D14 polling policy plus historical daily-recovery gap disposition",
+  "accepted_proposal_revision": 3,
+  "accepted_proposal_sha256": "038cb2ddcd2ca444d7a3855a4686cb457aa13bd373c767bee854ed657d59f944",
+  "accepted_proposal_artifact": "versions/owner-decision-proposal-r3-038cb2ddcd2ca444d7a3855a4686cb457aa13bd373c767bee854ed657d59f944.md",
+  "accepted_rows": [
+    "D-05",
+    "D-06",
+    "D-07",
+    "D-08",
+    "D-18",
+    "D-14"
+  ],
+  "questions_accepted": [
+    {
+      "title": "For the same revision 3, do you accept D-05–D-08: Basic ACR with classic RBAC, distinct pull identity with AcrPull, indefinite retention of deployed image digests and contents during development, Azure CLI 2.90.0/Bicep 0.38.33/uv 0.12.15, and future ACR quick tasks for Linux amd64 builds? Acceptance selects the method and prerequisites only; later installation, resources, builds, publication and budget require separate authorization.",
+      "options": [
+        "Accept revision 3 D-05–D-08",
+        "Provide exact replacements",
+        "Leave these decisions pending"
+      ]
+    },
+    {
+      "title": "For the same revision 3, do you accept D-18’s 30-second polling base and absolute 4,200-second observation deadline, with ambiguous outcomes treated as execution_unknown without automatic relaunch, and D-14’s explicit evidence limitation: 33 listed but uninspected historical daily directories establish no recovery horizon, and coverage spanning them requires later bounded, owner-authorized investigation? This does not waive recovery correctness or authorize new SEC requests.",
+      "options": [
+        "Accept revision 3 D-18 and D-14 disposition",
+        "Provide revised policy or gap disposition",
+        "Leave these decisions pending"
+      ]
+    }
+  ],
+  "result": "Explicit acceptance of the two named pending owner-decision sets; D01–D04 earlier acceptance remains separately retained",
+  "limitations": "Decision selection and gap disposition only; no provisioning, installation, build, publication, compute, SEC access, actual deployed proof or acceptance of the final readiness finding."
+}

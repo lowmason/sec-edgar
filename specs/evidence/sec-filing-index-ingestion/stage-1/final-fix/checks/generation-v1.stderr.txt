@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/Users/lowell/Projects/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-1/final-fix/verify_generation.py", line 131, in <module>
+    result={'history':verify_history(),'claims':verify_claims(),'stable_readonly_checks':stable_checks(),
+                                                ~~~~~~~~~~~~~^^
+  File "/Users/lowell/Projects/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-1/final-fix/verify_generation.py", line 113, in verify_claims
+    assert all(r['evidence_id'] in finding for r in claims),[r['evidence_id'] for r in claims if r['evidence_id'] not in finding]
+           ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: ['E-FF-DOC-JOBS-TEMP']

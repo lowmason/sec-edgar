@@ -1,0 +1,42 @@
+{
+  "inspection_utc": "2026-10-06T00:39:32.365965+00:00",
+  "method": "read-only installed publisher source plus public official REST reference; no Azure calls",
+  "installed_sources": [
+    {
+      "path": "/opt/homebrew/Cellar/azure-cli/2.90.0/libexec/lib/python3.14/site-packages/azure/cli/command_modules/acr/build.py",
+      "sha256": "7fe072f2208858d642c4ae971e5f027840c0742b1affc8c5f434a203a61cd088"
+    },
+    {
+      "path": "/opt/homebrew/Cellar/azure-cli/2.90.0/libexec/lib/python3.14/site-packages/azure/cli/command_modules/acr/_archive_utils.py",
+      "sha256": "0ec54c63444569de359ce53664d1a03173d371df181d846b99c31db6edc10180"
+    },
+    {
+      "path": "/opt/homebrew/Cellar/azure-cli/2.90.0/libexec/lib/python3.14/site-packages/azure/cli/core/commands/client_factory.py",
+      "sha256": "b1aaa5fac31ebdc53472cf774f9cc16cc055215384a0b28195659dc4e46108c0"
+    },
+    {
+      "path": "/opt/homebrew/Cellar/azure-cli/2.90.0/libexec/lib/python3.14/site-packages/azure/mgmt/containerregistrytasks/models/_models.py",
+      "sha256": "62567a60ed83971813ea43798e705cf9d703c37635d94eca8d7840600a136164"
+    },
+    {
+      "path": "/opt/homebrew/Cellar/azure-cli/2.90.0/libexec/lib/python3.14/site-packages/azure/mgmt/containerregistrytasks/_configuration.py",
+      "sha256": "9b0994c78833ec5a5674c95adf097413d23b13fac963c3de8251f6bcc95cef0e"
+    }
+  ],
+  "official_reference": "https://learn.microsoft.com/en-us/rest/api/container-registry-tasks/registries/schedule-run?view=rest-container-registry-tasks-2019-04-01",
+  "reference_claims": {
+    "agentConfiguration_cpu": "Number of cores required for the run; example uses2",
+    "noCache": "Boolean cache selection on DockerBuildRequest",
+    "isPushEnabled": "Boolean publication selection",
+    "platform": "Required platform properties",
+    "sourceLocation": "Relative uploaded-context path permitted"
+  },
+  "current_reference_attempt": "2025-03-01-preview Microsoft Learn schedule-run page returned Internal Error via web tool; no content retrieved",
+  "installed_current_sdk": {
+    "api_version": "2025-03-01-preview",
+    "model_fields": "agent_configuration=AgentProperties(cpu=2), no_cache=True, is_push_enabled=False, timeout=1800, platform=PlatformProperties(os=Linux,architecture=amd64)",
+    "serialized_fields": "agentConfiguration.cpu2/noCachetrue/isPushEnabledfalse/timeout1800/platformLinuxamd64",
+    "old_attribute_not_used": "is_no_cache_enabled"
+  },
+  "cli_limitation": "Installed2.90.0 acr_build signature exposes neitherCPU norcache flag; accepted argv rejected locally before submission. Standalone SDK launcher makes both explicit."
+}

@@ -1,0 +1,485 @@
+Managed Environments - Get - REST API (Azure Azure Container Apps) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/resource-manager/containerapps/managed-environments/get?view=rest-resource-manager-containerapps-2026-07-01)
+citeturn96view0 [wordlim: 200] Crawled: today; Content type: text/html; Source: open({"ref_id":"https://learn.microsoft.com/en-us/rest/api/resource-manager/containerapps/managed-environments/get?view=rest-resource-manager-containerapps-2026-07-01","lineno":568}); Total lines: 849
+L498: ### ErrorDetail
+L499: 
+L500: Object
+L501: 
+L502: The error detail.
+L503: 
+L504: Name  | Type  | Description
+L505: --- | --- | ---
+L506: additionalInfo  | cite27†ErrorAdditionalInfo []  | The error additional info.
+L507: code  | string  | The error code.
+L508: details  | cite28†ErrorDetail []  | The error details.
+L509: message  | string  | The error message.
+L510: target  | string  | The error target.
+L511: 
+L512: ### ErrorResponse
+L513: 
+L514: Object
+L515: 
+L516: Error response
+L517: 
+L518: Name  | Type  | Description
+L519: --- | --- | ---
+L520: error  | cite28†ErrorDetail | The error object.
+L521: ### Header
+L522: 
+L523: Object
+L524: 
+L525: Header of otlp configuration
+L526: 
+L527: Name  | Type  | Description
+L528: --- | --- | ---
+L529: key  | string  | The key of otlp configuration header
+L530: value  | string  | The value of otlp configuration header
+L531: ### IngressConfiguration
+L532: 
+L533: Object
+L534: 
+L535: Settings for the ingress component, including workload profile, scaling, and connection handling.
+L536: Name  | Type  | Description
+L537: --- | --- | ---
+L538: headerCountLimit  | integer (int32)  | Maximum number of headers per request allowed by the ingress. Must be at least 1. Defaults to 100.
+L539: requestIdleTimeout  | integer (int32)  | Duration (in minutes) before idle requests are timed out. Must be between 4 and 30 inclusive. Defaults to 4 minutes.
+L540: terminationGracePeriodSeconds  | integer (int32)  | Time (in seconds) to allow active connections to complete on termination. Must be between 0 and 3600. Defaults to 480 seconds.
+L541: workloadProfileName  | string  | Name of the workload profile used by the ingress component. Required.
+L542: ### KedaConfiguration
+L543: 
+L544: Object
+L545: 
+L546: Configuration properties Keda component
+L547: 
+L548: Name  | Type  | Description
+L549: --- | --- | ---
+L550: version  | string  | The version of Keda
+L551: 
+L552: ### LogAnalyticsConfiguration
+L553: 
+L554: Object
+L555: 
+L556: Log Analytics configuration, must only be provided when destination is configured as 'log-analytics'
+L557: 
+L558: Name  | Type  | Description
+L559: --- | --- | ---
+L560: customerId  | string  | Log analytics customer id
+L561: sharedKey  | string (password)  | Log analytics customer key
+L562: ### LogsConfiguration
+L563: 
+L564: Object
+L565: 
+L566: Configuration of Open Telemetry logs
+L567: 
+L568: Name  | Type  | Description
+L569: --- | --- | ---
+L570: destinations  | string[]  | Open telemetry logs destinations
+L571: ### ManagedEnvironment
+L572: 
+L573: Object
+L574: 
+L575: An environment for hosting container apps
+L576: Name  | Type  | Description
+L577: --- | --- | ---
+L578: id  | string (arm-id)  | Fully qualified resource ID for the resource. E.g. "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}"
+L579: identity  | cite38†ManagedServiceIdentity | The managed service identities assigned to this resource.
+L580: kind  | string  | Kind of the Environment.
+L581: location  | string  | The geo-location where the resource lives
+L582: name  | string  | The name of the resource
+L583: properties.appInsightsConfiguration  | cite18†AppInsightsConfiguration | Environment level Application Insights configuration
+L584: properties.appLogsConfiguration  | cite19†AppLogsConfiguration | Cluster configuration which enables the log daemon to export app logs to configured destination
+L585: properties.customDomainConfiguration  | cite22†CustomDomainConfiguration | Custom domain configuration for the environment
+L586: properties.daprAIConnectionString  | string (password)  | Application Insights connection string used by Dapr to export Service to Service communication telemetry
+L587: properties.daprAIInstrumentationKey  | string (password)  | Azure Monitor instrumentation key used by Dapr to export Service to Service communication telemetry
+L588: properties.daprConfiguration  | cite23†DaprConfiguration | The configuration of Dapr component.
+L589: properties.defaultDomain  | string  | Default Domain Name for the cluster
+L590: properties.deploymentErrors  | string  | Any errors that occurred during deployment or deployment validation
+L591: properties.environmentMode  | cite34†ManagedEnvironmentMode | Mode of the environment. Allowed Values: 'ConsumptionOnly', 'WorkloadProfiles', 'Express', 'Archived'.
+L592: properties.eventStreamEndpoint  | string  | The endpoint of the eventstream of the Environment.
+L593: properties.infrastructureResourceGroup  | string  | Name of the platform-managed resource group created for the Managed Environment to host infrastructure resources. If a subnet ID is provided, this resource group will be created in the same subscription as the subnet.
+L594: properties.ingressConfiguration  | cite30†IngressConfiguration | Ingress configuration for the Managed Environment.
+L595: properties.kedaConfiguration  | cite31†KedaConfiguration | The configuration of Keda component.
+L596: properties.openTelemetryConfiguration  | cite42†OpenTelemetryConfiguration | Environment Open Telemetry configuration
+L597: properties.peerAuthentication  | cite35†ManagedEnvironmentPropertiesPeerAuthentication | Peer authentication settings for the Managed Environment
+L598: properties.peerTrafficConfiguration  | cite36†ManagedEnvironmentPropertiesPeerTrafficConfiguration | Peer traffic settings for the Managed Environment
+L599: properties.privateEndpointConnections  | cite45†PrivateEndpointConnection []  | Private endpoint connections to the resource.
+L600: properties.provisioningState  | cite26†EnvironmentProvisioningState | Provisioning state of the Environment.
+L601: properties.publicNetworkAccess  | cite49†PublicNetworkAccess | Property to allow or block all public traffic. Allowed Values: 'Enabled', 'Disabled'.
+L602: properties.staticIp  | string  | Static IP of the Environment
+L603: properties.vnetConfiguration  | cite53†VnetConfiguration | Vnet configuration for the environment
+L604: properties.workloadProfiles  | cite54†WorkloadProfile []  | Workload profiles configured for the Managed Environment.
+L605: properties.zoneRedundant  | boolean  | Whether or not this Managed Environment is zone-redundant.
+L606: systemData  | cite50†systemData | Azure Resource Manager metadata containing createdBy and modifiedBy information.
+L607: tags  | object  | Resource tags.
+L608: type  | string  | The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or "Microsoft.Storage/storageAccounts"
+L609: ### ManagedEnvironmentMode
+L610: 
+L611: Enumeration
+L612: 
+L613: Mode of the managed environment.
+L614: 
+L615: Value  | Description
+L616: --- | ---
+L617: ConsumptionOnly  | The environment supports consumption-only workloads.
+L618: WorkloadProfiles  | The environment supports workload profiles.
+L619: Express  | The environment uses the Express mode.
+L620: Archived  | The environment is archived.
+--------------------------------------------------------------------------------
+Storage Accounts - Get Properties - REST API (Azure Storage Resource Provider) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/storagerp/storage-accounts/get-properties?view=rest-storagerp-2025-06-01)
+citeturn96view1 [wordlim: 200] Crawled: today; Content type: text/html; Source: open({"ref_id":"https://learn.microsoft.com/en-us/rest/api/storagerp/storage-accounts/get-properties?view=rest-storagerp-2025-06-01","lineno":2890}); Total lines: 3057
+L2806: Name  | Type  | Default value  | Description
+L2807: --- | --- | --- | ---
+L2808: expirationAction  | cite54†ExpirationAction | Log  | The SAS Expiration Action defines the action to be performed when sasPolicy.sasExpirationPeriod is violated. The 'Log' action can be used for audit purposes and the 'Block' action can be used to block and deny the usage of SAS tokens that do not adhere to the sas policy expiration period.
+L2809: sasExpirationPeriod  | string  |  | The SAS expiration period, DD.HH:MM:SS.
+L2810: ### Sku
+L2811: 
+L2812: Object
+L2813: 
+L2814: The SKU of the storage account.
+L2815: 
+L2816: Name  | Type  | Description
+L2817: --- | --- | ---
+L2818: name  | cite89†SkuName | The SKU name. Required for account creation; optional for update. Note that in older versions, SKU name was called accountType.
+L2819: tier  | cite90†SkuTier | The SKU tier. This is based on the SKU name.
+L2820: 
+L2821: ### SkuConversionStatus
+L2822: 
+L2823: Enumeration
+L2824: 
+L2825: This property indicates the current sku conversion status.
+L2826: 
+L2827: Value  | Description
+L2828: --- | ---
+L2829: InProgress  |
+L2830: Succeeded  |
+L2831: Failed  |
+L2832: ### SkuName
+L2833: 
+L2834: Enumeration
+L2835: 
+L2836: The SKU name. Required for account creation; optional for update. Note that in older versions, SKU name was called accountType.
+L2837: 
+L2838: Value  | Description
+L2839: --- | ---
+L2840: Standard_LRS  |
+L2841: Standard_GRS  |
+L2842: Standard_RAGRS  |
+L2843: Standard_ZRS  |
+L2844: Premium_LRS  |
+L2845: Premium_ZRS  |
+L2846: Standard_GZRS  |
+L2847: Standard_RAGZRS  |
+L2848: StandardV2_LRS  |
+L2849: StandardV2_GRS  |
+L2850: StandardV2_ZRS  |
+L2851: StandardV2_GZRS  |
+L2852: PremiumV2_LRS  |
+L2853: PremiumV2_ZRS  |
+L2854: ### SkuTier
+L2855: 
+L2856: Enumeration
+L2857: 
+L2858: The SKU tier. This is based on the SKU name.
+L2859: 
+L2860: Value  | Description
+L2861: --- | ---
+L2862: Standard  |
+L2863: Premium  |
+L2864: 
+L2865: ### SmbOAuthSettings
+L2866: 
+L2867: Object
+L2868: 
+L2869: Setting property for Managed Identity access over SMB using OAuth
+L2870: 
+L2871: Name  | Type  | Description
+L2872: --- | --- | ---
+L2873: isSmbOAuthEnabled  | boolean  | Specifies if managed identities can access SMB shares using OAuth. The default interpretation is false for this property.
+L2874: ### State
+L2875: 
+L2876: Enumeration
+L2877: 
+L2878: Gets the state of virtual network rule.
+L2879: 
+L2880: Value  | Description
+L2881: --- | ---
+L2882: Provisioning  |
+L2883: Deprovisioning  |
+L2884: Succeeded  |
+L2885: Failed  |
+L2886: NetworkSourceDeleted  |
+L2887: ### StorageAccount
+L2888: 
+L2889: Object
+L2890: 
+L2891: The storage account.
+L2892: Name  | Type  | Description
+L2893: --- | --- | ---
+L2894: extendedLocation  | cite55†ExtendedLocation | The extendedLocation of the resource.
+L2895: id  | string (arm-id)  | Fully qualified resource ID for the resource. E.g. "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}"
+L2896: identity  | cite60†Identity | The identity of the resource.
+L2897: kind  | cite69†Kind | Gets the Kind.
+L2898: location  | string  | The geo-location where the resource lives
+L2899: name  | string  | The name of the resource
+L2900: placement  | cite73†Placement | Optional. Gets or sets the zonal placement details for the storage account.
+L2901: properties.accessTier  | cite27†AccessTier | Required for storage accounts where kind = BlobStorage. The access tier is used for billing. The 'Premium' access tier is the default value for premium block blobs storage account type and it cannot be changed for the premium block blobs storage account type.
+L2902: properties.accountMigrationInProgress  | boolean  | If customer initiated account migration is in progress, the value will be true else it will be null.
+L2903: properties.allowBlobPublicAccess  | boolean  | Allow or disallow public access to all blobs or containers in the storage account. The default interpretation is false for this property.
+L2904: properties.allowCrossTenantReplication  | boolean  | Allow or disallow cross AAD tenant object replication. Set this property to true for new or existing accounts only if object replication policies will involve storage accounts in different AAD tenants. The default interpretation is false for new accounts to follow best security practices by default.
+L2905: properties.allowSharedKeyAccess  | boolean  | Indicates whether the storage account permits requests to be authorized with the account access key via Shared Key. If false, then all requests, including shared access signatures, must be authorized with Azure Active Directory (Azure AD). The default value is null, which is equivalent to true.
+L2906: properties.allowedCopyScope  | cite34†AllowedCopyScope | Restrict copy to and from Storage Accounts within an AAD tenant or with Private Links to the same VNet.
+L2907: properties.azureFilesIdentityBasedAuthentication  | cite35†AzureFilesIdentityBasedAuthentication | Provides the identity based authentication settings for Azure Files.
+L2908: properties.blobRestoreStatus  | cite39†BlobRestoreStatus | Blob restore status
+L2909: properties.creationTime  | string (date-time)  | Gets the creation date and time of the storage account in UTC.
+L2910: properties.customDomain  | cite42†CustomDomain | Gets the custom domain the user assigned to this storage account.
+L2911: properties.defaultToOAuthAuthentication  | boolean  | A boolean flag which indicates whether the default authentication is OAuth or not. The default interpretation is false for this property.
+L2912: properties.dnsEndpointType  | cite46†DnsEndpointType | Allows you to specify the type of endpoint. Set this to AzureDNSZone to create a large number of accounts in a single subscription, which creates accounts in an Azure DNS Zone and the endpoint URL will have an alphanumeric DNS Zone identifier.
+L2913: properties.dualStackEndpointPreference  | cite47†DualStackEndpointPreference | Maintains information about the Internet protocol opted by the user.
+L2914: properties.enableExtendedGroups  | boolean  | Enables extended group support with local users feature, if set to true
+L2915: properties.encryption  | cite48†Encryption | Encryption settings to be used for server-side encryption for the storage account.
+L2916: properties.failoverInProgress  | boolean  | If the failover is in progress, the value will be true, otherwise, it will be null.
+L2917: properties.geoPriorityReplicationStatus  | cite57†GeoPriorityReplicationStatus | Status indicating whether Geo Priority Replication is enabled for the account.
+L2918: properties.geoReplicationStats  | cite58†GeoReplicationStats | Geo Replication Stats
+L2919: properties.immutableStorageWithVersioning  | cite62†ImmutableStorageAccount | The property is immutable and can only be set to true at the account creation time. When set to true, it enables object level immutability for all the containers in the account by default.
+L2920: properties.isHnsEnabled  | boolean  | Account HierarchicalNamespace enabled if sets to true.
+L2921: properties.isLocalUserEnabled  | boolean  | Enables local users feature, if set to true
+--------------------------------------------------------------------------------
+Blob Containers - Get - REST API (Azure Storage Resource Provider) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/storagerp/blob-containers/get?view=rest-storagerp-2025-06-01)
+citeturn96view2 [wordlim: 200] Crawled: today; Content type: text/html; Source: open({"ref_id":"https://learn.microsoft.com/en-us/rest/api/storagerp/blob-containers/get?view=rest-storagerp-2025-06-01","lineno":718}); Total lines: 942
+L686:               "tenantId": "72f988bf-86f1-41af-91ab-2d7cd011db47",
+L687:               "timestamp": "2018-03-26T05:06:09.6964643Z"
+L688:             }
+L689:           ]
+L690:         },
+L691:         "publicAccess": "None"
+L692:       }
+L693:     }`
+L694: ## Definitions
+L695: Name  | Description
+L696: --- | ---
+L697: cite6†BlobContainer | Properties of the blob container, including Id, resource name, resource type, Etag.
+L698: cite22†createdByType | The type of identity that created the resource.
+L699: cite7†ErrorResponse | An error response from the storage resource provider.
+L700: cite23†ErrorResponseBody | Error response body contract.
+L701: cite24†ImmutabilityPolicyProperties | The properties of an ImmutabilityPolicy of a blob container.
+L702: cite25†ImmutabilityPolicyState | The ImmutabilityPolicy state of a blob container, possible values include: Locked and Unlocked.
+L703: cite26†ImmutabilityPolicyUpdateType | The ImmutabilityPolicy update type of a blob container, possible values include: put, lock and extend.
+L704: cite27†ImmutableStorageWithVersioning | Object level immutability properties of the container.
+L705: cite28†LeaseDuration | Specifies whether the lease on a container is of infinite or fixed duration, only when the container is leased.
+L706: cite29†LeaseState | Lease state of the container.
+L707: cite30†LeaseStatus | The lease status of the container.
+L708: cite31†LegalHoldProperties | The LegalHold property of a blob container.
+L709: cite32†MigrationState | This property denotes the container level immutability to object level immutability migration state.
+L710: cite33†ProtectedAppendWritesHistory | Protected append writes history setting for the blob container with Legal holds.
+L711: cite34†PublicAccess | Specifies whether data in the container may be accessed publicly and the level of access.
+L712: cite35†systemData | Metadata pertaining to creation and last modification of the resource.
+L713: cite36†TagProperty | A tag of the LegalHold of a blob container.
+L714: cite37†UpdateHistoryProperty | An update history of the ImmutabilityPolicy of a blob container.
+L715: ### BlobContainer
+L716: 
+L717: Object
+L718: 
+L719: Properties of the blob container, including Id, resource name, resource type, Etag.
+L720: Name  | Type  | Description
+L721: --- | --- | ---
+L722: etag  | string  | Resource Etag.
+L723: id  | string (arm-id)  | Fully qualified resource ID for the resource. E.g. "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}"
+L724: name  | string  | The name of the resource
+L725: properties.defaultEncryptionScope  | string  | Default the container to use specified encryption scope for all writes.
+L726: properties.deleted  | boolean  | Indicates whether the blob container was deleted.
+L727: properties.deletedTime  | string (date-time)  | Blob container deletion time.
+L728: properties.denyEncryptionScopeOverride  | boolean  | Block override of encryption scope from the container default.
+L729: properties.enableNfsV3AllSquash  | boolean  | Enable NFSv3 all squash on blob container.
+L730: properties.enableNfsV3RootSquash  | boolean  | Enable NFSv3 root squash on blob container.
+L731: properties.hasImmutabilityPolicy  | boolean  | The hasImmutabilityPolicy public property is set to true by SRP if ImmutabilityPolicy has been created for this container. The hasImmutabilityPolicy public property is set to false by SRP if ImmutabilityPolicy has not been created for this container.
+L732: properties.hasLegalHold  | boolean  | The hasLegalHold public property is set to true by SRP if there are at least one existing tag. The hasLegalHold public property is set to false by SRP if all existing legal hold tags are cleared out. There can be a maximum of 1000 blob containers with hasLegalHold=true for a given account.
+L733: properties.immutabilityPolicy  | cite24†ImmutabilityPolicyProperties | The ImmutabilityPolicy property of the container.
+L734: properties.immutableStorageWithVersioning  | cite27†ImmutableStorageWithVersioning | The object level immutability property of the container. The property is immutable and can only be set to true at the container creation time. Existing containers must undergo a migration process.
+L735: properties.lastModifiedTime  | string (date-time)  | Returns the date and time the container was last modified.
+L736: properties.leaseDuration  | cite28†LeaseDuration | Specifies whether the lease on a container is of infinite or fixed duration, only when the container is leased.
+L737: properties.leaseState  | cite29†LeaseState | Lease state of the container.
+L738: properties.leaseStatus  | cite30†LeaseStatus | The lease status of the container.
+L739: properties.legalHold  | cite31†LegalHoldProperties | The LegalHold property of the container.
+L740: properties.metadata  | object  | A name-value pair to associate with the container as metadata.
+L741: properties.publicAccess  | cite34†PublicAccess | Specifies whether data in the container may be accessed publicly and the level of access.
+L742: properties.remainingRetentionDays  | integer (int32)  | Remaining retention days for soft deleted blob container.
+L743: properties.version  | string  | The version of the deleted blob container.
+L744: systemData  | cite35†systemData | Azure Resource Manager metadata containing createdBy and modifiedBy information.
+L745: type  | string  | The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or "Microsoft.Storage/storageAccounts"
+L746: ### createdByType
+L747: 
+L748: Enumeration
+L749: 
+L750: The type of identity that created the resource.
+L751: 
+L752: Value  | Description
+L753: --- | ---
+L754: User  |
+L755: Application  |
+L756: ManagedIdentity  |
+L757: Key  |
+L758: 
+L759: ### ErrorResponse
+L760: 
+L761: Object
+L762: 
+L763: An error response from the storage resource provider.
+L764: 
+L765: Name  | Type  | Description
+L766: --- | --- | ---
+L767: error  | cite23†ErrorResponseBody | Azure Storage Resource Provider error response body.
+L768: ### ErrorResponseBody
+L769: 
+L770: Object
+L771: 
+L772: Error response body contract.
+L773: 
+L774: Name  | Type  | Description
+L775: --- | --- | ---
+L776: code  | string  | An identifier for the error. Codes are invariant and are intended to be consumed programmatically.
+L777: message  | string  | A message describing the error, intended to be suitable for display in a user interface.
+L778: ### ImmutabilityPolicyProperties
+L779: 
+L780: Object
+L781: 
+L782: The properties of an ImmutabilityPolicy of a blob container.
+L783: Name  | Type  | Description
+L784: --- | --- | ---
+L785: etag  | string  | ImmutabilityPolicy Etag.
+--------------------------------------------------------------------------------
+Pipelines - Get - REST API (Azure Data Factory) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/datafactory/pipelines/get?view=rest-datafactory-2018-06-01)
+citeturn96view3 [wordlim: 200] Crawled: today; Content type: text/html; Source: open({"ref_id":"https://learn.microsoft.com/en-us/rest/api/datafactory/pipelines/get?view=rest-datafactory-2018-06-01","lineno":4590}); Total lines: 6596
+L4534: Name  | Type  | Description
+L4535: --- | --- | ---
+L4536: additionalColumns  | management.azure.com.datafactory.pipelines.get  | Specifies the additional columns to be added to source data. Type: array of objects(AdditionalColumns) (or Expression with resultType array of objects).
+L4537: disableMetricsCollection  | management.azure.com.datafactory.pipelines.get  | If true, disable data store metrics collection. Default is false. Type: boolean (or Expression with resultType boolean).
+L4538: maxConcurrentConnections  | management.azure.com.datafactory.pipelines.get  | The maximum concurrent connection count for the source data store. Type: integer (or Expression with resultType integer).
+L4539: query  | management.azure.com.datafactory.pipelines.get  | A query to retrieve data from source. Type: string (or Expression with resultType string).
+L4540: queryTimeout  | management.azure.com.datafactory.pipelines.get  | Query timeout. Type: string (or Expression with resultType string), pattern: ((\d+).)?(\d\d):(60|([0-5][0-9])):(60|([0-5][0-9])).
+L4541: sourceRetryCount  | management.azure.com.datafactory.pipelines.get  | Source retry count. Type: integer (or Expression with resultType integer).
+L4542: sourceRetryWait  | management.azure.com.datafactory.pipelines.get  | Source retry wait. Type: string (or Expression with resultType string), pattern: ((\d+).)?(\d\d):(60|([0-5][0-9])):(60|([0-5][0-9])).
+L4543: type  | string: cite230†PhoenixSource | Copy source type.
+L4544: ### PipelineElapsedTimeMetricPolicy
+L4545: 
+L4546: Object
+L4547: 
+L4548: Pipeline ElapsedTime Metric Policy.
+L4549: 
+L4550: Name  | Type  | Description
+L4551: --- | --- | ---
+L4552: duration  | management.azure.com.datafactory.pipelines.get  | TimeSpan value, after which an Azure Monitoring Metric is fired.
+L4553: 
+L4554: ### PipelineFolder
+L4555: 
+L4556: Object
+L4557: 
+L4558: The folder that this Pipeline is in. If not specified, Pipeline will appear at the root level.
+L4559: 
+L4560: Name  | Type  | Description
+L4561: --- | --- | ---
+L4562: name  | string  | The name of the folder that this Pipeline is in.
+L4563: ### PipelinePolicy
+L4564: 
+L4565: Object
+L4566: 
+L4567: Pipeline Policy.
+L4568: 
+L4569: Name  | Type  | Description
+L4570: --- | --- | ---
+L4571: elapsedTimeMetric  | cite231†PipelineElapsedTimeMetricPolicy | Pipeline ElapsedTime Metric Policy.
+L4572: 
+L4573: ### PipelineReference
+L4574: 
+L4575: Object
+L4576: 
+L4577: Pipeline reference type.
+L4578: 
+L4579: Name  | Type  | Description
+L4580: --- | --- | ---
+L4581: name  | string  | Reference name.
+L4582: referenceName  | string  | Reference pipeline name.
+L4583: type  | cite235†PipelineReferenceType | Pipeline reference type.
+L4584: ### PipelineReferenceType
+L4585: 
+L4586: Enumeration
+L4587: 
+L4588: Pipeline reference type.
+L4589: 
+L4590: Value  | Description
+L4591: --- | ---
+L4592: PipelineReference  | PipelineReference
+L4593: ### PipelineResource
+L4594: 
+L4595: Object
+L4596: 
+L4597: Pipeline resource type.
+L4598: Name  | Type  | Description
+L4599: --- | --- | ---
+L4600: etag  | string  | "If etag is provided in the response body, it may also be provided as a header per the normal etag convention. Entity tags are used for comparing two or more entities from the same requested resource. HTTP/1.1 uses entity tags in the etag (section 14.19), If-Match (section 14.24), If-None-Match (section 14.26), and If-Range (section 14.27) header fields.")
+L4601: id  | string (arm-id)  | Fully qualified resource ID for the resource. E.g. "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}"
+L4602: name  | string  | The name of the resource
+L4603: properties.activities  | Activity[]:
+L4604:   * cite31†AppendVariableActivity []
+L4605:   * cite45†AzureDataExplorerCommandActivity []
+L4606:   * cite54†AzureFunctionActivity []
+L4607:   * cite58†AzureMLBatchExecutionActivity []
+L4608:   * cite59†AzureMLExecutePipelineActivity []
+L4609:   * cite60†AzureMLUpdateResourceActivity []
+L4610:   * cite89†ControlActivity []
+L4611:   * cite90†CopyActivity []
+L4612:   * cite100†CustomActivity []
+L4613:   * cite109†DataLakeAnalyticsUSQLActivity []
+L4614:   * cite102†DatabricksJobActivity []
+L4615:   * cite103†DatabricksNotebookActivity []
+L4616:   * cite104†DatabricksSparkJarActivity []
+L4617:   * cite105†DatabricksSparkPythonActivity []
+L4618:   * cite113†DeleteActivity []
+L4619:   * cite133†ExecuteDataFlowActivity []
+L4620:   * cite135†ExecutePipelineActivity []
+L4621:   * cite137†ExecuteSSISPackageActivity []
+L4622:   * cite138†ExecuteWranglingDataflowActivity []
+L4623:   * cite139†ExecutionActivity []
+L4624:   * cite144†FailActivity []
+L4625:   * cite149†FilterActivity []
+L4626:   * cite150†ForEachActivity []
+L4627:   * cite152†GetMetadataActivity []
+L4628:   * cite162†HDInsightHiveActivity []
+L4629:   * cite163†HDInsightMapReduceActivity []
+L4630:   * cite164†HDInsightPigActivity []
+L4631:   * cite165†HDInsightSparkActivity []
+L4632:   * cite166†HDInsightStreamingActivity []
+L4633:   * cite173†IfConditionActivity []
+L4634:   * cite192†LookupActivity []
+L4635:   * cite272†ScriptActivity []
+L4636:   * cite283†SetVariableActivity []
+L4637:   * cite307†SqlServerStoredProcedureActivity []
+L4638:   * cite322†SwitchActivity []
+L4639:   * cite325†SynapseNotebookActivity []
+L4640:   * cite327†SynapseSparkJobDefinitionActivity []
+L4641:   * cite338†UntilActivity []
+L4642:   * cite340†ValidationActivity []
+L4643:   * cite344†WaitActivity []
+L4644:   * cite347†WebActivity []
+L4645:   * cite350†WebHookActivity []
+L4646:  | List of activities in pipeline.
+L4647: properties.annotations  | Pipeline.Annotations[]  | List of tags that can be used for describing the Pipeline.
+L4648: properties.concurrency  | integer (int32) minimum: 1  | The max number of concurrent runs for the pipeline.
+L4649: properties.description  | string  | The description of the pipeline.
+L4650: properties.folder  | cite232†PipelineFolder | The folder that this Pipeline is in. If not specified, Pipeline will appear at the root level.
+L4651: properties.parameters  | <string,  cite223†ParameterSpecification >  | List of parameters for pipeline.
+L4652: properties.policy  | cite233†PipelinePolicy | Pipeline Policy.
+L4653: properties.runDimensions  | management.azure.com.datafactory.pipelines.get  | Dimensions emitted by Pipeline.
+L4654: properties.variables  | <string,  cite341†VariableSpecification >  | List of variables for pipeline.
+L4655: systemData  | cite329†systemData | Azure Resource Manager metadata containing createdBy and modifiedBy information.
+L4656: type  | string  | The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or "Microsoft.Storage/storageAccounts"
+L4657: ### PolybaseSettings
+L4658: 
+L4659: Object
+L4660: 
+L4661: PolyBase settings.
+L4662: Name  | Type  | Description
+L4663: --- | --- | ---
+L4664: rejectSampleValue  | management.azure.com.datafactory.pipelines.get  | Determines the number of rows to attempt to retrieve before the PolyBase recalculates the percentage of rejected rows. Type: integer (or Expression with resultType integer), minimum: 0.
+L4665: rejectType  | cite237†PolybaseSettingsRejectType | Reject type.
+L4666: rejectValue  | management.azure.com.datafactory.pipelines.get  | Specifies the value or the percentage of rows that can be rejected before the query fails. Type: number (or Expression with resultType number), minimum: 0.
+L4667: useTypeDefault  | management.azure.com.datafactory.pipelines.get  | Specifies how to handle missing values in delimited text files when PolyBase retrieves data from the text file. Type: boolean (or Expression with resultType boolean).
+

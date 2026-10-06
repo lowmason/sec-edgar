@@ -1,0 +1,61 @@
+{
+  "evidence_id": "SEC-0144",
+  "original_bytes": 178884,
+  "expanded_bytes": 1120694,
+  "observations": {
+    "text_family": "quarterly ISO-date master",
+    "column_header": "CIK|Company Name|Form Type|Date Filed|Filename",
+    "date_shape_counts": {
+      "YYYY-MM-DD": 12479
+    },
+    "strict_encoding": "ascii",
+    "decoder_failures": [],
+    "bom_hex": null,
+    "newline_counts": {
+      "crlf": 12489,
+      "lone_lf": 0,
+      "lone_cr": 0
+    },
+    "header_lines": [
+      "Description:           Master Index of EDGAR Dissemination Feed",
+      "Last Data Received:    October 3, 2026",
+      "Comments:              webmaster@sec.gov",
+      "Anonymous FTP:         ftp://ftp.sec.gov/edgar/",
+      "Cloud HTTP:            https://www.sec.gov/Archives/",
+      "",
+      "",
+      "",
+      "",
+      "CIK|Company Name|Form Type|Date Filed|Filename",
+      "--------------------------------------------------------------------------------"
+    ],
+    "separator": "|",
+    "scan_boundary": "Every nonempty post-header row in retained body",
+    "row_count": 12479,
+    "field_count_distribution": {
+      "5": 12479
+    },
+    "path_families": {
+      "edgar/data/CIK/dashed-accession.txt": 12479
+    },
+    "minimum_filing_date": "2026-10-01",
+    "maximum_filing_date": "2026-10-02",
+    "date_bound_raw_rows": {
+      "minimum": "1000275|ROYAL BANK OF CANADA|424B2|2026-10-01|edgar/data/1000275/0000950103-26-014887.txt",
+      "maximum": "1000275|ROYAL BANK OF CANADA|424B2|2026-10-02|edgar/data/1000275/0000950103-26-014973.txt"
+    },
+    "invalid_dates": [],
+    "representative_raw_rows": {
+      "edgar/data/CIK/dashed-accession.txt": "1000275|ROYAL BANK OF CANADA|424B2|2026-10-01|edgar/data/1000275/0000950103-26-014887.txt"
+    },
+    "nonextractable_examples": [],
+    "representative_fields": [
+      "1000275",
+      "ROYAL BANK OF CANADA",
+      "424B2",
+      "2026-10-01",
+      "edgar/data/1000275/0000950103-26-014887.txt"
+    ],
+    "non_ascii_byte_count": 0
+  }
+}

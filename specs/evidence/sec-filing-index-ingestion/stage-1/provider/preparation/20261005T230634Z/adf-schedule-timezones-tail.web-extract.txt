@@ -1,0 +1,391 @@
+Create schedule triggers - Azure Data Factory & Azure Synapse | Microsoft Learn (https://learn.microsoft.com/en-us/azure/data-factory/how-to-create-schedule-trigger)
+citeturn14view0 [wordlim: 200] Crawled: today; Content type: text/html; Source: open({"ref_id":"https://learn.microsoft.com/en-us/azure/data-factory/how-to-create-schedule-trigger","lineno":480}); Total lines: 619
+L225: Before you save the JSON file, set the value of the `startTime` element to the current UTC time. Set the value of the `endTime` element to one hour past the current UTC time.
+L226: 
+L227:     `{
+L228:         "name": "MyTrigger",
+L229:         "type": "ScheduleTrigger",
+L230:         "typeProperties": {
+L236:                 "timeZone": "UTC"
+L237:             }
+L238:         },
+L239:         "pipelines": [{
+L240:                 "pipelineReference": {
+L241:                     "type": "PipelineReference",
+L242:                     "referenceName": "Adfv2QuickStartPipeline"
+L243:                 },
+L244:                 "parameters": {
+L245:                     "inputPath": "adftutorial/input",
+L246:                     "outputPath": "adftutorial/output"
+L247:                 }
+L248:             }
+L249:         ]
+L250:     }
+L251:     `
+L252: In the JSON snippet:
+L253: 
+L254:      * The `type` element of the trigger is set to `ScheduleTrigger`.
+L255: 
+L256:      * The `frequency` element is set to `Minute` and the `interval` element is set to `15`. As such, the trigger runs the pipeline every 15 minutes between the start and end times.
+L257: 
+L258:      * The `timeZone` element specifies the time zone in which the trigger is created. This setting affects both `startTime` and `endTime`.
+L259:      * The `endTime` element is one hour after the value of the `startTime` element. As such, the trigger runs the pipeline 15 minutes, 30 minutes, and 45 minutes after the start time. Don't forget to update the start time to the current UTC time and the end time to one hour past the start time.
+L260: 
+L261: Important
+L262: 
+L263: For the UTC time zone, the `startTime` and endTime need to follow the format `yyyy-MM-ddTHH:mm:ss`Z. For other time zones, `startTime` and `endTime` follow the `yyyy-MM-ddTHH:mm:ss` format.
+L264: Per the ISO 8601 standard, the Z suffix is used to timestamp mark the datetime to the UTC time zone and render the `timeZone` field useless. If the Z suffix is missing for the UTC time zone, the result is an error upon trigger activation.
+L265: 
+L266:      * The trigger is associated with the `Adfv2QuickStartPipeline` pipeline. To associate multiple pipelines with a trigger, add more `pipelineReference` sections.
+L267:      * The pipeline in the quickstart takes two `parameters` values: `inputPath` and `outputPath`. You pass values for these parameters from the trigger.
+L268: 
+L269:   2. Create a trigger by using the cite50†az datafactory trigger create command:
+L270: 
+L271:     `az datafactory trigger create --resource-group "ADFQuickStartRG" --factory-name "ADFTutorialFactory"  --name "MyTrigger" --properties @MyTrigger.json
+L272:     `
+L273:   3. Confirm that the status of the trigger is Stopped by using the cite51†az datafactory trigger show command:
+L274: 
+L275:     `az datafactory trigger show --resource-group "ADFQuickStartRG" --factory-name "ADFTutorialFactory" --name "MyTrigger"
+L276:     `
+L277: 
+L278:   4. Start the trigger by using the cite52†az datafactory trigger start command:
+L279: 
+L280:     `az datafactory trigger start --resource-group "ADFQuickStartRG" --factory-name "ADFTutorialFactory" --name "MyTrigger"
+L281:     `
+L282:   5. Confirm that the status of the trigger is Started by using the cite51†az datafactory trigger show command:
+L283: 
+L284:     `az datafactory trigger show --resource-group "ADFQuickStartRG" --factory-name "ADFTutorialFactory" --name "MyTrigger"
+L285:     `
+L286:   6. Get the trigger runs in the Azure CLI by using the cite53†az datafactory trigger-run query-by-factory command. To get information about the trigger runs, execute the following command periodically. Update the `last-updated-after` and `last-updated-before` values to match the values in your trigger definition:
+L287:     `az datafactory trigger-run query-by-factory --resource-group "ADFQuickStartRG" --factory-name "ADFTutorialFactory" --filters operand="TriggerName" operator="Equals" values="MyTrigger" --last-updated-after "2017-12-08T00:00:00" --last-updated-before "2017-12-08T01:00:00"
+L288:     `
+L289: Note
+L290: 
+L291: The trigger times of schedule triggers are specified in the UTC timestamp. last-updated-after and last-updated-before also expects the UTC timestamp.
+L292: 
+L293: To monitor the trigger runs and pipeline runs in the Azure portal, see cite39†Monitor pipeline runs .
+L294: ## .NET SDK
+L295: 
+L296: This section shows you how to use the .NET SDK to create, start, and monitor a trigger. To see this sample working, first go through cite54†Quickstart: Create a data factory by using the .NET SDK . Then, add the following code to the main method, which creates and starts a schedule trigger that runs every 15 minutes. The trigger is associated with a pipeline named `Adfv2QuickStartPipeline` that you create as part of the quickstart.
+L297: To create and start a schedule trigger that runs every 15 minutes, add the following code to the main method:
+L298: 
+L299:     `            // Create the trigger
+L300:                 Console.WriteLine("Creating the trigger");
+L301: 
+L302:                 // Set the start time to the current UTC time
+L303:                 DateTime startTime = DateTime.UtcNow;
+L304: 
+L305:                 // Specify values for the inputPath and outputPath parameters
+L306:                 Dictionary<string, object> pipelineParameters = new Dictionary<string, object>();
+L307:                 pipelineParameters.Add("inputPath", "adftutorial/input");
+L308:                 pipelineParameters.Add("outputPath", "adftutorial/output");
+L309: 
+L310:                 // Create a schedule trigger
+L311:                 string triggerName = "MyTrigger";
+L312:                 ScheduleTrigger myTrigger = new ScheduleTrigger()
+L313:                 {
+L314:                     Pipelines = new List<TriggerPipelineReference>()
+L315:                     {
+L316:                         // Associate the Adfv2QuickStartPipeline pipeline with the trigger
+L317:                         new TriggerPipelineReference()
+L318:                         {
+L319:                             PipelineReference = new PipelineReference(pipelineName),
+L320:                             Parameters = pipelineParameters,
+L321:                         }
+L322:                     },
+L323:                     Recurrence = new ScheduleTriggerRecurrence()
+L324:                     {
+L325:                         // Set the start time to the current UTC time and the end time to one hour after the start time
+L326:                         StartTime = startTime,
+L327:                         TimeZone = "UTC",
+L328:                         EndTime = startTime.AddHours(1),
+L329:                         Frequency = RecurrenceFrequency.Minute,
+L330:                         Interval = 15,
+L331:                     }
+L332:                 };
+L333: 
+L334:                 // Now, create the trigger by invoking the CreateOrUpdate method
+L335:                 TriggerResource triggerResource = new TriggerResource()
+L336:                 {
+L337:                     Properties = myTrigger
+L338:                 };
+L339:                 client.Triggers.CreateOrUpdate(resourceGroup, dataFactoryName, triggerName, triggerResource);
+L340: 
+L341:                 // Start the trigger
+L342:                 Console.WriteLine("Starting the trigger");
+L343:                 client.Triggers.Start(resourceGroup, dataFactoryName, triggerName);
+L344:     `
+L345: To create triggers in a different time zone, other than UTC, the following settings are required:
+L346: 
+L347:     `<<ClientInstance>>.SerializationSettings.DateFormatHandling = Newtonsoft.Json.DateFormatHandling.IsoDateFormat;
+L348:     <<ClientInstance>>.SerializationSettings.DateTimeZoneHandling = Newtonsoft.Json.DateTimeZoneHandling.Unspecified;
+L349:     <<ClientInstance>>.SerializationSettings.DateParseHandling = DateParseHandling.None;
+L350:     <<ClientInstance>>.DeserializationSettings.DateParseHandling = DateParseHandling.None;
+L351:     <<ClientInstance>>.DeserializationSettings.DateFormatHandling = Newtonsoft.Json.DateFormatHandling.IsoDateFormat;
+L352:     <<ClientInstance>>.DeserializationSettings.DateTimeZoneHandling = Newtonsoft.Json.DateTimeZoneHandling.Unspecified;
+L353:     `
+L354: To monitor a trigger run, add the following code before the last `Console.WriteLine` statement in the sample:
+L355: 
+L356:     `            // Check that the trigger runs every 15 minutes
+L357:                 Console.WriteLine("Trigger runs. You see the output every 15 minutes");
+L358: 
+L359:                 for (int i = 0; i < 3; i++)
+L360:                 {
+L361:                     System.Threading.Thread.Sleep(TimeSpan.FromMinutes(15));
+L362:                     List<TriggerRun> triggerRuns = client.Triggers.ListRuns(resourceGroup, dataFactoryName, triggerName, DateTime.UtcNow.AddMinutes(-15 * (i + 1)), DateTime.UtcNow.AddMinutes(2)).ToList();
+L363:                     Console.WriteLine("{0} trigger runs found", triggerRuns.Count);
+L364: 
+L365:                     foreach (TriggerRun run in triggerRuns)
+L366:                     {
+L367:                         foreach (KeyValuePair<string, string> triggeredPipeline in run.TriggeredPipelines)
+L368:                         {
+L369:                             PipelineRun triggeredPipelineRun = client.PipelineRuns.Get(resourceGroup, dataFactoryName, triggeredPipeline.Value);
+L370:                             Console.WriteLine("Pipeline run ID: {0}, Status: {1}", triggeredPipelineRun.RunId, triggeredPipelineRun.Status);
+L371:                             List<ActivityRun> runs = client.ActivityRuns.ListByPipelineRun(resourceGroup, dataFactoryName, triggeredPipelineRun.RunId, run.TriggerRunTimestamp.Value, run.TriggerRunTimestamp.Value.AddMinutes(20)).ToList();
+L372:                         }
+L373:                     }
+L374:                 }
+L375:     `
+L376: To monitor the trigger runs and pipeline runs in the Azure portal, see cite39†Monitor pipeline runs .
+L377: ## Python SDK
+L378: This section shows you how to use the Python SDK to create, start, and monitor a trigger. To see this sample working, first go through cite55†Quickstart: Create a data factory by using the Python SDK . Then, add the following code block after the `monitor the pipeline run` code block in the Python script. This code creates a schedule trigger that runs every 15 minutes between the specified start and end times.
+L379: Update the `start_time` variable to the current UTC time and the `end_time` variable to one hour past the current UTC time.
+L380: 
+L381:     `    # Create a trigger
+L382:         tr_name = 'mytrigger'
+L383:         scheduler_recurrence = ScheduleTriggerRecurrence(frequency='Minute', interval='15',start_time='2017-12-12T04:00:00Z', end_time='2017-12-12T05:00:00Z', time_zone='UTC')
+L384:         pipeline_parameters = {'inputPath':'adftutorial/input', 'outputPath':'adftutorial/output'}
+L385:         pipelines_to_run = []
+L386:         pipeline_reference = PipelineReference('copyPipeline')
+L387:         pipelines_to_run.append(TriggerPipelineReference(pipeline_reference, pipeline_parameters))
+L388:         tr_properties = TriggerResource(properties=ScheduleTrigger(description='My scheduler trigger', pipelines = pipelines_to_run, recurrence=scheduler_recurrence))
+L389:         adf_client.triggers.create_or_update(rg_name, df_name, tr_name, tr_properties)
+L390: 
+L391:         # Start the trigger
+L392:         adf_client.triggers.start(rg_name, df_name, tr_name)
+L393:     `
+L394: To monitor the trigger runs and pipeline runs in the Azure portal, see cite39†Monitor pipeline runs .
+L395: ## Azure Resource Manager template
+L396: 
+L397: You can use an Azure Resource Manager template to create a trigger. For step-by-step instructions, see cite56†Create an Azure data factory by using an Azure Resource Manager template .
+L398: ## Pass the trigger start time to a pipeline
+L399: Azure Data Factory version 1 supports reading or writing partitioned data by using the system variables `SliceStart`, `SliceEnd`, `WindowStart`, and `WindowEnd`. In the current version of Data Factory and Azure Synapse pipelines, you can achieve this behavior by using a pipeline parameter. The start time and scheduled time for the trigger are set as the value for the pipeline parameter.
+L400: In the following example, the scheduled time for the trigger is passed as a value to the pipeline `scheduledRunTime` parameter:
+L401: 
+L402:     `"parameters": {
+L403:         "scheduledRunTime": "@trigger().scheduledTime"
+L404:     }
+L405:     `
+L406: ## JSON schema
+L407: The following JSON definition shows you how to create a schedule trigger with scheduling and recurrence:
+L408: 
+L409:     `{
+L410:       "properties": {
+L411:         "type": "ScheduleTrigger",
+L412:         "typeProperties": {
+L413:           "recurrence": {
+L414:             "frequency": <<Minute, Hour, Day, Week, Month>>,
+L415:             "interval": <<int>>,             // Optional, specifies how often to fire (default to 1)
+L416:             "startTime": <<datetime>>,
+L417:             "endTime": <<datetime - optional>>,
+L418:             "timeZone": "UTC"
+L419:             "schedule": {                    // Optional (advanced scheduling specifics)
+L420:               "hours": [<<0-23>>],
+L421:               "weekDays": [<<Monday-Sunday>>],
+L422:               "minutes": [<<0-59>>],
+L423:               "monthDays": [<<1-31>>],
+L424:               "monthlyOccurrences": [
+L425:                    {
+L426:                         "day": <<Monday-Sunday>>,
+L427:                         "occurrence": <<1-5>>
+L428:                    }
+L429:                ]
+L430:             }
+L431:           }
+L432:         },
+L433:        "pipelines": [
+L434:                 {
+L435:                     "pipelineReference": {
+L436:                         "type": "PipelineReference",
+L437:                         "referenceName": "<Name of your pipeline>"
+L438:                     },
+L439:                     "parameters": {
+L440:                         "<parameter 1 Name>": {
+L441:                             "type": "Expression",
+L442:                             "value": "<parameter 1 Value>"
+L443:                         },
+L444:                         "<parameter 2 Name>" : "<parameter 2 Value>"
+L445:                     }
+L446:                }
+L447:           ]
+L448:       }
+L449:     }
+L450:     `
+L451: Important
+L452: 
+L453: The `parameters` property is a mandatory property of the `pipelines` element. If your pipeline doesn't take any parameters, you must include an empty JSON definition for the `parameters` property.
+L454: ### Schema overview
+L455: 
+L456: The following table provides a high-level overview of the major schema elements that are related to recurrence and scheduling of a trigger.
+L457: JSON property  | Description
+L458: --- | ---
+L459: `startTime`  | A Date-Time value. For simple schedules, the value of the `startTime` property applies to the first occurrence. For complex schedules, the trigger starts no sooner than the specified `startTime` value.
+L460: For the UTC time zone, the format is `'yyyy-MM-ddTHH:mm:ssZ'`. For other time zones, the format is `yyyy-MM-ddTHH:mm:ss`.
+L461: `endTime`  | The end date and time for the trigger. The trigger doesn't execute after the specified end date and time. The value for the property can't be in the past. This property is optional.
+L462: For the UTC time zone, the format is `'yyyy-MM-ddTHH:mm:ssZ'`. For other time zones, the format is `yyyy-MM-ddTHH:mm:ss`.
+L463: `timeZone`  | The time zone in which the trigger is created. This setting affects `startTime`, `endTime`, and `schedule`. See a cite57†list of supported time zones .
+L464: `recurrence`  | A recurrence object that specifies the recurrence rules for the trigger. The recurrence object supports the `frequency`, `interval`, `endTime`, `count`, and `schedule` elements. When a recurrence object is defined, the `frequency` element is required. The other elements of the recurrence object are optional.
+L465: `frequency`  | The unit of frequency at which the trigger recurs. The supported values include `minute,` `hour,` `day`, `week`, and `month`.
+L466: `interval`  | A positive integer that denotes the interval for the `frequency` value, which determines how often the trigger runs. For example, if the `interval` is `3` and the `frequency` is `week`, the trigger recurs every 3 weeks.
+L467: `schedule`  | The recurrence schedule for the trigger. A trigger with a specified `frequency` value alters its recurrence based on a recurrence schedule. The `schedule` property contains modifications for the recurrence that are based on minutes, hours, weekdays, month days, and week number.
+L468: Important
+L469: 
+L470: For the UTC time zone, `startTime` and `endTime` need to follow the format `yyyy-MM-ddTHH:mm:ss`Z. For other time zones, `startTime` and `endTime` follow the `yyyy-MM-ddTHH:mm:ss` format.
+L471: 
+L472: Per the ISO 8601 standard, the Z suffix is used to timestamp mark the datetime to the UTC time zone and render the `timeZone` field useless. If the Z suffix is missing for the UTC time zone, the result is an error upon trigger activation.
+L473: ### Schema defaults, limits, and examples
+L474: JSON property  | Type  | Required  | Default value  | Valid values  | Example
+L475: --- | --- | --- | --- | --- | ---
+L476: `startTime`  | String  | Yes  | None  | ISO-8601 Date-Times  | For the UTC time zone: `"startTime" : "2013-01-09T09:30:00-08:00Z"`
+L477: For other time zones: `"2013-01-09T09:30:00-08:00"`
+L478: `timeZone`  | String  | Yes  | None  | cite57†Time zone values | `"UTC"`
+L479: `recurrence`  | Object  | Yes  | None  | Recurrence object  | `"recurrence" : { "frequency" : "monthly", "interval" : 1 }`
+L480: `interval`  | Number  | No  | 1  | 1 to 1,000  | `"interval":10`
+L481: `endTime`  | String  | Yes  | None  | Date-Time value that represents a time in the future  | For the UTC time zone: `"endTime" : "2013-02-09T09:30:00-08:00Z"`
+L482: For other time zones: `"endTime" : "2013-02-09T09:30:00-08:00"`
+L483: `schedule`  | Object  | No  | None  | Schedule object  | `"schedule" : { "minute" : [30], "hour" : [8,17] }`
+L484: ### Time zone option
+L485: 
+L486: Here are some of the time zones supported for schedule triggers.
+L487: Time zone  | UTC offset (Non-daylight saving)  | timeZone value  | Observe daylight saving  | Time stamp format
+L488: --- | --- | --- | --- | ---
+L489: Coordinated Universal Time  | 0  | `UTC`  | No  | `'yyyy-MM-ddTHH:mm:ssZ'`
+L490: Pacific Time (PT)  | -8  | `Pacific Standard Time`  | Yes  | `'yyyy-MM-ddTHH:mm:ss'`
+L491: Central Time (CT)  | -6  | `Central Standard Time`  | Yes  | `'yyyy-MM-ddTHH:mm:ss'`
+L492: Eastern Time (ET)  | -5  | `Eastern Standard Time`  | Yes  | `'yyyy-MM-ddTHH:mm:ss'`
+L493: Greenwich Mean Time (GMT)  | 0  | `GMT Standard Time`  | Yes  | `'yyyy-MM-ddTHH:mm:ss'`
+L494: Central European Standard Time  | +1  | `W. Europe Standard Time`  | Yes  | `'yyyy-MM-ddTHH:mm:ss'`
+L495: India Standard Time (IST)  | +5:30  | `India Standard Time`  | No  | `'yyyy-MM-ddTHH:mm:ss'`
+L496: China Standard Time  | +8  | `China Standard Time`  | No  | `'yyyy-MM-ddTHH:mm:ss'`
+L497: This list is incomplete. For a complete list of time-zone options, see the cite58†Trigger creation page in the portal.
+L498: ### startTime property
+L499: 
+L500: The following table shows you how the `startTime` property controls a trigger run.
+L501: startTime value  | Recurrence without schedule  | Recurrence with schedule
+L502: --- | --- | ---
+L503: Start time in past  | Calculates the first future execution time after the start time and runs at that time.
+L504: Runs subsequent executions based on calculating from the last execution time.
+L505: See the example that follows this table.  | The trigger starts no sooner than the specified start time. The first occurrence is based on the schedule that's calculated from the start time.
+L506: Runs subsequent executions based on the recurrence schedule.
+L507: Start time in future or at present  | Runs once at the specified start time.
+L508: Runs subsequent executions based on calculating from the last execution time.  | The trigger starts no sooner than the specified start time. The first occurrence is based on the schedule that's calculated from the start time.
+L509: Runs subsequent executions based on the recurrence schedule.
+L510: Let's see an example of what happens when the start time is in the past, with a recurrence, but no schedule. Assume that the current time is `2017-04-08 13:00`, the start time is `2017-04-07 14:00`, and the recurrence is every two days. (The `recurrence` value is defined by setting the `frequency` property to `day` and the `interval` property to `2`.) Notice that the `startTime` value is in the past and occurs before the current time.
+L511: Under these conditions, the first execution is at `2017-04-09` at `14:00`. The Scheduler engine calculates execution occurrences from the start time. Any instances in the past are discarded. The engine uses the next instance that occurs in the future. In this scenario, the start time is `2017-04-07` at `2:00pm`, so the next instance is two days from that time, which is `2017-04-09` at `2:00pm`.
+L512: The first execution time is the same even if the `startTime` value is `2017-04-05 14:00` or `2017-04-01 14:00`. After the first execution, subsequent executions are calculated by using the schedule. Therefore, the subsequent executions are at `2017-04-11` at `2:00pm`, then `2017-04-13` at `2:00pm`, then `2017-04-15` at `2:00pm`, and so on.
+L513: 
+L514: Finally, when the hours or minutes aren't set in the schedule for a trigger, the hours or minutes of the first execution are used as the defaults.
+L515: ### schedule property
+L516: 
+L517: The use of a schedule can limit the number of trigger executions. For example, if a trigger with a monthly frequency is scheduled to run only on day 31, the trigger runs only in those months that have a 31st day.
+L518: 
+L519: A schedule can also expand the number of trigger executions. For example, a trigger with a monthly frequency that's scheduled to run on month days 1 and 2, runs on the first and second days of the month, rather than once a month.
+L520: If multiple `schedule` elements are specified, the order of evaluation is from the largest to the smallest schedule setting. The evaluation starts with the week number, and then the month day, weekday, hour, and finally, minute.
+L521: 
+L522: The following table describes the `schedule` elements in detail.
+L523: 
+L524: JSON element  | Description  | Valid values
+L525: --- | --- | ---
+L526: `minutes`  | Minutes of the hour at which the trigger runs.  |
+L527:   * Integer
+L528:   * Array of integers
+L529: `hours`  | Hours of the day at which the trigger runs.  |
+L530: 
+L531:   * Integer
+L532:   * Array of integers
+L533: `weekDays`  | Days of the week on which the trigger runs. The value can be specified with a weekly frequency only.  |
+L534:   * Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday.
+L535:   * Array of day values (maximum array size is 7).
+L536:   * Day values aren't case sensitive.
+L537: `monthlyOccurrences`  | Days of the month on which the trigger runs. The value can be specified with a monthly frequency only.  |
+L538:   * Array of `monthlyOccurrences` objects: `{ "day": day, "occurrence": occurrence }`.
+L539:   * The `day` attribute is the day of the week on which the trigger runs. For example, a `monthlyOccurrences` property with a `day` value of `{Sunday}` means every Sunday of the month. The `day` attribute is required.
+L540:   * The `occurrence` attribute is the occurrence of the specified `day` during the month. For example, a `monthlyOccurrences` property with `day` and `occurrence` values of `{Sunday, -1}` means the last Sunday of the month. The `occurrence` attribute is optional.
+L541: `monthDays`  | Day of the month on which the trigger runs. The value can be specified with a monthly frequency only.  |
+L542:   * Any value <= -1 and >= -31
+L543:   * Any value >= 1 and <= 31
+L544:   * Array of values
+L545: ## Examples of trigger recurrence schedules
+L546: 
+L547: This section provides examples of recurrence schedules and focuses on the `schedule` object and its elements.
+L548: 
+L549: The examples assume that the `interval` value is `1` and that the `frequency` value is correct according to the schedule definition. For example, you can't have a `frequency` value of `day` and also have a `monthDays` modification in the `schedule` object. Restrictions such as these are mentioned in the table in the previous section.
+L550: Example  | Description
+L551: --- | ---
+L552: `{"hours":[5]}`  | Run at 5:00 AM every day.
+L553: `{"minutes":[15], "hours":[5]}`  | Run at 5:15 AM every day.
+L554: `{"minutes":[15], "hours":[5,17]}`  | Run at 5:15 AM and 5:15 PM every day.
+L555: `{"minutes":[15,45], "hours":[5,17]}`  | Run at 5:15 AM, 5:45 AM, 5:15 PM, and 5:45 PM every day.
+L556: `{"minutes":[0,15,30,45]}`  | Run every 15 minutes.
+L557: `{hours":[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]}`  | Run every hour. This trigger runs every hour. The minutes are controlled by the `startTime` value, when a value is specified. If a value isn't specified, the minutes are controlled by the creation time. For example, if the start time or creation time (whichever applies) is 12:25 PM, the trigger runs at 00:25, 01:25, 02:25, ..., and 23:25.
+L558: This schedule is equivalent to having a trigger with a `frequency` value of `hour`, an `interval` value of `1`, and no `schedule`. This schedule can be used with different `frequency` and `interval` values to create other triggers. For example, when the `frequency` value is `month`, the schedule runs only once a month, rather than every day, when the `frequency` value is `day`.
+L559: `{"minutes":[0]}`  | Run every hour on the hour. This trigger runs every hour on the hour starting at 12:00 AM, 1:00 AM, 2:00 AM, and so on.
+L560: This schedule is equivalent to a trigger with a `frequency` value of `hour` and a `startTime` value of zero minutes, or no `schedule` but a `frequency` value of `day`. If the `frequency` value is `week` or `month`, the schedule executes one day a week or one day a month only, respectively.
+L561: `{"minutes":[15]}`  | Run at 15 minutes past every hour. This trigger runs every hour at 15 minutes past the hour starting at 00:15 AM, 1:15 AM, 2:15 AM, and so on, and ending at 11:15 PM.
+L562: `{"hours":[17], "weekDays":["saturday"]}`  | Run at 5:00 PM on Saturdays every week.
+L563: `{"hours":[17], "weekDays":["monday", "wednesday", "friday"]}`  | Run at 5:00 PM on Monday, Wednesday, and Friday every week.
+L564: `{"minutes":[15,45], "hours":[17], "weekDays":["monday", "wednesday", "friday"]}`  | Run at 5:15 PM and 5:45 PM on Monday, Wednesday, and Friday every week.
+L565: `{"minutes":[0,15,30,45], "weekDays":["monday", "tuesday", "wednesday", "thursday", "friday"]}`  | Run every 15 minutes on weekdays.
+L566: `{"minutes":[0,15,30,45], "hours": [9, 10, 11, 12, 13, 14, 15, 16] "weekDays":["monday", "tuesday", "wednesday", "thursday", "friday"]}`  | Run every 15 minutes on weekdays between 9:00 AM and 4:45 PM.
+L567: `{"weekDays":["tuesday", "thursday"]}`  | Run on Tuesdays and Thursdays at the specified start time.
+L568: `{"minutes":[0], "hours":[6], "monthDays":[28]}`  | Run at 6:00 AM on the 28th day of every month (assuming a `frequency` value of `month`).
+L569: `{"minutes":[0], "hours":[6], "monthDays":[-1]}`  | Run at 6:00 AM on the last day of the month. To run a trigger on the last day of a month, use -1 instead of day 28, 29, 30, or 31.
+L570: `{"minutes":[0], "hours":[6], "monthDays":[1,-1]}`  | Run at 6:00 AM on the first and last day of every month.
+L571: `{monthDays":[1,14]}`  | Run on the first and 14th day of every month at the specified start time.
+L572: `{"minutes":[0], "hours":[5], "monthlyOccurrences":[{"day":"friday", "occurrence":1}]}`  | Run on the first Friday of every month at 5:00 AM.
+L573: `{"monthlyOccurrences":[{"day":"friday", "occurrence":1}]}`  | Run on the first Friday of every month at the specified start time.
+L574: `{"monthlyOccurrences":[{"day":"friday", "occurrence":-3}]}`  | Run on the third Friday from the end of the month, every month, at the specified start time.
+L575: `{"minutes":[15], "hours":[5], "monthlyOccurrences":[{"day":"friday", "occurrence":1},{"day":"friday", "occurrence":-1}]}`  | Run on the first and last Friday of every month at 5:15 AM.
+L576: `{"monthlyOccurrences":[{"day":"friday", "occurrence":1},{"day":"friday", "occurrence":-1}]}`  | Run on the first and last Friday of every month at the specified start time.
+L577: `{"monthlyOccurrences":[{"day":"friday", "occurrence":5}]}`  | Run on the fifth Friday of every month at the specified start time. When there's no fifth Friday in a month, the pipeline doesn't run because it's scheduled to run only on fifth Fridays. To run the trigger on the last occurring Friday of the month, consider using -1 instead of 5 for the `occurrence` value.
+L578: `{"minutes":[0,15,30,45], "monthlyOccurrences":[{"day":"friday", "occurrence":-1}]}`  | Run every 15 minutes on the last Friday of the month.
+L579: `{"minutes":[15,45], "hours":[5,17], "monthlyOccurrences":[{"day":"wednesday", "occurrence":3}]}`  | Run at 5:15 AM, 5:45 AM, 5:15 PM, and 5:45 PM on the third Wednesday of every month.
+L580: ## Related content
+L581: 
+L582:   * For more information about triggers, see cite59†Pipeline execution and triggers .
+L583:   * To learn how to reference trigger metadata in pipeline, see cite60†Reference trigger metadata in pipeline runs .
+L584: 
+L585: * * *
+L586: 
+L587: ## Feedback
+L588: 
+L589: Was this page helpful?
+L590: 
+L591: Yes No No
+L592: 
+L593: Need help with this topic?
+L594: 
+L595: Want to try using Ask Learn to clarify or guide you through this topic?
+L596: 
+L597: Ask Learn Ask Learn
+L598: 
+L599: Suggest a fix?
+L600: 
+L601: * * *
+L602: 
+L603: ## Additional resources
+L604: 
+L605: * * *
+L606: 
+L607:   * Last updated on 2025-02-13
+L608: ### In this article
+L609: 
+L610: Was this page helpful?
+L611: 
+L612: Need help with this topic?
+L613: 
+L614: Want to try using Ask Learn to clarify or guide you through this topic?
+L615: 
+L616: Ask Learn Ask Learn
+L617: 
+L618: Suggest a fix?

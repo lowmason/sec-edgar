@@ -1,0 +1,772 @@
+ (https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/specification/monitor/resource-manager/Microsoft.Insights/Insights/stable/2023-12-01/scheduledQueryRule_API.json)
+citeturn88view0 [wordlim: 200] Crawled: 5 days ago; Content type: text/plain; Source: find({"ref_id":"https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/specification/monitor/resource-manager/Microsoft.Insights/Insights/stable/2023-12-01/scheduledQueryRule_API.json","pattern":"\"responses\""}); Total lines: 785
+L26:       "type": "oauth2",
+L27:       "authorizationUrl": "https://login.microsoftonline.com/common/oauth2/authorize",
+L28:       "flow": "implicit",
+L29:       "description": "Azure Active Directory OAuth2 Flow",
+L30:       "scopes": {
+L31:         "user_impersonation": "impersonate your user account"
+L32:       }
+L33:     }
+L34:   },
+L35:   "paths": {
+L36:     "/subscriptions/{subscriptionId}/providers/Microsoft.Insights/scheduledQueryRules": {
+L37:       "get": {
+L38:         "tags": [
+L39:           "ScheduledQueryRules"
+L40:         ],
+L41:         "description": "Retrieve a scheduled query rule definitions in a subscription.",
+L42:         "operationId": "ScheduledQueryRules_ListBySubscription",
+L43:         "parameters": [
+L44:           {
+L45:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/SubscriptionIdParameter"
+L46:           },
+L47:           {
+L48:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/ApiVersionParameter"
+L49:           }
+L50:         ],
+L51:         "responses": {
+L52:           "200": {
+L53:             "description": "Successful request for a list of scheduled query rules",
+L54:             "schema": {
+L55:               "$ref": "#/definitions/ScheduledQueryRuleResourceCollection"
+L56:             }
+L57:           },
+L58:           "default": {
+L59:             "description": "BadRequest",
+L60:             "schema": {
+L61:               "$ref": "./common-types/v2/commonMonitoringTypes.json#/definitions/ErrorContract"
+L62:             }
+L63:           }
+L64:         },
+L65:         "x-ms-pageable": {
+L66:           "nextLinkName": "nextLink"
+L67:         },
+L68:         "x-ms-examples": {
+L69:           "List scheduled query rules by subscription": {
+L70:             "$ref": "./examples/listScheduledQueryRulesBySubscription.json"
+L71:           }
+L72:         }
+L73:       }
+L74:     },
+L75:     "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Insights/scheduledQueryRules": {
+L76:       "get": {
+L77:         "tags": [
+L78:           "ScheduledQueryRules"
+L79:         ],
+L80:         "description": "Retrieve scheduled query rule definitions in a resource group.",
+L81:         "operationId": "ScheduledQueryRules_ListByResourceGroup",
+L82:         "parameters": [
+L83:           {
+L84:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/SubscriptionIdParameter"
+L85:           },
+L86:           {
+L87:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/ResourceGroupNameParameter"
+L88:           },
+L89:           {
+L90:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/ApiVersionParameter"
+L91:           }
+L92:         ],
+L93:         "responses": {
+L94:           "200": {
+L95:             "description": "Successful request for a list of scheduled query rules",
+L96:             "schema": {
+L97:               "$ref": "#/definitions/ScheduledQueryRuleResourceCollection"
+L98:             }
+L99:           },
+L100:           "default": {
+L101:             "description": "BadRequest",
+L102:             "schema": {
+L103:               "$ref": "./common-types/v2/commonMonitoringTypes.json#/definitions/ErrorContract"
+L104:             }
+L105:           }
+L106:         },
+L107:         "x-ms-pageable": {
+L108:           "nextLinkName": "nextLink"
+L109:         },
+L110:         "x-ms-examples": {
+L111:           "List scheduled query rules by resource group": {
+L112:             "$ref": "./examples/listScheduledQueryRulesByResourceGroup.json"
+L113:           }
+L114:         }
+L115:       }
+L116:     },
+L117:     "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Insights/scheduledQueryRules/{ruleName}": {
+L118:       "get": {
+L119:         "tags": [
+L120:           "ScheduledQueryRules"
+L121:         ],
+L122:         "description": "Retrieve an scheduled query rule definition.",
+L123:         "operationId": "ScheduledQueryRules_Get",
+L124:         "parameters": [
+L125:           {
+L126:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/SubscriptionIdParameter"
+L127:           },
+L128:           {
+L129:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/ResourceGroupNameParameter"
+L130:           },
+L131:           {
+L132:             "$ref": "#/parameters/RuleNameParameter"
+L133:           },
+L134:           {
+L135:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/ApiVersionParameter"
+L136:           }
+L137:         ],
+L138:         "responses": {
+L139:           "200": {
+L140:             "description": "Successful request to get a scheduled query rule",
+L141:             "schema": {
+L142:               "$ref": "#/definitions/ScheduledQueryRuleResource"
+L143:             }
+L144:           },
+L145:           "default": {
+L146:             "description": "BadRequest",
+L147:             "schema": {
+L148:               "$ref": "./common-types/v2/commonMonitoringTypes.json#/definitions/ErrorContract"
+L149:             }
+L150:           }
+L151:         },
+L152:         "x-ms-examples": {
+L153:           "Get a scheduled query rule for single resource": {
+L154:             "$ref": "./examples/getScheduledQueryRule.json"
+L155:           }
+L156:         }
+L157:       },
+L158:       "put": {
+L159:         "tags": [
+L160:           "ScheduledQueryRules"
+L161:         ],
+L162:         "description": "Creates or updates a scheduled query rule.",
+L163:         "operationId": "ScheduledQueryRules_CreateOrUpdate",
+L164:         "parameters": [
+L165:           {
+L166:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/SubscriptionIdParameter"
+L167:           },
+L168:           {
+L169:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/ResourceGroupNameParameter"
+L170:           },
+L171:           {
+L172:             "$ref": "#/parameters/RuleNameParameter"
+L173:           },
+L174:           {
+L175:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/ApiVersionParameter"
+L176:           },
+L177:           {
+L178:             "name": "parameters",
+L179:             "in": "body",
+L180:             "required": true,
+L181:             "schema": {
+L182:               "$ref": "#/definitions/ScheduledQueryRuleResource"
+L183:             },
+L184:             "description": "The parameters of the rule to create or update."
+L185:           }
+L186:         ],
+L187:         "responses": {
+L188:           "200": {
+L189:             "description": "Successful request to update a scheduled query rule",
+L190:             "schema": {
+L191:               "$ref": "#/definitions/ScheduledQueryRuleResource"
+L192:             }
+L193:           },
+L194:           "201": {
+L195:             "description": "Created a scheduled query rule",
+L196:             "schema": {
+L197:               "$ref": "#/definitions/ScheduledQueryRuleResource"
+L198:             }
+L199:           },
+L200:           "default": {
+L201:             "description": "Error response describing why the operation failed.",
+L202:             "schema": {
+L203:               "$ref": "./common-types/v2/commonMonitoringTypes.json#/definitions/ErrorContract"
+L204:             }
+L205:           }
+L206:         },
+L207:         "x-ms-examples": {
+L208:           "Create or update a scheduled query rule for Single Resource": {
+L209:             "$ref": "./examples/createOrUpdateScheduledQueryRule.json"
+L210:           },
+L211:           "Create or update a scheduled query rule on Resource group(s)": {
+L212:             "$ref": "./examples/createOrUpdateScheduledQueryRuleResourceGroup.json"
+L213:           },
+L214:           "Create or update a scheduled query rule on Subscription ": {
+L215:             "$ref": "./examples/createOrUpdateScheduledQueryRuleSubscription.json"
+L216:           }
+L217:         }
+L218:       },
+L219:       "patch": {
+L220:         "tags": [
+L221:           "ScheduledQueryRules"
+L222:         ],
+L223:         "description": "Update a scheduled query rule.",
+L224:         "operationId": "ScheduledQueryRules_Update",
+L225:         "parameters": [
+L226:           {
+L227:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/SubscriptionIdParameter"
+L228:           },
+L229:           {
+L230:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/ResourceGroupNameParameter"
+L231:           },
+L232:           {
+L233:             "$ref": "#/parameters/RuleNameParameter"
+L234:           },
+L235:           {
+L236:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/ApiVersionParameter"
+L237:           },
+L238:           {
+L239:             "name": "parameters",
+L240:             "in": "body",
+L241:             "required": true,
+L242:             "schema": {
+L243:               "$ref": "#/definitions/ScheduledQueryRuleResourcePatch"
+L244:             },
+L245:             "description": "The parameters of the rule to update."
+L246:           }
+L247:         ],
+L248:         "responses": {
+L249:           "200": {
+L250:             "description": "Successful request to update a scheduled query rule",
+L251:             "schema": {
+L252:               "$ref": "#/definitions/ScheduledQueryRuleResource"
+L253:             }
+L254:           },
+L255:           "default": {
+L256:             "description": "Error response describing why the operation failed.",
+L257:             "schema": {
+L258:               "$ref": "./common-types/v2/commonMonitoringTypes.json#/definitions/ErrorContract"
+L259:             }
+L260:           }
+L261:         },
+L262:         "x-ms-examples": {
+L263:           "Create or update a scheduled query rule": {
+L264:             "$ref": "./examples/patchScheduledQueryRule.json"
+L265:           }
+L266:         }
+L267:       },
+L268:       "delete": {
+L269:         "tags": [
+L270:           "ScheduledQueryRules"
+L271:         ],
+L272:         "description": "Deletes a scheduled query rule.",
+L273:         "operationId": "ScheduledQueryRules_Delete",
+L274:         "parameters": [
+L275:           {
+L276:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/SubscriptionIdParameter"
+L277:           },
+L278:           {
+L279:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/ResourceGroupNameParameter"
+L280:           },
+L281:           {
+L282:             "$ref": "#/parameters/RuleNameParameter"
+L283:           },
+L284:           {
+L285:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/ApiVersionParameter"
+L286:           }
+L287:         ],
+L288:         "responses": {
+L289:           "default": {
+L290:             "description": "Error response describing why the operation failed.",
+L291:             "schema": {
+L292:               "$ref": "./common-types/v2/commonMonitoringTypes.json#/definitions/ErrorContract"
+L293:             }
+L294:           },
+L295:           "200": {
+L296:             "description": "Successful request to delete a scheduled query rule"
+L297:           },
+L298:           "204": {
+L299:             "description": "No content: the request was successful, but the response is empty"
+L300:           }
+L301:         },
+L302:         "x-ms-examples": {
+L303:           "Delete a scheduled query rule": {
+L304:             "$ref": "./examples/deleteScheduledQueryRule.json"
+L305:           }
+L306:         }
+L307:       }
+L308:     }
+L309:   },
+L310:   "definitions": {
+L311:     "Actions": {
+L312:       "type": "object",
+L313:       "description": "Actions to invoke when the alert fires.",
+L314:       "properties": {
+L315:         "actionGroups": {
+L316:           "type": "array",
+L317:           "items": {
+L318:             "type": "string"
+L319:           },
+L320:           "description": "Action Group resource Ids to invoke when the alert fires."
+L321:         },
+L322:         "customProperties": {
+L323:           "type": "object",
+L324:           "additionalProperties": {
+L325:             "type": "string",
+L326:             "description": "The dictionary of custom properties to include with the post operation. These data are appended to the alert payload."
+L327:           },
+L328:           "description": "The properties of an alert payload."
+L329:         },
+L330:         "actionProperties": {
+L331:           "type": "object",
+L332:           "additionalProperties": {
+L333:             "type": "string",
+L334:             "description": "The dictionary of action properties to include with the post operation. This data customizes the actions."
+L335:           },
+L336:           "description": "The properties of an action properties."
+L337:         }
+L338:       }
+L339:     },
+L340:     "RuleResolveConfiguration": {
+L341:       "type": "object",
+L342:       "description": "TBD. Relevant only for rules of the kind LogAlert.",
+L343:       "properties": {
+L344:         "autoResolved": {
+L345:           "type": "boolean",
+--------------------------------------------------------------------------------
+ (https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/specification/monitor/resource-manager/Microsoft.Insights/Insights/stable/2023-12-01/scheduledQueryRule_API.json)
+citeturn88view1 [wordlim: 200] Crawled: 5 days ago; Content type: text/plain; Source: find({"ref_id":"https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/specification/monitor/resource-manager/Microsoft.Insights/Insights/stable/2023-12-01/scheduledQueryRule_API.json","pattern":"\"ScheduledQueryRuleResource\""}); Total lines: 785
+L128:           {
+L129:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/ResourceGroupNameParameter"
+L130:           },
+L131:           {
+L132:             "$ref": "#/parameters/RuleNameParameter"
+L133:           },
+L134:           {
+L135:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/ApiVersionParameter"
+L136:           }
+L137:         ],
+L138:         "responses": {
+L141:             "schema": {
+L142:               "$ref": "#/definitions/ScheduledQueryRuleResource"
+L143:             }
+L144:           },
+L145:           "default": {
+L146:             "description": "BadRequest",
+L147:             "schema": {
+L148:               "$ref": "./common-types/v2/commonMonitoringTypes.json#/definitions/ErrorContract"
+L149:             }
+L150:           }
+L151:         },
+L152:         "x-ms-examples": {
+L153:           "Get a scheduled query rule for single resource": {
+L154:             "$ref": "./examples/getScheduledQueryRule.json"
+L155:           }
+L156:         }
+L157:       },
+L158:       "put": {
+L159:         "tags": [
+L160:           "ScheduledQueryRules"
+L161:         ],
+L162:         "description": "Creates or updates a scheduled query rule.",
+L163:         "operationId": "ScheduledQueryRules_CreateOrUpdate",
+L164:         "parameters": [
+L165:           {
+L166:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/SubscriptionIdParameter"
+L167:           },
+L168:           {
+L169:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/ResourceGroupNameParameter"
+L170:           },
+L171:           {
+L172:             "$ref": "#/parameters/RuleNameParameter"
+L173:           },
+L174:           {
+L175:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/ApiVersionParameter"
+L176:           },
+L177:           {
+L178:             "name": "parameters",
+L179:             "in": "body",
+L180:             "required": true,
+L181:             "schema": {
+L182:               "$ref": "#/definitions/ScheduledQueryRuleResource"
+L183:             },
+L184:             "description": "The parameters of the rule to create or update."
+L185:           }
+L186:         ],
+L187:         "responses": {
+L188:           "200": {
+L189:             "description": "Successful request to update a scheduled query rule",
+L190:             "schema": {
+L191:               "$ref": "#/definitions/ScheduledQueryRuleResource"
+L192:             }
+L193:           },
+L194:           "201": {
+L195:             "description": "Created a scheduled query rule",
+L196:             "schema": {
+L197:               "$ref": "#/definitions/ScheduledQueryRuleResource"
+L198:             }
+L199:           },
+L200:           "default": {
+L201:             "description": "Error response describing why the operation failed.",
+L202:             "schema": {
+L203:               "$ref": "./common-types/v2/commonMonitoringTypes.json#/definitions/ErrorContract"
+L204:             }
+L205:           }
+L206:         },
+L207:         "x-ms-examples": {
+L208:           "Create or update a scheduled query rule for Single Resource": {
+L209:             "$ref": "./examples/createOrUpdateScheduledQueryRule.json"
+L210:           },
+L211:           "Create or update a scheduled query rule on Resource group(s)": {
+L212:             "$ref": "./examples/createOrUpdateScheduledQueryRuleResourceGroup.json"
+L213:           },
+L214:           "Create or update a scheduled query rule on Subscription ": {
+L215:             "$ref": "./examples/createOrUpdateScheduledQueryRuleSubscription.json"
+L216:           }
+L217:         }
+L218:       },
+L219:       "patch": {
+L220:         "tags": [
+L221:           "ScheduledQueryRules"
+L222:         ],
+L223:         "description": "Update a scheduled query rule.",
+L224:         "operationId": "ScheduledQueryRules_Update",
+L225:         "parameters": [
+L226:           {
+L227:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/SubscriptionIdParameter"
+L228:           },
+L229:           {
+L230:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/ResourceGroupNameParameter"
+L231:           },
+L232:           {
+L233:             "$ref": "#/parameters/RuleNameParameter"
+L234:           },
+L235:           {
+L236:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/ApiVersionParameter"
+L237:           },
+L238:           {
+L239:             "name": "parameters",
+L240:             "in": "body",
+L241:             "required": true,
+L242:             "schema": {
+L243:               "$ref": "#/definitions/ScheduledQueryRuleResourcePatch"
+L244:             },
+L245:             "description": "The parameters of the rule to update."
+L246:           }
+L247:         ],
+L248:         "responses": {
+L249:           "200": {
+L250:             "description": "Successful request to update a scheduled query rule",
+L251:             "schema": {
+L252:               "$ref": "#/definitions/ScheduledQueryRuleResource"
+L253:             }
+L254:           },
+L255:           "default": {
+L256:             "description": "Error response describing why the operation failed.",
+L257:             "schema": {
+L258:               "$ref": "./common-types/v2/commonMonitoringTypes.json#/definitions/ErrorContract"
+L259:             }
+L260:           }
+L261:         },
+L262:         "x-ms-examples": {
+L263:           "Create or update a scheduled query rule": {
+L264:             "$ref": "./examples/patchScheduledQueryRule.json"
+L265:           }
+L266:         }
+L267:       },
+L268:       "delete": {
+L269:         "tags": [
+L270:           "ScheduledQueryRules"
+L271:         ],
+L272:         "description": "Deletes a scheduled query rule.",
+L273:         "operationId": "ScheduledQueryRules_Delete",
+L274:         "parameters": [
+L275:           {
+L276:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/SubscriptionIdParameter"
+L277:           },
+L278:           {
+L279:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/ResourceGroupNameParameter"
+L280:           },
+L281:           {
+L282:             "$ref": "#/parameters/RuleNameParameter"
+L283:           },
+L284:           {
+L285:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/ApiVersionParameter"
+L286:           }
+L287:         ],
+L288:         "responses": {
+L289:           "default": {
+L290:             "description": "Error response describing why the operation failed.",
+L462:       "description": "scheduled query rule Definition"
+L463:     },
+L464:     "ScheduledQueryRuleResource": {
+L465:       "type": "object",
+L466:       "required": [
+L467:         "properties",
+L468:         "location"
+L469:       ],
+L470:       "properties": {
+L471:         "id": {
+L472:           "readOnly": true,
+L473:           "type": "string",
+L474:           "description": "Fully qualified resource ID for the resource. Ex - /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}"
+L475:         },
+L574:             "$ref": "#/definitions/ScheduledQueryRuleResource"
+L575:           },
+L576:           "description": "The values for the scheduled query rule resources."
+L577:         },
+L578:         "nextLink": {
+L579:           "description": "Provides the link to retrieve the next set of elements.",
+L580:           "type": "string",
+L581:           "readOnly": true
+L582:         }
+L583:       },
+L584:       "description": "Represents a collection of scheduled query rule resources."
+L585:     },
+L586:     "ScheduledQueryRuleCriteria": {
+L587:       "type": "object",
+--------------------------------------------------------------------------------
+ (https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/specification/monitor/resource-manager/Microsoft.Insights/Insights/stable/2023-01-01/actionGroups_API.json)
+citeturn88view2 [wordlim: 200] Crawled: 3 days ago; Content type: text/plain; Source: find({"ref_id":"https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/specification/monitor/resource-manager/Microsoft.Insights/Insights/stable/2023-01-01/actionGroups_API.json","pattern":"\"ActionGroupResource\""}); Total lines: 1223
+L40:         "description": "Create a new action group or update an existing one.",
+L41:         "operationId": "ActionGroups_CreateOrUpdate",
+L42:         "x-ms-examples": {
+L43:           "Create or update an action group": {
+L44:             "$ref": "./examples/createOrUpdateActionGroup.json"
+L45:           }
+L46:         },
+L47:         "parameters": [
+L48:           {
+L49:             "$ref": "../../../../../../common-types/resource-management/v3/types.json#/parameters/ResourceGroupNameParameter"
+L50:           },
+L51:           {
+L52:             "$ref": "#/parameters/ActionGroupNameParameter"
+L53:           },
+L54:           {
+L55:             "name": "actionGroup",
+L56:             "in": "body",
+L57:             "required": true,
+L58:             "schema": {
+L59:               "$ref": "#/definitions/ActionGroupResource"
+L60:             },
+L61:             "description": "The action group to create or use for the update."
+L62:           },
+L63:           {
+L64:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/SubscriptionIdParameter"
+L65:           },
+L66:           {
+L67:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/ApiVersionParameter"
+L68:           }
+L69:         ],
+L70:         "responses": {
+L71:           "200": {
+L72:             "description": "An existing action group was successfully updated.",
+L73:             "schema": {
+L74:               "$ref": "#/definitions/ActionGroupResource"
+L75:             }
+L76:           },
+L77:           "201": {
+L78:             "description": "A new action group was successfully created.",
+L79:             "schema": {
+L80:               "$ref": "#/definitions/ActionGroupResource"
+L81:             }
+L82:           },
+L83:           "default": {
+L84:             "description": "An error occurred and the action group could not be created or updated.",
+L85:             "schema": {
+L86:               "$ref": "#/definitions/ErrorResponse"
+L87:             }
+L88:           }
+L89:         }
+L90:       },
+L91:       "get": {
+L92:         "description": "Get an action group.",
+L93:         "operationId": "ActionGroups_Get",
+L94:         "x-ms-examples": {
+L95:           "Get an action group": {
+L96:             "$ref": "./examples/getActionGroup.json"
+L97:           }
+L98:         },
+L99:         "parameters": [
+L100:           {
+L101:             "$ref": "../../../../../../common-types/resource-management/v3/types.json#/parameters/ResourceGroupNameParameter"
+L102:           },
+L103:           {
+L104:             "$ref": "#/parameters/ActionGroupNameParameter"
+L105:           },
+L106:           {
+L107:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/SubscriptionIdParameter"
+L108:           },
+L109:           {
+L110:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/ApiVersionParameter"
+L111:           }
+L112:         ],
+L113:         "responses": {
+L114:           "200": {
+L115:             "description": "The request succeeded.",
+L116:             "schema": {
+L117:               "$ref": "#/definitions/ActionGroupResource"
+L118:             }
+L119:           },
+L120:           "default": {
+L121:             "description": "An error occurred and the action group could not be retrieved. 404: The action group does not exist.",
+L122:             "schema": {
+L123:               "$ref": "#/definitions/ErrorResponse"
+L124:             }
+L125:           }
+L126:         }
+L127:       },
+L128:       "delete": {
+L129:         "description": "Delete an action group.",
+L130:         "operationId": "ActionGroups_Delete",
+L131:         "x-ms-examples": {
+L132:           "Delete an action group": {
+L133:             "$ref": "./examples/deleteActionGroup.json"
+L134:           }
+L135:         },
+L136:         "parameters": [
+L137:           {
+L138:             "$ref": "../../../../../../common-types/resource-management/v3/types.json#/parameters/ResourceGroupNameParameter"
+L139:           },
+L140:           {
+L141:             "$ref": "#/parameters/ActionGroupNameParameter"
+L142:           },
+L143:           {
+L144:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/SubscriptionIdParameter"
+L145:           },
+L146:           {
+L147:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/ApiVersionParameter"
+L148:           }
+L149:         ],
+L150:         "responses": {
+L151:           "200": {
+L152:             "description": "The action group was successfully deleted."
+L153:           },
+L154:           "204": {
+L155:             "description": "The action group does not exist. It may have already been deleted."
+L156:           },
+L157:           "default": {
+L158:             "description": "An error occurred and the action group could not be deleted.",
+L159:             "schema": {
+L160:               "$ref": "#/definitions/ErrorResponse"
+L161:             }
+L162:           }
+L163:         }
+L164:       },
+L165:       "patch": {
+L166:         "description": "Updates an existing action group's tags. To update other fields use the CreateOrUpdate method.",
+L167:         "operationId": "ActionGroups_Update",
+L168:         "parameters": [
+L169:           {
+L170:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/SubscriptionIdParameter"
+L171:           },
+L172:           {
+L173:             "$ref": "../../../../../../common-types/resource-management/v3/types.json#/parameters/ResourceGroupNameParameter"
+L174:           },
+L175:           {
+L176:             "$ref": "#/parameters/ActionGroupNameParameter"
+L177:           },
+L178:           {
+L179:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/ApiVersionParameter"
+L180:           },
+L181:           {
+L182:             "name": "actionGroupPatch",
+L183:             "in": "body",
+L184:             "required": true,
+L185:             "schema": {
+L186:               "$ref": "#/definitions/ActionGroupPatchBody"
+L187:             },
+L188:             "description": "Parameters supplied to the operation."
+L189:           }
+L190:         ],
+L191:         "responses": {
+L192:           "default": {
+L193:             "description": "Error response describing why the operation failed.",
+L194:             "schema": {
+L195:               "$ref": "#/definitions/ErrorResponse"
+L196:             }
+L197:           },
+L198:           "200": {
+L199:             "description": "An existing action group was successfully updated.",
+L200:             "schema": {
+L201:               "$ref": "#/definitions/ActionGroupResource"
+L202:             }
+L203:           }
+L204:         },
+L205:         "x-ms-examples": {
+L206:           "Patch an action group": {
+L207:             "$ref": "./examples/patchActionGroup.json"
+L208:           }
+L209:         }
+L210:       }
+L211:     },
+L212:     "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Insights/actionGroups/{actionGroupName}/createNotifications": {
+L213:       "post": {
+L214:         "x-ms-long-running-operation": true,
+L215:         "x-ms-long-running-operation-options": {
+L216:           "final-state-via": "location"
+L217:         },
+L218:         "description": "Send test notifications to a set of provided receivers",
+L219:         "operationId": "ActionGroups_CreateNotificationsAtActionGroupResourceLevel",
+L220:         "x-ms-examples": {
+L221:           "Create notifications at resource group level": {
+L222:             "$ref": "./examples/postTestNotificationsAtActionGroupResourceLevel.json"
+L223:           }
+L224:         },
+L225:         "parameters": [
+L226:           {
+L227:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/SubscriptionIdParameter"
+L228:           },
+L229:           {
+L230:             "$ref": "../../../../../../common-types/resource-management/v3/types.json#/parameters/ResourceGroupNameParameter"
+L231:           },
+L232:           {
+L233:             "$ref": "#/parameters/ActionGroupNameParameter"
+L234:           },
+L235:           {
+L236:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/ApiVersionParameter"
+L550:           "description": "The source of the notification request"
+L551:         },
+L552:         "contextType": {
+L553:           "type": "string",
+L554:           "description": "The context id type"
+L555:         }
+L556:       }
+L557:     },
+L558:     "ActionGroupResource": {
+L559:       "description": "An action group resource.",
+L560:       "type": "object",
+L561:       "allOf": [
+L562:         {
+L563:           "$ref": "#/definitions/AzureResource"
+L564:         }
+L565:       ],
+L566:       "properties": {
+L567:         "properties": {
+L568:           "x-ms-client-flatten": true,
+L569:           "$ref": "#/definitions/ActionGroup",
+L570:           "description": "The action groups properties of the resource."
+L571:         }
+L572:       }
+L573:     },
+L574:     "ActionGroupList": {
+L575:       "description": "A list of action groups.",
+L576:       "type": "object",
+L577:       "properties": {
+L578:         "value": {
+L579:           "x-ms-identifiers": [],
+L580:           "type": "array",
+L581:           "items": {
+L582:             "$ref": "#/definitions/ActionGroupResource"
+L583:           },
+L584:           "description": "The list of action groups."
+L585:         },
+L586:         "nextLink": {
+L587:           "type": "string",
+L588:           "description": "Provides the link to retrieve the next set of elements."
+L589:         }
+L590:       }
+L591:     },
+L592:     "NotificationRequestBody": {
+L593:       "description": "The request body which contain contact detail metadata",
+L594:       "type": "object",
+L595:       "properties": {
+L596:         "alertType": {
+L597:           "type": "string",
+L598:           "maxLength": 30,
+L599:           "description": "The value of the supported alert type. Supported alert type values are: servicehealth, metricstaticthreshold, metricsdynamicthreshold, logalertv2, smartalert, webtestalert, logalertv1numresult, logalertv1metricmeasurement, resourcehealth, activitylog, actualcostbudget, forecastedbudget"
+L600:         },
+L601:         "emailReceivers": {
+L602:           "x-ms-identifiers": [],
+L603:           "type": "array",
+L604:           "items": {
+L605:             "$ref": "#/definitions/EmailReceiver"
+L606:           },
+

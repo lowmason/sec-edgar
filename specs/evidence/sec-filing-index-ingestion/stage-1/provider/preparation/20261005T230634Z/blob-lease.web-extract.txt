@@ -1,0 +1,332 @@
+Lease Blob (REST API) - Azure Storage | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/storageservices/lease-blob)
+citeturn6view0 [wordlim: 200] Crawled: today; Content type: text/html; Source: open({"ref_id":"https://learn.microsoft.com/en-us/rest/api/storageservices/lease-blob","lineno":null}); Total lines: 357
+L0: cite0†Skip to main content cite1†Skip to Ask Learn chat experience L1: 
+L2: This browser is no longer supported.
+L3: 
+L4: Upgrade to Microsoft Edge to take advantage of the latest features, security updates, and technical support.
+L5: 
+L6: cite2†Download Microsoft Edge†go.microsoft.com cite3†More info about Internet Explorer and Microsoft Edge L7: 
+L8: Table of contents Exit editor mode
+L9: 
+L10: Ask Learn Ask Learn
+L11: 
+L12: Reading mode Table of contents cite1†Read in English Add Add to Plans cite4†Edit†github.com L13: 
+L14: * * *
+L15: 
+L16: Copy Markdown Print
+L17: 
+L18: * * *
+L19: 
+L20: Note
+L21: Access to this page requires authorization. You can try cite1†signing in or changing directories.
+L22: 
+L23: Access to this page requires authorization. You can try changing directories.
+L24: # Lease Blob
+L25: 
+L26: Feedback
+L27: 
+L28: Summarize this article for me
+L29: ## In this article
+L30: 
+L31: The `Lease Blob` operation creates and manages a lock on a blob for write and delete operations. The lock duration can be 15 to 60 seconds, or can be infinite. In versions prior to 2012-02-12, the lock duration is 60 seconds.
+L32: 
+L33: Important
+L34: Starting in version 2012-02-12, some behaviors of the `Lease Blob` operation differ from previous versions. For example, in previous versions, you could renew a lease after releasing it. Starting in version 2012-02-12, this lease request fails, but calls that use older versions of `Lease Blob` still succeed. For a list of changes to the behavior of this operation, see the "Remarks" section later in this article.
+L35: 
+L36: You can call the `Lease Blob` operation in one of the following modes:
+L37:   * `Acquire`, to request a new lease.
+L38: 
+L39:   * `Renew`, to renew an existing lease.
+L40: 
+L41:   * `Change`, to change the ID of an existing lease.
+L42: 
+L43:   * `Release`, to free the lease if it's no longer needed, so that another client can immediately acquire a lease against the blob.
+L44: 
+L45:   * `Break`, to end the lease, but ensure that another client can't acquire a new lease until the current lease period has expired.
+L46: ## Request
+L47: 
+L48: You can construct the `Lease Blob` request as follows. HTTPS is recommended. Replace myaccount with the name of your storage account.
+L49: 
+L50: PUT method request URI  | HTTP version
+L51: --- | ---
+L52: `https://myaccount.blob.core.windows.net/mycontainer/myblob?comp=lease`  | HTTP/1.1
+L53: ### Emulated storage service URI
+L54: 
+L55: When you make a request against the emulated storage service, specify the emulator hostname and Azure Blob Storage port as `127.0.0.1:10000`, followed by the emulated storage account name.
+L56: 
+L57: PUT method request URI  | HTTP version
+L58: --- | ---
+L59: `http://127.0.0.1:10000/devstoreaccount1/mycontainer/myblob?comp=lease`  | HTTP/1.0
+L60: HTTP/1.1
+L61: 
+L62: For more information, see cite5†Use Azurite emulator for local Azure Storage development .
+L63: ### URI parameters
+L64: 
+L65: You can specify the following additional parameter on the request URI.
+L66: 
+L67: Parameter  | Description
+L68: --- | ---
+L69: `timeout`  | Optional. The `timeout` parameter is expressed in seconds. For more information, see cite6†Setting timeouts for Blob Storage operations .
+L70: ### Request headers
+L71: 
+L72: The following table describes required and optional request headers.
+L73: Request header  | Description
+L74: --- | ---
+L75: `Authorization`  | Required. Specifies the authorization scheme, account name, and signature. For more information, see cite7†Authorize requests to Azure Storage .
+L76: `Date` or `x-ms-date`  | Required. Specifies the Coordinated Universal Time (UTC) for the request. For more information, see cite7†Authorize requests to Azure Storage .
+L77: `x-ms-version`  | Optional. Specifies the version of the operation to use for this request. For more information, see cite8†Versioning for the Azure Storage services .
+L78: `x-ms-lease-id: <ID>`  | Required to renew, change, or release the lease.
+L79: You can specify the value of `x-ms-lease-id` in any valid GUID string format. See cite9†Guid Constructor (String)†msdn.microsoft.com for a list of valid formats.
+L80: `x-ms-lease-action: <acquire ¦ renew ¦ change ¦ release ¦ break>`  | `acquire`: Requests a new lease. If the blob doesn't have an active lease, Blob Storage creates a lease on the blob, and returns a new lease ID. If the blob has an active lease, you can only request a new lease by using the active lease ID. You can, however, specify a new `x-ms-lease-duration`, including negative one (-1) for a lease that never expires.
+L81: `renew`: Renews the lease. You can renew the lease if the lease ID specified on the request matches that associated with the blob. Note that the lease can be renewed even if it has expired, as long as the blob hasn't been modified or leased again since the expiration of that lease. When you renew a lease, the lease duration clock resets.
+L82: `change`: Version 2012-02-12 and later. Changes the lease ID of an active lease. A `change` must include the current lease ID in `x-ms-lease-id`, and a new lease ID in `x-ms-proposed-lease-id`.
+L83: `release`: Releases the lease. You can release the lease if the lease ID specified on the request matches that associated with the blob. Releasing the lease allows another client to immediately acquire the lease for the blob, as soon as the release is complete.
+L84: `break`: Breaks the lease, if the blob has an active lease. After a lease is broken, it can't be renewed. Any authorized request can break the lease; the request isn't required to specify a matching lease ID. When a lease is broken, the lease break period is allowed to elapse, during which time `break` and `release` are the only lease operations you can perform on the blob. When a lease is successfully broken, the response indicates the interval in seconds until a new lease can be acquired.
+L85: A lease that has been broken can also be released, in which case another client can immediately acquire the lease on the blob.
+L86: `x-ms-lease-break-period: N`  | Optional. Version 2012-02-12 and later. For a `break` operation, this is the proposed duration of seconds that the lease should continue before it is broken, between 0 and 60 seconds. This break period is only used if it's shorter than the time remaining on the lease. If longer, the time remaining on the lease is used. A new lease will not be available before the break period has expired, but the lease can be held for longer than the break period.
+L87: If this header doesn't appear with a `break` operation, a fixed-duration lease breaks after the remaining lease period elapses, and an infinite lease breaks immediately.
+L88: `x-ms-lease-duration: -1 ¦ n seconds`  | Version 2012-02-12 and later. Only allowed and required on an `acquire` operation. Specifies the duration of the lease, in seconds, or negative one (-1) for a lease that never expires. A non-infinite lease can be between 15 and 60 seconds. A lease duration can't be changed by using `renew` or `change`.
+L89: `x-ms-proposed-lease-id: <ID>`  | Version 2012-02-12 and later. Optional for `acquire`, and required for `change`. Proposed lease ID, in a GUID string format. Blob Storage returns `400 (Invalid request)` if the proposed lease ID isn't in the correct format. See cite9†Guid Constructor (String)†msdn.microsoft.com for a list of valid formats.
+L90: `Origin`  | Optional. Specifies the origin from which the request is issued. The presence of this header results in cross-origin resource sharing (CORS) headers on the response. See cite10†CORS support for the Storage services for details.
+L91: `x-ms-client-request-id`  | Optional. Provides a client-generated, opaque value with a 1-kibibyte (KiB) character limit that's recorded in the logs when logging is configured. We highly recommend that you use this header to correlate client-side activities with requests that the server receives. For more information, see cite11†Monitor Azure Blob Storage .
+L92: This operation also supports the use of conditional headers to run the operation, only if a specified condition is met. For more information, see cite12†Specifying conditional headers for Blob Storage operations .
+L93: ### Request body
+L94: 
+L95: None.
+L96: ### Sample request
+L97: The following sample request shows how to acquire a lease:
+L98: 
+L99:     `
+L100:     Request Syntax:
+L101:     PUT https://myaccount.blob.core.windows.net/mycontainer/myblob?comp=lease HTTP/1.1
+L102: 
+L103:     Request Headers:
+L104:     x-ms-version: 2015-02-21
+L105:     x-ms-lease-action: acquire
+L106:     x-ms-lease-duration: -1
+L107:     x-ms-proposed-lease-id: 1f812371-a41d-49e6-b123-f4b542e851c5
+L108:     x-ms-date: <date>
+L109:     Authorization: SharedKey testaccount1:esSKMOYdK4o+nGTuTyeOLBI+xqnqi6aBmiW4XI699+o=
+L110: 
+L111:     `
+L112: ## Response
+L113: 
+L114: The response includes an HTTP status code and a set of response headers.
+L115: ### Status code
+L116: 
+L117: The success status codes returned for lease operations are the following:
+L118: 
+L119:   * `Acquire`: A successful operation returns status code 201 (Created).
+L120: 
+L121:   * `Renew`: A successful operation returns status code 200 (OK).
+L122: 
+L123:   * `Change`: A successful operation returns status code 200 (OK).
+L124: 
+L125:   * `Release`: A successful operation returns status code 200 (OK).
+L126: 
+L127:   * `Break`: A successful operation returns status code 202 (Accepted).
+L128: For information about status codes, see cite13†Status and error codes .
+L129: ### Response headers
+L130: 
+L131: The response for this operation includes the following headers. The response can also include additional, standard HTTP headers. All standard headers conform to the cite14†HTTP/1.1 protocol specification†go.microsoft.com .
+L132: Syntax  | Description
+L133: --- | ---
+L134: `ETag`  | Contains a value that you can use to perform operations conditionally. See cite12†Specifying conditional headers for Blob Storage operations for more information.
+L135: This header is returned for requests made against version 2013-08-15 and later, and the `ETag` value is in quotes.
+L136: The `Lease Blob` operation doesn't modify this property.
+L137: `Last-Modified`  | The date/time that the blob was last modified. For more information, see cite15†Representation of date-time values in headers .
+L138: Any write operation on the blob, including updates on the blob's metadata or properties, changes the last-modified time of the blob. The `Lease Blob` operation doesn't modify this property.
+L139: `x-ms-lease-id: <id>`  | When you request a lease, Blob Storage returns a unique lease ID. While the lease is active, you must include the lease ID with any request to write to the blob, or to renew, change, or release the lease.
+L140: A successful renew operation also returns the lease ID for the active lease.
+L141: `x-ms-lease-time: seconds`  | Approximate time remaining in the lease period, in seconds. This header is returned only for a successful request to break the lease. If the break is immediate, `0` is returned.
+L142: `x-ms-request-id`  | This header uniquely identifies the request that was made, and can be used for troubleshooting the request. For more information, see cite16†Troubleshooting API operations .
+L143: `x-ms-version`  | Indicates the version of Blob Storage used to run the request. This header is returned for requests made against version 2009-09-19 and later.
+L144: `Date`  | A UTC date/time value that indicates the time at which the response was initiated. The service generates this value.
+L145: `Access-Control-Allow-Origin`  | Returned if the request includes an `Origin` header, and CORS is enabled with a matching rule. This header returns the value of the origin request header in case of a match.
+L146: `Access-Control-Expose-Headers`  | Returned if the request includes an `Origin` header, and CORS is enabled with a matching rule. Returns the list of response headers that are to be exposed to the client or issuer of the request.
+L147: `Access-Control-Allow-Credentials`  | Returned if the request includes an `Origin` header, and CORS is enabled with a matching rule that doesn't allow all origins. This header is set to `true`.
+L148: `x-ms-client-request-id`  | You can use this header to troubleshoot requests and corresponding responses. The value of this header is equal to the value of the `x-ms-client-request-id` header, if it's present in the request. The value is at most 1,024 visible ASCII characters. If the `x-ms-client-request-id` header isn't present in the request, it won't be present in the response.
+L149: ### Response body
+L150: 
+L151: None.
+L152: 
+L153: ### Sample response
+L154: 
+L155: The following is a sample response for a request to acquire a lease:
+L156: 
+L157:     `Response Status:
+L158:     HTTP/1.1 201 Created
+L159: 
+L160:     Response Headers:
+L161:     Server: Windows-Azure-Blob/1.0 Microsoft-HTTPAPI/2.0
+L162:     x-ms-request-id: cc6b209a-b593-4be1-a38a-dde7c106f402
+L163:     x-ms-version: 2015-02-21
+L164:     x-ms-lease-id: 1f812371-a41d-49e6-b123-f4b542e851c5
+L165:     Date: <date>
+L166: 
+L167:     `
+L168: ## Authorization
+L169: 
+L170: Authorization is required when calling any data access operation in Azure Storage. You can authorize the `Lease Blob` operation as described below.
+L171: 
+L172: Important
+L173: 
+L174: Microsoft recommends using Microsoft Entra ID with managed identities to authorize requests to Azure Storage. Microsoft Entra ID provides superior security and ease of use compared to Shared Key authorization.
+L175: 
+L176:   * cite17†Microsoft Entra ID (recommended) L177:   * cite18†Shared access signatures (SAS) L178:   * cite19†Shared key L179: Azure Storage supports using Microsoft Entra ID to authorize requests to blob data. With Microsoft Entra ID, you can use Azure role-based access control (Azure RBAC) to grant permissions to a security principal. The security principal may be a user, group, application service principal, or Azure managed identity. The security principal is authenticated by Microsoft Entra ID to return an OAuth 2.0 token. The token can then be used to authorize a request against the Blob service.
+L180: To learn more about authorization using Microsoft Entra ID, see cite20†Authorize access to blobs using Microsoft Entra ID .
+L181: ### Permissions
+L182: 
+L183: Listed below are the RBAC action necessary for a Microsoft Entra user, group, managed identity, or service principal to call the `Lease Blob` operation, and the least privileged built-in Azure RBAC role that includes this action:
+L184: 
+L185:   * Azure RBAC action: cite21†Microsoft.Storage/storageAccounts/blobServices/containers/blobs/write L186:   * Least privileged built-in role: cite22†Storage Blob Data Contributor L187: To learn more about assigning roles using Azure RBAC, see cite23†Assign an Azure role for access to blob data .
+L188: 
+L189: A shared access signature (SAS) provides secure delegated access to resources in a storage account. With a SAS, you have granular control over how a client can access data. You can specify what resource the client may access, what permissions they have to those resources, and how long the SAS is valid.
+L190: The `Lease Blob` operation supports three types of shared access signatures: cite24†user delegation SAS , cite25†service SAS , and cite26†account SAS .
+L191: 
+L192: As a security best practice, we recommend that you use Microsoft Entra credentials rather than the storage account key, which can be more easily compromised. If your application design requires shared access signatures, use Microsoft Entra credentials to create a user delegation SAS, when possible.
+L193: When Shared Key access is disallowed for the storage account, a service SAS token or an account SAS token will not be permitted on a request to Blob Storage. To learn more, see cite27†Understand how disallowing Shared Key affects SAS tokens .
+L194: ### User delegation SAS
+L195: 
+L196: A user delegation SAS is secured with Microsoft Entra credentials and also by the permissions specified for the SAS.
+L197: 
+L198: Calling the `Lease Blob` operation using a SAS token delegated to a container or blob resource requires the Write (w) permission as part of the user delegation SAS token.
+L199: 
+L200: To learn more about the user delegation SAS, see cite28†Create a user delegation SAS .
+L201: ### Service SAS
+L202: 
+L203: A service SAS is secured with the storage account key. A service SAS delegates access to a resource in a single Azure Storage service, such as blob storage.
+L204: 
+L205: Calling the `Lease Blob` operation using a SAS token delegated to a container or blob resource requires the Write (w) permission as part of the service SAS token.
+L206: 
+L207: To learn more about the service SAS, see cite29†Create a service SAS .
+L208: ### Account SAS
+L209: 
+L210: An account SAS is secured with the storage account key. An account SAS delegates access to resources in one or more of the storage services. All of the operations available via a service or user delegation SAS are also available via an account SAS.
+L211: 
+L212: The following table indicates the signed resource type and signed permissions to specify when delegating access:
+L213: Operation  | Signed service  | Signed resource type  | Signed permission
+L214: --- | --- | --- | ---
+L215: Lease Blob  | Blob (b)  | Object (o)  | Write (w)
+L216: 
+L217: To learn more about the account SAS, see cite30†Create an account SAS .
+L218: 
+L219: The `Lease Blob` operation supports cite31†Shared Key authorization . Authorizing with account keys is not recommended for most scenarios, as it's less secure.
+L220: Microsoft recommends disallowing Shared Key authorization for the storage account when possible. For more information, see cite32†Prevent authorization with Shared Key .
+L221: ## Remarks
+L222: 
+L223: A lease on a blob provides exclusive write and delete access to the blob. To write to a blob with an active lease, a client must include the active lease ID with the write request. The lease is granted for the duration specified when the lease is acquired. This duration can be between 15 and 60 seconds, or an infinite duration.
+L224: When a client acquires a lease, a lease ID is returned. Blob Storage generates a lease ID if one isn't specified in the acquire request. The client can use this lease ID to renew the lease, change its lease ID, or release the lease.
+L225: 
+L226: When a lease is active, the lease ID must be included in the request for any of the following operations:
+L227: 
+L228:   * cite33†Put Blob L229: 
+L230:   * cite34†Set Blob Metadata L231: 
+L232:   * cite35†Set Blob Properties L233: 
+L234:   * cite36†Delete Blob L235: 
+L236:   * cite37†Put Block L237: 
+L238:   * cite38†Put Block List L239: 
+L240:   * cite39†Put Page L241:   * cite40†Append Block L242: 
+L243:   * cite41†Copy Blob (lease ID needed for destination blob)
+L244: 
+L245: If the lease ID isn't included, these operations fail on a leased blob, with `412 – Precondition failed`.
+L246: 
+L247: The following operations succeed on a leased blob, without including the lease ID:
+L248: 
+L249:   * cite42†Get Blob L250: 
+L251:   * cite43†Get Blob Metadata L252: 
+L253:   * cite44†Get Blob Properties L254: 
+L255:   * cite45†Get Block List L256: 
+L257:   * cite46†Get Page Ranges L258: 
+L259:   * cite47†List Blobs L260: 
+L261:   * cite41†Copy Blob (No lease ID needed for source blob.)
+L262:   * cite48†Lease Blob (REST API) (No lease ID needed for `x-ms-lease-action: break`.)
+L263: 
+L264: It's not necessary to include the lease ID for `GET` operations on a blob that has an active lease. However, all `GET` operations support a conditional lease parameter, where the operation only proceeds if the lease ID included with the request is valid.
+L265: All container operations are permitted on a container that includes blobs with an active lease, including cite49†Delete Container . Therefore, a container can be deleted even if blobs within it have active leases. Use the cite50†Lease Container operation to control rights to delete a container.
+L266: ### Lease states
+L267: 
+L268: The following diagram shows the five states of a lease, and the commands or events that cause lease state changes.
+L269: 
+L270: cite51†Image: BlobLeaseStates L271: 
+L272: A lease can be in one of these states, based on whether the lease is locked or unlocked, and whether the lease is renewable in that state. The lease actions shown in the preceding diagram cause state transitions.
+L273: Renewal status  | Locked lease  | Unlocked lease
+L274: --- | --- | ---
+L275: Renewable lease  | Leased  | Expired
+L276: Non-renewable lease  | Breaking  | Broken, Available
+L277: 
+L278:   * `Available`: The lease is unlocked and can be acquired. Allowed action: `acquire`.
+L279: 
+L280:   * `Leased`: The lease is locked. Allowed actions: `acquire` (same lease ID only), `renew`, `change`, `release`, and `break`.
+L281: 
+L282:   * `Expired`: The lease duration has expired. Allowed actions: `acquire`, `renew`, `release`, and `break`.
+L283:   * `Breaking`: The lease has been broken, but the lease will continue to be locked until the break period has expired. Allowed actions: `release` and `break`.
+L284: 
+L285:   * `Broken`: The lease has been broken, and the break period has expired. Allowed actions: `acquire`, `release`, and `break`.
+L286: After a lease has expired, the lease ID is maintained by Blob Storage until the blob is modified or leased again. A client can attempt to renew or release the lease by using their expired lease ID. If the operation is successful, this means that the blob hasn't been changed since the lease ID was last valid.
+L287: If the client attempts to renew or release a lease with their previous lease ID, and the request fails, then the blob was modified or leased again since the client's lease was last active. The client must then acquire a new lease on the blob.
+L288: 
+L289: If a lease expires rather than being explicitly released, a client might need to wait up to one minute before a new lease can be acquired for the blob. However, the client can renew the lease with their lease ID immediately, if the blob hasn't been modified.
+L290: Note that a lease can't be granted for a blob snapshot, because snapshots are read-only. Requesting a lease against a snapshot results in status code 400 (Bad Request).
+L291: 
+L292: The blob's `Last-Modified-Time` property isn't updated by calls to `Lease Blob`.
+L293: 
+L294: The following tables show outcomes of actions on blobs with leases in various lease states. Letters (A), (B), and (C) represent lease IDs, and (X) represents a lease ID generated by Blob Storage.
+L295: ### Outcomes of use attempts on blobs by lease state
+L296: Action  | Available  | Leased (A)  | Breaking (A)  | Broken (A)  | Expired (A)
+L297: --- | --- | --- | --- | --- | ---
+L298: Write with (A)  | Fails (412)  | Leased (A), write succeeds  | Breaking (A), write succeeds  | Fails (412)  | Fails (412)
+L299: Write with (B)  | Fails (412)  | Fails (409)  | Fails (412)  | Fails (412)  | Fails (412)
+L300: Write, no lease specified  | Available, write succeeds  | Fails (412)  | Fails (412)  | Available, write succeeds  | Available, write succeeds
+L301: Read with (A)  | Fails (412)  | Leased (A), read succeeds  | Breaking (A), read succeeds  | Fails (412)  | Fails (412)
+L302: Read with (B)  | Fails (412)  | Fails (409)  | Fails (409)  | Fails (412)  | Fails (412)
+L303: Read, no lease specified  | Available, read succeeds  | Leased (A), read succeeds  | Breaking (A), read succeeds  | Broken (A), read succeeds  | Expired (A), read succeeds
+L304: ### Outcomes of lease operations on blobs by lease state
+L305: Action  | Available  | Leased (A)  | Breaking (A)  | Broken (A)  | Expired (A)
+L306: --- | --- | --- | --- | --- | ---
+L307: `Acquire`, no proposed lease ID  | Leased (X)  | Fails (409)  | Fails (409)  | Leased (X)  | Leased (X)
+L308: `Acquire` (A)  | Leased (A)  | Leased (A), new duration  | Fails (409)  | Leased (A)  | Leased (A)
+L309: `Acquire` (B)  | Leased (B)  | Fails (409)  | Fails (409)  | Leased (B)  | Leased (B)
+L310: `Break`, period=0  | Fails (409)  | Broken (A)  | Broken (A)  | Broken (A)  | Broken (A)
+L311: `Break`, period>0  | Fails (409)  | Breaking (A)  | Breaking (A)  | Broken (A)  | Broken (A)
+L312: `Change`, (A) to (B)  | Fails (409)  | Leased (B)  | Fails (409)  | Fails (409)  | Fails (409)
+L313: `Change`, (B) to (A)  | Fails (409)  | Leased (A)  | Fails (409)  | Fails (409)  | Fails (409)
+L314: `Change`, (B) to (C)  | Fails (409)  | Fails (409)  | Fails (409)  | Fails (409)  | Fails (409)
+L315: `Renew` (A)  | Fails (409)  | Leased (A), expiration clock reset  | Fails (409)  | Fails (409)  | Leased(A), if blob hasn't been modified.
+L316: Fails (409) if blob has been modified.
+L317: `Renew` (B)  | Fails (409)  | Fails (409)  | Fails (409)  | Fails (409)  | Fails (409)
+L318: `Release` (A)  | Fails (409)  | Available  | Available  | Available  | Available
+L319: `Release` (B)  | Fails (409)  | Fails (409)  | Fails (409)  | Fails (409)  | Fails (409)
+L320: Duration expires  | Available  | Expired (A)  | Broken (A)  | Broken (A)  | Expired (A)
+L321: ### Changes to Lease Blob introduced in version 2012-02-12
+L322: 
+L323: The following list specifies changes to `Lease Blob` behavior introduced in version 2012-02-12.
+L324: 
+L325:   * A call to `Lease Blob` to acquire a lease now must include a lease duration header. If you try to acquire a lease without specifying a lease duration, the service returns `400 Bad Request – Missing required header`.
+L326:   * You can no longer renew a lease after releasing it. If you try to do so, the service returns `409 Conflict – The lease ID specified did not match the lease ID for the blob`. Applications that called release, and then called renew, must now save the `ETag` from the release call. Then applications must call acquire, with an `If-Match` conditional header, to acquire the lease only when the blob is unchanged.
+L327:   * You can no longer break a lease after releasing it. If you try to do so, the service returns `409 Conflict – There is currently no lease on the blob`.
+L328:   * You can now break a breaking or broken lease, making break operations idempotent. In previous versions, this failed with `409 Conflict – The lease has already been broken and cannot be broken again`. This change allows you to shorten the duration of a break. If you break a lease that is in the breaking state, and include a shorter duration than the remaining break period, your shorter duration is used.
+L329: ### Billing
+L330: 
+L331: Pricing requests can originate from clients that use Blob Storage APIs, either directly through the Blob Storage REST API, or from an Azure Storage client library. These requests accrue charges per transaction. The type of transaction affects how the account is charged. For example, read transactions accrue to a different billing category than write transactions. The following table shows the billing category for `Lease Blob` requests based on the storage account type:
+L332: Operation  | Storage account type  | Billing category
+L333: --- | --- | ---
+L334: Lease Blob (acquire, release, renew)  | Premium block blob
+L335: Standard general-purpose v2  | Other operations
+L336: Lease Blob (acquire, release, renew)  | Standard general-purpose v1  | Read operations
+L337: Lease Blob (break, change)  | Premium block blob
+L338: Standard general-purpose v2  | Other operations
+L339: Lease Blob (break, change)  | Standard general-purpose v1  | Write operations
+L340: ## See also
+L341: 
+L342: new-blob-lease-features-infinite-leases-smaller-lease-times-and-more.aspx)
+L343: cite7†Authorize requests to Azure Storage L344: cite13†Status and error codes L345: cite52†Blob Storage error codes L346: cite50†Lease Container L347: 
+L348: * * *
+L349: 
+L350: ## Additional resources
+L351: 
+L352: * * *
+L353: 
+L354:   * Last updated on 2023-04-04
+L355: 
+L356: ### In this article

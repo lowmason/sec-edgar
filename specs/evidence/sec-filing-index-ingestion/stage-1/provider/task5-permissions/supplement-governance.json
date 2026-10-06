@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "evidence_id": "T5-PERM-SUPP-governance",
+  "source_url": "https://learn.microsoft.com/en-us/azure/role-based-access-control/permissions/management-and-governance",
+  "retrieved_at_utc": "2026-10-06T01:20:12Z",
+  "timestamp_semantics": "Collection batch clock anchor, not exact individual request timestamp; compute/containers reuse previously collected official catalog matches.",
+  "source_version": "Rolling public permission catalog observed 2026-10-06",
+  "retrieval_method": "web.run public official permission catalog, curated exact action string extract",
+  "status": "success",
+  "actions": [
+    "Microsoft.Resources/subscriptions/providers/read",
+    "Microsoft.Resources/subscriptions/resourceGroups/read",
+    "Microsoft.Resources/subscriptions/resourceGroups/write",
+    "Microsoft.Resources/deployments/write",
+    "Microsoft.Resources/deployments/read",
+    "Microsoft.Resources/deployments/validate/action",
+    "Microsoft.Resources/deployments/whatIf/action",
+    "Microsoft.Resources/deployments/operations/read",
+    "Microsoft.Resources/deployments/operationstatuses/read",
+    "Microsoft.Authorization/roleDefinitions/write"
+  ],
+  "data_actions": [],
+  "limitations": "Only selected management operations collected; not a claim of complete deployment role or effective authorization."
+}

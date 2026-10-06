@@ -1,0 +1,12 @@
+{
+  "command": [
+    "python3",
+    "-B",
+    "specs/evidence/sec-filing-index-ingestion/stage-1/final-fix/assemble_claims.py"
+  ],
+  "exit_code": 1,
+  "stdout": "",
+  "stderr": "Traceback (most recent call last):\n  File \"/Users/lowell/Projects/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-1/final-fix/assemble_claims.py\", line 147, in <module>\n    actions=sorted(set(re.findall(r'[A-Za-z][A-Za-z.]+/[A-Za-z0-9*/.]+',source['extract'])))\n                                                                        ~~~~~~^^^^^^^^^^^\nKeyError: 'extract'\n",
+  "original_helper_sha256": "fef8dbde3ff781935110763d831345d2b8692636fde798eb5d5e3bee880d7135",
+  "semantics": "Exact stderr transcribed from tool output; no live mutation occurred."
+}

@@ -1,0 +1,586 @@
+Triggers - Create Or Update - REST API (Azure Data Factory) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/datafactory/triggers/create-or-update?view=rest-datafactory-2018-06-01)
+citeturn70view0 [wordlim: 200] Crawled: today; Content type: text/html; Source: find({"ref_id":"https://learn.microsoft.com/en-us/rest/api/datafactory/triggers/create-or-update?view=rest-datafactory-2018-06-01","pattern":"200 OK"}); Total lines: 1356
+L0: cite0†Skip to main content cite1†Skip to in-page navigation cite2†Skip to Ask Learn chat experience L1: 
+L2: This browser is no longer supported.
+L3: 
+L4: Upgrade to Microsoft Edge to take advantage of the latest features, security updates, and technical support.
+L5: 
+L6: cite3†Download Microsoft Edge†go.microsoft.com cite4†More info about Internet Explorer and Microsoft Edge L7: 
+L8: Table of contents Exit editor mode
+L9: 
+L10: Ask Learn Ask Learn
+L11: 
+L12: Reading mode Table of contents cite2†Read in English Add Add to Plans cite5†Edit†github.com L13: 
+L14: * * *
+L15: Copy Markdown Print
+L16: 
+L17: * * *
+L18: 
+L19: Note
+L20: 
+L21: Access to this page requires authorization. You can try cite2†signing in or changing directories.
+L22: 
+L23: Access to this page requires authorization. You can try changing directories.
+L24: # Triggers - Create Or Update
+L25: 
+L26: Service:
+L27:     Data Factory
+L28: 
+L29: API Version:
+L30:     2018-06-01
+L31: 
+L32: ##
+L33: 
+L34: Creates or updates a trigger.
+L35: 
+L36:     `PUT https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}/triggers/{triggerName}?api-version=2018-06-01`
+L37: ## URI Parameters
+L38: Name  | In  | Required  | Type  | Description
+L39: --- | --- | --- | --- | ---
+L40: factoryName  | path  | True  | string minLength: 3
+L41: maxLength: 63
+L42: pattern: ^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$  | The factory name.
+L43: resourceGroupName  | path  | True  | string minLength: 1
+L44: maxLength: 90  | The name of the resource group. The name is case insensitive.
+L45: subscriptionId  | path  | True  | string (uuid)  | The ID of the target subscription. The value must be an UUID.
+L46: triggerName  | path  | True  | string minLength: 1
+L47: maxLength: 260
+L48: pattern: ^[A-Za-z0-9_][^<>*#.%&:\\+?/]*$  | The trigger name.
+L49: api-version  | query  | True  | string minLength: 1  | The API version to use for this operation.
+L50: ## Request Header
+L51: 
+L52: Name  | Required  | Type  | Description
+L53: --- | --- | --- | ---
+L54: if-match  |  | string  | ETag of the trigger entity. Should only be specified for update, for which it should match existing entity or can be * for unconditional update.
+L55: ## Request Body
+L56: 
+L57: Name  | Required  | Type  | Description
+L58: --- | --- | --- | ---
+L59: properties  | True  | Trigger:
+L60: 
+L61:   * cite6†MultiplePipelineTrigger L62:   * cite7†ChainingTrigger L63:   * cite8†RerunTumblingWindowTrigger L64:   * cite9†TumblingWindowTrigger L65:   * cite10†BlobEventsTrigger L66:   * cite11†BlobTrigger L67:   * cite12†CustomEventsTrigger L68:   * cite13†ScheduleTrigger L69:  | Properties of the trigger.
+L70: ## Responses
+L71: 
+L72: Name  | Type  | Description
+L73: --- | --- | ---
+L74: 200 OK  | cite14†TriggerResource | Resource 'TriggerResource' update operation succeeded
+L75: Other Status Codes  | cite15†CloudError | An unexpected error response.
+L76: 
+L77: ## Security
+L78: 
+L79: ### azure_auth
+L80: 
+L81: Azure Active Directory OAuth2 Flow.
+L82: 
+L83: Type: oauth2
+L84: Flow: implicit
+L85: Authorization URL: https://login.microsoftonline.com/common/oauth2/authorize
+L86: 
+L87: #### Scopes
+L88: 
+L89: Name  | Description
+L90: --- | ---
+L91: user_impersonation  | impersonate your user account
+L92: ## Examples
+L93: 
+L94: cite16†Triggers_Create L95: cite17†Triggers_Update L96: 
+L97: ### Triggers_Create
+L98: #### Sample request
+L99:   * cite18†HTTP L100:   * cite19†Java L101:   * cite20†Python L102:   * cite21†Go L103:   * cite22†JavaScript L104:   * cite23†dotnet L105: 
+L106:     `PUT https://management.azure.com/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/exampleResourceGroup/providers/Microsoft.DataFactory/factories/exampleFactoryName/triggers/exampleTrigger?api-version=2018-06-01
+L107: 
+L108:     {
+L109:       "properties": {
+L110:         "type": "ScheduleTrigger",
+L111:         "pipelines": [
+L112:           {
+L113:             "parameters": {
+L114:               "OutputBlobNameList": [
+L115:                 "exampleoutput.csv"
+L116:               ]
+L117:             },
+L118:             "pipelineReference": {
+L119:               "type": "PipelineReference",
+L120:               "referenceName": "examplePipeline"
+L121:             }
+L122:           }
+L123:         ],
+L124:         "typeProperties": {
+L125:           "recurrence": {
+L126:             "endTime": "2018-06-16T00:55:13.8441801Z",
+L127:             "frequency": "Minute",
+L128:             "interval": 4,
+L129:             "startTime": "2018-06-16T00:39:13.8441801Z",
+L130:             "timeZone": "UTC"
+L131:           }
+L132:         }
+L133:       }
+L134:     }
+L135: 
+L136:     `
+L137: 
+L138:     `
+L139:     import com.azure.core.management.serializer.SerializerFactory;
+L140:     import com.azure.core.util.serializer.SerializerEncoding;
+L141:     import com.azure.resourcemanager.datafactory.models.PipelineReference;
+L142:     import com.azure.resourcemanager.datafactory.models.PipelineReferenceType;
+L143:     import com.azure.resourcemanager.datafactory.models.RecurrenceFrequency;
+L144:     import com.azure.resourcemanager.datafactory.models.ScheduleTrigger;
+L145:     import com.azure.resourcemanager.datafactory.models.ScheduleTriggerRecurrence;
+L146:     import com.azure.resourcemanager.datafactory.models.TriggerPipelineReference;
+L147:     import java.io.IOException;
+L148:     import java.time.OffsetDateTime;
+L149:     import java.util.Arrays;
+L150:     import java.util.HashMap;
+L151:     import java.util.Map;
+L152: 
+L153:     /**
+L154:      * Samples for Triggers CreateOrUpdate.
+L155:      */
+L156:     public final class Main {
+L157:         /*
+L158:          * x-ms-original-file: 2018-06-01/Triggers_Create.json
+L159:          */
+L160:         /**
+L161:          * Sample code: Triggers_Create.
+L162:          *
+L163:          * @param manager Entry point to DataFactoryManager.
+L164:          */
+L165:         public static void triggersCreate(com.azure.resourcemanager.datafactory.DataFactoryManager manager)
+L166:             throws IOException {
+L167:             manager.triggers().define("exampleTrigger").withExistingFactory("exampleResourceGroup", "exampleFactoryName")
+L168:                 .withProperties(new ScheduleTrigger()
+L169:                     .withPipelines(Arrays.asList(new TriggerPipelineReference()
+L170:                         .withPipelineReference(new PipelineReference().withType(PipelineReferenceType.PIPELINE_REFERENCE)
+L171:                             .withReferenceName("examplePipeline"))
+L172:                         .withParameters(mapOf("OutputBlobNameList",
+L173:                             SerializerFactory.createDefaultManagementSerializerAdapter()
+L174:                                 .deserialize("[\"exampleoutput.csv\"]", Object.class, SerializerEncoding.JSON)))))
+L175:                     .withRecurrence(new ScheduleTriggerRecurrence().withFrequency(RecurrenceFrequency.MINUTE)
+L176:                         .withInterval(4).withStartTime(OffsetDateTime.parse("2018-06-16T00:39:13.8441801Z"))
+L177:                         .withEndTime(OffsetDateTime.parse("2018-06-16T00:55:13.8441801Z")).withTimeZone("UTC")
+L178:                         .withAdditionalProperties(mapOf())))
+L179:                 .create();
+L180:         }
+L181: 
+L182:         // Use "Map.of" if available
+L183:         @SuppressWarnings("unchecked")
+L184:         private static <T> Map<String, T> mapOf(Object... inputs) {
+L185:             Map<String, T> map = new HashMap<>();
+L186:             for (int i = 0; i < inputs.length; i += 2) {
+L187:                 String key = (String) inputs[i];
+L188:                 T value = (T) inputs[i + 1];
+L189:                 map.put(key, value);
+L190:             }
+L191:             return map;
+L192:         }
+L193:     }
+L194: 
+L195:     `
+L196: To use the Azure SDK library in your project, see cite24†this documentation†github.com . To provide feedback on this code sample, cite25†open a GitHub issue†github.com L197: 
+L198:     `from azure.identity import DefaultAzureCredential
+L199: 
+L200:     from azure.mgmt.datafactory import DataFactoryManagementClient
+L201: 
+L202:     """
+L203:     # PREREQUISITES
+L204:         pip install azure-identity
+L205:         pip install azure-mgmt-datafactory
+L206:     # USAGE
+L207:         python triggers_create.py
+L208:         Before run the sample, please set the values of the client ID, tenant ID and client secret
+L209:         of the AAD application as environment variables: AZURE_CLIENT_ID, AZURE_TENANT_ID,
+L210:         AZURE_CLIENT_SECRET. For more info about how to get the value, please see:
+L211:         https://docs.microsoft.com/azure/active-directory/develop/howto-create-service-principal-portal
+L212:     """
+L213: 
+L214: 
+L215:     def main():
+L216:         client = DataFactoryManagementClient(
+L217:             credential=DefaultAzureCredential(),
+L218:             subscription_id="SUBSCRIPTION_ID",
+L219:         )
+L220: 
+L221:         response = client.triggers.create_or_update(
+L222:             resource_group_name="exampleResourceGroup",
+L223:             factory_name="exampleFactoryName",
+L224:             trigger_name="exampleTrigger",
+L225:             trigger={
+L226:                 "properties": {
+L227:                     "pipelines": [
+L228:                         {
+L229:                             "parameters": {"OutputBlobNameList": ["exampleoutput.csv"]},
+L230:                             "pipelineReference": {"referenceName": "examplePipeline", "type": "PipelineReference"},
+L231:                         }
+L232:                     ],
+L233:                     "type": "ScheduleTrigger",
+L234:                     "typeProperties": {
+L235:                         "recurrence": {
+L236:                             "endTime": "2018-06-16T00:55:13.8441801Z",
+L237:                             "frequency": "Minute",
+L238:                             "interval": 4,
+L239:                             "startTime": "2018-06-16T00:39:13.8441801Z",
+L240:                             "timeZone": "UTC",
+L241:                         }
+L242:                     },
+L243:                 }
+L244:             },
+L245:         )
+L246:         print(response)
+L247: 
+L248: 
+L249:     # x-ms-original-file: 2018-06-01/Triggers_Create.json
+L250:     if __name__ == "__main__":
+L251:         main()
+L252: 
+L253:     `
+L254: To use the Azure SDK library in your project, see cite26†this documentation†github.com . To provide feedback on this code sample, cite25†open a GitHub issue†github.com L255: 
+L256:     `package armdatafactory_test
+L257: 
+L258:     import (
+L259:     	"context"
+L260:     	"log"
+L261:     	"time"
+L262: 
+L263:     	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
+L264:     	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+L265:     	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/datafactory/armdatafactory/v11"
+L266:     )
+L267:     // Generated from example definition: 2018-06-01/Triggers_Create.json
+L268:     func ExampleTriggersClient_CreateOrUpdate_triggersCreate() {
+L269:     	cred, err := azidentity.NewDefaultAzureCredential(nil)
+L270:     	if err != nil {
+L271:     		log.Fatalf("failed to obtain a credential: %v", err)
+L272:     	}
+L273:     	ctx := context.Background()
+L274:     	clientFactory, err := armdatafactory.NewClientFactory("12345678-1234-1234-1234-123456789012", cred, nil)
+L275:     	if err != nil {
+L276:     		log.Fatalf("failed to create client: %v", err)
+L277:     	}
+L278:     	res, err := clientFactory.NewTriggersClient().CreateOrUpdate(ctx, "exampleResourceGroup", "exampleFactoryName", "exampleTrigger", armdatafactory.TriggerResource{
+L279:     		Properties: &armdatafactory.ScheduleTrigger{
+L280:     			Type: to.Ptr("ScheduleTrigger"),
+L281:     			Pipelines: []*armdatafactory.TriggerPipelineReference{
+L282:     				{
+L283:     					Parameters: map[string]any{
+L284:     						"OutputBlobNameList": []any{
+L285:     							"exampleoutput.csv",
+L286:     						},
+L287:     					},
+L288:     					PipelineReference: &armdatafactory.PipelineReference{
+L289:     						Type:          to.Ptr(armdatafactory.PipelineReferenceTypePipelineReference),
+L290:     						ReferenceName: to.Ptr("examplePipeline"),
+L291:     					},
+L292:     				},
+L293:     			},
+L294:     			TypeProperties: &armdatafactory.ScheduleTriggerTypeProperties{
+L295:     				Recurrence: &armdatafactory.ScheduleTriggerRecurrence{
+L296:     					EndTime:   to.Ptr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-06-16T00:55:13.8441801Z"); return t }()),
+L297:     					Frequency: to.Ptr(armdatafactory.RecurrenceFrequencyMinute),
+L298:     					Interval:  to.Ptr[int32](4),
+L299:     					StartTime: to.Ptr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-06-16T00:39:13.8441801Z"); return t }()),
+L300:     					TimeZone:  to.Ptr("UTC"),
+L301:     				},
+L302:     			},
+L303:     		},
+L304:     	}, nil)
+L305:     	if err != nil {
+L306:     		log.Fatalf("failed to finish the request: %v", err)
+L307:     	}
+L308:     	// You could use response here. We use blank identifier for just demo purposes.
+L309:     	_ = res
+L310:     	// If the HTTP response code is 200 as defined in example definition, your response structure would look as follows. Please pay attention that all the values in the output are fake values for just demo purposes.
+L311:     	// res = armdatafactory.TriggersClientCreateOrUpdateResponse{
+L312:     	// 	TriggerResource: armdatafactory.TriggerResource{
+L313:     	// 		Name: to.Ptr("exampleTrigger"),
+L314:     	// 		Type: to.Ptr("Microsoft.DataFactory/factories/triggers"),
+L315:     	// 		Etag: to.Ptr("0a008ad4-0000-0000-0000-5b245c6e0000"),
+L316:     	// 		ID: to.Ptr("/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/exampleResourceGroup/providers/Microsoft.DataFactory/factories/exampleFactoryName/triggers/exampleTrigger"),
+L317:     	// 		Properties: &armdatafactory.ScheduleTrigger{
+L318:     	// 			Type: to.Ptr("ScheduleTrigger"),
+L319:     	// 			Pipelines: []*armdatafactory.TriggerPipelineReference{
+L320:     	// 				{
+L321:     	// 					Parameters: map[string]any{
+--------------------------------------------------------------------------------
+Triggers - Get - REST API (Azure Data Factory) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/datafactory/triggers/get?view=rest-datafactory-2018-06-01)
+citeturn70view1 [wordlim: 200] Crawled: 3 days ago; Content type: text/html; Source: find({"ref_id":"https://learn.microsoft.com/en-us/rest/api/datafactory/triggers/get?view=rest-datafactory-2018-06-01","pattern":"200 OK"}); Total lines: 781
+L0: cite0†Skip to main content cite1†Skip to in-page navigation cite2†Skip to Ask Learn chat experience L1: 
+L2: This browser is no longer supported.
+L3: 
+L4: Upgrade to Microsoft Edge to take advantage of the latest features, security updates, and technical support.
+L5: 
+L6: cite3†Download Microsoft Edge†go.microsoft.com cite4†More info about Internet Explorer and Microsoft Edge L7: 
+L8: Table of contents Exit editor mode
+L9: 
+L10: Ask Learn Ask Learn
+L11: 
+L12: Reading mode Table of contents cite2†Read in English Add Add to Plans cite5†Edit†github.com L13: 
+L14: * * *
+L15: Copy Markdown Print
+L16: 
+L17: * * *
+L18: 
+L19: Note
+L20: 
+L21: Access to this page requires authorization. You can try cite2†signing in or changing directories.
+L22: 
+L23: Access to this page requires authorization. You can try changing directories.
+L24: # Triggers - Get
+L25: 
+L26: Service:
+L27:     Data Factory
+L28: 
+L29: API Version:
+L30:     2018-06-01
+L31: 
+L32: ##
+L33: 
+L34: Gets a trigger.
+L35: 
+L36:     `GET https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}/triggers/{triggerName}?api-version=2018-06-01`
+L37: ## URI Parameters
+L38: Name  | In  | Required  | Type  | Description
+L39: --- | --- | --- | --- | ---
+L40: factoryName  | path  | True  | string minLength: 3
+L41: maxLength: 63
+L42: pattern: ^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$  | The factory name.
+L43: resourceGroupName  | path  | True  | string minLength: 1
+L44: maxLength: 90  | The name of the resource group. The name is case insensitive.
+L45: subscriptionId  | path  | True  | string (uuid)  | The ID of the target subscription. The value must be an UUID.
+L46: triggerName  | path  | True  | string minLength: 1
+L47: maxLength: 260
+L48: pattern: ^[A-Za-z0-9_][^<>*#.%&:\\+?/]*$  | The trigger name.
+L49: api-version  | query  | True  | string minLength: 1  | The API version to use for this operation.
+L50: ## Request Header
+L51: 
+L52: Name  | Required  | Type  | Description
+L53: --- | --- | --- | ---
+L54: if-none-match  |  | string  | ETag of the trigger entity. Should only be specified for get. If the ETag matches the existing entity tag, or if * was provided, then no content will be returned.
+L55: ## Responses
+L56: 
+L57: Name  | Type  | Description
+L58: --- | --- | ---
+L59: 200 OK  | cite6†TriggerResource | Azure operation completed successfully.
+L60: Other Status Codes  |  | The client has made a conditional request and the resource has not been modified.
+L61: Other Status Codes  | cite7†CloudError | An unexpected error response.
+L62: 
+L63: ## Security
+L64: 
+L65: ### azure_auth
+L66: 
+L67: Azure Active Directory OAuth2 Flow.
+L68: 
+L69: Type: oauth2
+L70: Flow: implicit
+L71: Authorization URL: https://login.microsoftonline.com/common/oauth2/authorize
+L72: #### Scopes
+L73: 
+L74: Name  | Description
+L75: --- | ---
+L76: user_impersonation  | impersonate your user account
+L77: 
+L78: ## Examples
+L79: 
+L80: ### Triggers_Get
+L81: #### Sample request
+L82:   * cite8†HTTP L83:   * cite9†Java L84:   * cite10†Python L85:   * cite11†Go L86:   * cite12†JavaScript L87:   * cite13†dotnet L88: 
+L89:     `GET https://management.azure.com/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/exampleResourceGroup/providers/Microsoft.DataFactory/factories/exampleFactoryName/triggers/exampleTrigger?api-version=2018-06-01
+L90:     `
+L91: 
+L92:     `
+L93:     /**
+L94:      * Samples for Triggers Get.
+L95:      */
+L96:     public final class Main {
+L97:         /*
+L98:          * x-ms-original-file: 2018-06-01/Triggers_Get.json
+L99:          */
+L100:         /**
+L101:          * Sample code: Triggers_Get.
+L102:          *
+L103:          * @param manager Entry point to DataFactoryManager.
+L104:          */
+L105:         public static void triggersGet(com.azure.resourcemanager.datafactory.DataFactoryManager manager) {
+L106:             manager.triggers().getWithResponse("exampleResourceGroup", "exampleFactoryName", "exampleTrigger", null,
+L107:                 com.azure.core.util.Context.NONE);
+L108:         }
+L109:     }
+L110: 
+L111:     `
+L112: To use the Azure SDK library in your project, see cite14†this documentation†github.com . To provide feedback on this code sample, cite15†open a GitHub issue†github.com L113: 
+L114:     `from azure.identity import DefaultAzureCredential
+L115: 
+L116:     from azure.mgmt.datafactory import DataFactoryManagementClient
+L117: 
+L118:     """
+L119:     # PREREQUISITES
+L120:         pip install azure-identity
+L121:         pip install azure-mgmt-datafactory
+L122:     # USAGE
+L123:         python triggers_get.py
+L124:         Before run the sample, please set the values of the client ID, tenant ID and client secret
+L125:         of the AAD application as environment variables: AZURE_CLIENT_ID, AZURE_TENANT_ID,
+L126:         AZURE_CLIENT_SECRET. For more info about how to get the value, please see:
+L127:         https://docs.microsoft.com/azure/active-directory/develop/howto-create-service-principal-portal
+L128:     """
+L129: 
+L130: 
+L131:     def main():
+L132:         client = DataFactoryManagementClient(
+L133:             credential=DefaultAzureCredential(),
+L134:             subscription_id="SUBSCRIPTION_ID",
+L135:         )
+L136: 
+L137:         response = client.triggers.get(
+L138:             resource_group_name="exampleResourceGroup",
+L139:             factory_name="exampleFactoryName",
+L140:             trigger_name="exampleTrigger",
+L141:         )
+L142:         print(response)
+L143: 
+L144: 
+L145:     # x-ms-original-file: 2018-06-01/Triggers_Get.json
+L146:     if __name__ == "__main__":
+L147:         main()
+L148: 
+L149:     `
+L150: To use the Azure SDK library in your project, see cite16†this documentation†github.com . To provide feedback on this code sample, cite15†open a GitHub issue†github.com L151: 
+L152:     `package armdatafactory_test
+L153: 
+L154:     import (
+L155:     	"context"
+L156:     	"log"
+L157: 
+L158:     	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+L159:     	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/datafactory/armdatafactory/v11"
+L160:     )
+L161: 
+L162:     // Generated from example definition: 2018-06-01/Triggers_Get.json
+L163:     func ExampleTriggersClient_Get() {
+L164:     	cred, err := azidentity.NewDefaultAzureCredential(nil)
+L165:     	if err != nil {
+L166:     		log.Fatalf("failed to obtain a credential: %v", err)
+L167:     	}
+L168:     	ctx := context.Background()
+L169:     	clientFactory, err := armdatafactory.NewClientFactory("12345678-1234-1234-1234-123456789012", cred, nil)
+L170:     	if err != nil {
+L171:     		log.Fatalf("failed to create client: %v", err)
+L172:     	}
+L173:     	res, err := clientFactory.NewTriggersClient().Get(ctx, "exampleResourceGroup", "exampleFactoryName", "exampleTrigger", nil)
+L174:     	if err != nil {
+L175:     		log.Fatalf("failed to finish the request: %v", err)
+L176:     	}
+L177:     	// You could use response here. We use blank identifier for just demo purposes.
+L178:     	_ = res
+L179:     	// If the HTTP response code is 200 as defined in example definition, your response structure would look as follows. Please pay attention that all the values in the output are fake values for just demo purposes.
+L180:     	// res = armdatafactory.TriggersClientGetResponse{
+L181:     	// 	TriggerResource: armdatafactory.TriggerResource{
+L182:     	// 		Name: to.Ptr("exampleTrigger"),
+L183:     	// 		Type: to.Ptr("Microsoft.DataFactory/factories/triggers"),
+L184:     	// 		Etag: to.Ptr("1500544f-0000-0200-0000-5cbe09100000"),
+L185:     	// 		ID: to.Ptr("/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/exampleResourceGroup/providers/Microsoft.DataFactory/factories/exampleFactoryName/triggers/exampleTrigger"),
+L186:     	// 		Properties: &armdatafactory.ScheduleTrigger{
+L187:     	// 			Type: to.Ptr("ScheduleTrigger"),
+L188:     	// 			Pipelines: []*armdatafactory.TriggerPipelineReference{
+L189:     	// 				{
+L190:     	// 					Parameters: map[string]any{
+L191:     	// 						"OutputBlobNameList": []any{
+L192:     	// 							"exampleoutput.csv",
+L193:     	// 						},
+L194:     	// 					},
+L195:     	// 					PipelineReference: &armdatafactory.PipelineReference{
+L196:     	// 						Type: to.Ptr(armdatafactory.PipelineReferenceTypePipelineReference),
+L197:     	// 						ReferenceName: to.Ptr("examplePipeline"),
+L198:     	// 					},
+L199:     	// 				},
+L200:     	// 			},
+L201:     	// 			RuntimeState: to.Ptr(armdatafactory.TriggerRuntimeStateStopped),
+L202:     	// 			TypeProperties: &armdatafactory.ScheduleTriggerTypeProperties{
+L203:     	// 				Recurrence: &armdatafactory.ScheduleTriggerRecurrence{
+L204:     	// 					EndTime: to.Ptr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-04-22T18:48:52.5281747Z"); return t}()),
+L205:     	// 					Frequency: to.Ptr(armdatafactory.RecurrenceFrequencyMinute),
+L206:     	// 					Interval: to.Ptr[int32](4),
+L207:     	// 					StartTime: to.Ptr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-04-22T18:32:52.527912Z"); return t}()),
+L208:     	// 					TimeZone: to.Ptr("UTC"),
+L209:     	// 				},
+L210:     	// 			},
+L211:     	// 		},
+L212:     	// 	},
+L213:     	// }
+L214:     }
+L215: 
+L216:     `
+L217: To use the Azure SDK library in your project, see cite17†this documentation†github.com . To provide feedback on this code sample, cite15†open a GitHub issue†github.com L218: 
+L219:     `const { DataFactoryManagementClient } = require("@azure/arm-datafactory");
+L220:     const { DefaultAzureCredential } = require("@azure/identity");
+L221: 
+L222:     /**
+L223:      * This sample demonstrates how to gets a trigger.
+L224:      *
+L225:      * @summary gets a trigger.
+L226:      * x-ms-original-file: 2018-06-01/Triggers_Get.json
+L227:      */
+L228:     async function triggersGet() {
+L229:       const credential = new DefaultAzureCredential();
+L230:       const subscriptionId = "12345678-1234-1234-1234-123456789012";
+L231:       const client = new DataFactoryManagementClient(credential, subscriptionId);
+L232:       const result = await client.triggers.get(
+L233:         "exampleResourceGroup",
+L234:         "exampleFactoryName",
+L235:         "exampleTrigger",
+L236:       );
+L237:       console.log(result);
+L238:     }
+L239: 
+L240:     `
+L241: To use the Azure SDK library in your project, see cite18†this documentation†github.com . To provide feedback on this code sample, cite15†open a GitHub issue†github.com L242: 
+L243:     `using Azure;
+L244:     using Azure.ResourceManager;
+L245:     using System;
+L246:     using System.Threading.Tasks;
+L247:     using Azure.Core;
+L248:     using Azure.Identity;
+L249:     using Azure.ResourceManager.DataFactory.Models;
+L250:     using Azure.ResourceManager.DataFactory;
+L251:     // Generated from example definition: specification/datafactory/resource-manager/Microsoft.DataFactory/DataFactory/stable/2018-06-01/examples/Triggers_Get.json
+L252:     // this example is just showing the usage of "Triggers_Get" operation, for the dependent resources, they will have to be created separately.
+L253: 
+L254:     // get your azure access token, for more details of how Azure SDK get your access token, please refer to https://learn.microsoft.com/en-us/dotnet/azure/sdk/authentication?tabs=command-line
+L255:     TokenCredential cred = new DefaultAzureCredential();
+L256:     // authenticate your client
+L257:     ArmClient client = new ArmClient(cred);
+L258: 
+L259:     // this example assumes you already have this DataFactoryTriggerResource created on azure
+L260:     // for more information of creating DataFactoryTriggerResource, please refer to the document of DataFactoryTriggerResource
+L261:     string subscriptionId = "12345678-1234-1234-1234-12345678abc";
+L262:     string resourceGroupName = "exampleResourceGroup";
+L263:     string factoryName = "exampleFactoryName";
+L264:     string triggerName = "exampleTrigger";
+L265:     ResourceIdentifier dataFactoryTriggerResourceId = DataFactoryTriggerResource.CreateResourceIdentifier(subscriptionId, resourceGroupName, factoryName, triggerName);
+L266:     DataFactoryTriggerResource dataFactoryTrigger = client.GetDataFactoryTriggerResource(dataFactoryTriggerResourceId);
+L267: 
+L268:     // invoke the operation
+L269:     DataFactoryTriggerResource result = await dataFactoryTrigger.GetAsync();
+L270:     // the variable result is a resource, you could call other operations on this instance as well
+L271:     // but just for demo, we get its data from this resource instance
+L272:     DataFactoryTriggerData resourceData = result.Data;
+L273:     // for demo we just print out the id
+L274:     Console.WriteLine($"Succeeded on id: {resourceData.Id}");
+L275: 
+L276:     `
+L277: To use the Azure SDK library in your project, see cite19†this documentation†github.com . To provide feedback on this code sample, cite15†open a GitHub issue†github.com L278: #### Sample response
+L279: 
+L280: Status code:
+L281:     200
+L282: 
+L283:     `Date: Mon, 22 Apr 2019 18:33:52 GMT
+L284:     X-Content-Type-Options: nosniff
+L285:     x-ms-correlation-request-id: 8ad1759f-24c1-46a5-aef5-edd267e18870
+L286:     x-ms-ratelimit-remaining-subscription-reads: 11989
+L287:     x-ms-request-id: 8ad1759f-24c1-46a5-aef5-edd267e18870`
+L288: 
+L289: 
+L290:     `{
+L291:       "name": "exampleTrigger",
+L292:       "type": "Microsoft.DataFactory/factories/triggers",
+

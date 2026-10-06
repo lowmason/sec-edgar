@@ -1,0 +1,629 @@
+Pipelines - Create Or Update - REST API (Azure Data Factory) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/datafactory/pipelines/create-or-update?view=rest-datafactory-2018-06-01)
+citeturn69view0 [wordlim: 200] Crawled: today; Content type: text/html; Source: find({"ref_id":"https://learn.microsoft.com/en-us/rest/api/datafactory/pipelines/create-or-update?view=rest-datafactory-2018-06-01","pattern":"200 OK"}); Total lines: 7645
+L0: cite0†Skip to main content cite1†Skip to in-page navigation cite2†Skip to Ask Learn chat experience L1: 
+L2: This browser is no longer supported.
+L3: 
+L4: Upgrade to Microsoft Edge to take advantage of the latest features, security updates, and technical support.
+L5: 
+L6: cite3†Download Microsoft Edge†go.microsoft.com cite4†More info about Internet Explorer and Microsoft Edge L7: 
+L8: Table of contents Exit editor mode
+L9: 
+L10: Ask Learn Ask Learn
+L11: 
+L12: Reading mode Table of contents cite2†Read in English Add Add to Plans cite5†Edit†github.com L13: 
+L14: * * *
+L15: Copy Markdown Print
+L16: 
+L17: * * *
+L18: 
+L19: Note
+L20: 
+L21: Access to this page requires authorization. You can try cite2†signing in or changing directories.
+L22: 
+L23: Access to this page requires authorization. You can try changing directories.
+L24: # Pipelines - Create Or Update
+L25: 
+L26: Service:
+L27:     Data Factory
+L28: 
+L29: API Version:
+L30:     2018-06-01
+L31: 
+L32: ##
+L33: 
+L34: Creates or updates a pipeline.
+L35: 
+L36:     `PUT https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}/pipelines/{pipelineName}?api-version=2018-06-01`
+L37: ## URI Parameters
+L38: Name  | In  | Required  | Type  | Description
+L39: --- | --- | --- | --- | ---
+L40: factoryName  | path  | True  | string minLength: 3
+L41: maxLength: 63
+L42: pattern: ^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$  | The factory name.
+L43: pipelineName  | path  | True  | string minLength: 1
+L44: maxLength: 260
+L45: pattern: ^[A-Za-z0-9_][^<>*#.%&:\\+?/]*$  | The pipeline name.
+L46: resourceGroupName  | path  | True  | string minLength: 1
+L47: maxLength: 90  | The name of the resource group. The name is case insensitive.
+L48: subscriptionId  | path  | True  | string (uuid)  | The ID of the target subscription. The value must be an UUID.
+L49: api-version  | query  | True  | string minLength: 1  | The API version to use for this operation.
+L50: ## Request Header
+L51: 
+L52: Name  | Required  | Type  | Description
+L53: --- | --- | --- | ---
+L54: if-match  |  | string  | ETag of the pipeline entity. Should only be specified for update, for which it should match existing entity or can be * for unconditional update.
+L55: ## Request Body
+L56: 
+L57: Name  | Type  | Description
+L58: --- | --- | ---
+L59: properties.activities  | Activity[]:
+L60:   * cite6†ControlActivity []
+L61:   * cite7†ExecutionActivity []
+L62:   * cite8†ExecuteWranglingDataflowActivity []
+L63:   * cite9†AzureDataExplorerCommandActivity []
+L64:   * cite10†AzureFunctionActivity []
+L65:   * cite11†AzureMLBatchExecutionActivity []
+L66:   * cite12†AzureMLExecutePipelineActivity []
+L67:   * cite13†AzureMLUpdateResourceActivity []
+L68:   * cite14†CopyActivity []
+L69:   * cite15†CustomActivity []
+L70:   * cite16†DataLakeAnalyticsUSQLActivity []
+L71:   * cite17†DatabricksJobActivity []
+L72:   * cite18†DatabricksNotebookActivity []
+L73:   * cite19†DatabricksSparkJarActivity []
+L74:   * cite20†DatabricksSparkPythonActivity []
+L75:   * cite21†DeleteActivity []
+L76:   * cite22†ExecuteDataFlowActivity []
+L77:   * cite23†ExecuteSSISPackageActivity []
+L78:   * cite24†GetMetadataActivity []
+L79:   * cite25†HDInsightHiveActivity []
+L80:   * cite26†HDInsightMapReduceActivity []
+L81:   * cite27†HDInsightPigActivity []
+L82:   * cite28†HDInsightSparkActivity []
+L83:   * cite29†HDInsightStreamingActivity []
+L84:   * cite30†LookupActivity []
+L85:   * cite31†ScriptActivity []
+L86:   * cite32†SqlServerStoredProcedureActivity []
+L87:   * cite33†SynapseNotebookActivity []
+L88:   * cite34†SynapseSparkJobDefinitionActivity []
+L89:   * cite35†WebActivity []
+L90:   * cite36†AppendVariableActivity []
+L91:   * cite37†ExecutePipelineActivity []
+L92:   * cite38†FailActivity []
+L93:   * cite39†FilterActivity []
+L94:   * cite40†ForEachActivity []
+L95:   * cite41†IfConditionActivity []
+L96:   * cite42†SetVariableActivity []
+L97:   * cite43†SwitchActivity []
+L98:   * cite44†UntilActivity []
+L99:   * cite45†ValidationActivity []
+L100:   * cite46†WaitActivity []
+L101:   * cite47†WebHookActivity []
+L102:  | List of activities in pipeline.
+L103: properties.annotations  | Pipeline.Annotations[]  | List of tags that can be used for describing the Pipeline.
+L104: properties.concurrency  | integer (int32) minimum: 1  | The max number of concurrent runs for the pipeline.
+L105: properties.description  | string  | The description of the pipeline.
+L106: properties.folder  | cite48†PipelineFolder | The folder that this Pipeline is in. If not specified, Pipeline will appear at the root level.
+L107: properties.parameters  | <string,  cite49†ParameterSpecification >  | List of parameters for pipeline.
+L108: properties.policy  | cite50†PipelinePolicy | Pipeline Policy.
+L109: properties.runDimensions  | management.azure.com.datafactory.pipelines.createorupdate  | Dimensions emitted by Pipeline.
+L110: properties.variables  | <string,  cite51†VariableSpecification >  | List of variables for pipeline.
+L111: ## Responses
+L112: 
+L113: Name  | Type  | Description
+L114: --- | --- | ---
+L115: 200 OK  | cite52†PipelineResource | Resource 'PipelineResource' update operation succeeded
+L116: Other Status Codes  | cite53†CloudError | An unexpected error response.
+L117: 
+L118: ## Security
+L119: 
+L120: ### azure_auth
+L121: 
+L122: Azure Active Directory OAuth2 Flow.
+L123: 
+L124: Type: oauth2
+L125: Flow: implicit
+L126: Authorization URL: https://login.microsoftonline.com/common/oauth2/authorize
+L127: 
+L128: #### Scopes
+L129: 
+L130: Name  | Description
+L131: --- | ---
+L132: user_impersonation  | impersonate your user account
+L133: ## Examples
+L134: 
+L135: cite54†Pipelines_Create L136: cite55†Pipelines_Update L137: 
+L138: ### Pipelines_Create
+L139: #### Sample request
+L140:   * cite56†HTTP L141:   * cite57†Java L142:   * cite58†Python L143:   * cite59†Go L144:   * cite60†JavaScript L145:   * cite61†dotnet L146: 
+L147:     `PUT https://management.azure.com/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/exampleResourceGroup/providers/Microsoft.DataFactory/factories/exampleFactoryName/pipelines/examplePipeline?api-version=2018-06-01
+L148: 
+L149:     {
+L150:       "properties": {
+L151:         "activities": [
+L152:           {
+L153:             "name": "ExampleForeachActivity",
+L154:             "type": "ForEach",
+L155:             "typeProperties": {
+L156:               "activities": [
+L157:                 {
+L158:                   "name": "ExampleCopyActivity",
+L159:                   "type": "Copy",
+L160:                   "inputs": [
+L161:                     {
+L162:                       "type": "DatasetReference",
+L163:                       "parameters": {
+L164:                         "MyFileName": "examplecontainer.csv",
+L165:                         "MyFolderPath": "examplecontainer"
+L166:                       },
+L167:                       "referenceName": "exampleDataset"
+L168:                     }
+L169:                   ],
+L170:                   "outputs": [
+L171:                     {
+L172:                       "type": "DatasetReference",
+L173:                       "parameters": {
+L174:                         "MyFileName": {
+L175:                           "type": "Expression",
+L176:                           "value": "@item()"
+L177:                         },
+L178:                         "MyFolderPath": "examplecontainer"
+L179:                       },
+L180:                       "referenceName": "exampleDataset"
+L181:                     }
+L182:                   ],
+L183:                   "typeProperties": {
+L184:                     "dataIntegrationUnits": 32,
+L185:                     "sink": {
+L186:                       "type": "BlobSink"
+L187:                     },
+L188:                     "source": {
+L189:                       "type": "BlobSource"
+L190:                     }
+L191:                   }
+L192:                 }
+L193:               ],
+L194:               "isSequential": true,
+L195:               "items": {
+L196:                 "type": "Expression",
+L197:                 "value": "@pipeline().parameters.OutputBlobNameList"
+L198:               }
+L199:             }
+L200:           }
+L201:         ],
+L202:         "parameters": {
+L203:           "JobId": {
+L204:             "type": "String"
+L205:           },
+L206:           "OutputBlobNameList": {
+L207:             "type": "Array"
+L208:           }
+L209:         },
+L210:         "policy": {
+L211:           "elapsedTimeMetric": {
+L212:             "duration": "0.00:10:00"
+L213:           }
+L214:         },
+L215:         "runDimensions": {
+L216:           "JobId": {
+L217:             "type": "Expression",
+L218:             "value": "@pipeline().parameters.JobId"
+L219:           }
+L220:         },
+L221:         "variables": {
+L222:           "TestVariableArray": {
+L223:             "type": "Array"
+L224:           }
+L225:         }
+L226:       }
+L227:     }
+L228: 
+L229:     `
+L230: 
+L231:     `
+L232:     import com.azure.core.management.serializer.SerializerFactory;
+L233:     import com.azure.core.util.serializer.SerializerEncoding;
+L234:     import com.azure.resourcemanager.datafactory.models.BlobSink;
+L235:     import com.azure.resourcemanager.datafactory.models.BlobSource;
+L236:     import com.azure.resourcemanager.datafactory.models.CopyActivity;
+L237:     import com.azure.resourcemanager.datafactory.models.DatasetReference;
+L238:     import com.azure.resourcemanager.datafactory.models.DatasetReferenceType;
+L239:     import com.azure.resourcemanager.datafactory.models.Expression;
+L240:     import com.azure.resourcemanager.datafactory.models.ExpressionType;
+L241:     import com.azure.resourcemanager.datafactory.models.ForEachActivity;
+L242:     import com.azure.resourcemanager.datafactory.models.ParameterSpecification;
+L243:     import com.azure.resourcemanager.datafactory.models.ParameterType;
+L244:     import com.azure.resourcemanager.datafactory.models.PipelineElapsedTimeMetricPolicy;
+L245:     import com.azure.resourcemanager.datafactory.models.PipelinePolicy;
+L246:     import com.azure.resourcemanager.datafactory.models.VariableSpecification;
+L247:     import com.azure.resourcemanager.datafactory.models.VariableType;
+L248:     import java.io.IOException;
+L249:     import java.util.Arrays;
+L250:     import java.util.HashMap;
+L251:     import java.util.Map;
+L252: 
+L253:     /**
+L254:      * Samples for Pipelines CreateOrUpdate.
+L255:      */
+L256:     public final class Main {
+L257:         /*
+L258:          * x-ms-original-file: 2018-06-01/Pipelines_Create.json
+L259:          */
+L260:         /**
+L261:          * Sample code: Pipelines_Create.
+L262:          *
+L263:          * @param manager Entry point to DataFactoryManager.
+L264:          */
+L265:         public static void pipelinesCreate(com.azure.resourcemanager.datafactory.DataFactoryManager manager)
+L266:             throws IOException {
+L267:             manager.pipelines().define("examplePipeline").withExistingFactory("exampleResourceGroup", "exampleFactoryName")
+L268:                 .withActivities(Arrays.asList(new ForEachActivity().withName("ExampleForeachActivity")
+L269:                     .withIsSequential(true)
+L270:                     .withItems(new Expression().withType(ExpressionType.EXPRESSION)
+L271:                         .withValue("@pipeline().parameters.OutputBlobNameList"))
+L272:                     .withActivities(Arrays.asList(new CopyActivity().withName("ExampleCopyActivity")
+L273:                         .withInputs(Arrays.asList(new DatasetReference().withType(DatasetReferenceType.DATASET_REFERENCE)
+L274:                             .withReferenceName("exampleDataset").withParameters(
+L275:                                 mapOf("MyFileName", "examplecontainer.csv", "MyFolderPath", "examplecontainer"))))
+L276:                         .withOutputs(Arrays.asList(new DatasetReference().withType(DatasetReferenceType.DATASET_REFERENCE)
+L277:                             .withReferenceName("exampleDataset")
+L278:                             .withParameters(mapOf("MyFileName",
+L279:                                 SerializerFactory.createDefaultManagementSerializerAdapter().deserialize(
+L280:                                     "{\"type\":\"Expression\",\"value\":\"@item()\"}", Object.class,
+L281:                                     SerializerEncoding.JSON),
+L282:                                 "MyFolderPath", "examplecontainer"))))
+L283:                         .withSource(new BlobSource()).withSink(new BlobSink()).withDataIntegrationUnits(32)))))
+L284:                 .withParameters(mapOf("JobId", new ParameterSpecification().withType(ParameterType.STRING),
+L285:                     "OutputBlobNameList", new ParameterSpecification().withType(ParameterType.ARRAY)))
+L286:                 .withVariables(mapOf("TestVariableArray", new VariableSpecification().withType(VariableType.ARRAY)))
+L287:                 .withRunDimensions(mapOf("JobId",
+L288:                     SerializerFactory.createDefaultManagementSerializerAdapter().deserialize(
+L289:                         "{\"type\":\"Expression\",\"value\":\"@pipeline().parameters.JobId\"}", Object.class,
+L290:                         SerializerEncoding.JSON)))
+L291:                 .withPolicy(new PipelinePolicy()
+L292:                     .withElapsedTimeMetric(new PipelineElapsedTimeMetricPolicy().withDuration("0.00:10:00")))
+L293:                 .create();
+L294:         }
+L295: 
+L296:         // Use "Map.of" if available
+L297:         @SuppressWarnings("unchecked")
+L298:         private static <T> Map<String, T> mapOf(Object... inputs) {
+L299:             Map<String, T> map = new HashMap<>();
+L300:             for (int i = 0; i < inputs.length; i += 2) {
+L301:                 String key = (String) inputs[i];
+L302:                 T value = (T) inputs[i + 1];
+L303:                 map.put(key, value);
+L304:             }
+L305:             return map;
+L306:         }
+L307:     }
+L308: 
+L309:     `
+L310: To use the Azure SDK library in your project, see cite62†this documentation†github.com . To provide feedback on this code sample, cite63†open a GitHub issue†github.com L311: 
+L312:     `from azure.identity import DefaultAzureCredential
+L313: 
+L314:     from azure.mgmt.datafactory import DataFactoryManagementClient
+L315: 
+L316:     """
+L317:     # PREREQUISITES
+L318:         pip install azure-identity
+L319:         pip install azure-mgmt-datafactory
+L320:     # USAGE
+L321:         python pipelines_create.py
+L322:         Before run the sample, please set the values of the client ID, tenant ID and client secret
+L323:         of the AAD application as environment variables: AZURE_CLIENT_ID, AZURE_TENANT_ID,
+L324:         AZURE_CLIENT_SECRET. For more info about how to get the value, please see:
+L325:         https://docs.microsoft.com/azure/active-directory/develop/howto-create-service-principal-portal
+L326:     """
+L327: 
+L328: 
+L329:     def main():
+L330:         client = DataFactoryManagementClient(
+L331:             credential=DefaultAzureCredential(),
+L332:             subscription_id="SUBSCRIPTION_ID",
+L333:         )
+L334: 
+L335:         response = client.pipelines.create_or_update(
+L336:             resource_group_name="exampleResourceGroup",
+L337:             factory_name="exampleFactoryName",
+L338:             pipeline_name="examplePipeline",
+L339:             pipeline={
+L340:                 "properties": {
+L341:                     "activities": [
+L342:                         {
+L343:                             "name": "ExampleForeachActivity",
+L344:                             "type": "ForEach",
+L345:                             "typeProperties": {
+L346:                                 "activities": [
+L347:                                     {
+L348:                                         "inputs": [
+L349:                                             {
+L350:                                                 "parameters": {
+L351:                                                     "MyFileName": "examplecontainer.csv",
+--------------------------------------------------------------------------------
+Pipelines - Get - REST API (Azure Data Factory) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/datafactory/pipelines/get?view=rest-datafactory-2018-06-01)
+citeturn69view1 [wordlim: 200] Crawled: today; Content type: text/html; Source: find({"ref_id":"https://learn.microsoft.com/en-us/rest/api/datafactory/pipelines/get?view=rest-datafactory-2018-06-01","pattern":"200 OK"}); Total lines: 6596
+L0: cite0†Skip to main content cite1†Skip to in-page navigation cite2†Skip to Ask Learn chat experience L1: 
+L2: This browser is no longer supported.
+L3: 
+L4: Upgrade to Microsoft Edge to take advantage of the latest features, security updates, and technical support.
+L5: 
+L6: cite3†Download Microsoft Edge†go.microsoft.com cite4†More info about Internet Explorer and Microsoft Edge L7: 
+L8: Table of contents Exit editor mode
+L9: 
+L10: Ask Learn Ask Learn
+L11: 
+L12: Reading mode Table of contents cite2†Read in English Add Add to Plans cite5†Edit†github.com L13: 
+L14: * * *
+L15: Copy Markdown Print
+L16: 
+L17: * * *
+L18: 
+L19: Note
+L20: 
+L21: Access to this page requires authorization. You can try cite2†signing in or changing directories.
+L22: 
+L23: Access to this page requires authorization. You can try changing directories.
+L24: # Pipelines - Get
+L25: 
+L26: Service:
+L27:     Data Factory
+L28: 
+L29: API Version:
+L30:     2018-06-01
+L31: 
+L32: ##
+L33: 
+L34: Gets a pipeline.
+L35: 
+L36:     `GET https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}/pipelines/{pipelineName}?api-version=2018-06-01`
+L37: ## URI Parameters
+L38: Name  | In  | Required  | Type  | Description
+L39: --- | --- | --- | --- | ---
+L40: factoryName  | path  | True  | string minLength: 3
+L41: maxLength: 63
+L42: pattern: ^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$  | The factory name.
+L43: pipelineName  | path  | True  | string minLength: 1
+L44: maxLength: 260
+L45: pattern: ^[A-Za-z0-9_][^<>*#.%&:\\+?/]*$  | The pipeline name.
+L46: resourceGroupName  | path  | True  | string minLength: 1
+L47: maxLength: 90  | The name of the resource group. The name is case insensitive.
+L48: subscriptionId  | path  | True  | string (uuid)  | The ID of the target subscription. The value must be an UUID.
+L49: api-version  | query  | True  | string minLength: 1  | The API version to use for this operation.
+L50: ## Request Header
+L51: 
+L52: Name  | Required  | Type  | Description
+L53: --- | --- | --- | ---
+L54: if-none-match  |  | string  | ETag of the pipeline entity. Should only be specified for get. If the ETag matches the existing entity tag, or if * was provided, then no content will be returned.
+L55: ## Responses
+L56: 
+L57: Name  | Type  | Description
+L58: --- | --- | ---
+L59: 200 OK  | cite6†PipelineResource | Azure operation completed successfully.
+L60: Other Status Codes  |  | The client has made a conditional request and the resource has not been modified.
+L61: Other Status Codes  | cite7†CloudError | An unexpected error response.
+L62: 
+L63: ## Security
+L64: 
+L65: ### azure_auth
+L66: 
+L67: Azure Active Directory OAuth2 Flow.
+L68: 
+L69: Type: oauth2
+L70: Flow: implicit
+L71: Authorization URL: https://login.microsoftonline.com/common/oauth2/authorize
+L72: #### Scopes
+L73: 
+L74: Name  | Description
+L75: --- | ---
+L76: user_impersonation  | impersonate your user account
+L77: 
+L78: ## Examples
+L79: 
+L80: ### Pipelines_Get
+L81: #### Sample request
+L82:   * cite8†HTTP L83:   * cite9†Java L84:   * cite10†Python L85:   * cite11†Go L86:   * cite12†JavaScript L87:   * cite13†dotnet L88: 
+L89:     `GET https://management.azure.com/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/exampleResourceGroup/providers/Microsoft.DataFactory/factories/exampleFactoryName/pipelines/examplePipeline?api-version=2018-06-01
+L90:     `
+L91: 
+L92:     `
+L93:     /**
+L94:      * Samples for Pipelines Get.
+L95:      */
+L96:     public final class Main {
+L97:         /*
+L98:          * x-ms-original-file: 2018-06-01/Pipelines_Get.json
+L99:          */
+L100:         /**
+L101:          * Sample code: Pipelines_Get.
+L102:          *
+L103:          * @param manager Entry point to DataFactoryManager.
+L104:          */
+L105:         public static void pipelinesGet(com.azure.resourcemanager.datafactory.DataFactoryManager manager) {
+L106:             manager.pipelines().getWithResponse("exampleResourceGroup", "exampleFactoryName", "examplePipeline", null,
+L107:                 com.azure.core.util.Context.NONE);
+L108:         }
+L109:     }
+L110: 
+L111:     `
+L112: To use the Azure SDK library in your project, see cite14†this documentation†github.com . To provide feedback on this code sample, cite15†open a GitHub issue†github.com L113: 
+L114:     `from azure.identity import DefaultAzureCredential
+L115: 
+L116:     from azure.mgmt.datafactory import DataFactoryManagementClient
+L117: 
+L118:     """
+L119:     # PREREQUISITES
+L120:         pip install azure-identity
+L121:         pip install azure-mgmt-datafactory
+L122:     # USAGE
+L123:         python pipelines_get.py
+L124:         Before run the sample, please set the values of the client ID, tenant ID and client secret
+L125:         of the AAD application as environment variables: AZURE_CLIENT_ID, AZURE_TENANT_ID,
+L126:         AZURE_CLIENT_SECRET. For more info about how to get the value, please see:
+L127:         https://docs.microsoft.com/azure/active-directory/develop/howto-create-service-principal-portal
+L128:     """
+L129: 
+L130: 
+L131:     def main():
+L132:         client = DataFactoryManagementClient(
+L133:             credential=DefaultAzureCredential(),
+L134:             subscription_id="SUBSCRIPTION_ID",
+L135:         )
+L136: 
+L137:         response = client.pipelines.get(
+L138:             resource_group_name="exampleResourceGroup",
+L139:             factory_name="exampleFactoryName",
+L140:             pipeline_name="examplePipeline",
+L141:         )
+L142:         print(response)
+L143: 
+L144: 
+L145:     # x-ms-original-file: 2018-06-01/Pipelines_Get.json
+L146:     if __name__ == "__main__":
+L147:         main()
+L148: 
+L149:     `
+L150: To use the Azure SDK library in your project, see cite16†this documentation†github.com . To provide feedback on this code sample, cite15†open a GitHub issue†github.com L151: 
+L152:     `package armdatafactory_test
+L153: 
+L154:     import (
+L155:     	"context"
+L156:     	"log"
+L157: 
+L158:     	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+L159:     	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/datafactory/armdatafactory/v11"
+L160:     )
+L161: 
+L162:     // Generated from example definition: 2018-06-01/Pipelines_Get.json
+L163:     func ExamplePipelinesClient_Get() {
+L164:     	cred, err := azidentity.NewDefaultAzureCredential(nil)
+L165:     	if err != nil {
+L166:     		log.Fatalf("failed to obtain a credential: %v", err)
+L167:     	}
+L168:     	ctx := context.Background()
+L169:     	clientFactory, err := armdatafactory.NewClientFactory("12345678-1234-1234-1234-123456789012", cred, nil)
+L170:     	if err != nil {
+L171:     		log.Fatalf("failed to create client: %v", err)
+L172:     	}
+L173:     	res, err := clientFactory.NewPipelinesClient().Get(ctx, "exampleResourceGroup", "exampleFactoryName", "examplePipeline", nil)
+L174:     	if err != nil {
+L175:     		log.Fatalf("failed to finish the request: %v", err)
+L176:     	}
+L177:     	// You could use response here. We use blank identifier for just demo purposes.
+L178:     	_ = res
+L179:     	// If the HTTP response code is 200 as defined in example definition, your response structure would look as follows. Please pay attention that all the values in the output are fake values for just demo purposes.
+L180:     	// res = armdatafactory.PipelinesClientGetResponse{
+L181:     	// 	PipelineResource: armdatafactory.PipelineResource{
+L182:     	// 		Name: to.Ptr("examplePipeline"),
+L183:     	// 		Type: to.Ptr("Microsoft.DataFactory/factories/pipelines"),
+L184:     	// 		Etag: to.Ptr("1500504f-0000-0200-0000-5cbe090f0000"),
+L185:     	// 		ID: to.Ptr("/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/exampleResourceGroup/providers/Microsoft.DataFactory/factories/exampleFactoryName/pipelines/examplePipeline"),
+L186:     	// 		Properties: &armdatafactory.Pipeline{
+L187:     	// 			Description: to.Ptr("Example description"),
+L188:     	// 			Activities: []armdatafactory.ActivityClassification{
+L189:     	// 				&armdatafactory.ForEachActivity{
+L190:     	// 					Name: to.Ptr("ExampleForeachActivity"),
+L191:     	// 					Type: to.Ptr("ForEach"),
+L192:     	// 					TypeProperties: &armdatafactory.ForEachActivityTypeProperties{
+L193:     	// 						Activities: []armdatafactory.ActivityClassification{
+L194:     	// 							&armdatafactory.CopyActivity{
+L195:     	// 								Name: to.Ptr("ExampleCopyActivity"),
+L196:     	// 								Type: to.Ptr("Copy"),
+L197:     	// 								Inputs: []*armdatafactory.DatasetReference{
+L198:     	// 									{
+L199:     	// 										Type: to.Ptr(armdatafactory.DatasetReferenceTypeDatasetReference),
+L200:     	// 										Parameters: map[string]any{
+L201:     	// 											"MyFileName": "examplecontainer.csv",
+L202:     	// 											"MyFolderPath": "examplecontainer",
+L203:     	// 										},
+L204:     	// 										ReferenceName: to.Ptr("exampleDataset"),
+L205:     	// 									},
+L206:     	// 								},
+L207:     	// 								Outputs: []*armdatafactory.DatasetReference{
+L208:     	// 									{
+L209:     	// 										Type: to.Ptr(armdatafactory.DatasetReferenceTypeDatasetReference),
+L210:     	// 										Parameters: map[string]any{
+L211:     	// 											"MyFileName": map[string]any{
+L212:     	// 												"type": "Expression",
+L213:     	// 												"value": "@item()",
+L214:     	// 											},
+L215:     	// 											"MyFolderPath": "examplecontainer",
+L216:     	// 										},
+L217:     	// 										ReferenceName: to.Ptr("exampleDataset"),
+L218:     	// 									},
+L219:     	// 								},
+L220:     	// 								TypeProperties: &armdatafactory.CopyActivityTypeProperties{
+L221:     	// 									DataIntegrationUnits: 32,
+L222:     	// 									Sink: &armdatafactory.BlobSink{
+L223:     	// 										Type: to.Ptr("BlobSink"),
+L224:     	// 									},
+L225:     	// 									Source: &armdatafactory.BlobSource{
+L226:     	// 										Type: to.Ptr("BlobSource"),
+L227:     	// 									},
+L228:     	// 								},
+L229:     	// 							},
+L230:     	// 						},
+L231:     	// 						IsSequential: to.Ptr(true),
+L232:     	// 						Items: &armdatafactory.Expression{
+L233:     	// 							Type: to.Ptr(armdatafactory.ExpressionTypeExpression),
+L234:     	// 							Value: to.Ptr("@pipeline().parameters.OutputBlobNameList"),
+L235:     	// 						},
+L236:     	// 					},
+L237:     	// 				},
+L238:     	// 			},
+L239:     	// 			Parameters: map[string]*armdatafactory.ParameterSpecification{
+L240:     	// 				"OutputBlobNameList": &armdatafactory.ParameterSpecification{
+L241:     	// 					Type: to.Ptr(armdatafactory.ParameterTypeArray),
+L242:     	// 				},
+L243:     	// 			},
+L244:     	// 			Policy: &armdatafactory.PipelinePolicy{
+L245:     	// 				ElapsedTimeMetric: &armdatafactory.PipelineElapsedTimeMetricPolicy{
+L246:     	// 					Duration: "0.00:10:00",
+L247:     	// 				},
+L248:     	// 			},
+L249:     	// 			Variables: map[string]*armdatafactory.VariableSpecification{
+L250:     	// 				"TestVariableArray": &armdatafactory.VariableSpecification{
+L251:     	// 					Type: to.Ptr(armdatafactory.VariableTypeArray),
+L252:     	// 				},
+L253:     	// 			},
+L254:     	// 		},
+L255:     	// 	},
+L256:     	// }
+L257:     }
+L258: 
+L259:     `
+L260: To use the Azure SDK library in your project, see cite17†this documentation†github.com . To provide feedback on this code sample, cite15†open a GitHub issue†github.com L261: 
+L262:     `const { DataFactoryManagementClient } = require("@azure/arm-datafactory");
+L263:     const { DefaultAzureCredential } = require("@azure/identity");
+L264: 
+L265:     /**
+L266:      * This sample demonstrates how to gets a pipeline.
+L267:      *
+L268:      * @summary gets a pipeline.
+L269:      * x-ms-original-file: 2018-06-01/Pipelines_Get.json
+L270:      */
+L271:     async function pipelinesGet() {
+L272:       const credential = new DefaultAzureCredential();
+L273:       const subscriptionId = "12345678-1234-1234-1234-123456789012";
+L274:       const client = new DataFactoryManagementClient(credential, subscriptionId);
+L275:       const result = await client.pipelines.get(
+L276:         "exampleResourceGroup",
+L277:         "exampleFactoryName",
+L278:         "examplePipeline",
+L279:       );
+L280:       console.log(result);
+L281:     }
+L282: 
+L283:     `
+L284: To use the Azure SDK library in your project, see cite18†this documentation†github.com . To provide feedback on this code sample, cite15†open a GitHub issue†github.com L285: 
+L286:     `using Azure;
+L287:     using Azure.ResourceManager;
+L288:     using System;
+L289:     using System.Collections.Generic;
+L290:     using System.Threading.Tasks;
+L291:     using Azure.Core;
+L292:     using Azure.Core.Expressions.DataFactory;
+L293:     using Azure.Identity;
+L294:     using Azure.ResourceManager.DataFactory.Models;
+L295:     using Azure.ResourceManager.DataFactory;
+

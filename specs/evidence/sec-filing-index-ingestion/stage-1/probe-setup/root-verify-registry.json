@@ -1,0 +1,22 @@
+{
+  "argv": [
+    "az",
+    "acr",
+    "show",
+    "--resource-group",
+    "rg-sec-edgar-stage1-probe-20261005",
+    "--name",
+    "secedgarstage1probe20261005b8617",
+    "--query",
+    "{id:id,location:location,sku:sku.name,adminUserEnabled:adminUserEnabled,anonymousPullEnabled:anonymousPullEnabled,roleAssignmentMode:roleAssignmentMode,provisioningState:provisioningState,publicNetworkAccess:publicNetworkAccess,loginServer:loginServer,creationDate:creationDate,systemData:systemData,tags:tags}",
+    "-o",
+    "json",
+    "--subscription",
+    "3c92a216-8ed6-4897-b741-11ed287b8617"
+  ],
+  "started_at_utc": "2026-10-05T23:51:23.437096+00:00",
+  "ended_at_utc": "2026-10-05T23:51:24.178084+00:00",
+  "exit_code": 0,
+  "stdout": "{\n  \"adminUserEnabled\": false,\n  \"anonymousPullEnabled\": false,\n  \"creationDate\": \"2026-10-05T23:50:52.211421+00:00\",\n  \"id\": \"/subscriptions/3c92a216-8ed6-4897-b741-11ed287b8617/resourceGroups/rg-sec-edgar-stage1-probe-20261005/providers/Microsoft.ContainerRegistry/registries/secedgarstage1probe20261005b8617\",\n  \"location\": \"eastus\",\n  \"loginServer\": \"secedgarstage1probe20261005b8617.azurecr.io\",\n  \"provisioningState\": \"Succeeded\",\n  \"publicNetworkAccess\": \"Enabled\",\n  \"roleAssignmentMode\": \"LegacyRegistryPermissions\",\n  \"sku\": \"Basic\",\n  \"systemData\": {\n    \"createdAt\": \"2026-10-05T23:50:52.211421+00:00\",\n    \"createdBy\": \"mason.lowell@mac.com\",\n    \"createdByType\": \"User\",\n    \"lastModifiedAt\": \"2026-10-05T23:50:52.211421+00:00\",\n    \"lastModifiedBy\": \"mason.lowell@mac.com\",\n    \"lastModifiedByType\": \"User\"\n  },\n  \"tags\": {\n    \"expiresAtUTC\": \"2026-10-06T23:50:30.922520+00:00\",\n    \"owner\": \"LowellMason\",\n    \"purpose\": \"stage1-compatibility-probe\"\n  }\n}\n",
+  "stderr": ""
+}

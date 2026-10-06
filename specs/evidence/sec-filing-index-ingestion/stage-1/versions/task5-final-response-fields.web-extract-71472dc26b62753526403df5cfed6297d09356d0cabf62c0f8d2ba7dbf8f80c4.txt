@@ -1,0 +1,708 @@
+Storage Accounts - Get Properties - REST API (Azure Storage Resource Provider) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/storagerp/storage-accounts/get-properties?view=rest-storagerp-2025-06-01)
+citeturn97view0 [wordlim: 200] Crawled: today; Content type: text/html; Source: find({"ref_id":"https://learn.microsoft.com/en-us/rest/api/storagerp/storage-accounts/get-properties?view=rest-storagerp-2025-06-01","pattern":"properties.primaryEndpoints"}); Total lines: 3057
+L2922: properties.isNfsV3Enabled  | boolean  | NFS 3.0 protocol support enabled if set to true.
+L2923: properties.isSftpEnabled  | boolean  | Enables Secure File Transfer Protocol, if set to true
+L2924: properties.isSkuConversionBlocked  | boolean  | This property will be set to true or false on an event of ongoing migration. Default value is null.
+L2925: properties.keyCreationTime  | cite64†KeyCreationTime | Storage account keys creation time.
+L2926: properties.keyPolicy  | cite65†KeyPolicy | KeyPolicy assigned to the storage account.
+L2927: properties.largeFileSharesState  | cite70†LargeFileSharesState | Allow large file shares if sets to Enabled. It cannot be disabled once it is enabled.
+L2928: properties.lastGeoFailoverTime  | string (date-time)  | Gets the timestamp of the most recent instance of a failover to the secondary location. Only the most recent timestamp is retained. This element is not returned if there has never been a failover instance. Only available if the accountType is Standard_GRS or Standard_RAGRS.
+L2929: properties.minimumTlsVersion  | cite71†MinimumTlsVersion | Set the minimum TLS version to be permitted on requests to storage. The default interpretation is TLS 1.0 for this property. Minimum TLS version 1.3 version is not supported.
+L2930: properties.networkAcls  | cite72†NetworkRuleSet | Network rule set
+L2931: properties.primaryEndpoints  | cite52†Endpoints | Gets the URLs that are used to perform a retrieval of a public blob, queue, or table object. Note that Standard_ZRS and Premium_LRS accounts only return the blob endpoint.
+L2932: properties.primaryLocation  | string  | Gets the location of the primary data center for the storage account.
+L2933: properties.privateEndpointConnections  | cite77†PrivateEndpointConnection []  | List of private endpoint connection associated with the specified storage account
+L2934: properties.provisioningState  | cite81†ProvisioningState | Gets the status of the storage account at the time the operation was called.
+L2935: properties.publicNetworkAccess  | cite82†PublicNetworkAccess | Allow, disallow, or let Network Security Perimeter configuration to evaluate public network access to Storage Account.
+L2936: properties.routingPreference  | cite85†RoutingPreference | Maintains information about the network routing choice opted by the user for data transfer
+L2937: properties.sasPolicy  | cite86†SasPolicy | SasPolicy assigned to the storage account.
+L2938: properties.secondaryEndpoints  | cite52†Endpoints | Gets the URLs that are used to perform a retrieval of a public blob, queue, or table object from the secondary location of the storage account. Only available if the SKU name is Standard_RAGRS.
+L2939: properties.secondaryLocation  | string  | Gets the location of the geo-replicated secondary for the storage account. Only available if the accountType is Standard_GRS or Standard_RAGRS.
+L2940: properties.statusOfPrimary  | cite31†AccountStatus | Gets the status indicating whether the primary location of the storage account is available or unavailable.
+L2941: properties.statusOfSecondary  | cite31†AccountStatus | Gets the status indicating whether the secondary location of the storage account is available or unavailable. Only available if the SKU name is Standard_GRS or Standard_RAGRS.
+L2942: properties.storageAccountSkuConversionStatus  | cite96†StorageAccountSkuConversionStatus | This property is readOnly and is set by server during asynchronous storage account sku conversion operations.
+L2943: properties.supportsHttpsTrafficOnly  | boolean  | Allows https traffic only to storage service if sets to true.
+L2944: sku  | cite87†Sku | Gets the SKU.
+L2945: systemData  | cite97†systemData | Azure Resource Manager metadata containing createdBy and modifiedBy information.
+L2946: tags  | object  | Resource tags.
+L2947: type  | string  | The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or "Microsoft.Storage/storageAccounts"
+L2948: zones  | string[]  | The availability zones.
+L2949: ### StorageAccountExpand
+L2950: 
+L2951: Enumeration
+L2952: 
+L2953: May be used to expand the properties within account's properties. By default, data is not included when fetching properties. Currently we only support geoReplicationStats and blobRestoreStatus.
+L2954: 
+L2955: Value  | Description
+L2956: --- | ---
+L2957: geoReplicationStats  |
+L2958: blobRestoreStatus  |
+L2959: ### StorageAccountInternetEndpoints
+L2960: 
+L2961: Object
+L2962: 
+L2963: The URIs that are used to perform a retrieval of a public blob, file, web or dfs object via a internet routing endpoint.
+L2964: 
+L2965: Name  | Type  | Description
+L2966: --- | --- | ---
+L2967: blob  | string  | Gets the blob endpoint.
+L2968: dfs  | string  | Gets the dfs endpoint.
+L2969: file  | string  | Gets the file endpoint.
+L2970: web  | string  | Gets the web endpoint.
+--------------------------------------------------------------------------------
+ (https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/specification/monitor/resource-manager/Microsoft.Insights/Insights/stable/2023-01-01/actionGroups_API.json)
+citeturn97view1 [wordlim: 200] Crawled: 3 days ago; Content type: text/plain; Source: find({"ref_id":"https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/specification/monitor/resource-manager/Microsoft.Insights/Insights/stable/2023-01-01/actionGroups_API.json","pattern":"\"AzureResource\":"}); Total lines: 1223
+L394:         "x-ms-examples": {
+L395:           "Enable the receiver": {
+L396:             "$ref": "./examples/enableReceiver.json"
+L397:           }
+L398:         },
+L399:         "parameters": [
+L400:           {
+L401:             "$ref": "../../../../../../common-types/resource-management/v3/types.json#/parameters/ResourceGroupNameParameter"
+L402:           },
+L403:           {
+L404:             "$ref": "#/parameters/ActionGroupNameParameter"
+L405:           },
+L406:           {
+L407:             "name": "enableRequest",
+L408:             "in": "body",
+L409:             "required": true,
+L410:             "schema": {
+L411:               "$ref": "#/definitions/EnableRequest"
+L412:             },
+L413:             "description": "The receiver to re-enable."
+L414:           },
+L415:           {
+L416:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/SubscriptionIdParameter"
+L417:           },
+L418:           {
+L419:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/ApiVersionParameter"
+L420:           }
+L421:         ],
+L422:         "responses": {
+L423:           "200": {
+L424:             "description": "The receiver was successfully enabled."
+L425:           },
+L426:           "409": {
+L427:             "description": "The receiver is already enabled in the action group.",
+L428:             "x-ms-error-response": true
+L429:           },
+L430:           "default": {
+L431:             "description": "An error occurred and the receiver could not be enabled, e.g.: 404: The action group was not found or no matching receiver was found in the action group.",
+L432:             "schema": {
+L433:               "$ref": "#/definitions/ErrorResponse"
+L434:             }
+L435:           }
+L436:         }
+L437:       }
+L438:     }
+L439:   },
+L440:   "definitions": {
+L441:     "AzureResource": {
+L442:       "properties": {
+L443:         "id": {
+L444:           "type": "string",
+L445:           "readOnly": true,
+L446:           "description": "Azure resource Id"
+L447:         },
+L448:         "name": {
+L449:           "type": "string",
+L450:           "readOnly": true,
+L451:           "description": "Azure resource name"
+L452:         },
+L453:         "type": {
+L454:           "type": "string",
+L455:           "readOnly": true,
+L456:           "description": "Azure resource type"
+L457:         },
+L458:         "location": {
+L459:           "type": "string",
+L460:           "description": "Resource location",
+L461:           "x-ms-mutability": [
+L462:             "create",
+L463:             "read"
+L464:           ]
+L465:         },
+L466:         "tags": {
+L467:           "additionalProperties": {
+L468:             "type": "string"
+L469:           },
+L470:           "type": "object",
+L471:           "description": "Resource tags"
+L472:         }
+L473:       },
+L474:       "required": [
+L475:         "location"
+L476:       ],
+L477:       "type": "object",
+L478:       "x-ms-azure-resource": true,
+L479:       "description": "An azure resource object"
+L480:     },
+L481:     "TestNotificationDetailsResponse": {
+L482:       "description": "The details of the test notification results.",
+L483:       "type": "object",
+L484:       "properties": {
+L485:         "context": {
+L486:           "type": "object",
+L487:           "$ref": "#/definitions/Context"
+L488:         },
+L489:         "state": {
+L490:           "type": "string",
+L491:           "description": "The overall state"
+L492:         },
+L493:         "completedTime": {
+L494:           "type": "string",
+L495:           "description": "The completed time"
+L496:         },
+L497:         "createdTime": {
+L498:           "type": "string",
+L499:           "description": "The created time"
+L500:         },
+L501:         "actionDetails": {
+L502:           "x-ms-identifiers": [],
+L503:           "type": "array",
+L504:           "items": {
+L505:             "$ref": "#/definitions/ActionDetail"
+L506:           },
+L507:           "description": "The list of action detail"
+L508:         }
+L509:       },
+L510:       "required": [
+L511:         "state"
+L512:       ]
+L513:     },
+L514:     "ActionDetail": {
+L515:       "description": "The action detail",
+L516:       "type": "object",
+L517:       "properties": {
+L518:         "MechanismType": {
+L519:           "type": "string",
+L520:           "description": "The mechanism type"
+L521:         },
+L522:         "Name": {
+L523:           "type": "string",
+L524:           "description": "The name of the action"
+L525:         },
+L526:         "Status": {
+L527:           "type": "string",
+L528:           "description": "The status of the action"
+L529:         },
+L530:         "SubState": {
+L531:           "type": "string",
+L532:           "description": "The substatus of the action"
+L533:         },
+L534:         "SendTime": {
+L535:           "type": "string",
+L536:           "description": "The send time"
+L537:         },
+L538:         "Detail": {
+L539:           "type": "string",
+L540:           "description": "The detail of the friendly error message"
+L541:         }
+L542:       }
+L543:     },
+L544:     "Context": {
+L545:       "description": "The context info",
+L546:       "type": "object",
+L547:       "properties": {
+L548:         "notificationSource": {
+L549:           "type": "string",
+L550:           "description": "The source of the notification request"
+L551:         },
+L552:         "contextType": {
+L553:           "type": "string",
+L554:           "description": "The context id type"
+L555:         }
+L556:       }
+L557:     },
+L558:     "ActionGroupResource": {
+L559:       "description": "An action group resource.",
+L560:       "type": "object",
+L561:       "allOf": [
+L562:         {
+L563:           "$ref": "#/definitions/AzureResource"
+L564:         }
+L565:       ],
+L566:       "properties": {
+L567:         "properties": {
+L568:           "x-ms-client-flatten": true,
+L569:           "$ref": "#/definitions/ActionGroup",
+L570:           "description": "The action groups properties of the resource."
+L571:         }
+L572:       }
+L573:     },
+L574:     "ActionGroupList": {
+L575:       "description": "A list of action groups.",
+L576:       "type": "object",
+L577:       "properties": {
+L578:         "value": {
+L579:           "x-ms-identifiers": [],
+L580:           "type": "array",
+L581:           "items": {
+L582:             "$ref": "#/definitions/ActionGroupResource"
+L583:           },
+L584:           "description": "The list of action groups."
+L585:         },
+L586:         "nextLink": {
+L587:           "type": "string",
+L588:           "description": "Provides the link to retrieve the next set of elements."
+L589:         }
+L590:       }
+L591:     },
+L592:     "NotificationRequestBody": {
+L593:       "description": "The request body which contain contact detail metadata",
+L594:       "type": "object",
+L595:       "properties": {
+L596:         "alertType": {
+L597:           "type": "string",
+L598:           "maxLength": 30,
+L599:           "description": "The value of the supported alert type. Supported alert type values are: servicehealth, metricstaticthreshold, metricsdynamicthreshold, logalertv2, smartalert, webtestalert, logalertv1numresult, logalertv1metricmeasurement, resourcehealth, activitylog, actualcostbudget, forecastedbudget"
+L600:         },
+L601:         "emailReceivers": {
+L602:           "x-ms-identifiers": [],
+L603:           "type": "array",
+L604:           "items": {
+L605:             "$ref": "#/definitions/EmailReceiver"
+L606:           },
+L607:           "description": "The list of email receivers that are part of this action group."
+L608:         },
+L609:         "smsReceivers": {
+L610:           "x-ms-identifiers": [],
+L611:           "type": "array",
+L612:           "items": {
+L613:             "$ref": "#/definitions/SmsReceiver"
+L614:           },
+L615:           "description": "The list of SMS receivers that are part of this action group."
+L616:         },
+L617:         "webhookReceivers": {
+L618:           "x-ms-identifiers": [],
+L619:           "type": "array",
+L620:           "items": {
+L621:             "$ref": "#/definitions/WebhookReceiver"
+L622:           },
+L623:           "description": "The list of webhook receivers that are part of this action group."
+L624:         },
+L625:         "itsmReceivers": {
+L626:           "x-ms-identifiers": [],
+L627:           "type": "array",
+L628:           "items": {
+L629:             "$ref": "#/definitions/ItsmReceiver"
+L630:           },
+L631:           "description": "The list of ITSM receivers that are part of this action group."
+L632:         },
+L633:         "azureAppPushReceivers": {
+L634:           "x-ms-identifiers": [],
+L635:           "type": "array",
+L636:           "items": {
+L637:             "$ref": "#/definitions/AzureAppPushReceiver"
+L638:           },
+L639:           "description": "The list of AzureAppPush receivers that are part of this action group."
+L640:         },
+L641:         "automationRunbookReceivers": {
+L642:           "x-ms-identifiers": [],
+L643:           "type": "array",
+L644:           "items": {
+L645:             "$ref": "#/definitions/AutomationRunbookReceiver"
+L646:           },
+--------------------------------------------------------------------------------
+ (https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/specification/monitor/resource-manager/Microsoft.Insights/Insights/stable/2023-01-01/actionGroups_API.json)
+citeturn97view2 [wordlim: 200] Crawled: 3 days ago; Content type: text/plain; Source: find({"ref_id":"https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/specification/monitor/resource-manager/Microsoft.Insights/Insights/stable/2023-01-01/actionGroups_API.json","pattern":"\"ActionGroup\":"}); Total lines: 1223
+L0: {
+L1:   "swagger": "2.0",
+L2:   "info": {
+L3:     "title": "Azure Action Groups API",
+L4:     "x-ms-code-generation-settings": {
+L5:       "name": "MonitorManagementClient"
+L6:     },
+L7:     "version": "2023-01-01"
+L8:   },
+L9:   "host": "management.azure.com",
+L10:   "schemes": [
+L11:     "https"
+L12:   ],
+L13:   "consumes": [
+L14:     "application/json"
+L15:   ],
+L16:   "produces": [
+L17:     "application/json"
+L18:   ],
+L19:   "security": [
+L20:     {
+L21:       "azure_auth": [
+L22:         "user_impersonation"
+L23:       ]
+L24:     }
+L25:   ],
+L26:   "securityDefinitions": {
+L27:     "azure_auth": {
+L28:       "type": "oauth2",
+L29:       "authorizationUrl": "https://login.microsoftonline.com/common/oauth2/authorize",
+L30:       "flow": "implicit",
+L31:       "description": "Azure Active Directory OAuth2 Flow",
+L32:       "scopes": {
+L33:         "user_impersonation": "impersonate your user account"
+L34:       }
+L35:     }
+L36:   },
+L37:   "paths": {
+L38:     "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Insights/actionGroups/{actionGroupName}": {
+L39:       "put": {
+L40:         "description": "Create a new action group or update an existing one.",
+L41:         "operationId": "ActionGroups_CreateOrUpdate",
+L42:         "x-ms-examples": {
+L43:           "Create or update an action group": {
+L44:             "$ref": "./examples/createOrUpdateActionGroup.json"
+L45:           }
+L46:         },
+L47:         "parameters": [
+L48:           {
+L49:             "$ref": "../../../../../../common-types/resource-management/v3/types.json#/parameters/ResourceGroupNameParameter"
+L50:           },
+L51:           {
+L52:             "$ref": "#/parameters/ActionGroupNameParameter"
+L53:           },
+L54:           {
+L55:             "name": "actionGroup",
+L56:             "in": "body",
+L57:             "required": true,
+L58:             "schema": {
+L59:               "$ref": "#/definitions/ActionGroupResource"
+L60:             },
+L61:             "description": "The action group to create or use for the update."
+L62:           },
+L63:           {
+L64:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/SubscriptionIdParameter"
+L65:           },
+L66:           {
+L67:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/ApiVersionParameter"
+L68:           }
+L69:         ],
+L70:         "responses": {
+L71:           "200": {
+L72:             "description": "An existing action group was successfully updated.",
+L73:             "schema": {
+L74:               "$ref": "#/definitions/ActionGroupResource"
+L75:             }
+L76:           },
+L77:           "201": {
+L78:             "description": "A new action group was successfully created.",
+L79:             "schema": {
+L80:               "$ref": "#/definitions/ActionGroupResource"
+L81:             }
+L82:           },
+L83:           "default": {
+L84:             "description": "An error occurred and the action group could not be created or updated.",
+L85:             "schema": {
+L86:               "$ref": "#/definitions/ErrorResponse"
+L87:             }
+L88:           }
+L89:         }
+L90:       },
+L91:       "get": {
+L92:         "description": "Get an action group.",
+L93:         "operationId": "ActionGroups_Get",
+L94:         "x-ms-examples": {
+L95:           "Get an action group": {
+L96:             "$ref": "./examples/getActionGroup.json"
+L97:           }
+L98:         },
+L99:         "parameters": [
+L100:           {
+L101:             "$ref": "../../../../../../common-types/resource-management/v3/types.json#/parameters/ResourceGroupNameParameter"
+L102:           },
+L103:           {
+L104:             "$ref": "#/parameters/ActionGroupNameParameter"
+L105:           },
+L106:           {
+L107:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/SubscriptionIdParameter"
+L108:           },
+L109:           {
+L110:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/ApiVersionParameter"
+L111:           }
+L112:         ],
+L113:         "responses": {
+L114:           "200": {
+L115:             "description": "The request succeeded.",
+L116:             "schema": {
+L117:               "$ref": "#/definitions/ActionGroupResource"
+L118:             }
+L119:           },
+L120:           "default": {
+L121:             "description": "An error occurred and the action group could not be retrieved. 404: The action group does not exist.",
+L122:             "schema": {
+L123:               "$ref": "#/definitions/ErrorResponse"
+L124:             }
+L125:           }
+L126:         }
+L127:       },
+L128:       "delete": {
+L129:         "description": "Delete an action group.",
+L130:         "operationId": "ActionGroups_Delete",
+L131:         "x-ms-examples": {
+L132:           "Delete an action group": {
+L133:             "$ref": "./examples/deleteActionGroup.json"
+L134:           }
+L135:         },
+L136:         "parameters": [
+L137:           {
+L138:             "$ref": "../../../../../../common-types/resource-management/v3/types.json#/parameters/ResourceGroupNameParameter"
+L139:           },
+L140:           {
+L141:             "$ref": "#/parameters/ActionGroupNameParameter"
+L142:           },
+L143:           {
+L144:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/SubscriptionIdParameter"
+L145:           },
+L146:           {
+L515:       "description": "The action detail",
+L516:       "type": "object",
+L517:       "properties": {
+L518:         "MechanismType": {
+L519:           "type": "string",
+L520:           "description": "The mechanism type"
+L521:         },
+L522:         "Name": {
+L523:           "type": "string",
+L524:           "description": "The name of the action"
+L525:         },
+L526:         "Status": {
+L532:           "description": "The substatus of the action"
+L533:         },
+L534:         "SendTime": {
+L535:           "type": "string",
+L536:           "description": "The send time"
+L537:         },
+L538:         "Detail": {
+L539:           "type": "string",
+L540:           "description": "The detail of the friendly error message"
+L541:         }
+L542:       }
+L543:     },
+L544:     "Context": {
+L545:       "description": "The context info",
+L546:       "type": "object",
+L547:       "properties": {
+L548:         "notificationSource": {
+L549:           "type": "string",
+L550:           "description": "The source of the notification request"
+L551:         },
+L552:         "contextType": {
+L553:           "type": "string",
+L554:           "description": "The context id type"
+L555:         }
+L556:       }
+L557:     },
+L558:     "ActionGroupResource": {
+L559:       "description": "An action group resource.",
+L560:       "type": "object",
+L561:       "allOf": [
+L562:         {
+L563:           "$ref": "#/definitions/AzureResource"
+L564:         }
+L565:       ],
+L566:       "properties": {
+L567:         "properties": {
+L568:           "x-ms-client-flatten": true,
+L569:           "$ref": "#/definitions/ActionGroup",
+L570:           "description": "The action groups properties of the resource."
+L571:         }
+L572:       }
+L573:     },
+L574:     "ActionGroupList": {
+L575:       "description": "A list of action groups.",
+L576:       "type": "object",
+L577:       "properties": {
+L578:         "value": {
+L579:           "x-ms-identifiers": [],
+L580:           "type": "array",
+L581:           "items": {
+L582:             "$ref": "#/definitions/ActionGroupResource"
+L583:           },
+L584:           "description": "The list of action groups."
+L585:         },
+L586:         "nextLink": {
+L587:           "type": "string",
+L588:           "description": "Provides the link to retrieve the next set of elements."
+L589:         }
+L590:       }
+L591:     },
+L592:     "NotificationRequestBody": {
+L593:       "description": "The request body which contain contact detail metadata",
+L594:       "type": "object",
+L595:       "properties": {
+L596:         "alertType": {
+L597:           "type": "string",
+L598:           "maxLength": 30,
+L599:           "description": "The value of the supported alert type. Supported alert type values are: servicehealth, metricstaticthreshold, metricsdynamicthreshold, logalertv2, smartalert, webtestalert, logalertv1numresult, logalertv1metricmeasurement, resourcehealth, activitylog, actualcostbudget, forecastedbudget"
+L600:         },
+L601:         "emailReceivers": {
+L602:           "x-ms-identifiers": [],
+L603:           "type": "array",
+L604:           "items": {
+L605:             "$ref": "#/definitions/EmailReceiver"
+L606:           },
+L607:           "description": "The list of email receivers that are part of this action group."
+L608:         },
+L609:         "smsReceivers": {
+L610:           "x-ms-identifiers": [],
+L611:           "type": "array",
+L612:           "items": {
+L613:             "$ref": "#/definitions/SmsReceiver"
+L614:           },
+L615:           "description": "The list of SMS receivers that are part of this action group."
+L616:         },
+L617:         "webhookReceivers": {
+L618:           "x-ms-identifiers": [],
+L619:           "type": "array",
+L620:           "items": {
+L621:             "$ref": "#/definitions/WebhookReceiver"
+L622:           },
+L623:           "description": "The list of webhook receivers that are part of this action group."
+L624:         },
+L625:         "itsmReceivers": {
+L626:           "x-ms-identifiers": [],
+L627:           "type": "array",
+L628:           "items": {
+L629:             "$ref": "#/definitions/ItsmReceiver"
+L630:           },
+L631:           "description": "The list of ITSM receivers that are part of this action group."
+L632:         },
+L633:         "azureAppPushReceivers": {
+L634:           "x-ms-identifiers": [],
+L635:           "type": "array",
+L636:           "items": {
+L637:             "$ref": "#/definitions/AzureAppPushReceiver"
+L638:           },
+L639:           "description": "The list of AzureAppPush receivers that are part of this action group."
+L640:         },
+L641:         "automationRunbookReceivers": {
+L642:           "x-ms-identifiers": [],
+L643:           "type": "array",
+L644:           "items": {
+L645:             "$ref": "#/definitions/AutomationRunbookReceiver"
+L646:           },
+L647:           "description": "The list of AutomationRunbook receivers that are part of this action group."
+L648:         },
+L649:         "voiceReceivers": {
+L650:           "x-ms-identifiers": [],
+L651:           "type": "array",
+L652:           "items": {
+L653:             "$ref": "#/definitions/VoiceReceiver"
+L654:           },
+L655:           "description": "The list of voice receivers that are part of this action group."
+L656:         },
+L657:         "logicAppReceivers": {
+L658:           "x-ms-identifiers": [],
+L659:           "type": "array",
+L660:           "items": {
+L661:             "$ref": "#/definitions/LogicAppReceiver"
+L662:           },
+L663:           "description": "The list of logic app receivers that are part of this action group."
+L664:         },
+L665:         "azureFunctionReceivers": {
+L666:           "x-ms-identifiers": [],
+L667:           "type": "array",
+L668:           "items": {
+L669:             "$ref": "#/definitions/AzureFunctionReceiver"
+L670:           },
+L671:           "description": "The list of azure function receivers that are part of this action group."
+L672:         },
+L673:         "armRoleReceivers": {
+L674:           "x-ms-identifiers": [],
+L675:           "type": "array",
+L676:           "items": {
+L677:             "$ref": "#/definitions/ArmRoleReceiver"
+L678:           },
+L679:           "description": "The list of ARM role receivers that are part of this action group. Roles are Azure RBAC roles and only built-in roles are supported."
+L680:         },
+L681:         "eventHubReceivers": {
+L682:           "x-ms-identifiers": [],
+L683:           "type": "array",
+L684:           "items": {
+L685:             "$ref": "#/definitions/EventHubReceiver"
+L686:           },
+L687:           "description": "The list of event hub receivers that are part of this action group."
+L688:         }
+L689:       },
+L690:       "required": [
+L691:         "alertType"
+L692:       ]
+L693:     },
+L694:     "ActionGroup": {
+L695:       "description": "An Azure action group.",
+L696:       "type": "object",
+L697:       "properties": {
+L698:         "groupShortName": {
+L699:           "type": "string",
+L700:           "maxLength": 12,
+L701:           "description": "The short name of the action group. This will be used in SMS messages."
+L702:         },
+L703:         "enabled": {
+L704:           "type": "boolean",
+L705:           "default": true,
+L706:           "description": "Indicates whether this action group is enabled. If an action group is not enabled, then none of its receivers will receive communications."
+L707:         },
+L708:         "emailReceivers": {
+L709:           "x-ms-identifiers": [],
+L710:           "type": "array",
+L711:           "items": {
+L712:             "$ref": "#/definitions/EmailReceiver"
+L713:           },
+L714:           "description": "The list of email receivers that are part of this action group."
+L715:         },
+L716:         "smsReceivers": {
+L717:           "x-ms-identifiers": [],
+L718:           "type": "array",
+L719:           "items": {
+L720:             "$ref": "#/definitions/SmsReceiver"
+L721:           },
+L722:           "description": "The list of SMS receivers that are part of this action group."
+L723:         },
+L724:         "webhookReceivers": {
+L725:           "x-ms-identifiers": [],
+L726:           "type": "array",
+L727:           "items": {
+L728:             "$ref": "#/definitions/WebhookReceiver"
+L729:           },
+L730:           "description": "The list of webhook receivers that are part of this action group."
+L731:         },
+L732:         "itsmReceivers": {
+L733:           "x-ms-identifiers": [],
+L734:           "type": "array",
+L735:           "items": {
+L736:             "$ref": "#/definitions/ItsmReceiver"
+L737:           },
+L738:           "description": "The list of ITSM receivers that are part of this action group."
+L739:         },
+L740:         "azureAppPushReceivers": {
+L741:           "x-ms-identifiers": [],
+L742:           "type": "array",
+L743:           "items": {
+L744:             "$ref": "#/definitions/AzureAppPushReceiver"
+L745:           },
+L746:           "description": "The list of AzureAppPush receivers that are part of this action group."
+L747:         },
+L748:         "automationRunbookReceivers": {
+L749:           "x-ms-identifiers": [],
+L750:           "type": "array",
+L751:           "items": {
+L752:             "$ref": "#/definitions/AutomationRunbookReceiver"
+L753:           },
+L754:           "description": "The list of AutomationRunbook receivers that are part of this action group."
+L755:         },
+L756:         "voiceReceivers": {
+L757:           "x-ms-identifiers": [],
+L758:           "type": "array",
+L759:           "items": {
+L760:             "$ref": "#/definitions/VoiceReceiver"
+L761:           },
+L762:           "description": "The list of voice receivers that are part of this action group."
+L763:         },
+L764:         "logicAppReceivers": {
+L765:           "x-ms-identifiers": [],
+L766:           "type": "array",
+L767:           "items": {
+L768:             "$ref": "#/definitions/LogicAppReceiver"
+L769:           },
+

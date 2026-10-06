@@ -1,0 +1,25 @@
+{
+  "argv": [
+    "az",
+    "acr",
+    "task",
+    "show-run",
+    "--subscription",
+    "3c92a216-8ed6-4897-b741-11ed287b8617",
+    "--registry",
+    "secedgarstage1probe20261005b8617",
+    "--resource-group",
+    "rg-sec-edgar-stage1-probe-20261005",
+    "--run-id",
+    "ca3",
+    "--query",
+    "{runId:runId,status:status,agentConfiguration:agentConfiguration,platform:platform,startTime:startTime,finishTime:finishTime,runErrorMessage:runErrorMessage}",
+    "--output",
+    "json"
+  ],
+  "started_utc": "2026-10-06T00:46:06.292092+00:00",
+  "ended_utc": "2026-10-06T00:46:07.626428+00:00",
+  "exit_code": 0,
+  "stdout": "{\n  \"agentConfiguration\": {\n    \"cpu\": 2\n  },\n  \"finishTime\": \"2026-10-06T00:45:15.775589+00:00\",\n  \"platform\": {\n    \"architecture\": \"amd64\",\n    \"os\": \"Linux\",\n    \"variant\": null\n  },\n  \"runErrorMessage\": null,\n  \"runId\": \"ca3\",\n  \"startTime\": \"2026-10-06T00:44:48.855224+00:00\",\n  \"status\": \"Succeeded\"\n}\n",
+  "stderr": ""
+}

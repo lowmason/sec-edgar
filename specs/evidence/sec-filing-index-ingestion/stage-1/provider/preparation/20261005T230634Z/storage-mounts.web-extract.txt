@@ -1,0 +1,593 @@
+Use storage mounts in Azure Container Apps | Microsoft Learn (https://learn.microsoft.com/en-us/azure/container-apps/storage-mounts)
+citeturn10view0 [wordlim: 200] Crawled: today; Content type: text/html; Source: open({"ref_id":"https://learn.microsoft.com/en-us/azure/container-apps/storage-mounts","lineno":null}); Total lines: 653
+L0: cite0†Skip to main content cite1†Skip to Ask Learn chat experience L1: 
+L2: This browser is no longer supported.
+L3: 
+L4: Upgrade to Microsoft Edge to take advantage of the latest features, security updates, and technical support.
+L5: 
+L6: cite2†Download Microsoft Edge†go.microsoft.com cite3†More info about Internet Explorer and Microsoft Edge L7: 
+L8: Table of contents Exit editor mode
+L9: 
+L10: Ask Learn Ask Learn
+L11: 
+L12: Reading mode Table of contents cite1†Read in English Add Add to Plans cite4†Edit†github.com L13: 
+L14: * * *
+L15: 
+L16: Copy Markdown Print
+L17: 
+L18: * * *
+L19: 
+L20: Note
+L21: Access to this page requires authorization. You can try cite1†signing in or changing directories.
+L22: 
+L23: Access to this page requires authorization. You can try changing directories.
+L24: # Use storage mounts in Azure Container Apps
+L25: 
+L26: Feedback
+L27: 
+L28: Summarize this article for me
+L29: ## In this article
+L30: 
+L31: A container app has access to different types of storage. A single app can take advantage of more than one type of storage if necessary.
+L32: 
+L33: Note
+L34: 
+L35: Avoid using special characters in volume names to prevent deployment failures. For example, a volume named `credentials.json` contains a special character (`.`) which results in a deployment error.
+L36: Storage type  | Description  | Persistence  | Usage example
+L37: --- | --- | --- | ---
+L38: cite5†Container-scoped storage | Ephemeral storage available to a running container  | Data is available until container shuts down  | Writing a local app cache.
+L39: cite6†Replica-scoped storage | Ephemeral storage for sharing files between containers in the same replica  | Data is available until replica shuts down  | The main app container writing log files that a sidecar container processes.
+L40: cite7†Azure Files | Permanent storage  | Data is persisted to Azure Files  | Writing files to a file share to make data accessible by other systems.
+L41: Note
+L42: 
+L43: Azure Container Apps doesn't support mounting file shares from Azure NetApp Files or Azure Blob Storage.
+L44: ## Ephemeral storage
+L45: 
+L46: A container app can read and write temporary data to ephemeral storage. Ephemeral storage can be scoped to a container or a replica. The total amount of container-scoped and replica-scoped storage available to each replica depends on the total number of vCPUs allocated to the replica.
+L47: 
+L48: vCPUs  | Total ephemeral storage
+L49: --- | ---
+L50: 0.25 or lower  | 1 GiB
+L51: 0.5 or lower  | 2 GiB
+L52: 1 or lower  | 4 GiB
+L53: Over 1  | 8 GiB
+L54: ### Container-scoped storage
+L55: 
+L56: A container can write to its own file system.
+L57: 
+L58: Container file system storage has the following characteristics:
+L59: 
+L60:   * The storage is temporary and disappears when the container shuts down or restarts.
+L61:   * Only processes running in the current container can see files written to this storage.
+L62: ### Replica-scoped storage
+L63: 
+L64: You can mount an ephemeral, temporary volume that's equivalent to cite8†EmptyDir†kubernetes.io (empty directory) in Kubernetes. This storage is scoped to a single replica. Use an `EmptyDir` volume to share data between containers in the same replica.
+L65: 
+L66: Replica-scoped storage has the following characteristics:
+L67:   * Files persist for the lifetime of the replica.
+L68:     * If a container in a replica restarts, the files in the volume remain.
+L69:   * Any init or app containers in the replica can mount the same volume.
+L70:   * A container can mount multiple `EmptyDir` volumes.
+L71: 
+L72: To configure replica-scoped storage, first define an `EmptyDir` volume in the revision. Then define a volume mount in one or more containers in the revision.
+L73: #### Prerequisites
+L74: 
+L75: Requirement  | Instructions
+L76: --- | ---
+L77: Azure account  | If you don't have one, cite9†create an account for free†azure.microsoft.com .
+L78: Azure Container Apps environment  | cite10†Create a container apps environment .
+L79: Managed identity configuration  | Make sure the managed identity associated with your Container Apps environment is assigned the cite11†appropriate roles to access Azure Files.
+L80: #### Configuration
+L81: 
+L82: When you configure replica-scoped storage by using the Azure CLI, you must use a YAML definition to create or update your container app.
+L83: 
+L84:   1. To update an existing container app to use replica-scoped storage, export your app's specification to a YAML file named app.yaml.
+L85: 
+L86:     `az containerapp show -n <APP_NAME> -g <RESOURCE_GROUP_NAME> -o yaml > app.yaml
+L87:     `
+L88: 
+L89:   2. Make the following changes to your container app specification.
+L90:      * Add a `volumes` array to the `template` section of your container app definition and define a volume. If you already have a `volumes` array, add a new volume to the array.
+L91:        * The `name` is an identifier for the volume.
+L92:        * Use `EmptyDir` as the `storageType`.
+L93:      * For each container in the template that you want to mount the volume, define a volume mount in the `volumeMounts` array of the container definition.
+L94:        * The `volumeName` is the name defined in the `volumes` array.
+L95:        * The `mountPath` is the path in the container to mount the volume.
+L96: 
+L97:     `properties:
+L98:       managedEnvironmentId: /subscriptions/<SUBSCRIPTION_ID>/resourceGroups/<RESOURCE_GROUP_NAME>/providers/Microsoft.App/managedEnvironments/<ENVIRONMENT_NAME>
+L99:       configuration:
+L100:         activeRevisionsMode: Single
+L101:       template:
+L102:         containers:
+L103:         - image: <IMAGE_NAME1>
+L104:           name: my-container-1
+L105:           volumeMounts:
+L106:           - mountPath: /myempty
+L107:             volumeName: myempty
+L108:         - image: <IMAGE_NAME_2>
+L109:           name: my-container-2
+L110:           volumeMounts:
+L111:           - mountPath: /myempty
+L112:             volumeName: myempty
+L113:         volumes:
+L114:         - name: myempty
+L115:           storageType: EmptyDir
+L116:     `
+L117:   3. Update your container app by using the YAML file.
+L118: 
+L119:     `az containerapp update --name <APP_NAME> --resource-group <RESOURCE_GROUP_NAME> \
+L120:         --yaml app.yaml
+L121:     `
+L122: 
+L123: For a full example, see the cite12†YAML specification .
+L124: 
+L125: To create a replica-scoped volume and mount it in a container, make the following changes to the container apps resource in an ARM template:
+L126:   * Add a `volumes` array to the `template` section of your container app definition and define a volume. If you already have a `volumes` array, add a new volume to the array.
+L127:     * The `name` is an identifier for the volume.
+L128:     * Use `EmptyDir` as the `storageType`.
+L129:   * For each container in the template that you want to mount the volume, define a volume mount in the `volumeMounts` array of the container definition.
+L130:     * The `volumeName` is the name defined in the `volumes` array.
+L131:     * The `mountPath` is the path in the container to mount the volume.
+L132: Example ARM template snippet:
+L133: 
+L134:     `{
+L135:       "apiVersion": "2022-03-01",
+L136:       "type": "Microsoft.App/containerApps",
+L137:       "name": "[parameters('containerappName')]",
+L138:       "location": "[parameters('location')]",
+L139:       "properties": {
+L140: 
+L141:         ...
+L142: 
+L143:         "template": {
+L144:           "revisionSuffix": "myrevision",
+L145:           "containers": [
+L146:             {
+L147:               "name": "main",
+L148:               "image": "[parameters('container_image')]",
+L149:               "resources": {
+L150:                 "cpu": 0.5,
+L151:                 "memory": "1Gi"
+L152:               },
+L153:               "volumeMounts": [
+L154:                 {
+L155:                   "mountPath": "/myempty",
+L156:                   "volumeName": "myempty"
+L157:                 }
+L158:               ]
+L159:             },
+L160:             {
+L161:               "name": "sidecar",
+L162:               "image": "[parameters('sidecar_image')]",
+L163:               "resources": {
+L164:                 "cpu": 0.5,
+L165:                 "memory": "1Gi"
+L166:               },
+L167:               "volumeMounts": [
+L168:                 {
+L169:                   "mountPath": "/myempty",
+L170:                   "volumeName": "myempty"
+L171:                 }
+L172:               ]
+L173:             }
+L174:           ],
+L175:           "scale": {
+L176:             "minReplicas": 1,
+L177:             "maxReplicas": 3
+L178:           },
+L179:           "volumes": [
+L180:             {
+L181:               "name": "myempty",
+L182:               "storageType": "EmptyDir"
+L183:             }
+L184:           ]
+L185:         }
+L186:       }
+L187:     }
+L188:     `
+L189: See the cite13†ARM template API specification for a full example.
+L190: 
+L191: To create a replica-scoped volume and mount it in a container, deploy a new revision of your container app by using the Azure portal.
+L192: 
+L193:   1. In the Azure portal, go to your container app.
+L194: 
+L195:   2. Select Revision management in the left menu.
+L196: 
+L197:   3. Select Create new revision.
+L198: 
+L199:   4. Select the container where you want to mount the volume.
+L200: 
+L201:   5. In the Edit a container context pane, select the Volume mounts tab.
+L202:   6. Under the Ephemeral storage section, create a new volume with the following information:
+L203: 
+L204:      * Volume name: A name for the ephemeral volume.
+L205:      * Mount path: The absolute path in the container to mount the volume.
+L206:   7. Select Save to save changes and exit the context pane.
+L207: 
+L208:   8. Select Create to create the new revision.
+L209: ## Azure Files volume
+L210: 
+L211: You can mount a file share from cite14†Azure Files as a volume in a container.
+L212: 
+L213: Important
+L214: Azure Container Apps supports only classic Azure file shares, which are created within a storage account (the `Microsoft.Storage/storageAccounts/fileServices/shares` resource type). Container Apps doesn't support the newer `Microsoft.FileShares` top-level resource type. If you try to mount a `Microsoft.FileShares` resource, the operation fails. To create a supported file share, see cite15†Create a classic Azure file share .
+L215: 
+L216: Azure Files storage has the following characteristics:
+L217:   * Files written under the mount location are persisted to the file share.
+L218:   * Files in the share are available via the mount location.
+L219:   * Multiple containers can mount the same file share, including ones that are in another replica, revision, or container app.
+L220:   * All containers that mount the share can access files written by any other container or method.
+L221:   * More than one Azure Files volume can be mounted in a single container.
+L222: Azure Files supports both SMB (Server Message Block) and NFS (Network File System) protocols. You can mount an Azure Files share using either protocol. The file share you define in the environment must be configured with the same protocol used by the file share in the storage account.
+L223: 
+L224: To enable Azure Files storage in your container, you need to set up your environment and container app as follows:
+L225: In the Azure portal, open your Container App.
+L226: In the left navigation pane, under Settings, select Storage mounts.
+L227: 
+L228: From here you can add a new mount:
+L229: 
+L230:   1. Choose Azure File share as the storage type.
+L231:   2. Provide the required configuration (storage account, share name, access mode).
+L232:   3. Save the mount.
+L233:   4. Create and deploy a new revision of your container app to apply the changes.
+L234:   * Create a storage definition in the Container Apps environment.
+L235:   * If you're using NFS, your environment must be configured with a custom VNet and the storage account must be configured to allow access from the VNet. For more information, see cite16†NFS file shares in Azure Files .
+L236:   * If you're using NFS, the storage account must not require encrypted NFS connections. Container Apps doesn't support encryption in transit for NFS file shares. If the storage account's Require Encryption in Transit for NFS setting is enabled, or if that setting isn't configured and Secure transfer required is enabled, the mount fails with an error such as `mount.nfs: access denied by server while mounting`. For more information, see cite17†Encryption in transit for NFS Azure file shares .
+L237:   * If your environment is configured with a custom VNet, you must allow ports 445 and 2049 in the network security group (NSG) associated with the subnet.
+L238:   * Define a volume of type `AzureFile` (SMB) or `NfsAzureFile` (NFS) in a revision.
+L239:   * Define a volume mount in one or more containers in the revision.
+L240:   * The Azure Files storage account used must be accessible from your container app's virtual network. For more information, see cite18†Grant access from a virtual network .
+L241: ### Prerequisites
+L242: 
+L243: Requirement  | Instructions
+L244: --- | ---
+L245: Azure account  | If you don't have one, cite9†create an account for free†azure.microsoft.com .
+L246: Azure Storage account  | cite19†Create a storage account with a cite15†classic Azure file share .
+L247: Azure Container Apps environment  | cite10†Create a container apps environment .
+L248: ### Configuration
+L249: 
+L250: When you configure a container app to mount an Azure Files volume by using Azure CLI, you must use a YAML definition to create or update your container app.
+L251: 
+L252: For a step-by-step tutorial on mounting an SMB file share, see cite20†Create an Azure Files storage mount in Azure Container Apps .
+L253: 
+L254:   1. Add a storage definition to your Container Apps environment.
+L255:      * cite21†SMB L256:      * cite22†NFS L257: 
+L258:     `az containerapp env storage set --name my-env --resource-group my-group \
+L259:         --storage-name mystorage \
+L260:         --storage-type AzureFile \
+L261:         --azure-file-account-name <STORAGE_ACCOUNT_NAME> \
+L262:         --azure-file-account-key <STORAGE_ACCOUNT_KEY> \
+L263:         --azure-file-share-name <STORAGE_SHARE_NAME> \
+L264:         --access-mode ReadWrite
+L265:     `
+L266: Replace `<STORAGE_ACCOUNT_NAME>` and `<STORAGE_ACCOUNT_KEY>` with the name and key of your storage account. Replace `<STORAGE_SHARE_NAME>` with the name of the file share in the storage account.
+L267: Valid values for `--access-mode` are `ReadWrite` and `ReadOnly`.
+L268: 
+L269:     `az containerapp env storage set --name my-env --resource-group my-group \
+L270:         --storage-name mystorage \
+L271:         --storage-type NfsAzureFile \
+L272:         --server <NFS_SERVER> \
+L273:         --azure-file-share-name <STORAGE_SHARE_NAME> \
+L274:         --azure-file-account-name <STORAGE_ACCOUNT_NAME> \
+L275:         --azure-file-account-key <STORAGE_ACCOUNT_KEY> \
+L276:         --access-mode ReadWrite
+L277:     `
+L278: Replace `<NFS_SERVER>` with the NFS server address in the format `<STORAGE_ACCOUNT_NAME>.file.core.windows.net`. For example, if your storage account name is `mystorageaccount`, the NFS server address is `mystorageaccount.file.core.windows.net`.
+L279: Replace `<STORAGE_SHARE_NAME>` with the name of the file share in the format `/<STORAGE_ACCOUNT_NAME>/<STORAGE_SHARE_NAME>`. For example, if your storage account name is `mystorageaccount` and the file share name is `myshare`, the share name is `/mystorageaccount/myshare`.
+L280: 
+L281: Replace `<STORAGE_ACCOUNT_NAME>` with the name of your Azure Storage account and `<STORAGE_ACCOUNT_KEY>` with the key for your Azure Storage account, which you can find in the Azure portal.
+L282: Valid values for `--access-mode` are `ReadWrite` and `ReadOnly`.
+L283: 
+L284: Note
+L285: 
+L286: To mount NFS Azure Files, you must use a Container Apps environment with a custom VNet. The Storage account must be configured to allow access from the VNet.
+L287: 
+L288:   2. To update an existing container app to mount a file share, export your app's specification to a YAML file named app.yaml.
+L289: 
+L290:     `az containerapp show -n <APP_NAME> -g <RESOURCE_GROUP_NAME> -o yaml > app.yaml
+L291:     `
+L292:   3. Make the following changes to your container app specification.
+L293:      * Add a `volumes` array to the `template` section of your container app definition and define a volume. If you already have a `volumes` array, add a new volume to the array.
+L294:        * The `name` is an identifier for the volume.
+L295:        * For `storageType`, use `AzureFile` for SMB, or `NfsAzureFile` for NFS. This value must match the storage type you defined in the environment.
+L296:        * For `storageName`, use the name of the storage you defined in the environment.
+L297:        * The `mountOptions` is a comma-separated string of mount options. For more information, see cite23†Use mountOptions settings in Azure Files .
+L298:        * The `secrets` list is a list of secrets to mount in the volume. For more information, see cite24†Mounting secrets in a volume .
+L299:      * For each container in the template that you want to mount Azure Files storage, define a volume mount in the `volumeMounts` array of the container definition.
+L300:        * The `volumeName` is the name defined in the `volumes` array.
+L301:        * The `mountPath` is the path in the container to mount the volume.
+L302:        * The `subPath` is the path in the volume to mount. If you don't specify this value, the volume root is mounted. For more information, see cite25†Sub path .
+L303:      * cite26†SMB L304:      * cite27†NFS L305: 
+L306:     `properties:
+L307:       managedEnvironmentId: /subscriptions/<SUBSCRIPTION_ID>/resourceGroups/<RESOURCE_GROUP_NAME>/providers/Microsoft.App/managedEnvironments/<ENVIRONMENT_NAME>
+L308:       configuration:
+L309:       template:
+L310:         containers:
+L311:         - image: <IMAGE_NAME>
+L312:           name: my-container
+L313:           volumeMounts:
+L314:           - volumeName: azure-files-volume
+L315:             mountPath: /my-files
+L316:             subPath: my-sub-path
+L317:         volumes:
+L318:         - name: azure-files-volume
+L319:           storageType: AzureFile
+L320:           storageName: mystorage
+L321:     `
+L322: 
+L323:     `properties:
+L324:       managedEnvironmentId: /subscriptions/<SUBSCRIPTION_ID>/resourceGroups/<RESOURCE_GROUP_NAME>/providers/Microsoft.App/managedEnvironments/<ENVIRONMENT_NAME>
+L325:       configuration:
+L326:       template:
+L327:         containers:
+L328:         - image: <IMAGE_NAME>
+L329:           name: my-container
+L330:           volumeMounts:
+L331:           - volumeName: azure-files-volume
+L332:             mountPath: /my-files
+L333:             subPath: my-sub-path
+L334:         volumes:
+L335:         - name: azure-files-volume
+L336:           storageType: NfsAzureFile
+L337:           storageName: mystorage
+L338:     `
+L339:   4. Update your container app by using the YAML file.
+L340: 
+L341:     `az containerapp update --name <APP_NAME> --resource-group <RESOURCE_GROUP_NAME> \
+L342:         --yaml app.yaml
+L343:     `
+L344: 
+L345: For a full example, see the cite12†YAML specification .
+L346: 
+L347: The following ARM template snippets demonstrate how to add an Azure Files share to a Container Apps environment and use it in a container app.
+L348: 
+L349:   1. Add a `storages` child resource to the Container Apps environment.
+L350:      * cite28†SMB L351:      * cite29†NFS L352: 
+L353:     `{
+L354:       "type": "Microsoft.App/managedEnvironments",
+L355:       "apiVersion": "2022-03-01",
+L356:       "name": "[parameters('environment_name')]",
+L357:       "location": "[parameters('location')]",
+L358:       "properties": {
+L359:         "daprAIInstrumentationKey": "[parameters('dapr_ai_instrumentation_key')]",
+L360:         "appLogsConfiguration": {
+L361:           "destination": "log-analytics",
+L362:           "logAnalyticsConfiguration": {
+L363:             "customerId": "[parameters('log_analytics_customer_id')]",
+L364:             "sharedKey": "[parameters('log_analytics_shared_key')]"
+L365:           }
+L366:         }
+L367:       },
+L368:       "resources": [
+L369:         {
+L370:           "type": "storages",
+L371:           "name": "myazurefiles",
+L372:           "apiVersion": "2022-03-01",
+L373:           "dependsOn": [
+L374:             "[resourceId('Microsoft.App/managedEnvironments', parameters('environment_name'))]"
+L375:           ],
+L376:           "properties": {
+L377:             "azureFile": {
+L378:               "accountName": "[parameters('storage_account_name')]",
+L379:               "accountKey": "[parameters('storage_account_key')]",
+L380:               "shareName": "[parameters('storage_share_name')]",
+L381:               "accessMode": "ReadWrite"
+L382:             }
+L383:           }
+L384:         }
+L385:       ]
+L386:     }
+L387:     `
+L388: 
+L389:     `{
+L390:       "type": "Microsoft.App/managedEnvironments",
+L391:       "apiVersion": "2023-05-01",
+L392:       "name": "[parameters('environment_name')]",
+L393:       "location": "[parameters('location')]",
+L394:       "properties": {
+L395:         "daprAIInstrumentationKey": "[parameters('dapr_ai_instrumentation_key')]",
+L396:         "appLogsConfiguration": {
+L397:           "destination": "log-analytics",
+L398:           "logAnalyticsConfiguration": {
+L399:             "customerId": "[parameters('log_analytics_customer_id')]",
+L400:             "sharedKey": "[parameters('log_analytics_shared_key')]"
+L401:           }
+L402:         },
+L403:         "workloadProfiles": [
+L404:           {
+L405:             "name": "Consumption",
+L406:             "workloadProfileType": "Consumption"
+L407:           }
+L408:         ],
+L409:         "vnetConfiguration": {
+L410:           "infrastructureSubnetId": "[parameters('custom_vnet_subnet_id')]",
+L411:           "internal": false
+L412:         },
+L413:       },
+L414:       "resources": [
+L415:         {
+L416:           "type": "storages",
+L417:           "name": "myazurefiles",
+L418:           "apiVersion": "2023-11-02-preview",
+L419:           "dependsOn": [
+L420:             "[resourceId('Microsoft.App/managedEnvironments', parameters('environment_name'))]"
+L421:           ],
+L422:           "properties": {
+L423:             "nfsAzureFile": {
+L424:               "server": "[concat(parameters('storage_account_name'), '.file.core.windows.net')]",
+L425:               "shareName": "[concat('/', parameters('storage_account_name'), '/', parameters('storage_share_name'))]",
+L426:               "accessMode": "ReadWrite"
+L427:             }
+L428:           }
+L429:         }
+L430:       ]
+L431:     }
+L432:     `
+L433: Note
+L434: 
+L435: To mount NFS Azure Files, you must use a Container Apps environment with a custom VNet. The Storage account must be configured to allow access from the VNet.
+L436: 
+L437:   2. Update the container app resource to add a volume and volume mount.
+L438:      * cite30†SMB L439:      * cite31†NFS L440: 
+L441:     `{
+L442:       "apiVersion": "2023-05-01",
+L443:       "type": "Microsoft.App/containerApps",
+L444:       "name": "[parameters('containerappName')]",
+L445:       "location": "[parameters('location')]",
+L446:       "properties": {
+L447: 
+L448:         ...
+L449: 
+L450:         "template": {
+L451:           "revisionSuffix": "myrevision",
+L452:           "containers": [
+L453:             {
+L454:               "name": "main",
+L455:               "image": "[parameters('container_image')]",
+L456:               "resources": {
+L457:                 "cpu": 0.5,
+L458:                 "memory": "1Gi"
+L459:               },
+L460:               "volumeMounts": [
+L461:                 {
+L462:                   "mountPath": "/myfiles",
+L463:                   "volumeName": "azure-files-volume",
+L464:                   "subPath": "my-sub-path"
+L465:                 }
+L466:               ]
+L467:             }
+L468:           ],
+L469:           "scale": {
+L470:             "minReplicas": 1,
+L471:             "maxReplicas": 3
+L472:           },
+L473:           "volumes": [
+L474:             {
+L475:               "name": "azure-files-volume",
+L476:               "storageType": "AzureFile",
+L477:               "storageName": "myazurefiles"
+L478:             }
+L479:           ]
+L480:         }
+L481:       }
+L482:     }
+L483:     `
+L484: 
+L485:     `{
+L486:       "apiVersion": "2023-11-02-preview",
+L487:       "type": "Microsoft.App/containerApps",
+L488:       "name": "[parameters('containerappName')]",
+L489:       "location": "[parameters('location')]",
+L490:       "properties": {
+L491: 
+L492:         ...
+L493: 
+L494:         "template": {
+L495:           "revisionSuffix": "myrevision",
+L496:           "containers": [
+L497:             {
+L498:               "name": "main",
+L499:               "image": "[parameters('container_image')]",
+L500:               "resources": {
+L501:                 "cpu": 0.5,
+L502:                 "memory": "1Gi"
+L503:               },
+L504:               "volumeMounts": [
+L505:                 {
+L506:                   "mountPath": "/myfiles",
+L507:                   "volumeName": "azure-files-volume",
+L508:                   "subPath": "my-sub-path"
+L509:                 }
+L510:               ]
+L511:             }
+L512:           ],
+L513:           "scale": {
+L514:             "minReplicas": 1,
+L515:             "maxReplicas": 3
+L516:           },
+L517:           "volumes": [
+L518:             {
+L519:               "name": "azure-files-volume",
+L520:               "storageType": "NfsAzureFile",
+L521:               "storageName": "myazurefiles"
+L522:             }
+L523:           ]
+L524:         }
+L525:       }
+L526:     }
+L527:     `
+L528:      * Add a `volumes` array to the `template` section of your container app definition and define a volume. If you already have a `volumes` array, add a new volume to the array.
+L529:        * The `name` is an identifier for the volume.
+L530:        * For `storageType`, use `AzureFile` for SMB, or `NfsAzureFile` for NFS. This value must match the storage type you defined in the environment.
+L531:        * For `storageName`, use the name of the storage you defined in the environment.
+L532:        * The `mountOptions` is a comma-separated string of mount options. For more information, see cite23†Use mountOptions settings in Azure Files .
+L533:        * The `secrets` list is a list of secrets to mount in the volume. For more information, see cite24†Mounting secrets in a volume .
+L534:      * For each container in the template that you want to mount Azure Files storage, define a volume mount in the `volumeMounts` array of the container definition.
+L535:        * The `volumeName` is the name defined in the `volumes` array.
+L536:        * The `mountPath` is the path in the container to mount the volume.
+L537:        * The `subPath` (optional) is the path in the volume to mount. If you don't specify it, the volume root is mounted. For more information, see cite25†Sub path .
+L538: See the cite13†ARM template API specification for a full example.
+L539: 
+L540: To configure a volume mount for Azure Files storage in the Azure portal, add a file share to your Container Apps environment and then add a volume mount to your container app by creating a new revision.
+L541: 
+L542:   1. In the Azure portal, navigate to your Container Apps environment.
+L543: 
+L544:   2. In the navigation pane, under Settings, select Volume mounts.
+L545: 
+L546:   3. Select Add.
+L547:   4. Select Server Message Block (SMB) or Network File System (NFS), depending on the protocol used by your file share.
+L548: 
+L549:   5. In the Add file share context pane, enter the following information:
+L550:      * cite32†SMB L551:      * cite33†NFS L552:      * Name: A name for the file share.
+L553:      * Storage account name: The name of the storage account that contains the file share.
+L554:      * Storage account key: The access key for the storage account.
+L555:      * File share: The name of the file share.
+L556:      * Access mode: The access mode for the file share. Valid values are Read/Write and Read only.
+L557:      * Name: A name for the file share.
+L558:      * Server: The name of the server that contains the file share. This server name follows the format `<STORAGE_ACCOUNT_NAME>.file.core.windows.net`.
+L559:      * File share name: The name of the file share. This name follows the format `/<STORAGE_ACCOUNT_NAME>/<FILE_SHARE_NAME>`.
+L560:      * Access mode: The access mode for the file share. Valid values are Read/Write and Read only.
+L561:   6. Select Add to exit the context pane.
+L562: 
+L563:   7. Select Save to commit the changes.
+L564: 
+L565:   8. Go to your container app.
+L566: 
+L567:   9. In the navigation pane, under Application, select Revisions and replicas.
+L568: 
+L569:   10. Select Create new revision.
+L570: 
+L571:   11. In the Create and deploy new revision page, select the Volumes tab.
+L572: 
+L573:   12. Select Add.
+L574: 
+L575:   13. In the Add volume context pane, set the following values.
+L576:      * Volume type: Azure file volume.
+L577:      * Name: Enter a volume name.
+L578:      * File share name: Select the file share you created previously.
+L579:      * Mount options: Optionally, enter a comma-separated string of mount options. For more information, see cite23†Use mountOptions settings in Azure Files .
+L580:   14. Select Add to exit the context pane.
+L581: 
+L582:   15. In the Create and deploy new revision page, select the Container tab.
+L583: 
+L584:   16. Select the container that you want to mount the volume in.
+L585:   17. In the Edit a container context pane, select the Volume mounts tab.
+L586: 
+L587:   18. Under Volume name, select the volume you created previously.
+L588: 
+L589:   19. In Mount path, enter the absolute path in the container to mount the volume.
+L590: 
+L591:   20. In Sub path (optional), enter the path in the volume to mount. If you don't specify this value, the volume root is mounted. For more information, see cite25†Sub path .
+L592: 
+L593:   21. Select Save to save changes and exit the context pane.
+L594: 
+L595:   22. Select Create to create the new revision.
+L596: ### Sub path
+L597: 
+L598: When you mount a file share from Azure Files, you can specify both a mount path and a sub path.
+L599: 
+L600:   * Mount path: The path in the container where you want to mount the volume.
+L601:   * Sub path: The path in the volume you want to mount.
+L602: 
+L603: The sub path is optional. If you don't specify a sub path, the volume root is mounted.

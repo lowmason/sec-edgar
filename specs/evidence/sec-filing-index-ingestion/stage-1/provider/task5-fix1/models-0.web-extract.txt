@@ -1,0 +1,562 @@
+Managed Environments - Get - REST API (Azure Azure Container Apps) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/resource-manager/containerapps/managed-environments/get?view=rest-resource-manager-containerapps-2026-07-01)
+citeturn89view0 [wordlim: 200] Crawled: today; Content type: text/html; Source: find({"ref_id":"https://learn.microsoft.com/en-us/rest/api/resource-manager/containerapps/managed-environments/get?view=rest-resource-manager-containerapps-2026-07-01","pattern":"### ManagedEnvironment"}); Total lines: 849
+L45: ## Responses
+L46: 
+L47: Name  | Type  | Description
+L48: --- | --- | ---
+L49: 200 OK  | cite6†ManagedEnvironment | Azure operation completed successfully.
+L50: Other Status Codes  | cite7†ErrorResponse | An unexpected error response.
+L51: 
+L52: ## Security
+L53: 
+L54: ### azure_auth
+L55: 
+L56: Azure Active Directory OAuth2 Flow.
+L57: 
+L58: Type: oauth2
+L59: Flow: implicit
+L60: Authorization URL: https://login.microsoftonline.com/common/oauth2/authorize
+L61: 
+L62: #### Scopes
+L63: 
+L64: Name  | Description
+L65: --- | ---
+L66: user_impersonation  | impersonate your user account
+L67: 
+L68: ## Examples
+L167:     	// res = armappcontainers.ManagedEnvironmentsClientGetResponse{
+L168:     	// 	ManagedEnvironment: armappcontainers.ManagedEnvironment{
+L169:     	// 		Name: to.Ptr("jlaw-demo1"),
+L170:     	// 		Type: to.Ptr("Microsoft.App/managedEnvironments"),
+L171:     	// 		ID: to.Ptr("/subscriptions/8efdecc5-919e-44eb-b179-915dca89ebf9/resourceGroups/examplerg/providers/Microsoft.App/managedEnvironments/jlaw-demo1"),
+L172:     	// 		Location: to.Ptr("North Central US"),
+L173:     	// 		Properties: &armappcontainers.ManagedEnvironmentProperties{
+L174:     	// 			CustomDomainConfiguration: &armappcontainers.CustomDomainConfiguration{
+L175:     	// 				CustomDomainVerificationID: to.Ptr("custom domain verification id"),
+L176:     	// 				DNSSuffix: to.Ptr("www.my-name.com"),
+L177:     	// 				ExpirationDate: to.Ptr(time.Date(2022, time.November, 6, 4, 0, 0, 0, time.UTC)),
+L178:     	// 				SubjectName: to.Ptr("CN=www.my-name.com"),
+L179:     	// 				Thumbprint: to.Ptr("CERTIFICATE_THUMBPRINT"),
+L180:     	// 			},
+L181:     	// 			DaprConfiguration: &armappcontainers.DaprConfiguration{
+L358: cite30†IngressConfiguration | Settings for the ingress component, including workload profile, scaling, and connection handling.
+L359: cite31†KedaConfiguration | Configuration properties Keda component
+L360: cite32†LogAnalyticsConfiguration | Log Analytics configuration, must only be provided when destination is configured as 'log-analytics'
+L361: cite33†LogsConfiguration | Configuration of Open Telemetry logs
+L362: cite6†ManagedEnvironment | An environment for hosting container apps
+L536: Name  | Type  | Description
+L537: --- | --- | ---
+L538: headerCountLimit  | integer (int32)  | Maximum number of headers per request allowed by the ingress. Must be at least 1. Defaults to 100.
+L539: requestIdleTimeout  | integer (int32)  | Duration (in minutes) before idle requests are timed out. Must be between 4 and 30 inclusive. Defaults to 4 minutes.
+L540: terminationGracePeriodSeconds  | integer (int32)  | Time (in seconds) to allow active connections to complete on termination. Must be between 0 and 3600. Defaults to 480 seconds.
+L541: workloadProfileName  | string  | Name of the workload profile used by the ingress component. Required.
+L542: ### KedaConfiguration
+L543: 
+L544: Object
+L545: 
+L546: Configuration properties Keda component
+L547: 
+L548: Name  | Type  | Description
+L549: --- | --- | ---
+L550: version  | string  | The version of Keda
+L551: 
+L552: ### LogAnalyticsConfiguration
+L553: 
+L554: Object
+L555: 
+L556: Log Analytics configuration, must only be provided when destination is configured as 'log-analytics'
+L557: 
+L558: Name  | Type  | Description
+L559: --- | --- | ---
+L560: customerId  | string  | Log analytics customer id
+L561: sharedKey  | string (password)  | Log analytics customer key
+L562: ### LogsConfiguration
+L563: 
+L564: Object
+L565: 
+L566: Configuration of Open Telemetry logs
+L567: 
+L568: Name  | Type  | Description
+L569: --- | --- | ---
+L570: destinations  | string[]  | Open telemetry logs destinations
+L571: ### ManagedEnvironment
+L572: 
+L573: Object
+L574: 
+L575: An environment for hosting container apps
+L576: Name  | Type  | Description
+L577: --- | --- | ---
+L578: id  | string (arm-id)  | Fully qualified resource ID for the resource. E.g. "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}"
+L579: identity  | cite38†ManagedServiceIdentity | The managed service identities assigned to this resource.
+L580: kind  | string  | Kind of the Environment.
+L581: location  | string  | The geo-location where the resource lives
+L582: name  | string  | The name of the resource
+L583: properties.appInsightsConfiguration  | cite18†AppInsightsConfiguration | Environment level Application Insights configuration
+L584: properties.appLogsConfiguration  | cite19†AppLogsConfiguration | Cluster configuration which enables the log daemon to export app logs to configured destination
+L585: properties.customDomainConfiguration  | cite22†CustomDomainConfiguration | Custom domain configuration for the environment
+L586: properties.daprAIConnectionString  | string (password)  | Application Insights connection string used by Dapr to export Service to Service communication telemetry
+L587: properties.daprAIInstrumentationKey  | string (password)  | Azure Monitor instrumentation key used by Dapr to export Service to Service communication telemetry
+L588: properties.daprConfiguration  | cite23†DaprConfiguration | The configuration of Dapr component.
+L589: properties.defaultDomain  | string  | Default Domain Name for the cluster
+L590: properties.deploymentErrors  | string  | Any errors that occurred during deployment or deployment validation
+L591: properties.environmentMode  | cite34†ManagedEnvironmentMode | Mode of the environment. Allowed Values: 'ConsumptionOnly', 'WorkloadProfiles', 'Express', 'Archived'.
+L592: properties.eventStreamEndpoint  | string  | The endpoint of the eventstream of the Environment.
+L593: properties.infrastructureResourceGroup  | string  | Name of the platform-managed resource group created for the Managed Environment to host infrastructure resources. If a subnet ID is provided, this resource group will be created in the same subscription as the subnet.
+L594: properties.ingressConfiguration  | cite30†IngressConfiguration | Ingress configuration for the Managed Environment.
+L595: properties.kedaConfiguration  | cite31†KedaConfiguration | The configuration of Keda component.
+L596: properties.openTelemetryConfiguration  | cite42†OpenTelemetryConfiguration | Environment Open Telemetry configuration
+L597: properties.peerAuthentication  | cite35†ManagedEnvironmentPropertiesPeerAuthentication | Peer authentication settings for the Managed Environment
+L598: properties.peerTrafficConfiguration  | cite36†ManagedEnvironmentPropertiesPeerTrafficConfiguration | Peer traffic settings for the Managed Environment
+--------------------------------------------------------------------------------
+Factories - Get - REST API (Azure Data Factory) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/datafactory/factories/get?view=rest-datafactory-2018-06-01)
+citeturn89view1 [wordlim: 200] Crawled: today; Content type: text/html; Source: find({"ref_id":"https://learn.microsoft.com/en-us/rest/api/datafactory/factories/get?view=rest-datafactory-2018-06-01","pattern":"### Factory"}); Total lines: 533
+L311:         "version": "2018-06-01"
+L312:       },
+L313:       "tags": {
+L314:         "exampleTag": "exampleValue"
+L317: Status code:
+L318:     304
+L319: ## Definitions
+L320: Name  | Description
+L321: --- | ---
+L322: cite7†CloudError | The object that defines the structure of an Azure Data Factory error response.
+L323: cite20†CMKIdentityDefinition | Managed Identity used for CMK.
+L324: cite21†createdByType | The type of identity that created the resource.
+L325: cite22†EncryptionConfiguration | Definition of CMK for the factory.
+L326: cite6†Factory | Factory resource type.
+L327: cite23†FactoryGitHubConfiguration | Factory's GitHub repo information.
+L328: cite24†FactoryIdentity | Identity properties of the factory resource.
+L329: cite25†FactoryIdentityType | The identity type.
+L330: cite26†FactoryVSTSConfiguration | Factory's VSTS repo information.
+L331: cite27†GitHubClientSecret | Client secret information for factory's bring your own app repository configuration.
+L332: cite28†GlobalParameterSpecification | Definition of a single parameter for an entity.
+L333: cite29†GlobalParameterType | Global Parameter type.
+L334: cite30†PublicNetworkAccess | Whether or not public network access is allowed for the data factory.
+L335: cite31†PurviewConfiguration | Purview configuration.
+L336: cite32†systemData | Metadata pertaining to creation and last modification of the resource.
+L337: ### CloudError
+L338: 
+L339: Object
+L340: 
+L341: The object that defines the structure of an Azure Data Factory error response.
+L342: 
+L343: Name  | Type  | Description
+L344: --- | --- | ---
+L345: error.code  | string  | Error code.
+L346: error.details  | cite7†CloudError []  | Array with additional error details.
+L347: error.message  | string  | Error message.
+L348: error.target  | string  | Property name/path in request associated with error.
+L349: ### CMKIdentityDefinition
+L350: 
+L351: Object
+L352: 
+L353: Managed Identity used for CMK.
+L354: 
+L355: Name  | Type  | Description
+L356: --- | --- | ---
+L357: userAssignedIdentity  | string  | The resource id of the user assigned identity to authenticate to customer's key vault.
+L358: 
+L359: ### createdByType
+L360: 
+L361: Enumeration
+L362: 
+L363: The type of identity that created the resource.
+L364: 
+L365: Value  | Description
+L366: --- | ---
+L367: User  |
+L368: Application  |
+L369: ManagedIdentity  |
+L370: Key  |
+L371: ### EncryptionConfiguration
+L372: 
+L373: Object
+L374: 
+L375: Definition of CMK for the factory.
+L376: Name  | Type  | Description
+L377: --- | --- | ---
+L378: identity  | cite20†CMKIdentityDefinition | User assigned identity to use to authenticate to customer's key vault. If not provided Managed Service Identity will be used.
+L379: keyName  | string  | The name of the key in Azure Key Vault to use as Customer Managed Key.
+L380: keyVersion  | string  | The version of the key used for CMK. If not provided, latest version will be used.
+L381: vaultBaseUrl  | string  | The url of the Azure Key Vault used for CMK.
+L382: ### Factory
+L383: 
+L384: Object
+L385: 
+L386: Factory resource type.
+L387: Name  | Type  | Description
+L388: --- | --- | ---
+L389: eTag  | string  | If eTag is provided in the response body, it may also be provided as a header per the normal etag convention. Entity tags are used for comparing two or more entities from the same requested resource. HTTP/1.1 uses entity tags in the etag (section 14.19), If-Match (section 14.24), If-None-Match (section 14.26), and If-Range (section 14.27) header fields.
+L390: id  | string (arm-id)  | Fully qualified resource ID for the resource. E.g. "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}"
+L391: identity  | cite24†FactoryIdentity | Managed service identity of the factory.
+L392: location  | string  | The resource location.
+L393: name  | string  | The name of the resource
+L394: properties.createTime  | string (date-time)  | Time the factory was created in ISO8601 format.
+L395: properties.encryption  | cite22†EncryptionConfiguration | Properties to enable Customer Managed Key for the factory.
+L396: properties.globalParameters  | <string,  cite28†GlobalParameterSpecification >  | List of parameters for factory.
+L397: properties.provisioningState  | string  | Factory provisioning state, example Succeeded.
+L398: properties.publicNetworkAccess  | cite30†PublicNetworkAccess | Whether or not public network access is allowed for the data factory.
+L399: properties.purviewConfiguration  | cite31†PurviewConfiguration | Purview information of the factory.
+L400: properties.repoConfiguration  | FactoryRepoConfiguration:
+L401:   * cite23†FactoryGitHubConfiguration L402:   * cite26†FactoryVSTSConfiguration L403:  | Git repo information of the factory.
+L404: properties.version  | string  | Version of the factory.
+L405: systemData  | cite32†systemData | Azure Resource Manager metadata containing createdBy and modifiedBy information.
+L406: tags  | object  | The resource tags.
+L407: type  | string  | The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or "Microsoft.Storage/storageAccounts"
+L408: ### FactoryGitHubConfiguration
+L409: 
+L410: Object
+L411: 
+L412: Factory's GitHub repo information.
+L413: Name  | Type  | Description
+L414: --- | --- | ---
+L415: accountName  | string  | Account name.
+L416: clientId  | string  | GitHub bring your own app client id.
+L417: clientSecret  | cite27†GitHubClientSecret | GitHub bring your own app client secret information.
+L418: collaborationBranch  | string  | Collaboration branch.
+L419: disablePublish  | boolean  | Disable manual publish operation in ADF studio to favor automated publish.
+L420: hostName  | string  | GitHub Enterprise host name. For example: `https://github.mydomain.com`
+L421: lastCommitId  | string  | Last commit id.
+L422: repositoryName  | string  | Repository name.
+L423: rootFolder  | string  | Root folder.
+L424: type  | string: cite23†FactoryGitHubConfiguration | Type of repo configuration.
+L425: ### FactoryIdentity
+L426: 
+L427: Object
+L428: 
+L429: Identity properties of the factory resource.
+L430: 
+L431: Name  | Type  | Description
+L432: --- | --- | ---
+L433: principalId  | string (uuid)  | The principal id of the identity.
+L434: tenantId  | string (uuid)  | The client tenant id of the identity.
+L435: type  | cite25†FactoryIdentityType | The identity type.
+L436: userAssignedIdentities  | management.azure.com.datafactory.factories.get  | List of user assigned identities for the factory.
+L437: ### FactoryIdentityType
+L438: 
+L439: Enumeration
+L440: 
+L441: The identity type.
+L442: 
+L443: Value  | Description
+L444: --- | ---
+L445: SystemAssigned  | SystemAssigned
+L446: UserAssigned  | UserAssigned
+L447: SystemAssigned,UserAssigned  | SystemAssigned,UserAssigned
+L448: ### FactoryVSTSConfiguration
+L449: 
+L450: Object
+L451: 
+L452: Factory's VSTS repo information.
+L453: Name  | Type  | Description
+L454: --- | --- | ---
+L455: accountName  | string  | Account name.
+L456: collaborationBranch  | string  | Collaboration branch.
+L457: disablePublish  | boolean  | Disable manual publish operation in ADF studio to favor automated publish.
+L458: lastCommitId  | string  | Last commit id.
+L459: projectName  | string  | VSTS project name.
+L460: repositoryName  | string  | Repository name.
+L461: rootFolder  | string  | Root folder.
+L462: tenantId  | string  | VSTS tenant id.
+L463: type  | string: cite26†FactoryVSTSConfiguration | Type of repo configuration.
+L464: ### GitHubClientSecret
+L465: 
+L466: Object
+L467: 
+L468: Client secret information for factory's bring your own app repository configuration.
+L469: 
+L470: Name  | Type  | Description
+L471: --- | --- | ---
+L472: byoaSecretAkvUrl  | string  | Bring your own app client secret AKV URL.
+L473: byoaSecretName  | string  | Bring your own app client secret name in AKV.
+L474: ### GlobalParameterSpecification
+L475: 
+L476: Object
+L477: 
+L478: Definition of a single parameter for an entity.
+L479: 
+L480: Name  | Type  | Description
+L481: --- | --- | ---
+L482: type  | cite29†GlobalParameterType | Global Parameter type.
+L483: value  | management.azure.com.datafactory.factories.get  | Value of parameter.
+L484: 
+L485: ### GlobalParameterType
+L486: 
+L487: Enumeration
+L488: 
+L489: Global Parameter type.
+L490: 
+L491: Value  | Description
+L492: --- | ---
+L493: Object  | Object
+L494: String  | String
+L495: Int  | Int
+L496: Float  | Float
+L497: Bool  | Bool
+L498: Array  | Array
+L499: ### PublicNetworkAccess
+L500: 
+L501: Enumeration
+L502: 
+L503: Whether or not public network access is allowed for the data factory.
+L504: 
+L505: Value  | Description
+L506: --- | ---
+L507: Enabled  | Enabled
+L508: Disabled  | Disabled
+L509: 
+L510: ### PurviewConfiguration
+L511: 
+L512: Object
+L513: 
+L514: Purview configuration.
+L515: 
+L516: Name  | Type  | Description
+L517: --- | --- | ---
+L518: purviewResourceId  | string  | Purview resource id.
+L519: ### systemData
+L520: 
+L521: Object
+L522: 
+L523: Metadata pertaining to creation and last modification of the resource.
+L524: Name  | Type  | Description
+L525: --- | --- | ---
+L526: createdAt  | string (date-time)  | The timestamp of resource creation (UTC).
+L527: createdBy  | string  | The identity that created the resource.
+L528: createdByType  | cite21†createdByType | The type of identity that created the resource.
+L529: lastModifiedAt  | string (date-time)  | The timestamp of resource last modification (UTC)
+L530: lastModifiedBy  | string  | The identity that last modified the resource.
+L531: lastModifiedByType  | cite21†createdByType | The type of identity that last modified the resource.
+L532: ### In this article
+--------------------------------------------------------------------------------
+Pipelines - Get - REST API (Azure Data Factory) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/datafactory/pipelines/get?view=rest-datafactory-2018-06-01)
+citeturn89view2 [wordlim: 200] Crawled: today; Content type: text/html; Source: find({"ref_id":"https://learn.microsoft.com/en-us/rest/api/datafactory/pipelines/get?view=rest-datafactory-2018-06-01","pattern":"### PipelineResource"}); Total lines: 6596
+L179:     	// If the HTTP response code is 200 as defined in example definition, your response structure would look as follows. Please pay attention that all the values in the output are fake values for just demo purposes.
+L180:     	// res = armdatafactory.PipelinesClientGetResponse{
+L181:     	// 	PipelineResource: armdatafactory.PipelineResource{
+L182:     	// 		Name: to.Ptr("examplePipeline"),
+L183:     	// 		Type: to.Ptr("Microsoft.DataFactory/factories/pipelines"),
+L184:     	// 		Etag: to.Ptr("1500504f-0000-0200-0000-5cbe090f0000"),
+L4542: sourceRetryWait  | management.azure.com.datafactory.pipelines.get  | Source retry wait. Type: string (or Expression with resultType string), pattern: ((\d+).)?(\d\d):(60|([0-5][0-9])):(60|([0-5][0-9])).
+L4543: type  | string: cite230†PhoenixSource | Copy source type.
+L4544: ### PipelineElapsedTimeMetricPolicy
+L4545: 
+L4546: Object
+L4547: 
+L4548: Pipeline ElapsedTime Metric Policy.
+L4549: 
+L4550: Name  | Type  | Description
+L4551: --- | --- | ---
+L4552: duration  | management.azure.com.datafactory.pipelines.get  | TimeSpan value, after which an Azure Monitoring Metric is fired.
+L4553: 
+L4554: ### PipelineFolder
+L4555: 
+L4556: Object
+L4557: 
+L4558: The folder that this Pipeline is in. If not specified, Pipeline will appear at the root level.
+L4559: 
+L4560: Name  | Type  | Description
+L4561: --- | --- | ---
+L4562: name  | string  | The name of the folder that this Pipeline is in.
+L4563: ### PipelinePolicy
+L4564: 
+L4565: Object
+L4566: 
+L4567: Pipeline Policy.
+L4568: 
+L4569: Name  | Type  | Description
+L4570: --- | --- | ---
+L4571: elapsedTimeMetric  | cite231†PipelineElapsedTimeMetricPolicy | Pipeline ElapsedTime Metric Policy.
+L4572: 
+L4573: ### PipelineReference
+L4574: 
+L4575: Object
+L4576: 
+L4577: Pipeline reference type.
+L4578: 
+L4579: Name  | Type  | Description
+L4580: --- | --- | ---
+L4581: name  | string  | Reference name.
+L4582: referenceName  | string  | Reference pipeline name.
+L4583: type  | cite235†PipelineReferenceType | Pipeline reference type.
+L4584: ### PipelineReferenceType
+L4585: 
+L4586: Enumeration
+L4587: 
+L4588: Pipeline reference type.
+L4589: 
+L4590: Value  | Description
+L4591: --- | ---
+L4592: PipelineReference  | PipelineReference
+L4593: ### PipelineResource
+L4594: 
+L4595: Object
+L4596: 
+L4597: Pipeline resource type.
+L4598: Name  | Type  | Description
+L4599: --- | --- | ---
+L4600: etag  | string  | "If etag is provided in the response body, it may also be provided as a header per the normal etag convention. Entity tags are used for comparing two or more entities from the same requested resource. HTTP/1.1 uses entity tags in the etag (section 14.19), If-Match (section 14.24), If-None-Match (section 14.26), and If-Range (section 14.27) header fields.")
+L4601: id  | string (arm-id)  | Fully qualified resource ID for the resource. E.g. "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}"
+L4602: name  | string  | The name of the resource
+L4603: properties.activities  | Activity[]:
+L4604:   * cite31†AppendVariableActivity []
+L4605:   * cite45†AzureDataExplorerCommandActivity []
+L4606:   * cite54†AzureFunctionActivity []
+L4607:   * cite58†AzureMLBatchExecutionActivity []
+L4608:   * cite59†AzureMLExecutePipelineActivity []
+L4609:   * cite60†AzureMLUpdateResourceActivity []
+L4610:   * cite89†ControlActivity []
+L4611:   * cite90†CopyActivity []
+L4612:   * cite100†CustomActivity []
+L4613:   * cite109†DataLakeAnalyticsUSQLActivity []
+L4614:   * cite102†DatabricksJobActivity []
+L4615:   * cite103†DatabricksNotebookActivity []
+L4616:   * cite104†DatabricksSparkJarActivity []
+L4617:   * cite105†DatabricksSparkPythonActivity []
+L4618:   * cite113†DeleteActivity []
+L4619:   * cite133†ExecuteDataFlowActivity []
+L4620:   * cite135†ExecutePipelineActivity []
+L4621:   * cite137†ExecuteSSISPackageActivity []
+L4622:   * cite138†ExecuteWranglingDataflowActivity []
+L4623:   * cite139†ExecutionActivity []
+L4624:   * cite144†FailActivity []
+L4625:   * cite149†FilterActivity []
+L4626:   * cite150†ForEachActivity []
+L4627:   * cite152†GetMetadataActivity []
+L4628:   * cite162†HDInsightHiveActivity []
+L4629:   * cite163†HDInsightMapReduceActivity []
+L4630:   * cite164†HDInsightPigActivity []
+L4631:   * cite165†HDInsightSparkActivity []
+L4632:   * cite166†HDInsightStreamingActivity []
+L4633:   * cite173†IfConditionActivity []
+L4634:   * cite192†LookupActivity []
+L4635:   * cite272†ScriptActivity []
+L4636:   * cite283†SetVariableActivity []
+L4637:   * cite307†SqlServerStoredProcedureActivity []
+L4638:   * cite322†SwitchActivity []
+L4639:   * cite325†SynapseNotebookActivity []
+L4640:   * cite327†SynapseSparkJobDefinitionActivity []
+L4641:   * cite338†UntilActivity []
+L4642:   * cite340†ValidationActivity []
+L4643:   * cite344†WaitActivity []
+L4644:   * cite347†WebActivity []
+L4645:   * cite350†WebHookActivity []
+L4646:  | List of activities in pipeline.
+L4647: properties.annotations  | Pipeline.Annotations[]  | List of tags that can be used for describing the Pipeline.
+L4648: properties.concurrency  | integer (int32) minimum: 1  | The max number of concurrent runs for the pipeline.
+L4649: properties.description  | string  | The description of the pipeline.
+L4650: properties.folder  | cite232†PipelineFolder | The folder that this Pipeline is in. If not specified, Pipeline will appear at the root level.
+--------------------------------------------------------------------------------
+Triggers - Get - REST API (Azure Data Factory) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/datafactory/triggers/get?view=rest-datafactory-2018-06-01)
+citeturn89view3 [wordlim: 200] Crawled: 3 days ago; Content type: text/html; Source: find({"ref_id":"https://learn.microsoft.com/en-us/rest/api/datafactory/triggers/get?view=rest-datafactory-2018-06-01","pattern":"### TriggerResource"}); Total lines: 781
+L179:     	// If the HTTP response code is 200 as defined in example definition, your response structure would look as follows. Please pay attention that all the values in the output are fake values for just demo purposes.
+L180:     	// res = armdatafactory.TriggersClientGetResponse{
+L181:     	// 	TriggerResource: armdatafactory.TriggerResource{
+L182:     	// 		Name: to.Ptr("exampleTrigger"),
+L183:     	// 		Type: to.Ptr("Microsoft.DataFactory/factories/triggers"),
+L184:     	// 		Etag: to.Ptr("1500544f-0000-0200-0000-5cbe09100000"),
+L351: cite43†TriggerReference | Trigger reference type.
+L352: cite44†TriggerReferenceType | Trigger reference type.
+L353: cite6†TriggerResource | Trigger resource type.
+L354: cite45†TriggerRuntimeState | Enumerates possible state of Triggers.
+L355: cite46†TumblingWindowFrequency | Enumerates possible frequency option for the tumbling window trigger.
+L637: Name  | Type  | Description
+L638: --- | --- | ---
+L639: createdAt  | string (date-time)  | The timestamp of resource creation (UTC).
+L640: createdBy  | string  | The identity that created the resource.
+L641: createdByType  | cite24†createdByType | The type of identity that created the resource.
+L642: lastModifiedAt  | string (date-time)  | The timestamp of resource last modification (UTC)
+L643: lastModifiedBy  | string  | The identity that last modified the resource.
+L644: lastModifiedByType  | cite24†createdByType | The type of identity that last modified the resource.
+L645: ### TriggerDependencyReference
+L646: 
+L647: Object
+L648: 
+L649: Trigger referenced dependency.
+L650: 
+L651: Name  | Type  | Description
+L652: --- | --- | ---
+L653: referenceTrigger  | cite43†TriggerReference | Referenced trigger.
+L654: type  | string: cite41†TriggerDependencyReference | The type of dependency reference.
+L655: ### TriggerPipelineReference
+L656: 
+L657: Object
+L658: 
+L659: Pipeline that needs to be triggered with the given parameters.
+L660: 
+L661: Name  | Type  | Description
+L662: --- | --- | ---
+L663: parameters  | management.azure.com.datafactory.triggers.get  | Pipeline parameters.
+L664: pipelineReference  | cite30†PipelineReference | Pipeline reference.
+L665: 
+L666: ### TriggerReference
+L667: 
+L668: Object
+L669: 
+L670: Trigger reference type.
+L671: 
+L672: Name  | Type  | Description
+L673: --- | --- | ---
+L674: referenceName  | string  | Reference trigger name.
+L675: type  | cite44†TriggerReferenceType | Trigger reference type.
+L676: ### TriggerReferenceType
+L677: 
+L678: Enumeration
+L679: 
+L680: Trigger reference type.
+L681: 
+L682: Value  | Description
+L683: --- | ---
+L684: TriggerReference  | TriggerReference
+L685: ### TriggerResource
+L686: 
+L687: Object
+L688: 
+L689: Trigger resource type.
+L690: Name  | Type  | Description
+L691: --- | --- | ---
+L692: etag  | string  | "If etag is provided in the response body, it may also be provided as a header per the normal etag convention. Entity tags are used for comparing two or more entities from the same requested resource. HTTP/1.1 uses entity tags in the etag (section 14.19), If-Match (section 14.24), If-None-Match (section 14.26), and If-Range (section 14.27) header fields.")
+L693: id  | string (arm-id)  | Fully qualified resource ID for the resource. E.g. "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}"
+L694: name  | string  | The name of the resource
+L695: properties  | Trigger:
+L696:   * cite20†BlobEventsTrigger L697:   * cite22†BlobTrigger L698:   * cite23†ChainingTrigger L699:   * cite25†CustomEventsTrigger L700:   * cite29†MultiplePipelineTrigger L701:   * cite35†RerunTumblingWindowTrigger L702:   * cite37†ScheduleTrigger L703:   * cite47†TumblingWindowTrigger L704:  | Properties of the trigger.
+L705: systemData  | cite40†systemData | Azure Resource Manager metadata containing createdBy and modifiedBy information.
+L706: type  | string  | The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or "Microsoft.Storage/storageAccounts"
+L707: ### TriggerRuntimeState
+L708: 
+L709: Enumeration
+L710: 
+L711: Enumerates possible state of Triggers.
+L712: 
+L713: Value  | Description
+L714: --- | ---
+L715: Started  | Started
+L716: Stopped  | Stopped
+L717: Disabled  | Disabled
+L718: 
+L719: ### TumblingWindowFrequency
+L720: 
+L721: Enumeration
+L722: 
+L723: Enumerates possible frequency option for the tumbling window trigger.
+L724: 
+L725: Value  | Description
+L726: --- | ---
+L727: Minute  | Minute
+L728: Hour  | Hour
+L729: Month  | Month
+L730: ### TumblingWindowTrigger
+L731: 
+L732: Object
+L733: 
+L734: Trigger that schedules pipeline runs for all fixed time interval windows from a start time without gaps and also supports backfill scenarios (when start time is in the past).
+L735: Name  | Type  | Description
+L736: --- | --- | ---
+L737: annotations  | Trigger.Annotations[]  | List of tags that can be used for describing the trigger.
+L738: description  | string  | Trigger description.
+L739: pipeline  | cite42†TriggerPipelineReference | Pipeline for which runs are created when an event is fired for trigger window that is ready.
+L740: runtimeState  | cite45†TriggerRuntimeState | Indicates if trigger is running or not. Updated when Start/Stop APIs are called on the Trigger.
+L741: type  | string: cite47†TumblingWindowTrigger | Trigger type.
+L742: typeProperties.delay  | management.azure.com.datafactory.triggers.get  | Specifies how long the trigger waits past due time before triggering new run. It doesn't alter window start and end time. The default is 0. Type: string (or Expression with resultType string), pattern: ((\d+).)?(\d\d):(60|([0-5][0-9])):(60|([0-5][0-9])).
+L743: typeProperties.dependsOn  | DependencyReference[]:
+

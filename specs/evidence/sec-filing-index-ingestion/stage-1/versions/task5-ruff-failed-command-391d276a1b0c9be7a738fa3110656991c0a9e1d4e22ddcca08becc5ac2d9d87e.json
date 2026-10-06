@@ -1,0 +1,10 @@
+{
+  "command": "uv run ruff check specs/evidence/sec-filing-index-ingestion/stage-1/provider/task5-contracts/offline_checks.py specs/evidence/sec-filing-index-ingestion/stage-1/provider/task5-contracts/retain_metadata.py",
+  "cwd": "/Users/lowell/Projects/sec-edgar",
+  "tool_result": {"chunk_id":"228537","exit_code":2,"wall_time_seconds":0.000007541,"output":"Using CPython 3.14.0\nCreating virtual environment at: .venv\n   Building sec-edgar @ file:///Users/lowell/Projects/sec-edgar\nerror: Failed to build `sec-edgar @ file:///Users/lowell/Projects/sec-edgar`\n  cause: Expected a Python module at: src/sec_edgar/__init__.py\n"},
+  "stream_semantics": "exec_command returned one merged output field, not independently captured stdout/stderr files; no fabricated separation",
+  "time_semantics": "Exact invocation time was not retained by the tool; subsequent filesystem listing reports Oct5 21:29 Eastern creation minute. Root informed immediately afterwards. Receipt preparation time appears in metadata manifest retention timestamp.",
+  "unexpected_side_effect": ".venv created by uv according to explicit Creating virtual environment output; bin/lib and pyvenv.cfg observed afterwards. Pre-call .venv absence was not independently observed in this task, so no deletion attempted and exact evidence sent to root.",
+  "subsequent_observation": {"command":"ls -la .venv","exit_code":0,"output":"total 24\ndrwxr-xr-x@  8 lowell  staff  256 Oct  5 21:29 .\ndrwxr-xr-x  13 lowell  staff  416 Oct  5 21:29 ..\n-rw-r--r--@  1 lowell  staff    1 Oct  5 21:29 .gitignore\n-rw-rw-rw-@  1 lowell  staff    0 Oct  5 21:29 .lock\n-rw-r--r--@  1 lowell  staff   43 Oct  5 21:29 CACHEDIR.TAG\ndrwxr-xr-x@ 15 lowell  staff  480 Oct  5 21:29 bin\ndrwxr-xr-x@  3 lowell  staff   96 Oct  5 21:29 lib\n-rw-r--r--@  1 lowell  staff  198 Oct  5 21:29 pyvenv.cfg\n"},
+  "disposition": "No root-package repair, dependency installation or additional project-aware uv command; helper checks use python3 offline. Cleanup pending root review of new-directory evidence."
+}

@@ -1,0 +1,539 @@
+Role Assignments - Create - REST API (Azure Authorization) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/authorization/role-assignments/create?view=rest-authorization-2022-04-01)
+citeturn75view0 [wordlim: 200] Crawled: today; Content type: text/html; Source: find({"ref_id":"https://learn.microsoft.com/en-us/rest/api/authorization/role-assignments/create?view=rest-authorization-2022-04-01","pattern":"200 OK"}); Total lines: 732
+L0: cite0†Skip to main content cite1†Skip to in-page navigation cite2†Skip to Ask Learn chat experience L1: 
+L2: This browser is no longer supported.
+L3: 
+L4: Upgrade to Microsoft Edge to take advantage of the latest features, security updates, and technical support.
+L5: 
+L6: cite3†Download Microsoft Edge†go.microsoft.com cite4†More info about Internet Explorer and Microsoft Edge L7: 
+L8: Table of contents Exit editor mode
+L9: 
+L10: Ask Learn Ask Learn
+L11: 
+L12: Reading mode Table of contents cite2†Read in English Add Add to Plans cite5†Edit†github.com L13: 
+L14: * * *
+L15: Copy Markdown Print
+L16: 
+L17: * * *
+L18: 
+L19: Note
+L20: 
+L21: Access to this page requires authorization. You can try cite2†signing in or changing directories.
+L22: 
+L23: Access to this page requires authorization. You can try changing directories.
+L24: # Role Assignments - Create
+L25: 
+L26: Service:
+L27:     Authorization
+L28: 
+L29: API Version:
+L30:     2022-04-01
+L31: 
+L32: ##
+L33: 
+L34: Create or update a role assignment by scope and name.
+L35: 
+L36:     `PUT https://management.azure.com/{scope}/providers/Microsoft.Authorization/roleAssignments/{roleAssignmentName}?api-version=2022-04-01`
+L37: ## URI Parameters
+L38: 
+L39: Name  | In  | Required  | Type  | Description
+L40: --- | --- | --- | --- | ---
+L41: roleAssignmentName  | path  | True  | string  | The name of the role assignment. It can be any valid GUID.
+L42: scope  | path  | True  | string  | The fully qualified Azure Resource manager identifier of the resource.
+L43: api-version  | query  | True  | string minLength: 1  | The API version to use for this operation.
+L44: ## Request Body
+L45: Name  | Required  | Type  | Description
+L46: --- | --- | --- | ---
+L47: properties.principalId  | True  | string  | The principal ID.
+L48: properties.roleDefinitionId  | True  | string  | The role definition ID.
+L49: properties.condition  |  | string  | The conditions on the role assignment. This limits the resources it can be assigned to. e.g.: @Resource[Microsoft.Storage/storageAccounts/blobServices/containers:ContainerName] StringEqualsIgnoreCase 'foo_storage_container'
+L50: properties.conditionVersion  |  | string  | Version of the condition. Currently the only accepted value is '2.0'
+L51: properties.delegatedManagedIdentityResourceId  |  | string  | Id of the delegated managed identity resource
+L52: properties.description  |  | string  | Description of role assignment
+L53: properties.principalType  |  | cite6†PrincipalType | The principal type of the assigned principal ID.
+L54: ## Responses
+L55: 
+L56: Name  | Type  | Description
+L57: --- | --- | ---
+L58: 200 OK  | cite7†RoleAssignment | Resource 'RoleAssignment' update operation succeeded
+L59: 201 Created  | cite7†RoleAssignment | Resource 'RoleAssignment' create operation succeeded
+L60: Other Status Codes  | cite8†ErrorResponse | An unexpected error response.
+L61: 
+L62: ## Permissions
+L63: 
+L64: To call this API, you must be assigned a role that has the following permissions. For more information, see cite9†Azure built-in roles .
+L65: 
+L66: `Microsoft.Authorization/roleAssignments/write`
+L67: ## Security
+L68: 
+L69: ### azure_auth
+L70: 
+L71: Azure Active Directory OAuth2 Flow.
+L72: 
+L73: Type: oauth2
+L74: Flow: implicit
+L75: Authorization URL: https://login.microsoftonline.com/common/oauth2/authorize
+L76: 
+L77: #### Scopes
+L78: 
+L79: Name  | Description
+L80: --- | ---
+L81: user_impersonation  | impersonate your user account
+L82: 
+L83: ## Examples
+L84: 
+L85: cite10†Create role assignment for resource L86: cite11†Create role assignment for resource group L87: cite12†Create role assignment for subscription L88: 
+L89: ### Create role assignment for resource
+L90: #### Sample request
+L91:   * cite13†HTTP L92:   * cite14†Python L93:   * cite15†Go L94:   * cite16†JavaScript L95: 
+L96:     `PUT https://management.azure.com/subscriptions/a925f2f7-5c63-4b7b-8799-25a5f97bc3b2/resourceGroups/testrg/providers/Microsoft.DocumentDb/databaseAccounts/test-db-account/providers/Microsoft.Authorization/roleAssignments/05c5a614-a7d6-4502-b150-c2fb455033ff?api-version=2022-04-01
+L97: 
+L98:     {
+L99:       "properties": {
+L100:         "principalId": "ce2ce14e-85d7-4629-bdbc-454d0519d987",
+L101:         "principalType": "User",
+L102:         "roleDefinitionId": "/subscriptions/a925f2f7-5c63-4b7b-8799-25a5f97bc3b2/providers/Microsoft.Authorization/roleDefinitions/0b5fe924-9a61-425c-96af-cfe6e287ca2d"
+L103:       }
+L104:     }
+L105: 
+L106:     `
+L107: 
+L108:     `from azure.identity import DefaultAzureCredential
+L109: 
+L110:     from azure.mgmt.authorization import AuthorizationManagementClient
+L111: 
+L112:     """
+L113:     # PREREQUISITES
+L114:         pip install azure-identity
+L115:         pip install azure-mgmt-authorization
+L116:     # USAGE
+L117:         python role_assignments_create_for_resource.py
+L118: 
+L119:         Before run the sample, please set the values of the client ID, tenant ID and client secret
+L120:         of the AAD application as environment variables: AZURE_CLIENT_ID, AZURE_TENANT_ID,
+L121:         AZURE_CLIENT_SECRET. For more info about how to get the value, please see:
+L122:         https://docs.microsoft.com/azure/active-directory/develop/howto-create-service-principal-portal
+L123:     """
+L124: 
+L125: 
+L126:     def main():
+L127:         client = AuthorizationManagementClient(
+L128:             credential=DefaultAzureCredential(),
+L129:             subscription_id="SUBSCRIPTION_ID",
+L130:         )
+L131: 
+L132:         response = client.role_assignments.create(
+L133:             scope="subscriptions/a925f2f7-5c63-4b7b-8799-25a5f97bc3b2/resourceGroups/testrg/providers/Microsoft.DocumentDb/databaseAccounts/test-db-account",
+L134:             role_assignment_name="05c5a614-a7d6-4502-b150-c2fb455033ff",
+L135:             parameters={
+L136:                 "properties": {
+L137:                     "principalId": "ce2ce14e-85d7-4629-bdbc-454d0519d987",
+L138:                     "principalType": "User",
+L139:                     "roleDefinitionId": "/subscriptions/a925f2f7-5c63-4b7b-8799-25a5f97bc3b2/providers/Microsoft.Authorization/roleDefinitions/0b5fe924-9a61-425c-96af-cfe6e287ca2d",
+L140:                 }
+L141:             },
+L142:         )
+L143:         print(response)
+L144: 
+L145: 
+L146:     # x-ms-original-file: 2022-04-01/RoleAssignments_CreateForResource.json
+L147:     if __name__ == "__main__":
+L148:         main()
+L149:     `
+L150: To use the Azure SDK library in your project, see cite17†this documentation†github.com . To provide feedback on this code sample, cite18†open a GitHub issue†github.com L151: 
+L152:     `package armauthorization_test
+L153: 
+L154:     import (
+L155:     	"context"
+L156:     	"log"
+L157: 
+L158:     	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
+L159:     	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+L160:     	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/authorization/armauthorization/v3"
+L161:     )
+L162:     // Generated from example definition: 2022-04-01/RoleAssignments_CreateForResource.json
+L163:     func ExampleRoleAssignmentsClient_Create_createRoleAssignmentForResource() {
+L164:     	cred, err := azidentity.NewDefaultAzureCredential(nil)
+L165:     	if err != nil {
+L166:     		log.Fatalf("failed to obtain a credential: %v", err)
+L167:     	}
+L168:     	ctx := context.Background()
+L169:     	clientFactory, err := armauthorization.NewClientFactory("<subscriptionID>", cred, nil)
+L170:     	if err != nil {
+L171:     		log.Fatalf("failed to create client: %v", err)
+L172:     	}
+L173:     	res, err := clientFactory.NewRoleAssignmentsClient().Create(ctx, "subscriptions/a925f2f7-5c63-4b7b-8799-25a5f97bc3b2/resourceGroups/testrg/providers/Microsoft.DocumentDb/databaseAccounts/test-db-account", "05c5a614-a7d6-4502-b150-c2fb455033ff", armauthorization.RoleAssignmentCreateParameters{
+L174:     		Properties: &armauthorization.RoleAssignmentProperties{
+L175:     			PrincipalID:      to.Ptr("ce2ce14e-85d7-4629-bdbc-454d0519d987"),
+L176:     			PrincipalType:    to.Ptr(armauthorization.PrincipalTypeUser),
+L177:     			RoleDefinitionID: to.Ptr("/subscriptions/a925f2f7-5c63-4b7b-8799-25a5f97bc3b2/providers/Microsoft.Authorization/roleDefinitions/0b5fe924-9a61-425c-96af-cfe6e287ca2d"),
+L178:     		},
+L179:     	}, nil)
+L180:     	if err != nil {
+L181:     		log.Fatalf("failed to finish the request: %v", err)
+L182:     	}
+L183:     	// You could use response here. We use blank identifier for just demo purposes.
+L184:     	_ = res
+L185:     	// If the HTTP response code is 200 as defined in example definition, your response structure would look as follows. Please pay attention that all the values in the output are fake values for just demo purposes.
+L186:     	// res = armauthorization.RoleAssignmentsClientCreateResponse{
+L187:     	// 	RoleAssignment: &armauthorization.RoleAssignment{
+L188:     	// 		Name: to.Ptr("05c5a614-a7d6-4502-b150-c2fb455033ff"),
+L189:     	// 		Type: to.Ptr("Microsoft.Authorization/roleAssignments"),
+L190:     	// 		ID: to.Ptr("/subscriptions/a925f2f7-5c63-4b7b-8799-25a5f97bc3b2/resourceGroups/testrg/providers/Microsoft.DocumentDb/databaseAccounts/test-db-account/providers/Microsoft.Authorization/roleAssignments/05c5a614-a7d6-4502-b150-c2fb455033ff"),
+L191:     	// 		Properties: &armauthorization.RoleAssignmentProperties{
+L192:     	// 			PrincipalID: to.Ptr("ce2ce14e-85d7-4629-bdbc-454d0519d987"),
+L193:     	// 			PrincipalType: to.Ptr(armauthorization.PrincipalTypeUser),
+L194:     	// 			RoleDefinitionID: to.Ptr("/providers/Microsoft.Authorization/roleDefinitions/0b5fe924-9a61-425c-96af-cfe6e287ca2d"),
+L195:     	// 			Scope: to.Ptr("/subscriptions/a925f2f7-5c63-4b7b-8799-25a5f97bc3b2/resourceGroups/testrg/providers/Microsoft.DocumentDb/databaseAccounts/test-db-account"),
+L196:     	// 		},
+L197:     	// 	},
+L198:     	// }
+L199:     }
+L200: 
+L201:     `
+L202: To use the Azure SDK library in your project, see cite19†this documentation†github.com . To provide feedback on this code sample, cite18†open a GitHub issue†github.com L203: 
+L204:     `const { AuthorizationManagementClient } = require("@azure/arm-authorization");
+L205:     const { DefaultAzureCredential } = require("@azure/identity");
+L206: 
+L207:     /**
+L208:      * This sample demonstrates how to create or update a role assignment by scope and name.
+L209:      *
+L210:      * @summary create or update a role assignment by scope and name.
+L211:      * x-ms-original-file: 2022-04-01/RoleAssignments_CreateForResource.json
+L212:      */
+L213:     async function createRoleAssignmentForResource() {
+L214:       const credential = new DefaultAzureCredential();
+L215:       const client = new AuthorizationManagementClient(credential);
+L216:       const result = await client.roleAssignments.create(
+L217:         "subscriptions/a925f2f7-5c63-4b7b-8799-25a5f97bc3b2/resourceGroups/testrg/providers/Microsoft.DocumentDb/databaseAccounts/test-db-account",
+L218:         "05c5a614-a7d6-4502-b150-c2fb455033ff",
+L219:         {
+L220:           principalId: "ce2ce14e-85d7-4629-bdbc-454d0519d987",
+L221:           principalType: "User",
+L222:           roleDefinitionId:
+L223:             "/subscriptions/a925f2f7-5c63-4b7b-8799-25a5f97bc3b2/providers/Microsoft.Authorization/roleDefinitions/0b5fe924-9a61-425c-96af-cfe6e287ca2d",
+L224:         },
+L225:       );
+L226:       console.log(result);
+L227:     }
+L228: 
+L229:     `
+L230: To use the Azure SDK library in your project, see cite20†this documentation†github.com . To provide feedback on this code sample, cite18†open a GitHub issue†github.com L231: #### Sample response
+L232: Status code:
+L233:     200
+L234: 
+L235:     `{
+L236:       "name": "05c5a614-a7d6-4502-b150-c2fb455033ff",
+L237:       "type": "Microsoft.Authorization/roleAssignments",
+L238:       "id": "/subscriptions/a925f2f7-5c63-4b7b-8799-25a5f97bc3b2/resourceGroups/testrg/providers/Microsoft.DocumentDb/databaseAccounts/test-db-account/providers/Microsoft.Authorization/roleAssignments/05c5a614-a7d6-4502-b150-c2fb455033ff",
+L239:       "properties": {
+L240:         "principalId": "ce2ce14e-85d7-4629-bdbc-454d0519d987",
+L241:         "principalType": "User",
+L242:         "roleDefinitionId": "/providers/Microsoft.Authorization/roleDefinitions/0b5fe924-9a61-425c-96af-cfe6e287ca2d",
+L243:         "scope": "/subscriptions/a925f2f7-5c63-4b7b-8799-25a5f97bc3b2/resourceGroups/testrg/providers/Microsoft.DocumentDb/databaseAccounts/test-db-account"
+L244:       }
+L245:     }`
+L246: Status code:
+L247:     201
+L248: 
+L249:     `{
+L250:       "name": "05c5a614-a7d6-4502-b150-c2fb455033ff",
+L251:       "type": "Microsoft.Authorization/roleAssignments",
+L252:       "id": "/subscriptions/a925f2f7-5c63-4b7b-8799-25a5f97bc3b2/resourceGroups/testrg/providers/Microsoft.DocumentDb/databaseAccounts/test-db-account/providers/Microsoft.Authorization/roleAssignments/05c5a614-a7d6-4502-b150-c2fb455033ff",
+L253:       "properties": {
+L254:         "principalId": "ce2ce14e-85d7-4629-bdbc-454d0519d987",
+L255:         "principalType": "User",
+--------------------------------------------------------------------------------
+Role Assignments - Get - REST API (Azure Authorization) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/authorization/role-assignments/get?view=rest-authorization-2022-04-01)
+citeturn75view1 [wordlim: 200] Crawled: today; Content type: text/html; Source: find({"ref_id":"https://learn.microsoft.com/en-us/rest/api/authorization/role-assignments/get?view=rest-authorization-2022-04-01","pattern":"200 OK"}); Total lines: 317
+L0: cite0†Skip to main content cite1†Skip to in-page navigation cite2†Skip to Ask Learn chat experience L1: 
+L2: This browser is no longer supported.
+L3: 
+L4: Upgrade to Microsoft Edge to take advantage of the latest features, security updates, and technical support.
+L5: 
+L6: cite3†Download Microsoft Edge†go.microsoft.com cite4†More info about Internet Explorer and Microsoft Edge L7: 
+L8: Table of contents Exit editor mode
+L9: 
+L10: Ask Learn Ask Learn
+L11: 
+L12: Reading mode Table of contents cite2†Read in English Add Add to Plans cite5†Edit†github.com L13: 
+L14: * * *
+L15: Copy Markdown Print
+L16: 
+L17: * * *
+L18: 
+L19: Note
+L20: 
+L21: Access to this page requires authorization. You can try cite2†signing in or changing directories.
+L22: 
+L23: Access to this page requires authorization. You can try changing directories.
+L24: # Role Assignments - Get
+L25: 
+L26: Service:
+L27:     Authorization
+L28: 
+L29: API Version:
+L30:     2022-04-01
+L31: 
+L32: ##
+L33: 
+L34: Get a role assignment by scope and name.
+L35: 
+L36:     `GET https://management.azure.com/{scope}/providers/Microsoft.Authorization/roleAssignments/{roleAssignmentName}?api-version=2022-04-01`
+L37: 
+L38: With optional parameters:
+L39: 
+L40:     `GET https://management.azure.com/{scope}/providers/Microsoft.Authorization/roleAssignments/{roleAssignmentName}?api-version=2022-04-01&tenantId={tenantId}`
+L41: ## URI Parameters
+L42: 
+L43: Name  | In  | Required  | Type  | Description
+L44: --- | --- | --- | --- | ---
+L45: roleAssignmentName  | path  | True  | string  | The name of the role assignment. It can be any valid GUID.
+L46: scope  | path  | True  | string  | The fully qualified Azure Resource manager identifier of the resource.
+L47: api-version  | query  | True  | string minLength: 1  | The API version to use for this operation.
+L48: tenantId  | query  |  | string  | Tenant ID for cross-tenant request
+L49: ## Responses
+L50: 
+L51: Name  | Type  | Description
+L52: --- | --- | ---
+L53: 200 OK  | cite6†RoleAssignment | Azure operation completed successfully.
+L54: Other Status Codes  | cite7†ErrorResponse | An unexpected error response.
+L55: 
+L56: ## Permissions
+L57: 
+L58: To call this API, you must be assigned a role that has the following permissions. For more information, see cite8†Azure built-in roles .
+L59: 
+L60: `Microsoft.Authorization/roleAssignments/read`
+L61: 
+L62: ## Security
+L63: ### azure_auth
+L64: 
+L65: Azure Active Directory OAuth2 Flow.
+L66: 
+L67: Type: oauth2
+L68: Flow: implicit
+L69: Authorization URL: https://login.microsoftonline.com/common/oauth2/authorize
+L70: 
+L71: #### Scopes
+L72: 
+L73: Name  | Description
+L74: --- | ---
+L75: user_impersonation  | impersonate your user account
+L76: 
+L77: ## Examples
+L78: 
+L79: ### Get role assignment by scope and name
+L80: #### Sample request
+L81:   * cite9†HTTP L82:   * cite10†Python L83:   * cite11†Go L84:   * cite12†JavaScript L85: 
+L86:     `GET https://management.azure.com/subscriptions/a925f2f7-5c63-4b7b-8799-25a5f97bc3b2/providers/Microsoft.Authorization/roleAssignments/b0f43c54-e787-4862-89b1-a653fa9cf747?api-version=2022-04-01
+L87:     `
+L88: 
+L89:     `from azure.identity import DefaultAzureCredential
+L90: 
+L91:     from azure.mgmt.authorization import AuthorizationManagementClient
+L92: 
+L93:     """
+L94:     # PREREQUISITES
+L95:         pip install azure-identity
+L96:         pip install azure-mgmt-authorization
+L97:     # USAGE
+L98:         python role_assignments_get.py
+L99: 
+L100:         Before run the sample, please set the values of the client ID, tenant ID and client secret
+L101:         of the AAD application as environment variables: AZURE_CLIENT_ID, AZURE_TENANT_ID,
+L102:         AZURE_CLIENT_SECRET. For more info about how to get the value, please see:
+L103:         https://docs.microsoft.com/azure/active-directory/develop/howto-create-service-principal-portal
+L104:     """
+L105: 
+L106: 
+L107:     def main():
+L108:         client = AuthorizationManagementClient(
+L109:             credential=DefaultAzureCredential(),
+L110:             subscription_id="SUBSCRIPTION_ID",
+L111:         )
+L112: 
+L113:         response = client.role_assignments.get(
+L114:             scope="subscriptions/a925f2f7-5c63-4b7b-8799-25a5f97bc3b2",
+L115:             role_assignment_name="b0f43c54-e787-4862-89b1-a653fa9cf747",
+L116:         )
+L117:         print(response)
+L118: 
+L119: 
+L120:     # x-ms-original-file: 2022-04-01/RoleAssignments_Get.json
+L121:     if __name__ == "__main__":
+L122:         main()
+L123:     `
+L124: To use the Azure SDK library in your project, see cite13†this documentation†github.com . To provide feedback on this code sample, cite14†open a GitHub issue†github.com L125: 
+L126:     `package armauthorization_test
+L127: 
+L128:     import (
+L129:     	"context"
+L130:     	"log"
+L131: 
+L132:     	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+L133:     	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/authorization/armauthorization/v3"
+L134:     )
+L135: 
+L136:     // Generated from example definition: 2022-04-01/RoleAssignments_Get.json
+L137:     func ExampleRoleAssignmentsClient_Get() {
+L138:     	cred, err := azidentity.NewDefaultAzureCredential(nil)
+L139:     	if err != nil {
+L140:     		log.Fatalf("failed to obtain a credential: %v", err)
+L141:     	}
+L142:     	ctx := context.Background()
+L143:     	clientFactory, err := armauthorization.NewClientFactory("<subscriptionID>", cred, nil)
+L144:     	if err != nil {
+L145:     		log.Fatalf("failed to create client: %v", err)
+L146:     	}
+L147:     	res, err := clientFactory.NewRoleAssignmentsClient().Get(ctx, "subscriptions/a925f2f7-5c63-4b7b-8799-25a5f97bc3b2", "b0f43c54-e787-4862-89b1-a653fa9cf747", nil)
+L148:     	if err != nil {
+L149:     		log.Fatalf("failed to finish the request: %v", err)
+L150:     	}
+L151:     	// You could use response here. We use blank identifier for just demo purposes.
+L152:     	_ = res
+L153:     	// If the HTTP response code is 200 as defined in example definition, your response structure would look as follows. Please pay attention that all the values in the output are fake values for just demo purposes.
+L154:     	// res = armauthorization.RoleAssignmentsClientGetResponse{
+L155:     	// 	RoleAssignment: &armauthorization.RoleAssignment{
+L156:     	// 		Name: to.Ptr("b0f43c54-e787-4862-89b1-a653fa9cf747"),
+L157:     	// 		Type: to.Ptr("Microsoft.Authorization/roleAssignments"),
+L158:     	// 		ID: to.Ptr("/subscriptions/a925f2f7-5c63-4b7b-8799-25a5f97bc3b2/providers/Microsoft.Authorization/roleAssignments/b0f43c54-e787-4862-89b1-a653fa9cf747"),
+L159:     	// 		Properties: &armauthorization.RoleAssignmentProperties{
+L160:     	// 			PrincipalID: to.Ptr("ce2ce14e-85d7-4629-bdbc-454d0519d987"),
+L161:     	// 			PrincipalType: to.Ptr(armauthorization.PrincipalTypeUser),
+L162:     	// 			RoleDefinitionID: to.Ptr("/providers/Microsoft.Authorization/roleDefinitions/0b5fe924-9a61-425c-96af-cfe6e287ca2d"),
+L163:     	// 			Scope: to.Ptr("/subscriptions/a925f2f7-5c63-4b7b-8799-25a5f97bc3b2"),
+L164:     	// 		},
+L165:     	// 	},
+L166:     	// }
+L167:     }
+L168: 
+L169:     `
+L170: To use the Azure SDK library in your project, see cite15†this documentation†github.com . To provide feedback on this code sample, cite14†open a GitHub issue†github.com L171: 
+L172:     `const { AuthorizationManagementClient } = require("@azure/arm-authorization");
+L173:     const { DefaultAzureCredential } = require("@azure/identity");
+L174: 
+L175:     /**
+L176:      * This sample demonstrates how to get a role assignment by scope and name.
+L177:      *
+L178:      * @summary get a role assignment by scope and name.
+L179:      * x-ms-original-file: 2022-04-01/RoleAssignments_Get.json
+L180:      */
+L181:     async function getRoleAssignmentByScopeAndName() {
+L182:       const credential = new DefaultAzureCredential();
+L183:       const client = new AuthorizationManagementClient(credential);
+L184:       const result = await client.roleAssignments.get(
+L185:         "subscriptions/a925f2f7-5c63-4b7b-8799-25a5f97bc3b2",
+L186:         "b0f43c54-e787-4862-89b1-a653fa9cf747",
+L187:       );
+L188:       console.log(result);
+L189:     }
+L190: 
+L191:     `
+L192: To use the Azure SDK library in your project, see cite16†this documentation†github.com . To provide feedback on this code sample, cite14†open a GitHub issue†github.com L193: #### Sample response
+L194: Status code:
+L195:     200
+L196: 
+L197:     `{
+L198:       "name": "b0f43c54-e787-4862-89b1-a653fa9cf747",
+L199:       "type": "Microsoft.Authorization/roleAssignments",
+L200:       "id": "/subscriptions/a925f2f7-5c63-4b7b-8799-25a5f97bc3b2/providers/Microsoft.Authorization/roleAssignments/b0f43c54-e787-4862-89b1-a653fa9cf747",
+L201:       "properties": {
+L202:         "principalId": "ce2ce14e-85d7-4629-bdbc-454d0519d987",
+L203:         "principalType": "User",
+L204:         "roleDefinitionId": "/providers/Microsoft.Authorization/roleDefinitions/0b5fe924-9a61-425c-96af-cfe6e287ca2d",
+L205:         "scope": "/subscriptions/a925f2f7-5c63-4b7b-8799-25a5f97bc3b2"
+L206:       }
+L207:     }`
+L208: ## Definitions
+L209: 
+L210: Name  | Description
+L211: --- | ---
+L212: cite17†createdByType | The type of identity that created the resource.
+L213: cite18†ErrorAdditionalInfo | The resource management error additional info.
+L214: cite19†ErrorDetail | The error detail.
+L215: cite7†ErrorResponse | Error response
+L216: cite20†PrincipalType | The principal type of the assigned principal ID.
+L217: cite6†RoleAssignment | Role Assignments
+L218: cite21†systemData | Metadata pertaining to creation and last modification of the resource.
+L219: ### createdByType
+L220: 
+L221: Enumeration
+L222: 
+L223: The type of identity that created the resource.
+L224: 
+L225: Value  | Description
+L226: --- | ---
+L227: User  |
+L228: Application  |
+L229: ManagedIdentity  |
+L230: Key  |
+L231: 
+L232: ### ErrorAdditionalInfo
+L233: 
+L234: Object
+L235: 
+L236: The resource management error additional info.
+L237: 
+L238: Name  | Type  | Description
+L239: --- | --- | ---
+L240: info  | object  | The additional info.
+L241: type  | string  | The additional info type.
+L242: ### ErrorDetail
+L243: 
+L244: Object
+L245: 
+L246: The error detail.
+L247: 
+L248: Name  | Type  | Description
+L249: --- | --- | ---
+L250: additionalInfo  | cite18†ErrorAdditionalInfo []  | The error additional info.
+L251: code  | string  | The error code.
+L252: details  | cite19†ErrorDetail []  | The error details.
+L253: message  | string  | The error message.
+L254: target  | string  | The error target.
+L255: 
+L256: ### ErrorResponse
+L257: 
+L258: Object
+L259: 
+L260: Error response
+L261: 
+L262: Name  | Type  | Description
+L263: --- | --- | ---
+L264: error  | cite19†ErrorDetail | The error object.
+L265: ### PrincipalType
+L266: 
+L267: Enumeration
+L268: 
+L269: The principal type of the assigned principal ID.
+L270: 
+L271: Value  | Description
+L272: --- | ---
+L273: User  | User
+L274: Group  | Group
+L275: ServicePrincipal  | ServicePrincipal
+L276: ForeignGroup  | ForeignGroup
+L277: Device  | Device
+L278: AgentUser  | Agent identity derived from a user.
+L279: AgentServicePrincipal  | Agent identity derived from a service principal.
+L280: ### RoleAssignment
+L281: 
+L282: Object
+L283: 
+L284: Role Assignments
+L285: Name  | Type  | Default value  | Description
+L286: --- | --- | --- | ---
+L287: id  | string (arm-id)  |  | Fully qualified resource ID for the resource. E.g. "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}"
+L288: name  | string  |  | The name of the resource
+L289: properties.condition  | string  |  | The conditions on the role assignment. This limits the resources it can be assigned to. e.g.: @Resource[Microsoft.Storage/storageAccounts/blobServices/containers:ContainerName] StringEqualsIgnoreCase 'foo_storage_container'
+L290: properties.conditionVersion  | string  |  | Version of the condition. Currently the only accepted value is '2.0'
+L291: properties.createdBy  | string  |  | Id of the user who created the assignment
+L292: properties.createdOn  | string (date-time)  |  | Time it was created
+L293: properties.delegatedManagedIdentityResourceId  | string  |  | Id of the delegated managed identity resource
+L294: properties.description  | string  |  | Description of role assignment
+L295: properties.principalId  | string  |  | The principal ID.
+L296: properties.principalType  | cite20†PrincipalType | User  | The principal type of the assigned principal ID.
+L297: properties.roleDefinitionId  | string  |  | The role definition ID.
+L298: properties.scope  | string  |  | The role assignment scope.
+L299: properties.updatedBy  | string  |  | Id of the user who updated the assignment
+

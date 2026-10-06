@@ -1,0 +1,425 @@
+Microsoft.ManagedIdentity/userAssignedIdentities 2024-11-30 - Bicep, ARM template & Terraform AzAPI reference | Microsoft Learn (https://learn.microsoft.com/en-us/azure/templates/microsoft.managedidentity/2024-11-30/userassignedidentities)
+citeturn38view0 [wordlim: 200] Crawled: today; Content type: text/html; Source: open({"ref_id":"https://learn.microsoft.com/en-us/azure/templates/microsoft.managedidentity/2024-11-30/userassignedidentities","lineno":null}); Total lines: 390
+L0: cite0†Skip to main content cite1†Skip to Ask Learn chat experience L1: 
+L2: This browser is no longer supported.
+L3: 
+L4: Upgrade to Microsoft Edge to take advantage of the latest features, security updates, and technical support.
+L5: 
+L6: cite2†Download Microsoft Edge†go.microsoft.com cite3†More info about Internet Explorer and Microsoft Edge L7: 
+L8: Table of contents Exit editor mode
+L9: 
+L10: Ask Learn Ask Learn
+L11: 
+L12: Reading mode Table of contents cite1†Read in English Add Add to Plans Edit
+L13: 
+L14: * * *
+L15: 
+L16: Copy Markdown Print
+L17: 
+L18: * * *
+L19: 
+L20: Note
+L21: Access to this page requires authorization. You can try cite1†signing in or changing directories.
+L22: 
+L23: Access to this page requires authorization. You can try changing directories.
+L24: # Microsoft.ManagedIdentity userAssignedIdentities 2024-11-30
+L25: 
+L26: Feedback
+L27: 
+L28: Summarize this article for me
+L29: 
+L30: ## In this article
+L31: 
+L32:   * cite4†Latest L33:   * cite5†2025-05-31-preview L34:   * cite6†2025-01-31-preview L35:   * cite7†2024-11-30 L36:   * cite8†2023-07-31-preview L37:   * cite9†2023-01-31 L38:   * cite10†2022-01-31-preview L39:   * cite11†2021-09-30-preview L40:   * cite12†2018-11-30 L41:   * cite13†2015-08-31-preview L42: ## Bicep resource definition
+L43: 
+L44: The userAssignedIdentities resource type can be deployed with operations that target:
+L45: 
+L46:   * Resource groups - See cite14†resource group deployment commands L47: 
+L48: For a list of changed properties in each API version, see cite15†change log .
+L49: 
+L50: ## Usage Examples
+L51: ### Bicep Samples
+L52: 
+L53: A basic example of deploying User Assigned Identity.
+L54: 
+L55:     `param location string = 'westeurope'
+L56:     param resourceName string = 'acctest0001'
+L57: 
+L58:     resource userAssignedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
+L59:       name: resourceName
+L60:       location: location
+L61:     }
+L62:     `
+L63: ### Azure Verified Modules
+L64: 
+L65: The following cite16†Azure Verified Modules†aka.ms can be used to deploy this resource type.
+L66: 
+L67: Module  | Description
+L68: --- | ---
+L69: cite17†User Assigned Identity†github.com | AVM Resource Module for User Assigned Identity
+L70: ### Azure Quickstart Samples
+L71: 
+L72: The following cite18†Azure Quickstart templates†aka.ms contain Bicep samples for deploying this resource type.
+L73: Bicep File  | Description
+L74: --- | ---
+L75: cite19†AKS Cluster with a NAT Gateway and an Application Gateway†github.com | This sample shows how to a deploy an AKS cluster with NAT Gateway for outbound connections and an Application Gateway for inbound connections.
+L76: cite20†AKS cluster with the Application Gateway Ingress Controller†github.com | This sample shows how to deploy an AKS cluster with Application Gateway, Application Gateway Ingress Controller, Azure Container Registry, Log Analytics and Key Vault
+L77: cite21†Azure Container Service (AKS) with Helm†github.com | Deploy a managed cluster with Azure Container Service (AKS) with Helm
+L78: cite22†Azure Image Builder with Azure Windows Baseline†github.com | Creates an Azure Image Builder environment and builds a Windows Server image with the latest Windows Updates and Azure Windows Baseline applied.
+L79: cite23†Build container images with ACR Tasks†github.com | This template uses DeploymentScript to orchestrate ACR to build your container image from code repo.
+L80: cite24†Configure Dev Box service†github.com | This template would create all Dev Box admin resources as per Dev Box quick start guide (/azure/dev-box/quickstart-create-dev-box). You can view all resources created, or directly go to DevPortal.microsoft.com to create your first Dev Box.
+L81: cite25†Create a function app in the Flex Consumption plan†github.com | Flex Consumption hosting is recommended for functions that require rapid dynamic scale (including to zero instances), managed identity connections, and virtual network integration.
+L82: cite26†Create a user-assigned managed identity and role assignment†github.com | This module allows you to create a user-assigned managed identity and a role assignment scoped to the resource group.
+L83: cite27†Create a WordPress site†github.com | This template creates a WordPress site on Container Instance
+L84: cite28†Create AKS with Prometheus and Grafana with privae link†github.com | This will create an Azure grafana, AKS and install Prometheus, an open-source monitoring and alerting toolkit, on an Azure Kubernetes Service (AKS) cluster. Then you use Azure Managed Grafana's managed private endpoint to connect to this Prometheus server and display the Prometheus data in a Grafana dashboard
+L85: cite29†Create an API Management service with SSL from KeyVault†github.com | This template deploys an API Management service configured with User Assigned Identity. It uses this identity to fetch SSL certificate from KeyVault and keeps it updated by checking every 4 hours.
+L86: cite30†Create an Azure Virtual Network Manager and sample VNETs†github.com | This template deploys an Azure Virtual Network Manager and sample virtual networks into the named resource group. It supports multiple connectivity topologies and network group membership types.
+L87: cite31†Create an on-demand SFTP Server with persistent storage†github.com | This template demonstrates an on-demand SFTP server using an Azure Container Instance (ACI).
+L88: cite32†Create Application Gateway with Certificates†github.com | This template shows how to generate Key Vault self-signed certificates, then reference from Application Gateway.
+L89: cite33†Create key vault, managed identity, and role assignment†github.com | This template creates a key vault, managed identity, and role assignment.
+L90: cite34†Creates a Container App and Environment with Registry†github.com | Create a Container App Environment with a basic Container App from an Azure Container Registry. It also deploys a Log Analytics Workspace to store logs.
+L91: cite35†Creates a Dapr microservices app using Container Apps†github.com | Create a Dapr microservices app using Container Apps.
+L92: cite36†Creates a Dapr pub-sub servicebus app using Container Apps†github.com | Create a Dapr pub-sub servicebus app using Container Apps.
+L93: cite37†Deploy a simple Azure Spring Apps microservice application†github.com | This template deploys a simple Azure Spring Apps microservice application to run on Azure.
+L94: cite38†Deploy the MedTech service including an Azure IoT Hub†github.com | The MedTech service is one of the Azure Health Data Services designed to ingest device data from multiple devices, transform the device data into FHIR Observations, which are then persisted in the Azure Health Data Services FHIR service.
+L95: cite39†Deploys a static website†github.com | Deploys a static website with a backing storage account
+L96: cite40†FinOps hub†github.com | This template creates a new FinOps hub instance, including Data Explorer, Data Lake storage, and Data Factory.
+L97: cite41†Front Door Standard/Premium with static website origin†github.com | This template creates a Front Door Standard/Premium and an Azure Storage static website, and configured Front Door to send traffic to the static website.
+L98: cite42†Import Container Images into ACR†github.com | This template leverages the Import ACR module from the bicep registry to import public container images into an Azure Container Registry.
+L99: cite43†Network Secured Agent with User Managed Identity†github.com | This set of templates demonstrates how to set up Azure AI Agent Service with virtual network isolation using User Managed Identity authetication for the AI Service/AOAI connection and private network links to connect the agent to your secure data.
+L100: cite44†Testing environment for Azure Firewall Premium†github.com | This template creates an Azure Firewall Premium and Firewall Policy with premium features such as Intrusion Inspection Detection (IDPS), TLS inspection and Web Category filtering
+L101: cite45†Web App with Managed Identity, SQL Server and ΑΙ†github.com | Simple example to deploy Azure infrastructure for app + data + managed identity + monitoring
+L102: ## Resource format
+L103: 
+L104: To create a Microsoft.ManagedIdentity/userAssignedIdentities resource, add the following Bicep to your template.
+L105: 
+L106:     `resource symbolicname 'Microsoft.ManagedIdentity/userAssignedIdentities@2024-11-30' = {
+L107:       location: 'string'
+L108:       name: 'string'
+L109:       properties: {
+L110:         isolationScope: 'string'
+L111:       }
+L112:       tags: {
+L113:         {customized property}: 'string'
+L114:       }
+L115:     }
+L116:     `
+L117: 
+L118: ## Property Values
+L119: ### Microsoft.ManagedIdentity/userAssignedIdentities
+L120: 
+L121: Name  | Description  | Value
+L122: --- | --- | ---
+L123: location  | The geo-location where the resource lives  | string (required)
+L124: name  | The resource name  | string (required)
+L125: properties  | The properties associated with the identity.  | cite46†UserAssignedIdentityProperties L126: tags  | Resource tags  | Dictionary of tag names and values. See cite47†Tags in templates L127: 
+L128: ### TrackedResourceTags
+L129: 
+L130: Name  | Description  | Value
+L131: --- | --- | ---
+L132: ### UserAssignedIdentityProperties
+L133: 
+L134: Name  | Description  | Value
+L135: --- | --- | ---
+L136: isolationScope  | Enum to configure regional restrictions on identity assignment, as necessary.  | 'None'
+L137: 'Regional'
+L138: 
+L139: ## ARM template resource definition
+L140: 
+L141: The userAssignedIdentities resource type can be deployed with operations that target:
+L142: 
+L143:   * Resource groups - See cite48†resource group deployment commands For a list of changed properties in each API version, see cite15†change log .
+L144: 
+L145: ## Usage Examples
+L146: ### Azure Quickstart Templates
+L147: 
+L148: The following cite18†Azure Quickstart templates†aka.ms deploy this resource type.
+L149: Template  | Description
+L150: --- | ---
+L151: cite49†AKS Cluster with a NAT Gateway and an Application Gateway†github.com L152:  | This sample shows how to a deploy an AKS cluster with NAT Gateway for outbound connections and an Application Gateway for inbound connections.
+L153: cite50†AKS cluster with the Application Gateway Ingress Controller†github.com L154:  | This sample shows how to deploy an AKS cluster with Application Gateway, Application Gateway Ingress Controller, Azure Container Registry, Log Analytics and Key Vault
+L155: cite51†Azure Container Service (AKS) with Helm†github.com L156:  | Deploy a managed cluster with Azure Container Service (AKS) with Helm
+L157: cite52†Azure Image Builder with Azure Windows Baseline†github.com L158:  | Creates an Azure Image Builder environment and builds a Windows Server image with the latest Windows Updates and Azure Windows Baseline applied.
+L159: cite53†AzureDatabricks Template with Default Storage Firewall†github.com L160:  | This template allows you to create an Default Storage Firewall enabled Azure Databricks workspace with Privateendpoint, all three forms of CMK, and User-Assigned Access Connector.
+L161: cite54†Build container images with ACR Tasks†github.com L162:  | This template uses DeploymentScript to orchestrate ACR to build your container image from code repo.
+L163: cite55†Configure Dev Box service†github.com L164:  | This template would create all Dev Box admin resources as per Dev Box quick start guide (/azure/dev-box/quickstart-create-dev-box). You can view all resources created, or directly go to DevPortal.microsoft.com to create your first Dev Box.
+L165: cite56†Create a function app in the Flex Consumption plan†github.com L166:  | Flex Consumption hosting is recommended for functions that require rapid dynamic scale (including to zero instances), managed identity connections, and virtual network integration.
+L167: cite57†Create a Private AKS Cluster with a Public DNS Zone†github.com L168:  | This sample shows how to a deploy a private AKS cluster with a Public DNS Zone.
+L169: cite58†Create a user-assigned managed identity and role assignment†github.com L170:  | This module allows you to create a user-assigned managed identity and a role assignment scoped to the resource group.
+L171: cite59†Create a WordPress site†github.com L172:  | This template creates a WordPress site on Container Instance
+L173: cite60†Create AKS with Prometheus and Grafana with privae link†github.com L174:  | This will create an Azure grafana, AKS and install Prometheus, an open-source monitoring and alerting toolkit, on an Azure Kubernetes Service (AKS) cluster. Then you use Azure Managed Grafana's managed private endpoint to connect to this Prometheus server and display the Prometheus data in a Grafana dashboard
+L175: cite61†Create alert rule for azure business continuity items†github.com L176:  | This templates creates an alert rule and user assigned MSI. It also assigns the MSI reader access to the subscription so that the alert rule has access to query the required protected items and latest recovery point details.
+L177: cite62†Create an API Management service with SSL from KeyVault†github.com L178:  | This template deploys an API Management service configured with User Assigned Identity. It uses this identity to fetch SSL certificate from KeyVault and keeps it updated by checking every 4 hours.
+L179: cite63†Create an Application Gateway V2 with Key Vault†github.com L180:  | This template deploys an Application Gateway V2 in a Virtual Network, a user defined identity, Key Vault, a secret (cert data), and access policy on Key Vault and Application Gateway.
+L181: cite64†Create an Azure Virtual Network Manager and sample VNETs†github.com L182:  | This template deploys an Azure Virtual Network Manager and sample virtual networks into the named resource group. It supports multiple connectivity topologies and network group membership types.
+L183: cite65†Create an on-demand SFTP Server with persistent storage†github.com L184:  | This template demonstrates an on-demand SFTP server using an Azure Container Instance (ACI).
+L185: cite66†Create Application Gateway with Certificates†github.com L186:  | This template shows how to generate Key Vault self-signed certificates, then reference from Application Gateway.
+L187: cite67†Create key vault, managed identity, and role assignment†github.com L188:  | This template creates a key vault, managed identity, and role assignment.
+L189: cite68†Create ssh-keys and store in KeyVault†github.com L190:  | This template uses the deploymentScript resource to generate ssh keys and stores the private key in keyVault.
+L191: cite69†Creates a Container App and Environment with Registry†github.com L192:  | Create a Container App Environment with a basic Container App from an Azure Container Registry. It also deploys a Log Analytics Workspace to store logs.
+L193: cite70†Creates a Dapr microservices app using Container Apps†github.com L194:  | Create a Dapr microservices app using Container Apps.
+L195: cite71†Creates a Dapr pub-sub servicebus app using Container Apps†github.com L196:  | Create a Dapr pub-sub servicebus app using Container Apps.
+L197: cite72†Deploy a simple Azure Spring Apps microservice application†github.com L198:  | This template deploys a simple Azure Spring Apps microservice application to run on Azure.
+L199: cite73†Deploy the MedTech service including an Azure IoT Hub†github.com L200:  | The MedTech service is one of the Azure Health Data Services designed to ingest device data from multiple devices, transform the device data into FHIR Observations, which are then persisted in the Azure Health Data Services FHIR service.
+L201: cite74†Deploys a static website†github.com L202:  | Deploys a static website with a backing storage account
+L203: cite75†FinOps hub†github.com L204:  | This template creates a new FinOps hub instance, including Data Explorer, Data Lake storage, and Data Factory.
+L205: cite76†Front Door Standard/Premium with static website origin†github.com L206:  | This template creates a Front Door Standard/Premium and an Azure Storage static website, and configured Front Door to send traffic to the static website.
+L207: cite77†Import Container Images into ACR†github.com L208:  | This template leverages the Import ACR module from the bicep registry to import public container images into an Azure Container Registry.
+L209: cite78†Import VHD Blobs from a ZIP Archive URL†github.com L210:  | Deploying Virtual Machines based on specialized disk images requires to import VHD files into a Storage Account. In the case there are multiple VHD files compressed in a single ZIP and you got the URL to fetch the ZIP archive, this ARM template will ease the job: Download, Extract and Import into an existing Storage Account Blob Container.
+L211: cite79†min.io Azure Gateway†github.com L212:  | Fully private min.io Azure Gateway deployment to provide an S3 compliant storage API backed by blob storage
+L213: cite80†Network Secured Agent with User Managed Identity†github.com L214:  | This set of templates demonstrates how to set up Azure AI Agent Service with virtual network isolation using User Managed Identity authetication for the AI Service/AOAI connection and private network links to connect the agent to your secure data.
+L215: cite81†RBAC - Create Managed Identity Access on Azure Maps account†github.com L216:  | This template creates a Managed Identity and assigns it access to an a created Azure Maps account.
+L217: cite82†Testing environment for Azure Firewall Premium†github.com L218:  | This template creates an Azure Firewall Premium and Firewall Policy with premium features such as Intrusion Inspection Detection (IDPS), TLS inspection and Web Category filtering
+L219: cite83†Web App with Managed Identity, SQL Server and ΑΙ†github.com L220:  | Simple example to deploy Azure infrastructure for app + data + managed identity + monitoring
+L221: ## Resource format
+L222: 
+L223: To create a Microsoft.ManagedIdentity/userAssignedIdentities resource, add the following JSON to your template.
+L224: 
+L225:     `{
+L226:       "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+L227:       "apiVersion": "2024-11-30",
+L228:       "name": "string",
+L229:       "location": "string",
+L230:       "properties": {
+L231:         "isolationScope": "string"
+L232:       },
+L233:       "tags": {
+L234:         "{customized property}": "string"
+L235:       }
+L236:     }
+L237:     `
+L238: 
+L239: ## Property Values
+L240: ### Microsoft.ManagedIdentity/userAssignedIdentities
+L241: Name  | Description  | Value
+L242: --- | --- | ---
+L243: apiVersion  | The api version  | '2024-11-30'
+L244: location  | The geo-location where the resource lives  | string (required)
+L245: name  | The resource name  | string (required)
+L246: properties  | The properties associated with the identity.  | cite84†UserAssignedIdentityProperties L247: tags  | Resource tags  | Dictionary of tag names and values. See cite47†Tags in templates L248: type  | The resource type  | 'Microsoft.ManagedIdentity/userAssignedIdentities'
+L249: ### TrackedResourceTags
+L250: 
+L251: Name  | Description  | Value
+L252: --- | --- | ---
+L253: 
+L254: ### UserAssignedIdentityProperties
+L255: 
+L256: Name  | Description  | Value
+L257: --- | --- | ---
+L258: isolationScope  | Enum to configure regional restrictions on identity assignment, as necessary.  | 'None'
+L259: 'Regional'
+L260: 
+L261: ## Terraform (AzAPI provider) resource definition
+L262: 
+L263: The userAssignedIdentities resource type can be deployed with operations that target:
+L264: 
+L265:   * Resource groups For a list of changed properties in each API version, see cite15†change log .
+L266: ## Usage Examples
+L267: ### Terraform Samples
+L268: A basic example of deploying User Assigned Identity.
+L269: 
+L270:     `terraform {
+L271:       required_providers {
+L272:         azapi = {
+L273:           source = "Azure/azapi"
+L274:         }
+L275:       }
+L276:     }
+L277: 
+L278:     provider "azapi" {
+L279:       skip_provider_registration = false
+L280:     }
+L281: 
+L282:     variable "resource_name" {
+L283:       type    = string
+L284:       default = "acctest0001"
+L285:     }
+L286: 
+L287:     variable "location" {
+L288:       type    = string
+L289:       default = "westeurope"
+L290:     }
+L291: 
+L292:     resource "azapi_resource" "resourceGroup" {
+L293:       type     = "Microsoft.Resources/resourceGroups@2020-06-01"
+L294:       name     = var.resource_name
+L295:       location = var.location
+L296:     }
+L297: 
+L298:     resource "azapi_resource" "userAssignedIdentity" {
+L299:       type                      = "Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31"
+L300:       parent_id                 = azapi_resource.resourceGroup.id
+L301:       name                      = var.resource_name
+L302:       location                  = var.location
+L303:       schema_validation_enabled = false
+L304:       response_export_values    = ["*"]
+L305:     }
+L306:     `
+L307: ### Azure Verified Modules
+L308: 
+L309: The following cite16†Azure Verified Modules†aka.ms can be used to deploy this resource type.
+L310: 
+L311: Module  | Description
+L312: --- | ---
+L313: cite85†User Assigned Identity†github.com | AVM Resource Module for User Assigned Identity
+L314: ## Resource format
+L315: 
+L316: To create a Microsoft.ManagedIdentity/userAssignedIdentities resource, add the following Terraform to your template.
+L317: 
+L318:     `resource "azapi_resource" "symbolicname" {
+L319:       type = "Microsoft.ManagedIdentity/userAssignedIdentities@2024-11-30"
+L320:       name = "string"
+L321:       parent_id = "string"
+L322:       location = "string"
+L323:       tags = {
+L324:         {customized property} = "string"
+L325:       }
+L326:       body = {
+L327:         properties = {
+L328:           isolationScope = "string"
+L329:         }
+L330:       }
+L331:     }
+L332:     `
+L333: ## Property Values
+L334: 
+L335: ### Microsoft.ManagedIdentity/userAssignedIdentities
+L336: 
+L337: Name  | Description  | Value
+L338: --- | --- | ---
+L339: location  | The geo-location where the resource lives  | string (required)
+L340: name  | The resource name  | string (required)
+L341: properties  | The properties associated with the identity.  | cite86†UserAssignedIdentityProperties L342: tags  | Resource tags  | Dictionary of tag names and values.
+L343: type  | The resource type  | "Microsoft.ManagedIdentity/userAssignedIdentities@2024-11-30"
+L344: ### TrackedResourceTags
+L345: 
+L346: Name  | Description  | Value
+L347: --- | --- | ---
+L348: 
+L349: ### UserAssignedIdentityProperties
+L350: 
+L351: Name  | Description  | Value
+L352: --- | --- | ---
+L353: isolationScope  | Enum to configure regional restrictions on identity assignment, as necessary.  | 'None'
+L354: 'Regional'
+L355: 
+L356: * * *
+L357: 
+L358: ## Feedback
+L359: 
+L360: Was this page helpful?
+L361: 
+L362: Yes No No
+L363: 
+L364: Need help with this topic?
+L365: 
+L366: Want to try using Ask Learn to clarify or guide you through this topic?
+L367: 
+L368: Ask Learn Ask Learn
+L369: 
+L370: Suggest a fix?
+L371: 
+L372: * * *
+L373: ## Additional resources
+L374: 
+L375: * * *
+L376: 
+L377:   * Last updated on 2025-10-08
+L378: 
+L379: ### In this article
+L380: 
+L381: Was this page helpful?
+L382: 
+L383: Need help with this topic?
+L384: 
+L385: Want to try using Ask Learn to clarify or guide you through this topic?
+L386: 
+L387: Ask Learn Ask Learn
+L388: 
+L389: Suggest a fix?
+--------------------------------------------------------------------------------
+Microsoft.Authorization/roleAssignments 2022-04-01 - Bicep, ARM template & Terraform AzAPI reference | Microsoft Learn (https://learn.microsoft.com/en-us/azure/templates/microsoft.authorization/2022-04-01/roleassignments)
+citeturn38view1 [wordlim: 200] Crawled: today; Content type: text/html; Source: open({"ref_id":"https://learn.microsoft.com/en-us/azure/templates/microsoft.authorization/2022-04-01/roleassignments","lineno":null}); Total lines: 541
+L0: cite0†Skip to main content cite1†Skip to Ask Learn chat experience L1: 
+L2: This browser is no longer supported.
+L3: 
+L4: Upgrade to Microsoft Edge to take advantage of the latest features, security updates, and technical support.
+L5: 
+L6: cite2†Download Microsoft Edge†go.microsoft.com cite3†More info about Internet Explorer and Microsoft Edge L7: 
+L8: Table of contents Exit editor mode
+L9: 
+L10: Ask Learn Ask Learn
+L11: 
+L12: Reading mode Table of contents cite1†Read in English Add Add to Plans Edit
+L13: 
+L14: * * *
+L15: 
+L16: Copy Markdown Print
+L17: 
+L18: * * *
+L19: 
+L20: Note
+L21: Access to this page requires authorization. You can try cite1†signing in or changing directories.
+L22: 
+L23: Access to this page requires authorization. You can try changing directories.
+L24: # Microsoft.Authorization roleAssignments 2022-04-01
+L25: 
+L26: Feedback
+L27: 
+L28: Summarize this article for me
+L29: 
+L30: ## In this article
+L31: 
+L32:   * cite4†Latest L33:   * cite5†2022-04-01 L34:   * cite6†2020-10-01-preview L35:   * cite7†2020-08-01-preview L36:   * cite8†2020-04-01-preview L37:   * cite9†2020-03-01-preview L38:   * cite10†2018-09-01-preview L39:   * cite11†2018-01-01-preview L40:   * cite12†2017-10-01-preview L41:   * cite13†2015-07-01 L42: 
+L43: ## Remarks
+L44: 
+L45: For guidance on creating role assignments and definitions, see cite14†Create Azure RBAC resources by using Bicep .
+L46: ## Bicep resource definition
+L47: 
+L48: The roleAssignments resource type can be deployed with operations that target:
+L49: 
+L50:   * Tenant - See cite15†tenant deployment commands * Management groups - See cite16†management group deployment commands * Subscription - See cite17†subscription deployment commands * Resource groups - See cite18†resource group deployment commands L51: 
+L52: For a list of changed properties in each API version, see cite19†change log .
+L53: 
+L54: ## Usage Examples
+L55: ### Azure Verified Modules
+L56: 
+L57: The following cite20†Azure Verified Modules†aka.ms can be used to deploy this resource type.
+L58: Module  | Description
+L59: --- | ---
+L60: cite21†Authorization - Role Assignment†github.com | AVM Resource Module for Authorization - Role Assignment
+L61: cite22†Authorization - Role Assignment - Management Group Scope†github.com | AVM Child Module for Authorization - Role Assignment - Management Group Scope
+L62: cite23†Authorization - Role Assignment - Resource Group Scope†github.com | AVM Child Module for Authorization - Role Assignment - Resource Group Scope
+L63: cite24†Authorization - Role Assignment - Subscription Scope†github.com | AVM Child Module for Authorization - Role Assignment - Subscription Scope
+L64: ### Azure Quickstart Samples
+L65: 
+L66: The following cite25†Azure Quickstart templates†aka.ms contain Bicep samples for deploying this resource type.
+L67: Bicep File  | Description
+L68: --- | ---
+L69: cite26†Configure Deployment Environments service†github.com | This template provides a way to configure Deployment Environments.
+L70: cite27†AKS Cluster with a NAT Gateway and an Application Gateway†github.com | This sample shows how to a deploy an AKS cluster with NAT Gateway for outbound connections and an Application Gateway for inbound connections.
+--------------------------------------------------------------------------------
+Microsoft.ContainerRegistry/registries 2025-11-01 - Bicep, ARM template & Terraform AzAPI reference | Microsoft Learn (https://learn.microsoft.com/en-us/azure/templates/microsoft.containerregistry/2025-11-01/registries)
+citeturn38view2 [wordlim: 200] Crawled: today; Content type: text/html; Source: open({"ref_id":"https://learn.microsoft.com/en-us/azure/templates/microsoft.containerregistry/2025-11-01/registries","lineno":null}); Total lines: 935
+--------------------------------------------------------------------------------
+Microsoft.OperationalInsights/workspaces 2025-07-01 - Bicep, ARM template & Terraform AzAPI reference | Microsoft Learn (https://learn.microsoft.com/en-us/azure/templates/microsoft.operationalinsights/2025-07-01/workspaces)
+citeturn38view3 [wordlim: 200] Crawled: today; Content type: text/html; Source: open({"ref_id":"https://learn.microsoft.com/en-us/azure/templates/microsoft.operationalinsights/2025-07-01/workspaces","lineno":null}); Total lines: 783
+--------------------------------------------------------------------------------
+Microsoft.OperationalInsights/workspaces/tables 2025-07-01 - Bicep, ARM template & Terraform AzAPI reference | Microsoft Learn (https://learn.microsoft.com/en-us/azure/templates/microsoft.operationalinsights/2025-07-01/workspaces/tables)
+citeturn38view4 [wordlim: 200] Crawled: today; Content type: text/html; Source: open({"ref_id":"https://learn.microsoft.com/en-us/azure/templates/microsoft.operationalinsights/2025-07-01/workspaces/tables","lineno":null}); Total lines: 912
+--------------------------------------------------------------------------------
+Microsoft.Insights/diagnosticSettings 2021-05-01-preview - Bicep, ARM template & Terraform AzAPI reference | Microsoft Learn (https://learn.microsoft.com/en-us/azure/templates/microsoft.insights/2021-05-01-preview/diagnosticsettings)
+citeturn38view5 [wordlim: 200] Crawled: today; Content type: text/html; Source: open({"ref_id":"https://learn.microsoft.com/en-us/azure/templates/microsoft.insights/2021-05-01-preview/diagnosticsettings","lineno":null}); Total lines: 670
+--------------------------------------------------------------------------------
+Microsoft.Insights/actionGroups 2023-01-01 - Bicep, ARM template & Terraform AzAPI reference | Microsoft Learn (https://learn.microsoft.com/en-us/azure/templates/microsoft.insights/2023-01-01/actiongroups)
+citeturn38view6 [wordlim: 200] Crawled: today; Content type: text/html; Source: open({"ref_id":"https://learn.microsoft.com/en-us/azure/templates/microsoft.insights/2023-01-01/actiongroups","lineno":null}); Total lines: 939
+--------------------------------------------------------------------------------
+Microsoft.Insights/scheduledQueryRules 2023-12-01 - Bicep, ARM template & Terraform AzAPI reference | Microsoft Learn (https://learn.microsoft.com/en-us/azure/templates/microsoft.insights/2023-12-01/scheduledqueryrules)
+citeturn38view7 [wordlim: 200] Crawled: today; Content type: text/html; Source: open({"ref_id":"https://learn.microsoft.com/en-us/azure/templates/microsoft.insights/2023-12-01/scheduledqueryrules","lineno":null}); Total lines: 933
+--------------------------------------------------------------------------------
+Release v0.38.33 · Azure/bicep · GitHub (https://github.com/Azure/bicep/releases/tag/v0.38.33)
+citeturn38view8 [wordlim: 200] Crawled: 2 weeks ago; Content type: text/html; Source: open({"ref_id":"https://github.com/Azure/bicep/releases/tag/v0.38.33","lineno":null}); Total lines: 195
+--------------------------------------------------------------------------------
+Release notes & updates – Azure CLI | Microsoft Learn (https://learn.microsoft.com/en-us/cli/azure/release-notes-azure-cli)
+citeturn38view9 [wordlim: 200] Crawled: today; Content type: text/html; Source: open({"ref_id":"https://learn.microsoft.com/en-us/cli/azure/release-notes-azure-cli","lineno":null}); Redirected to URL: https://learn.microsoft.com/en-us/cli/azure/release-notes-azure-cli?view=azure-cli-latest; Total lines: 13621
+

@@ -1,0 +1,110 @@
+{
+  "selected_receipts_count": 5,
+  "distinct_original_files_count": 4,
+  "unique_original_bytes": 11311695,
+  "distinct_derivative_files_count": 4,
+  "unique_derivative_bytes": 84787910,
+  "quarterly_listed_volume_by_representation": {
+    "master.Z": {
+      "quarter_children_count": 68,
+      "sum_by_retained_label_unit": {
+        "KB": 393903.0
+      },
+      "assumed_binary_scale_total_bytes": 403356672.0,
+      "unknown_size_children": [],
+      "assumption": "KB/MB/GB treated as 1024-based for planning only; SEC label scaling and rounding unverified; not actual received bytes"
+    },
+    "master.gz": {
+      "quarter_children_count": 68,
+      "sum_by_retained_label_unit": {
+        "KB": 219223.0
+      },
+      "assumed_binary_scale_total_bytes": 224484352.0,
+      "unknown_size_children": [],
+      "assumption": "KB/MB/GB treated as 1024-based for planning only; SEC label scaling and rounding unverified; not actual received bytes"
+    },
+    "master.idx": {
+      "quarter_children_count": 68,
+      "sum_by_retained_label_unit": {
+        "KB": 1519859.0
+      },
+      "assumed_binary_scale_total_bytes": 1556335616.0,
+      "unknown_size_children": [],
+      "assumption": "KB/MB/GB treated as 1024-based for planning only; SEC label scaling and rounding unverified; not actual received bytes"
+    },
+    "master.sit": {
+      "quarter_children_count": 19,
+      "sum_by_retained_label_unit": {
+        "KB": 117188.0
+      },
+      "assumed_binary_scale_total_bytes": 120000512.0,
+      "unknown_size_children": [],
+      "assumption": "KB/MB/GB treated as 1024-based for planning only; SEC label scaling and rounding unverified; not actual received bytes"
+    },
+    "master.z": {
+      "quarter_children_count": 9,
+      "sum_by_retained_label_unit": {
+        "KB": 55053.0
+      },
+      "assumed_binary_scale_total_bytes": 56374272.0,
+      "unknown_size_children": [],
+      "assumption": "KB/MB/GB treated as 1024-based for planning only; SEC label scaling and rounding unverified; not actual received bytes"
+    },
+    "master.zip": {
+      "quarter_children_count": 68,
+      "sum_by_retained_label_unit": {
+        "KB": 209670.0
+      },
+      "assumed_binary_scale_total_bytes": 214702080.0,
+      "unknown_size_children": [],
+      "assumption": "KB/MB/GB treated as 1024-based for planning only; SEC label scaling and rounding unverified; not actual received bytes"
+    }
+  },
+  "largest_listed_selected_representation": {
+    "quarter": "2024Q1",
+    "development_subset": "true",
+    "requested_at": "2026-10-05T23:41:20.853315+00:00",
+    "listing_evidence_id": "SEC-0073",
+    "discovered_url": "https://www.sec.gov/Archives/edgar/full-index/2024/QTR1/master.zip",
+    "representation": "master.zip",
+    "listed_size": "4114 KB",
+    "listed_size_unit": "listing-declared (unit unverified)",
+    "source_status": "listed_source_pending",
+    "selection_reason": "Observed master representation; Task 3 selects inspected alternative",
+    "gap_id": ""
+  },
+  "largest_retained_source": {
+    "evidence_id": "SEC-0142",
+    "bytes": 3901000
+  },
+  "archive_expansion_ratios": {
+    "SEC-0141": 7.262699415523332,
+    "SEC-0142": 7.369475006408613,
+    "SEC-0143": 7.946871566005636,
+    "SEC-0144": 6.264920283535699,
+    "SEC-0145": 6.264920283535699
+  },
+  "bounded_one_source_unit_peak_terms": {
+    "one_original_bytes_measured": 3901000,
+    "one_expanded_bytes_measured": 28748322,
+    "observation_output_scratch_bytes_assumed": 28748322,
+    "candidate_generation_scratch_bytes_assumed": 57496644,
+    "installer_runtime_log_reserve_bytes_assumed": 1073741824
+  },
+  "bounded_one_source_unit_peak_assumed_bytes": 1192636112,
+  "temporary_peak_terms": {
+    "simultaneous_original_archives_or_idx_bytes": 11311695,
+    "expanded_derivatives_bytes": 84787910,
+    "planned_observation_output_scratch_bytes_assumed": 28748322,
+    "candidate_generation_scratch_bytes_assumed": 57496644,
+    "installer_runtime_log_reserve_bytes_assumed": 1073741824
+  },
+  "temporary_peak_assumed_bytes": 1256086395,
+  "documented_candidate_ephemeral_capacity_bytes": 8589934592,
+  "capacity_evidence": "provider/preparation/20261005T230634Z/storage-mounts.web-extract.txt lines 44-53; >1 vCPU gives 8 GiB; documentation only",
+  "root_relationship": {
+    "original_bytes_equal": true,
+    "decoded_bytes_equal": true
+  },
+  "limitation": "Largest retained expansion is a sample observation, not an all-quarter upper bound. Scratch/reserve assumptions are not measured process usage, memory fit or runtime fit; no integrated Azure behavior verified."
+}

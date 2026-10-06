@@ -1,0 +1,103 @@
+"""Controller-only exact retention and post-review candidate freeze; no acceptance."""
+import hashlib
+import json
+from datetime import datetime, timezone
+from pathlib import Path
+from zoneinfo import ZoneInfo
+
+ROOT = Path('/Users/lowell/Projects/sec-edgar')
+SDD = ROOT / '.sdd/1-sec-filing-index-ingestion-stage-1-spec'
+EVIDENCE = ROOT / 'specs/evidence/sec-filing-index-ingestion/stage-1'
+FINAL = EVIDENCE / 'final-candidate'
+FINDING = ROOT / 'specs/sec-filing-index-ingestion-stage-1-findings.md'
+EXPECTED = '939a724eccf22147015a59d5940ed57f02cc4e9fe9d942a9cd78ae73c34615ff'
+
+def digest(data):
+    return hashlib.sha256(data).hexdigest()
+
+def relative(path):
+    return str(path.relative_to(ROOT))
+
+def retain(path, data):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if path.exists():
+        assert path.read_bytes() == data, f'Immutable collision: {path}'
+    else:
+        path.write_bytes(data)
+
+def encode(value):
+    return (json.dumps(value, indent=2) + '\n').encode()
+
+def record(path):
+    data = path.read_bytes()
+    return {'path': relative(path), 'bytes': len(data), 'sha256': digest(data)}
+
+def main():
+    review = SDD / 'final-scoped-review.md'
+    assert review.is_file(), 'Read and adjudicate the scoped review before freezing.'
+    finding_bytes = FINDING.read_bytes()
+    assert digest(finding_bytes) == EXPECTED
+    now = datetime.now(timezone.utc)
+    local_date = now.astimezone(ZoneInfo('America/New_York')).date().isoformat()
+    review_bytes = review.read_bytes()
+    review_copy = EVIDENCE / 'reviews' / f'final-scoped-review-{digest(review_bytes)}.md'
+    retain(review_copy, review_bytes)
+    historical = json.loads((EVIDENCE / 'task6/sdd-retention-map.json').read_text())
+    old_records = historical['records']
+    by_key = {(r['original_path'], r['sha256']): r for r in old_records}
+    records = []
+    for source in sorted(SDD.rglob('*')):
+        if not source.is_file() or '__pycache__' in source.parts or source.suffix == '.pyc':
+            continue
+        assert not source.is_symlink()
+        data = source.read_bytes()
+        key = (relative(source), digest(data))
+        if key in by_key:
+            destination = ROOT / by_key[key]['durable_path']
+            assert destination.read_bytes() == data
+        else:
+            destination = FINAL / 'sdd-history' / f'{source.name}.{digest(data)}'
+            retain(destination, data)
+        records.append({'original_path': relative(source), 'durable_path': relative(destination),
+                        'bytes': len(data), 'sha256': digest(data)})
+    retention = FINAL / 'sdd-retention-map.json'
+    retain(retention, encode({'recorded_at_utc': now.isoformat(),
+        'boundary': 'Exact current SDD retention before final finding acceptance; prior 85-file historical map remains immutable. Later acceptance/completion SDD changes need a separate supplement.',
+        'records': records}))
+    immutable_finding = FINAL / f'finding-F1-{local_date}-{EXPECTED}.md'
+    retain(immutable_finding, finding_bytes)
+    manifest_path = FINAL / 'evidence-manifest.json'
+    freeze_path = FINAL / 'freeze.json'
+    boundary_path = EVIDENCE / 'final-fix/controller-boundary.json'
+    exclusions = {manifest_path, freeze_path, boundary_path}
+    paths = [p for p in EVIDENCE.rglob('*') if p.is_file() and p not in exclusions
+             and '__pycache__' not in p.parts and p.suffix != '.pyc'] + [FINDING]
+    manifest = {'recorded_at_utc': now.isoformat(), 'revision': 'F1', 'date': local_date,
+        'scope': 'Post-review retained Stage 1 evidence and exact pre-acceptance finding; no effective deployment or owner acceptance asserted.',
+        'exclusions': [relative(p) for p in sorted(exclusions)],
+        'post_capture_boundary': 'Later owner-acceptance/completion receipts are separate supplements. If the live finding gains an acceptance appendix, this exact immutable finding resolves the original path and hash.',
+        'immutable_finding': relative(immutable_finding),
+        'records': [record(p) for p in sorted(paths)]}
+    retain(manifest_path, encode(manifest))
+    for row in manifest['records']:
+        data = (ROOT / row['path']).read_bytes()
+        assert len(data) == row['bytes'] and digest(data) == row['sha256'], row['path']
+    freeze = {'recorded_at_utc': now.isoformat(), 'revision': 'F1', 'date': local_date,
+        'finding': record(FINDING), 'immutable_finding': relative(immutable_finding),
+        'evidence_manifest': record(manifest_path), 'manifest_files_verified': len(paths),
+        'whole_branch_review': record(EVIDENCE / 'reviews/final-whole-branch-review-ac76c031d1bddf04ba78c202873059b83a84ded4b2c9f4ec5a462fd675c47630.md'),
+        'scoped_re_review': record(review_copy),
+        'review_resolution': 'P2 and P3 ADDRESSED; no new findings; controller read full report before running this freeze.',
+        'conclusion': 'READY for the bounded Stage 1 prerequisite exit, subject to Lowell Mason accepting exact revision/date and all recorded limitations.',
+        'owner_acceptance': 'pending'}
+    retain(freeze_path, encode(freeze))
+    boundary_path.write_bytes(encode({'boundary': 'Post-capture controller receipt; technical finding remains exact reviewed bytes.',
+        'whole_branch_review': 'Completed GPT-6.1-sol/max; initial With fixes report retained unchanged.',
+        'correction_scoped_review': 'PASS; P2/P3 ADDRESSED, no new findings',
+        'final_candidate_freeze': record(freeze_path),
+        'conclusion': freeze['conclusion'], 'owner_acceptance': 'pending',
+        'completion': 'Stage 1 unticked; active plan retained; no completion stamp.'}))
+    print(json.dumps(freeze, indent=2))
+
+if __name__ == '__main__':
+    main()
