@@ -180,3 +180,18 @@ class StorageTests(unittest.TestCase):
             self.fail(f"Reopening a lease client must preserve the mutable sentinel journal: {error}")
         self.addCleanup(reopened.close)
         self.assertEqual(sentinel.read_bytes(), journal)
+
+    def test_symlink_object_collision_cannot_follow_a_leaf_link(self):
+        target = self.root / "outside-object-root"
+        target.write_bytes(b"protected")
+        parent = self.root / "objects/quarantine"
+        parent.mkdir()
+        link = parent / "leaf"
+        link.symlink_to(target)
+        with self.assertRaises(ValueError):
+            try:
+                self.objects.put_once("quarantine/leaf", b"replacement")
+            except OSError as error:
+                self.fail(f"Symlink rejection must use the host errno and raise ValueError, got errno {error.errno}")
+        self.assertTrue(link.is_symlink())
+        self.assertEqual(target.read_bytes(), b"protected")

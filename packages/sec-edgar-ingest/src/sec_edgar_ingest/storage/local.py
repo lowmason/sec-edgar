@@ -1,6 +1,7 @@
 """SQLite CAS and durable write-once files for offline acquisition fixtures."""
 from __future__ import annotations
 
+import errno
 import hashlib
 import io
 import os
@@ -48,7 +49,7 @@ class LocalObjectStore:
                 try:
                     child = os.open(segment, DIRECTORY_FLAGS, dir_fd=descriptor)
                 except OSError as error:
-                    if error.errno in (20, 40):
+                    if error.errno in (errno.ENOTDIR, errno.ELOOP):
                         raise ValueError("object parents must be real directories") from error
                     raise
                 os.close(descriptor)
@@ -63,7 +64,7 @@ class LocalObjectStore:
             try:
                 descriptor = os.open(name, FILE_FLAGS, dir_fd=parent)
             except OSError as error:
-                if error.errno == 40:
+                if error.errno == errno.ELOOP:
                     raise ValueError("object must not be a symlink") from error
                 raise
             with os.fdopen(descriptor, "rb") as stream:
