@@ -514,3 +514,331 @@ def constructor_process_probe(root):
                 process.join(10)
         queue.close()
         queue.join_thread()
+
+
+# Task 5 controls retain entity bytes; ZIP fixtures are synthetic, never SEC receipts.
+def zip_bytes(body: bytes) -> bytes:
+    import io
+    import zipfile
+    stream = io.BytesIO()
+    with zipfile.ZipFile(stream, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+        member = zipfile.ZipInfo("master.idx", date_time=(2015, 1, 1, 0, 0, 0))
+        member.compress_type = zipfile.ZIP_DEFLATED
+        archive.writestr(member, body)
+    return stream.getvalue()
+
+
+def body_receipt(root, body, *, status=200, headers=None, complete=True, error=None):
+    import hashlib
+    import uuid
+    from sec_edgar_ingest.models import BodyReceipt
+    path = Path(root) / ("entity-"+uuid.uuid4().hex)
+    path.write_bytes(body)
+    return BodyReceipt(fixture_source().canonical_url, status, headers or {}, path,
+                       fixture_context().started_at, len(body), hashlib.sha256(body).hexdigest(), complete, error)
+
+
+class DownloadHarness:
+    def __init__(self, responses, *, settings=None, context=None, root=None):
+        import tempfile
+        from sec_edgar_ingest.coordination import Coordinator
+        from sec_edgar_ingest.download import RequestClient, ResponseSpec, ScriptedSender
+        from sec_edgar_ingest.state import AcquisitionState
+        self.directory = tempfile.TemporaryDirectory() if root is None else None
+        self.root = Path(self.directory.name) if root is None else Path(root)
+        self.clock = fixture_clock()
+        self.settings = settings or fixture_settings()
+        self.context = context or fixture_context()
+        self.store, self.objects, self.leases = store_bundle(self.root, clock=self.clock)
+        self.state = AcquisitionState(self.store, clock=self.clock)
+        self.coordinator = Coordinator(self.settings, self.store, self.leases, self.clock)
+        self.events = []
+        self.coordinator.observer = self.events.append
+        specs = [item if isinstance(item, ResponseSpec) else ResponseSpec(*item) for item in responses]
+        self.sender = ScriptedSender(specs)
+        self.sender.clock = self.clock
+        self.client = RequestClient(self.settings, self.coordinator, self.sender, self.state, self.clock)
+        self.client.jitter = lambda: 1.0
+
+    def fetch(self, source):
+        return self.client.fetch(source.canonical_url, self.context, source)
+
+    def fetch_response_only(self, url=None):
+        return self.client.fetch(url or "https://www.sec.gov/Archives/edgar/full-index/2015/QTR1/index.json", self.context)
+
+    @property
+    def starts(self):
+        return self.sender.starts
+
+    @property
+    def attempt_count(self):
+        return len(self.starts)
+
+    @property
+    def maximum_active(self):
+        return self.sender.maximum_active
+
+    def close(self):
+        for row in self.store.scan("TransportAttempt", {}):
+            value = row.to_mapping()["value"]
+            if value["receipt"] is not None and value["outcome"] != "received":
+                from sec_edgar_ingest.models import BodyReceipt
+                receipt = BodyReceipt.from_mapping(value["receipt"])
+                code = value["error"]["code"] if value.get("error") else value["outcome"]
+                retain_download_evidence("ledger-"+value["request_id"], receipt, code)
+        self.store.close()
+        self.leases.close()
+        self.sender.close()
+        if self.directory is not None:
+            self.directory.cleanup()
+
+
+def download_harness(responses):
+    return DownloadHarness(responses)
+
+
+def retain_download_evidence(name, receipt, code):
+    import os
+    import shutil
+    destination = os.environ.get("SEC_EDGAR_TASK5_TRACE_DIR")
+    if destination:
+        target = Path(destination) / "invalid"
+        target.mkdir(parents=True, exist_ok=True)
+        path = target / (name+".body")
+        shutil.copyfile(receipt.temporary_path, path)
+        path.with_suffix(".json").write_text(json.dumps({"reason": code, "receipt": receipt.to_mapping()}, indent=2, sort_keys=True)+"\n")
+
+
+class LoopbackServer:
+    """Exactly one explicitly fixture-only HTTP peer records accepted sockets and closure."""
+    def __init__(self, body=b"fixture prefix", *, mode="complete", status=200, headers=None):
+        import socket
+        import threading
+        import time
+        self.body, self.mode, self.status, self.headers = body, mode, status, dict(headers or {})
+        self.events, self.requests, self.sent = [], [], 0
+        self.connected, self.prefix_sent, self.closed, self.stopped = (threading.Event() for _ in range(4))
+        self.socket = socket.socket()
+        self.socket.bind(("127.0.0.1", 0))
+        self.socket.listen(2)
+        self.socket.settimeout(0.05)
+        self.origin = f"http://127.0.0.1:{self.socket.getsockname()[1]}"
+        self.url = self.origin+"/fixture"
+        self.thread = threading.Thread(target=self._serve, name="bounded-loopback-fixture", daemon=True)
+        self.thread.start()
+
+    def record(self, event, **details):
+        import time
+        self.events.append({"event": event, "monotonic": time.monotonic(), **details})
+
+    def _serve(self):
+        import select
+        import socket
+        try:
+            while not self.stopped.is_set():
+                try:
+                    peer, _ = self.socket.accept()
+                    break
+                except socket.timeout:
+                    continue
+            else:
+                return
+            with peer:
+                self.record("socket-accepted")
+                self.connected.set()
+                peer.settimeout(1)
+                request = b""
+                while b"\r\n\r\n" not in request:
+                    chunk = peer.recv(4096)
+                    if not chunk:
+                        return
+                    request += chunk
+                self.requests.append(request.decode("ascii"))
+                self.record("request-received")
+                headers = {"Content-Length": str(len(self.body)), "Connection": "close", **self.headers}
+                if self.mode == "trickle":
+                    headers["Content-Length"] = "1000000"
+                elif self.mode == "truncated":
+                    headers["Content-Length"] = str(len(self.body)+10)
+                elif self.mode == "unadvertised":
+                    headers.pop("Content-Length")
+                response = (f"HTTP/1.1 {self.status} Fixture\r\n"+"".join(f"{key}: {value}\r\n" for key,value in headers.items())+"\r\n").encode("ascii")
+                if self.mode == "headers":
+                    for byte in response:
+                        peer.sendall(bytes([byte]))
+                        if self.stopped.wait(0.02):
+                            return
+                elif self.mode == "blocked-headers":
+                    peer.sendall(b"HTTP/1.1 200 Fixture\r\nX-Fixture: ")
+                    self.record("blocked-headers-sent")
+                else:
+                    peer.sendall(response)
+                    self.record("headers-sent")
+                    if self.mode == "trickle":
+                        while not self.stopped.is_set():
+                            if select.select([peer], [], [], 0)[0] and peer.recv(1) == b"":
+                                return
+                            peer.sendall(self.body)
+                            self.sent += len(self.body)
+                            self.record("entity-sent", byte_count=self.sent)
+                            self.prefix_sent.set()
+                            if self.stopped.wait(0.02):
+                                return
+                    else:
+                        peer.sendall(self.body)
+                        self.sent = len(self.body)
+                        self.record("entity-sent", byte_count=self.sent)
+                        self.prefix_sent.set()
+                        if self.mode == "truncated":
+                            return
+                while not self.stopped.is_set():
+                    if select.select([peer], [], [], 0.05)[0] and peer.recv(1) == b"":
+                        return
+        except (BrokenPipeError, ConnectionResetError):
+            self.record("peer-disconnected")
+        except OSError as error:
+            if not self.stopped.is_set():
+                self.record("server-error", message=str(error))
+        finally:
+            self.record("socket-closed")
+            self.closed.set()
+
+    def close(self):
+        self.stopped.set()
+        self.socket.close()
+        self.thread.join(2)
+        if self.thread.is_alive():
+            raise AssertionError("fixture server did not drain")
+
+
+def loopback_sender(settings, clock, origin, *, target=None, spool=None):
+    from sec_edgar_ingest.download import BoundedSender
+    from urllib.parse import urlsplit
+    class FixtureLoopbackSender(BoundedSender):
+        def _validated_origin(self, url):
+            if self.settings.storage.backend != "local-fixture" or "fixture" not in self.settings.worker.provenance:
+                raise ValueError("loopback exception is expressly fixture-only")
+            parsed = urlsplit(url)
+            if parsed.scheme != "http" or parsed.hostname != "127.0.0.1" or parsed.username or parsed.password or parsed.fragment or urlsplit(origin).netloc != parsed.netloc:
+                raise ValueError("fixture sender can contact only its one selected loopback origin")
+            return origin
+        def _child_target(self):
+            return target or super()._child_target()
+        def _spool_directory(self):
+            if spool is None:
+                return super()._spool_directory()
+            root = Path(spool)
+            root.mkdir(parents=True, exist_ok=True)
+            return root
+    return FixtureLoopbackSender(settings, clock)
+
+
+def real_permit(clock, seconds=0.4, *, start_seconds=1/3):
+    from sec_edgar_ingest.models import Permit
+    now, mono = clock.now(), clock.monotonic()
+    start = min(start_seconds, seconds)
+    return Permit("fixture-real-owner", 1, "fixture-real-request", now+timedelta(seconds=start),
+                  now+timedelta(seconds=seconds), now+timedelta(seconds=seconds+2),
+                  mono+start, mono+seconds, now+timedelta(seconds=start+1/3))
+
+
+def real_context(clock, settings):
+    from dataclasses import replace
+    now = clock.now()
+    return replace(fixture_context(), started_at=now, deadline=now+timedelta(seconds=10),
+                   config_sha256=settings.config_sha256, effective_config=settings.to_mapping())
+
+
+def timer_failure_child(transport, cancellation, channel):
+    import sec_edgar_ingest.download as download
+    def fail_timer(_):
+        raise download.HardTimerUnavailable("fixture OS timer installation failed")
+    download.arm_child_deadline = fail_timer
+    download._child_exchange(transport, cancellation, channel)
+
+
+def stale_start_child(transport, cancellation, channel):
+    import time
+    import sec_edgar_ingest.download as download
+    time.sleep(max(0, transport.start_before_mono-time.monotonic()+0.01))
+    download._child_exchange(transport, cancellation, channel)
+
+
+def ipc_loss_child(transport, cancellation, channel):
+    import sec_edgar_ingest.download as download
+    channel.close()
+    download._child_exchange(transport, cancellation, channel)
+
+
+def crash_supervisor(root, url, origin, cancellation):
+    import os
+    from sec_edgar_ingest.coordination import Clock, Coordinator
+    import gc
+    clock = Clock()
+    settings = fixture_settings(http={"exchange_deadline_seconds": 0.4}, coordination={"lease_seconds": 2, "renew_every_seconds": 1})
+    store, _, leases = store_bundle(Path(root) / "state", clock=clock)
+    coordinator = Coordinator(settings, store, leases, clock)
+    sender = loopback_sender(settings, clock, origin, spool=Path(root) / "sender")
+    context = real_context(clock, settings)
+    with coordinator.turn("crashing-fixture-supervisor", "backfill", context.deadline) as turn:
+        # The surviving fixture parent owns semaphore cleanup even when this supervisor is killed.
+        turn.cancelled = cancellation
+        gc.collect()
+        permit = turn.reserve("crashing-fixture-request")
+        turn.assert_current(permit)
+        sender.send(url, context, permit, cancellation=cancellation)
+        turn.complete(permit, drained=True)
+    os._exit(2)
+
+
+def retain_process_evidence(name, spool, server, extra=None):
+    import os
+    import shutil
+    destination = os.environ.get("SEC_EDGAR_TASK5_TRACE_DIR")
+    if destination:
+        target = Path(destination) / "process" / name
+        target.mkdir(parents=True, exist_ok=True)
+        if spool is not None and Path(spool).exists():
+            shutil.copytree(spool, target / "sender", dirs_exist_ok=True)
+        (target / "server.json").write_text(json.dumps({"events": server.events, "sent_bytes": server.sent, "requests": server.requests, "extra": extra or {}}, indent=2, sort_keys=True)+"\n")
+
+
+def malformed_metadata_child(transport, cancellation, channel):
+    import sec_edgar_ingest.download as download
+    download._child_exchange(transport, cancellation, channel)
+    (Path(transport.spool)/"receipt.json").write_text("[]")
+
+
+def unexpected_failure_child(transport, cancellation, channel):
+    import sec_edgar_ingest.download as download
+    def fail_exchange(*args):
+        raise RuntimeError("fixture unexpected transport exception")
+    download._read_http_entity = fail_exchange
+    download._child_exchange(transport, cancellation, channel)
+
+
+def stale_preparation_child(transport, cancellation, channel):
+    import time
+    import requests
+    import sec_edgar_ingest.download as download
+    prepare = requests.Session.prepare_request
+    def delayed_prepare(session, request):
+        prepared = prepare(session, request)
+        time.sleep(max(0, transport.start_before_mono-time.monotonic()+0.01))
+        return prepared
+    requests.Session.prepare_request = delayed_prepare
+    download._child_exchange(transport, cancellation, channel)
+
+
+def delayed_adapter_child(transport, cancellation, channel):
+    import time
+    import requests
+    import sec_edgar_ingest.download as download
+    send = requests.adapters.HTTPAdapter.send
+    def delayed_send(adapter, request, **kwargs):
+        download._trace_transport(transport, "adapter-delay-begin")
+        time.sleep(0.55)
+        download._trace_transport(transport, "adapter-delay-end")
+        return send(adapter, request, **kwargs)
+    requests.adapters.HTTPAdapter.send = delayed_send
+    download._child_exchange(transport, cancellation, channel)

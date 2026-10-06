@@ -472,9 +472,15 @@ class Turn:
                 raise OwnershipLost(self.loss_reason)
             self._drained, self._completed = drained, True
             try:
-                self._refresh()
+                bounds = self._refresh()
                 if not drained:
                     raise OwnershipLost("sender drain was not positively confirmed")
+                # DNS/TLS/connect may delay wire activity beyond reservation; positive drain bounds it above.
+                interval = timedelta(microseconds=math.ceil(1_000_000/self.coordinator.settings.sec.requests_per_second))
+                self._value["not_before"] = max(utc_value(self._value["not_before"]), bounds.upper+interval).isoformat()
+                self._write()
+                self.coordinator._trace("drain-pacing", owner=self.handle.owner_id, epoch=self.epoch,
+                                        not_before=self._value["not_before"])
             except Exception as error:
                 self._lose(str(error))
                 raise OwnershipLost(str(error)) from error

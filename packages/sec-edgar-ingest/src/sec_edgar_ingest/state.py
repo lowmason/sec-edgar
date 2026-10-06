@@ -4,6 +4,7 @@ from __future__ import annotations
 import hashlib
 from datetime import datetime, timezone
 
+from .config import HTTP_ATTEMPT_LIMIT
 from .models import Binding, BodyReceipt, CommandResult, Error, Permit, RunContext, Snapshot, Source, Versioned, canonical_json, require_number, require_text, require_utc
 from .storage.contracts import AlreadyExists, CAS_ATTEMPTS, Conflict, StateStore
 
@@ -176,16 +177,110 @@ class AcquisitionState:
                 value["acquisition_status"] = "failed"
         self._update_source(source, change)
 
-    def request_attempt(self, context: RunContext, receipt: BodyReceipt, permit: Permit, ordinal: int) -> None:
+    def request_history(self, context: RunContext, url: str) -> tuple[Versioned, ...]:
+        rows = tuple(self.store.scan("TransportAttempt", {"attempt_key": attempt_key(context), "url": url}))
+        for row in rows:
+            if row.to_mapping()["value"]["context"] != context.to_mapping():
+                raise Conflict("request history has conflicting command provenance")
+        return tuple(sorted(rows, key=lambda row: row.value["ordinal"]))
+
+    def begin_request(self, context: RunContext, url: str, source_id: str | None, request_id: str, ordinal: int) -> None:
+        require_text(url, "request URL")
+        require_text(request_id, "request_id")
         require_number(ordinal, "request ordinal", positive=True, integer=True)
-        if ordinal > 5:
+        if ordinal > HTTP_ATTEMPT_LIMIT:
             raise ValueError("request ordinal exceeds five total attempts")
-        next_allowed_at = getattr(permit, "next_allowed_at", None)
-        if next_allowed_at is not None:
-            require_utc(next_allowed_at, "next_allowed_at")
-        value = {"attempt_key": attempt_key(context), "context": context.to_mapping(), "request_id": permit.request_id,
-                 "ordinal": ordinal, "url": receipt.url, "status": receipt.status, "byte_count": receipt.byte_count,
-                 "ownership_epoch": permit.epoch, "next_allowed_at": next_allowed_at.isoformat() if next_allowed_at is not None else None,
-                 "receipt": receipt.to_mapping(), "permit": permit.to_mapping()}
-        key = hashlib.sha256(canonical_json([attempt_key(context), permit.request_id, ordinal])).hexdigest()
-        self._insert_immutable("TransportAttempt", key, value)
+        self.begin_attempt(context)
+        rows = self.request_history(context, url)
+        if [row.value["ordinal"] for row in rows] != list(range(1, ordinal)):
+            raise Conflict("request ordinal must follow every accounted durable attempt")
+        prior = {}
+        for row in self.store.scan("TransportAttempt", {"url": url}):
+            old = row.value["context"]
+            budget = old.get("effective_config", {}).get("http", {}).get("max_attempts", HTTP_ATTEMPT_LIMIT)
+            exhausted = row.value["outcome"] == "exhausted" or row.value["ordinal"] >= budget
+            if exhausted and old["run_id"] == context.run_id and row.value["attempt_key"] != attempt_key(context):
+                prior[row.value["attempt_key"]] = {name: old[name] for name in ("run_id", "execution_id", "command", "attempt_id")}
+        value = {"attempt_key": attempt_key(context), "context": context.to_mapping(), "request_id": request_id,
+                 "ordinal": ordinal, "url": url, "source_id": source_id, "begun_at": self._now().isoformat(),
+                 "ended_at": None, "outcome": "uncertain", "receipt": None, "permit": None,
+                 "status": None, "byte_count": None, "ownership_epoch": None, "next_allowed_at": None,
+                 "permit_next_allowed_at": None, "error": None, "retry": {},
+                 "prior_exhaustion": [prior[key] for key in sorted(prior)]}
+        key = _request_key(context, url, ordinal)
+        try:
+            self.store.insert("TransportAttempt", key, value)
+        except AlreadyExists as error:
+            raise Conflict("request ordinal was already consumed before dispatch") from error
+
+    def request_attempt(self, context: RunContext, receipt: BodyReceipt, permit: Permit, ordinal: int, *,
+                        outcome: str = "received", error: Error | None = None,
+                        retry: dict[str, object] | None = None, next_allowed_at: datetime | None = None) -> None:
+        require_number(ordinal, "request ordinal", positive=True, integer=True)
+        if ordinal > HTTP_ATTEMPT_LIMIT:
+            raise ValueError("request ordinal exceeds five total attempts")
+        require_text(outcome, "request outcome")
+        permit_next = permit.next_allowed_at
+        next_allowed = next_allowed_at if next_allowed_at is not None else permit_next
+        if next_allowed is not None:
+            require_utc(next_allowed, "next_allowed_at")
+        key = _request_key(context, receipt.url, ordinal)
+        for _ in range(CAS_ATTEMPTS):
+            row = self.store.get("TransportAttempt", key)
+            if row is not None:
+                value = row.to_mapping()["value"]
+                if value["context"] != context.to_mapping() or value["request_id"] != permit.request_id:
+                    raise Conflict("receipt differs from the request's durable reservation")
+            else:
+                # Preserve Task 3's direct, immutable receipt audit API for existing callers.
+                value = {"attempt_key": attempt_key(context), "context": context.to_mapping(),
+                         "request_id": permit.request_id, "ordinal": ordinal, "url": receipt.url,
+                         "source_id": None, "begun_at": receipt.received_at.isoformat(), "ended_at": None,
+                         "receipt": None, "prior_exhaustion": []}
+            final = {**value, "status": receipt.status, "byte_count": receipt.byte_count,
+                     "ownership_epoch": permit.epoch, "next_allowed_at": next_allowed.isoformat() if next_allowed is not None else None,
+                     "permit_next_allowed_at": permit_next.isoformat() if permit_next is not None else None,
+                     "receipt": receipt.to_mapping(), "permit": permit.to_mapping(), "outcome": outcome,
+                     "error": (error or receipt.error).to_mapping() if error or receipt.error else None,
+                     "retry": dict(retry or {}), "ended_at": value.get("ended_at") or self._now().isoformat()}
+            if value["receipt"] is not None:
+                if value != final:
+                    raise Conflict("finished request receipt and outcome cannot be replaced")
+                return
+            try:
+                if row is None:
+                    self.store.insert("TransportAttempt", key, final)
+                else:
+                    self.store.replace("TransportAttempt", key, final, row.version)
+                return
+            except (AlreadyExists, Conflict):
+                continue
+        raise Conflict("request finish exhausted conditional races")
+
+    def halt_run(self, context: RunContext, error: Error) -> None:
+        provenance = _run_provenance(context)
+        value = {"provenance": provenance, "context": context.to_mapping(), "error": error.to_mapping(),
+                 "halted_at": self._now().isoformat()}
+        key = hashlib.sha256(canonical_json(context.run_id)).hexdigest()
+        try:
+            self.store.insert("RunHalt", key, value)
+        except AlreadyExists:
+            self.run_halt(context)
+
+    def run_halt(self, context: RunContext) -> Error | None:
+        key = hashlib.sha256(canonical_json(context.run_id)).hexdigest()
+        row = self.store.get("RunHalt", key)
+        if row is None:
+            return None
+        value = row.to_mapping()["value"]
+        if value["provenance"] != _run_provenance(context):
+            raise Conflict("run halt has conflicting immutable run provenance")
+        return Error.from_mapping(value["error"])
+
+
+def _request_key(context: RunContext, url: str, ordinal: int) -> str:
+    return hashlib.sha256(canonical_json([attempt_key(context), url, ordinal])).hexdigest()
+
+
+def _run_provenance(context: RunContext) -> dict[str, str]:
+    return {name: getattr(context, name) for name in ("run_id", "image_digest", "parser_version", "schema_version", "config_sha256")}
