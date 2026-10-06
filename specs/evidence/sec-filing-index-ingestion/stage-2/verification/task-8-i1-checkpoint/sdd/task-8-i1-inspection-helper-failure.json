@@ -1,0 +1,11 @@
+{
+  "correction": "Read the actual manifest as a list; no driver or production change",
+  "cwd": "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar",
+  "exit_code": 1,
+  "historical_execution_time": "not separately recorded",
+  "kind": "Read-only inline schema-inspection helper failure before payload verification; no acquisition, provider or state mutation",
+  "recorded_at": "2026-10-06T23:14:12.261405+00:00",
+  "shell_command": "python3 - <<'PY'\nfrom pathlib import Path\nimport json\nv=Path('specs/evidence/sec-filing-index-ingestion/stage-2/verification');b=v/'sec-edgar-stage-2-k8g11etz';s=Path('.sdd/2-sec-filing-index-ingestion-stage-2-spec')\nfor name in ['sha256-manifest.json','retention-map.json']:\n d=json.loads((b/name).read_text());print(name,'keys',list(d),'first_file', d.get('files',[None])[0])\nf=json.loads((b/'final-state-records.json').read_text());print('final_keys',list(f));print('table_counts',{k:len(rows) for k,rows in f.items()});print('attempt',next(iter(f['Attempt'].values())) if isinstance(f['Attempt'],dict) else f['Attempt'][0])\nprint('result_files',[str(p.relative_to(b)) for p in b.rglob('*') if p.is_file() and '/results/' in str(p)])\nfor name in ['quarterly-config.json','proposed-daily-config.json']:\n d=json.loads((b/name).read_text());print(name,d['backfill'],d['fixture'])\nfor name in ['controller-task8-i1-inspection.json','controller-task8-i1-inspection-first-failure.json','task-8-daily-endpoint-owner-answer.json']:\n print(name);print((s/name).read_text())\nprint('dist', [(str(p),p.stat().st_size) for p in Path('packages/sec-edgar-ingest/dist').glob('*')])\nprint('installed_artifacts',[str(p.relative_to(v/'sec-edgar-wheel-1k5klfr3')) for p in (v/'sec-edgar-wheel-1k5klfr3').rglob('*') if p.name.endswith(('.whl','.tar.gz'))])\nPY",
+  "stderr": "Traceback (most recent call last):\n  File \"<stdin>\", line 5, in <module>\nAttributeError: 'list' object has no attribute 'get'\n",
+  "stdout": ""
+}
