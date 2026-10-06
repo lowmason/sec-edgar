@@ -940,7 +940,7 @@ class DiscoveryHarness:
 
     @staticmethod
     def workset_path(workset):
-        return f'worksets/source/{workset.workset_id}.json'
+        return f'worksets/sec/source/sha256={workset.workset_id}/workset.json'
 
     def run(self, mode: str, today: date, discovery_id: str, *, refresh: bool = False) -> "SourceWorkset":
         from dataclasses import replace

@@ -222,7 +222,22 @@ def _persist_receipt(objects: ObjectStore, receipt: BodyReceipt, context: RunCon
             'receipt_path': receipt_path, 'receipt_sha256': metadata_hash, 'receipt_byte_count': len(metadata)}
 
 
-def _reopen_listing(objects: ObjectStore, value: dict, unit: dict):
+def _verify_receipt_context(value: object, frozen_context: RunContext) -> None:
+    try:
+        transport_context = RunContext.from_mapping(value)
+        settings = Settings.from_mapping(transport_context.to_mapping()['effective_config'])
+        if transport_context.pinned_on is None:
+            raise ValueError('receipt transport context requires its actual pinning date')
+        pin_context(settings, transport_context, transport_context.pinned_on)
+    except ValueError as error:
+        raise Conflict('cached listing receipt has invalid transport context') from error
+    provenance_fields = ('run_id', 'command', 'config_sha256', 'image_digest', 'parser_version', 'schema_version')
+    if (any(getattr(transport_context, field) != getattr(frozen_context, field) for field in provenance_fields)
+            or transport_context.effective_config != frozen_context.effective_config):
+        raise Conflict('cached listing receipt has conflicting frozen transport provenance')
+
+
+def _reopen_listing(objects: ObjectStore, value: dict, unit: dict, frozen_context: RunContext):
     outcome = DirectoryOutcome.from_mapping(value['outcome'])
     if outcome.url != unit['url'] or outcome.period != unit['period']:
         raise Conflict('cached directory progress differs from the requested directory metadata')
@@ -230,6 +245,7 @@ def _reopen_listing(objects: ObjectStore, value: dict, unit: dict):
     objects.verify(evidence['body_path'], evidence['sha256'], evidence['byte_count'])
     objects.verify(evidence['receipt_path'], evidence['receipt_sha256'], evidence['receipt_byte_count'])
     metadata = parse_json(objects.read(evidence['receipt_path']))
+    _verify_receipt_context(metadata.get('context'), frozen_context)
     receipt = BodyReceipt.from_mapping(metadata['receipt'])
     if (not receipt.complete or receipt.status != HTTP_OK or receipt.error is not None or receipt.url != unit['url']
             or receipt.sha256 != outcome.listing_sha256 or receipt.byte_count != evidence['byte_count']
@@ -282,7 +298,7 @@ def discover(settings: Settings, context: RunContext, mode: Literal['quarterly',
         cached = state.directory_progress(discovery_id, url)
         if cached is not None and cached.value['outcome']['outcome'] != 'discovery_failed':
             saved = cached.to_mapping()['value']
-            outcome, selected, entries, discovered_at = _reopen_listing(objects, saved, unit)
+            outcome, selected, entries, discovered_at = _reopen_listing(objects, saved, unit, pinned_context)
             state.record_directory(discovery_id, outcome, selected, evidence=saved['evidence'],
                                    selection=saved['selection'], expected_gap=saved['observed_gap_token'])
         else:
@@ -332,7 +348,7 @@ def discover(settings: Settings, context: RunContext, mode: Literal['quarterly',
     directories = tuple(outcomes.values())
     workset = make_source_workset(pinned_context, frozen['end'], discovery_id, tuple(members.values()), directories,
                                   date.fromisoformat(frozen['overlap_from']), acquisition_mode=frozen['acquisition_mode'])
-    objects.put_once(f'worksets/source/{workset.workset_id}.json', encode_workset(workset))
+    objects.put_once(f'worksets/sec/source/sha256={workset.workset_id}/workset.json', encode_workset(workset))
     state.finish_discovery(discovery_id, workset.workset_id, request_context)
     if frozen['mode'] == 'daily':
         candidate = advance_daily_boundary(state.daily_boundary(), date.fromisoformat(frozen['today']), directories)

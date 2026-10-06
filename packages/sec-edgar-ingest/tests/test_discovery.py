@@ -272,6 +272,21 @@ class DiscoveryTests(unittest.TestCase):
         self.assertEqual(result.acquisition_mode, 'refresh')
         self.assertEqual(decode_source_workset(h.objects.read(h.workset_path(result))), result)
 
+    def test_source_workset_uses_approved_path_with_independent_digest_identity(self):
+        from sec_edgar_ingest.models import canonical_json
+        from sec_edgar_ingest.worksets import decode_source_workset, encode_workset
+        h = self.harness({'2026Q4': [listing_response('2026Q4', ['master.20261001.idx'])]})
+        result = h.run('daily', date(2026, 10, 6), 'approved-source-path')
+        path = f'worksets/sec/source/sha256={result.workset_id}/workset.json'
+        self.assertTrue((h.objects.directory/path).is_file(), path)
+        body = h.objects.read(path)
+        payload = json.loads(body)
+        identity = payload.pop('workset_id')
+        self.assertEqual(hashlib.sha256(canonical_json(payload)).hexdigest(), identity)
+        self.assertEqual(identity, result.workset_id)
+        self.assertEqual(decode_source_workset(body), result)
+        self.assertEqual(body, encode_workset(result))
+
     def test_historical_closed_quarter_does_not_register_root_bridge_as_coverage(self):
         from support import fixture_settings
         h = self.harness({'full-index': [listing_response('full-index', ['2015/', 'master.zip'])],
@@ -464,6 +479,59 @@ class DiscoveryTests(unittest.TestCase):
         h.store.replace('DirectoryProgress', key, value, row.version)
         with self.assertRaises(Conflict):
             h.run('daily', date(2026, 10, 6), 'metadata-integrity')
+
+    def test_cached_receipt_rejects_conflicting_or_invalid_transport_context(self):
+        from sec_edgar_ingest.models import canonical_json
+        from sec_edgar_ingest.storage.contracts import Conflict
+        cases = (
+            ('run_id', 'another-run'), ('command', 'collect'),
+            ('config_sha256', 'b'*64), ('image_digest', 'sha256:'+'b'*64),
+            ('parser_version', 'another-parser'), ('schema_version', 'sec-index-v2'),
+            ('effective_config', {}), ('pinned_on', None),
+            ('pinned_on', '2014-01-01'), (None, None),
+        )
+        for field, replacement in cases:
+            with self.subTest(field=field, replacement=replacement):
+                h = self.harness({})
+                discovery_id = 'receipt-provenance'
+                first = h.run('daily', date(2026, 10, 6), discovery_id)
+                url = h.url('daily-index')
+                row = h.state.directory_progress(discovery_id, url)
+                value = row.to_mapping()['value']
+                metadata = json.loads(h.objects.read(value['evidence']['receipt_path']))
+                if field is None:
+                    metadata['context'] = replacement
+                else:
+                    metadata['context'][field] = replacement
+                changed = canonical_json(metadata)
+                digest = hashlib.sha256(changed).hexdigest()
+                path = f'worksets/discovery/listings/receipts/sha256={digest}.json'
+                h.objects.put_once(path, changed)
+                value['evidence'].update(receipt_path=path, receipt_sha256=digest, receipt_byte_count=len(changed))
+                key = hashlib.sha256(canonical_json([discovery_id, url])).hexdigest()
+                h.store.replace('DirectoryProgress', key, value, row.version)
+                before = len(h.attempted_urls)
+                with self.assertRaisesRegex(Conflict, 'receipt.*context|receipt.*provenance'):
+                    h.run('daily', date(2026, 10, 7), discovery_id)
+                self.assertEqual(len(h.attempted_urls), before)
+                self.assertEqual(h.state.discovery_session(discovery_id).value['workset_id'], first.workset_id)
+                self.assertEqual(h.boundary, date(2026, 10, 6))
+
+    def test_cached_receipt_accepts_actual_resumed_execution_and_attempt_context(self):
+        h = self.harness({'2026Q4': [failed_response(503)]})
+        first = h.run('daily', date(2026, 10, 6), 'transport-resume')
+        h.responses['2026Q4'] = [listing_response('2026Q4', ['master.20261001.idx'])]
+        completed = h.run('daily', date(2026, 10, 7), 'transport-resume')
+        value = h.state.directory_progress('transport-resume', h.url('2026Q4')).to_mapping()['value']
+        transport = json.loads(h.objects.read(value['evidence']['receipt_path']))['context']
+        self.assertNotEqual(transport['execution_id'], first.context.execution_id)
+        self.assertNotEqual(transport['attempt_id'], first.context.attempt_id)
+        self.assertEqual(transport['pinned_on'], '2026-10-07')
+        before = len(h.attempted_urls)
+        reopened = h.run('daily', date(2026, 10, 8), 'transport-resume')
+        self.assertEqual(reopened, completed)
+        self.assertEqual(completed.context, first.context)
+        self.assertEqual(len(h.attempted_urls), before)
 
     def test_retained_root_year_and_quarter_select_exact_actual_zip_child(self):
         from support import fixture_settings
