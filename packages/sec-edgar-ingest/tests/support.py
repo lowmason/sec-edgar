@@ -539,14 +539,14 @@ def body_receipt(root, body, *, status=200, headers=None, complete=True, error=N
 
 
 class DownloadHarness:
-    def __init__(self, responses, *, settings=None, context=None, root=None):
+    def __init__(self, responses, *, settings=None, context=None, root=None, clock=None):
         import tempfile
         from sec_edgar_ingest.coordination import Coordinator
         from sec_edgar_ingest.download import RequestClient, ResponseSpec, ScriptedSender
         from sec_edgar_ingest.state import AcquisitionState
         self.directory = tempfile.TemporaryDirectory() if root is None else None
         self.root = Path(self.directory.name) if root is None else Path(root)
-        self.clock = fixture_clock()
+        self.clock = clock or fixture_clock()
         self.settings = settings or fixture_settings()
         self.context = context or fixture_context()
         self.store, self.objects, self.leases = store_bundle(self.root, clock=self.clock)
@@ -584,6 +584,8 @@ class DownloadHarness:
             if value["receipt"] is not None and value["outcome"] != "received":
                 from sec_edgar_ingest.models import BodyReceipt
                 receipt = BodyReceipt.from_mapping(value["receipt"])
+                if receipt.temporary_path.parent != Path(self.sender.directory.name):
+                    continue  # A shared ledger includes sibling harness spools with separate cleanup owners.
                 code = value["error"]["code"] if value.get("error") else value["outcome"]
                 retain_download_evidence("ledger-"+value["request_id"], receipt, code)
         self.store.close()

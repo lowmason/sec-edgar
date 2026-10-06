@@ -9,7 +9,7 @@ import uuid
 from contextlib import contextmanager
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
-from typing import Protocol
+from typing import Callable, Protocol
 
 from .config import Settings
 from .models import BodyReceipt, Error, Permit, QueueTicket, RunContext, Versioned, require_number, require_text, require_utc
@@ -80,6 +80,13 @@ class ManualClock(Clock):
         return unsubscribe
 
 
+class PolicyBlocked(RuntimeError):
+    """A confirmed durable sentinel latch forbids any further request in this issuer namespace."""
+    def __init__(self, reason: Error):
+        self.reason = reason
+        super().__init__(reason.message)
+
+
 class Sender(Protocol):
     """A returned receipt proves positive transport drain, including partial failure receipts."""
     def send(self, url: str, context: RunContext, permit: Permit, *, cancellation) -> BodyReceipt: ...
@@ -117,7 +124,7 @@ def _journal(value, bounds: TimeBounds) -> dict[str, object]:
         return {"journal_version": JOURNAL_VERSION, "owner_id": "unowned", "epoch": 0,
                 "ownership_until": bounds.upper.isoformat(), "unsafe_until": bounds.upper.isoformat(),
                 "last_start": None, "not_before": bounds.upper.isoformat(), "request_id": None,
-                "clean_release": True}
+                "clean_release": True, "policy_block": None}
     result = dict(value)
     if result.get("journal_version") != JOURNAL_VERSION:
         raise Conflict("unknown sentinel journal version")
@@ -131,6 +138,9 @@ def _journal(value, bounds: TimeBounds) -> dict[str, object]:
         require_text(result["request_id"], "journal request")
     if type(result.get("clean_release")) is not bool:
         raise Conflict("journal clean_release must be boolean")
+    result.setdefault("policy_block", None)
+    if result["policy_block"] is not None:
+        Error.from_mapping(result["policy_block"])
     return result
 
 
@@ -254,7 +264,13 @@ class Coordinator:
             with self.turn("cooldown-"+uuid.uuid4().hex, "daily", deadline) as turn:
                 turn._defer(instant)
 
-    def exchange(self, context: RunContext, url: str, sender: Sender) -> BodyReceipt:
+    def block_requests(self, reason: Error) -> None:
+        if self._active is None:
+            raise OwnershipLost("a shared policy block requires the current issuer turn")
+        self._active._block(reason)
+
+    def exchange(self, context: RunContext, url: str, sender: Sender, *,
+                 on_response: Callable[[BodyReceipt, Permit], None] | None = None) -> BodyReceipt:
         owner = context.execution_id + ":" + context.attempt_id + ":" + uuid.uuid4().hex
         with self.turn(owner, context.priority, context.deadline) as turn:
             permit = turn.reserve(uuid.uuid4().hex)
@@ -265,6 +281,8 @@ class Coordinator:
                 raise ValueError("Sender must return a drained BodyReceipt")
             self._trace("request-end", owner=owner, epoch=permit.epoch, request_id=permit.request_id)
             try:
+                if on_response is not None:
+                    turn._response_policy(receipt, permit, on_response)
                 turn.complete(permit, drained=True)
             except OwnershipLost:
                 pass
@@ -411,6 +429,8 @@ class Turn:
                 while True:
                     self._tick()
                     bounds = self._refresh()
+                    if self._value["policy_block"] is not None:
+                        raise PolicyBlocked(Error.from_mapping(self._value["policy_block"]))
                     target = self.next_allowed_at
                     delay = (target-bounds.lower).total_seconds()
                     if delay <= 0:
@@ -445,6 +465,9 @@ class Turn:
                                        next_allowed_at=permit.next_allowed_at.isoformat(),
                                        start_before_mono=permit.start_before_mono)
                 return permit
+            except PolicyBlocked as error:
+                self._lose(str(error))
+                raise
             except Exception as error:
                 self._lose(str(error))
                 raise OwnershipLost(str(error)) from error
@@ -462,6 +485,33 @@ class Turn:
             except Exception as error:
                 self._lose(str(error))
                 raise OwnershipLost(str(error)) from error
+
+    def _response_policy(self, receipt: BodyReceipt, permit: Permit, callback) -> None:
+        with self._lock:
+            try:
+                self._tick()
+                self._refresh()
+                if permit != self._permit or self._completed:
+                    raise OwnershipLost("response policy does not match the held request turn")
+                callback(receipt, permit)
+                self._require_live()
+            except Exception as error:
+                self._lose("response policy was not confirmed: "+str(error))
+                raise OwnershipLost(self.loss_reason) from error
+
+    def _block(self, reason: Error) -> None:
+        with self._lock:
+            try:
+                self._tick()
+                self._refresh()
+                if self._value["policy_block"] is None:
+                    self._value["policy_block"] = reason.to_mapping()
+                    self._write()
+                self.coordinator._trace("policy-block", owner=self.handle.owner_id, epoch=self.epoch,
+                                        reason=self._value["policy_block"])
+            except Exception as error:
+                self._lose("shared policy block was not confirmed: "+str(error))
+                raise OwnershipLost(self.loss_reason) from error
 
     def complete(self, permit: Permit, drained: bool) -> None:
         if type(drained) is not bool:

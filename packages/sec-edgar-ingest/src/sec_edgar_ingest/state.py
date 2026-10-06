@@ -222,6 +222,8 @@ class AcquisitionState:
         require_text(outcome, "request outcome")
         permit_next = permit.next_allowed_at
         next_allowed = next_allowed_at if next_allowed_at is not None else permit_next
+        if retry and retry.get("policy_blocked"):
+            next_allowed = None
         if next_allowed is not None:
             require_utc(next_allowed, "next_allowed_at")
         key = _request_key(context, receipt.url, ordinal)

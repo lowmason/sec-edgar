@@ -13,14 +13,14 @@ import tempfile
 import time
 import uuid
 from collections.abc import Sequence
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from datetime import datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
 from pathlib import Path
 from urllib.parse import urlsplit
 
 from .config import Settings
-from .coordination import Clock, Coordinator, Sender
+from .coordination import Clock, Coordinator, PolicyBlocked, Sender
 from .models import BodyReceipt, Error, Permit, RunContext, Source, require_number, require_utc
 from .state import AcquisitionState
 from .storage.contracts import ClockUncertain, OwnershipLost, TimeBounds
@@ -119,14 +119,33 @@ class ScriptedSender:
         self.directory.cleanup()
 
 
+@dataclass
+class _ResponsePolicy:
+    outcome: str | None = None
+    error: Error | None = None
+    retry: dict = field(default_factory=dict)
+    next_allowed: datetime | None = None
+
+
+class _UnrepresentableRetry(ValueError):
+    def __init__(self, metadata):
+        self.metadata = metadata
+        super().__init__("valid server Retry-After cannot be represented as a finite UTC scheduling instant")
+
+
 class _AuditedSender:
-    def __init__(self, sender, state, source, ordinal):
-        self.sender, self.state, self.source, self.ordinal = sender, state, source, ordinal
+    def __init__(self, sender, state, source, ordinal, clock):
+        self.sender, self.state, self.source, self.ordinal, self.clock = sender, state, source, ordinal, clock
         self.permit = self.receipt = None
         self.begun = False
 
     def send(self, url, context, permit, *, cancellation):
         self.permit = permit
+        halt = self.state.run_halt(context)
+        if halt is not None:
+            error = Error("run_halted", "serialized admission refused a durably halted run", False,
+                          self.source.source_id if self.source else None, {"cause": halt.to_mapping(), "outcome": "halted"})
+            raise FetchError(error, _new_receipt(url, b"", 0, {}, self.clock.now(), complete=False))
         self.state.begin_request(context, url, self.source.source_id if self.source else None, permit.request_id, self.ordinal)
         self.begun = True
         self.receipt = self.sender.send(url, context, permit, cancellation=cancellation)
@@ -191,15 +210,50 @@ class RequestClient:
             raise ClockUncertain("retry requires server TimeBounds; host UTC is not a substitute")
         value = header_value(receipt.headers, "Retry-After")
         server_delay = retry_after(value, bounds.lower)
+        metadata = {"retry_after_value": value, "retry_after_valid": value is None or server_delay is not None,
+                    "server_delay_seconds": server_delay, "server_lower": bounds.lower.isoformat(),
+                    "server_upper": bounds.upper.isoformat(), "observed_mono": bounds.monotonic_at}
+        numeric = value is not None and value.strip().isascii() and value.strip().isdigit()
+        if numeric and server_delay is None:
+            raise _UnrepresentableRetry({**metadata, "retry_after_valid": True, "policy_blocked": True,
+                                         "not_before": None, "ready_mono": None})
         delay = retry_delay(ordinal, server_delay, self.settings, self.jitter())
-        not_before = bounds.upper+timedelta(seconds=delay)
+        metadata["delay_seconds"] = delay
+        try:
+            not_before = bounds.upper+timedelta(seconds=delay)
+        except OverflowError as error:
+            raise _UnrepresentableRetry({**metadata, "policy_blocked": True, "not_before": None, "ready_mono": None}) from error
         if permit.next_allowed_at is not None:
             not_before = max(not_before, permit.next_allowed_at)
-        return {"retry_after_value": value, "retry_after_valid": value is None or server_delay is not None,
-                "server_delay_seconds": server_delay, "delay_seconds": delay,
-                "not_before": not_before.isoformat(), "server_lower": bounds.lower.isoformat(),
-                "server_upper": bounds.upper.isoformat(), "observed_mono": bounds.monotonic_at,
+        return {**metadata, "not_before": not_before.isoformat(),
                 "ready_mono": bounds.monotonic_at+(not_before-bounds.lower).total_seconds()}, not_before
+
+    def _publish_response_policy(self, context, source, ordinal, receipt, permit, policy):
+        # Only the small transport/access policy is inside ownership; source envelope scans happen afterward.
+        outcome, error = self._outcome(receipt, None)
+        if outcome == "halted":
+            error = replace(error, source_id=source.source_id if source else None)
+            self.state.halt_run(context, error)
+            policy.outcome, policy.error = outcome, error
+        elif outcome == "retry":
+            try:
+                policy.retry, policy.next_allowed = self._retry_metadata(receipt, permit, ordinal)
+                self.coordinator.defer_until(policy.next_allowed)
+                policy.retry["cooldown_confirmed"] = True
+            except _UnrepresentableRetry as unsupported:
+                policy.retry = unsupported.metadata
+                reason = self._error("retry_delay_unrepresentable", str(unsupported), source,
+                                     details={"outcome": "deferred", "url": receipt.url, "request_id": permit.request_id,
+                                              "ordinal": ordinal, "retry": policy.retry})
+                self.coordinator.block_requests(reason)
+                policy.outcome, policy.error = "deferred", reason
+            except (ClockUncertain, OwnershipLost, ValueError) as exception:
+                policy.outcome = "failed"
+                policy.retry["cooldown_confirmed"] = False
+                policy.next_allowed = None
+                policy.error = self._error("clock_uncertain" if isinstance(exception, ClockUncertain) else "cooldown_unconfirmed",
+                                          "retry cooldown could not be confirmed: "+str(exception), source)
+                raise
 
     def fetch(self, url: str, context: RunContext, source: Source | None = None) -> BodyReceipt:
         canonical = canonical_source_url(url, source.kind) if source else canonical_listing_url(url)
@@ -216,9 +270,17 @@ class RequestClient:
         if ordinal > self.settings.http.max_attempts:
             raise FetchError(self._error("attempts_exhausted", "all accounted attempts for this command and URL are exhausted", source, details={"outcome": "exhausted"}), self._previous_receipt(rows, url))
         while ordinal <= self.settings.http.max_attempts:
-            audited = _AuditedSender(self.sender, self.state, source, ordinal)
+            audited = _AuditedSender(self.sender, self.state, source, ordinal, self.clock)
+            policy = _ResponsePolicy()
             try:
-                receipt = self.coordinator.exchange(context, url, audited)
+                receipt = self.coordinator.exchange(context, url, audited,
+                    on_response=lambda received, permit: self._publish_response_policy(context, source, ordinal, received, permit, policy))
+            except FetchError:
+                raise
+            except PolicyBlocked as blocked:
+                error = self._error("policy_blocked", "durable owner policy forbids another request", source,
+                                    details={"outcome": "deferred", "cause": blocked.reason.to_mapping()})
+                raise FetchError(error, self._empty(url)) from blocked
             except Exception as exception:
                 receipt = getattr(exception, "receipt", None) or audited.receipt or self._empty(url)
                 error = self._error("ownership_lost" if isinstance(exception, OwnershipLost) else "sender_unverified",
@@ -229,26 +291,20 @@ class RequestClient:
                     self.state.record_failure(source, error)
                 raise FetchError(error, receipt) from exception
             outcome, error = self._outcome(receipt, source)
-            retry, next_allowed = {}, audited.permit.next_allowed_at
-            if outcome == "halted":
-                self.state.halt_run(context, error)
+            retry, next_allowed = policy.retry, policy.next_allowed or audited.permit.next_allowed_at
+            if policy.outcome is not None:
+                outcome, error = policy.outcome, policy.error
+            elif receipt.error is not None and receipt.error.code == "ownership_lost":
+                outcome, error = "failed", receipt.error
             if outcome == "retry":
-                try:
-                    retry, next_allowed = self._retry_metadata(receipt, audited.permit, ordinal)
-                    self.coordinator.defer_until(next_allowed)
-                except (ClockUncertain, OwnershipLost, ValueError) as exception:
-                    outcome = "failed"
-                    error = self._error("clock_uncertain" if isinstance(exception, ClockUncertain) else "cooldown_unconfirmed",
-                                        "retry cooldown could not be confirmed: "+str(exception), source)
-                else:
-                    if ordinal == self.settings.http.max_attempts:
-                        outcome = "exhausted"
-                        error = self._error("attempts_exhausted", "fifth or configured final request failed", source,
-                                            details={"cause": error.to_mapping()})
-                    elif retry["ready_mono"] >= command_deadline_mono:
-                        outcome = "deferred"
-                        error = self._error("deferred", "retry delay reaches or exceeds this command's deadline", source, retryable=True,
-                                            details={"next_allowed_at": next_allowed.isoformat()})
+                if ordinal == self.settings.http.max_attempts:
+                    outcome = "exhausted"
+                    error = self._error("attempts_exhausted", "fifth or configured final request failed", source,
+                                        details={"cause": error.to_mapping()})
+                elif retry["ready_mono"] >= command_deadline_mono:
+                    outcome = "deferred"
+                    error = self._error("deferred", "retry delay reaches or exceeds this command's deadline", source, retryable=True,
+                                        details={"next_allowed_at": next_allowed.isoformat()})
             if error is not None:
                 error = replace(error, source_id=source.source_id if source else None,
                                 details={**error.to_mapping()["details"], "outcome": outcome,

@@ -255,6 +255,195 @@ class DownloadTests(unittest.TestCase):
         self.assertEqual(h.attempt_count, 1)
 
 
+class PolicyHandoffTests(unittest.TestCase):
+    def setUp(self):
+        self.download = importlib.import_module("sec_edgar_ingest.download")
+        self.first = DownloadHarness([])
+        self.addCleanup(self.first.close)
+
+    def successor(self, responses, *, other_run=False):
+        context = replace(self.first.context, execution_id="queued-execution", attempt_id="queued-attempt", priority="daily",
+                          run_id="independent-run" if other_run else self.first.context.run_id)
+        second = DownloadHarness(responses, root=self.first.root, clock=self.first.clock, context=context)
+        self.addCleanup(second.close)
+        return second
+
+    def test_queued_caller_cannot_dispatch_after_another_client_persists_denial(self):
+        import threading
+        first = self.first
+        first.sender.responses = [self.download.ResponseSpec(403, b"original denial", {})]
+        second = self.successor([(200, b"must not dispatch", {})])
+        waiting, resume = threading.Event(), threading.Event()
+        exchange = second.coordinator.exchange
+        outcomes = []
+        def queued_exchange(*args, **kwargs):
+            waiting.set()
+            if not resume.wait(2):
+                raise AssertionError("queued fixture was not resumed")
+            return exchange(*args, **kwargs)
+        second.coordinator.exchange = queued_exchange
+        def queued_fetch():
+            try:
+                second.fetch_response_only()
+                outcomes.append("sent")
+            except self.download.FetchError as error:
+                outcomes.append(error.error.code)
+        thread = threading.Thread(target=queued_fetch)
+        thread.start()
+        try:
+            self.assertTrue(waiting.wait(2), "caller must pass its initial halt check before denial")
+            with self.assertRaises(self.download.FetchError) as denied:
+                first.fetch_response_only()
+            self.assertEqual(denied.exception.error.code, "access_denied")
+            self.assertIsNotNone(second.state.run_halt(second.context))
+            resume.set()
+            thread.join(3)
+            self.assertFalse(thread.is_alive())
+            self.assertEqual(second.starts, [], "serialized admission must recheck a durable run halt before ordinal and transport")
+            self.assertEqual(outcomes, ["run_halted"])
+            self.assertEqual(second.state.request_history(second.context, denied.exception.receipt.url), ())
+        finally:
+            resume.set()
+            thread.join(3)
+
+    def test_retry_after_is_published_before_original_owner_hands_off(self):
+        first = self.first
+        first.sender.responses = [self.download.ResponseSpec(429, b"original cooldown", {"Retry-After": "180"}),
+                                  self.download.ResponseSpec(200, b"listing", {})]
+        second = self.successor([(200, b"other listing", {})])
+        admitted = []
+        def observe(event):
+            first.events.append(event)
+            if event["event"] == "release" and not admitted:
+                admitted.append("next-owner")
+                second.fetch_response_only()
+        first.coordinator.observer = observe
+        first.fetch_response_only()
+        self.assertEqual(len(second.starts), 1)
+        self.assertGreaterEqual(second.starts[0]-first.starts[0], 180,
+                                "already queued next owner must see the server delay at the first release")
+        self.assertEqual(first.maximum_active, 1)
+        row = first.state.request_history(first.context, "https://www.sec.gov/Archives/edgar/full-index/2015/QTR1/index.json")[0]
+        self.assertEqual(row.value["retry"]["server_delay_seconds"], 180)
+
+    def test_unconfirmed_denial_persistence_retains_original_receipt_and_unsafe_guard(self):
+        first = self.first
+        first.sender.responses = [self.download.ResponseSpec(403, b"original denial without policy acknowledgement", {})]
+        def unavailable(*args):
+            raise OSError("fixture run-halt write outcome unknown")
+        first.state.halt_run = unavailable
+        with self.assertRaises(self.download.FetchError) as raised:
+            first.fetch_response_only()
+        self.assertEqual(raised.exception.error.code, "ownership_lost")
+        self.assertEqual(raised.exception.receipt.temporary_path.read_bytes(), b"original denial without policy acknowledgement")
+        self.assertFalse(raised.exception.receipt.complete)
+        self.assertFalse(any(event["event"] == "release" for event in first.events))
+        row, = first.state.request_history(first.context, raised.exception.receipt.url)
+        self.assertEqual(row.value["outcome"], "failed")
+        self.assertEqual(first.attempt_count, 1)
+
+    def test_unconfirmed_cooldown_write_does_not_claim_a_persisted_next_allowed(self):
+        from sec_edgar_ingest.storage.contracts import OwnershipLost
+        first = self.first
+        first.sender.responses = [self.download.ResponseSpec(429, b"original cooldown without acknowledgement", {"Retry-After": "180"})]
+        def unavailable(instant):
+            self.assertIsNotNone(first.coordinator._active)
+            raise OwnershipLost("fixture sentinel policy write outcome unknown")
+        first.coordinator.defer_until = unavailable
+        with self.assertRaises(self.download.FetchError) as raised:
+            first.fetch_response_only()
+        self.assertEqual(raised.exception.error.code, "cooldown_unconfirmed")
+        self.assertEqual(raised.exception.receipt.temporary_path.read_bytes(), b"original cooldown without acknowledgement")
+        self.assertFalse(raised.exception.receipt.complete)
+        self.assertFalse(any(event["event"] == "release" for event in first.events))
+        row, = first.state.request_history(first.context, raised.exception.receipt.url)
+        self.assertIs(row.value["retry"].get("cooldown_confirmed"), False)
+        self.assertEqual(row.value["next_allowed_at"], row.value["permit_next_allowed_at"])
+
+    def test_retry_admission_rechecks_halt_after_sleep_outside_ownership(self):
+        first = self.first
+        first.sender.responses = [self.download.ResponseSpec(429, b"retry", {}), self.download.ResponseSpec(200, b"must not retry", {})]
+        second = self.successor([(403, b"denial during retry sleep", {})])
+        sleep = first.clock.sleep
+        denied = []
+        def while_sleep(seconds):
+            if seconds >= 2 and not denied and first.coordinator._active is None:
+                denied.append(True)
+                with self.assertRaises(self.download.FetchError) as raised:
+                    second.fetch_response_only()
+                self.assertEqual(raised.exception.error.code, "access_denied")
+            sleep(seconds)
+        first.clock.sleep = while_sleep
+        with self.assertRaises(self.download.FetchError) as halted:
+            first.fetch_response_only()
+        self.assertEqual(halted.exception.error.code, "run_halted")
+        self.assertEqual(first.attempt_count, 1)
+        self.assertEqual(len(first.state.request_history(first.context, halted.exception.receipt.url)), 1)
+
+    def test_run_halt_is_visible_at_the_original_response_turn_release(self):
+        first = self.first
+        first.sender.responses = [self.download.ResponseSpec(403, b"denial before release", {})]
+        halt_at_release = []
+        def observe(event):
+            first.events.append(event)
+            if event["event"] == "release":
+                halt_at_release.append(first.state.run_halt(first.context))
+        first.coordinator.observer = observe
+        with self.assertRaises(self.download.FetchError):
+            first.fetch_response_only()
+        self.assertEqual(len(halt_at_release), 1)
+        self.assertEqual(halt_at_release[0].code, "access_denied")
+
+    def test_malformed_durable_policy_latch_fails_before_ordinal_or_dispatch(self):
+        first = self.first
+        with first.coordinator.turn("fixture-malformed-policy", "backfill", first.context.deadline) as turn:
+            row = first.leases.read_journal(turn.handle)
+            value = row.to_mapping()["value"]
+            value["policy_block"] = {"message": "missing required structured Error fields"}
+            first.leases.write_journal(turn.handle, value, row.version)
+        second = self.successor([(200, b"must not send", {})], other_run=True)
+        with self.assertRaises(self.download.FetchError):
+            second.fetch_response_only()
+        self.assertEqual(second.starts, [])
+        self.assertEqual(tuple(second.store.scan("TransportAttempt", {})), ())
+
+    def test_very_large_valid_numeric_delay_also_blocks_without_local_fallback(self):
+        first = self.first
+        header = "9"*500
+        first.sender.responses = [self.download.ResponseSpec(503, b"original nonfloat delay", {"Retry-After": header})]
+        with self.assertRaises(self.download.FetchError) as raised:
+            first.fetch_response_only()
+        self.assertEqual(raised.exception.error.code, "retry_delay_unrepresentable")
+        self.assertEqual(raised.exception.error.details["retry"]["retry_after_value"], header)
+        self.assertTrue(raised.exception.error.details["retry"]["retry_after_valid"])
+        self.assertEqual(first.attempt_count, 1)
+        second = self.successor([(200, b"must not send", {})], other_run=True)
+        with self.assertRaises(self.download.FetchError) as blocked:
+            second.fetch_response_only()
+        self.assertEqual(blocked.exception.error.code, "policy_blocked")
+        self.assertEqual(second.attempt_count, 0)
+
+    def test_calendar_overflow_retains_receipt_and_blocks_all_successor_runs(self):
+        first = self.first
+        header = "1000000000000"
+        first.sender.responses = [self.download.ResponseSpec(429, b"original impossible delay", {"Retry-After": header})]
+        with self.assertRaises(self.download.FetchError) as deferred:
+            first.fetch_response_only()
+        self.assertEqual(deferred.exception.error.code, "retry_delay_unrepresentable")
+        self.assertEqual(deferred.exception.error.details["outcome"], "deferred")
+        self.assertEqual(deferred.exception.receipt.temporary_path.read_bytes(), b"original impossible delay")
+        self.assertEqual(deferred.exception.receipt.headers["Retry-After"], header)
+        row, = first.state.request_history(first.context, deferred.exception.receipt.url)
+        self.assertEqual(row.value["retry"]["retry_after_value"], header)
+        self.assertEqual(row.value["outcome"], "deferred")
+        second = self.successor([(200, b"must not send", {})], other_run=True)
+        with self.assertRaises(self.download.FetchError) as blocked:
+            second.fetch_response_only()
+        self.assertEqual(blocked.exception.error.code, "policy_blocked")
+        self.assertEqual(second.starts, [])
+        self.assertEqual(second.state.request_history(second.context, deferred.exception.receipt.url), ())
+
+
 class BoundedProcessTests(unittest.TestCase):
     def setUp(self):
         self.download = importlib.import_module("sec_edgar_ingest.download")

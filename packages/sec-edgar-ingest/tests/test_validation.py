@@ -57,8 +57,22 @@ class ValidationTests(unittest.TestCase):
 
     def test_all_ten_hash_checked_retained_originals_validate(self):
         evidence = REPO / "specs/evidence/sec-filing-index-ingestion/stage-1"
-        audit = json.loads((REPO / ".sdd/2-sec-filing-index-ingestion-stage-2-spec/retained-fixture-audit.json").read_text())
+        audit = json.loads((Path(__file__).parent / "fixtures/retained-manifest.json").read_text())
+        self.assertEqual(audit["schema_version"], "sec-retained-fixture-manifest-v1")
+        self.assertEqual(len(audit["records"]), 83)
+        provenance = audit["provenance"]
+        self.assertEqual(provenance["finding"]["sha256"], "939a724eccf22147015a59d5940ed57f02cc4e9fe9d942a9cd78ae73c34615ff")
+        self.assertEqual(provenance["accepted_manifest"]["sha256"], "124e96041548daba8216aa495fc69021751555b0f0e4c890ac85e934f512a131")
+        for record in provenance.values():
+            self.assertEqual(hashlib.sha256((REPO / record["path"]).read_bytes()).hexdigest(), record["sha256"])
+        accepted = json.loads((REPO / provenance["accepted_manifest"]["path"]).read_text())
+        accepted_records = {item["path"]: item for item in accepted["records"]}
         expected = {item["path"]: item for item in audit["records"]}
+        for record in audit["records"]:
+            self.assertEqual(record, accepted_records[record["path"]])
+            raw = (REPO / record["path"]).read_bytes()
+            self.assertEqual(len(raw), record["bytes"])
+            self.assertEqual(hashlib.sha256(raw).hexdigest(), record["sha256"])
         matrix_path = evidence / "specimens/matrix.json"
         original = matrix_path.read_bytes()
         self.assertEqual(hashlib.sha256(original).hexdigest(), expected[str(matrix_path.relative_to(REPO))]["sha256"])
