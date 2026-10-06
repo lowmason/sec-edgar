@@ -229,3 +229,19 @@ class ConfigTests(unittest.TestCase):
                 with self.subTest(name=name), self.assertRaises(ValueError):
                     path.write_bytes(malformed)
                     self.config.load_config(path)
+
+    def test_pinning_retains_exact_date_without_changing_run_start(self):
+        original = fixture_context()
+        settings = fixture_settings(fixture={"allow_clock_override": True})
+        context = replace(original, config_sha256=settings.config_sha256)
+        pinning_date = date(2026, 7, 15)
+        pinned, endpoint = self.config.pin_context(settings, context, pinning_date)
+        self.assertEqual(endpoint, "2026Q3")
+        self.assertEqual(pinned.started_at, context.started_at)
+        self.assertEqual(pinned.deadline, context.deadline)
+        self.assertEqual(getattr(pinned, "pinned_on", None), pinning_date,
+                         "the actual labelled fixture pinning date must be retained")
+        self.assertEqual(type(pinned).from_mapping(pinned.to_mapping()), pinned)
+        self.assertEqual(pinned.to_mapping()["pinned_on"], "2026-07-15")
+        with self.assertRaises(FrozenInstanceError):
+            pinned.pinned_on = date(2026, 7, 16)

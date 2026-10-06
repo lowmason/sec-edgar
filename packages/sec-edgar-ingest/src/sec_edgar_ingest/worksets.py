@@ -2,6 +2,7 @@
 import hashlib
 from dataclasses import replace
 from datetime import date
+from typing import Literal
 
 from .config import Settings, pin_context
 from .models import (FORMAT_VERSION, DirectoryOutcome, RunContext, Snapshot, SnapshotWorkset,
@@ -68,12 +69,12 @@ def _validate_common(workset: SourceWorkset | SnapshotWorkset) -> dict[str, Dire
     if not workset.context.effective_config:
         raise ValueError("workset context must pin its effective configuration")
     settings = Settings.from_mapping(workset.context.to_mapping()["effective_config"])
-    pin_context(settings, workset.context, workset.context.started_at.date())
-    end = quarter_value(workset.pinned_end_quarter)
-    if end < quarter_value(settings.backfill.start_quarter) or end > quarter_value(quarter_for(workset.context.started_at.date())):
-        raise ValueError("workset requires a resolved endpoint within the run's quarter range")
-    if settings.backfill.end_quarter != "open" and workset.pinned_end_quarter != settings.backfill.end_quarter:
-        raise ValueError("workset endpoint differs from the pinned effective configuration")
+    if workset.context.pinned_on is None:
+        raise ValueError("workset context requires its actual pinning date")
+    _, resolved_endpoint = pin_context(settings, workset.context, workset.context.pinned_on)
+    quarter_value(workset.pinned_end_quarter)
+    if workset.pinned_end_quarter != resolved_endpoint:
+        raise ValueError("workset endpoint differs from its exact pinned configuration/date resolution")
     if type(workset.overlap_from) is not date or workset.overlap_from > workset.context.started_at.date():
         raise ValueError("overlap_from must be a date no later than the run start")
     if workset.acquisition_mode not in ("reuse_accepted", "refresh"):
@@ -137,12 +138,13 @@ def _validate_snapshot(workset: SnapshotWorkset, *, check_identity: bool = True)
 
 def make_source_workset(context: RunContext, end_quarter: str, discovery_id: str,
                         members: tuple[Source, ...], directories: tuple[DirectoryOutcome, ...],
-                        overlap_from: date) -> SourceWorkset:
+                        overlap_from: date, *,
+                        acquisition_mode: Literal["reuse_accepted", "refresh"] = "reuse_accepted") -> SourceWorkset:
     workset = SourceWorkset("0" * 64, context, end_quarter, discovery_id,
                            tuple(sorted(members, key=lambda member: member.source_id)),
                            tuple(sorted(directories, key=lambda directory: directory.url)),
                            bool(directories) and all(directory.outcome != "discovery_failed" for directory in directories),
-                           overlap_from, "refresh" if context.command == "refresh" else "reuse_accepted")
+                           overlap_from, acquisition_mode)
     _validate_source(workset, check_identity=False)
     return _identified(workset)
 

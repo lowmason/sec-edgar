@@ -4,7 +4,7 @@ import importlib.util
 import json
 import unittest
 from dataclasses import FrozenInstanceError, replace
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 from support import fixture_context, fixture_settings, fixture_source, fixture_workset
@@ -18,9 +18,12 @@ class WorksetTests(unittest.TestCase):
         self.models = importlib.import_module("sec_edgar_ingest.models")
 
     def snapshot(self, source, digest="b" * 64):
-        return self.models.Snapshot(source.source_id, digest,
-                                    f"raw/{source.source_id}/{digest}/master.zip", 12,
-                                    fixture_context().started_at, {"etag": "abc"}, "zip", "sec-quarterly-envelope-v1")
+        envelope = (self.models.QUARTERLY_ENVELOPE_VERSION if source.kind == "quarterly"
+                    else self.models.DAILY_ENVELOPE_VERSION)
+        raw_path = (f"raw/sec/indexes/kind={source.kind}/period={source.period}/"
+                    f"sha256={digest}/master.{source.representation}")
+        return self.models.Snapshot(source.source_id, digest, raw_path, 12,
+                                   fixture_context().started_at, {"etag": "abc"}, source.representation, envelope)
 
     def tamper(self, workset, edit, decoder=None):
         value = json.loads(self.worksets.encode_workset(workset))
@@ -45,8 +48,9 @@ class WorksetTests(unittest.TestCase):
         changed = self.worksets.make_source_workset(replace(first.context, execution_id="different"),
                   first.pinned_end_quarter, first.discovery_id, first.members, first.directories, first.overlap_from)
         self.assertNotEqual(first.workset_id, changed.workset_id)
-        refreshed = self.worksets.make_source_workset(replace(first.context, command="refresh"),
-                  first.pinned_end_quarter, first.discovery_id, first.members, first.directories, first.overlap_from)
+        refreshed = self.worksets.make_source_workset(first.context,
+                  first.pinned_end_quarter, first.discovery_id, first.members, first.directories, first.overlap_from,
+                  acquisition_mode="refresh")
         self.assertEqual(refreshed.acquisition_mode, "refresh")
         self.assertNotEqual(first.workset_id, refreshed.workset_id)
         one = self.worksets.make_snapshot_workset(first, (self.snapshot(source),))
@@ -218,3 +222,116 @@ class WorksetTests(unittest.TestCase):
         workset = fixture_workset((source,))
         with self.assertRaises(ValueError):
             self.worksets.decode_source_workset(self.worksets.encode_workset(workset).decode().encode("utf-16"))
+
+    def test_approved_raw_layout_round_trips_both_representations(self):
+        cases = [
+            (fixture_source("2015Q1"), "master.zip", "sec-quarterly-envelope-v1"),
+            (fixture_source("2024-02-29", "daily"), "master.idx", "sec-daily-envelope-v1"),
+        ]
+        for source, filename, envelope in cases:
+            with self.subTest(kind=source.kind):
+                digest = "b" * 64
+                raw_path = (f"raw/sec/indexes/kind={source.kind}/period={source.period}/"
+                            f"sha256={digest}/{filename}")
+                try:
+                    snapshot = self.models.Snapshot(source.source_id, digest, raw_path, 12,
+                               fixture_context().started_at, {"etag": "abc"}, source.representation, envelope)
+                except ValueError as error:
+                    self.fail(f"approved raw path rejected: {error}")
+                self.assertEqual(self.models.Snapshot.from_mapping(snapshot.to_mapping()), snapshot)
+                workset = self.worksets.make_snapshot_workset(fixture_workset((source,)), (snapshot,))
+                self.assertEqual(self.worksets.decode_snapshot_workset(self.worksets.encode_workset(workset)), workset)
+
+    def test_approved_raw_layout_rejects_unsafe_or_mismatched_content_addresses(self):
+        source = fixture_source()
+        snapshot = self.snapshot(source)
+        root = "raw/sec/indexes/kind=quarterly/period=2015Q1/"
+        cases = [
+            ("different hash", root + "sha256=" + "c" * 64 + "/master.zip"),
+            ("nonhex hash", root + "sha256=" + "Z" * 64 + "/master.zip"),
+            ("missing hash label", root + "b" * 64 + "/master.zip"),
+            ("wrong kind", root.replace("quarterly", "daily") + "sha256=" + "b" * 64 + "/master.zip"),
+            ("invalid period", root.replace("2015Q1", "2015Q5") + "sha256=" + "b" * 64 + "/master.zip"),
+            ("absolute path", "/" + root + "sha256=" + "b" * 64 + "/master.zip"),
+            ("parent escape", "../" + root + "sha256=" + "b" * 64 + "/master.zip"),
+            ("encoded escape", root + "sha256=" + "b" * 64 + "/%2e%2e/master.zip"),
+            ("mutable latest", root + "sha256=latest/master.zip"),
+            ("wrong file", root + "sha256=" + "b" * 64 + "/company.zip"),
+        ]
+        for name, raw_path in cases:
+            with self.subTest(name=name), self.assertRaises(ValueError):
+                replace(snapshot, raw_path=raw_path)
+
+    def test_discover_freezes_explicit_mode_without_rewriting_command(self):
+        source = fixture_source()
+        original = fixture_workset((source,))
+        context = fixture_context(command="discover")
+        try:
+            reused = self.worksets.make_source_workset(context, original.pinned_end_quarter,
+                      original.discovery_id, original.members, original.directories, original.overlap_from,
+                      acquisition_mode="reuse_accepted")
+            refreshed = self.worksets.make_source_workset(context, original.pinned_end_quarter,
+                         original.discovery_id, original.members, original.directories, original.overlap_from,
+                         acquisition_mode="refresh")
+        except TypeError as error:
+            self.fail(f"discover cannot freeze its explicit acquisition mode: {error}")
+        self.assertEqual(reused.context.command, "discover")
+        self.assertEqual(refreshed.context.command, "discover")
+        self.assertEqual(reused.acquisition_mode, "reuse_accepted")
+        self.assertEqual(refreshed.acquisition_mode, "refresh")
+        self.assertNotEqual(reused.workset_id, refreshed.workset_id)
+        snapshot_worksets = []
+        for workset in (reused, refreshed):
+            self.assertEqual(self.worksets.decode_source_workset(self.worksets.encode_workset(workset)), workset)
+            snapshots = self.worksets.make_snapshot_workset(workset, (self.snapshot(source),))
+            self.assertEqual(snapshots.context.command, "discover")
+            self.assertEqual(snapshots.acquisition_mode, workset.acquisition_mode)
+            self.assertEqual(self.worksets.decode_snapshot_workset(self.worksets.encode_workset(snapshots)), snapshots)
+            snapshot_worksets.append(snapshots)
+        self.assertNotEqual(snapshot_worksets[0].workset_id, snapshot_worksets[1].workset_id)
+        with self.assertRaises(ValueError):
+            self.worksets.make_source_workset(context, original.pinned_end_quarter, original.discovery_id,
+                       original.members, original.directories, original.overlap_from, acquisition_mode="latest")
+
+    def test_open_endpoint_matches_exact_resolution_in_constructor_and_decoders(self):
+        source = fixture_source()
+        original = fixture_workset((source,))
+        with self.subTest(boundary="constructor"), self.assertRaisesRegex(ValueError, "endpoint"):
+            self.worksets.make_source_workset(original.context, "2026Q3", original.discovery_id,
+                      original.members, original.directories, original.overlap_from)
+        with self.subTest(boundary="source decoder"):
+            self.tamper(original, lambda value: value.update(pinned_end_quarter="2026Q3"))
+        snapshots = self.worksets.make_snapshot_workset(original, (self.snapshot(source),))
+        with self.subTest(boundary="snapshot decoder"):
+            self.tamper(snapshots, lambda value: value.update(pinned_end_quarter="2026Q3"),
+                        self.worksets.decode_snapshot_workset)
+
+    def test_fixture_clock_override_keeps_exact_auditable_endpoint(self):
+        original = fixture_workset((fixture_source(),))
+        settings = fixture_settings(fixture={"allow_clock_override": True})
+        context = replace(original.context, config_sha256=settings.config_sha256)
+        config = importlib.import_module("sec_edgar_ingest.config")
+        pinning_date = date(2026, 7, 15)
+        context, endpoint = config.pin_context(settings, context, pinning_date)
+        self.assertEqual(getattr(context, "pinned_on", None), pinning_date,
+                         "worksets must retain the actual fixture pinning date")
+        self.assertEqual(context.started_at, original.context.started_at)
+        self.assertEqual(endpoint, "2026Q3")
+        workset = self.worksets.make_source_workset(context, endpoint, original.discovery_id,
+                  original.members, original.directories, original.overlap_from)
+        self.assertEqual(self.worksets.decode_source_workset(self.worksets.encode_workset(workset)), workset)
+        snapshots = self.worksets.make_snapshot_workset(workset, (self.snapshot(original.members[0]),))
+        self.assertEqual(snapshots.context.pinned_on, pinning_date)
+        self.assertEqual(self.worksets.decode_snapshot_workset(self.worksets.encode_workset(snapshots)), snapshots)
+        for wrong in ("2026Q2", "2026Q4"):
+            with self.subTest(boundary="constructor", endpoint=wrong), self.assertRaisesRegex(ValueError, "endpoint"):
+                self.worksets.make_source_workset(context, wrong, original.discovery_id,
+                          original.members, original.directories, original.overlap_from)
+            with self.subTest(boundary="source decoder", endpoint=wrong):
+                self.tamper(workset, lambda value: value.update(pinned_end_quarter=wrong))
+            with self.subTest(boundary="snapshot decoder", endpoint=wrong):
+                self.tamper(snapshots, lambda value: value.update(pinned_end_quarter=wrong),
+                            self.worksets.decode_snapshot_workset)
+        with self.assertRaisesRegex(ValueError, "pinning date"):
+            self.worksets.make_source_workset(replace(context, pinned_on=None), endpoint,
+                      original.discovery_id, original.members, original.directories, original.overlap_from)

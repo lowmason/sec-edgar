@@ -20,6 +20,9 @@ DAILY_ENVELOPE_VERSION = "sec-daily-envelope-v1"
 SHA256_PATTERN = re.compile(r"[0-9a-f]{64}\Z")
 IMAGE_PATTERN = re.compile(r"sha256:[0-9a-f]{64}\Z")
 QUARTER_PATTERN = re.compile(r"([0-9]{4})Q([1-4])\Z")
+RAW_SNAPSHOT_PATH = re.compile(
+    r"raw/sec/indexes/kind=(quarterly|daily)/period=([^/]+)/sha256=([0-9a-f]{64})/(master\.(?:zip|idx))\Z"
+)
 Priority = Literal["daily", "backfill", "reconciliation"]
 Representation = Literal["zip", "idx"]
 
@@ -313,6 +316,7 @@ class RunContext(Record):
     deadline: datetime
     priority: Priority
     effective_config: Mapping[str, object] = field(default_factory=dict)
+    pinned_on: date | None = None
 
     def __post_init__(self):
         validate_record_fields(self)
@@ -415,10 +419,21 @@ class Snapshot(Record):
         require_hash(self.source_id, "source_id")
         require_hash(self.sha256, "sha256")
         safe_relative_path(self.raw_path, "raw_path")
-        components = self.raw_path.split("/")
-        has_hash = any(item == self.sha256 or item == f"{self.sha256}.{self.representation}" for item in components)
-        if "latest" in components or self.source_id not in components or not has_hash:
-            raise ValueError("raw_path must address this source and exact snapshot hash")
+        address = RAW_SNAPSHOT_PATH.fullmatch(self.raw_path)
+        if address is None or address[3] != self.sha256:
+            raise ValueError("raw_path must use the approved index layout and exact snapshot hash")
+        expected_kind = "quarterly" if self.representation == "zip" else "daily"
+        if address[1] != expected_kind or address[4] != f"master.{self.representation}":
+            raise ValueError("raw_path kind/file conflicts with representation")
+        if address[1] == "quarterly":
+            quarter_value(address[2])
+        else:
+            try:
+                period = date.fromisoformat(address[2])
+            except ValueError as error:
+                raise ValueError("raw_path daily period must be a valid ISO date") from error
+            if period.isoformat() != address[2]:
+                raise ValueError("raw_path daily period must be a canonical ISO date")
         require_number(self.byte_count, "byte_count", integer=True)
         require_utc(self.received_at, "received_at")
         if self.representation not in ("zip", "idx"):

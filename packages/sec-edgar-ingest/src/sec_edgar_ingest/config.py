@@ -277,4 +277,4 @@ def pin_context(settings: Settings, context: RunContext, today: date) -> tuple[R
         raise ValueError("backfill endpoint is in a future quarter")
     if quarter_value(end) < quarter_value(settings.backfill.start_quarter):
         raise ValueError("pinned backfill endpoint precedes start_quarter")
-    return replace(context, effective_config=settings.to_mapping()), end
+    return replace(context, effective_config=settings.to_mapping(), pinned_on=today), end
