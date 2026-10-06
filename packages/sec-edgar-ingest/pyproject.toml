@@ -1,13 +1,21 @@
 [project]
 name = "sec-edgar-ingest"
 version = "0.1.0"
-description = "Add your description here"
+description = "Acquire immutable SEC filing-index source snapshots"
 readme = "README.md"
 authors = [
     { name = "Lowell Mason", email = "mason.lowell@mac.com" }
 ]
 requires-python = ">=3.14"
-dependencies = []
+dependencies = [
+    "requests==2.34.2",
+    "azure-identity==1.26.0",
+    "azure-storage-blob==12.31.0",
+    "azure-data-tables==12.7.0",
+]
+
+[project.scripts]
+sec-edgar-ingest = "sec_edgar_ingest.cli:main"
 
 [build-system]
 requires = ["uv_build>=0.12.15,<0.13.0"]
