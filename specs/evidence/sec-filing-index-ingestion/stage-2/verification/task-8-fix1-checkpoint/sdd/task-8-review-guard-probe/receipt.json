@@ -1,0 +1,14 @@
+{
+  "argv": [
+    "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/bin/python",
+    "/private/tmp/sec-task8-review-guard-96ho7hbw/probe.py"
+  ],
+  "cwd": "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar",
+  "env_overrides": {
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PYTHONPATH": "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests"
+  },
+  "exit": 0,
+  "stdout": "{\n  \"provenance\": \"offline probe; both original connection methods are recording stubs; no connection or authentication was attempted\",\n  \"support_import_installs_guard\": false,\n  \"external_connect_blocked\": true,\n  \"recorded_calls\": [\n    {\n      \"method\": \"connect\",\n      \"address\": [\n        \"127.0.0.1\",\n        54321\n      ]\n    },\n    {\n      \"method\": \"connect_ex\",\n      \"address\": [\n        \"198.51.100.1\",\n        443\n      ]\n    }\n  ],\n  \"credential_constructor_unchanged\": true\n}\n",
+  "stderr": ""
+}

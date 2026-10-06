@@ -20,6 +20,48 @@ uses the lock's exact 20 runtime versions and the four direct pins in this packa
 Offline checks refuse a missing cache. This local macOS build does not establish
 Linux container compatibility or worker capacity.
 
+
+Set up the existing workspace from the accepted cache without changing the lock:
+
+```sh
+uv sync --offline --frozen --package sec-edgar-ingest
+uv build --offline --all-packages
+```
+
+Python 3.14+, uv, the locked runtime wheels and the cached `uv_build` build
+requirement must already be available from the authorized dependency setup.
+A missing cache is a prerequisite failure; obtain that separately authorized
+setup rather than fetching dependencies or changing pins during a fixture run.
+
+To install the built wheel in a fresh environment, run from the repository root:
+
+```sh
+python3 -m venv --without-pip /tmp/sec-edgar-installed
+uv export --offline --frozen --no-dev --no-emit-workspace \
+  --output-file /tmp/sec-edgar-pinned-requirements.txt
+uv pip install --offline --no-index \
+  --find-links specs/evidence/sec-filing-index-ingestion/stage-2/verification/sdd-history/task1-evidence/wheels \
+  --python /tmp/sec-edgar-installed/bin/python --require-hashes \
+  -r /tmp/sec-edgar-pinned-requirements.txt
+uv pip install --offline --no-index --no-deps \
+  --python /tmp/sec-edgar-installed/bin/python \
+  dist/sec_edgar_ingest-0.1.0-py3-none-any.whl
+/tmp/sec-edgar-installed/bin/sec-edgar-ingest --help
+/tmp/sec-edgar-installed/bin/python -m sec_edgar_ingest --version
+```
+
+Use a fresh unused environment path. `python3` must be the available Python 3.14+
+interpreter (the workspace `.venv/bin/python` also works). The retained wheel
+cache contains the accepted 20 runtime versions for this local macOS platform;
+other platforms require their separately authorized matching cached artifacts.
+The hash-bearing export preserves exact lock pins. Wheel installation uses
+`--no-deps` only after that explicit dependency installation. These uv pip/build
+commands have no `--frozen` option; the lock export, exact hashes, offline and
+no-index flags enforce the selected installation. Run fixture commands with
+`/tmp/sec-edgar-installed/bin/sec-edgar-ingest` and the same explicit config,
+pack and state-dir arguments below. The console works outside the source checkout;
+no editable import or PYTHONPATH is needed.
+
 The configuration filename is YAML, but its supported syntax is strict **JSON**,
 a subset of YAML 1.2. Duplicate keys, nonfinite values, unsupported fields, missing
 identity/version pins, invalid storage bindings, and unsafe paths are refused.

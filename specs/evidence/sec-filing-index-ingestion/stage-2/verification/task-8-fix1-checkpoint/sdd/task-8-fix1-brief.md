@@ -1,0 +1,29 @@
+# Task 8 fix round 1
+
+Read task-8-brief.md first for the approved requirements and exact Global Constraints. You own the adopted I2 and I3 findings from the fresh Task 8 review at a62c05c0a961fecc2f1ac854b9dac68be3add7ef. Full operative findings/verdict/checks are in task-8-review.md; exact original offline probe and receipt are in task-8-review-guard-probe/. Do not rerun that reviewer probe as a substitute for regressions. Its credential-class identity field alone is not constructor/token behavior evidence.
+
+## Required I2 fix
+
+The suite currently has no installed guard. support.py:1297 patches only socket.connect, permits arbitrary loopback ports, and has no authentication denial; only CLI/result-crash wrappers call it. check-sec-edgar-ingest.sh invokes ordinary unittest discovery. This misses the explicit test-support requirement to block unapproved external network/auth and allow only expressly bounded process fixtures.
+
+Use fixture-only test support to install denial before suite execution and relevant spawned processes. Cover outbound connection and resolution paths, including connect_ex. Deny unapproved authentication construction/token activity before real provider work. Permit only explicitly selected bounded loopback origins needed by the existing fixtures, not every loopback port. Keep the production CLI and production SDK/transport behavior outside this test guard. Existing scripted Azure tests, zero-live-fallback fixture packs and actual selected-origin loopback mechanisms must continue working. No live SEC/Azure/auth/registry/compute access is authorized.
+
+Write focused behavioral failing tests FIRST using recording stubs, then implement. Prove ordinary suite/support installation, external connection/resolution denial, connect_ex denial, unselected loopback-port denial, selected fixture-origin allowance, and authentication denial without executing real authentication. Cover relevant spawned-process enforcement. Preserve genuine loopback/process evidence and production defaults. Use small separate test-only guard/test modules if they give this protection a clear responsibility instead of further bloating the shared support module.
+
+## Required I3 fix
+
+README/runbook currently has build/run/check commands and describes pins but lacks the promised explicit installation invocation. Add exact offline setup/install commands based on the validated installed-wheel-proof.py export/hash/install recipe, with cached dependency prerequisites, exact pins and wheel install. Missing cache is a prerequisite failure; never quietly fetch or change pins. Explain a usable initial setup path as well as fresh installed-wheel verification where appropriate. Docs-only assertions/tests that mirror text are unnecessary; validate commands against the already successful recipe or run a materially new command only when needed.
+
+## Ownership and boundaries
+
+Own minimum changes to tests/support.py, new tests/network_guard.py and tests/test_network_guard.py if needed, existing CLI/process/workspace test fixture wiring if necessary, scripts/check-sec-edgar-ingest.sh, root/package README, acquisition runbook, and named Stage 2 verification/proof artifacts. Paths are under packages/sec-edgar-ingest except root README/script/runbook/evidence. If a different source module or public API is concretely required, state the exact need BEFORE editing it. Do not change production package code, endpoint/pin/hash rules or unrelated helpers speculatively. You are not alone; preserve others' edits and adapt to them. Preserve four original unstaged deletions, local roadmap, parent/ADR/F1 and primary checkout.
+
+I1 remains an unanswered owner choice for the prescribed combined Step4 sequence. Do not execute the proposed --include-approved-daily sequence or revise pin contracts without an actual answer. Continue all independent I2/I3 work. This is a technical fix round, not renewed Plan2 approval.
+
+## Verification and report
+
+Retain focused RED and GREEN commands, exact output/exit and decisive behavior. Cover new guard tests plus current test_cli, test_acquisition_processes and test_workspace. After the final implementation change, run the required full scripts/check-sec-edgar-ingest.sh once and inspect every record/footer/noise. Explain whether actual package bytes changed; the built artifact/install evidence must correspond to the final package. Do not rerun unchanged installed proof needlessly if package/source artifacts are identical; verify equality and retain the existing verified installed receipt, or run fresh proof if changed/new concerns justify it. Preserve all current historical failures and checkpoint bytes; do not rewrite original receipts to imply they were current.
+
+Append fix report to task-8-report.md: adopted findings, actual changed interfaces/guard scope/selected origins/spawn wiring, tests and exact commands/output, full current check, artifact equality, provenance/limits, pending I1 status. Named-file commit(s) only, record BASE a62c05c..finalHEAD, freeze for a fresh scoped re-review of I2/I3 and fix-introduced defects. No self-issued PASS, Stage2 stamp/tick/retirement or Stage3 work.
+
+Retention: retain new original review/probe/controller/fix receipts as an append-only checkpoint with maps/hashes. Keep the existing sdd-history checkpoint byte-identical. The new standard Task8 diff is 18MB because it includes original proof; lossless compression with both original and compressed SHA/size and explicit retrieval mapping is acceptable for new diff handoffs to avoid recursive evidence duplication. Never omit required evidence or invent historical full output. Avoid copying a retention target into itself, self-hash cycles, and self-ignoring control files accidentally excluding evidence. Report exact new retained inventory. Final required owner combined sequence remains the only permitted NEEDS_CONTEXT after technical findings are resolved and reviewed.

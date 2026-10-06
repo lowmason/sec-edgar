@@ -1,0 +1,15 @@
+{
+  "actual_stderr": "Traceback (most recent call last):\n  File \"<stdin>\", line 19, in <module>\nAssertionError\n",
+  "argv": [
+    "python3",
+    "-"
+  ],
+  "corrected_check": "versions[\"versions\"]==old_versions[\"versions\"]",
+  "cwd": "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar",
+  "exit": 1,
+  "failed_check": "assert versions==old_versions for whole installed-versions.json mappings",
+  "historical_full_inline_command_not_retained": true,
+  "kind": "earlier inspection tool failure retained after execution",
+  "recorded_at": "2026-10-06T21:46:01.661653+00:00",
+  "root_cause": "Mappings contain different fresh-environment import/prefix paths; only nested versions fields should match. No installed command or package test failed and no source change occurred."
+}

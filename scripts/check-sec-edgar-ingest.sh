@@ -1,6 +1,6 @@
 #!/bin/sh
 set -eu
-uv run --offline --frozen --package sec-edgar-ingest python -m unittest discover -s packages/sec-edgar-ingest/tests -p 'test_*.py' -v
+uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/network_guard.py discover -s packages/sec-edgar-ingest/tests -p 'test_*.py' -v
 uv build --offline --all-packages
 uv run --offline --frozen --package sec-edgar-ingest sec-edgar-ingest --help
 uv run --offline --frozen --package sec-edgar-ingest python -m sec_edgar_ingest --version

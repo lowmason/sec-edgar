@@ -1,0 +1,92 @@
+argv=['.venv/bin/python', '-m', 'unittest', 'discover', '-s', 'packages/sec-edgar-ingest/tests', '-p', 'test_network_guard.py', '-v']
+stdout:
+
+stderr:
+test_explicit_helper_denies_connect_ex_resolution_and_unselected_loopback (test_network_guard.NetworkGuardTests.test_explicit_helper_denies_connect_ex_resolution_and_unselected_loopback) ... FAIL
+test_only_selected_fixture_origin_is_allowed_and_scope_closes (test_network_guard.NetworkGuardTests.test_only_selected_fixture_origin_is_allowed_and_scope_closes) ... FAIL
+test_ordinary_support_import_installs_connection_resolution_and_auth_denial (test_network_guard.NetworkGuardTests.test_ordinary_support_import_installs_connection_resolution_and_auth_denial) ... FAIL
+test_provider_construction_and_existing_instance_token_work_never_reach_stubs (test_network_guard.NetworkGuardTests.test_provider_construction_and_existing_instance_token_work_never_reach_stubs) ... FAIL
+test_spawned_process_has_selected_origin_and_denies_network_and_auth (test_network_guard.NetworkGuardTests.test_spawned_process_has_selected_origin_and_denies_network_and_auth) ... FAIL
+test_suite_runner_installs_guard_before_unittest_executes (test_network_guard.NetworkGuardTests.test_suite_runner_installs_guard_before_unittest_executes) ... FAIL
+
+======================================================================
+FAIL: test_explicit_helper_denies_connect_ex_resolution_and_unselected_loopback (test_network_guard.NetworkGuardTests.test_explicit_helper_denies_connect_ex_resolution_and_unselected_loopback)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_network_guard.py", line 97, in test_explicit_helper_denies_connect_ex_resolution_and_unselected_loopback
+    self.assertEqual(proof['denied'], [True] * 4)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: [False, False, False, False] != [True, True, True, True]
+
+First differing element 0:
+False
+True
+
+- [False, False, False, False]
++ [True, True, True, True]
+
+======================================================================
+FAIL: test_only_selected_fixture_origin_is_allowed_and_scope_closes (test_network_guard.NetworkGuardTests.test_only_selected_fixture_origin_is_allowed_and_scope_closes)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_network_guard.py", line 101, in test_only_selected_fixture_origin_is_allowed_and_scope_closes
+    self.assertTrue(import_available(), 'a separate test-only selected-origin guard is required')
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : a separate test-only selected-origin guard is required
+
+======================================================================
+FAIL: test_ordinary_support_import_installs_connection_resolution_and_auth_denial (test_network_guard.NetworkGuardTests.test_ordinary_support_import_installs_connection_resolution_and_auth_denial)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_network_guard.py", line 83, in test_ordinary_support_import_installs_connection_resolution_and_auth_denial
+    self.assertEqual(proof['denied'], [True] * 9)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: [False, False, False, False, False, False, False, False, False] != [True, True, True, True, True, True, True, True, True]
+
+First differing element 0:
+False
+True
+
+- [False, False, False, False, False, False, False, False, False]
++ [True, True, True, True, True, True, True, True, True]
+
+======================================================================
+FAIL: test_provider_construction_and_existing_instance_token_work_never_reach_stubs (test_network_guard.NetworkGuardTests.test_provider_construction_and_existing_instance_token_work_never_reach_stubs)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_network_guard.py", line 128, in test_provider_construction_and_existing_instance_token_work_never_reach_stubs
+    self.assertEqual(proof['denied'], [True] * 4)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: [False, False, False, False] != [True, True, True, True]
+
+First differing element 0:
+False
+True
+
+- [False, False, False, False]
++ [True, True, True, True]
+
+======================================================================
+FAIL: test_spawned_process_has_selected_origin_and_denies_network_and_auth (test_network_guard.NetworkGuardTests.test_spawned_process_has_selected_origin_and_denies_network_and_auth)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_network_guard.py", line 156, in test_spawned_process_has_selected_origin_and_denies_network_and_auth
+    self.assertTrue(proof['guard_available'], 'spawned fixture needs an explicit installed guard')
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : spawned fixture needs an explicit installed guard
+
+======================================================================
+FAIL: test_suite_runner_installs_guard_before_unittest_executes (test_network_guard.NetworkGuardTests.test_suite_runner_installs_guard_before_unittest_executes)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_network_guard.py", line 132, in test_suite_runner_installs_guard_before_unittest_executes
+    self.assertTrue(import_available(), 'the test runner must install denial before discovery')
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : the test runner must install denial before discovery
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.475s
+
+FAILED (failures=6)
+
+exit_code=1

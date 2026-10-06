@@ -1,0 +1,51 @@
+{
+  "events": [
+    {
+      "event": "socket-accepted",
+      "monotonic": 2762041.330011583
+    },
+    {
+      "event": "request-received",
+      "monotonic": 2762041.330053583
+    },
+    {
+      "event": "headers-sent",
+      "monotonic": 2762041.330074916
+    },
+    {
+      "byte_count": 23,
+      "event": "entity-sent",
+      "monotonic": 2762041.330079958
+    },
+    {
+      "event": "socket-closed",
+      "monotonic": 2762041.330087291
+    }
+  ],
+  "extra": {
+    "receipt": {
+      "byte_count": 23,
+      "complete": false,
+      "error": {
+        "code": "incomplete_body",
+        "details": {},
+        "message": "HTTP stream interrupted: ('Connection broken: IncompleteRead(23 bytes read, 10 more expected)', IncompleteRead(23 bytes read, 10 more expected))",
+        "retryable": true,
+        "source_id": null
+      },
+      "headers": {
+        "Connection": "close",
+        "Content-Length": "33"
+      },
+      "received_at": "2026-10-06T21:39:37.366502+00:00",
+      "sha256": "e58a7f3b337d776d1d8df852dd3a257f8cd7ae28a960ccf35541ad9de82edd10",
+      "status": 200,
+      "temporary_path": "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/tmp126uxgh_/sender/body",
+      "url": "http://127.0.0.1:50035/fixture"
+    }
+  },
+  "requests": [
+    "GET /fixture HTTP/1.1\r\nHost: 127.0.0.1:50035\r\nUser-Agent: Lowell Mason sec-edgar-ingest mason.lowell@mac.com\r\nAccept-Encoding: identity\r\nAccept: */*\r\nConnection: keep-alive\r\n\r\n"
+  ],
+  "sent_bytes": 23
+}

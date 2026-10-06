@@ -5,6 +5,10 @@ from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from network_guard import install as _install_offline_guard, selected_origin
+
+_install_offline_guard()
+
 if TYPE_CHECKING:
     from sec_edgar_ingest.config import Settings
     from sec_edgar_ingest.download import ResponseSpec
@@ -630,6 +634,8 @@ class LoopbackServer:
         self.socket.settimeout(0.05)
         self.origin = f"http://127.0.0.1:{self.socket.getsockname()[1]}"
         self.url = self.origin+"/fixture"
+        self._network_origin = selected_origin(self.origin)
+        self._network_origin.__enter__()
         self.thread = threading.Thread(target=self._serve, name="bounded-loopback-fixture", daemon=True)
         self.thread.start()
 
@@ -712,9 +718,12 @@ class LoopbackServer:
     def close(self):
         self.stopped.set()
         self.socket.close()
-        self.thread.join(2)
-        if self.thread.is_alive():
-            raise AssertionError("fixture server did not drain")
+        try:
+            self.thread.join(2)
+            if self.thread.is_alive():
+                raise AssertionError("fixture server did not drain")
+        finally:
+            self._network_origin.__exit__(None, None, None)
 
 
 def loopback_sender(settings, clock, origin, *, target=None, spool=None):
@@ -729,7 +738,9 @@ def loopback_sender(settings, clock, origin, *, target=None, spool=None):
                 raise ValueError("fixture sender can contact only its one selected loopback origin")
             return origin
         def _child_target(self):
-            return target or super()._child_target()
+            from functools import partial
+            from network_guard import guarded_transport_child
+            return partial(guarded_transport_child, target=target or super()._child_target(), origin=origin)
         def _spool_directory(self):
             if spool is None:
                 return super()._spool_directory()
@@ -1295,14 +1306,8 @@ ACQUISITION_PACK = Path(__file__).parent / 'fixtures/acquisition/manifest.json'
 
 
 def block_external_network():
-    """Tests admit only expressly selected loopback sockets and never ambient auth."""
-    import socket
-    original = socket.socket.connect
-    def connect(sock, address):
-        if not isinstance(address, tuple) or address[0] not in ('127.0.0.1', '::1'):
-            raise AssertionError('offline acquisition tests refuse external network')
-        return original(sock, address)
-    socket.socket.connect = connect
+    """Keep existing fixture call sites under the suite's exact-origin/auth guard."""
+    _install_offline_guard()
 
 
 def cli_process_entry():

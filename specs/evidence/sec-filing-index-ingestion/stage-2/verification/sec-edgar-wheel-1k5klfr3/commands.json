@@ -1,0 +1,193 @@
+[
+  {
+    "argv": [
+      "uv",
+      "export",
+      "--offline",
+      "--frozen",
+      "--no-dev",
+      "--no-emit-workspace",
+      "--output-file",
+      "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-wheel-1k5klfr3/pinned-requirements.txt"
+    ],
+    "exit": 0,
+    "label": "locked-export"
+  },
+  {
+    "argv": [
+      "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/bin/python",
+      "-m",
+      "venv",
+      "--without-pip",
+      "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-wheel-1k5klfr3/fresh-env"
+    ],
+    "exit": 0,
+    "label": "fresh-environment"
+  },
+  {
+    "argv": [
+      "uv",
+      "pip",
+      "install",
+      "--offline",
+      "--no-index",
+      "--find-links",
+      "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.sdd/2-sec-filing-index-ingestion-stage-2-spec/task1-evidence/wheels",
+      "--python",
+      "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-wheel-1k5klfr3/fresh-env/bin/python",
+      "--require-hashes",
+      "-r",
+      "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-wheel-1k5klfr3/pinned-requirements.txt"
+    ],
+    "exit": 0,
+    "label": "cached-pinned-install"
+  },
+  {
+    "argv": [
+      "uv",
+      "pip",
+      "install",
+      "--offline",
+      "--no-index",
+      "--no-deps",
+      "--python",
+      "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-wheel-1k5klfr3/fresh-env/bin/python",
+      "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/dist/sec_edgar_ingest-0.1.0-py3-none-any.whl"
+    ],
+    "exit": 0,
+    "label": "wheel-install"
+  },
+  {
+    "argv": [
+      "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-wheel-1k5klfr3/fresh-env/bin/python",
+      "-c",
+      "import importlib.metadata as m, json, platform, sys\nimport sec_edgar_ingest, sec_edgar_ingest.cli\nprint(json.dumps({'python': sys.version, 'platform': platform.platform(), 'prefix': sys.prefix,\n'package_file': sec_edgar_ingest.__file__, 'cli_file': sec_edgar_ingest.cli.__file__,\n'version': sec_edgar_ingest.__version__, 'versions': {dist.metadata['Name']: dist.version for dist in m.distributions()}}))\n"
+    ],
+    "exit": 0,
+    "label": "installed-import"
+  },
+  {
+    "argv": [
+      "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-wheel-1k5klfr3/fresh-env/bin/sec-edgar-ingest",
+      "--help"
+    ],
+    "exit": 0,
+    "label": "installed-help"
+  },
+  {
+    "argv": [
+      "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-wheel-1k5klfr3/fresh-env/bin/python",
+      "-m",
+      "sec_edgar_ingest",
+      "--version"
+    ],
+    "exit": 0,
+    "label": "installed-version"
+  },
+  {
+    "argv": [
+      "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-wheel-1k5klfr3/fresh-env/bin/sec-edgar-ingest",
+      "discover",
+      "--config",
+      "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-wheel-1k5klfr3/wheel-fixture-config.json",
+      "--fixture-pack",
+      "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/fixtures/acquisition/manifest.json",
+      "--state-dir",
+      "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-wheel-1k5klfr3/state",
+      "--deadline",
+      "2099-01-01T00:00:00Z",
+      "--today",
+      "2026-10-06",
+      "--mode",
+      "quarterly",
+      "--discovery-id",
+      "wheel-quarter",
+      "--run-id",
+      "wheel-run",
+      "--execution-id",
+      "wheel-discover",
+      "--attempt-id",
+      "discover-1"
+    ],
+    "exit": 0,
+    "label": "installed-discover"
+  },
+  {
+    "argv": [
+      "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-wheel-1k5klfr3/fresh-env/bin/sec-edgar-ingest",
+      "collect",
+      "--config",
+      "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-wheel-1k5klfr3/wheel-fixture-config.json",
+      "--fixture-pack",
+      "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/fixtures/acquisition/manifest.json",
+      "--state-dir",
+      "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-wheel-1k5klfr3/state",
+      "--deadline",
+      "2099-01-01T00:00:00Z",
+      "--today",
+      "2026-10-06",
+      "--workset",
+      "worksets/sec/source/sha256=0ee03feec54d0d93527da06c281c630def7bc58aca9d55f507be4272b5f08048/workset.json",
+      "--run-id",
+      "wheel-run",
+      "--execution-id",
+      "wheel-collect",
+      "--attempt-id",
+      "collect-1"
+    ],
+    "exit": 0,
+    "label": "installed-collect"
+  },
+  {
+    "argv": [
+      "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-wheel-1k5klfr3/fresh-env/bin/sec-edgar-ingest",
+      "collect",
+      "--config",
+      "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-wheel-1k5klfr3/wheel-fixture-config.json",
+      "--fixture-pack",
+      "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/fixtures/acquisition/manifest.json",
+      "--state-dir",
+      "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-wheel-1k5klfr3/state",
+      "--deadline",
+      "2099-01-01T00:00:00Z",
+      "--today",
+      "2026-10-06",
+      "--workset",
+      "worksets/sec/source/sha256=0ee03feec54d0d93527da06c281c630def7bc58aca9d55f507be4272b5f08048/workset.json",
+      "--run-id",
+      "wheel-run",
+      "--execution-id",
+      "wheel-collect",
+      "--attempt-id",
+      "collect-1"
+    ],
+    "exit": 0,
+    "label": "installed-exact-replay"
+  },
+  {
+    "argv": [
+      "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-wheel-1k5klfr3/fresh-env/bin/sec-edgar-ingest",
+      "collect",
+      "--config",
+      "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-wheel-1k5klfr3/wheel-fixture-config.json",
+      "--fixture-pack",
+      "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/fixtures/acquisition/manifest.json",
+      "--state-dir",
+      "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-wheel-1k5klfr3/state",
+      "--deadline",
+      "2099-01-01T00:00:00Z",
+      "--today",
+      "2026-10-06",
+      "--workset",
+      "worksets/sec/source/sha256=0ee03feec54d0d93527da06c281c630def7bc58aca9d55f507be4272b5f08048/workset.json",
+      "--run-id",
+      "wheel-run",
+      "--execution-id",
+      "wheel-retry",
+      "--attempt-id",
+      "collect-2"
+    ],
+    "exit": 0,
+    "label": "installed-pinned-replay"
+  }
+]
