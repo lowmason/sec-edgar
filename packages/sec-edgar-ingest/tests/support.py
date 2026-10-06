@@ -1,12 +1,14 @@
 """Validated builders shared by offline acquisition tests."""
 import json
+from collections.abc import Callable
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from sec_edgar_ingest.config import Settings
-    from sec_edgar_ingest.models import RunContext, Source, SourceWorkset
+    from sec_edgar_ingest.models import RunContext, Source, SourceWorkset, Snapshot
+    from sec_edgar_ingest.storage.contracts import StateStore, ObjectStore, LeaseStore, BoundaryObserver
 
 FIXTURE_CONFIG = Path(__file__).parent / "fixtures/config/local.json"
 
@@ -76,3 +78,49 @@ def fixture_workset(members: tuple["Source", ...], discovery_complete: bool = Tr
         directories += (failed,)
     return make_source_workset(fixture_context(), "2026Q4", "fixture-discovery",
                                tuple(members), directories, date(2026, 10, 1))
+
+
+def fixture_snapshot(source: "Source", body: bytes) -> "Snapshot":
+    import hashlib
+    from sec_edgar_ingest.models import Snapshot, QUARTERLY_ENVELOPE_VERSION, DAILY_ENVELOPE_VERSION
+    digest = hashlib.sha256(body).hexdigest()
+    envelope = QUARTERLY_ENVELOPE_VERSION if source.kind == "quarterly" else DAILY_ENVELOPE_VERSION
+    return Snapshot(source.source_id, digest,
+                    f"raw/sec/indexes/kind={source.kind}/period={source.period}/sha256={digest}/master.{source.representation}",
+                    len(body), fixture_context().started_at, {}, source.representation, envelope)
+
+
+class Faults:
+    """One-shot observers interrupt the real durable transition at a named boundary."""
+    def __init__(self):
+        self._actions = {}
+
+    def at(self, point: str, action: Callable[[], None]) -> None:
+        self._actions[point] = action
+
+    def __call__(self, point: str) -> None:
+        action = self._actions.pop(point, None)
+        if action is not None:
+            action()
+
+
+class FixtureClock:
+    def __init__(self):
+        self.instant = datetime(2026, 10, 6, tzinfo=timezone.utc)
+        self.elapsed = 0.0
+
+    def now(self) -> datetime:
+        return self.instant
+
+    def monotonic(self) -> float:
+        return self.elapsed
+
+    def advance(self, seconds: float) -> None:
+        self.instant += timedelta(seconds=seconds)
+        self.elapsed += seconds
+
+
+def store_bundle(root: Path, *, observer: "BoundaryObserver | None" = None, clock=None) -> tuple["StateStore", "ObjectStore", "LeaseStore"]:
+    from sec_edgar_ingest.storage.local import LocalStateStore, LocalObjectStore, LocalLeaseStore
+    return (LocalStateStore(root, observer=observer), LocalObjectStore(root, observer=observer),
+            LocalLeaseStore(root, observer=observer, clock=clock))
