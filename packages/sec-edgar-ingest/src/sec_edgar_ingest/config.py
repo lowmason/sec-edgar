@@ -20,6 +20,14 @@ ACCOUNT_NAME = "secedgardevb8617"
 COORDINATION_NAMESPACE = "sec-owner-lowell-mason"
 LOCK_BLOB = COORDINATION_NAMESPACE + "/sentinel.json"
 BINDING_REGISTRY_BLOB = COORDINATION_NAMESPACE + "/binding.json"
+OWNER_USER_AGENT = "Lowell Mason sec-edgar-ingest mason.lowell@mac.com"
+REQUEST_BUDGET_PER_SECOND = 3
+ACTIVE_COLLECTOR_LIMIT = 1
+HTTP_ATTEMPT_LIMIT = 5
+CLOCK_UNCERTAINTY_LIMIT_SECONDS = 2
+AZURE_LEASE_MIN_SECONDS = 15
+AZURE_LEASE_MAX_SECONDS = 60
+TRANSIENT_REPLAY_LIMIT = 1
 WORKER_ALLOWANCE_SECONDS = 3600
 MAX_EXCHANGE_SECONDS = 90
 MAX_RECEIVED_BYTES = 67108864
@@ -142,26 +150,26 @@ class Settings(Record):
         if type(self.daily.start_date) is not date:
             raise ValueError("daily.start_date must be an ISO date")
         require_text(self.sec.user_agent, "sec.user_agent")
-        if self.sec.user_agent != "Lowell Mason sec-edgar-ingest mason.lowell@mac.com":
+        if self.sec.user_agent != OWNER_USER_AGENT:
             raise ValueError("sec.user_agent must use the accepted owner identity")
         require_number(self.sec.requests_per_second, "sec.requests_per_second", positive=True)
-        if self.sec.requests_per_second > 3:
+        if self.sec.requests_per_second > REQUEST_BUDGET_PER_SECOND:
             raise ValueError("sec.requests_per_second exceeds the accepted shared request budget")
-        if type(self.sec.max_active_collectors) is not int or self.sec.max_active_collectors != 1:
+        if type(self.sec.max_active_collectors) is not int or self.sec.max_active_collectors != ACTIVE_COLLECTOR_LIMIT:
             raise ValueError("sec.max_active_collectors must equal 1")
         for label in ("max_attempts", "max_received_bytes", "max_expanded_bytes"):
             require_number(getattr(self.http, label), "http." + label, positive=True, integer=True)
         for label in ("retry_base_seconds", "retry_cap_seconds", "connect_timeout_seconds",
                       "read_timeout_seconds", "exchange_deadline_seconds"):
             require_number(getattr(self.http, label), "http." + label, positive=True)
-        if self.http.max_attempts > 5 or self.http.retry_cap_seconds < self.http.retry_base_seconds:
+        if self.http.max_attempts > HTTP_ATTEMPT_LIMIT or self.http.retry_cap_seconds < self.http.retry_base_seconds:
             raise ValueError("http retry settings exceed the accepted attempts or reverse the delay bounds")
         if self.http.exchange_deadline_seconds > MAX_EXCHANGE_SECONDS or self.http.max_received_bytes > MAX_RECEIVED_BYTES or self.http.max_expanded_bytes > MAX_EXPANDED_BYTES:
             raise ValueError("http guard settings exceed accepted acquisition bounds")
         for label in ("lease_seconds", "renew_every_seconds"):
             require_number(getattr(self.coordination, label), "coordination." + label, positive=True)
         require_number(self.coordination.clock_uncertainty_seconds, "coordination.clock_uncertainty_seconds")
-        if self.coordination.clock_uncertainty_seconds > 2:
+        if self.coordination.clock_uncertainty_seconds > CLOCK_UNCERTAINTY_LIMIT_SECONDS:
             raise ValueError("coordination.clock_uncertainty_seconds exceeds accepted bound")
         if self.coordination.renew_every_seconds >= self.coordination.lease_seconds:
             raise ValueError("coordination requires 0 < renew_every_seconds < lease_seconds")
@@ -178,7 +186,7 @@ class Settings(Record):
         require_text(self.worker.provenance, "worker.provenance")
         if type(self.jobs.replica_retry_limit) is not int or self.jobs.replica_retry_limit != 0:
             raise ValueError("jobs.replica_retry_limit must equal 0")
-        if type(self.orchestration.transient_replays) is not int or not 0 <= self.orchestration.transient_replays <= 1:
+        if type(self.orchestration.transient_replays) is not int or not 0 <= self.orchestration.transient_replays <= TRANSIENT_REPLAY_LIMIT:
             raise ValueError("orchestration.transient_replays must be at most 1")
         if self.reconciliation.require_withdrawal_approval is not True:
             raise ValueError("reconciliation.require_withdrawal_approval must be true")
@@ -198,7 +206,6 @@ class Settings(Record):
     @property
     def config_sha256(self) -> str:
         return hashlib.sha256(canonical_json(self.to_mapping())).hexdigest()
-
 
 
 def _validate_storage(storage: StorageSettings) -> None:
@@ -230,7 +237,7 @@ def _validate_storage(storage: StorageSettings) -> None:
 def _validate_azure_policy(settings: Settings) -> None:
     if settings.fixture is not None:
         raise ValueError("fixture overrides are permitted only for local-fixture storage")
-    if settings.sec.requests_per_second != 3:
+    if settings.sec.requests_per_second != REQUEST_BUDGET_PER_SECOND:
         raise ValueError("azure request budget must match the deployment binding")
     if "fixture" in settings.worker.provenance.lower() or "synthetic" in settings.worker.provenance.lower() or settings.worker.image_digest == "sha256:" + "0" * 64:
         raise ValueError("synthetic fixture image is forbidden for Azure")
@@ -240,7 +247,7 @@ def _validate_azure_policy(settings: Settings) -> None:
             or settings.http.max_received_bytes != MAX_RECEIVED_BYTES
             or settings.http.max_expanded_bytes != MAX_EXPANDED_BYTES):
         raise ValueError("lower HTTP guard overrides are fixture-only")
-    if not 15 <= settings.coordination.lease_seconds <= 60:
+    if not AZURE_LEASE_MIN_SECONDS <= settings.coordination.lease_seconds <= AZURE_LEASE_MAX_SECONDS:
         raise ValueError("azure finite lease_seconds must be in the supported 15..60 second range")
 
 

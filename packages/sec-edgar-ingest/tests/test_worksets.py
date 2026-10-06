@@ -4,7 +4,7 @@ import importlib.util
 import json
 import unittest
 from dataclasses import FrozenInstanceError, replace
-from datetime import date, datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from support import fixture_context, fixture_settings, fixture_source, fixture_workset
