@@ -546,6 +546,7 @@ class Permit(Record):
     takeover_after: datetime
     start_before_mono: float
     deadline_mono: float
+    next_allowed_at: datetime | None = None
 
     def __post_init__(self):
         validate_record_fields(self)
@@ -556,6 +557,8 @@ class Permit(Record):
             require_utc(getattr(self, label), label)
         if not self.must_start_before <= self.must_end_by <= self.takeover_after:
             raise ValueError("permit ownership windows are reversed")
+        if self.next_allowed_at is not None:
+            require_utc(self.next_allowed_at, "next_allowed_at")
         require_number(self.start_before_mono, "start_before_mono")
         require_number(self.deadline_mono, "deadline_mono")
         if self.deadline_mono < self.start_before_mono:

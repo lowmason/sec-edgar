@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterator, Mapping
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Protocol
 
@@ -35,15 +35,49 @@ class ClockUncertain(Exception):
 
 
 @dataclass(frozen=True, slots=True)
+class TimeBounds:
+    """Server UTC at one monotonic observation; Date precision and RTT are included."""
+    lower: datetime
+    upper: datetime
+    monotonic_at: float
+
+    def __post_init__(self):
+        require_utc(self.lower, "server lower")
+        require_utc(self.upper, "server upper")
+        require_number(self.monotonic_at, "observation monotonic")
+        if self.upper < self.lower:
+            raise ClockUncertain("server interval is reversed")
+
+    def at(self, monotonic_now: float) -> "TimeBounds":
+        require_number(monotonic_now, "monotonic_now")
+        elapsed = monotonic_now - self.monotonic_at
+        if elapsed < 0:
+            raise ClockUncertain("monotonic clock moved backwards")
+        delta = timedelta(seconds=elapsed)
+        return TimeBounds(self.lower + delta, self.upper + delta, monotonic_now)
+
+
+@dataclass(frozen=True, slots=True)
 class LeaseHandle:
     owner_id: str
     lease_id: str
     observed_until: datetime
+    acquired_upper: datetime | None = None
+    ownership_until_upper: datetime | None = None
+    observation: TimeBounds | None = None
 
     def __post_init__(self):
         require_text(self.owner_id, "owner_id")
         require_text(self.lease_id, "lease_id")
         require_utc(self.observed_until, "observed_until")
+        for label in ("acquired_upper", "ownership_until_upper"):
+            value = getattr(self, label)
+            if value is not None:
+                require_utc(value, label)
+        if self.ownership_until_upper is not None and self.ownership_until_upper < self.observed_until:
+            raise ClockUncertain("upper expiry cannot precede lower validity")
+        if self.observation is not None and not isinstance(self.observation, TimeBounds):
+            raise ValueError("lease observation must be TimeBounds")
 
 
 class StateStore(Protocol):
@@ -66,6 +100,9 @@ class LeaseStore(Protocol):
     def renew(self, handle: LeaseHandle) -> LeaseHandle: ...
     def release(self, handle: LeaseHandle) -> None: ...
     def assert_owned(self, handle: LeaseHandle) -> None: ...
+    def observe_time(self, handle: LeaseHandle | None = None) -> TimeBounds: ...
+    def read_journal(self, handle: LeaseHandle) -> Versioned: ...
+    def write_journal(self, handle: LeaseHandle, value: dict[str, object], version: str) -> Versioned: ...
 
 
 def observe(observer: BoundaryObserver | None, point: str) -> None:

@@ -19,7 +19,7 @@ from azure.storage.blob import BlobLeaseClient, BlobServiceClient
 from ..config import ACCOUNT_NAME, LOCK_BLOB, Settings
 from ..models import Versioned, parse_json, require_hash, require_number, require_text, require_utc, safe_relative_path
 from .contracts import (AlreadyExists, BoundaryObserver, ClockUncertain, Conflict, FILE_CHUNK_BYTES,
-                        LeaseHandle, OwnershipLost, REGISTRY_PATH, deployment_binding, exact_version,
+                        LeaseHandle, OwnershipLost, TimeBounds, REGISTRY_PATH, deployment_binding, exact_version,
                         identity, observe, payload_bytes, table_for, validate_raw_address)
 
 RETRY_OPTIONS = dict(retry_total=0, retry_connect=0, retry_read=0, retry_status=0)
@@ -249,6 +249,7 @@ class AzureLeaseStore:
     def _capture(self, observed):
         def capture(response):
             observed["date"] = response.http_response.headers.get("Date")
+            observed["etag"] = response.http_response.headers.get("ETag")
             if response.http_response.status_code < 400:
                 try:
                     server_date = parsedate_to_datetime(observed["date"] or "")
@@ -258,7 +259,7 @@ class AzureLeaseStore:
                 observed["server_date"] = server_date
         return capture
 
-    def _bounded_until(self, before: datetime, mono: float, observed: dict) -> datetime:
+    def _observation(self, before: datetime, mono: float, observed: dict) -> TimeBounds:
         after = self.clock.now()
         require_utc(after, "clock.now")
         elapsed = self.clock.monotonic() - mono
@@ -272,7 +273,14 @@ class AzureLeaseStore:
                 or abs((after - before).total_seconds() - elapsed) > self.uncertainty_seconds
                 or server_date > after + uncertainty or server_date + timedelta(seconds=1) < before - uncertainty):
             raise ClockUncertain("Storage server observation exceeds the accepted uncertainty")
-        return min(before, server_date) + timedelta(seconds=self.lease_seconds) - uncertainty
+        # Date is rounded to whole seconds. The entire measured operation RTT bounds response transit.
+        if 1 + elapsed > self.uncertainty_seconds:
+            raise ClockUncertain("Storage Date precision plus RTT exceeds the accepted uncertainty")
+        return TimeBounds(server_date, server_date + timedelta(seconds=1 + elapsed), self.clock.monotonic())
+
+    def _bounded_until(self, before: datetime, mono: float, observed: dict) -> datetime:
+        bounds = self._observation(before, mono, observed)
+        return min(before, bounds.lower) + timedelta(seconds=self.lease_seconds - self.uncertainty_seconds)
 
     def _current(self, handle: LeaseHandle) -> None:
         require_utc(self.clock.now(), "clock.now")
@@ -302,9 +310,11 @@ class AzureLeaseStore:
             raise
         if not lease.id:
             raise OwnershipLost("Storage did not return an actual acquired lease ID")
-        until = self._bounded_until(before, mono, observed)
+        bounds = self._observation(before, mono, observed)
+        until = min(before, bounds.lower) + timedelta(seconds=self.lease_seconds - self.uncertainty_seconds)
         observe(self.observer, "lease.after_acquire")
-        return LeaseHandle(owner, lease.id, until)
+        return LeaseHandle(owner, lease.id, until, bounds.upper,
+                           bounds.upper + timedelta(seconds=self.lease_seconds), bounds)
 
     def renew(self, handle: LeaseHandle) -> LeaseHandle:
         self._current(handle)
@@ -318,9 +328,11 @@ class AzureLeaseStore:
             raise
         if lease.id != handle.lease_id:
             raise OwnershipLost("Storage renewal did not confirm the actual lease ID")
-        until = self._bounded_until(before, mono, observed)
+        bounds = self._observation(before, mono, observed)
+        until = min(before, bounds.lower) + timedelta(seconds=self.lease_seconds - self.uncertainty_seconds)
         observe(self.observer, "lease.after_renew")
-        return LeaseHandle(handle.owner_id, lease.id, until)
+        return LeaseHandle(handle.owner_id, lease.id, until, handle.acquired_upper,
+                           bounds.upper + timedelta(seconds=self.lease_seconds), bounds)
 
     def release(self, handle: LeaseHandle) -> None:
         self._current(handle)
@@ -332,7 +344,25 @@ class AzureLeaseStore:
             raise
         observe(self.observer, "lease.after_release")
 
+    def observe_time(self, handle: LeaseHandle | None = None) -> TimeBounds:
+        if handle is None:
+            self._ensure_sentinel()
+        else:
+            self._current(handle)
+        before, mono, observed = self._start()
+        try:
+            self.blob.get_blob_properties(lease=handle.lease_id if handle is not None else None,
+                                          raw_response_hook=self._capture(observed))
+        except HttpResponseError as error:
+            if error.status_code in (404, 409, 412):
+                raise OwnershipLost("sentinel clock observation failed ownership") from error
+            raise
+        return self._observation(before, mono, observed)
+
     def assert_owned(self, handle: LeaseHandle) -> None:
+        self.read_journal(handle)
+
+    def read_journal(self, handle: LeaseHandle) -> Versioned:
         self._current(handle)
         before, mono, observed = self._start()
         hook = self._capture(observed)
@@ -341,14 +371,39 @@ class AzureLeaseStore:
             version = _etag(properties.etag)
             body = self.blob.download_blob(lease=handle.lease_id, etag=version, match_condition=MatchConditions.IfNotModified,
                                            max_concurrency=1, raw_response_hook=hook).readall()
+            # Reads alone do not prove Blob lease ownership. This exact rewrite fences the read.
             self.blob.upload_blob(body, overwrite=True, lease=handle.lease_id, etag=version,
                                   match_condition=MatchConditions.IfNotModified, raw_response_hook=hook)
         except HttpResponseError as error:
             if error.status_code in (404, 409, 412):
-                raise OwnershipLost("fixed sentinel no longer recognizes the actual lease") from error
+                raise OwnershipLost("fixed sentinel no longer recognizes the actual lease/version") from error
             raise
-        self._bounded_until(before, mono, observed)
+        self._observation(before, mono, observed)
         self._current(handle)
+        value = parse_json(body)
+        if not isinstance(value, dict):
+            raise Conflict("sentinel journal must be a JSON object")
+        observe(self.observer, "journal.after_read")
+        return Versioned(value, _etag(observed.get("etag")))
+
+    def write_journal(self, handle: LeaseHandle, value: dict[str, object], version: str) -> Versioned:
+        exact_version(version)
+        self._current(handle)
+        body = payload_bytes(value)
+        before, mono, observed = self._start()
+        observe(self.observer, "journal.before_write")
+        try:
+            self.blob.upload_blob(body, overwrite=True, lease=handle.lease_id, etag=version,
+                                  match_condition=MatchConditions.IfNotModified,
+                                  raw_response_hook=self._capture(observed))
+        except HttpResponseError as error:
+            if error.status_code in (404, 409, 412):
+                raise OwnershipLost("sentinel write lost the actual lease or exact version") from error
+            raise
+        self._observation(before, mono, observed)
+        self._current(handle)
+        observe(self.observer, "journal.after_write")
+        return Versioned(parse_json(body), _etag(observed.get("etag")))
 
 
 def open_azure_stores(settings: Settings, *, observer: BoundaryObserver | None = None):

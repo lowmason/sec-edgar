@@ -4,9 +4,11 @@ from __future__ import annotations
 import errno
 import hashlib
 import io
+import math
 import os
 import sqlite3
 import stat
+import time
 import uuid
 from collections.abc import Iterator
 from contextlib import contextmanager
@@ -15,12 +17,13 @@ from pathlib import Path
 
 from ..config import LOCK_BLOB
 from ..models import Versioned, parse_json, require_hash, require_number, require_text, require_utc, safe_relative_path
-from .contracts import (AlreadyExists, BoundaryObserver, CAS_ATTEMPTS, Conflict, FILE_CHUNK_BYTES,
-                        LeaseHandle, OwnershipLost, REGISTRY_PATH, SENTINEL_PATH, deployment_binding,
+from .contracts import (AlreadyExists, BoundaryObserver, CAS_ATTEMPTS, ClockUncertain, Conflict, FILE_CHUNK_BYTES,
+                        LeaseHandle, OwnershipLost, TimeBounds, REGISTRY_PATH, SENTINEL_PATH, deployment_binding,
                         exact_version, identity, observe, payload_bytes, table_for, validate_raw_address)
 
 DIRECTORY_FLAGS = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
 FILE_FLAGS = os.O_RDONLY | os.O_NOFOLLOW
+SQLITE_INIT_ATTEMPTS = 3
 
 
 class LocalObjectStore:
@@ -146,10 +149,21 @@ class LocalStateStore:
         self.page_size = page_size
         self.observer = observer
         self._closed = False
-        with self._connection() as connection:
-            connection.execute("PRAGMA journal_mode=WAL")
-            connection.execute("CREATE TABLE IF NOT EXISTS records (table_name TEXT NOT NULL, partition TEXT NOT NULL, key TEXT NOT NULL, value TEXT NOT NULL, version TEXT NOT NULL, PRIMARY KEY(table_name, partition, key))")
-            connection.commit()
+        for attempt in range(SQLITE_INIT_ATTEMPTS):
+            try:
+                with self._connection() as connection:
+                    if connection.execute("PRAGMA journal_mode").fetchone()[0] != "wal":
+                        mode = connection.execute("PRAGMA journal_mode=WAL").fetchone()[0]
+                        if mode != "wal":
+                            raise Conflict("local state did not confirm WAL mode")
+                    connection.execute("CREATE TABLE IF NOT EXISTS records (table_name TEXT NOT NULL, partition TEXT NOT NULL, key TEXT NOT NULL, value TEXT NOT NULL, version TEXT NOT NULL, PRIMARY KEY(table_name, partition, key))")
+                    connection.commit()
+                break
+            except sqlite3.OperationalError as error:
+                # Competing WAL transitions can return BUSY without honoring the busy timeout.
+                # Closing the losing connection releases its read lock before bounded retry.
+                if error.sqlite_errorcode & 0xff != sqlite3.SQLITE_BUSY or attempt == SQLITE_INIT_ATTEMPTS-1:
+                    raise
 
     @contextmanager
     def _connection(self):
@@ -215,8 +229,13 @@ class LocalStateStore:
 
 
 class _WallClock:
+    precision_seconds = 0.000001
+
     def now(self) -> datetime:
         return datetime.now(timezone.utc)
+
+    def monotonic(self) -> float:
+        return time.monotonic()
 
 
 class LocalLeaseStore:
@@ -231,6 +250,13 @@ class LocalLeaseStore:
             except Conflict:
                 self.objects.read(SENTINEL_PATH)
         self.clock = clock or _WallClock()
+        self.observer = observer
+        # A private sentinel table shares the lease transaction, never a Table/StateStore pacing row.
+        with self.store._connection() as connection:
+            connection.execute("CREATE TABLE IF NOT EXISTS sentinel_journal (identity TEXT PRIMARY KEY, value TEXT NOT NULL, version TEXT NOT NULL)")
+            connection.execute("INSERT OR IGNORE INTO sentinel_journal VALUES (?, ?, ?)",
+                               (LOCK_BLOB, "{}", uuid.uuid4().hex))
+            connection.commit()
 
     def close(self) -> None:
         self.store.close()
@@ -252,7 +278,9 @@ class LocalLeaseStore:
                     self.store.insert("_Lease", LOCK_BLOB, value)
                 else:
                     self.store.replace("_Lease", LOCK_BLOB, value, current.version)
-                return LeaseHandle(owner, lease_id, until)
+                observation = self.observe_time()
+                observe(self.observer, "lease.after_acquire")
+                return LeaseHandle(owner, lease_id, until, observation.upper, until, observation)
             except (AlreadyExists, Conflict):
                 continue
         raise Conflict("lease acquisition exhausted conditional races")
@@ -278,7 +306,9 @@ class LocalLeaseStore:
             self.store.replace("_Lease", LOCK_BLOB, value, row.version)
         except Conflict as error:
             raise OwnershipLost("lease changed during renewal") from error
-        return LeaseHandle(handle.owner_id, handle.lease_id, until)
+        observation = self.observe_time()
+        observe(self.observer, "lease.after_renew")
+        return LeaseHandle(handle.owner_id, handle.lease_id, until, handle.acquired_upper, until, observation)
 
     def release(self, handle: LeaseHandle) -> None:
         row = self._owned(handle)
@@ -288,3 +318,81 @@ class LocalLeaseStore:
             self.store.replace("_Lease", LOCK_BLOB, value, row.version)
         except Conflict as error:
             raise OwnershipLost("lease changed during release") from error
+
+        observe(self.observer, "lease.after_release")
+
+    def observe_time(self, handle: LeaseHandle | None = None) -> TimeBounds:
+        if handle is not None:
+            self._owned(handle)
+        monotonic = self.clock.monotonic if hasattr(self.clock, "monotonic") else time.monotonic
+        before = monotonic()
+        now = self.clock.now()
+        after = monotonic()
+        require_utc(now, "fixture server clock")
+        elapsed = after - before
+        if not math.isfinite(elapsed) or elapsed < 0:
+            raise ClockUncertain("local server paired sampling has invalid monotonic elapsed")
+        precision = getattr(self.clock, "precision_seconds", 0)
+        require_number(precision, "clock sample precision")
+        upper = now + timedelta(microseconds=math.ceil((elapsed + precision)*1_000_000))
+        return TimeBounds(now, upper, after)
+
+    @contextmanager
+    def _sentinel_transaction(self, handle: LeaseHandle):
+        with self.store._connection() as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            partition, key = identity("_Lease", LOCK_BLOB)
+            row = connection.execute("SELECT value FROM records WHERE table_name=? AND partition=? AND key=?",
+                                     (table_for("_Lease"), partition, key)).fetchone()
+            lease = parse_json(row[0]) if row is not None else None
+            now = self.clock.now()
+            require_utc(now, "fixture server clock")
+            if (lease is None or lease["lease_id"] != handle.lease_id or lease["owner_id"] != handle.owner_id
+                    or datetime.fromisoformat(lease["expires_at"]) <= now):
+                connection.rollback()
+                raise OwnershipLost("sentinel transaction has lost the actual lease")
+            yield connection
+            connection.commit()
+
+    def read_journal(self, handle: LeaseHandle) -> Versioned:
+        with self._sentinel_transaction(handle) as connection:
+            body, version = connection.execute("SELECT value, version FROM sentinel_journal WHERE identity=?", (LOCK_BLOB,)).fetchone()
+        observe(self.observer, "journal.after_read")
+        return Versioned(parse_json(body), version)
+
+    def write_journal(self, handle: LeaseHandle, value: dict[str, object], version: str) -> Versioned:
+        exact_version(version)
+        body, next_version = payload_bytes(value).decode(), uuid.uuid4().hex
+        observe(self.observer, "journal.before_write")
+        with self._sentinel_transaction(handle) as connection:
+            changed = connection.execute("UPDATE sentinel_journal SET value=?, version=? WHERE identity=? AND version=?",
+                                         (body, next_version, LOCK_BLOB, version)).rowcount
+            if changed != 1:
+                connection.rollback()
+                raise Conflict("sentinel journal version changed")
+        observe(self.observer, "journal.after_write")
+        return Versioned(parse_json(body), next_version)
+
+
+    def release_clean(self, handle: LeaseHandle, value: dict[str, object], version: str) -> Versioned:
+        """Finalize a positively drained journal and finite lease in one durable sentinel transaction."""
+        exact_version(version)
+        if value.get("clean_release") is not True or value.get("owner_id") != handle.owner_id:
+            raise ValueError("atomic clean release requires the positively drained owner journal")
+        body, next_version = payload_bytes(value).decode(), uuid.uuid4().hex
+        observe(self.observer, "lease.before_clean_release")
+        with self._sentinel_transaction(handle) as connection:
+            observe(self.observer, "journal.before_clean_release")
+            changed = connection.execute("UPDATE sentinel_journal SET value=?, version=? WHERE identity=? AND version=?",
+                                         (body, next_version, LOCK_BLOB, version)).rowcount
+            if changed != 1:
+                connection.rollback()
+                raise Conflict("atomic release journal version changed")
+            partition, key = identity("_Lease", LOCK_BLOB)
+            lease_body = connection.execute("SELECT value FROM records WHERE table_name=? AND partition=? AND key=?",
+                                            (table_for("_Lease"), partition, key)).fetchone()[0]
+            lease = parse_json(lease_body)
+            lease["expires_at"] = self.clock.now().isoformat()
+            connection.execute("UPDATE records SET value=?, version=? WHERE table_name=? AND partition=? AND key=?",
+                               (payload_bytes(lease).decode(), uuid.uuid4().hex, table_for("_Lease"), partition, key))
+        return Versioned(parse_json(body), next_version)
