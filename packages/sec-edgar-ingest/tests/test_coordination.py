@@ -80,6 +80,26 @@ class JournalContractTests(unittest.TestCase):
                          "Expiry/takeover need the server upper bound, never the lower observed_until")
         self.assertEqual(handle.ownership_until_upper, FixtureClock().now()+timedelta(seconds=61.5))
 
+    def test_azure_receive_sample_must_anchor_the_interval_without_unmeasured_delay(self):
+        clock = FixtureClock()
+        origin = clock.now()
+        clock.advance(0.95)
+        leases, _ = self.azure_leases([], clock)
+        original_monotonic = clock.monotonic
+        samples = 0
+        def receive_sample():
+            nonlocal samples
+            samples += 1
+            if samples == 2:
+                clock.advance(0.25)
+            return original_monotonic()
+        clock.monotonic = receive_sample
+        bounds = leases._observation(origin+timedelta(seconds=0.9), 0.9, {"server_date": origin})
+        current = bounds.at(clock.monotonic())
+        self.assertLessEqual(current.lower, clock.now())
+        self.assertGreaterEqual(current.upper, clock.now(),
+                                "A later monotonic anchor must not omit elapsed time from the accepted server interval")
+
     def test_date_precision_plus_rtt_must_fit_two_second_bound(self):
         from sec_edgar_ingest.storage.contracts import ClockUncertain
         from test_azure_contracts import response
@@ -306,6 +326,75 @@ class CoordinationTests(unittest.TestCase):
         h.reserve("daily-b")
         self.assertEqual(h.maximum_active, 1)
         self.assertEqual([owner for owner, _ in h.starts], ["backfill-a", "daily-b"])
+
+    def test_refresh_return_pause_cannot_compress_actual_transport_starts(self):
+        from support import fixture_clock
+        directory = self.enterContext(tempfile.TemporaryDirectory())
+        clock = fixture_clock()
+        h = self.harness(Path(directory), clock)
+        self.addCleanup(h.close)
+        h.start("one", "backfill")
+        turn = h.turns["one"]
+        original_refresh = turn._refresh
+        def paused_after_refresh():
+            bounds = original_refresh()
+            turn._refresh = original_refresh
+            clock.advance(0.25)
+            return bounds
+        turn._refresh = paused_after_refresh
+        permit = turn.reserve("paused-return")
+        clock.advance(permit.start_before_mono-clock.monotonic()-0.00001)
+        h.dispatch("one", permit)
+        h.finish_request("one")
+        h.start("two", "daily")
+        h.reserve("two")
+        spacing = (h.starts[1][1]-h.starts[0][1]).total_seconds()
+        self.assertGreaterEqual(spacing, 1/3,
+                                "Latest permissible dispatch UTC must advance through a pause after refresh returned")
+
+    def test_turn_deadline_conversion_cannot_add_the_delay_after_utc_sampling(self):
+        from support import fixture_clock
+        directory = self.enterContext(tempfile.TemporaryDirectory())
+        clock = fixture_clock()
+        coordinator, _ = self.build(Path(directory), clock)
+        deadline = clock.now()+timedelta(seconds=1)
+        expected = clock.monotonic()+1
+        original_now = clock.now
+        def paused_after_wall_sample():
+            instant = original_now()
+            clock.now = original_now
+            clock.advance(0.25)
+            return instant
+        clock.now = paused_after_wall_sample
+        with coordinator.turn("bounded-turn", "daily", deadline) as turn:
+            self.assertLessEqual(turn.deadline_mono, expected,
+                                 "A turn deadline must not extend an absolute UTC deadline by a later mono sample")
+
+    def test_validity_conversion_cannot_add_the_delay_between_monotonic_samples(self):
+        from support import fixture_clock
+        directory = self.enterContext(tempfile.TemporaryDirectory())
+        clock = fixture_clock()
+        h = self.harness(Path(directory), clock)
+        self.addCleanup(h.close)
+        h.start("one", "daily")
+        turn = h.turns["one"]
+        observation = turn.handle.observation
+        expected = observation.monotonic_at + (turn.handle.observed_until-observation.upper).total_seconds()
+        original_monotonic = clock.monotonic
+        samples = 0
+        def delayed_second_sample():
+            nonlocal samples
+            samples += 1
+            if samples == 2:
+                clock.advance(0.25)
+            return original_monotonic()
+        clock.monotonic = delayed_second_sample
+        try:
+            validity = turn._validity_mono(turn.handle)
+        finally:
+            clock.monotonic = original_monotonic
+        self.assertLessEqual(validity, expected,
+                             "Conservative validity must not extend the confirmed UTC expiry by a second sample delay")
 
     def test_delayed_dispatch_cannot_compress_actual_socket_starts(self):
         from support import fixture_clock

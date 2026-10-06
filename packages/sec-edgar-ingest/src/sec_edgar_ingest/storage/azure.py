@@ -262,7 +262,8 @@ class AzureLeaseStore:
     def _observation(self, before: datetime, mono: float, observed: dict) -> TimeBounds:
         after = self.clock.now()
         require_utc(after, "clock.now")
-        elapsed = self.clock.monotonic() - mono
+        received_mono = self.clock.monotonic()
+        elapsed = received_mono - mono
         try:
             server_date = observed.get("server_date")
             require_utc(server_date, "Storage Date")
@@ -276,7 +277,7 @@ class AzureLeaseStore:
         # Date is rounded to whole seconds. The entire measured operation RTT bounds response transit.
         if 1 + elapsed > self.uncertainty_seconds:
             raise ClockUncertain("Storage Date precision plus RTT exceeds the accepted uncertainty")
-        return TimeBounds(server_date, server_date + timedelta(seconds=1 + elapsed), self.clock.monotonic())
+        return TimeBounds(server_date, server_date + timedelta(seconds=1 + elapsed), received_mono)
 
     def _bounded_until(self, before: datetime, mono: float, observed: dict) -> datetime:
         bounds = self._observation(before, mono, observed)

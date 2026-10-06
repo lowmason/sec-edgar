@@ -190,10 +190,11 @@ class Coordinator:
         require_utc(deadline, "deadline")
         if self._active is not None:
             raise ValueError("a coordinator can have one active turn")
+        mono = self.clock.monotonic()
         remaining = (deadline - self.clock.now()).total_seconds()
         if remaining <= 0:
             raise TimeoutError("turn deadline has expired")
-        deadline_mono = self.clock.monotonic() + remaining
+        deadline_mono = mono + remaining
         bounds = self._time()
         ticket = QueueTicket(uuid.uuid4().hex, owner_id, priority, bounds.upper,
                              bounds.lower + timedelta(seconds=remaining))
@@ -321,7 +322,7 @@ class Turn:
 
     def _validity_mono(self, handle: LeaseHandle) -> float:
         bounds = handle.observation.at(self.coordinator.clock.monotonic())
-        return self.coordinator.clock.monotonic() + (handle.observed_until-bounds.upper).total_seconds()
+        return bounds.monotonic_at + (handle.observed_until-bounds.upper).total_seconds()
 
     def _lose(self, reason: str) -> None:
         with self._lock:
@@ -421,6 +422,7 @@ class Turn:
                         continue
                     self.coordinator.clock.sleep(min(delay, remaining))
                 mono = self.coordinator.clock.monotonic()
+                bounds = bounds.at(mono)
                 # Charge the latest admissible dispatch, not just the reservation instant.
                 dispatch_seconds = 1 / self.coordinator.settings.sec.requests_per_second
                 deadline_mono = min(self.deadline_mono, mono+self.exchange_seconds)
