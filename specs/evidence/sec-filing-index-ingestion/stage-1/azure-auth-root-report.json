@@ -1,0 +1,29 @@
+{
+  "root_report_received_at_utc": "2026-10-05T23:13:05.217073+00:00",
+  "timestamp_limitation": "Receipt time for root-reported observations; exact call access time not retained here",
+  "authorization": [
+    "Please install Azure CLI",
+    "I would much rather you get an Azure authentication or resource setup."
+  ],
+  "observations": [
+    {
+      "command": "az login --output none",
+      "exit_code": 0,
+      "result": "Browser authentication successful; sole available subscription 1 selected for CLI session only"
+    },
+    {
+      "command": "az account show --query '{cloud:environmentName,tenantId:tenantId,subscriptionId:id,subscriptionName:name,state:state,user:user.name,userType:user.type}' --output json",
+      "exit_code": 0,
+      "result": {
+        "cloud": "AzureCloud",
+        "state": "Enabled",
+        "subscriptionId": "3c92a216-8ed6-4897-b741-11ed287b8617",
+        "subscriptionName": "LGM Consulting",
+        "tenantId": "0bb72127-3aa2-408f-a5e4-ba9abcfc6db6",
+        "user": "mason.lowell@mac.com",
+        "userType": "user"
+      }
+    }
+  ],
+  "limitation": "Root-reported cached account metadata only; no effective role authority proven, no resource created or read. CLI session subscription selection is not an accepted deployment binding. No credential or token data retained."
+}

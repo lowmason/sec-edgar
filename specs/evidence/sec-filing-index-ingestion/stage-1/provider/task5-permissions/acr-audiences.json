@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "evidence_id": "T5-PERM-acr-audiences",
+  "source_url": "https://learn.microsoft.com/en-us/Azure/container-registry/container-registry-disable-authentication-as-arm",
+  "retrieved_at_utc": "2026-10-06T01:11:54Z",
+  "source_version": "Rolling registry token audience guide",
+  "retrieval_method": "public Microsoft Learn via web.run; curated extract",
+  "status": "success",
+  "extract": "Registry default enabled accepts both ARM-scoped and ACR-scoped Entra authentication. Disabled accepts only ACR-scoped authentication. Some Azure services/integrations may fail with ACR-only configuration; compatibility must be tested. ACR-scoped login uses az login --scope https://containerregistry.azure.net/.default.",
+  "limitations": "Documentation evidence only. No Azure authorization or live operation tested."
+}

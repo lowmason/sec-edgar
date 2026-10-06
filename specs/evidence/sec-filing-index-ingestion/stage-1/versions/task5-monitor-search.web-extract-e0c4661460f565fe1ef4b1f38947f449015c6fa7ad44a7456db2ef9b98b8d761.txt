@@ -1,0 +1,1023 @@
+Microsoft.Insights/scheduledQueryRules 2023-12-01 - Bicep, ARM template & Terraform AzAPI reference | Microsoft Learn (https://learn.microsoft.com/ga-ie/azure/templates/microsoft.insights/2023-12-01/scheduledqueryrules)
+citeturn84search0 [wordlim: 200] Published: 1.8 years ago; Crawled: 5 months ago; type  | The resource type  | "Microsoft.Insights/scheduledQueryRules@2023-12-01" ... description  | The description of the scheduled query rule.  | string
+
+# Microsoft.Insights scheduledQueryRules 2023-12-01
+
+Aiseolas
+
+## San alt seo
+
+  * Latest
+  * 2026-03-01
+  * 2025-01-01-preview
+  * 2023-12-01
+  * 2023-03-15-preview
+  * 2022-08-01-preview
+  * 2022-06-15
+  * 2021-08-01
+  * 2021-02-01-preview
+  * 2020-05-01-preview
+  * 2018-04-16
+
+## Remarks
+
+For guidance on deploying monitoring solutions, see Create monitoring resources by using Bicep.
+
+## Bicep resource definition
+
+The scheduledQueryRules resource type can be deployed with operations that target:
+
+  * Resource groups - See resource group deployment commands
+
+For a list of changed properties in each API version, see change log.
+
+## Resource format
+
+To create a Microsoft.Insights/scheduledQueryRules resource, add the following Bicep to your template.
+    
+    `resource symbolicname 'Microsoft.Insights/scheduledQueryRules@2023-12-01' = {
+      identity: {
+        type: 'string'
+## Usage Examples
+
+### Azure Quickstart Templates
+
+The following Azure Quickstart templates deploy this resource type.
+
+Template  | Description
+--- | ---
+Create alert rule for azure business continuity items
+ | This templates creates an alert rule and user assigned MSI. It also assigns the MSI reader access to the subscription so that the alert rule has access to query the required protected items and latest recovery point details.
+
+## Terraform (AzAPI provider) resource definition
+
+The scheduledQueryRules resource type can be deployed with operations that target:
+
+  * Resource groups
+
+For a list of changed properties in each API version, see change log.
+
+## Resource format
+
+To create a Microsoft.Insights/scheduledQueryRules resource, add the following Terraform to your template.
+    
+    `resource "azapi_resource" "symbolicname" {
+      type = "Microsoft.Insights/scheduledQueryRules@2023-12-01"
+      name = "string"
+      parent_id = "string"
+      identity {
+## Property Values
+
+### Microsoft.Insights/scheduledQueryRules
+
+Name  | Description  | Value
+--- | --- | ---
+identity  | The identity of the resource.  | Identity
+kind  | Indicates the type of scheduled query rule. The default is LogAlert.  | 'LogAlert'
+'LogToMetric'
+location  | The geo-location where the resource lives  | string (required)
+name  | The resource name  | string
+Constraints:
+Pattern = `^[^#<>%&:\?/{}*]{1,260}$` (required)
+properties  | The rule properties of the resource.  | ScheduledQueryRuleProperties (required)
+tags  | Resource tags  | Dictionary of tag names and values.
+type  | The resource type  | "Microsoft.Insights/scheduledQueryRules@2023-12-01"
+
+### Actions
+
+Name  | Description  | Value
+--- | --- | ---
+actionGroups  | Action Group resource Ids to invoke when the alert fires.  | string[]
+actionProperties  | The properties of an action properties.  | ActionsActionProperties
+customProperties  | The properties of an alert payload.  | ActionsCustomProperties
+--------------------------------------------------------------------------------
+Microsoft.Insights/actionGroups - Bicep, ARM template & Terraform AzAPI reference | Microsoft Learn (https://learn.microsoft.com/en-us/azure/templates/microsoft.insights/actiongroups?pivots=deployment-language-bicep)
+citeturn84search1 [wordlim: 200] Crawled: 3 days ago;     resource actionGroup 'Microsoft.Insights/actionGroups@2023-01-01' = { ...     resource "azapi_resource" "actionGroup" {
+
+# Microsoft.Insights actionGroups
+
+Feedback
+
+Summarize this article for me
+
+Choose a deployment language
+
+Bicep ARM template Terraform
+
+## In this article
+
+  1. Remarks
+  2. Bicep resource definition
+  3. Usage Examples
+  4. Resource format
+  5. Property Values
+
+API Versions:
+
+Latest
+
+## Remarks
+
+For guidance on deploying monitoring solutions, see Create monitoring resources by using Bicep.
+
+## Bicep resource definition
+
+The actionGroups resource type can be deployed with operations that target:
+
+  * Resource groups - See resource group deployment commands
+
+For a list of changed properties in each API version, see change log.
+
+## Usage Examples
+
+### Bicep Samples
+
+A basic example of deploying Action Group within Azure Monitor.
+
+Bicep
+
+Copy
+    
+    `param location string = 'westeurope'
+    param resourceName string = 'acctest0001'
+    
+    resource actionGroup 'Microsoft.Insights/actionGroups@2023-01-01' = {
+      name: resourceName
+## Terraform (AzAPI provider) resource definition
+
+The actionGroups resource type can be deployed with operations that target:
+
+  * Resource groups For a list of changed properties in each API version, see change log.
+
+## Usage Examples
+
+### Terraform Samples
+
+A basic example of deploying Action Group within Azure Monitor.
+
+Terraform
+
+Copy
+    
+    `terraform {
+      required_providers {
+        azapi = {
+          source = "Azure/azapi"
+        }
+      }
+    }
+    
+    provider "azapi" {
+      skip_provider_registration = false
+    }
+    
+    variable "resource_name" {
+      type    = string
+      default = "acctest0001"
+    }
+    
+    variable "location" {
+      type    = string
+      default = "westeurope"
+    }
+    
+    resource "azapi_resource" "resourceGroup" {
+      type     = "Microsoft.Resources/resourceGroups@2020-06-01"
+      name     = var.resource_name
+      location = var.location
+    }
+    
+    resource "azapi_resource" "actionGroup" {
+      type      = "Microsoft.Insights/actionGroups@2023-01-01"
+--------------------------------------------------------------------------------
+Microsoft. Insights/scheduledQueryRules 01.12.2023 - Bicep, ARM template & Terraform AzAPI reference | Microsoft Learn (https://learn.microsoft.com/de-de/azure/templates/microsoft.insights/2023-12-01/scheduledqueryrules)
+citeturn84search2 [wordlim: 200] Published: 7 months ago; Crawled: 2 months ago; | ScheduledQueryRuleProperties (erforderlich) ... Art  | Der Ressourcentyp  | "Microsoft.Insights/scheduledQueryRules@2023-12-01"
+
+Hinweis
+
+Für den Zugriff auf diese Seite ist eine Autorisierung erforderlich. Sie können versuchen, sich anzumelden oder das Verzeichnis zu wechseln.
+
+Für den Zugriff auf diese Seite ist eine Autorisierung erforderlich. Sie können versuchen, das Verzeichnis zu wechseln.
+
+# Microsoft. Insights scheduledQueryRules am 01.12.2023
+
+Feedback
+
+Auswählen einer Bereitstellungssprache
+
+Bicep ARM-Vorlage Terraform
+
+## In diesem Artikel
+
+  1. Bemerkungen
+  2. Bicep-Ressourcendefinition
+  3. Verwendungsbeispiele
+  4. Ressourcenformat
+  5. Eigenschaftswerte
+
+API Versions:
+
+2023-12-01
+
+## Bemerkungen
+
+Für Hinweise zur Bereitstellung von Überwachungslösungen siehe Erstellen Sie Überwachungsressourcen mit Bicep.
+
+## Bicep-Ressourcendefinition
+
+Der ressourcentyp "scheduledQueryRules" kann mit Vorgängen bereitgestellt werden, die auf Folgendes abzielen:
+
+  * Resource groups - Siehe resource group deployment-Befehle
+
+Eine Liste der geänderten Eigenschaften in jeder API-Version finden Sie unter Änderungsprotokoll.
+
+JSON
+
+Kopieren
+    
+    `{
+      "type": "Microsoft.Insights/scheduledQueryRules",
+      "apiVersion": "2023-12-01",
+      "name": "string",
+      "identity": {
+        "type": "string",
+        "userAssignedIdentities": {
+          "{customized property}": {
+          }
+        }
+      },
+      "kind": "string",
+      "location": "string",
+      "properties": {
+        "actions": {
+          "actionGroups": [ "string" ],
+          "actionProperties": {
+            "{customized property}": "string"
+          },
+          "customProperties": {
+            "{customized property}": "string"
+          }
+        },
+        "autoMitigate": "bool",
+        "checkWorkspaceAlertsStorageConfigured": "bool",
+        "criteria": {
+          "allOf": [
+            {
+              "dimensions": [
+                {
+                  "name": "string",
+                  "operator": "string",
+                  "values": [ "string" ]
+                }
+              ],
+              "failingPeriods": {
+                "minFailingPeriodsToAlert": "int",
+                "numberOfEvaluationPeriods": "int"
+              },
+              "metricMeasureColumn": "string",
+              "metricName": "string",
+              "operator": "string",
+              "query": "string",
+              "resourceIdColumn": "string",
+              "threshold": "int",
+              "timeAggregation": "string"
+            }
+          ]
+        },
+        "description": "string",
+        "displayName": "string",
+        "enabled": "bool",
+        "evaluationFrequency": "string",
+        "muteActionsDuration": "string",
+        "overrideQueryTimeRange": "string",
+        "resolveConfiguration": {
+          "autoResolved": "bool",
+          "timeToResolve": "string"
+        },
+        "scopes": [ "string" ],
+        "severity": "int",
+        "skipQueryValidation": "bool",
+        "targetResourceTypes": [ "string" ],
+        "windowSize": "string"
+      },
+      "tags": {
+        "{customized property}": "string"
+      }
+    }
+    `
+
+## Eigenschaftswerte
+
+### Microsoft.Insights/scheduledQueryRules
+
+Tabelle erweitern
+
+Name  | Beschreibung  | Wert
+--- | --- | ---
+apiVersion (Englisch)  | Die API-Version  | '2023-12-01'
+Identität  | Die Identität der Ressource.  | Identität
+Art  | Gibt den Typ der geplanten Abfrageregel an. Der Standardwert ist LogAlert.  | 'Log-Alarm'
+'LogToMetric'
+Ort  | Der geografische Standort, an dem sich die Ressource befindet  | Zeichenfolge (erforderlich)
+Name  | Der Ressourcenname  | Schnur
+Zwänge:
+Pattern = `^[^#<>%&:\?/{}*]{1,260}$` (erforderlich)
+Eigenschaften  | Die Regeleigenschaften der Ressource.  | ScheduledQueryRuleProperties (erforderlich)
+Schilder  | Ressourcentags  | Wörterbuch der Tagnamen und -werte. Siehe Tags in Vorlagen
+Art  | Der Ressourcentyp  | "Microsoft.Insights/scheduledQueryRules"
+
+### Aktionen
+
+Tabelle erweitern
+
+Name  | Beschreibung  | Wert
+--- | --- | ---
+Aktionsgruppen  | Aktionsgruppenressourcen-IDs, die beim Auslösen der Warnung aufgerufen werden sollen.            }
+          scopes = [
+            "string"
+          ]
+          severity = int
+          skipQueryValidation = bool
+          targetResourceTypes = [
+            "string"
+          ]
+          windowSize = "string"
+        }
+      }
+    }
+    `
+
+## Eigenschaftswerte
+
+### Microsoft.Insights/scheduledQueryRules
+
+Tabelle erweitern
+
+Name  | Beschreibung  | Wert
+--- | --- | ---
+Identität  | Die Identität der Ressource.  | Identität
+Art  | Gibt den Typ der geplanten Abfrageregel an. Der Standardwert ist LogAlert.  | 'Log-Alarm'
+'LogToMetric'
+Ort  | Der geografische Standort, an dem sich die Ressource befindet  | Zeichenfolge (erforderlich)
+Name  | Der Ressourcenname  | Schnur
+Zwänge:
+Pattern = `^[^#<>%&:\?/{}*]{1,260}$` (erforderlich)
+Eigenschaften  | Die Regeleigenschaften der Ressource.  | ScheduledQueryRuleProperties (erforderlich)
+Schilder  | Ressourcentags  | Wörterbuch der Tagnamen und -werte.
+Art  | Der Ressourcentyp  | "Microsoft.Insights/scheduledQueryRules@2023-12-01"
+
+--------------------------------------------------------------------------------
+Microsoft. Insights/scheduledQueryRules 2023-12-01 - Bicep, ARM template & Terraform AzAPI reference | Microsoft Learn (https://learn.microsoft.com/sv-se/azure/templates/microsoft.insights/2023-12-01/scheduledqueryrules)
+citeturn84search3 [wordlim: 200] Published: 1.3 years ago; Crawled: 2 months ago;     resource scheduledQueryRule 'Microsoft.Insights/scheduledQueryRules@2021-08-01' = { ... typ  | Resurstypen  | "Microsoft.Insights/scheduledQueryRules@2023-12-01"
+
+Åtkomst till den här sidan kräver auktorisering. Du kan prova att logga in eller ändra kataloger.
+
+Åtkomst till den här sidan kräver auktorisering. Du kan prova att ändra kataloger.
+
+# Microsoft. Insikter schemalagdQueryRules 2023-12-01
+
+Feedback
+
+Välj ett distributionsspråk
+
+Bicep ARM-mall Terraform
+
+## I den här artikeln
+
+  1. Anmärkningar
+  2. Bicep-resursdefinition
+  3. Användningsexempel
+  4. Resursformat
+  5. Egenskapsvärden
+
+API Versions:
+
+2023-12-01
+
+## Anmärkningar
+
+För vägledning om hur man implementerar övervakningslösningar, se Create övervakningsresurser genom att använda Bicep.
+
+## Bicep-resursdefinition
+
+Resurstypen scheduledQueryRules kan distribueras med åtgärder som mål:
+
+  * Resursgrupper - Se resursgruppsutplaceringskommandon
+
+En lista över ändrade egenskaper i varje API-version finns i ändringsloggen.
+
+## Användningsexempel
+
+### Bicep-exempel
+
+Ett grundläggande exempel på att distribuera AlertingAction Scheduled Query Rules-resursen inom Azure Monitor.
+## Egenskapsvärden
+
+### Microsoft.Insights/scheduledQueryRules
+
+Expandera tabell
+
+Namn  | Beskrivning  | Värde
+--- | --- | ---
+apiVersion  | API-versionen  | '2023-12-01'
+identitet  | Resursens identitet.  | Identitet
+sort  | Anger typen av schemalagd frågeregel. Standardvärdet är LogAlert.  | "LogAlert"
+"LogToMetric"
+plats  | Den geo-plats där resursen finns  | sträng (krävs)
+Namn  | Resursnamnet  | sträng
+Begränsningar:
+Mönster = `^[^#<>%&:\?/{}*]{1,260}$` (krävs)
+Egenskaper  | Resursens regelegenskaper.  | ScheduledQueryRuleProperties (krävs)
+Taggar  | Resurstaggar  | Ordlista med taggnamn och värden. Se Taggar i mallar
+typ  | Resurstypen  | "Microsoft.Insights/scheduledQueryRules"
+
+### Åtgärder
+
+Expandera tabell
+
+Namn  | Beskrivning  | Värde
+--- | --- | ---
+aktionsgrupper  | Resurs-ID för åtgärdsgrupp som ska anropas när aviseringen utlöses.  | sträng[]
+actionProperties  | Egenskaperna för en åtgärdsegenskaper.  | ActionsActionProperties
+                  {
+                    name = "string"
+                    operator = "string"
+                    values = [
+                      "string"
+                    ]
+                  }
+                ]
+                failingPeriods = {
+                  minFailingPeriodsToAlert = int
+                  numberOfEvaluationPeriods = int
+                }
+                metricMeasureColumn = "string"
+                metricName = "string"
+                operator = "string"
+                query = "string"
+                resourceIdColumn = "string"
+                threshold = int
+                timeAggregation = "string"
+              }
+            ]
+          }
+          description = "string"
+          displayName = "string"
+          enabled = bool
+          evaluationFrequency = "string"
+          muteActionsDuration = "string"
+          overrideQueryTimeRange = "string"
+          resolveConfiguration = {
+            autoResolved = bool
+            timeToResolve = "string"
+          }
+          scopes = [
+            "string"
+          ]
+          severity = int
+          skipQueryValidation = bool
+          targetResourceTypes = [
+            "string"
+          ]
+          windowSize = "string"
+        }
+      }
+    }
+    `
+
+## Egenskapsvärden
+
+### Microsoft.Insights/scheduledQueryRules
+
+Expandera tabell
+
+Namn  | Beskrivning  | Värde
+--- | --- | ---
+identitet  | Resursens identitet.  | Identitet
+sort  | Anger typen av schemalagd frågeregel. Standardvärdet är LogAlert.  | "LogAlert"
+"LogToMetric"
+plats  | Den geo-plats där resursen finns  | sträng (krävs)
+Namn  | Resursnamnet  | sträng
+Begränsningar:
+Mönster = `^[^#<>%&:\?/{}*]{1,260}$` (krävs)
+Egenskaper  | Resursens regelegenskaper.  | ScheduledQueryRuleProperties (krävs)
+Taggar  | Resurstaggar  | Ordlista med taggnamn och värden.
+typ  | Resurstypen  | "Microsoft.Insights/scheduledQueryRules@2023-12-01"
+
+--------------------------------------------------------------------------------
+Microsoft.Insights/activityLogAlerts - Bicep, ARM template & Terraform AzAPI reference | Microsoft Learn (https://learn.microsoft.com/en-us/azure/templates/microsoft.insights/activitylogalerts)
+citeturn84search4 [wordlim: 200] Published: 1.8 years ago; Crawled: 2 months ago;     resource actionGroup 'Microsoft.Insights/actionGroups@2023-01-01' = {
+
+Copy
+    
+    `param location string = 'westeurope'
+    param resourceName string = 'acctest0001'
+    
+    resource actionGroup 'Microsoft.Insights/actionGroups@2023-01-01' = {
+      name: resourceName
+      location: 'global'
+      properties: {
+        armRoleReceivers: []
+        automationRunbookReceivers: []
+        azureAppPushReceivers: []
+        azureFunctionReceivers: []
+        emailReceivers: []
+        enabled: true
+        eventHubReceivers: []
+        groupShortName: 'acctestag1'
+        itsmReceivers: []
+        logicAppReceivers: []
+        smsReceivers: []
+        voiceReceivers: []
+        webhookReceivers: []
+      }
+    }
+    
+    resource actionGroup2 'Microsoft.Insights/actionGroups@2023-01-01' = {
+      name: resourceName
+      location: 'global'
+      properties: {
+        armRoleReceivers: []
+        automationRunbookReceivers: []
+        azureAppPushReceivers: []
+        azureFunctionReceivers: []
+        emailReceivers: []
+        enabled: true
+        eventHubReceivers: []
+        groupShortName: 'acctestag2'
+--------------------------------------------------------------------------------
+Microsoft. Insights/scheduledQueryRules 2023-12-01 - Bicep, ARM template & Terraform AzAPI reference | Microsoft Learn (https://learn.microsoft.com/fr-fr/azure/templates/microsoft.insights/2023-12-01/scheduledqueryrules)
+citeturn84search5 [wordlim: 200] Published: 1.3 years ago; Crawled: 2 months ago; | ScheduledQueryRuleProperties (obligatoire) ... type  | Type de ressource  | « Microsoft.Insights/scheduledQueryRules@2023-12-01 »
+
+# Microsoft. Insights programmésQueryRules 2023-12-01
+
+Commentaires
+
+Choisir une langue de déploiement
+
+Bicep Modèle ARM Terraform
+
+## Dans cet article
+
+  1. Remarques
+  2. Définition de ressource Bicep
+  3. Exemples d’utilisation
+  4. Format de ressource
+  5. Valeurs de propriété
+
+API Versions:
+
+2023-12-01
+
+## Remarques
+
+Pour des conseils sur le déploiement de solutions de surveillance, voir Créer des ressources de surveillance en utilisant Bicep.
+
+## Définition de ressource Bicep
+
+Le type de ressource scheduledQueryRules peut être déployé avec des opérations qui ciblent :
+
+  * Resource groups - Voir c1resource groups
+
+Pour obtenir la liste des propriétés modifiées dans chaque version de l’API, consultez journal des modifications.
+
+## Exemples d’utilisation
+
+### Exemples Bicep
+
+Un exemple de base de déploiement de la ressource AlertingAction Scheduled Query Rules dans Azure Monitor.
+
+Bicep
+
+Copier
+    
+    `param resourceName string = 'acctest0001'
+
+JSON
+
+Copier
+    
+    `{
+      "type": "Microsoft.Insights/scheduledQueryRules",
+      "apiVersion": "2023-12-01",
+      "name": "string",
+      "identity": {
+        "type": "string",
+        "userAssignedIdentities": {
+          "{customized property}": {
+          }
+        }
+      },
+      "kind": "string",
+      "location": "string",
+      "properties": {
+        "actions": {
+          "actionGroups": [ "string" ],
+          "actionProperties": {
+            "{customized property}": "string"
+          },
+          "customProperties": {
+            "{customized property}": "string"
+          }
+        },
+        "autoMitigate": "bool",
+        "checkWorkspaceAlertsStorageConfigured": "bool",
+        "criteria": {
+          "allOf": [
+            {
+              "dimensions": [
+                {
+                  "name": "string",
+                  "operator": "string",
+                  "values": [ "string" ]
+                }
+              ],
+              "failingPeriods": {
+                "minFailingPeriodsToAlert": "int",
+                "numberOfEvaluationPeriods": "int"
+              },
+              "metricMeasureColumn": "string",
+              "metricName": "string",
+              "operator": "string",
+              "query": "string",
+              "resourceIdColumn": "string",
+              "threshold": "int",
+              "timeAggregation": "string"
+            }
+          ]
+        },
+        "description": "string",
+        "displayName": "string",
+        "enabled": "bool",
+        "evaluationFrequency": "string",
+        "muteActionsDuration": "string",
+        "overrideQueryTimeRange": "string",
+        "resolveConfiguration": {
+          "autoResolved": "bool",
+          "timeToResolve": "string"
+        },
+        "scopes": [ "string" ],
+        "severity": "int",
+        "skipQueryValidation": "bool",
+        "targetResourceTypes": [ "string" ],
+        "windowSize": "string"
+      },
+      "tags": {
+        "{customized property}": "string"
+      }
+    }
+    `
+
+            "string"
+          ]
+          severity = int
+          skipQueryValidation = bool
+          targetResourceTypes = [
+            "string"
+          ]
+          windowSize = "string"
+        }
+      }
+    }
+    `
+
+## Valeurs de propriété
+
+### Microsoft.Insights/scheduledQueryRules
+
+Agrandir le tableau
+
+Nom  | Descriptif  | Valeur
+--- | --- | ---
+identité  | Identité de la ressource.  | Identité
+gentil  | Indique le type de règle de requête planifiée. La valeur par défaut est LogAlert.  | 'LogAlert'
+'LogToMetric'
+emplacement  | Emplacement géographique où réside la ressource  | chaîne (obligatoire)
+nom  | Nom de la ressource  | corde
+Contraintes:
+Modèle = `^[^#<>%&:\?/{}*]{1,260}$` (obligatoire)
+Propriétés  | Propriétés de la règle de la ressource.  | ScheduledQueryRuleProperties (obligatoire)
+étiquettes  | Balises de ressource  | Dictionnaire de noms et de valeurs d’étiquettes.
+type  | Type de ressource  | « Microsoft.Insights/scheduledQueryRules@2023-12-01 »
+
+--------------------------------------------------------------------------------
+Microsoft。Insights/scheduledQueryRules 2023-12-01 - Bicep, ARM template & Terraform AzAPI reference | Microsoft Learn (https://learn.microsoft.com/ja-jp/azure/templates/microsoft.insights/2023-12-01/scheduledqueryrules)
+citeturn84search6 [wordlim: 200] Published: 2 months ago; Crawled: 2 months ago;     resource "azapi_resource" "scheduledQueryRule" { ... 型  | リソースの種類  | 「Microsoft.Insights/scheduledQueryRules@2023-12-01」
+
+Note
+
+このページにアクセスするには、承認が必要です。 サインインまたはディレクトリの変更を試すことができます。
+
+このページにアクセスするには、承認が必要です。 ディレクトリの変更を試すことができます。
+
+# Microsoft。Insights scheduledQueryRules 2023-12-01
+
+フィードバック
+
+デプロイ言語を選択する
+
+Bicep ARM テンプレート Terraform
+
+## この記事の内容
+
+  1. 備考
+  2. Bicep リソース定義
+  3. 使用例
+  4. リソースの形式
+  5. プロパティ値
+
+API Versions:
+
+2023-12-01
+
+## 備考
+
+モニタリングソリューションの導入に関するガイダンスについては、Bicepを使ってモニタリングリソースを作成してください。
+
+## Bicep リソース定義
+
+scheduledQueryRules リソースの種類は、次を対象とする操作と共にデプロイできます。
+
+  * Resource groups - リソースグループのデプロイコマンド
+--------------------------------------------------------------------------------
+Microsoft. Insights/scheduledQueryRules 2023-12-01 - Bicep, ARM template & Terraform AzAPI reference | Microsoft Learn (https://learn.microsoft.com/pt-pt/azure/templates/microsoft.insights/2023-12-01/scheduledqueryrules)
+citeturn84search7 [wordlim: 200] Published: 7 months ago; Crawled: last month;     resource "azapi_resource" "scheduledQueryRule" { ... tipo  | O tipo de recurso  | "Microsoft.Insights/scheduledQueryRules@2023-12-01"
+
+# Microsoft. Insights scheduledQueryRules 2023-12-01
+
+Comentários
+
+Escolha um idioma de implantação
+
+Bicep Modelo ARM Terraform
+
+## Neste artigo
+
+  1. Comentários
+  2. Definição de recursos do bíceps
+  3. Exemplos de uso
+  4. Formato do recurso
+  5. Valores de propriedade
+
+API Versions:
+
+2023-12-01
+
+## Comentários
+
+Para orientações sobre a implementação de soluções de monitorização, consulte Criar recursos de monitorização utilizando o Bicep.
+
+## Definição de recursos do bíceps
+
+O tipo de recurso scheduledQueryRules pode ser implantado com operações que visam:
+
+  * Resource groups - Ver comandos de implementação resource groups
+
+Para obter uma lista de propriedades alteradas em cada versão da API, consulte log de alterações.
+
+## Exemplos de uso
+
+### Amostras de bíceps
+
+Um exemplo básico de implementação do recurso AlertingAction Scheduled Query Rules dentro do Azure Monitor.
+
+Bicep
+
+Copiar
+    
+    `param resourceName string = 'acctest0001'
+--------------------------------------------------------------------------------
+Microsoft. Approfondimenti/scheduledQueryRules 2023-12-01 - Bicep, ARM template & Terraform AzAPI reference | Microsoft Learn (https://learn.microsoft.com/it-it/azure/templates/microsoft.insights/2023-12-01/scheduledqueryrules)
+citeturn84search8 [wordlim: 200] Published: 1.3 years ago; Crawled: last month; | ScheduledQueryRuleProperties (obbligatorio) ... digitare  | Tipo di risorsa  | "Microsoft.Insights/scheduledQueryRules@2023-12-01"
+
+# Microsoft. Approfondimenti programmatiQueryRegole 2023-12-01
+
+Commenti e suggerimenti
+
+Scegliere una lingua di distribuzione
+
+Bicep Modello ARM Terraform
+
+## In questo articolo
+
+  1. Osservazioni
+  2. Definizione di risorsa Bicep
+  3. Esempi di utilizzo
+  4. Formato risorsa
+  5. Valori delle proprietà
+
+API Versions:
+
+2023-12-01
+
+## Osservazioni
+
+Per indicazioni sull'implementazione di soluzioni di monitoraggio, vedi Crea risorse di monitoraggio utilizzando Bicep.
+
+## Definizione di risorsa Bicep
+
+Il tipo di risorsa scheduledQueryRules può essere distribuito con operazioni destinate a:
+
+  * Resource groups - Vedi resource group
+
+Per un elenco delle proprietà modificate in ogni versione dell'API, vedere log delle modifiche.
+
+## Esempi di utilizzo
+
+### Esempi bicep
+
+Un esempio base di distribuzione della risorsa AlertingAction Scheduled Query Rules all'interno di Monitoraggio di Azure.
+
+Bicep
+
+Copia
+    
+    `param resourceName string = 'acctest0001'
+--------------------------------------------------------------------------------
+microsoft.insights/actionGroups 2018-03-01 - Bicep, ARM template & Terraform AzAPI reference | Microsoft Learn (https://learn.microsoft.com/en-us/azure/templates/microsoft.insights/2018-03-01/actiongroups)
+citeturn84search9 [wordlim: 200] Published: 1.8 years ago; Crawled: 2 months ago;     resource actionGroup 'Microsoft.Insights/actionGroups@2023-01-01' = { ...     resource "azapi_resource" "actionGroup" {
+
+Copy
+    
+    `param location string = 'westeurope'
+    param resourceName string = 'acctest0001'
+    
+    resource actionGroup 'Microsoft.Insights/actionGroups@2023-01-01' = {
+      name: resourceName
+      location: 'global'
+      properties: {
+        armRoleReceivers: []
+        automationRunbookReceivers: []
+        azureAppPushReceivers: []
+        azureFunctionReceivers: []
+        emailReceivers: []
+        enabled: true
+        eventHubReceivers: []
+        groupShortName: 'acctestag'
+        itsmReceivers: []
+        logicAppReceivers: []
+        smsReceivers: []
+        voiceReceivers: []
+        webhookReceivers: []
+      }
+    }
+
+## Resource format
+
+To create a microsoft.insights/actionGroups resource, add the following Bicep to your template.
+
+Bicep
+
+Copy
+    
+    `resource symbolicname 'microsoft.insights/actionGroups@2018-03-01' = {
+      location: 'string'
+      name: 'string'
+      properties: {
+        automationRunbookReceivers: [
+          {
+            automationAccountId: 'string'
+            isGlobalRunbook: bool
+## Usage Examples
+
+### Terraform Samples
+
+A basic example of deploying Action Group within Azure Monitor.
+
+Terraform
+
+Copy
+    
+    `terraform {
+      required_providers {
+        azapi = {
+          source = "Azure/azapi"
+        }
+      }
+    }
+    
+    provider "azapi" {
+      skip_provider_registration = false
+    }
+    
+    variable "resource_name" {
+      type    = string
+      default = "acctest0001"
+    }
+    
+    variable "location" {
+      type    = string
+      default = "westeurope"
+    }
+    
+    resource "azapi_resource" "resourceGroup" {
+      type     = "Microsoft.Resources/resourceGroups@2020-06-01"
+      name     = var.resource_name
+      location = var.location
+    }
+    
+    resource "azapi_resource" "actionGroup" {
+      type      = "Microsoft.Insights/actionGroups@2023-01-01"
+      parent_id = azapi_resource.resourceGroup.id
+      name      = var.resource_name
+      location  = "global"
+      body = {
+        properties = {
+          armRoleReceivers = [
+          ]
+          automationRunbookReceivers = [
+--------------------------------------------------------------------------------
+microsoft.insights/actionGroups 2017-04-01 - Bicep, ARM template & Terraform AzAPI reference | Microsoft Learn (https://learn.microsoft.com/en-us/azure/templates/microsoft.insights/2017-04-01/actiongroups)
+citeturn84search10 [wordlim: 200] Published: 1.8 years ago; Crawled: last month;     resource "azapi_resource" "actionGroup" {      type      = "Microsoft.Insights/actionGroups@2023-01-01"
+    }
+    
+    variable "resource_name" {
+      type    = string
+      default = "acctest0001"
+    }
+    
+    variable "location" {
+      type    = string
+      default = "westeurope"
+    }
+    
+    resource "azapi_resource" "resourceGroup" {
+      type     = "Microsoft.Resources/resourceGroups@2020-06-01"
+      name     = var.resource_name
+      location = var.location
+    }
+    
+    resource "azapi_resource" "actionGroup" {
+      type      = "Microsoft.Insights/actionGroups@2023-01-01"
+      parent_id = azapi_resource.resourceGroup.id
+      name      = var.resource_name
+      location  = "global"
+      body = {
+        properties = {
+          armRoleReceivers = [
+          ]
+          automationRunbookReceivers = [
+          ]
+          azureAppPushReceivers = [
+          ]
+          azureFunctionReceivers = [
+          ]
+          emailReceivers = [
+          ]
+          enabled = true
+          eventHubReceivers = [
+          ]
+          groupShortName = "acctestag"
+          itsmReceivers = [
+          ]
+          logicAppReceivers = [
+          ]
+          smsReceivers = [
+          ]
+          voiceReceivers = [
+          ]
+          webhookReceivers = [
+          ]
+        }
+      }
+      schema_validation_enabled = false
+      response_export_values    = ["*"]
+    }
+    `
+
+--------------------------------------------------------------------------------
+Microsoft. Инсайты/расписаниеПравила запроса 2023-12-01 - Bicep, ARM template & Terraform AzAPI reference | Microsoft Learn (https://learn.microsoft.com/ru-ru/azure/templates/microsoft.insights/2023-12-01/scheduledqueryrules)
+citeturn84search11 [wordlim: 200] Published: 7 months ago; Crawled: 2 months ago; | ScheduledQueryRuleProperties (обязательно) ... тип  | Тип ресурса  | "Microsoft.Insights/scheduledQueryRules@2023-12-01"
+
+# Microsoft. Insights scheduledQueryRules 2023-12-01
+
+Обратная связь
+
+Выбор языка развертывания
+
+Bicep Шаблон ARM Terraform
+
+## В этой статье
+
+  1. Замечания
+  2. Определение ресурсов Bicep
+  3. Примеры использования
+  4. Формат ресурса
+  5. Значения свойств
+
+API Versions:
+
+2023-12-01
+
+## Замечания
+
+Для рекомендаций по внедрению решений для мониторинга см. Создание мониторинговых ресурсов с помощью Bicep.
+
+## Определение ресурсов Bicep
+
+Тип ресурса scheduledQueryRules можно развернуть с помощью операций, целевых:
+
+  * группы ресурсов - см. команды развертывания групп ресурсов
+
+Для получения списка изменённых свойств в каждой версии API см. журнал изменений.
+

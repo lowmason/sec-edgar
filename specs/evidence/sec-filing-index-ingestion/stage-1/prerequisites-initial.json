@@ -1,0 +1,53 @@
+{
+  "time_utc": "2026-10-05T23:06:45.855758+00:00",
+  "cwd": "/private/tmp/sec-edgar-stage-1-prerequisites-_dnzxoi8",
+  "results": [
+    {
+      "command": [
+        "docker",
+        "version"
+      ],
+      "exit_code": 127,
+      "stdout": "",
+      "stderr": "[Errno 2] No such file or directory: 'docker'"
+    },
+    {
+      "command": [
+        "docker",
+        "buildx",
+        "version"
+      ],
+      "exit_code": 127,
+      "stdout": "",
+      "stderr": "[Errno 2] No such file or directory: 'docker'"
+    },
+    {
+      "command": [
+        "uv",
+        "--version"
+      ],
+      "exit_code": 0,
+      "stdout": "uv 0.12.15 (Homebrew 2026-09-15 aarch64-apple-darwin)\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "az",
+        "version"
+      ],
+      "exit_code": 127,
+      "stdout": "",
+      "stderr": "[Errno 2] No such file or directory: 'az'"
+    },
+    {
+      "command": [
+        "az",
+        "bicep",
+        "version"
+      ],
+      "exit_code": 127,
+      "stdout": "",
+      "stderr": "[Errno 2] No such file or directory: 'az'"
+    }
+  ]
+}

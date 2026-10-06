@@ -1,0 +1,478 @@
+ (https://raw.githubusercontent.com/Azure/azure-sdk-for-python/azure-storage-blob_12.31.0/sdk/storage/azure-storage-blob/azure/storage/blob/_shared/constants.py)
+citeturn41view0 [wordlim: 200] Crawled: 3 days ago; Content type: text/plain; Source: open({"ref_id":"https://raw.githubusercontent.com/Azure/azure-sdk-for-python/azure-storage-blob_12.31.0/sdk/storage/azure-storage-blob/azure/storage/blob/_shared/constants.py","lineno":null}); Total lines: 20
+L0: # -------------------------------------------------------------------------
+L1: # Copyright (c) Microsoft Corporation. All rights reserved.
+L2: # Licensed under the MIT License. See License.txt in the project root for
+L3: # license information.
+L4: # --------------------------------------------------------------------------
+L5: 
+L6: from .._serialize import _SUPPORTED_API_VERSIONS
+L7: 
+L8: X_MS_VERSION = _SUPPORTED_API_VERSIONS[-1]
+L9: # Connection defaults
+L10: CONNECTION_TIMEOUT = 20
+L11: READ_TIMEOUT = 60
+L12: DATA_BLOCK_SIZE = 256 * 1024
+L13: 
+L14: DEFAULT_MAX_CONCURRENCY = 1
+L15: 
+L16: DEFAULT_OAUTH_SCOPE = "/.default"
+L17: STORAGE_OAUTH_SCOPE = "https://storage.azure.com/.default"
+L18: 
+L19: SERVICE_HOST_BASE = "core.windows.net"
+--------------------------------------------------------------------------------
+Internal Error ()
+citeturn41view1 [wordlim: 200] Source: open({"ref_id":"https://raw.githubusercontent.com/Azure/azure-sdk-for-python/azure-data-tables_12.7.0/sdk/tables/azure-data-tables/azure/data/tables/_constants.py","lineno":null}); Total lines: 1
+L0: Failed to fetch https://raw.githubusercontent.com/Azure/azure-sdk-for-python/azure-data-tables_12.7.0/sdk/tables/azure-data-tables/azure/data/tables/_constants.py: Cache miss
+--------------------------------------------------------------------------------
+ (https://raw.githubusercontent.com/Azure/azure-sdk-for-python/azure-storage-blob_12.31.0/sdk/storage/azure-storage-blob/azure/storage/blob/_serialize.py)
+citeturn41view2 [wordlim: 200] Crawled: 3 days ago; Content type: text/plain; Source: open({"ref_id":"https://raw.githubusercontent.com/Azure/azure-sdk-for-python/azure-storage-blob_12.31.0/sdk/storage/azure-storage-blob/azure/storage/blob/_serialize.py","lineno":null}); Total lines: 213
+L0: # -------------------------------------------------------------------------
+L1: # Copyright (c) Microsoft Corporation. All rights reserved.
+L2: # Licensed under the MIT License. See License.txt in the project root for
+L3: # license information.
+L4: # --------------------------------------------------------------------------
+L5: from typing import Any, cast, Dict, Optional, Tuple, Union, TYPE_CHECKING
+L6: 
+L7: try:
+L8:     from urllib.parse import quote
+L9: except ImportError:
+L10:     from urllib2 import quote  # type: ignore
+L11: from azure.core import MatchConditions
+L12: 
+L13: from ._generated.models import (
+L14:     ArrowConfiguration,
+L15:     BlobModifiedAccessConditions,
+L16:     BlobTag,
+L17:     BlobTags,
+L18:     ContainerCpkScopeInfo,
+L19:     CpkScopeInfo,
+L20:     DelimitedTextConfiguration,
+L21:     JsonTextConfiguration,
+L22:     LeaseAccessConditions,
+L23:     ModifiedAccessConditions,
+L24:     QueryFormat,
+L25:     QueryFormatType,
+L26:     QuerySerialization,
+L27:     SourceModifiedAccessConditions,
+L28: )
+L29: from ._models import ContainerEncryptionScope, DelimitedJsonDialect
+L30: if TYPE_CHECKING:
+L31:     from ._lease import BlobLeaseClient
+L32: 
+L33: _SUPPORTED_API_VERSIONS = [
+L34:     "2019-02-02",
+L35:     "2019-07-07",
+L36:     "2019-10-10",
+L37:     "2019-12-12",
+L38:     "2020-02-10",
+L39:     "2020-04-08",
+L40:     "2020-06-12",
+L41:     "2020-08-04",
+L42:     "2020-10-02",
+L43:     "2020-12-06",
+L44:     "2021-02-12",
+L45:     "2021-04-10",
+L46:     "2021-06-08",
+L47:     "2021-08-06",
+L48:     "2021-12-02",
+L49:     "2022-11-02",
+L50:     "2023-01-03",
+L51:     "2023-05-03",
+L52:     "2023-08-03",
+L53:     "2023-11-03",
+L54:     "2024-05-04",
+L55:     "2024-08-04",
+L56:     "2024-11-04",
+L57:     "2025-01-05",
+L58:     "2025-05-05",
+L59:     "2025-07-05",
+L60:     "2025-11-05",
+L61:     "2026-02-06",
+L62:     "2026-04-06",
+L63:     "2026-06-06",
+L64:     "2026-10-06",
+L65: ]
+L66: 
+L67: def _get_match_headers(
+L68:     kwargs: Dict[str, Any], match_param: str, etag_param: str
+L69: ) -> Tuple[Optional[str], Optional[Any]]:
+L70:     if_match = None
+L71:     if_none_match = None
+L72:     match_condition = kwargs.pop(match_param, None)
+L73:     if match_condition == MatchConditions.IfNotModified:
+L74:         if_match = kwargs.pop(etag_param, None)
+L75:         if not if_match:
+L76:             raise ValueError(f"'{match_param}' specified without '{etag_param}'.")
+L77:     elif match_condition == MatchConditions.IfPresent:
+L78:         if_match = "*"
+L79:     elif match_condition == MatchConditions.IfModified:
+L80:         if_none_match = kwargs.pop(etag_param, None)
+L81:         if not if_none_match:
+L82:             raise ValueError(f"'{match_param}' specified without '{etag_param}'.")
+L83:     elif match_condition == MatchConditions.IfMissing:
+L84:         if_none_match = "*"
+L85:     elif match_condition is None:
+L86:         if kwargs.get(etag_param):
+L87:             raise ValueError(f"'{etag_param}' specified without '{match_param}'.")
+L88:     else:
+L89:         raise TypeError(f"Invalid match condition: {match_condition}")
+L90:     return if_match, if_none_match
+L91: 
+L92: def get_access_conditions(lease: Optional[Union["BlobLeaseClient", str]]) -> Optional[LeaseAccessConditions]:
+L93:     try:
+L94:         lease_id = lease.id  # type: ignore
+L95:     except AttributeError:
+L96:         lease_id = lease  # type: ignore
+L97:     return LeaseAccessConditions(lease_id=lease_id) if lease_id else None
+L98: 
+L99: def get_modify_conditions(kwargs: Dict[str, Any]) -> ModifiedAccessConditions:
+L100:     if_match, if_none_match = _get_match_headers(kwargs, "match_condition", "etag")
+L101:     return ModifiedAccessConditions(
+L102:         if_modified_since=kwargs.pop("if_modified_since", None),
+L103:         if_unmodified_since=kwargs.pop("if_unmodified_since", None),
+L104:         if_match=if_match or kwargs.pop("if_match", None),
+L105:         if_none_match=if_none_match or kwargs.pop("if_none_match", None),
+L106:         if_tags=kwargs.pop("if_tags_match_condition", None),
+L107:     )
+L108: 
+L109: def get_blob_modify_conditions(kwargs: Dict[str, Any]) -> BlobModifiedAccessConditions:
+L110:     if_match, if_none_match = _get_match_headers(kwargs, "match_condition", "etag")
+L111:     return BlobModifiedAccessConditions(
+L112:         if_modified_since=kwargs.pop("if_modified_since", None),
+L113:         if_unmodified_since=kwargs.pop("if_unmodified_since", None),
+L114:         if_match=if_match or kwargs.pop("if_match", None),
+L115:         if_none_match=if_none_match or kwargs.pop("if_none_match", None),
+L116:     )
+L117: 
+L118: def get_source_conditions(kwargs: Dict[str, Any]) -> SourceModifiedAccessConditions:
+L119:     if_match, if_none_match = _get_match_headers(kwargs, "source_match_condition", "source_etag")
+L120:     return SourceModifiedAccessConditions(
+L121:         source_if_modified_since=kwargs.pop("source_if_modified_since", None),
+L122:         source_if_unmodified_since=kwargs.pop("source_if_unmodified_since", None),
+L123:         source_if_match=if_match or kwargs.pop("source_if_match", None),
+L124:         source_if_none_match=if_none_match or kwargs.pop("source_if_none_match", None),
+L125:         source_if_tags=kwargs.pop("source_if_tags_match_condition", None),
+L126:     )
+L127: 
+L128: def get_cpk_scope_info(kwargs: Dict[str, Any]) -> Optional[CpkScopeInfo]:
+L129:     if "encryption_scope" in kwargs:
+L130:         return CpkScopeInfo(encryption_scope=kwargs.pop("encryption_scope"))
+L131:     return None
+L132: 
+L133: def get_container_cpk_scope_info(kwargs: Dict[str, Any]) -> Optional[ContainerCpkScopeInfo]:
+L134:     encryption_scope = kwargs.pop("container_encryption_scope", None)
+L135:     if encryption_scope:
+L136:         if isinstance(encryption_scope, ContainerEncryptionScope):
+L137:             return ContainerCpkScopeInfo(
+L138:                 default_encryption_scope=encryption_scope.default_encryption_scope,
+L139:                 prevent_encryption_scope_override=encryption_scope.prevent_encryption_scope_override,
+L140:             )
+L141:         if isinstance(encryption_scope, dict):
+L142:             return ContainerCpkScopeInfo(
+L143:                 default_encryption_scope=encryption_scope["default_encryption_scope"],
+L144:                 prevent_encryption_scope_override=encryption_scope.get("prevent_encryption_scope_override"),
+L145:             )
+L146:         raise TypeError("Container encryption scope must be dict or type ContainerEncryptionScope.")
+L147:     return None
+L148: 
+L149: def get_api_version(kwargs: Dict[str, Any]) -> str:
+L150:     api_version = kwargs.get("api_version", None)
+L151:     if api_version and api_version not in _SUPPORTED_API_VERSIONS:
+L152:         versions = "\n".join(_SUPPORTED_API_VERSIONS)
+L153:         raise ValueError(f"Unsupported API version '{api_version}'. Please select from:\n{versions}")
+L154:     return api_version or _SUPPORTED_API_VERSIONS[-1]
+L155: 
+L156: def get_version_id(self_vid: Optional[str], kwargs: Dict[str, Any]) -> Optional[str]:
+L157:     if "version_id" in kwargs:
+L158:         return cast(str, kwargs.pop("version_id"))
+L159:     return self_vid
+L160: 
+L161: 
+L162: def serialize_blob_tags_header(tags: Optional[Dict[str, str]] = None) -> Optional[str]:
+L163:     if tags is None:
+L164:         return None
+L165:     components = []
+L166:     if tags:
+L167:         for key, value in tags.items():
+L168:             components.append(quote(key, safe=".-"))
+L169:             components.append("=")
+L170:             components.append(quote(value, safe=".-"))
+L171:             components.append("&")
+L172: 
+L173:     if components:
+L174:         del components[-1]
+L175: 
+L176:     return "".join(components)
+L177: 
+L178: def serialize_blob_tags(tags: Optional[Dict[str, str]] = None) -> BlobTags:
+L179:     tag_list = []
+L180:     if tags:
+L181:         tag_list = [BlobTag(key=k, value=v) for k, v in tags.items()]
+L182:     return BlobTags(blob_tag_set=tag_list)
+L183: 
+L184: def serialize_query_format(formater: Union[str, DelimitedJsonDialect]) -> Optional[QuerySerialization]:
+L185:     if formater == "ParquetDialect":
+L186:         qq_format = QueryFormat(type=QueryFormatType.PARQUET, parquet_text_configuration=" ")  # type: ignore [arg-type]
+L187:     elif isinstance(formater, DelimitedJsonDialect):
+L188:         json_serialization_settings = JsonTextConfiguration(record_separator=formater.delimiter)
+L189:         qq_format = QueryFormat(type=QueryFormatType.JSON, json_text_configuration=json_serialization_settings)
+L190:     elif hasattr(formater, "quotechar"):  # This supports a csv.Dialect as well
+L191:         try:
+L192:             headers = formater.has_header  # type: ignore
+L193:         except AttributeError:
+L194:             headers = False
+L195:         if isinstance(formater, str):
+L196:             raise ValueError("Unknown string value provided. Accepted values: ParquetDialect")
+L197:         csv_serialization_settings = DelimitedTextConfiguration(
+L198:             column_separator=formater.delimiter,
+L199:             field_quote=formater.quotechar,
+L200:             record_separator=formater.lineterminator,
+L201:             escape_char=formater.escapechar,
+L202:             headers_present=headers,
+L203:         )
+L204:         qq_format = QueryFormat(type=QueryFormatType.DELIMITED, delimited_text_configuration=csv_serialization_settings)
+L205:     elif isinstance(formater, list):
+L206:         arrow_serialization_settings = ArrowConfiguration(schema=formater)
+L207:         qq_format = QueryFormat(type=QueryFormatType.arrow, arrow_configuration=arrow_serialization_settings)
+L208:     elif not formater:
+L209:         return None
+L210:     else:
+L211:         raise TypeError("Format must be DelimitedTextDialect or DelimitedJsonDialect or ParquetDialect.")
+L212:     return QuerySerialization(format=qq_format)
+--------------------------------------------------------------------------------
+Status of asynchronous operations - Azure Resource Manager | Microsoft Learn (https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/async-operations)
+citeturn41view3 [wordlim: 200] Crawled: today; Content type: text/html; Source: open({"ref_id":"https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/async-operations","lineno":null}); Total lines: 235
+L0: cite0†Skip to main content cite1†Skip to Ask Learn chat experience L1: 
+L2: This browser is no longer supported.
+L3: 
+L4: Upgrade to Microsoft Edge to take advantage of the latest features, security updates, and technical support.
+L5: 
+L6: cite2†Download Microsoft Edge†go.microsoft.com cite3†More info about Internet Explorer and Microsoft Edge L7: 
+L8: Table of contents Exit editor mode
+L9: 
+L10: Ask Learn Ask Learn
+L11: 
+L12: Reading mode Table of contents cite1†Read in English Add Add to Plans cite4†Edit†github.com L13: 
+L14: * * *
+L15: 
+L16: Copy Markdown Print
+L17: 
+L18: * * *
+L19: 
+L20: Note
+L21: Access to this page requires authorization. You can try cite1†signing in or changing directories.
+L22: 
+L23: Access to this page requires authorization. You can try changing directories.
+L24: # Track asynchronous Azure operations
+L25: 
+L26: Feedback
+L27: 
+L28: Summarize this article for me
+L29: 
+L30: ## In this article
+L31: 
+L32: Some Azure REST operations run asynchronously because the operation can't be completed quickly. This article describes how to track the status of asynchronous operations through values returned in the response.
+L33: ## Status codes for asynchronous operations
+L34: 
+L35: An asynchronous operation initially returns an HTTP status code of either:
+L36: 
+L37:   * 201 (Created)
+L38:   * 202 (Accepted)
+L39: However, that status code doesn't necessarily mean the operation is asynchronous. An asynchronous operation also returns a value for `provisioningState` that indicates the operation isn't finished. The value can vary by operation but doesn't include Succeeded, Failed, or Canceled. Those three values indicate the operation finished. If no value is returned for `provisioningState`, the operation finished and succeeded.
+L40: 
+L41: When the operation successfully completes, it returns either:
+L42:   * 200 (OK)
+L43:   * 204 (No Content)
+L44: 
+L45: Refer to the cite5†REST API documentation to see the responses for the operation you're executing.
+L46: 
+L47: After getting the 201 or 202 response code, you're ready to monitor the status of the operation.
+L48: ## URL to monitor status
+L49: 
+L50: There are two different ways to monitor the status of the asynchronous operation. You determine the correct approach by examining the header values that are returned from your original request. First, look for:
+L51:   * `Azure-AsyncOperation` - URL for checking the ongoing status of the operation. If your operation returns this value, use it to track the status of the operation.
+L52:   * `Retry-After` - The number of seconds to wait before checking the status of the asynchronous operation.
+L53: 
+L54: If `Azure-AsyncOperation` isn't one of the header values, then look for:
+L55:   * `Location` - URL for determining when an operation is completed. Use this value only when `Azure-AsyncOperation` isn't returned.
+L56:   * `Retry-After` - The number of seconds to wait before checking the status of the asynchronous operation.
+L57: 
+L58: When the `Retry-after` header isn't returned, cite6†implement your own retry logic .
+L59: 
+L60: Note
+L61: 
+L62: Your REST client must accept a minimum URL size of 4 KB for `Azure-AsyncOperation` and `Location`.
+L63: ## Permission for tracking async status
+L64: 
+L65: To track the status of an asynchronous operation, you need sufficient permission at the resource group level. If you only have permission at the resource level, you can start the operation but you can't track its status. Resource group-level permission is required because the URL for tracking status isn't scoped to the resource.
+L66: For example, to start a virtual machine, you need the Virtual Machine Contributor role for the resource group that contains the virtual machine. The URL for tracking a start request doesn't include the virtual machine in its path.
+L67: 
+L68:     `GET
+L69:     https://management.azure.com/subscriptions/{subscription-id}/providers/Microsoft.Compute/locations/{region}/operations/{operation-id}?api-version=2019-12-01
+L70:     `
+L71: ## Azure-AsyncOperation request and response
+L72: If you have a URL from the `Azure-AsyncOperation` header value, send a GET request to that URL. Use the value from `Retry-After` to schedule how often to check the status. You get a response object that indicates the status of the operation. A different response is returned when checking the status of the operation with the `Location` URL. For more information about the response from a location URL, see cite7†Create storage account (202 with Location and Retry-After) .
+L73: The response properties can vary but always include the status of the asynchronous operation.
+L74: 
+L75:     `{
+L76:         "status": "{status-value}"
+L77:     }
+L78:     `
+L79: The following example shows other values that might be returned from the operation:
+L80: 
+L81:     `{
+L82:         "id": "{resource path from GET operation}",
+L83:         "name": "{operation-id}",
+L84:         "status" : "Succeeded | Failed | Canceled | {resource provider values}",
+L85:         "startTime": "2017-01-06T20:56:36.002812+00:00",
+L86:         "endTime": "2017-01-06T20:56:56.002812+00:00",
+L87:         "percentComplete": {double between 0 and 100 },
+L88:         "properties": {
+L89:             /* Specific resource provider values for successful operations */
+L90:         },
+L91:         "error" : {
+L92:             "code": "{error code}",
+L93:             "message": "{error description}"
+L94:         }
+L95:     }
+L96:     `
+L97: The error object is returned when the status is Failed or Canceled. All other values are optional. The response you receive might look different than the example.
+L98: ## provisioningState values
+L99: 
+L100: Operations that create, update, or delete (PUT, PATCH, DELETE) a resource typically return a `provisioningState` value. When an operation completes, one of the following three values is returned:
+L101: 
+L102:   * Succeeded
+L103:   * Failed
+L104:   * Canceled
+L105: 
+L106: All other values indicate the operation is still running. The resource provider can return a customized value that indicates its state. For example, you receive Accepted when the request is received and running.
+L107: ## Example requests and responses
+L108: ### Start virtual machine (202 with Azure-AsyncOperation)
+L109: 
+L110: This example shows how to determine the status of cite8†start operation for virtual machines . The initial request is in the following format:
+L111: 
+L112:     `POST
+L113:     https://management.azure.com/subscriptions/{subscription-id}/resourceGroups/{resource-group}/providers/Microsoft.Compute/virtualMachines/{vm-name}/start?api-version=2019-12-01
+L114:     `
+L115: It returns status code 202. Among the header values, you see:
+L116: 
+L117:     `Azure-AsyncOperation : https://management.azure.com/subscriptions/{subscription-id}/providers/Microsoft.Compute/locations/{region}/operations/{operation-id}?api-version=2019-12-01
+L118:     `
+L119: To check the status of the asynchronous operation, send another request to that URL.
+L120: 
+L121:     `GET
+L122:     https://management.azure.com/subscriptions/{subscription-id}/providers/Microsoft.Compute/locations/{region}/operations/{operation-id}?api-version=2019-12-01
+L123:     `
+L124: 
+L125: The response body contains the status of the operation:
+L126: 
+L127:     `{
+L128:       "startTime": "2017-01-06T18:58:24.7596323+00:00",
+L129:       "status": "InProgress",
+L130:       "name": "9a062a88-e463-4697-bef2-fe039df73a02"
+L131:     }
+L132:     `
+L133: ### Deploy resources (201 with Azure-AsyncOperation)
+L134: 
+L135: This example shows how to determine the status of cite9†deployments operation for deploying resources to Azure. The initial request is in the following format:
+L136: 
+L137:     `PUT
+L138:     https://management.azure.com/subscriptions/{subscription-id}/resourcegroups/{resource-group}/providers/microsoft.resources/deployments/{deployment-name}?api-version=2020-06-01
+L139:     `
+L140: It returns status code 201. The body of the response includes:
+L141: 
+L142:     `"provisioningState":"Accepted",
+L143:     `
+L144: 
+L145: Among the header values, you see:
+L146: 
+L147:     `Azure-AsyncOperation: https://management.azure.com/subscriptions/{subscription-id}/resourcegroups/{resource-group}/providers/Microsoft.Resources/deployments/{deployment-name}/operationStatuses/{operation-id}?api-version=2020-06-01
+L148:     `
+L149: To check the status of the asynchronous operation, send another request to the operation URL.
+L150: 
+L151:     `GET
+L152:     https://management.azure.com/subscriptions/{subscription-id}/resourcegroups/{resource-group}/providers/Microsoft.Resources/deployments/{deployment-name}/operationStatuses/{operation-id}?api-version=2020-06-01
+L153:     `
+L154: 
+L155: The response body contains the status of the operation:
+L156: 
+L157:     `{
+L158:         "status": "Running"
+L159:     }
+L160:     `
+L161: When the deployment is finished, the response contains:
+L162: 
+L163:     `{
+L164:         "status": "Succeeded"
+L165:     }
+L166:     `
+L167: ### Create storage account (202 with Location and Retry-After)
+L168: 
+L169: This example shows how to determine the status of the cite10†create operation for storage accounts . The initial request is in the following format:
+L170: 
+L171:     `PUT
+L172:     https://management.azure.com/subscriptions/{subscription-id}/resourceGroups/{resource-group}/providers/Microsoft.Storage/storageAccounts/{storage-name}?api-version=2019-06-01
+L173:     `
+L174: The request body contains properties for the storage account:
+L175: 
+L176:     `{
+L177:         "location": "South Central US",
+L178:         "properties": {},
+L179:         "sku": {
+L180:             "name": "Standard_LRS"
+L181:         },
+L182:         "kind": "Storage"
+L183:     }
+L184:     `
+L185: It returns status code 202. Among the header values, you see the following two values:
+L186: 
+L187:     `Location: https://management.azure.com/subscriptions/{subscription-id}/providers/Microsoft.Storage/operations/{operation-id}?monitor=true&api-version=2019-06-01
+L188:     Retry-After: 17
+L189:     `
+L190: After waiting for number of seconds specified in `Retry-After`, check the status of the asynchronous operation by sending another request to that URL.
+L191: 
+L192:     `GET
+L193:     https://management.azure.com/subscriptions/{subscription-id}/providers/Microsoft.Storage/operations/{operation-id}?monitor=true&api-version=2019-06-01
+L194:     `
+L195: If the request is still running, you receive a status code 202. If the request is completed, you receive a status code 200. The body of the response contains the properties of the storage account that was created.
+L196: ## Next steps
+L197: 
+L198:   * For documentation about each REST operation, see cite5†REST API documentation .
+L199:   * For information about deploying templates through the Resource Manager REST API, see cite11†Deploy resources with Resource Manager templates and Resource Manager REST API .
+L200: 
+L201: * * *
+L202: 
+L203: ## Feedback
+L204: 
+L205: Was this page helpful?
+L206: 
+L207: Yes No No
+L208: 
+L209: Need help with this topic?
+L210: 
+L211: Want to try using Ask Learn to clarify or guide you through this topic?
+L212: 
+L213: Ask Learn Ask Learn
+L214: 
+L215: Suggest a fix?
+L216: 
+L217: * * *
+L218: ## Additional resources
+L219: 
+L220: * * *
+L221: 
+L222:   * Last updated on 2026-02-27
+L223: 
+L224: ### In this article
+L225: 
+L226: Was this page helpful?
+L227: 
+L228: Need help with this topic?
+L229: 
+L230: Want to try using Ask Learn to clarify or guide you through this topic?
+L231: 
+L232: Ask Learn Ask Learn
+L233: 
+L234: Suggest a fix?
+

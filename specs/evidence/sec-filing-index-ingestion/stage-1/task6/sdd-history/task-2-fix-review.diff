@@ -1,0 +1,914 @@
+diff --git a/specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/sec_inventory.py b/specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/sec_inventory.py
+new file mode 100644
+index 0000000..b8fac96
+--- /dev/null
++++ b/specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/sec_inventory.py
+@@ -0,0 +1,482 @@
++"""Bounded Stage 1 investigation only. Root alone executes network commands."""
++import argparse
++import csv
++import datetime as dt
++import email.utils
++import fcntl
++import hashlib
++import html.parser
++import http.client
++import json
++import pathlib
++import random
++import re
++import signal
++import ssl
++import time
++import urllib.parse
++import xml.etree.ElementTree as ET
++
++BASE = pathlib.Path(__file__).resolve().parents[1]
++STATE = BASE / 'sec-window-state.json'
++LEDGER = BASE / 'requests.csv'
++UA = 'Lowell Mason sec-edgar-ingest mason.lowell@mac.com'
++LIMIT_BYTES = 536870912
++LIMIT_ATTEMPTS = 240
++DOCS = ['https://www.sec.gov/search-filings/edgar-search-assistance/accessing-edgar-data',
++        'https://www.sec.gov/about/developer-resources']
++ROOTS = {f: f'https://www.sec.gov/Archives/edgar/{f}/index.json' for f in ['full-index', 'daily-index']}
++REQUEST_COLUMNS = 'attempt_id issuer start_utc end_utc url status received_bytes body_sha256 response_headers_artifact exit_code retry_reason next_allowed_at outcome'.split()
++QUARTER_COLUMNS = 'quarter development_subset requested_at listing_evidence_id discovered_url representation listed_size listed_size_unit source_status selection_reason gap_id'.split()
++DAILY_COLUMNS = 'directory_period listing_evidence_id discovered_url listed_date representation handoff_relation outcome gap_id'.split()
++
++
++def now():
++    return dt.datetime.now(dt.timezone.utc)
++
++
++def save_json(path, value):
++    path.parent.mkdir(parents=True, exist_ok=True)
++    temp = path.with_suffix(path.suffix + '.tmp')
++    temp.write_text(json.dumps(value, indent=2) + '\n')
++    temp.replace(path)
++
++
++def write_csv(path, columns, rows):
++    with path.open('w', newline='') as handle:
++        writer = csv.DictWriter(handle, fieldnames=columns)
++        writer.writeheader()
++        writer.writerows(rows)
++
++
++def validate_url(url):
++    parsed = urllib.parse.urlsplit(url)
++    if parsed.scheme != 'https' or parsed.netloc != 'www.sec.gov' or parsed.query or parsed.fragment:
++        raise ValueError('Only canonical SEC HTTPS URLs without queries/fragments')
++    if url in DOCS:
++        return
++    if not any(parsed.path.startswith('/Archives/edgar/' + family + '/') for family in ROOTS):
++        raise ValueError('Outside accepted source families')
++    if any(part in ('..', '.') for part in parsed.path.split('/')) or '%' in parsed.path:
++        raise ValueError('Ambiguous path')
++
++
++def child_url(listing_url, name):
++    if not isinstance(name, str) or not re.fullmatch(r'[A-Za-z0-9_.-]+', name) or name in ('.', '..'):
++        raise ValueError(f'Unsafe child name {name!r}')
++    parent = listing_url if listing_url.endswith('/') else listing_url.rsplit('/', 1)[0] + '/'
++    url = parent + name
++    validate_url(url)
++    return url
++
++
++def listing_url(parent, name):
++    return child_url(parent, name) + '/index.json'
++
++
++def read_state():
++    if not STATE.exists():
++        raise RuntimeError('Window is not activated')
++    return json.loads(STATE.read_text())
++
++
++def guard(state):
++    if state.get('halted'):
++        raise RuntimeError('Window halted: ' + state['halted'])
++    if now() >= dt.datetime.fromisoformat(state['deadline_utc']):
++        raise RuntimeError('Window expired')
++    if state['attempts'] >= LIMIT_ATTEMPTS or state['received_bytes'] >= LIMIT_BYTES:
++        raise RuntimeError('Shared budget exhausted')
++
++
++def retry_delay(headers, attempt):
++    delay = min(120, 2 * 2 ** (attempt - 1) + random.uniform(0, 1))
++    for key, value in headers:
++        if key.lower() == 'retry-after':
++            try:
++                delay = max(delay, float(value))
++            except ValueError:
++                try:
++                    delay = max(delay, (email.utils.parsedate_to_datetime(value) - now()).total_seconds())
++                except (ValueError, TypeError):
++                    pass
++    return delay
++
++
++def fetch(url, specimen=False):
++    validate_url(url)
++    state = read_state()
++    if specimen and state['specimens'] >= 12:
++        raise RuntimeError('Specimen cap reached')
++    prior_attempts = 0
++    if LEDGER.exists():
++        with LEDGER.open(newline='') as handle:
++            prior_attempts = sum(row['url'] == url for row in csv.DictReader(handle))
++    if prior_attempts >= 5:
++        raise RuntimeError('URL already exhausted its five-attempt allowance')
++    for attempt in range(prior_attempts + 1, 6):
++        state = read_state()
++        guard(state)
++        allowed = dt.datetime.fromisoformat(state['next_allowed_at'])
++        delay = max(0, (allowed - now()).total_seconds())
++        if now() + dt.timedelta(seconds=delay) >= dt.datetime.fromisoformat(state['deadline_utc']):
++            raise RuntimeError('Deferred: next allowed start outside window')
++        if delay:
++            time.sleep(delay)
++        guard(state)
++        start = now()
++        state['attempts'] += 1
++        state['next_allowed_at'] = (start + dt.timedelta(seconds=0.34)).isoformat()
++        save_json(STATE, state)
++        attempt_id = f"SEC-{state['attempts']:04d}"
++        (BASE / 'listings').mkdir(parents=True, exist_ok=True)
++        stem = BASE / 'listings' / attempt_id
++        if stem.with_suffix('.headers.json').exists():
++            raise RuntimeError('Refusing to overwrite retained attempt evidence')
++        body_path = stem.with_suffix('.body')
++        headers_path = stem.with_suffix('.headers.json')
++        intent_path = stem.with_suffix('.intent.json')
++        save_json(intent_path, {'request_headers': {'User-Agent': UA, 'Accept-Encoding': 'identity'}, 'budget_counter': dict(state), 'evidence_id': attempt_id, 'url': url, 'start_utc': start.isoformat(), 'outcome': 'attempt_started', 'received_bytes': 0, 'issuer': 'root chat only'})
++        with LEDGER.open('a', newline='') as handle:
++            writer = csv.DictWriter(handle, fieldnames=REQUEST_COLUMNS)
++            if handle.tell() == 0:
++                writer.writeheader()
++            writer.writerow(dict(zip(REQUEST_COLUMNS, [attempt_id, 'root chat only', start.isoformat(), '', url, '', 0, '', str(intent_path.relative_to(BASE)), '', '', state['next_allowed_at'], 'attempt_started'])))
++        headers, status, received, error = [], '', 0, ''
++        digest = hashlib.sha256()
++        connection = None
++        previous_handler = signal.getsignal(signal.SIGALRM)
++        deadline = dt.datetime.fromisoformat(state['deadline_utc'])
++        def remaining_window():
++            remaining = (deadline - now()).total_seconds()
++            if remaining <= 0:
++                raise TimeoutError('Absolute window deadline reached')
++            return remaining
++        try:
++            parsed = urllib.parse.urlsplit(url)
++            connection = http.client.HTTPSConnection('www.sec.gov', timeout=15, context=ssl.create_default_context())
++            def connection_alarm(signum, frame):
++                raise TimeoutError('Connection including DNS exceeded 15 seconds')
++            previous_handler = signal.signal(signal.SIGALRM, connection_alarm)
++            signal.setitimer(signal.ITIMER_REAL, min(15, remaining_window()))
++            try:
++                connection.connect()
++            finally:
++                signal.setitimer(signal.ITIMER_REAL, remaining_window())
++            response_socket = connection.sock
++            response_socket.settimeout(min(60, remaining_window()))
++            remaining_window()
++            connection.request('GET', parsed.path, headers={'User-Agent': UA, 'Accept-Encoding': 'identity'})
++            remaining_window()
++            response = connection.getresponse()
++            status, headers = response.status, response.getheaders()
++            with body_path.open('wb') as handle:
++                while True:
++                    remaining = LIMIT_BYTES - state['received_bytes']
++                    if remaining <= 0:
++                        state['halted'] = 'Received-byte cap reached during response'
++                        raise RuntimeError(state['halted'])
++                    response_socket.settimeout(min(60, remaining_window()))
++                    incomplete_read = None
++                    try:
++                        chunk = response.read(min(65536, remaining))
++                    except http.client.IncompleteRead as exc:
++                        chunk = exc.partial
++                        # _read_chunked chains the truncated current chunk separately.
++                        cause = exc.__cause__
++                        while isinstance(cause, http.client.IncompleteRead):
++                            chunk += cause.partial
++                            cause = cause.__cause__
++                        incomplete_read = exc
++                    if not chunk:
++                        if incomplete_read is not None:
++                            raise incomplete_read
++                        break
++                    handle.write(chunk)
++                    digest.update(chunk)
++                    received += len(chunk)
++                    state['received_bytes'] += len(chunk)
++                    save_json(STATE, state)
++                    if incomplete_read is not None:
++                        raise incomplete_read
++        except Exception as exc:
++            error = f'{type(exc).__name__}: {exc}'
++        finally:
++            signal.setitimer(signal.ITIMER_REAL, 0)
++            signal.signal(signal.SIGALRM, previous_handler)
++            if connection:
++                connection.close()
++        end = now()
++        probe = b''
++        if body_path.exists():
++            with body_path.open('rb') as handle:
++                probe = handle.read(262144).lower()
++        lengths = [value for key, value in headers if key.lower() == 'content-length']
++        if lengths:
++            try:
++                if len(set(lengths)) != 1 or int(lengths[0]) != received:
++                    error = error or 'Content-Length mismatch; partial response quarantined'
++            except ValueError:
++                error = error or 'Invalid Content-Length; response quarantined'
++        denial = status == 403 or any(term in probe for term in [b'undeclared automated tool', b'your request originates from an undeclared', b'request rate threshold exceeded', b'access denied'])
++        if denial:
++            state['halted'] = 'SEC 403 or explicit access-denial body'
++        success = status == 200 and not error and not denial
++        retry = not success and not denial and (error or status in (429, 500, 502, 503, 504)) and attempt < 5
++        if retry:
++            state['next_allowed_at'] = max(dt.datetime.fromisoformat(state['next_allowed_at']), end + dt.timedelta(seconds=retry_delay(headers, attempt))).isoformat()
++        if success and specimen:
++            state['specimens'] += 1
++        outcome = 'success' if success else ('halted_access_denial' if denial else 'failed')
++        metadata = {'evidence_id': attempt_id, 'url': url, 'start_utc': start.isoformat(), 'receipt_utc': end.isoformat(), 'status': status,
++                    'headers': headers, 'transport': 'HTTPS TLS verified; transfer framing removed by http.client',
++                    'content_encoding': next((v for k, v in headers if k.lower() == 'content-encoding'), 'identity'),
++                    'redirect_chain': [], 'redirect_policy': 'never followed', 'received_bytes': received,
++                    'sha256': digest.hexdigest(), 'body_artifact': str(body_path.relative_to(BASE)), 'error': error,
++                    'intent_artifact': str(intent_path.relative_to(BASE)), 'schema': 'uninspected response entity bytes', 'outcome': outcome, 'specimen': specimen}
++        save_json(headers_path, metadata)
++        with LEDGER.open(newline='') as handle:
++            ledger_rows = list(csv.DictReader(handle))
++        terminal = dict(zip(REQUEST_COLUMNS, [attempt_id, 'root chat only', start.isoformat(), end.isoformat(), url, status, received, digest.hexdigest(), str(headers_path.relative_to(BASE)), 0 if success else 1, error or (str(status) if not success else ''), state['next_allowed_at'], outcome]))
++        ledger_rows[-1] = terminal
++        temporary_ledger = LEDGER.with_suffix('.csv.tmp')
++        write_csv(temporary_ledger, REQUEST_COLUMNS, ledger_rows)
++        temporary_ledger.replace(LEDGER)
++        save_json(STATE, state)
++        print(json.dumps(metadata), flush=True)
++        if denial:
++            raise RuntimeError(state['halted'])
++        if not retry:
++            return metadata
++    return metadata
++
++
++class DirectoryLinks(html.parser.HTMLParser):
++    def __init__(self, base_url):
++        super().__init__()
++        self.base_url = base_url
++        self.children = []
++
++    def handle_starttag(self, tag, attrs):
++        if tag != 'a':
++            return
++        href = dict(attrs).get('href', '')
++        if not href or href.startswith(('?', '#')):
++            return
++        resolved = urllib.parse.urljoin(self.base_url, href)
++        path = urllib.parse.urlsplit(resolved).path
++        name = path.rstrip('/').rsplit('/', 1)[-1]
++        if name and name not in ('.', '..'):
++            try:
++                expected = child_url(self.base_url, name)
++                validate_url(resolved)
++            except ValueError:
++                return
++            if resolved.rstrip('/') == expected:
++                self.children.append({'name': name, 'type': 'dir' if path.endswith('/') else 'file'})
++
++
++def parse_listing(url, raw, representation):
++    if representation == 'json':
++        directory = json.loads(raw)['directory']
++        children = directory['item']
++        directory_name = directory.get('name')
++    elif representation == 'xml':
++        root = ET.fromstring(raw)
++        children = [{child.tag: child.text or '' for child in item} for item in root.findall('.//item')]
++        if not children and root.tag != 'directory':
++            raise ValueError('Unrecognized XML directory schema')
++        directory_name = root.findtext('name')
++    else:
++        parser = DirectoryLinks(url)
++        parser.feed(raw.decode('utf-8', errors='strict'))
++        children = parser.children
++        if not children:
++            raise ValueError('HTML has no validated directory entries; cannot establish empty listing')
++        directory_name = None
++    if not isinstance(children, list):
++        raise ValueError('Directory entries must be a list')
++    validated = []
++    for child in children:
++        if not isinstance(child, dict) or child.get('type') not in ('dir', 'file'):
++            raise ValueError('Directory entry requires observed dir/file type')
++        child_url(url, child['name'])
++        validated.append(child)
++    return directory_name, validated
++
++
++def discover(url):
++    for representation in ('json', 'xml', 'html'):
++        candidate = url.rsplit('/', 1)[0] + '/' if representation == 'html' else url.rsplit('.', 1)[0] + '.' + representation
++        metadata = fetch(candidate)
++        if metadata['outcome'] != 'success':
++            if metadata['status'] not in (404, 406):
++                return metadata, None
++            continue
++        try:
++            name, children = parse_listing(candidate, (BASE / metadata['body_artifact']).read_bytes(), representation)
++            metadata.update(schema='SEC directory entries: ' + representation, directory_name=name, discovered_children=children,
++                            selection_decision='Validated name and dir/file type; no source-body support claim')
++            save_json(BASE / 'listings' / (metadata['evidence_id'] + '.headers.json'), metadata)
++            return metadata, children
++        except (ValueError, KeyError, TypeError, ET.ParseError) as exc:
++            metadata['listing_error'] = str(exc)
++            save_json(BASE / 'listings' / (metadata['evidence_id'] + '.headers.json'), metadata)
++    return metadata, None
++
++
++def directories(children, pattern):
++    return sorted([c['name'] for c in children or [] if c.get('type') == 'dir' and re.fullmatch(pattern, c['name'])])
++
++
++def inventory():
++    if (BASE / 'quarterly.csv').exists() or (BASE / 'daily.csv').exists():
++        raise RuntimeError('Refusing to overwrite previous inventory matrices')
++    quarters, summaries = [], {}
++    daily = [dict(zip(DAILY_COLUMNS, ['2026Q4', '', '', '20261001', 'required_handoff_summary', 'handoff', 'unattempted', 'GAP-D-HANDOFF']))]
++    for year in range(2010, 2027):
++        for quarter in range(1, 5):
++            label = f'{year}Q{quarter}'
++            summaries[label] = dict(zip(QUARTER_COLUMNS, [label, str(year >= 2015).lower(), '', '', '', 'quarter_summary', '', '', 'discovery_failed', 'Unattempted: hierarchy not inspected', 'GAP-Q-' + label]))
++    try:
++        meta, children = discover(ROOTS['full-index'])
++        for row in summaries.values():
++            row.update(requested_at=meta['receipt_utc'], listing_evidence_id=meta['evidence_id'], selection_reason='Root discovery failed' if children is None else 'Requested hierarchy child absent or uninspected')
++        if children is None:
++            return
++        if children is not None:
++            for child in children:
++                if child['name'].startswith('master.'):
++                    quarters.append(dict(zip(QUARTER_COLUMNS, ['2026Q4', 'true', meta['receipt_utc'], meta['evidence_id'], child_url(meta['url'], child['name']), child['name'], child.get('size', ''), 'listing-declared (unit unverified)', 'listed_source_pending', 'Current full-index root; relationship to year/QTR requires body comparison', ''])))
++            for year in directories(children, r'20\d{2}'):
++                if not 2010 <= int(year) <= 2026:
++                    continue
++                ym, yc = discover(listing_url(meta['url'], year))
++                for label, row in summaries.items():
++                    if label.startswith(year):
++                        row.update(requested_at=ym['receipt_utc'], listing_evidence_id=ym['evidence_id'], selection_reason='Year discovery failed' if yc is None else 'Quarter child absent from inspected year listing')
++                for qtr in directories(yc, r'QTR[1-4]'):
++                    label = year + 'Q' + qtr[-1]
++                    qm, qc = discover(listing_url(ym['url'], qtr))
++                    row = summaries[label]
++                    row.update(requested_at=qm['receipt_utc'], listing_evidence_id=qm['evidence_id'], discovered_url=qm['url'])
++                    masters = [c for c in qc or [] if c['name'].startswith('master.')]
++                    row.update(source_status='available' if masters else ('valid_no_source' if qc is not None else 'discovery_failed'), selection_reason='Listing only; no body collected', gap_id='' if masters else 'GAP-Q-' + label)
++                    for child in masters:
++                        quarters.append(dict(zip(QUARTER_COLUMNS, [label, str(int(year) >= 2015).lower(), qm['receipt_utc'], qm['evidence_id'], child_url(qm['url'], child['name']), child['name'], child.get('size', ''), 'listing-declared (unit unverified)', 'listed_source_pending', 'Observed master representation; Task 3 selects inspected alternative', ''])))
++        dm, dc = discover(ROOTS['daily-index'])
++        daily.append(dict(zip(DAILY_COLUMNS, ['root', dm['evidence_id'], dm['url'], '', 'directory_summary', 'Historical observation boundary', 'available' if dc is not None else 'discovery_failed', '' if dc is not None else 'GAP-D-ROOT'])))
++        for year in directories(dc, r'20\d{2}'):
++            if not 2010 <= int(year) <= 2026:
++                continue
++            ym, yc = discover(listing_url(dm['url'], year))
++            qtrs = directories(yc, r'QTR[1-4]')
++            selected = set(qtrs[:1] + qtrs[-1:])
++            if year == '2026':
++                selected.update(q for q in qtrs if q in ('QTR3', 'QTR4'))
++            daily.append(dict(zip(DAILY_COLUMNS, [year, ym['evidence_id'], ym['url'], '', 'year_summary', 'Historical boundary', 'available' if yc is not None else 'discovery_failed', '' if yc is not None else 'GAP-D-' + year])))
++            for qtr in qtrs:
++                label = year + 'Q' + qtr[-1]
++                if qtr not in selected:
++                    daily.append(dict(zip(DAILY_COLUMNS, [label, ym['evidence_id'], listing_url(ym['url'], qtr), '', 'directory_summary', 'Historical boundary', 'listed_uninspected', 'GAP-D-' + label])))
++                    continue
++                qm, qc = discover(listing_url(ym['url'], qtr))
++                daily.append(dict(zip(DAILY_COLUMNS, [label, qm['evidence_id'], qm['url'], '', 'directory_summary', 'handoff/current' if label == '2026Q4' else 'historical/preceding', 'available' if qc is not None else 'discovery_failed', '' if qc is not None else 'GAP-D-' + label])))
++                if label == '2026Q4':
++                    handoff = daily[0]
++                    handoff.update(listing_evidence_id=qm['evidence_id'], discovered_url=qm['url'], outcome='discovery_failed' if qc is None else 'required_date_absent_in_listing')
++                    if any('20261001' in c['name'] and c['name'].startswith('master.') for c in qc or []):
++                        handoff.update(outcome='listed_source_pending', gap_id='')
++                for child in qc or []:
++                    if child['name'].startswith('master.'):
++                        match = re.search(r'(\d{8})', child['name'])
++                        date = match[1] if match else ''
++                        daily.append(dict(zip(DAILY_COLUMNS, [label, qm['evidence_id'], child_url(qm['url'], child['name']), date, child['name'], 'handoff' if date == '20261001' else ('after_handoff' if date > '20261001' else 'before_handoff'), 'listed_source_pending', ''])))
++    finally:
++        observed_daily = {row['directory_period'] for row in daily if row['representation'] == 'directory_summary'}
++        root_evidence = next((row['listing_evidence_id'] for row in daily if row['directory_period'] == 'root'), '')
++        for label in summaries:
++            if label not in observed_daily:
++                daily.append(dict(zip(DAILY_COLUMNS, [label, root_evidence, '', '', 'directory_summary', 'Historical observation boundary', 'not_listed_or_uninspected', 'GAP-D-' + label])))
++        write_csv(BASE / 'quarterly.csv', QUARTER_COLUMNS, list(summaries.values()) + quarters)
++        write_csv(BASE / 'daily.csv', DAILY_COLUMNS, daily)
++
++
++def recover_interrupted_attempts():
++    if not STATE.exists():
++        return
++    state = read_state()
++    rows = []
++    if LEDGER.exists():
++        with LEDGER.open(newline='') as handle:
++            rows = list(csv.DictReader(handle))
++    changed = False
++    recorded = {row['attempt_id'] for row in rows}
++    for number in range(1, state['attempts'] + 1):
++        attempt_id = f'SEC-{number:04d}'
++        if attempt_id in recorded:
++            continue
++        intent_path = BASE / 'listings' / (attempt_id + '.intent.json')
++        intent = json.loads(intent_path.read_text()) if intent_path.exists() else {}
++        rows.append(dict(zip(REQUEST_COLUMNS, [attempt_id, 'root chat only', intent.get('start_utc', ''), '', intent.get('url', 'unknown; interrupted before intent write'), '', 0, '', str(intent_path.relative_to(BASE)), '', '', '', 'attempt_started'])))
++    for row in rows:
++        if row['outcome'] != 'attempt_started':
++            continue
++        path = BASE / 'listings' / (row['attempt_id'] + '.body')
++        digest = hashlib.sha256()
++        count = 0
++        if path.exists():
++            with path.open('rb') as handle:
++                for chunk in iter(lambda: handle.read(65536), b''):
++                    digest.update(chunk)
++                    count += len(chunk)
++        row.update(end_utc=now().isoformat(), received_bytes=count, body_sha256=digest.hexdigest(),
++                   exit_code=1, retry_reason='Interrupted attempt: response fields unknown; no automatic replay', outcome='interrupted_unknown')
++        changed = True
++    actual_bytes = sum(path.stat().st_size for path in (BASE / 'listings').glob('SEC-*.body'))
++    state['received_bytes'] = max(state['received_bytes'], actual_bytes)
++    if changed:
++        state['halted'] = 'Interrupted attempt requires root reconciliation; no silent replay'
++        temporary = LEDGER.with_suffix('.csv.tmp')
++        write_csv(temporary, REQUEST_COLUMNS, rows)
++        temporary.replace(LEDGER)
++    save_json(STATE, state)
++
++
++def main():
++    parser = argparse.ArgumentParser()
++    parser.add_argument('command', choices=['activate', 'inventory', 'fetch', 'status', 'close'])
++    parser.add_argument('--root-issuer', action='store_true')
++    parser.add_argument('--url')
++    parser.add_argument('--specimen', action='store_true')
++    args = parser.parse_args()
++    with (BASE / 'sec-window.lock').open('a') as lock:
++        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
++        if args.command == 'activate':
++            if not args.root_issuer or STATE.exists():
++                raise RuntimeError('Explicit root issuer required; existing window cannot reactivate')
++            acceptance = json.loads((BASE / 'sec-window-owner-acceptance.json').read_text())
++            if acceptance['exact_owner_reply'] != 'Confirm window; all other SEC traffic paused':
++                raise RuntimeError('Owner acceptance does not match')
++            start = now()
++            save_json(STATE, {'start_utc': start.isoformat(), 'deadline_utc': (start + dt.timedelta(minutes=45)).isoformat(), 'issuer': 'root chat only', 'attempts': 0, 'received_bytes': 0, 'specimens': 0, 'next_allowed_at': start.isoformat(), 'halted': ''})
++        elif args.command == 'status':
++            recover_interrupted_attempts()
++            print(json.dumps(read_state(), indent=2))
++        elif args.command == 'close':
++            state = read_state()
++            state['closed_utc'] = now().isoformat()
++            state['halted'] = state['halted'] or 'Window explicitly closed by root'
++            save_json(STATE, state)
++        else:
++            if not args.root_issuer:
++                raise RuntimeError('Only explicit root issuer may make SEC requests')
++            recover_interrupted_attempts()
++            if args.command == 'inventory':
++                inventory()
++            else:
++                fetch(args.url, args.specimen)
++
++
++if __name__ == '__main__':
++    main()
+diff --git a/specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/check_inventory_offline.py b/specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/check_inventory_offline.py
+new file mode 100644
+index 0000000..180ffc7
+--- /dev/null
++++ b/specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/check_inventory_offline.py
+@@ -0,0 +1,234 @@
++"""Retained local evidence checks; no requests, production modules or golden tests."""
++import csv
++import importlib.util
++import json
++import pathlib
++import tempfile
++
++path = pathlib.Path(__file__).with_name('sec_inventory.py')
++spec = importlib.util.spec_from_file_location('investigation', path)
++helper = importlib.util.module_from_spec(spec)
++spec.loader.exec_module(helper)
++url = helper.ROOTS['full-index']
++for bad in ['../x', 'a/b', '%2e%2e', '..']:
++    try:
++        helper.child_url(url, bad)
++    except ValueError:
++        continue
++    raise AssertionError(bad)
++for bad in ['http://www.sec.gov/Archives/edgar/full-index/index.json', 'https://evil.example/Archives/edgar/full-index/index.json']:
++    try:
++        helper.validate_url(bad)
++    except ValueError:
++        continue
++    raise AssertionError(bad)
++children = helper.parse_listing(url, json.dumps({'directory': {'item': [{'name': '2010', 'type': 'dir'}, {'name': '2026', 'type': 'file'}]}}).encode(), 'json')[1]
++assert helper.directories(children, r'20\d{2}') == ['2010']
++try:
++    helper.parse_listing(url, b'{"directory":{"item":[{"name":"2010"}]}}', 'json')
++except ValueError:
++    pass
++else:
++    raise AssertionError('type missing accepted')
++assert len(helper.parse_listing(url, b'<directory><item><name>2010</name><type>dir</type></item></directory>', 'xml')[1]) == 1
++html = b'<html><a href="2010/">2010</a><a href="https://evil.example/2015/">bad</a><a href="../2016/">bad</a></html>'
++assert helper.parse_listing(url, html, 'html')[1] == [{'name': '2010', 'type': 'dir'}]
++assert sum(1 for year in range(2010, 2027) for _ in range(4)) == 68
++assert sum(1 for year in range(2015, 2027) for _ in range(4)) == 48
++with tempfile.TemporaryDirectory() as temp:
++    helper.BASE = pathlib.Path(temp)
++    helper.STATE = helper.BASE / 'state.json'
++    helper.LEDGER = helper.BASE / 'requests.csv'
++    try:
++        helper.read_state()
++    except RuntimeError:
++        pass
++    else:
++        raise AssertionError('inactive window accepted')
++    (helper.BASE / 'listings').mkdir()
++    (helper.BASE / 'listings' / 'SEC-0001.body').write_bytes(b'partial')
++    helper.save_json(helper.STATE, {'attempts': 1, 'received_bytes': 0, 'halted': ''})
++    helper.recover_interrupted_attempts()
++    state = helper.read_state()
++    assert state['received_bytes'] == 7 and state['halted']
++    rows = list(csv.DictReader(helper.LEDGER.open()))
++    assert len(rows) == 1 and rows[0]['outcome'] == 'interrupted_unknown'
++print('PASS canonical URL/child guards; JSON/XML/HTML schema/type; external/parent HTML links rejected; 68 requested/48 development; inactive refusal; interruption recovery and orphan bytes. No SEC traffic.')
++
++class MockSocket:
++    def __init__(self):
++        self.timeout_updates = []
++
++    def settimeout(self, value):
++        self.timeout_updates.append(value)
++
++
++class MockResponse:
++    status = 200
++
++    def __init__(self):
++        self.remaining = b'{}'
++
++    def getheaders(self):
++        return [('Content-Length', '2'), ('Connection', 'close')]
++
++    def read(self, size):
++        result, self.remaining = self.remaining[:size], self.remaining[size:]
++        return result
++
++
++class MockConnection:
++    last_instance = None
++
++    def __init__(self, *args, **kwargs):
++        self.sock = MockSocket()
++        self.retained_socket = self.sock
++        MockConnection.last_instance = self
++
++    def connect(self):
++        pass
++
++    def request(self, *args, **kwargs):
++        assert kwargs['headers']['Accept-Encoding'] == 'identity'
++
++    def getresponse(self):
++        self.sock = None
++        return MockResponse()
++
++    def close(self):
++        pass
++
++
++with tempfile.TemporaryDirectory() as temp:
++    helper.BASE = pathlib.Path(temp)
++    helper.STATE = helper.BASE / 'state.json'
++    helper.LEDGER = helper.BASE / 'requests.csv'
++    start = helper.now()
++    helper.save_json(helper.STATE, {'attempts': 0, 'received_bytes': 0, 'specimens': 0, 'halted': '', 'deadline_utc': (start + helper.dt.timedelta(minutes=1)).isoformat(), 'next_allowed_at': start.isoformat()})
++    original_connection = helper.http.client.HTTPSConnection
++    helper.http.client.HTTPSConnection = MockConnection
++    try:
++        receipt = helper.fetch(url)
++    finally:
++        helper.http.client.HTTPSConnection = original_connection
++    assert receipt['outcome'] == 'success' and receipt['received_bytes'] == 2
++    assert MockConnection.last_instance.sock is None
++    assert len(MockConnection.last_instance.retained_socket.timeout_updates) >= 2
++assert helper.parse_listing('https://www.sec.gov/Archives/edgar/full-index/', b'<a href="2010/">year</a>', 'html')[1] == [{'name': '2010', 'type': 'dir'}]
++print('PASS mocked Connection:close response retains socket timeout updates; canonical directory HTML href parsing. Mock only; no SEC traffic.')
++
++with tempfile.TemporaryDirectory() as temp:
++    helper.BASE = pathlib.Path(temp)
++    def synthetic_listing(url):
++        pieces = url.split('/')
++        if url in helper.ROOTS.values():
++            children = [{'name': str(year), 'type': 'dir'} for year in range(2010, 2027)]
++        elif pieces[-2].isdigit():
++            children = [{'name': 'QTR' + str(quarter), 'type': 'dir'} for quarter in range(1, 5)]
++        elif 'full-index' in url:
++            children = [{'name': 'master.idx', 'type': 'file', 'size': '42'}]
++        else:
++            children = [{'name': 'master.20261001.idx', 'type': 'file', 'size': '42'}] if '/2026/QTR4/' in url else []
++        return {'url': url, 'receipt_utc': '2026-10-05T00:00:00+00:00', 'evidence_id': 'OFFLINE-SYNTHETIC'}, children
++    original_discover = helper.discover
++    helper.discover = synthetic_listing
++    try:
++        helper.inventory()
++    finally:
++        helper.discover = original_discover
++    rows = list(csv.DictReader((helper.BASE / 'quarterly.csv').open()))
++    summaries = [row for row in rows if row['representation'] == 'quarter_summary']
++    assert len(summaries) == len({row['quarter'] for row in summaries}) == 68
++    assert sum(row['development_subset'] == 'true' for row in summaries) == 48
++    assert all(row['source_status'] == 'available' for row in summaries)
++    daily = list(csv.DictReader((helper.BASE / 'daily.csv').open()))
++    handoff = [row for row in daily if row['representation'] == 'required_handoff_summary']
++    assert len(handoff) == 1 and handoff[0]['outcome'] == 'listed_source_pending'
++    assert len({row['directory_period'] for row in daily if row['representation'] == 'directory_summary' and row['directory_period'] != 'root'}) == 68
++    try:
++        helper.inventory()
++    except RuntimeError as exc:
++        assert 'overwrite' in str(exc)
++    else:
++        raise AssertionError('repeat inventory overwrote matrices')
++print('PASS synthetic complete hierarchy inventory: 68 unique summaries/48 development, explicit handoff, 68 daily boundary units; repeat inventory refused. Synthetic only; no SEC traffic.')
++
++class MockIncompleteChunkedResponse:
++    status = 200
++
++    def __init__(self):
++        self.read_calls = 0
++
++    def getheaders(self):
++        return [('Transfer-Encoding', 'chunked')]
++
++    def read(self, size):
++        self.read_calls += 1
++        if self.read_calls == 1:
++            return b'prefix'
++        assert size >= len(b'partial')
++        raise helper.http.client.IncompleteRead(b'partial', 19)
++
++
++class MockIncompleteConnection(MockConnection):
++    def getresponse(self):
++        return MockIncompleteChunkedResponse()
++
++
++for byte_cap in (64, 13):
++    with tempfile.TemporaryDirectory() as temp:
++        helper.BASE = pathlib.Path(temp)
++        helper.STATE = helper.BASE / 'state.json'
++        helper.LEDGER = helper.BASE / 'requests.csv'
++        start = helper.now()
++        helper.save_json(helper.STATE, {'attempts': 4, 'received_bytes': 0, 'specimens': 0, 'halted': '', 'deadline_utc': (start + helper.dt.timedelta(minutes=1)).isoformat(), 'next_allowed_at': start.isoformat()})
++        helper.write_csv(helper.LEDGER, helper.REQUEST_COLUMNS, [dict(zip(helper.REQUEST_COLUMNS, [f'SEC-{number:04d}', 'offline mock', '', '', url, '', 0, '', '', 1, 'prior mock attempt', '', 'failed'])) for number in range(1, 5)])
++        original_connection, original_cap = helper.http.client.HTTPSConnection, helper.LIMIT_BYTES
++        helper.http.client.HTTPSConnection, helper.LIMIT_BYTES = MockIncompleteConnection, byte_cap
++        try:
++            receipt = helper.fetch(url, specimen=True)
++        finally:
++            helper.http.client.HTTPSConnection, helper.LIMIT_BYTES = original_connection, original_cap
++        retained = (helper.BASE / receipt['body_artifact']).read_bytes()
++        assert retained == b'prefixpartial', (byte_cap, retained)
++        assert receipt['received_bytes'] == len(retained) == 13
++        assert receipt['sha256'] == helper.hashlib.sha256(retained).hexdigest()
++        assert receipt['outcome'] == 'failed' and 'IncompleteRead' in receipt['error']
++        assert helper.read_state()['received_bytes'] == 13
++        assert helper.read_state()['specimens'] == 0
++        last_row = list(csv.DictReader(helper.LEDGER.open()))[-1]
++        assert int(last_row['received_bytes']) == 13 and last_row['outcome'] == 'failed'
++print('PASS mocked chunked IncompleteRead: prefix+partial retained/hash/count, final failure, no completed specimen; sufficient and exact remaining-byte budgets. Mock only; no SEC traffic.')
++
++class MemoryResponseSocket:
++    def makefile(self, mode):
++        import io
++        return io.BytesIO(b'HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n6\r\nprefix\r\n7\r\npart')
++
++
++class RealChunkedIncompleteConnection(MockConnection):
++    def getresponse(self):
++        response = helper.http.client.HTTPResponse(MemoryResponseSocket())
++        response.begin()
++        return response
++
++
++with tempfile.TemporaryDirectory() as temp:
++    helper.BASE = pathlib.Path(temp)
++    helper.STATE = helper.BASE / 'state.json'
++    helper.LEDGER = helper.BASE / 'requests.csv'
++    start = helper.now()
++    helper.save_json(helper.STATE, {'attempts': 4, 'received_bytes': 0, 'specimens': 0, 'halted': '', 'deadline_utc': (start + helper.dt.timedelta(minutes=1)).isoformat(), 'next_allowed_at': start.isoformat()})
++    helper.write_csv(helper.LEDGER, helper.REQUEST_COLUMNS, [dict(zip(helper.REQUEST_COLUMNS, [f'SEC-{number:04d}', 'offline mock', '', '', url, '', 0, '', '', 1, 'prior mock attempt', '', 'failed'])) for number in range(1, 5)])
++    original_connection, original_cap = helper.http.client.HTTPSConnection, helper.LIMIT_BYTES
++    helper.http.client.HTTPSConnection, helper.LIMIT_BYTES = RealChunkedIncompleteConnection, 13
++    try:
++        receipt = helper.fetch(url, specimen=True)
++    finally:
++        helper.http.client.HTTPSConnection, helper.LIMIT_BYTES = original_connection, original_cap
++    retained = (helper.BASE / receipt['body_artifact']).read_bytes()
++    assert retained == b'prefixpart', retained
++    assert receipt['received_bytes'] == helper.read_state()['received_bytes'] == 10
++    assert receipt['sha256'] == helper.hashlib.sha256(retained).hexdigest()
++    assert receipt['outcome'] == 'failed' and helper.read_state()['specimens'] == 0
++print('PASS real stdlib HTTPResponse over BytesIO truncated chunk: outer completed-prefix and chained current-chunk partial retained/hash/count; failed, no specimen. Offline only; no SEC traffic.')
+diff --git a/.sdd/1-sec-filing-index-ingestion-stage-1-spec/task-2-report.md b/.sdd/1-sec-filing-index-ingestion-stage-1-spec/task-2-report.md
+new file mode 100644
+index 0000000..0a62b88
+--- /dev/null
++++ b/.sdd/1-sec-filing-index-ingestion-stage-1-spec/task-2-report.md
+@@ -0,0 +1,55 @@
++# Task 2 report — inventory accounting checkpoint complete
++
++Task 2 has an evidence-linked outcome for every requested quarter and a documented daily historical observation boundary. Root alone made all SEC requests. This agent performed local preparation, verification and register updates only. The checkpoint establishes listing availability and accounting; source-body formats, historical ingestion completeness and arbitrary outage recovery remain unverified.
++
++Read the Task 2 brief including Global Constraints, Stage 1 §5.1 and parent §4.2. Applied clean-code to the isolated investigation helper. Production packages, parser/catalog, production tests, infrastructure and protected baseline artifacts remain outside this task's edits.
++
++## Results
++
++The pinned end is 2026Q4. `quarterly.csv` contains exactly 68 unique quarter summaries for 2010Q1–2026Q4, including exactly 48 development units from 2015Q1. All 68 summaries are `available` based on successful retained directory listings containing master representations. Its 304 child representation rows include both current full-index root children and year/QTR children; their relationship remains a Task 3 body comparison, not an equality inference.
++
++The root full-index listing, all 17 requested year directories and all 68 quarter directories were inspected. Observed quarterly alternatives are `master.Z`, `master.gz`, `master.idx`, `master.zip` (69 child rows each including the root), `master.sit` (19) and `master.z` (9). Directory-listed sizes remain explicitly labeled as listing-declared with units unverified; exact listing dates and sizes remain in the retained children metadata.
++
++`daily.csv` has 2,176 rows. The daily root and all 17 year directories from 2010 through 2026 were inspected. The first and last available quarter of every year were inspected; 2026Q3 was also inspected as the preceding quarter and 2026Q4 as current/handoff. Thus 35 quarter listings succeeded and 33 middle quarters are explicitly `listed_uninspected`. All 68 requested quarter boundary units have honest outcomes. No inaccessible/missing directory was called a successful empty listing. Observed daily master entries are IDX (1,902), GZIP extension (185), uppercase Z (1) and ZIP (1). These counts are listing representations, not specimen validation.
++
++The required 2026-10-01 handoff appears explicitly and has actual discovered `master.20261001.idx` in SEC-0139. An already-published `master.20261002.idx` is available in that same listing. No weekend/holiday filename was manufactured.
++
++## Acquisition and shared access accounting
++
++The accepted root-only window was activated 2026-10-05T23:40:28.753726+00:00 with deadline 2026-10-06T00:25:28.753726+00:00. The root inventory command completed 2026-10-05T23:41:43.654694+00:00, exit 0. Attempts SEC-0001–SEC-0139 retained 1,609,165 original entity bytes; every directory response succeeded; zero retries, redirects, specimens or access-denial halts. JSON was sufficient throughout; XML/HTML fallback was prepared and checked offline but was not exercised live.
++
++Root subsequently retrieved official SEC access guidance through the same helper as SEC-0140, exit 0. At independent verification, shared accounting was 140 attempts, 1,689,512 bytes and zero specimens, without a halt. The original deadline/caps remain authoritative; Task 3 must reuse this exact state/ledger/lock. This checkpoint does not reset or extend the window.
++
++The helper retains immutable intent, original entity body, SHA-256, all response headers, UTC receipt, response status, discovered schema/children and selection decision. It enforces TLS verification, identity content encoding, no redirects, 0.34-second sequential starts, absolute deadline, 15-second connection/DNS signal bound and 60-second read ceiling bounded by remaining window; shared 240-attempt/536870912-byte/12-specimen caps; five attempts per URL across the ledger; Retry-After-aware backoff; persistent denial halt; and conservative interrupted-attempt/orphan-byte recovery with no silent replay. A retained socket supports `Connection: close`. Matrices refuse rerun/overwrite. Ledger initiation is appended and the terminal row atomically completed; one row corresponds to one attempt.
++
++## Independent verification and retained commands
++
++- `python3 -m py_compile specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/sec_inventory.py`: exit 0.
++- `python3 specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/check_inventory_offline.py`: exit 0, retained output and command receipt. Canonical URL/traversal guards, JSON/XML/HTML observed type validation, external/parent HTML rejection, inactive-window refusal, interruption/orphan-byte recovery, mocked Connection:close handling, synthetic 68/48 inventory, explicit handoff and repeat-output refusal passed. Synthetic/mock output is clearly labeled and establishes no live source claims. A local check initially counted the daily root in its expected 68 quarter units; that check was corrected to exclude the root, with no implementation change.
++- `python3 specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/check_inventory_evidence.py`: exit 0. Independently recomputed inclusive counts; verified unique summaries, development boundary, allowed statuses, retained evidence references, every listed representation against actual retained child entries, original byte counts and SHA-256 for all 140 attempts, immutable intent existence, shared attempt/byte accounting and at least 0.34-second start spacing. Confirmed required handoff row and all 68 daily boundary units. Exact result is `inventory-evidence-check.json`, with `inventory-evidence-check-command.json`.
++- Root inventory command/start/end/exit are retained in `inventory-root-command.json`, with complete stdout/stderr. Official documentation retrieval has its own `sec-documentation-root-command.json` and output artifacts.
++
++## Selection and remaining limits
++
++`task-2-specimen-candidates.json` proposes nine actual-child URLs: quarterly ZIP bodies for 2010Q1, 2015Q1, 2015Q4, 2016Q1, 2026Q3 and 2026Q4; root ZIP for the current-root/year-QTR relationship; and daily IDX bodies for 2026-10-01 and 2026-10-02. These cover intended/development boundaries, year transition, latest closed/open quarter, root relationship, handoff and published daily source within the 12-specimen cap. Root makes the actual Task 3 selection. Root clarified that its final matrix will cover daily year and quarter transitions, using actual retained daily entries for 2025-12-31/2026-01-02 and 2026-09-30/2026-10-01, with the handoff role reused. The additional actual-child references are in `task-2-daily-transition-advisory.json`; the earlier proposed quarterly transition specimens are advisory and may be omitted. Only Task 3 selects the final matrix.
++
++The proposed selected families are quarterly ZIP and uncompressed daily IDX. `.gz`, `.Z`, `.z`, `.sit` and other daily archive alternatives are optional listed representations, unselected and unexamined. They do not imply codec support or require speculative downloads when the selected alternative covers the source. Novelty detection is a manual root review control: the helper has no automated format-family novelty detector, and the offline checks do not claim to test one. The newly observed .sit/.z names are unselected optional archive-codec alternatives within the known master-index source family; no body was inspected, so a new selected content family has not been established. Root has paused further SEC requests pending this checkpoint review. If chosen body inspection reveals a new content format, legacy row/path family or requires expanded sampling, root must stop and coordinate explicit additional window/review authorization; this task grants no expanded sampling budget. No codec, text encoding, line ending, archive content or legacy path/accession support is asserted here.
++
++SEC documentation received as SEC-0140 describes weekly rebuilding of quarterly/full indexes and the current-quarter full-index bridge through the previous business day. It describes daily files through the current year. That wording does not pin an oldest retained year or guarantee arbitrary historical outage recovery; observed 2010–2026 directories are separate receipt-time source observations. There is no necessary contradiction between “through current year” and historic directory presence. Neither the bridge description nor similar representation names establishes byte equality of root and year/QTR bodies; Task 3 must compare actual originals.
++
++D-14 records the 33 uninspected historical daily middle quarters. Before asserting recovery spanning them, inspect relevant additional directories in another accepted bounded window or obtain explicit owner gap/contract resolution. No range revision has been inferred or accepted. Existing readiness/runtime decisions remain root-owned. Open-quarter availability is sensitive to this receipt date and must be reevaluated on later runs.
++
++## Registers and self-review
++
++With explicit root coordination, appended SEC-0001–SEC-0140 evidence, E-T2-COVERAGE, E-T2-DAILY, E-T2-CANDIDATES and E-T2-DOC-BRIDGE to the evidence index; appended D-14 without replacing historical discrepancy rows; and appended Task 2 shared accounting to access-window.md. Preserved original decision/boundary records and original listing bytes. Root may resume register writes after this interval is released.
++
++Self-review: requested accounting and retained-child/hash checks pass; failed/uninspected states stay honest; optional codecs remain unselected; no ingestion/body support claims; no SEC access by this agent; no protected baseline restoration or production edits. Task 2 is ready for root review. Stage 1 readiness and Task 3 body investigation remain incomplete.
++
++
++## Review repair: incomplete chunked responses
++
++Root review identified that the generic exception path dropped `http.client.IncompleteRead.partial`: a failed chunked response could consume entity bytes without retaining/hash-counting them before a retry. Applied systematic-debugging and reproduced before fixing. The direct offline mock returned `prefix` then raised `IncompleteRead(partial)`; the failing check showed only six prefix bytes retained instead of all thirteen bytes. A minimal fix sends the exception's partial bytes through the same original write/hash/state-accounting path, then re-raises so the response remains failed and never increments complete specimens.
++
++Local stdlib source inspection revealed that `_read_chunked` chains the truncated current-chunk exception separately from its outer completed-chunks partial. A second red reproduction used the real `http.client.HTTPResponse` over an in-memory HTTP chunked stream: outer prefix six bytes plus current truncated chunk four bytes. The final fix includes the chained `IncompleteRead` partial payloads before retaining and accounting, then preserves failure. Requested read amount remains bounded by remaining shared bytes. The direct case passed with both a sufficient 64-byte cap and an exact thirteen-byte cap; the real-client truncated-chunk case retained/hash-counted all ten entity bytes, remained failed, and recorded zero completed specimens.
++
++The retained exact command is `python3 specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/check_inventory_offline.py`. Both red reproductions exited 1; final full offline checks exited 0. Compilation exited 0. Original red/green stdout/stderr and command receipt are retained as `investigation-tools/incomplete-read-*.stdout.txt`, `incomplete-read-*.stderr.txt` and `incomplete-read-check-command.json`. Previous offline results and actual acquisition originals remain intact. No SEC/network requests or shared-register writes occurred during this repair. Root review must accept the repair before Task 3 access continues.
+diff --git a/specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/incomplete-read-final-green.stdout.txt b/specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/incomplete-read-final-green.stdout.txt
+new file mode 100644
+index 0000000..ffdb6ae
+--- /dev/null
++++ b/specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/incomplete-read-final-green.stdout.txt
+@@ -0,0 +1,9 @@
++PASS canonical URL/child guards; JSON/XML/HTML schema/type; external/parent HTML links rejected; 68 requested/48 development; inactive refusal; interruption recovery and orphan bytes. No SEC traffic.
++{"evidence_id": "SEC-0001", "url": "https://www.sec.gov/Archives/edgar/full-index/index.json", "start_utc": "2026-10-05T23:50:27.728318+00:00", "receipt_utc": "2026-10-05T23:50:27.733567+00:00", "status": 200, "headers": [["Content-Length", "2"], ["Connection", "close"]], "transport": "HTTPS TLS verified; transfer framing removed by http.client", "content_encoding": "identity", "redirect_chain": [], "redirect_policy": "never followed", "received_bytes": 2, "sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a", "body_artifact": "listings/SEC-0001.body", "error": "", "intent_artifact": "listings/SEC-0001.intent.json", "schema": "uninspected response entity bytes", "outcome": "success", "specimen": false}
++PASS mocked Connection:close response retains socket timeout updates; canonical directory HTML href parsing. Mock only; no SEC traffic.
++PASS synthetic complete hierarchy inventory: 68 unique summaries/48 development, explicit handoff, 68 daily boundary units; repeat inventory refused. Synthetic only; no SEC traffic.
++{"evidence_id": "SEC-0005", "url": "https://www.sec.gov/Archives/edgar/full-index/index.json", "start_utc": "2026-10-05T23:50:27.736936+00:00", "receipt_utc": "2026-10-05T23:50:27.741407+00:00", "status": 200, "headers": [["Transfer-Encoding", "chunked"]], "transport": "HTTPS TLS verified; transfer framing removed by http.client", "content_encoding": "identity", "redirect_chain": [], "redirect_policy": "never followed", "received_bytes": 13, "sha256": "427ffcc209173a051f8847f6a8a8f4d057ad3c24a04c7c209a2e8501b1efa901", "body_artifact": "listings/SEC-0005.body", "error": "IncompleteRead: IncompleteRead(7 bytes read, 19 more expected)", "intent_artifact": "listings/SEC-0005.intent.json", "schema": "uninspected response entity bytes", "outcome": "failed", "specimen": true}
++{"evidence_id": "SEC-0005", "url": "https://www.sec.gov/Archives/edgar/full-index/index.json", "start_utc": "2026-10-05T23:50:27.742599+00:00", "receipt_utc": "2026-10-05T23:50:27.746982+00:00", "status": 200, "headers": [["Transfer-Encoding", "chunked"]], "transport": "HTTPS TLS verified; transfer framing removed by http.client", "content_encoding": "identity", "redirect_chain": [], "redirect_policy": "never followed", "received_bytes": 13, "sha256": "427ffcc209173a051f8847f6a8a8f4d057ad3c24a04c7c209a2e8501b1efa901", "body_artifact": "listings/SEC-0005.body", "error": "IncompleteRead: IncompleteRead(7 bytes read, 19 more expected)", "intent_artifact": "listings/SEC-0005.intent.json", "schema": "uninspected response entity bytes", "outcome": "failed", "specimen": true}
++PASS mocked chunked IncompleteRead: prefix+partial retained/hash/count, final failure, no completed specimen; sufficient and exact remaining-byte budgets. Mock only; no SEC traffic.
++{"evidence_id": "SEC-0005", "url": "https://www.sec.gov/Archives/edgar/full-index/index.json", "start_utc": "2026-10-05T23:50:27.748128+00:00", "receipt_utc": "2026-10-05T23:50:27.752354+00:00", "status": 200, "headers": [["Transfer-Encoding", "chunked"]], "transport": "HTTPS TLS verified; transfer framing removed by http.client", "content_encoding": "identity", "redirect_chain": [], "redirect_policy": "never followed", "received_bytes": 10, "sha256": "7f61c0d814b40b576f374c252307d81fb1d5777bcc9e87c4897a02eee5c59a46", "body_artifact": "listings/SEC-0005.body", "error": "IncompleteRead: IncompleteRead(6 bytes read)", "intent_artifact": "listings/SEC-0005.intent.json", "schema": "uninspected response entity bytes", "outcome": "failed", "specimen": true}
++PASS real stdlib HTTPResponse over BytesIO truncated chunk: outer completed-prefix and chained current-chunk partial retained/hash/count; failed, no specimen. Offline only; no SEC traffic.
+diff --git a/specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/incomplete-read-chained-red.stdout.txt b/specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/incomplete-read-chained-red.stdout.txt
+new file mode 100644
+index 0000000..e3bcc3c
+--- /dev/null
++++ b/specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/incomplete-read-chained-red.stdout.txt
+@@ -0,0 +1,8 @@
++PASS canonical URL/child guards; JSON/XML/HTML schema/type; external/parent HTML links rejected; 68 requested/48 development; inactive refusal; interruption recovery and orphan bytes. No SEC traffic.
++{"evidence_id": "SEC-0001", "url": "https://www.sec.gov/Archives/edgar/full-index/index.json", "start_utc": "2026-10-05T23:50:11.019273+00:00", "receipt_utc": "2026-10-05T23:50:11.024942+00:00", "status": 200, "headers": [["Content-Length", "2"], ["Connection", "close"]], "transport": "HTTPS TLS verified; transfer framing removed by http.client", "content_encoding": "identity", "redirect_chain": [], "redirect_policy": "never followed", "received_bytes": 2, "sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a", "body_artifact": "listings/SEC-0001.body", "error": "", "intent_artifact": "listings/SEC-0001.intent.json", "schema": "uninspected response entity bytes", "outcome": "success", "specimen": false}
++PASS mocked Connection:close response retains socket timeout updates; canonical directory HTML href parsing. Mock only; no SEC traffic.
++PASS synthetic complete hierarchy inventory: 68 unique summaries/48 development, explicit handoff, 68 daily boundary units; repeat inventory refused. Synthetic only; no SEC traffic.
++{"evidence_id": "SEC-0005", "url": "https://www.sec.gov/Archives/edgar/full-index/index.json", "start_utc": "2026-10-05T23:50:11.028520+00:00", "receipt_utc": "2026-10-05T23:50:11.033060+00:00", "status": 200, "headers": [["Transfer-Encoding", "chunked"]], "transport": "HTTPS TLS verified; transfer framing removed by http.client", "content_encoding": "identity", "redirect_chain": [], "redirect_policy": "never followed", "received_bytes": 13, "sha256": "427ffcc209173a051f8847f6a8a8f4d057ad3c24a04c7c209a2e8501b1efa901", "body_artifact": "listings/SEC-0005.body", "error": "IncompleteRead: IncompleteRead(7 bytes read, 19 more expected)", "intent_artifact": "listings/SEC-0005.intent.json", "schema": "uninspected response entity bytes", "outcome": "failed", "specimen": true}
++{"evidence_id": "SEC-0005", "url": "https://www.sec.gov/Archives/edgar/full-index/index.json", "start_utc": "2026-10-05T23:50:11.034106+00:00", "receipt_utc": "2026-10-05T23:50:11.038495+00:00", "status": 200, "headers": [["Transfer-Encoding", "chunked"]], "transport": "HTTPS TLS verified; transfer framing removed by http.client", "content_encoding": "identity", "redirect_chain": [], "redirect_policy": "never followed", "received_bytes": 13, "sha256": "427ffcc209173a051f8847f6a8a8f4d057ad3c24a04c7c209a2e8501b1efa901", "body_artifact": "listings/SEC-0005.body", "error": "IncompleteRead: IncompleteRead(7 bytes read, 19 more expected)", "intent_artifact": "listings/SEC-0005.intent.json", "schema": "uninspected response entity bytes", "outcome": "failed", "specimen": true}
++PASS mocked chunked IncompleteRead: prefix+partial retained/hash/count, final failure, no completed specimen; sufficient and exact remaining-byte budgets. Mock only; no SEC traffic.
++{"evidence_id": "SEC-0005", "url": "https://www.sec.gov/Archives/edgar/full-index/index.json", "start_utc": "2026-10-05T23:50:11.039550+00:00", "receipt_utc": "2026-10-05T23:50:11.043999+00:00", "status": 200, "headers": [["Transfer-Encoding", "chunked"]], "transport": "HTTPS TLS verified; transfer framing removed by http.client", "content_encoding": "identity", "redirect_chain": [], "redirect_policy": "never followed", "received_bytes": 6, "sha256": "e7a2e8b216e5aec3facf743962d3997f2e7d70088ef257de472d6a258049832e", "body_artifact": "listings/SEC-0005.body", "error": "IncompleteRead: IncompleteRead(6 bytes read)", "intent_artifact": "listings/SEC-0005.intent.json", "schema": "uninspected response entity bytes", "outcome": "failed", "specimen": true}
+diff --git a/specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/incomplete-read-green.stderr.txt b/specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/incomplete-read-green.stderr.txt
+new file mode 100644
+index 0000000..e69de29
+diff --git a/specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/incomplete-read-red.stdout.txt b/specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/incomplete-read-red.stdout.txt
+new file mode 100644
+index 0000000..8e9b758
+--- /dev/null
++++ b/specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/incomplete-read-red.stdout.txt
+@@ -0,0 +1,5 @@
++PASS canonical URL/child guards; JSON/XML/HTML schema/type; external/parent HTML links rejected; 68 requested/48 development; inactive refusal; interruption recovery and orphan bytes. No SEC traffic.
++{"evidence_id": "SEC-0001", "url": "https://www.sec.gov/Archives/edgar/full-index/index.json", "start_utc": "2026-10-05T23:48:59.087640+00:00", "receipt_utc": "2026-10-05T23:48:59.093441+00:00", "status": 200, "headers": [["Content-Length", "2"], ["Connection", "close"]], "transport": "HTTPS TLS verified; transfer framing removed by http.client", "content_encoding": "identity", "redirect_chain": [], "redirect_policy": "never followed", "received_bytes": 2, "sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a", "body_artifact": "listings/SEC-0001.body", "error": "", "intent_artifact": "listings/SEC-0001.intent.json", "schema": "uninspected response entity bytes", "outcome": "success", "specimen": false}
++PASS mocked Connection:close response retains socket timeout updates; canonical directory HTML href parsing. Mock only; no SEC traffic.
++PASS synthetic complete hierarchy inventory: 68 unique summaries/48 development, explicit handoff, 68 daily boundary units; repeat inventory refused. Synthetic only; no SEC traffic.
++{"evidence_id": "SEC-0005", "url": "https://www.sec.gov/Archives/edgar/full-index/index.json", "start_utc": "2026-10-05T23:48:59.096988+00:00", "receipt_utc": "2026-10-05T23:48:59.101403+00:00", "status": 200, "headers": [["Transfer-Encoding", "chunked"]], "transport": "HTTPS TLS verified; transfer framing removed by http.client", "content_encoding": "identity", "redirect_chain": [], "redirect_policy": "never followed", "received_bytes": 6, "sha256": "e7a2e8b216e5aec3facf743962d3997f2e7d70088ef257de472d6a258049832e", "body_artifact": "listings/SEC-0005.body", "error": "IncompleteRead: IncompleteRead(7 bytes read, 19 more expected)", "intent_artifact": "listings/SEC-0005.intent.json", "schema": "uninspected response entity bytes", "outcome": "failed", "specimen": true}
+diff --git a/specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/incomplete-read-check-command.json b/specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/incomplete-read-check-command.json
+new file mode 100644
+index 0000000..786b733
+--- /dev/null
++++ b/specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/incomplete-read-check-command.json
+@@ -0,0 +1,38 @@
++{
++  "method": "Offline synthetic/mock HTTPSConnection and real stdlib HTTPResponse over BytesIO; no SEC access",
++  "recorded_at_utc": "2026-10-05T23:51:04.247533+00:00",
++  "command": "python3 specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/check_inventory_offline.py",
++  "runs": [
++    {
++      "phase": "red direct IncompleteRead.partial",
++      "exit_code": 1,
++      "stdout": "incomplete-read-red.stdout.txt",
++      "stderr": "incomplete-read-red.stderr.txt",
++      "observed": "Retained prefix only6bytes instead of prefix+partial13bytes"
++    },
++    {
++      "phase": "green direct partial fix",
++      "exit_code": 0,
++      "stdout": "incomplete-read-green.stdout.txt",
++      "stderr": "incomplete-read-green.stderr.txt"
++    },
++    {
++      "phase": "red real stdlib chained partial",
++      "exit_code": 1,
++      "stdout": "incomplete-read-chained-red.stdout.txt",
++      "stderr": "incomplete-read-chained-red.stderr.txt",
++      "observed": "Outer exception retained prefix6bytes but current truncatedchunk4bytes remained only in chainedcause"
++    },
++    {
++      "phase": "green final direct+chained partial fix",
++      "exit_code": 0,
++      "stdout": "incomplete-read-final-green.stdout.txt",
++      "stderr": "incomplete-read-final-green.stderr.txt"
++    }
++  ],
++  "compile_command": "python3 -m py_compile specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/sec_inventory.py",
++  "compile_exit_code": 0,
++  "helper_sha256": "018d8f107088cc66dcac63fa4270e02371ff07d4cce17ebfdff0de55e30f0ae3",
++  "check_script_sha256": "9b881174e505f148ccf53a8dc35c59c50609ba982a3f0cc2b5334b1a2ee0e2ef",
++  "scope": "IncompleteRead entity partial retention/hash/accounting only; no sharedregister updates, existing root acquisitions unchanged"
++}
+diff --git a/specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/incomplete-read-green.stdout.txt b/specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/incomplete-read-green.stdout.txt
+new file mode 100644
+index 0000000..022bf6a
+--- /dev/null
++++ b/specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/incomplete-read-green.stdout.txt
+@@ -0,0 +1,7 @@
++PASS canonical URL/child guards; JSON/XML/HTML schema/type; external/parent HTML links rejected; 68 requested/48 development; inactive refusal; interruption recovery and orphan bytes. No SEC traffic.
++{"evidence_id": "SEC-0001", "url": "https://www.sec.gov/Archives/edgar/full-index/index.json", "start_utc": "2026-10-05T23:49:22.655490+00:00", "receipt_utc": "2026-10-05T23:49:22.660669+00:00", "status": 200, "headers": [["Content-Length", "2"], ["Connection", "close"]], "transport": "HTTPS TLS verified; transfer framing removed by http.client", "content_encoding": "identity", "redirect_chain": [], "redirect_policy": "never followed", "received_bytes": 2, "sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a", "body_artifact": "listings/SEC-0001.body", "error": "", "intent_artifact": "listings/SEC-0001.intent.json", "schema": "uninspected response entity bytes", "outcome": "success", "specimen": false}
++PASS mocked Connection:close response retains socket timeout updates; canonical directory HTML href parsing. Mock only; no SEC traffic.
++PASS synthetic complete hierarchy inventory: 68 unique summaries/48 development, explicit handoff, 68 daily boundary units; repeat inventory refused. Synthetic only; no SEC traffic.
++{"evidence_id": "SEC-0005", "url": "https://www.sec.gov/Archives/edgar/full-index/index.json", "start_utc": "2026-10-05T23:49:22.663942+00:00", "receipt_utc": "2026-10-05T23:49:22.668287+00:00", "status": 200, "headers": [["Transfer-Encoding", "chunked"]], "transport": "HTTPS TLS verified; transfer framing removed by http.client", "content_encoding": "identity", "redirect_chain": [], "redirect_policy": "never followed", "received_bytes": 13, "sha256": "427ffcc209173a051f8847f6a8a8f4d057ad3c24a04c7c209a2e8501b1efa901", "body_artifact": "listings/SEC-0005.body", "error": "IncompleteRead: IncompleteRead(7 bytes read, 19 more expected)", "intent_artifact": "listings/SEC-0005.intent.json", "schema": "uninspected response entity bytes", "outcome": "failed", "specimen": true}
++{"evidence_id": "SEC-0005", "url": "https://www.sec.gov/Archives/edgar/full-index/index.json", "start_utc": "2026-10-05T23:49:22.669350+00:00", "receipt_utc": "2026-10-05T23:49:22.673858+00:00", "status": 200, "headers": [["Transfer-Encoding", "chunked"]], "transport": "HTTPS TLS verified; transfer framing removed by http.client", "content_encoding": "identity", "redirect_chain": [], "redirect_policy": "never followed", "received_bytes": 13, "sha256": "427ffcc209173a051f8847f6a8a8f4d057ad3c24a04c7c209a2e8501b1efa901", "body_artifact": "listings/SEC-0005.body", "error": "IncompleteRead: IncompleteRead(7 bytes read, 19 more expected)", "intent_artifact": "listings/SEC-0005.intent.json", "schema": "uninspected response entity bytes", "outcome": "failed", "specimen": true}
++PASS mocked chunked IncompleteRead: prefix+partial retained/hash/count, final failure, no completed specimen; sufficient and exact remaining-byte budgets. Mock only; no SEC traffic.
+diff --git a/specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/incomplete-read-final-green.stderr.txt b/specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/incomplete-read-final-green.stderr.txt
+new file mode 100644
+index 0000000..e69de29
+diff --git a/specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/incomplete-read-chained-red.stderr.txt b/specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/incomplete-read-chained-red.stderr.txt
+new file mode 100644
+index 0000000..9e4d274
+--- /dev/null
++++ b/specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/incomplete-read-chained-red.stderr.txt
+@@ -0,0 +1,5 @@
++Traceback (most recent call last):
++  File "/Users/lowell/Projects/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/check_inventory_offline.py", line 230, in <module>
++    assert retained == b'prefixpart', retained
++           ^^^^^^^^^^^^^^^^^^^^^^^^^
++AssertionError: b'prefix'
+diff --git a/specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/incomplete-read-red.stderr.txt b/specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/incomplete-read-red.stderr.txt
+new file mode 100644
+index 0000000..06dade8
+--- /dev/null
++++ b/specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/incomplete-read-red.stderr.txt
+@@ -0,0 +1,5 @@
++Traceback (most recent call last):
++  File "/Users/lowell/Projects/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/check_inventory_offline.py", line 193, in <module>
++    assert retained == b'prefixpartial', (byte_cap, retained)
++           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
++AssertionError: (64, b'prefix')

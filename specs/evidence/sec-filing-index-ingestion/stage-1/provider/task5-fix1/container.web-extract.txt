@@ -1,0 +1,521 @@
+Blob Containers - Create - REST API (Azure Storage Resource Provider) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/storagerp/blob-containers/create?view=rest-storagerp-2025-06-01)
+citeturn72view0 [wordlim: 200] Crawled: today; Content type: text/html; Source: find({"ref_id":"https://learn.microsoft.com/en-us/rest/api/storagerp/blob-containers/create?view=rest-storagerp-2025-06-01","pattern":"200 OK"}); Total lines: 1074
+L0: cite0†Skip to main content cite1†Skip to in-page navigation cite2†Skip to Ask Learn chat experience L1: 
+L2: This browser is no longer supported.
+L3: 
+L4: Upgrade to Microsoft Edge to take advantage of the latest features, security updates, and technical support.
+L5: 
+L6: cite3†Download Microsoft Edge†go.microsoft.com cite4†More info about Internet Explorer and Microsoft Edge L7: 
+L8: Table of contents Exit editor mode
+L9: 
+L10: Ask Learn Ask Learn
+L11: 
+L12: Reading mode Table of contents cite2†Read in English Add Add to Plans cite5†Edit†github.com L13: 
+L14: * * *
+L15: Copy Markdown Print
+L16: 
+L17: * * *
+L18: 
+L19: Note
+L20: 
+L21: Access to this page requires authorization. You can try cite2†signing in or changing directories.
+L22: 
+L23: Access to this page requires authorization. You can try changing directories.
+L24: # Blob Containers - Create
+L25: 
+L26: Service:
+L27:     Storage Resource Provider
+L28: 
+L29: API Version:
+L30:     2025-06-01
+L31: ##
+L32: 
+L33: Creates a new container under the specified account as described by request body. The container resource includes metadata and properties for that container. It does not include a list of the blobs contained by the container.
+L34: 
+L35:     `PUT https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{accountName}/blobServices/default/containers/{containerName}?api-version=2025-06-01`
+L36: ## URI Parameters
+L37: Name  | In  | Required  | Type  | Description
+L38: --- | --- | --- | --- | ---
+L39: accountName  | path  | True  | string minLength: 3
+L40: maxLength: 24
+L41: pattern: ^[a-z0-9]+$  | The name of the storage account within the specified resource group. Storage account names must be between 3 and 24 characters in length and use numbers and lower-case letters only.
+L42: containerName  | path  | True  | string minLength: 3
+L43: maxLength: 63  | The name of the blob container within the specified storage account. Blob container names must be between 3 and 63 characters in length and use numbers, lower-case letters and dash (-) only. Every dash (-) character must be immediately preceded and followed by a letter or number.
+L44: resourceGroupName  | path  | True  | string minLength: 1
+L45: maxLength: 90  | The name of the resource group. The name is case insensitive.
+L46: subscriptionId  | path  | True  | string (uuid)  | The ID of the target subscription. The value must be an UUID.
+L47: api-version  | query  | True  | string minLength: 1  | The API version to use for this operation.
+L48: ## Request Body
+L49: Name  | Type  | Description
+L50: --- | --- | ---
+L51: properties.defaultEncryptionScope  | string  | Default the container to use specified encryption scope for all writes.
+L52: properties.denyEncryptionScopeOverride  | boolean  | Block override of encryption scope from the container default.
+L53: properties.enableNfsV3AllSquash  | boolean  | Enable NFSv3 all squash on blob container.
+L54: properties.enableNfsV3RootSquash  | boolean  | Enable NFSv3 root squash on blob container.
+L55: properties.immutableStorageWithVersioning  | cite6†ImmutableStorageWithVersioning | The object level immutability property of the container. The property is immutable and can only be set to true at the container creation time. Existing containers must undergo a migration process.
+L56: properties.metadata  | object  | A name-value pair to associate with the container as metadata.
+L57: properties.publicAccess  | cite7†PublicAccess | Specifies whether data in the container may be accessed publicly and the level of access.
+L58: ## Responses
+L59: 
+L60: Name  | Type  | Description
+L61: --- | --- | ---
+L62: 200 OK  | cite8†BlobContainer | Resource 'BlobContainer' update operation succeeded
+L63: 201 Created  | cite8†BlobContainer | Resource 'BlobContainer' create operation succeeded
+L64: Other Status Codes  | cite9†ErrorResponse | An unexpected error response.
+L65: 
+L66: ## Security
+L67: 
+L68: ### azure_auth
+L69: 
+L70: Azure Active Directory OAuth2 Flow.
+L71: 
+L72: Type: oauth2
+L73: Flow: implicit
+L74: Authorization URL: https://login.microsoftonline.com/common/oauth2/authorize
+L75: #### Scopes
+L76: 
+L77: Name  | Description
+L78: --- | ---
+L79: user_impersonation  | impersonate your user account
+L80: 
+L81: ## Examples
+L82: 
+L83: cite10†PutContainers L84: cite11†PutContainerWithDefaultEncryptionScope L85: cite12†PutContainerWithObjectLevelWorm L86: 
+L87: ### PutContainers
+L88: #### Sample request
+L89:   * cite13†HTTP L90:   * cite14†Java L91:   * cite15†Python L92:   * cite16†Go L93:   * cite17†JavaScript L94:   * cite18†dotnet L95: 
+L96:     `PUT https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/res3376/providers/Microsoft.Storage/storageAccounts/sto328/blobServices/default/containers/container6185?api-version=2025-06-01
+L97: 
+L98:     {}
+L99: 
+L100:     `
+L101: 
+L102:     `
+L103:     import com.azure.resourcemanager.storage.fluent.models.BlobContainerInner;
+L104: 
+L105:     /**
+L106:      * Samples for BlobContainers Create.
+L107:      */
+L108:     public final class Main {
+L109:         /*
+L110:          * x-ms-original-file:
+L111:          * specification/storage/resource-manager/Microsoft.Storage/stable/2025-06-01/examples/BlobContainersPut.json
+L112:          */
+L113:         /**
+L114:          * Sample code: PutContainers.
+L115:          *
+L116:          * @param azure The entry point for accessing resource management APIs in Azure.
+L117:          */
+L118:         public static void putContainers(com.azure.resourcemanager.AzureResourceManager azure) {
+L119:             azure.storageAccounts().manager().serviceClient().getBlobContainers().createWithResponse("res3376", "sto328",
+L120:                 "container6185", new BlobContainerInner(), com.azure.core.util.Context.NONE);
+L121:         }
+L122:     }
+L123: 
+L124:     `
+L125: To use the Azure SDK library in your project, see cite19†this documentation†github.com . To provide feedback on this code sample, cite20†open a GitHub issue†github.com L126: 
+L127:     `from azure.identity import DefaultAzureCredential
+L128: 
+L129:     from azure.mgmt.storage import StorageManagementClient
+L130: 
+L131:     """
+L132:     # PREREQUISITES
+L133:         pip install azure-identity
+L134:         pip install azure-mgmt-storage
+L135:     # USAGE
+L136:         python blob_containers_put.py
+L137:         Before run the sample, please set the values of the client ID, tenant ID and client secret
+L138:         of the AAD application as environment variables: AZURE_CLIENT_ID, AZURE_TENANT_ID,
+L139:         AZURE_CLIENT_SECRET. For more info about how to get the value, please see:
+L140:         https://docs.microsoft.com/azure/active-directory/develop/howto-create-service-principal-portal
+L141:     """
+L142: 
+L143: 
+L144:     def main():
+L145:         client = StorageManagementClient(
+L146:             credential=DefaultAzureCredential(),
+L147:             subscription_id="{subscription-id}",
+L148:         )
+L149: 
+L150:         response = client.blob_containers.create(
+L151:             resource_group_name="res3376",
+L152:             account_name="sto328",
+L153:             container_name="container6185",
+L154:             blob_container={
+L155:                 "defaultEncryptionScope": "str",
+L156:                 "deleted": bool,
+L157:                 "deletedTime": "2020-02-20 00:00:00",
+L158:                 "denyEncryptionScopeOverride": bool,
+L159:                 "enableNfsV3AllSquash": bool,
+L160:                 "enableNfsV3RootSquash": bool,
+L161:                 "etag": "str",
+L162:                 "hasImmutabilityPolicy": bool,
+L163:                 "hasLegalHold": bool,
+L164:                 "id": "str",
+L165:                 "immutabilityPolicy": {
+L166:                     "allowProtectedAppendWrites": bool,
+L167:                     "allowProtectedAppendWritesAll": bool,
+L168:                     "etag": "str",
+L169:                     "immutabilityPeriodSinceCreationInDays": 0,
+L170:                     "state": "str",
+L171:                     "updateHistory": [
+L172:                         {
+L173:                             "allowProtectedAppendWrites": bool,
+L174:                             "allowProtectedAppendWritesAll": bool,
+L175:                             "immutabilityPeriodSinceCreationInDays": 0,
+L176:                             "objectIdentifier": "str",
+L177:                             "tenantId": "str",
+L178:                             "timestamp": "2020-02-20 00:00:00",
+L179:                             "update": "str",
+L180:                             "upn": "str",
+L181:                         }
+L182:                     ],
+L183:                 },
+L184:                 "immutableStorageWithVersioning": {
+L185:                     "enabled": bool,
+L186:                     "migrationState": "str",
+L187:                     "timeStamp": "2020-02-20 00:00:00",
+L188:                 },
+L189:                 "lastModifiedTime": "2020-02-20 00:00:00",
+L190:                 "leaseDuration": "str",
+L191:                 "leaseState": "str",
+L192:                 "leaseStatus": "str",
+L193:                 "legalHold": {
+L194:                     "hasLegalHold": bool,
+L195:                     "protectedAppendWritesHistory": {
+L196:                         "allowProtectedAppendWritesAll": bool,
+L197:                         "timestamp": "2020-02-20 00:00:00",
+L198:                     },
+L199:                     "tags": [
+L200:                         {
+L201:                             "objectIdentifier": "str",
+L202:                             "tag": "str",
+L203:                             "tenantId": "str",
+L204:                             "timestamp": "2020-02-20 00:00:00",
+L205:                             "upn": "str",
+L206:                         }
+L207:                     ],
+L208:                 },
+L209:                 "metadata": {"str": "str"},
+L210:                 "name": "str",
+L211:                 "publicAccess": "str",
+L212:                 "remainingRetentionDays": 0,
+L213:                 "type": "str",
+L214:                 "version": "str",
+L215:             },
+L216:         )
+L217:         print(response)
+L218:     # x-ms-original-file: specification/storage/resource-manager/Microsoft.Storage/stable/2025-06-01/examples/BlobContainersPut.json
+L219:     if __name__ == "__main__":
+L220:         main()
+L221: 
+L222:     `
+L223: To use the Azure SDK library in your project, see cite21†this documentation†github.com . To provide feedback on this code sample, cite20†open a GitHub issue†github.com L224: 
+L225:     `package armstorage_test
+L226: 
+L227:     import (
+L228:     	"context"
+L229:     	"log"
+L230: 
+L231:     	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+L232:     	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage/v3"
+L233:     )
+L234:     // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/blob/4e9df3afd38a1cfa00a5d49419dce51bd014601f/specification/storage/resource-manager/Microsoft.Storage/stable/2025-06-01/examples/BlobContainersPut.json
+L235:     func ExampleBlobContainersClient_Create_putContainers() {
+L236:     	cred, err := azidentity.NewDefaultAzureCredential(nil)
+L237:     	if err != nil {
+L238:     		log.Fatalf("failed to obtain a credential: %v", err)
+L239:     	}
+L240:     	ctx := context.Background()
+L241:     	clientFactory, err := armstorage.NewClientFactory("<subscription-id>", cred, nil)
+L242:     	if err != nil {
+L243:     		log.Fatalf("failed to create client: %v", err)
+L244:     	}
+L245:     	res, err := clientFactory.NewBlobContainersClient().Create(ctx, "res3376", "sto328", "container6185", armstorage.BlobContainer{}, nil)
+L246:     	if err != nil {
+L247:     		log.Fatalf("failed to finish the request: %v", err)
+L248:     	}
+L249:     	// You could use response here. We use blank identifier for just demo purposes.
+L250:     	_ = res
+L251:     	// If the HTTP response code is 200 as defined in example definition, your response structure would look as follows. Please pay attention that all the values in the output are fake values for just demo purposes.
+L252:     	// res.BlobContainer = armstorage.BlobContainer{
+L253:     	// 	Name: to.Ptr("container6185"),
+L254:     	// 	Type: to.Ptr("Microsoft.Storage/storageAccounts/blobServices/containers"),
+L255:     	// 	ID: to.Ptr("/subscriptions/{subscription-id}/resourceGroups/res3376/providers/Microsoft.Storage/storageAccounts/sto328/blobServices/default/containers/container6185"),
+L256:     	// }
+L257:     }
+L258: 
+L259:     `
+L260: To use the Azure SDK library in your project, see cite22†this documentation†github.com . To provide feedback on this code sample, cite20†open a GitHub issue†github.com L261: 
+L262:     `const { StorageManagementClient } = require("@azure/arm-storage");
+L263:     const { DefaultAzureCredential } = require("@azure/identity");
+L264:     require("dotenv/config");
+L265: 
+L266:     /**
+L267:      * This sample demonstrates how to Creates a new container under the specified account as described by request body. The container resource includes metadata and properties for that container. It does not include a list of the blobs contained by the container.
+L268:      *
+L269:      * @summary Creates a new container under the specified account as described by request body. The container resource includes metadata and properties for that container. It does not include a list of the blobs contained by the container.
+L270:      * x-ms-original-file: specification/storage/resource-manager/Microsoft.Storage/stable/2025-06-01/examples/BlobContainersPut.json
+L271:      */
+L272:     async function putContainers() {
+L273:       const subscriptionId = process.env["STORAGE_SUBSCRIPTION_ID"] || "{subscription-id}";
+L274:       const resourceGroupName = process.env["STORAGE_RESOURCE_GROUP"] || "res3376";
+L275:       const accountName = "sto328";
+L276:       const containerName = "container6185";
+L277:       const blobContainer = {};
+L278:       const credential = new DefaultAzureCredential();
+L279:       const client = new StorageManagementClient(credential, subscriptionId);
+L280:       const result = await client.blobContainers.create(
+L281:         resourceGroupName,
+--------------------------------------------------------------------------------
+Blob Containers - Get - REST API (Azure Storage Resource Provider) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/storagerp/blob-containers/get?view=rest-storagerp-2025-06-01)
+citeturn72view1 [wordlim: 200] Crawled: today; Content type: text/html; Source: find({"ref_id":"https://learn.microsoft.com/en-us/rest/api/storagerp/blob-containers/get?view=rest-storagerp-2025-06-01","pattern":"200 OK"}); Total lines: 942
+L0: cite0†Skip to main content cite1†Skip to in-page navigation cite2†Skip to Ask Learn chat experience L1: 
+L2: This browser is no longer supported.
+L3: 
+L4: Upgrade to Microsoft Edge to take advantage of the latest features, security updates, and technical support.
+L5: 
+L6: cite3†Download Microsoft Edge†go.microsoft.com cite4†More info about Internet Explorer and Microsoft Edge L7: 
+L8: Table of contents Exit editor mode
+L9: 
+L10: Ask Learn Ask Learn
+L11: 
+L12: Reading mode Table of contents cite2†Read in English Add Add to Plans cite5†Edit†github.com L13: 
+L14: * * *
+L15: Copy Markdown Print
+L16: 
+L17: * * *
+L18: 
+L19: Note
+L20: 
+L21: Access to this page requires authorization. You can try cite2†signing in or changing directories.
+L22: 
+L23: Access to this page requires authorization. You can try changing directories.
+L24: # Blob Containers - Get
+L25: 
+L26: Service:
+L27:     Storage Resource Provider
+L28: 
+L29: API Version:
+L30:     2025-06-01
+L31: 
+L32: ##
+L33: 
+L34: Gets properties of a specified container.
+L35: 
+L36:     `GET https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{accountName}/blobServices/default/containers/{containerName}?api-version=2025-06-01`
+L37: ## URI Parameters
+L38: Name  | In  | Required  | Type  | Description
+L39: --- | --- | --- | --- | ---
+L40: accountName  | path  | True  | string minLength: 3
+L41: maxLength: 24
+L42: pattern: ^[a-z0-9]+$  | The name of the storage account within the specified resource group. Storage account names must be between 3 and 24 characters in length and use numbers and lower-case letters only.
+L43: containerName  | path  | True  | string minLength: 3
+L44: maxLength: 63  | The name of the blob container within the specified storage account. Blob container names must be between 3 and 63 characters in length and use numbers, lower-case letters and dash (-) only. Every dash (-) character must be immediately preceded and followed by a letter or number.
+L45: resourceGroupName  | path  | True  | string minLength: 1
+L46: maxLength: 90  | The name of the resource group. The name is case insensitive.
+L47: subscriptionId  | path  | True  | string (uuid)  | The ID of the target subscription. The value must be an UUID.
+L48: api-version  | query  | True  | string minLength: 1  | The API version to use for this operation.
+L49: ## Responses
+L50: 
+L51: Name  | Type  | Description
+L52: --- | --- | ---
+L53: 200 OK  | cite6†BlobContainer | Azure operation completed successfully.
+L54: Other Status Codes  | cite7†ErrorResponse | An unexpected error response.
+L55: 
+L56: ## Security
+L57: 
+L58: ### azure_auth
+L59: 
+L60: Azure Active Directory OAuth2 Flow.
+L61: 
+L62: Type: oauth2
+L63: Flow: implicit
+L64: Authorization URL: https://login.microsoftonline.com/common/oauth2/authorize
+L65: 
+L66: #### Scopes
+L67: 
+L68: Name  | Description
+L69: --- | ---
+L70: user_impersonation  | impersonate your user account
+L71: ## Examples
+L72: 
+L73: cite8†GetBlobContainersGetWithAllowProtectedAppendWritesAll L74: cite9†GetContainers L75: 
+L76: ### GetBlobContainersGetWithAllowProtectedAppendWritesAll
+L77: #### Sample request
+L78:   * cite10†HTTP L79:   * cite11†Java L80:   * cite12†Python L81:   * cite13†Go L82:   * cite14†JavaScript L83:   * cite15†dotnet L84: 
+L85:     `GET https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/res9871/providers/Microsoft.Storage/storageAccounts/sto6217/blobServices/default/containers/container1634?api-version=2025-06-01
+L86:     `
+L87: 
+L88:     `
+L89:     /**
+L90:      * Samples for BlobContainers Get.
+L91:      */
+L92:     public final class Main {
+L93:         /*
+L94:          * x-ms-original-file: specification/storage/resource-manager/Microsoft.Storage/stable/2025-06-01/examples/
+L95:          * BlobContainersGetWithAllowProtectedAppendWritesAll.json
+L96:          */
+L97:         /**
+L98:          * Sample code: GetBlobContainersGetWithAllowProtectedAppendWritesAll.
+L99:          *
+L100:          * @param azure The entry point for accessing resource management APIs in Azure.
+L101:          */
+L102:         public static void
+L103:             getBlobContainersGetWithAllowProtectedAppendWritesAll(com.azure.resourcemanager.AzureResourceManager azure) {
+L104:             azure.storageAccounts().manager().serviceClient().getBlobContainers().getWithResponse("res9871", "sto6217",
+L105:                 "container1634", com.azure.core.util.Context.NONE);
+L106:         }
+L107:     }
+L108: 
+L109:     `
+L110: To use the Azure SDK library in your project, see cite16†this documentation†github.com . To provide feedback on this code sample, cite17†open a GitHub issue†github.com L111: 
+L112:     `from azure.identity import DefaultAzureCredential
+L113: 
+L114:     from azure.mgmt.storage import StorageManagementClient
+L115: 
+L116:     """
+L117:     # PREREQUISITES
+L118:         pip install azure-identity
+L119:         pip install azure-mgmt-storage
+L120:     # USAGE
+L121:         python blob_containers_get_with_allow_protected_append_writes_all.py
+L122:         Before run the sample, please set the values of the client ID, tenant ID and client secret
+L123:         of the AAD application as environment variables: AZURE_CLIENT_ID, AZURE_TENANT_ID,
+L124:         AZURE_CLIENT_SECRET. For more info about how to get the value, please see:
+L125:         https://docs.microsoft.com/azure/active-directory/develop/howto-create-service-principal-portal
+L126:     """
+L127: 
+L128: 
+L129:     def main():
+L130:         client = StorageManagementClient(
+L131:             credential=DefaultAzureCredential(),
+L132:             subscription_id="{subscription-id}",
+L133:         )
+L134: 
+L135:         response = client.blob_containers.get(
+L136:             resource_group_name="res9871",
+L137:             account_name="sto6217",
+L138:             container_name="container1634",
+L139:         )
+L140:         print(response)
+L141: 
+L142: 
+L143:     # x-ms-original-file: specification/storage/resource-manager/Microsoft.Storage/stable/2025-06-01/examples/BlobContainersGetWithAllowProtectedAppendWritesAll.json
+L144:     if __name__ == "__main__":
+L145:         main()
+L146: 
+L147:     `
+L148: To use the Azure SDK library in your project, see cite18†this documentation†github.com . To provide feedback on this code sample, cite17†open a GitHub issue†github.com L149: 
+L150:     `package armstorage_test
+L151: 
+L152:     import (
+L153:     	"context"
+L154:     	"log"
+L155: 
+L156:     	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+L157:     	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage/v3"
+L158:     )
+L159:     // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/blob/4e9df3afd38a1cfa00a5d49419dce51bd014601f/specification/storage/resource-manager/Microsoft.Storage/stable/2025-06-01/examples/BlobContainersGetWithAllowProtectedAppendWritesAll.json
+L160:     func ExampleBlobContainersClient_Get_getBlobContainersGetWithAllowProtectedAppendWritesAll() {
+L161:     	cred, err := azidentity.NewDefaultAzureCredential(nil)
+L162:     	if err != nil {
+L163:     		log.Fatalf("failed to obtain a credential: %v", err)
+L164:     	}
+L165:     	ctx := context.Background()
+L166:     	clientFactory, err := armstorage.NewClientFactory("<subscription-id>", cred, nil)
+L167:     	if err != nil {
+L168:     		log.Fatalf("failed to create client: %v", err)
+L169:     	}
+L170:     	res, err := clientFactory.NewBlobContainersClient().Get(ctx, "res9871", "sto6217", "container1634", nil)
+L171:     	if err != nil {
+L172:     		log.Fatalf("failed to finish the request: %v", err)
+L173:     	}
+L174:     	// You could use response here. We use blank identifier for just demo purposes.
+L175:     	_ = res
+L176:     	// If the HTTP response code is 200 as defined in example definition, your response structure would look as follows. Please pay attention that all the values in the output are fake values for just demo purposes.
+L177:     	// res.BlobContainer = armstorage.BlobContainer{
+L178:     	// 	Name: to.Ptr("container1634"),
+L179:     	// 	Type: to.Ptr("Microsoft.Storage/storageAccounts/blobServices/containers"),
+L180:     	// 	ID: to.Ptr("/subscriptions/{subscription-id}/resourceGroups/res9871/providers/Microsoft.Storage/storageAccounts/sto6217/blobServices/default/containers/container1634"),
+L181:     	// 	Etag: to.Ptr("\"0x8D592D74CC20EBA\""),
+L182:     	// 	ContainerProperties: &armstorage.ContainerProperties{
+L183:     	// 		HasImmutabilityPolicy: to.Ptr(true),
+L184:     	// 		HasLegalHold: to.Ptr(true),
+L185:     	// 		ImmutabilityPolicy: &armstorage.ImmutabilityPolicyProperties{
+L186:     	// 			Etag: to.Ptr("\"8d592d74cb3011a\""),
+L187:     	// 			Properties: &armstorage.ImmutabilityPolicyProperty{
+L188:     	// 				AllowProtectedAppendWritesAll: to.Ptr(true),
+L189:     	// 				ImmutabilityPeriodSinceCreationInDays: to.Ptr[int32](100),
+L190:     	// 				State: to.Ptr(armstorage.ImmutabilityPolicyStateLocked),
+L191:     	// 			},
+L192:     	// 			UpdateHistory: []*armstorage.UpdateHistoryProperty{
+L193:     	// 				{
+L194:     	// 					AllowProtectedAppendWritesAll: to.Ptr(true),
+L195:     	// 					ImmutabilityPeriodSinceCreationInDays: to.Ptr[int32](3),
+L196:     	// 					ObjectIdentifier: to.Ptr("ce7cd28a-fc25-4bf1-8fb9-e1b9833ffd4b"),
+L197:     	// 					TenantID: to.Ptr("72f988bf-86f1-41af-91ab-2d7cd011db47"),
+L198:     	// 					Timestamp: to.Ptr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-03-26T05:06:11.431Z"); return t}()),
+L199:     	// 					Update: to.Ptr(armstorage.ImmutabilityPolicyUpdateTypePut),
+L200:     	// 				},
+L201:     	// 				{
+L202:     	// 					AllowProtectedAppendWritesAll: to.Ptr(true),
+L203:     	// 					ImmutabilityPeriodSinceCreationInDays: to.Ptr[int32](3),
+L204:     	// 					ObjectIdentifier: to.Ptr("ce7cd28a-fc25-4bf1-8fb9-e1b9833ffd4b"),
+L205:     	// 					TenantID: to.Ptr("72f988bf-86f1-41af-91ab-2d7cd011db47"),
+L206:     	// 					Timestamp: to.Ptr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-03-26T05:06:13.090Z"); return t}()),
+L207:     	// 					Update: to.Ptr(armstorage.ImmutabilityPolicyUpdateTypeLock),
+L208:     	// 				},
+L209:     	// 				{
+L210:     	// 					AllowProtectedAppendWritesAll: to.Ptr(true),
+L211:     	// 					ImmutabilityPeriodSinceCreationInDays: to.Ptr[int32](100),
+L212:     	// 					ObjectIdentifier: to.Ptr("ce7cd28a-fc25-4bf1-8fb9-e1b9833ffd4b"),
+L213:     	// 					TenantID: to.Ptr("72f988bf-86f1-41af-91ab-2d7cd011db47"),
+L214:     	// 					Timestamp: to.Ptr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-03-26T05:06:14.709Z"); return t}()),
+L215:     	// 					Update: to.Ptr(armstorage.ImmutabilityPolicyUpdateTypeExtend),
+L216:     	// 			}},
+L217:     	// 		},
+L218:     	// 		LastModifiedTime: to.Ptr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-03-26T05:06:14.000Z"); return t}()),
+L219:     	// 		LeaseState: to.Ptr(armstorage.LeaseStateAvailable),
+L220:     	// 		LeaseStatus: to.Ptr(armstorage.LeaseStatusUnlocked),
+L221:     	// 		LegalHold: &armstorage.LegalHoldProperties{
+L222:     	// 			HasLegalHold: to.Ptr(true),
+L223:     	// 			ProtectedAppendWritesHistory: &armstorage.ProtectedAppendWritesHistory{
+L224:     	// 				AllowProtectedAppendWritesAll: to.Ptr(true),
+L225:     	// 				Timestamp: to.Ptr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2022-09-01T01:58:44.504Z"); return t}()),
+L226:     	// 			},
+L227:     	// 			Tags: []*armstorage.TagProperty{
+L228:     	// 				{
+L229:     	// 					ObjectIdentifier: to.Ptr("ce7cd28a-fc25-4bf1-8fb9-e1b9833ffd4b"),
+L230:     	// 					Tag: to.Ptr("tag1"),
+L231:     	// 					TenantID: to.Ptr("72f988bf-86f1-41af-91ab-2d7cd011db47"),
+L232:     	// 					Timestamp: to.Ptr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-03-26T05:06:09.696Z"); return t}()),
+L233:     	// 				},
+L234:     	// 				{
+L235:     	// 					ObjectIdentifier: to.Ptr("ce7cd28a-fc25-4bf1-8fb9-e1b9833ffd4b"),
+L236:     	// 					Tag: to.Ptr("tag2"),
+L237:     	// 					TenantID: to.Ptr("72f988bf-86f1-41af-91ab-2d7cd011db47"),
+L238:     	// 					Timestamp: to.Ptr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-03-26T05:06:09.696Z"); return t}()),
+L239:     	// 				},
+L240:     	// 				{
+L241:     	// 					ObjectIdentifier: to.Ptr("ce7cd28a-fc25-4bf1-8fb9-e1b9833ffd4b"),
+L242:     	// 					Tag: to.Ptr("tag3"),
+L243:     	// 					TenantID: to.Ptr("72f988bf-86f1-41af-91ab-2d7cd011db47"),
+L244:     	// 					Timestamp: to.Ptr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-03-26T05:06:09.696Z"); return t}()),
+L245:     	// 			}},
+L246:     	// 		},
+L247:     	// 		PublicAccess: to.Ptr(armstorage.PublicAccessNone),
+L248:     	// 	},
+L249:     	// }
+L250:     }
+L251: 
+L252:     `
+L253: To use the Azure SDK library in your project, see cite19†this documentation†github.com . To provide feedback on this code sample, cite17†open a GitHub issue†github.com L254: 
+L255:     `const { StorageManagementClient } = require("@azure/arm-storage");
+L256:     const { DefaultAzureCredential } = require("@azure/identity");
+L257:     require("dotenv/config");
+L258: 
+L259:     /**
+L260:      * This sample demonstrates how to Gets properties of a specified container.
+L261:      *
+

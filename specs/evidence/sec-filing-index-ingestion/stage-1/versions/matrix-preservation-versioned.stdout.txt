@@ -1,0 +1,23 @@
+{
+  "retained_version_map": "versions/version-map.json",
+  "original_matrix_hashes": {
+    "quarterly.csv": "d738bebd7f73ddf278f701551eafb51574f7ea74e45536543be0384dd85bfdf8",
+    "daily.csv": "fb8c5dfa54d56c14a1bc1041475519d4c9138f63f7b79cd652f90ccc47a29bf8"
+  },
+  "result": "PASS",
+  "matrices": {
+    "quarterly.csv": {
+      "original_rows": 372,
+      "current_rows": 372,
+      "authorized_original_field_changes": 10,
+      "all_other_original_fields": "byte-string equal in same row order"
+    },
+    "daily.csv": {
+      "original_rows": 2176,
+      "current_rows": 2176,
+      "authorized_original_field_changes": 5,
+      "all_other_original_fields": "byte-string equal in same row order"
+    }
+  },
+  "tail_recovery": "All four recovered daily tail rows match frozen original fields and row order"
+}

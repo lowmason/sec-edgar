@@ -1,0 +1,29 @@
+{
+  "evidence_id": "SEC-0146",
+  "status": "new selected daily text family; root acquisition pause required",
+  "inspection_exit_code": 1,
+  "receipt_artifact": "listings/SEC-0146.headers.json",
+  "original_path": "specimens/8ec83de06534af79673887618c0125184a76e9a3db79843c95d3558561ddd018.idx",
+  "original_bytes": 320256,
+  "original_sha256": "8ec83de06534af79673887618c0125184a76e9a3db79843c95d3558561ddd018",
+  "strict_first_2000_byte_ascii": "Description:           Daily Index of EDGAR Dissemination Feed\nLast Data Received:    Sep 30, 2026\nComments:              webmaster@sec.gov\nAnonymous FTP:         ftp://ftp.sec.gov/edgar/\n \nCIK|Company Name|Form Type|Date Filed|File Name\n--------------------------------------------------------------------------------\n1000275|ROYAL BANK OF CANADA|424B2|20260930|edgar/data/1000275/0000950103-26-014800.txt\n1000275|ROYAL BANK OF CANADA|424B2|20260930|edgar/data/1000275/0000950103-26-014809.txt\n1000275|ROYAL BANK OF CANADA|424B2|20260930|edgar/data/1000275/0000950103-26-014811.txt\n1000275|ROYAL BANK OF CANADA|424B2|20260930|edgar/data/1000275/0000950103-26-014812.txt\n1000275|ROYAL BANK OF CANADA|424B2|20260930|edgar/data/1000275/0000950103-26-014813.txt\n1000275|ROYAL BANK OF CANADA|424B2|20260930|edgar/data/1000275/0000950103-26-014816.txt\n1000275|ROYAL BANK OF CANADA|424B2|20260930|edgar/data/1000275/0000950103-26-014819.txt\n1000275|ROYAL BANK OF CANADA|424B2|20260930|edgar/data/1000275/0000950103-26-014822.txt\n1000275|ROYAL BANK OF CANADA|424B2|20260930|edgar/data/1000275/0000950103-26-014823.txt\n1000275|ROYAL BANK OF CANADA|424B2|20260930|edgar/data/1000275/0000950103-26-014824.txt\n1000275|ROYAL BANK OF CANADA|424B2|20260930|edgar/data/1000275/0000950103-26-014828.txt\n1000275|ROYAL BANK OF CANADA|424B2|20260930|edgar/data/1000275/0000950103-26-014852.txt\n1000275|ROYAL BANK OF CANADA|424B2|20260930|edgar/data/1000275/0000950103-26-014866.txt\n1000275|ROYAL BANK OF CANADA|424B2|20260930|edgar/data/1000275/0000950103-26-014877.txt\n1000275|ROYAL BANK OF CANADA|424B2|20260930|edgar/data/1000275/0000950103-26-014880.txt\n1000275|ROYAL BANK OF CANADA|424B2|20260930|edgar/data/1000275/0000950103-26-014883.txt\n1000275|ROYAL BANK OF CANADA|424B2|20260930|edgar/data/1000275/0000950103-26-014885.txt\n1000275|ROYAL BANK OF CANADA|FWP|20260930|edgar/data/1000275/0000950103-26-014810.txt\n1000275|ROYAL BANK OF CANADA|FWP|20260930|edgar/data/1000275/0000950103-26-014818.txt\n1000275|ROYAL",
+  "observation_boundary": "First 2000 bytes plus complete byte-level newline counts; no full row/path scan yet",
+  "newline_counts": {
+    "lf": 3600,
+    "crlf": 0,
+    "cr": 0
+  },
+  "novelty": [
+    "daily header File Name instead of quarterly Filename",
+    "compact YYYYMMDD filing date rather than quarterly YYYY-MM-DD",
+    "LF instead of quarterly CRLF"
+  ],
+  "direct_shasum_command": [
+    "shasum",
+    "-a",
+    "256",
+    "specs/evidence/sec-filing-index-ingestion/stage-1/specimens/8ec83de06534af79673887618c0125184a76e9a3db79843c95d3558561ddd018.idx"
+  ],
+  "direct_shasum_exit_code": 0,
+  "direct_shasum_stdout": "8ec83de06534af79673887618c0125184a76e9a3db79843c95d3558561ddd018  specs/evidence/sec-filing-index-ingestion/stage-1/specimens/8ec83de06534af79673887618c0125184a76e9a3db79843c95d3558561ddd018.idx\n"
+}

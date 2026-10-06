@@ -1,0 +1,38 @@
+{
+  "method": "Offline synthetic/mock HTTPSConnection and real stdlib HTTPResponse over BytesIO; no SEC access",
+  "recorded_at_utc": "2026-10-05T23:51:04.247533+00:00",
+  "command": "python3 specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/check_inventory_offline.py",
+  "runs": [
+    {
+      "phase": "red direct IncompleteRead.partial",
+      "exit_code": 1,
+      "stdout": "incomplete-read-red.stdout.txt",
+      "stderr": "incomplete-read-red.stderr.txt",
+      "observed": "Retained prefix only6bytes instead of prefix+partial13bytes"
+    },
+    {
+      "phase": "green direct partial fix",
+      "exit_code": 0,
+      "stdout": "incomplete-read-green.stdout.txt",
+      "stderr": "incomplete-read-green.stderr.txt"
+    },
+    {
+      "phase": "red real stdlib chained partial",
+      "exit_code": 1,
+      "stdout": "incomplete-read-chained-red.stdout.txt",
+      "stderr": "incomplete-read-chained-red.stderr.txt",
+      "observed": "Outer exception retained prefix6bytes but current truncatedchunk4bytes remained only in chainedcause"
+    },
+    {
+      "phase": "green final direct+chained partial fix",
+      "exit_code": 0,
+      "stdout": "incomplete-read-final-green.stdout.txt",
+      "stderr": "incomplete-read-final-green.stderr.txt"
+    }
+  ],
+  "compile_command": "python3 -m py_compile specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/sec_inventory.py",
+  "compile_exit_code": 0,
+  "helper_sha256": "018d8f107088cc66dcac63fa4270e02371ff07d4cce17ebfdff0de55e30f0ae3",
+  "check_script_sha256": "9b881174e505f148ccf53a8dc35c59c50609ba982a3f0cc2b5334b1a2ee0e2ef",
+  "scope": "IncompleteRead entity partial retention/hash/accounting only; no sharedregister updates, existing root acquisitions unchanged"
+}

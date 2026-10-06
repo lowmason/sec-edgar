@@ -1,0 +1,219 @@
+Update Entity (REST API) - Azure Storage | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/storageservices/update-entity2)
+citeturn7view0 [wordlim: 200] Crawled: today; Content type: text/html; Source: open({"ref_id":"https://learn.microsoft.com/en-us/rest/api/storageservices/update-entity2","lineno":null}); Total lines: 225
+L0: cite0†Skip to main content cite1†Skip to Ask Learn chat experience L1: 
+L2: This browser is no longer supported.
+L3: 
+L4: Upgrade to Microsoft Edge to take advantage of the latest features, security updates, and technical support.
+L5: 
+L6: cite2†Download Microsoft Edge†go.microsoft.com cite3†More info about Internet Explorer and Microsoft Edge L7: 
+L8: Table of contents Exit editor mode
+L9: 
+L10: Ask Learn Ask Learn
+L11: 
+L12: Reading mode Table of contents cite1†Read in English Add Add to Plans cite4†Edit†github.com L13: 
+L14: * * *
+L15: 
+L16: Copy Markdown Print
+L17: 
+L18: * * *
+L19: 
+L20: Note
+L21: Access to this page requires authorization. You can try cite1†signing in or changing directories.
+L22: 
+L23: Access to this page requires authorization. You can try changing directories.
+L24: # Update Entity
+L25: 
+L26: Feedback
+L27: 
+L28: Summarize this article for me
+L29: 
+L30: ## In this article
+L31: 
+L32: The `Update Entity` operation updates an existing entity in a table. The `Update Entity` operation replaces the entire entity, and you can use the operation to remove properties.
+L33: ## Request
+L34: 
+L35: You can construct the `Update Entity` request as follows. HTTPS is recommended. Replace myaccount with the name of your storage account, and `mytable` with the name of your table. Replace myPartitionKey and myRowKey with the name of the partition key and row key that identify the entity to be updated.
+L36: 
+L37: Method  | Request URI  | HTTP version
+L38: --- | --- | ---
+L39: `PUT`  | `https://myaccount.table.core.windows.net/mytable(PartitionKey='myPartitionKey', RowKey='myRowKey')`  | HTTP/1.1
+L40: The address of the entity to be updated can take a number of forms on the request URI. See the cite5†OData Protocol†www.odata.org for additional details.
+L41: ### Emulated storage service URI
+L42: 
+L43: When you make a request against the emulated storage service, specify the emulator hostname and Azure Table Storage port as `127.0.0.1:10002`, followed by the emulated storage account name.
+L44: 
+L45: Method  | Request URI  | HTTP version
+L46: --- | --- | ---
+L47: `PUT`  | `http://127.0.0.1:10002/devstoreaccount1/mytable(PartitionKey='myPartitionKey', RowKey='myRowKey')`  | HTTP/1.1
+L48: Table Storage in the storage emulator differs from Azure Table Storage in several ways. For more information, see cite6†Differences between the storage emulator and Azure Storage services .
+L49: ### URI parameters
+L50: 
+L51: You can specify the following additional parameters on the request URI.
+L52: 
+L53: Parameter  | Description
+L54: --- | ---
+L55: `timeout`  | Optional. The `timeout` parameter is expressed in seconds. For more information, see cite7†Setting timeouts for Table Storage operations .
+L56: ### Request headers
+L57: 
+L58: The following table describes required and optional request headers.
+L59: Request header  | Description
+L60: --- | ---
+L61: `Authorization`  | Required. Specifies the authorization scheme, account name, and signature. For more information, see cite8†Authorize requests to Azure Storage .
+L62: `Date` or `x-ms-date`  | Required. Specifies the Coordinated Universal Time (UTC) for the request. For more information, see cite8†Authorize requests to Azure Storage .
+L63: `x-ms-version`  | Optional. Specifies the version of the operation to use for this request. For more information, see cite9†Versioning for the Azure Storage services .
+L64: `Content-Type`  | Required. Specifies the content type of the payload. Possible values are `application/atom+xml` and `application/json`.
+L65: For more information about valid content types, see cite10†Payload format for Table Storage operations .
+L66: `Content-Length`  | Required. The length of the request body.
+L67: `If-Match`  | Required. The client can specify the `ETag` for the entity on the request, to compare to the `ETag` maintained by the service for the purpose of optimistic concurrency. The update operation is performed only if the `ETag` sent by the client matches the value maintained by the server. This match indicates that the entity hasn't been modified since it was retrieved by the client.
+L68: To force an unconditional update, set `If-Match` to the wildcard character (*).
+L69: `x-ms-client-request-id`  | Optional. Provides a client-generated, opaque value with a 1-kibibyte (KiB) character limit that's recorded in the logs when logging is configured. We highly recommend that you use this header to correlate client-side activities with requests that the server receives. For more information, see cite11†Monitor Azure Table Storage .
+L70: ### Request body
+L71: 
+L72: The `Update Entity` operation sends the entity to be updated as an `OData` entity set, which can be either a JSON or an Atom feed. For more information, see cite12†Inserting and updating entities .
+L73: 
+L74: Note
+L75: 
+L76: JSON is the recommended payload format, and it's the only format supported for version 2015-12-11 and later.
+L77: 
+L78: ### Sample request
+L79: #### JSON (version 2013-08-15 and later)
+L80: This example shows a sample request URI, the associated request headers, and the request body for a JSON feed.
+L81: 
+L82:     `Request Headers:
+L83:     x-ms-version: 2015-12-11
+L84:     Accept-Charset: UTF-8
+L85:     Content-Type: application/json
+L86:     If-Match: *
+L87:     x-ms-date: Mon, 27 Jun 2016 18:10:24 GMT
+L88:     Authorization: SharedKeyLite myaccount:u0sWZKmjBD1B7LY/CwXWCnHdqK4B1P4z8hKy9SVW49o=
+L89:     Content-Length: ###
+L90:     DataServiceVersion: 3.0;NetFx
+L91:     MaxDataServiceVersion: 3.0;NetFx
+L92: 
+L93:     {
+L94:        "Address":"Santa Clara",
+L95:        "Age":23,
+L96:        "AmountDue":200.23,
+L97:        "CustomerCode@odata.type":"Edm.Guid",
+L98:        "CustomerCode":"c9da6455-213d-42c9-9a79-3e9149a57833",
+L99:        "CustomerSince@odata.type":"Edm.DateTime",
+L100:        "CustomerSince":"2008-07-10T00:00:00",
+L101:        "IsActive":false,
+L102:        "NumberOfOrders@odata.type":"Edm.Int64",
+L103:        "NumberOfOrders":"255",
+L104:        "PartitionKey":"mypartitionkey",
+L105:        "RowKey":"myrowkey"
+L106:     }
+L107:     `
+L108: #### Atom feed (versions earlier than 2015-12-11)
+L109: This example shows a sample request URI, the associated request headers, and the request body for an Atom feed.
+L110: 
+L111:     `Request URI:
+L112:     https://myaccount.table.core.windows.net/mytable(PartitionKey='myPartitionKey',RowKey='myRowKey')
+L113: 
+L114:     Request Headers:
+L115:     x-ms-version: 2013-08-15
+L116:     Accept: application/atom+xml,application/xml
+L117:     Accept-Charset: UTF-8
+L118:     Content-Type: application/atom+xml
+L119:     If-Match: *
+L120:     x-ms-date: Wed, 20 Nov 2013 18:10:24 GMT
+L121:     Authorization: SharedKeyLite myaccount:u0sWZKmjBD1B7LY/CwXWCnHdqK4B1P4z8hKy9SVW49o=
+L122:     Content-Length: ###
+L123:     DataServiceVersion: 1.0;NetFx
+L124:     MaxDataServiceVersion: 2.0;NetFx
+L125: 
+L126:     Request Body:
+L127:     <?xml version="1.0" encoding="utf-8"?>
+L128:     <entry xmlns:d="http://schemas.microsoft.com/ado/2007/08/dataservices" xmlns:m="http://schemas.microsoft.com/ado/2007/08/dataservices/metadata" xmlns="http://www.w3.org/2005/Atom">
+L129:       <title />
+L130:       <updated>2008-09-18T23:46:37.168836Z</updated>
+L131:       <author>
+L132:         <name />
+L133:       </author>
+L134:     <id>https://myaccount.table.core.windows.net/mytable(PartitionKey='mypartitionkey',RowKey='myrowkey')</id>
+L135:       <content type="application/xml">
+L136:         <m:properties>
+L137:           <d:Address>Santa Clara</d:Address>
+L138:           <d:Age m:type="Edm.Int32">23</d:Age>
+L139:           <d:AmountDue m:type="Edm.Double">200.23</d:AmountDue>
+L140:           <d:CustomerCode m:type="Edm.Guid">c9da6455-213d-42c9-9a79-3e9149a57833</d:CustomerCode>
+L141:           <d:CustomerSince m:type="Edm.DateTime">2008-07-10T00:00:00Z</d:CustomerSince>
+L142:           <d:IsActive m:type="Edm.Boolean">false</d:IsActive>
+L143:           <d:NumOfOrders m:type="Edm.Int64">255</d:NumOfOrders>
+L144:           <d:PartitionKey>mypartitionkey</d:PartitionKey>
+L145:           <d:RowKey>myrowkey</d:RowKey>
+L146:         </m:properties>
+L147:       </content>
+L148:     </entry>
+L149:     `
+L150: ## Response
+L151: 
+L152: The response includes an HTTP status code and a set of response headers.
+L153: 
+L154: ### Status code
+L155: 
+L156: A successful operation returns status code 204 (No Content). For information about status codes, see cite13†Status and error codes and cite14†Table Storage error codes .
+L157: ### Response headers
+L158: 
+L159: The response includes the following headers. The response can also include additional, standard HTTP headers. All standard headers conform to the cite15†HTTP/1.1 protocol specification†go.microsoft.com .
+L160: Response header  | Description
+L161: --- | ---
+L162: `ETag`  | The `ETag` for the entity.
+L163: `x-ms-request-id`  | This header uniquely identifies the request that was made, and can be used for troubleshooting the request. For more information, see cite16†Troubleshooting API operations .
+L164: `x-ms-version`  | Indicates the version of Table Storage used to run the request. This header is returned for requests made against version 2009-09-19 and later.
+L165: `Date`  | A UTC date/time value that indicates the time at which the response was initiated. The service generates this value.
+L166: `x-ms-client-request-id`  | You can use this header to troubleshoot requests and corresponding responses. The value of this header is equal to the value of the `x-ms-client-request-id` header, if it's present in the request. The value is at most 1,024 visible ASCII characters. If the `x-ms-client-request-id` header isn't present in the request, this header won't be present in the response.
+L167: ### Response body
+L168: 
+L169: None.
+L170: 
+L171: ### Sample response
+L172: 
+L173:     `Response Status:
+L174:     HTTP/1.1 204 No Content
+L175: 
+L176:     Response Headers:
+L177:     Connection: Keep-Alive
+L178:     x-ms-request-id: 2c085f8f-11a4-4e1d-bd49-82c6bd87649d
+L179:     Content-Length: 0
+L180:     Cache-Control: no-cache
+L181:     Date: Mon, 27 Jun 2016 18:12:54 GMT
+L182:     ETag: W/"0x5B168C7B6E589D2"
+L183:     DataServiceVersion: 3.0;NetFx
+L184:     MaxDataServiceVersion: 3.0;NetFx
+L185:     Server: Windows-Azure-Table/1.0 Microsoft-HTTPAPI/2.0
+L186:     `
+L187: ## Authorization
+L188: 
+L189: The account owner can perform this operation. Additionally, anyone with a shared access signature who has permission to perform this operation can do so.
+L190: ## Remarks
+L191: 
+L192: When you update an entity, you must specify the `PartitionKey` and `RowKey` system properties as part of the update operation.
+L193: An entity's `ETag` provides default optimistic concurrency for update operations. The `ETag` value is opaque, and should not be read or relied upon. Before an update operation occurs, Table Storage verifies that the entity's current `ETag` value is identical to the `ETag` value included with the update request in the `If-Match` header. If the values are identical, Table Storage determines that the entity hasn't been modified since it was retrieved, and the update operation proceeds.
+L194: If the entity's `ETag` differs from that specified with the update request, the update operation fails with status code 412 (Precondition Failed). This error indicates that the entity has been changed on the server since it was retrieved. To resolve this error, retrieve the entity again and reissue the request.
+L195: To force an unconditional update operation, set the value of the `If-Match` header to the wildcard character (*) on the request. Passing this value to the operation overrides the default optimistic concurrency, and ignores any mismatch in `ETag` values.
+L196: 
+L197: If the `If-Match` header is missing from the request in version 2011-08-18 or later, the service performs an cite17†Insert Or Replace Entity (upsert) operation. In versions earlier than 2011-08-18, the service returns status code 400 (Bad Request).
+L198: Table Storage doesn't persist `null` values for properties. Specifying a property with a `null` value is equivalent to omitting that property in the request.
+L199: 
+L200: Note
+L201: 
+L202: You can take advantage of either behavior to remove a property from an entity.
+L203: 
+L204: To explicitly type a property, specify the appropriate `OData` data type by setting the `m:type` attribute within the property definition in the Atom feed. For more information about typing properties, see cite12†Inserting and updating entities .
+L205: Any application that can authorize and send an HTTP `PUT` request can update an entity.
+L206: 
+L207: For information about performing batch update operations, see cite18†Performing entity group transactions .
+L208: ## See also
+L209: 
+L210: cite19†Merge Entity L211: cite8†Authorize requests to Azure Storage L212: cite20†Setting the OData data service version headers L213: cite13†Status and error codes L214: cite14†Table Storage error codes L215: 
+L216: * * *
+L217: 
+L218: ## Additional resources
+L219: 
+L220: * * *
+L221: 
+L222:   * Last updated on 2023-06-27
+L223: 
+L224: ### In this article

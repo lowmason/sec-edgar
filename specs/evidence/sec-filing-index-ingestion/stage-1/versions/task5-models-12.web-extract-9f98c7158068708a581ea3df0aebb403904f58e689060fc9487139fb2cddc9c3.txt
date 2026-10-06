@@ -1,0 +1,567 @@
+Tables - Get - REST API (Azure Log Analytics) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/loganalytics/tables/get?view=rest-loganalytics-2025-07-01)
+citeturn92view0 [wordlim: 200] Crawled: yesterday; Content type: text/html; Source: find({"ref_id":"https://learn.microsoft.com/en-us/rest/api/loganalytics/tables/get?view=rest-loganalytics-2025-07-01","pattern":"### Table"}); Total lines: 654
+L24: # Tables - Get
+L25: 
+L26: Service:
+L27:     Log Analytics
+L28: 
+L29: API Version:
+L30:     2025-07-01
+L31: 
+L32: ##
+L33: 
+L34: Gets a Log Analytics workspace table.
+L35: 
+L36:     `GET https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.OperationalInsights/workspaces/{workspaceName}/tables/{tableName}?api-version=2025-07-01`
+L38: Name  | In  | Required  | Type  | Description
+L39: --- | --- | --- | --- | ---
+L40: resourceGroupName  | path  | True  | string minLength: 1
+L41: maxLength: 90  | The name of the resource group. The name is case insensitive.
+L50: ## Responses
+L51: 
+L52: Name  | Type  | Description
+L53: --- | --- | ---
+L54: 200 OK  | cite6†Table | Azure operation completed successfully.
+L55: Other Status Codes  | cite7†ErrorResponse | An unexpected error response.
+L56: 
+L57: ## Security
+L58: 
+L59: ### azure_auth
+L60: 
+L61: Azure Active Directory OAuth2 Flow.
+L62: 
+L63: Type: oauth2
+L64: Flow: implicit
+L65: Authorization URL: https://login.microsoftonline.com/common/oauth2/authorize
+L66: 
+L67: #### Scopes
+L68: 
+L69: Name  | Description
+L70: --- | ---
+L71: user_impersonation  | impersonate your user account
+L72: 
+L73: ## Examples
+L74: 
+L75: ### TablesGet
+L173:     	// If the HTTP response code is 200 as defined in example definition, your response structure would look as follows. Please pay attention that all the values in the output are fake values for just demo purposes.
+L174:     	// res = armoperationalinsights.TablesClientGetResponse{
+L175:     	// 	Table: armoperationalinsights.Table{
+L176:     	// 		Name: to.Ptr("table1_SRCH"),
+L263: To use the Azure SDK library in your project, see cite16†this documentation†github.com . To provide feedback on this code sample, cite14†open a GitHub issue†github.com L264: 
+L265:     `const { OperationalInsightsManagementClient } = require("@azure/arm-operationalinsights");
+L266:     const { DefaultAzureCredential } = require("@azure/identity");
+L267: 
+L268:     /**
+L269:      * This sample demonstrates how to gets a Log Analytics workspace table.
+L270:      *
+L271:      * @summary gets a Log Analytics workspace table.
+L365:               "isHidden": false
+L366:             }
+L367:           ],
+L368:           "tableSubType": "DataCollectionRuleBased",
+L369:           "tableType": "SearchResults"
+L370:         },
+L371:         "archiveRetentionInDays": 0,
+L372:         "plan": "Analytics",
+L373:         "provisioningState": "InProgress",
+L374:         "resultStatistics": {
+L375:           "ingestedRecords": 5,
+L376:           "progress": 75,
+L377:           "scannedGb": 23.5
+L378:         },
+L379:         "retentionInDays": 50,
+L380:         "retentionInDaysAsDefault": false,
+L381:         "searchResults": {
+L382:           "description": "This table was created using a Search Job with the following query: 'Heartbeat | where SourceSystem != '' | project SourceSystem'.",
+L383:           "endSearchTime": "2020-02-02T04:05:06Z",
+L384:           "limit": 1000,
+L385:           "query": "Heartbeat | where SourceSystem != '' | project SourceSystem",
+L386:           "sourceTable": "Heartbeat",
+L387:           "startSearchTime": "2020-02-03T04:05:06Z"
+L388:         },
+L389:         "totalRetentionInDays": 50,
+L390:         "totalRetentionInDaysAsDefault": true
+L391:       },
+L392:       "systemData": {
+L393:         "createdAt": "2020-02-03T04:05:06Z",
+L394:         "createdBy": "00000000-0000-0000-0000-000000000000"
+L395:       }
+L396:     }`
+L397: ## Definitions
+L398: Name  | Description
+L399: --- | ---
+L400: cite18†Column | Table column.
+L401: cite19†ColumnDataTypeHintEnum | Column data type logical hint.
+L402: cite20†ColumnTypeEnum | Column data type.
+L403: cite21†createdByType | The type of identity that created the resource.
+L404: cite22†ErrorAdditionalInfo | The resource management error additional info.
+L405: cite23†ErrorDetail | The error detail.
+L406: cite7†ErrorResponse | Error response
+L407: cite24†OperationalInsightsTableProvisioningState | Table's current provisioning state. If set to 'updating', indicates a resource lock due to ongoing operation, forbidding any update to the table until the ongoing operation is concluded.
+L408: cite25†RestoredLogs | Restore parameters.
+L409: cite26†ResultStatistics | Search job execution statistics.
+L410: cite27†Schema | Table's schema.
+L411: cite28†SearchResults | Parameters of the search job that initiated this table.
+L412: cite29†SourceEnum | Table's creator.
+L413: cite30†systemData | Metadata pertaining to creation and last modification of the resource.
+L414: cite6†Table | Workspace data table definition.
+L415: cite31†TablePlanEnum | Instruct the system how to handle and charge the logs ingested to this table.
+L416: cite32†TableSubTypeEnum | The subtype describes what APIs can be used to interact with the table, and what features are available against it.
+L417: cite33†TableTypeEnum | Table's creator.
+L418: ### Column
+L419: 
+L420: Object
+L421: 
+L422: Table column.
+L423: Name  | Type  | Description
+L424: --- | --- | ---
+L425: dataTypeHint  | cite19†ColumnDataTypeHintEnum | Column data type logical hint.
+L426: description  | string  | Column description.
+L427: displayName  | string  | Column display name. Can be set at creation time; after creation, updates must either match column name or set to null/empty. If not provided, defaults to column name.
+L428: isDefaultDisplay  | boolean  | Is displayed by default.
+L429: isHidden  | boolean  | Is column hidden.
+L430: name  | string  | Column name.
+L431: type  | cite20†ColumnTypeEnum | Column data type.
+L432: ### ColumnDataTypeHintEnum
+L433: 
+L434: Enumeration
+L435: 
+L436: Column data type logical hint.
+L437: Value  | Description
+L438: --- | ---
+L439: uri  | A string that matches the pattern of a URI, for example, scheme://username:password@host:1234/this/is/a/path?k1=v1&k2=v2#fragment
+L440: guid  | A standard 128-bit GUID following the standard shape, xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+L441: armPath  | An Azure Resource Model (ARM) path: /subscriptions/{...}/resourceGroups/{...}/providers/Microsoft.{...}/{...}/{...}/{...}...
+L442: ip  | A standard V4/V6 ip address following the standard shape, x.x.x.x/y:y:y:y:y:y:y:y
+L443: ### ColumnTypeEnum
+L444: 
+L445: Enumeration
+L446: 
+L447: Column data type.
+L448: 
+L449: Value  | Description
+L450: --- | ---
+L451: string  | string
+L452: int  | int
+L453: long  | long
+L454: real  | real
+L455: boolean  | boolean
+L456: dateTime  | dateTime
+L457: guid  | guid
+L458: dynamic  | dynamic
+L459: 
+L460: ### createdByType
+L461: 
+L462: Enumeration
+L463: 
+L464: The type of identity that created the resource.
+L465: 
+L466: Value  | Description
+L467: --- | ---
+L468: User  |
+L469: Application  |
+L470: ManagedIdentity  |
+L471: Key  |
+L472: ### ErrorAdditionalInfo
+L473: 
+L474: Object
+L475: 
+L476: The resource management error additional info.
+L477: 
+L478: Name  | Type  | Description
+L479: --- | --- | ---
+L480: info  | object  | The additional info.
+L481: type  | string  | The additional info type.
+L482: ### ErrorDetail
+L483: 
+L484: Object
+L485: 
+L486: The error detail.
+L487: 
+L488: Name  | Type  | Description
+L489: --- | --- | ---
+L490: additionalInfo  | cite22†ErrorAdditionalInfo []  | The error additional info.
+L491: code  | string  | The error code.
+L492: details  | cite23†ErrorDetail []  | The error details.
+L493: message  | string  | The error message.
+L494: target  | string  | The error target.
+L495: 
+L496: ### ErrorResponse
+L497: 
+L498: Object
+L499: 
+L500: Error response
+L501: 
+L502: Name  | Type  | Description
+L503: --- | --- | ---
+L504: error  | cite23†ErrorDetail | The error object.
+L505: ### OperationalInsightsTableProvisioningState
+L506: 
+L507: Enumeration
+L508: 
+L509: Table's current provisioning state. If set to 'updating', indicates a resource lock due to ongoing operation, forbidding any update to the table until the ongoing operation is concluded.
+L510: Value  | Description
+L511: --- | ---
+L512: Updating  | Table schema is still being built and updated, table is currently locked for any changes till the procedure is done.
+L513: InProgress  | Table schema is stable and without changes, table data is being updated.
+L514: Succeeded  | Table state is stable and without changes, table is unlocked and open for new updates.
+L515: Deleting  | Table state is deleting.
+L516: ### RestoredLogs
+L517: 
+L518: Object
+L519: 
+L520: Restore parameters.
+L521: 
+L522: Name  | Type  | Description
+L523: --- | --- | ---
+L524: azureAsyncOperationId  | string  | Search results table async operation id.
+L525: endRestoreTime  | string (date-time)  | The timestamp to end the restore by (UTC).
+L526: sourceTable  | string  | The table to restore data from.
+L527: startRestoreTime  | string (date-time)  | The timestamp to start the restore from (UTC).
+L528: ### ResultStatistics
+L529: 
+L530: Object
+L531: 
+L532: Search job execution statistics.
+L533: 
+L534: Name  | Type  | Description
+L535: --- | --- | ---
+L536: ingestedRecords  | integer (int32)  | The number of rows that were returned by the search job.
+L537: progress  | number (float)  | Search job completion percentage.
+L538: scannedGb  | number (float)  | Search job: Amount of scanned data.
+L539: ### Schema
+L540: 
+L541: Object
+L542: 
+L543: Table's schema.
+L544: Name  | Type  | Description
+L545: --- | --- | ---
+L546: categories  | string[]  | Table category.
+L547: columns  | cite18†Column []  | A list of table custom columns.
+L548: description  | string  | Table description.
+L549: displayName  | string  | Table display name.
+L550: labels  | string[]  | Table labels.
+L551: name  | string  | Table name.
+L552: solutions  | string[]  | List of solutions the table is affiliated with
+L553: source  | cite29†SourceEnum | Table's creator.
+L554: standardColumns  | cite18†Column []  | A list of table standard columns.
+L555: tableSubType  | cite32†TableSubTypeEnum | The subtype describes what APIs can be used to interact with the table, and what features are available against it.
+L556: tableType  | cite33†TableTypeEnum | Table's creator.
+L557: ### SearchResults
+L558: 
+L559: Object
+L560: 
+L561: Parameters of the search job that initiated this table.
+L562: Name  | Type  | Description
+L563: --- | --- | ---
+L564: azureAsyncOperationId  | string  | Search results table async operation id.
+L565: description  | string  | Search job Description.
+L566: endSearchTime  | string (date-time)  | The timestamp to end the search by (UTC)
+L567: limit  | integer (int32)  | Limit the search job to return up to specified number of rows.
+L568: query  | string  | Search job query.
+L569: sourceTable  | string  | The table used in the search job.
+L570: startSearchTime  | string (date-time)  | The timestamp to start the search from (UTC)
+L571: ### SourceEnum
+L572: 
+L573: Enumeration
+L574: 
+L575: Table's creator.
+L576: 
+L577: Value  | Description
+L578: --- | ---
+L579: microsoft  | Tables provisioned by the system, as collected via Diagnostic Settings, the Agents, or any other standard data collection means.
+L580: customer  | Tables created by the owner of the Workspace, and only found in this Workspace.
+L581: ### systemData
+L582: 
+L583: Object
+L584: 
+L585: Metadata pertaining to creation and last modification of the resource.
+L586: Name  | Type  | Description
+L587: --- | --- | ---
+L588: createdAt  | string (date-time)  | The timestamp of resource creation (UTC).
+L589: createdBy  | string  | The identity that created the resource.
+L590: createdByType  | cite21†createdByType | The type of identity that created the resource.
+L591: lastModifiedAt  | string (date-time)  | The timestamp of resource last modification (UTC)
+L592: lastModifiedBy  | string  | The identity that last modified the resource.
+L593: lastModifiedByType  | cite21†createdByType | The type of identity that last modified the resource.
+L594: ### Table
+L595: 
+L596: Object
+L597: 
+L598: Workspace data table definition.
+L599: Name  | Type  | Description
+L600: --- | --- | ---
+L601: id  | string (arm-id)  | Fully qualified resource ID for the resource. E.g. "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}"
+L602: name  | string  | The name of the resource
+L603: properties.archiveRetentionInDays  | integer (int32)  | The tables long-term retention in days. Calculated as (totalRetentionInDays-retentionInDays).
+L604: properties.lastPlanModifiedDate  | string  | The timestamp that table plan was last modified (UTC).
+L605: properties.plan  | cite31†TablePlanEnum | Instruct the system how to handle and charge the logs ingested to this table.
+L606: properties.provisioningState  | cite24†OperationalInsightsTableProvisioningState | Table's current provisioning state. If set to 'updating', indicates a resource lock due to ongoing operation, forbidding any update to the table until the ongoing operation is concluded.
+L607: properties.restoredLogs  | cite25†RestoredLogs | Parameters of the restore operation that initiated this table.
+L608: properties.resultStatistics  | cite26†ResultStatistics | Search job execution statistics.
+L609: properties.retentionInDays  | integer (int32) minimum: 4
+L610: maximum: 730  | In Analytics table: the tables analytics retention in days, between 4 and 730. Setting this property to -1 will default to the workspace retention. In Basic and Auxiliary table: read only property.
+L611: properties.retentionInDaysAsDefault  | boolean  | True - Value originates from workspace retention in days, False - Customer specific.
+L612: properties.schema  | cite27†Schema | Table schema.
+L613: properties.searchResults  | cite28†SearchResults | Parameters of the search job that initiated this table.
+L614: properties.totalRetentionInDays  | integer (int32) minimum: 4
+L615: maximum: 4383  | The table total retention in days, between 4 and 4383. Setting this property to -1 will default to retentionInDays.
+L616: properties.totalRetentionInDaysAsDefault  | boolean  | True - Value originates from retention in days, False - Customer specific.
+L617: systemData  | cite30†systemData | Azure Resource Manager metadata containing createdBy and modifiedBy information.
+L618: type  | string  | The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or "Microsoft.Storage/storageAccounts"
+L619: ### TablePlanEnum
+L620: 
+L621: Enumeration
+L622: 
+L623: Instruct the system how to handle and charge the logs ingested to this table.
+L624: 
+L625: Value  | Description
+L626: --- | ---
+L627: Basic  | Medium-touch logs needed for troubleshooting and incident response.
+L628: Analytics  | High-value logs used for continuous monitoring, real-time detection, and performance analytics.
+L629: Auxiliary  | Low-touch logs, such as verbose logs, and data required for auditing and compliance.
+L630: ### TableSubTypeEnum
+L631: 
+L632: Enumeration
+L633: 
+L634: The subtype describes what APIs can be used to interact with the table, and what features are available against it.
+L635: Value  | Description
+L636: --- | ---
+L637: Any  | The default subtype with which built-in tables are created.
+L638: Classic  | Indicates a table created through the Data Collector API or with the custom logs feature of the MMA agent, or any table against which Custom Fields were created.
+L639: DataCollectionRuleBased  | A table eligible to have data sent into it via any of the means supported by Data Collection Rules: the Data Collection Endpoint API, ingestion-time transformations, or any other mechanism provided by Data Collection Rules
+L640: ### TableTypeEnum
+L641: 
+L642: Enumeration
+L643: 
+L644: Table's creator.
+L645: 
+L646: Value  | Description
+L647: --- | ---
+L648: Microsoft  | Standard data collected by Azure Monitor.
+L649: CustomLog  | Custom log table.
+L650: RestoredLogs  | Restored data.
+L651: SearchResults  | Data collected by a search job.
+L652: 
+L653: ### In this article
+--------------------------------------------------------------------------------
+Diagnostic Settings - Get - REST API (Azure Monitor) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/monitor/diagnostic-settings/get?view=rest-monitor-2021-05-01-preview)
+citeturn92view1 [wordlim: 200] Crawled: today; Content type: text/html; Source: find({"ref_id":"https://learn.microsoft.com/en-us/rest/api/monitor/diagnostic-settings/get?view=rest-monitor-2021-05-01-preview","pattern":"### DiagnosticSettingsResource"}); Total lines: 430
+L44: ## Responses
+L45: 
+L46: Name  | Type  | Description
+L47: --- | --- | ---
+L48: 200 OK  | cite6†DiagnosticSettingsResource | Successful request to get more information about diagnostic setting
+L49: Other Status Codes  | cite7†ErrorResponse | Error response describing why the operation failed.
+L50: 
+L51: ## Security
+L52: 
+L53: ### azure_auth
+L54: 
+L55: Azure Active Directory OAuth2 Flow
+L56: 
+L57: Type: oauth2
+L58: Flow: implicit
+L59: Authorization URL: https://login.microsoftonline.com/common/oauth2/authorize
+L97:     	clientFactory, err := armmonitor.NewClientFactory("<subscriptionID>", cred, nil)
+L98:     	if err != nil {
+L99:     		log.Fatalf("failed to create client: %v", err)
+L100:     	}
+L101:     	res, err := clientFactory.NewDiagnosticSettingsClient().Get(ctx, "subscriptions/1a66ce04-b633-4a0b-b2bc-a912ec8986a6/resourcegroups/viruela1/providers/microsoft.logic/workflows/viruela6", "mysetting", nil)
+L102:     	if err != nil {
+L103:     		log.Fatalf("failed to finish the request: %v", err)
+L104:     	}
+L105:     	// You could use response here. We use blank identifier for just demo purposes.
+L106:     	_ = res
+L107:     	// If the HTTP response code is 200 as defined in example definition, your response structure would look as follows. Please pay attention that all the values in the output are fake values for just demo purposes.
+L108:     	// res = armmonitor.DiagnosticSettingsClientGetResponse{
+L109:     	// 	DiagnosticSettingsResource: armmonitor.DiagnosticSettingsResource{
+L110:     	// 		Name: to.Ptr("mysetting"),
+L111:     	// 		Type: to.Ptr("Microsoft.Insights/diagnosticSettings"),
+L112:     	// 		ID: to.Ptr("/subscriptions/1a66ce04-b633-4a0b-b2bc-a912ec8986a6/resourcegroups/viruela1/providers/microsoft.logic/workflows/viruela6/providers/microsoft.insights/diagnosticSettings/mysetting"),
+L113:     	// 		Properties: &armmonitor.DiagnosticSettings{
+L114:     	// 			EventHubAuthorizationRuleID: to.Ptr("/subscriptions/1a66ce04-b633-4a0b-b2bc-a912ec8986a6/resourceGroups/montest/providers/microsoft.eventhub/namespaces/mynamespace/authorizationrules/myrule"),
+L115:     	// 			Logs: []*armmonitor.LogSettings{
+L116:     	// 				{
+L117:     	// 					CategoryGroup: to.Ptr("allLogs"),
+L118:     	// 					Enabled: to.Ptr(true),
+L119:     	// 					RetentionPolicy: &armmonitor.RetentionPolicy{
+L120:     	// 						Days: to.Ptr[int32](0),
+L121:     	// 						Enabled: to.Ptr(false),
+L122:     	// 					},
+L123:     	// 				},
+L236:     	// You could use response here. We use blank identifier for just demo purposes.
+L237:     	_ = res
+L238:     	// If the HTTP response code is 200 as defined in example definition, your response structure would look as follows. Please pay attention that all the values in the output are fake values for just demo purposes.
+L239:     	// res = armmonitor.DiagnosticSettingsClientGetResponse{
+L240:     	// 	DiagnosticSettingsResource: armmonitor.DiagnosticSettingsResource{
+L241:     	// 		Name: to.Ptr("mysetting"),
+L242:     	// 		Type: to.Ptr(""),
+L243:     	// 		ID: to.Ptr("/subscriptions/1a66ce04-b633-4a0b-b2bc-a912ec8986a6/resourcegroups/viruela1/providers/microsoft.logic/workflows/viruela6/diagnosticSettings/service"),
+L244:     	// 		Properties: &armmonitor.DiagnosticSettings{
+L245:     	// 			EventHubAuthorizationRuleID: to.Ptr("/subscriptions/1a66ce04-b633-4a0b-b2bc-a912ec8986a6/resourceGroups/montest/providers/microsoft.eventhub/namespaces/mynamespace/authorizationrules/myrule"),
+L246:     	// 			Logs: []*armmonitor.LogSettings{
+L247:     	// 				{
+L248:     	// 					Category: to.Ptr("WorkflowRuntime"),
+L249:     	// 					Enabled: to.Ptr(true),
+L250:     	// 					RetentionPolicy: &armmonitor.RetentionPolicy{
+L251:     	// 						Days: to.Ptr[int32](0),
+L252:     	// 						Enabled: to.Ptr(false),
+L253:     	// 					},
+L254:     	// 				},
+L255:     	// 			},
+L256:     	// 			MarketplacePartnerID: to.Ptr("/subscriptions/abcdeabc-1234-1234-ab12-123a1234567a/resourceGroups/test-rg/providers/Microsoft.Datadog/monitors/dd1"),
+L257:     	// 			Metrics: []*armmonitor.MetricSettings{
+L258:     	// 				{
+L275: To use the Azure SDK library in your project, see cite13†this documentation†github.com . To provide feedback on this code sample, cite14†open a GitHub issue†github.com L276: 
+L277:     `const { MonitorClient } = require("@azure/arm-monitor");
+L278:     const { DefaultAzureCredential } = require("@azure/identity");
+L279: 
+L280:     /**
+L281:      * This sample demonstrates how to gets the active diagnostic settings for the specified resource.
+L282:      *
+L283:      * @summary gets the active diagnostic settings for the specified resource.
+L284:      * x-ms-original-file: 2021-05-01-preview/getDiagnosticSettingCategory.json
+L285:      */
+L286:     async function getsTheDiagnosticSettingForCategory() {
+L287:       const credential = new DefaultAzureCredential();
+L288:       const client = new MonitorClient(credential);
+L289:       const result = await client.diagnosticSettings.get(
+L290:         "subscriptions/1a66ce04-b633-4a0b-b2bc-a912ec8986a6/resourcegroups/viruela1/providers/microsoft.logic/workflows/viruela6",
+L291:         "mysetting",
+L292:       );
+L293:       console.log(result);
+L294:     }
+L295:     `
+L296: To use the Azure SDK library in your project, see cite15†this documentation†github.com . To provide feedback on this code sample, cite14†open a GitHub issue†github.com L297: #### Sample response
+L298: Status code:
+L299:     200
+L300: 
+L301:     `{
+L302:       "name": "mysetting",
+L303:       "type": "",
+L304:       "id": "/subscriptions/1a66ce04-b633-4a0b-b2bc-a912ec8986a6/resourcegroups/viruela1/providers/microsoft.logic/workflows/viruela6/diagnosticSettings/service",
+L305:       "properties": {
+L306:         "eventHubAuthorizationRuleId": "/subscriptions/1a66ce04-b633-4a0b-b2bc-a912ec8986a6/resourceGroups/montest/providers/microsoft.eventhub/namespaces/mynamespace/authorizationrules/myrule",
+L307:         "logs": [
+L308:           {
+L309:             "category": "WorkflowRuntime",
+L310:             "enabled": true,
+L311:             "retentionPolicy": {
+L312:               "days": 0,
+L313:               "enabled": false
+L314:             }
+L315:           }
+L316:         ],
+L317:         "marketplacePartnerId": "/subscriptions/abcdeabc-1234-1234-ab12-123a1234567a/resourceGroups/test-rg/providers/Microsoft.Datadog/monitors/dd1",
+L318:         "metrics": [
+L319:           {
+L320:             "category": "WorkflowMetrics",
+L321:             "enabled": true,
+L322:             "retentionPolicy": {
+L323:               "days": 0,
+L324:               "enabled": false
+L325:             }
+L326:           }
+L327:         ],
+L328:         "storageAccountId": "/subscriptions/df602c9c-7aa0-407d-a6fb-eb20c8bd1192/resourceGroups/apptest/providers/Microsoft.Storage/storageAccounts/appteststorage1",
+L329:         "workspaceId": ""
+L330:       }
+L331:     }`
+L332: ## Definitions
+L333: Name  | Description
+L334: --- | ---
+L335: cite16†createdByType | The type of identity that created the resource.
+L336: cite6†DiagnosticSettingsResource | The diagnostic setting resource.
+L337: cite7†ErrorResponse | Describes the format of Error response.
+L338: cite17†LogSettings | Part of MultiTenantDiagnosticSettings. Specifies the settings for a particular log.
+L339: cite18†MetricSettings | Part of MultiTenantDiagnosticSettings. Specifies the settings for a particular metric.
+L340: cite19†RetentionPolicy | Specifies the retention policy for the log.
+L341: cite20†systemData | Metadata pertaining to creation and last modification of the resource.
+L342: ### createdByType
+L343: 
+L344: Enumeration
+L345: 
+L346: The type of identity that created the resource.
+L347: 
+L348: Value  | Description
+L349: --- | ---
+L350: User  |
+L351: Application  |
+L352: ManagedIdentity  |
+L353: Key  |
+L354: ### DiagnosticSettingsResource
+L355: 
+L356: Object
+L357: 
+L358: The diagnostic setting resource.
+L359: Name  | Type  | Description
+L360: --- | --- | ---
+L361: id  | string  | Fully qualified resource ID for the resource. Ex - /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}
+L362: name  | string  | The name of the resource
+L363: properties.eventHubAuthorizationRuleId  | string  | The resource Id for the event hub authorization rule.
+L364: properties.eventHubName  | string  | The name of the event hub. If none is specified, the default event hub will be selected.
+L365: properties.logAnalyticsDestinationType  | string  | A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type constructed as follows: <normalized service identity>_<normalized category name>. Possible values are: Dedicated and null (null is default.)
+L366: properties.logs  | cite17†LogSettings []  | The list of logs settings.
+L367: properties.marketplacePartnerId  | string  | The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs.
+L368: properties.metrics  | cite18†MetricSettings []  | The list of metric settings.
+L369: properties.serviceBusRuleId  | string  | The service bus rule Id of the diagnostic setting. This is here to maintain backwards compatibility.
+L370: properties.storageAccountId  | string  | The resource ID of the storage account to which you would like to send Diagnostic Logs.
+L371: properties.workspaceId  | string  | The full ARM resource ID of the Log Analytics workspace to which you would like to send Diagnostic Logs. Example: /subscriptions/4b9e8510-67ab-4e9a-95a9-e2f1e570ea9c/resourceGroups/insights-integration/providers/Microsoft.OperationalInsights/workspaces/viruela2
+L372: systemData  | cite20†systemData | The system metadata related to this resource.
+L373: type  | string  | The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or "Microsoft.Storage/storageAccounts"
+L374: ### ErrorResponse
+L375: 
+L376: Object
+L377: 
+L378: Describes the format of Error response.
+L379: 
+L380: Name  | Type  | Description
+L381: --- | --- | ---
+L382: code  | string  | Error code
+L383: message  | string  | Error message indicating why the operation failed.
+L384: ### LogSettings
+L385: 
+L386: Object
+L387: 
+L388: Part of MultiTenantDiagnosticSettings. Specifies the settings for a particular log.
+L389: Name  | Type  | Description
+L390: --- | --- | ---
+L391: category  | string  | Name of a Diagnostic Log category for a resource type this setting is applied to. To obtain the list of Diagnostic Log categories for a resource, first perform a GET diagnostic settings operation.
+L392: categoryGroup  | string  | Name of a Diagnostic Log category group for a resource type this setting is applied to. To obtain the list of Diagnostic Log categories for a resource, first perform a GET diagnostic settings operation.
+L393: enabled  | boolean  | a value indicating whether this log is enabled.
+L394: retentionPolicy  | cite19†RetentionPolicy | the retention policy for this log.
+L395: ### MetricSettings
+L396: 
+L397: Object
+L398: 
+L399: Part of MultiTenantDiagnosticSettings. Specifies the settings for a particular metric.
+L400: Name  | Type  | Description
+L401: --- | --- | ---
+L402: category  | string  | Name of a Diagnostic Metric category for a resource type this setting is applied to. To obtain the list of Diagnostic metric categories for a resource, first perform a GET diagnostic settings operation.
+L403: enabled  | boolean  | a value indicating whether this category is enabled.
+L404: retentionPolicy  | cite19†RetentionPolicy | the retention policy for this category.
+L405: timeGrain  | string (duration)  | the timegrain of the metric in ISO8601 format.
+L406: ### RetentionPolicy
+L407: 
+L408: Object
+L409: 
+L410: Specifies the retention policy for the log.
+L411: 
+L412: Name  | Type  | Description
+L413: --- | --- | ---
+L414: days  | integer (int32) minimum: 0  | the number of days for the retention in days. A value of 0 will retain the events indefinitely.
+L415: enabled  | boolean  | a value indicating whether the retention policy is enabled.
+L416: ### systemData
+L417: 
+L418: Object
+L419: 
+L420: Metadata pertaining to creation and last modification of the resource.
+L421: Name  | Type  | Description
+L422: --- | --- | ---
+L423: createdAt  | string (date-time)  | The timestamp of resource creation (UTC).
+L424: createdBy  | string  | The identity that created the resource.
+L425: createdByType  | cite16†createdByType | The type of identity that created the resource.
+L426: lastModifiedAt  | string (date-time)  | The timestamp of resource last modification (UTC)
+L427: lastModifiedBy  | string  | The identity that last modified the resource.
+

@@ -1,0 +1,35 @@
+{
+  "recorded_at_utc": "2026-10-06T01:26:38.907638+00:00",
+  "event": "Owner decision batch submitted; response pending",
+  "proposal_revision": 3,
+  "proposal_sha256": "038cb2ddcd2ca444d7a3855a4686cb457aa13bd373c767bee854ed657d59f944",
+  "proposal_path": "specs/evidence/sec-filing-index-ingestion/stage-1/versions/owner-decision-proposal-r3-038cb2ddcd2ca444d7a3855a4686cb457aa13bd373c767bee854ed657d59f944.md",
+  "questions": [
+    {
+      "title": "Stage 1 requires concrete owner decisions before a ready finding. For owner-decision-proposal.md revision 3, SHA-256 038cb2ddcd2ca444d7a3855a4686cb457aa13bd373c767bee854ed657d59f944, do you accept D-01–D-04: LGM Consulting production binding, rg-sec-edgar-dev-eastus and proposed dev names/identities, with Lowell Mason as operator and the specified bootstrap/deployment/approval authority? This selects required delegations; it neither confirms current role assignments nor authorizes provisioning. Your prior “Keep binding undecided” remains effective unless you explicitly accept this new selection.",
+      "options": [
+        "Accept revision 3 D-01–D-04",
+        "Keep binding undecided",
+        "Provide exact replacements"
+      ]
+    },
+    {
+      "title": "For the same revision 3, do you accept D-05–D-08: Basic ACR with classic RBAC, distinct pull identity with AcrPull, indefinite retention of deployed image digests and contents during development, Azure CLI 2.90.0/Bicep 0.38.33/uv 0.12.15, and future ACR quick tasks for Linux amd64 builds? Acceptance selects the method and prerequisites only; later installation, resources, builds, publication and budget require separate authorization.",
+      "options": [
+        "Accept revision 3 D-05–D-08",
+        "Provide exact replacements",
+        "Leave these decisions pending"
+      ]
+    },
+    {
+      "title": "For the same revision 3, do you accept D-18’s 30-second polling base and absolute 4,200-second observation deadline, with ambiguous outcomes treated as execution_unknown without automatic relaunch, and D-14’s explicit evidence limitation: 33 listed but uninspected historical daily directories establish no recovery horizon, and coverage spanning them requires later bounded, owner-authorized investigation? This does not waive recovery correctness or authorize new SEC requests.",
+      "options": [
+        "Accept revision 3 D-18 and D-14 disposition",
+        "Provide revised policy or gap disposition",
+        "Leave these decisions pending"
+      ]
+    }
+  ],
+  "responses": null,
+  "authorization_boundary": "Decision selection only; no deployment, provisioning, installation, compute, publication or SEC access authorized."
+}

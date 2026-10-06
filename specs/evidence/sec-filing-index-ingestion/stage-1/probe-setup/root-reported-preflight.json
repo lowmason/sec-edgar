@@ -1,0 +1,51 @@
+{
+  "receipt_time_utc": "2026-10-05T23:18:49Z",
+  "category": "Source/probe observation — root-reported read-only preflight, not independently repeated",
+  "method": "Parent agent task message received; exact live CLI call times unknown. This artifact retains reported outcomes, not original stdout/stderr.",
+  "cloud": "AzureCloud",
+  "tenant": "0bb72127-3aa2-408f-a5e4-ba9abcfc6db6",
+  "subscription": "3c92a216-8ed6-4897-b741-11ed287b8617",
+  "subscription_name": "LGM Consulting",
+  "signed_in_user": "mason.lowell@mac.com",
+  "results": [
+    {
+      "command_family": "az acr check-name",
+      "name": "secedgarstage1probe20261005b8617",
+      "exit_code": 0,
+      "result": {
+        "nameAvailable": true
+      }
+    },
+    {
+      "command_family": "az provider show",
+      "namespace": "Microsoft.ContainerRegistry",
+      "exit_code": 0,
+      "result": {
+        "registrationState": "NotRegistered"
+      },
+      "stderr": "Root reported SDK SyntaxWarning; exact text not supplied here."
+    },
+    {
+      "command_family": "az acr list",
+      "exit_code": 0,
+      "result": []
+    }
+  ],
+  "limitations": [
+    "Name availability is transient.",
+    "No caller registration/create/delete/task authority verified.",
+    "No resource has been provisioned.",
+    "Production deployment binding expressly remains undecided."
+  ],
+  "documentation_references": [
+    {
+      "url": "https://learn.microsoft.com/en-us/azure/container-registry/container-registry-tasks-overview",
+      "claim": "Root reports official documentation supports cloud Dockerless builds."
+    },
+    {
+      "url": "https://learn.microsoft.com/en-us/cli/azure/acr?view=azure-cli-latest#az-acr-build",
+      "claim": "Root reports default LinuxAMD64, explicit --platform linux/amd64, --no-push, --no-cache, CPU and timeout options."
+    }
+  ],
+  "documentation_limit": "These are parent-reported documentation conclusions with direct URLs; this agent has not reaccessed them in this proposal turn."
+}

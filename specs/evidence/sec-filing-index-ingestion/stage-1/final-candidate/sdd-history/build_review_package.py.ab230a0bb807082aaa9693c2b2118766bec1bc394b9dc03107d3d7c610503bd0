@@ -1,0 +1,125 @@
+"""Build a controller review package for uncommitted investigation artifacts."""
+
+import difflib
+import hashlib
+import json
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+ROOT = Path('/Users/lowell/Projects/sec-edgar')
+EVIDENCE = ROOT / 'specs/evidence/sec-filing-index-ingestion/stage-1'
+WORK = ROOT / '.sdd/1-sec-filing-index-ingestion-stage-1-spec'
+mode = sys.argv[1]
+assert mode in {'task6', 'finalfix', 'whole'}
+before = {}
+if mode in {'task6', 'finalfix'}:
+    baseline_path = (EVIDENCE / 'task6/pre-task6-artifact-hashes.json'
+                     if mode == 'task6' else WORK / 'final-fix-before-manifest.json')
+    before = {r['path']: r for r in json.loads(
+        baseline_path.read_text()
+    )['records']}
+
+paths = sorted(p for p in EVIDENCE.rglob('*') if p.is_file()
+               and '__pycache__' not in p.parts and p.suffix != '.pyc')
+paths += [ROOT / 'specs/sec-filing-index-ingestion-stage-1-findings.md']
+records = []
+hash_paths = {}
+for p in paths:
+    b = p.read_bytes()
+    r = {'path': str(p.relative_to(ROOT)), 'bytes': len(b),
+         'sha256': hashlib.sha256(b).hexdigest()}
+    records.append(r)
+    hash_paths.setdefault(r['sha256'], p)
+
+chunks = [f'# {mode} review package\n\n'
+          'Baseline and HEAD: 321c93af78b54c7e63efbb0e69252c69a238fec6.\n'
+          'This package reviews uncommitted investigation artifacts, not an empty Git range.\n'
+          'Original package deletions and untracked plan/roadmap are protected baseline.\n'
+          'All changed artifact bytes are enumerated in the companion manifest.\n'
+          'Bulk raw inputs, publisher sources and immutable historical copies are path/hash '
+          'references; inspect them for named provenance or correctness risks.\n\n']
+changed = []
+shown_hashes = set()
+for r in records:
+    rel = r['path']
+    old = before.get(rel)
+    if old and old['sha256'] == r['sha256']:
+        continue
+    p = ROOT / rel
+    excluded = any(part in p.parts for part in
+                   ('versions', 'sdd-history', 'installed-publisher-source', '__pycache__'))
+    textual = (p.suffix in {'.md', '.py', '.csv', '.json', '.lock', '.txt', '.yaml', '.yml'}
+               or p.name.startswith('Dockerfile'))
+    full = textual and not excluded and r['bytes'] <= 400_000
+    if mode == 'finalfix' and p == EVIDENCE / 'index.csv':
+        full = True
+    if mode == 'finalfix' and p.name == 'claims.json':
+        full = False
+    if p.suffix == '.json' and ('manifest' in p.name or 'artifact-hashes' in p.name):
+        full = False
+    if p.suffix == '.csv' and ('before-' in p.name or '-before-' in p.name):
+        full = False
+    if p.name.endswith('.stdout.txt') and r['bytes'] > 20_000:
+        full = False
+    if mode == 'whole' and (p.name.endswith(('.web-extract.txt', '.METADATA.txt'))
+                            or p.name in {'daily.csv', 'quarterly.csv'}
+                            or p.name == 'index.csv'
+                            or 'old-index' in p.name):
+        full = False
+    if mode == 'whole' and p.suffix == '.json':
+        primary_json = (p.parent == EVIDENCE or p.name in {
+            'base-image.json', 'matrix.json', 'volume-assessment.json',
+            'cleanup-summary.json', 'integrity-results.json', 'draft-freeze.json',
+            'sdd-retention-map.json', 'index-id-correction-map.json',
+            'discrepancy-enum-normalization.json'})
+        full = full and primary_json
+    if mode == 'whole' and r['sha256'] in shown_hashes:
+        full = False
+    if full:
+        shown_hashes.add(r['sha256'])
+    old_text = ''
+    if old and full:
+        old_path = hash_paths.get(old['sha256'])
+        if old_path is None:
+            raise RuntimeError(f'Missing exact before bytes for {rel}')
+        old_text = old_path.read_text()
+    r = {**r, 'before_sha256': old['sha256'] if old else None,
+         'review_form': 'full text diff' if full else 'retained path/hash reference'}
+    changed.append(r)
+    if mode == 'whole' and not full:
+        continue
+    chunks.append(f'## {rel}\nBytes: {r["bytes"]}; SHA-256: {r["sha256"]}\n')
+    if full:
+        try:
+            new_text = p.read_text()
+        except UnicodeDecodeError:
+            r['review_form'] = 'retained path/hash reference (binary)'
+            chunks.append('Binary retained artifact.\n\n')
+            continue
+        chunks.extend(difflib.unified_diff(
+            old_text.splitlines(keepends=True), new_text.splitlines(keepends=True),
+            fromfile='before/' + rel, tofile='after/' + rel, n=3))
+        chunks.append('\n')
+    else:
+        chunks.append(f'Read retained bytes at {p} when needed.\n\n')
+
+if mode == 'whole':
+    chunks.append('\nAll bulk artifact paths, bytes and hashes are in the companion manifest.\n')
+
+stem = {'task6': 'task-6-review', 'finalfix': 'final-fix-review',
+        'whole': 'whole-branch-review'}[mode]
+out = WORK / stem
+diff = out.with_suffix('.diff')
+diff.write_text(''.join(chunks))
+manifest = out.with_suffix('.manifest.json')
+manifest.write_text(json.dumps({
+    'captured_utc': datetime.now(timezone.utc).isoformat(), 'mode': mode,
+    'baseline_head': '321c93af78b54c7e63efbb0e69252c69a238fec6',
+    'package_path': str(diff), 'package_sha256': hashlib.sha256(diff.read_bytes()).hexdigest(),
+    'records': changed,
+    'boundary': 'Files frozen at capture; no .sdd controller output is an investigation result.'
+}, indent=2) + '\n')
+print(json.dumps({'package': str(diff), 'manifest': str(manifest),
+                  'artifacts': len(changed), 'package_bytes': diff.stat().st_size,
+                  'package_sha256': hashlib.sha256(diff.read_bytes()).hexdigest()}))

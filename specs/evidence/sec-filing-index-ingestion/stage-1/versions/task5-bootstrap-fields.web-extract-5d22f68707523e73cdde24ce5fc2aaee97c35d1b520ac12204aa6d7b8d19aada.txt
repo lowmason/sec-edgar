@@ -1,0 +1,547 @@
+Azure permissions for Management and governance - Azure RBAC | Microsoft Learn (https://learn.microsoft.com/en-us/azure/role-based-access-control/permissions/management-and-governance)
+citeturn48view0 [wordlim: 200] Crawled: today; Content type: text/html; Source: find({"ref_id":"turn47view0","pattern":"Microsoft.Resources/subscriptions/providers"}); Total lines: 1543
+L1273: Action  | Description
+L1274: --- | ---
+L1275: `Microsoft.Resources/checkResourceName/action`  | Check the resource name for validity.
+L1276: `Microsoft.Resources/calculateTemplateHash/action`  | Calculate the hash of provided template.
+L1277: `Microsoft.Resources/relayRegionalMoveRequest/action`  | Relay Regional Move Request
+L1278: `Microsoft.Resources/populateRegionalMoveTargetResource/action`  | Populate Regional Move Target Resource
+L1279: `Microsoft.Resources/checkZonePeers/action`  | Check Zone Peers
+L1280: `Microsoft.Resources/changes/read`  | Gets or lists changes
+L1281: `Microsoft.Resources/checkPolicyCompliance/read`  | Check the compliance status of a given resource against resource policies.
+L1282: `Microsoft.Resources/deployments/read`  | Gets or lists deployments.
+L1283: `Microsoft.Resources/deployments/write`  | Creates or updates an deployment.
+L1284: `Microsoft.Resources/deployments/delete`  | Deletes a deployment.
+L1285: `Microsoft.Resources/deployments/cancel/action`  | Cancels a deployment.
+L1286: `Microsoft.Resources/deployments/validate/action`  | Validates a deployment.
+L1287: `Microsoft.Resources/deployments/whatIf/action`  | Predicts template deployment changes.
+L1288: `Microsoft.Resources/deployments/exportTemplate/action`  | Export template for a deployment
+L1289: `Microsoft.Resources/deployments/operations/read`  | Gets or lists deployment operations.
+L1290: `Microsoft.Resources/deployments/operationstatuses/read`  | Gets or lists deployment operation statuses.
+L1291: `Microsoft.Resources/deploymentScripts/read`  | Gets or lists deployment scripts
+L1292: `Microsoft.Resources/deploymentScripts/write`  | Creates or updates a deployment script
+L1293: `Microsoft.Resources/deploymentScripts/delete`  | Deletes a deployment script
+L1294: `Microsoft.Resources/deploymentScripts/logs/read`  | Gets or lists deployment script logs
+L1295: `Microsoft.Resources/deploymentStacks/read`  | Gets or lists deployment stacks
+L1296: `Microsoft.Resources/deploymentStacks/write`  | Creates or updates a deployment stack
+L1297: `Microsoft.Resources/deploymentStacks/delete`  | Deletes a deployment stack
+L1298: `Microsoft.Resources/deploymentStacks/validate/action`  | Validates a deployment stack.
+L1299: `Microsoft.Resources/deploymentStacks/exportTemplate/action`  | Export the template for a deployment stack
+L1300: `Microsoft.Resources/deploymentStacks/manageDenySetting/action`  | Manage the denySettings property of a deployment stack.
+L1301: `Microsoft.Resources/deploymentStacksWhatIfResults/read`  | Gets or lists deployment stack what-if results
+L1302: `Microsoft.Resources/deploymentStacksWhatIfResults/write`  | Creates or updates a deployment stack what-if result, which will predict changes to the specified deployment stack
+L1303: `Microsoft.Resources/deploymentStacksWhatIfResults/delete`  | Deletes a deployment stack what-if result
+L1304: `Microsoft.Resources/deploymentStacksWhatIfResults/whatIf/action`  | Provides property-level detail for the changes predicted by the deployment stack what-if result.
+L1305: `Microsoft.Resources/links/read`  | Gets or lists resource links.
+L1306: `Microsoft.Resources/links/write`  | Creates or updates a resource link.
+L1307: `Microsoft.Resources/links/delete`  | Deletes a resource link.
+L1308: `Microsoft.Resources/locations/moboOperationStatuses/read`  | Reads the Mobo Service Operation Status for the resource.
+L1309: `Microsoft.Resources/marketplace/purchase/action`  | Purchases a resource from the marketplace.
+L1310: `Microsoft.Resources/moboBrokers/read`  | Gets or lists mobo brokers
+L1311: `Microsoft.Resources/moboBrokers/write`  | Creates or updates a mobo broker
+L1312: `Microsoft.Resources/moboBrokers/delete`  | Deletes a mobo broker
+L1313: `Microsoft.Resources/providers/read`  | Get the list of providers.
+L1314: `Microsoft.Resources/resources/read`  | Get the list of resources based upon filters.
+L1315: `Microsoft.Resources/subscriptionRegistrations/read`  | Get Subscription Registration for a resource provider namespace.
+L1316: `Microsoft.Resources/subscriptions/read`  | Gets the list of subscriptions.
+L1317: `Microsoft.Resources/subscriptions/locations/read`  | Gets the list of locations supported.
+L1318: `Microsoft.Resources/subscriptions/operationresults/read`  | Get the subscription operation results.
+L1319: `Microsoft.Resources/subscriptions/providers/read`  | Gets or lists resource providers.
+L1320: `Microsoft.Resources/subscriptions/resourceGroups/read`  | Gets or lists resource groups.
+L1321: `Microsoft.Resources/subscriptions/resourceGroups/write`  | Creates or updates a resource group.
+L1322: `Microsoft.Resources/subscriptions/resourceGroups/delete`  | Deletes a resource group and all its resources.
+L1323: `Microsoft.Resources/subscriptions/resourceGroups/moveResources/action`  | Moves resources from one resource group to another.
+L1324: `Microsoft.Resources/subscriptions/resourceGroups/validateMoveResources/action`  | Validate move of resources from one resource group to another.
+L1325: `Microsoft.Resources/subscriptions/resourcegroups/deployments/read`  | Gets or lists deployments.
+L1326: `Microsoft.Resources/subscriptions/resourcegroups/deployments/write`  | Creates or updates an deployment.
+L1327: `Microsoft.Resources/subscriptions/resourcegroups/deployments/operations/read`  | Gets or lists deployment operations.
+L1328: `Microsoft.Resources/subscriptions/resourcegroups/deployments/operationstatuses/read`  | Gets or lists deployment operation statuses.
+L1329: `Microsoft.Resources/subscriptions/resourcegroups/resources/read`  | Gets the resources for the resource group.
+L1330: `Microsoft.Resources/subscriptions/resources/read`  | Gets resources of a subscription.
+L1331: `Microsoft.Resources/subscriptions/tagNames/read`  | Gets or lists subscription tags.
+L1332: `Microsoft.Resources/subscriptions/tagNames/write`  | Adds a subscription tag.
+L1333: `Microsoft.Resources/subscriptions/tagNames/delete`  | Deletes a subscription tag.
+L1334: `Microsoft.Resources/subscriptions/tagNames/tagValues/read`  | Gets or lists subscription tag values.
+L1335: `Microsoft.Resources/subscriptions/tagNames/tagValues/write`  | Adds a subscription tag value.
+L1336: `Microsoft.Resources/subscriptions/tagNames/tagValues/delete`  | Deletes a subscription tag value.
+L1337: `Microsoft.Resources/tags/read`  | Gets all the tags on a resource.
+L1338: `Microsoft.Resources/tags/write`  | Updates the tags on a resource by replacing or merging existing tags with a new set of tags, or removing existing tags.
+L1339: `Microsoft.Resources/tags/delete`  | Removes all the tags on a resource.
+L1340: `Microsoft.Resources/templateSpecs/read`  | Gets or lists template specs
+L1341: `Microsoft.Resources/templateSpecs/write`  | Creates or updates a template spec
+L1342: `Microsoft.Resources/templateSpecs/delete`  | Deletes a template spec
+L1343: `Microsoft.Resources/templateSpecs/versions/read`  | Gets or lists template specs
+L1344: `Microsoft.Resources/templateSpecs/versions/write`  | Creates or updates a template spec version
+L1345: `Microsoft.Resources/templateSpecs/versions/delete`  | Deletes a template spec version
+L1346: `Microsoft.Resources/tenants/read`  | Gets the list of tenants.
+L1347: ## Microsoft.Solutions
+L1348: 
+L1349: Find the solution to meet the needs of your application or business.
+L1350: 
+L1351: Azure service: cite25†Azure Managed Applications L1352: Action  | Description
+L1353: --- | ---
+L1354: `Microsoft.Solutions/register/action`  | Register the subscription for Microsoft.Solutions
+L1355: `Microsoft.Solutions/unregister/action`  | Unregister the subscription for Microsoft.Solutions
+L1356: `Microsoft.Solutions/portalRegistryPackage/action`  | Generates the registry package links for Managed Applications and Solution Templates.
+L1357: `Microsoft.Solutions/applicationDefinitions/read`  | Gets the managed application definition.
+L1358: `Microsoft.Solutions/applicationDefinitions/write`  | Creates or updates a managed application definition.
+L1359: `Microsoft.Solutions/applicationDefinitions/delete`  | Deletes the managed application definition.
+L1360: `Microsoft.Solutions/applicationDefinitions/write`  | Updates the managed application definition.
+L1361: `Microsoft.Solutions/applicationDefinitions/read`  | Lists the managed application definitions in a resource group.
+--------------------------------------------------------------------------------
+Azure permissions for Management and governance - Azure RBAC | Microsoft Learn (https://learn.microsoft.com/en-us/azure/role-based-access-control/permissions/management-and-governance)
+citeturn48view1 [wordlim: 200] Crawled: today; Content type: text/html; Source: find({"ref_id":"turn47view0","pattern":"Microsoft.Resources/subscriptions/resourceGroups/write"}); Total lines: 1543
+L1280: `Microsoft.Resources/changes/read`  | Gets or lists changes
+L1281: `Microsoft.Resources/checkPolicyCompliance/read`  | Check the compliance status of a given resource against resource policies.
+L1282: `Microsoft.Resources/deployments/read`  | Gets or lists deployments.
+L1283: `Microsoft.Resources/deployments/write`  | Creates or updates an deployment.
+L1284: `Microsoft.Resources/deployments/delete`  | Deletes a deployment.
+L1285: `Microsoft.Resources/deployments/cancel/action`  | Cancels a deployment.
+L1286: `Microsoft.Resources/deployments/validate/action`  | Validates a deployment.
+L1287: `Microsoft.Resources/deployments/whatIf/action`  | Predicts template deployment changes.
+L1288: `Microsoft.Resources/deployments/exportTemplate/action`  | Export template for a deployment
+L1289: `Microsoft.Resources/deployments/operations/read`  | Gets or lists deployment operations.
+L1290: `Microsoft.Resources/deployments/operationstatuses/read`  | Gets or lists deployment operation statuses.
+L1291: `Microsoft.Resources/deploymentScripts/read`  | Gets or lists deployment scripts
+L1292: `Microsoft.Resources/deploymentScripts/write`  | Creates or updates a deployment script
+L1293: `Microsoft.Resources/deploymentScripts/delete`  | Deletes a deployment script
+L1294: `Microsoft.Resources/deploymentScripts/logs/read`  | Gets or lists deployment script logs
+L1295: `Microsoft.Resources/deploymentStacks/read`  | Gets or lists deployment stacks
+L1296: `Microsoft.Resources/deploymentStacks/write`  | Creates or updates a deployment stack
+L1297: `Microsoft.Resources/deploymentStacks/delete`  | Deletes a deployment stack
+L1298: `Microsoft.Resources/deploymentStacks/validate/action`  | Validates a deployment stack.
+L1299: `Microsoft.Resources/deploymentStacks/exportTemplate/action`  | Export the template for a deployment stack
+L1300: `Microsoft.Resources/deploymentStacks/manageDenySetting/action`  | Manage the denySettings property of a deployment stack.
+L1301: `Microsoft.Resources/deploymentStacksWhatIfResults/read`  | Gets or lists deployment stack what-if results
+L1302: `Microsoft.Resources/deploymentStacksWhatIfResults/write`  | Creates or updates a deployment stack what-if result, which will predict changes to the specified deployment stack
+L1303: `Microsoft.Resources/deploymentStacksWhatIfResults/delete`  | Deletes a deployment stack what-if result
+L1304: `Microsoft.Resources/deploymentStacksWhatIfResults/whatIf/action`  | Provides property-level detail for the changes predicted by the deployment stack what-if result.
+L1305: `Microsoft.Resources/links/read`  | Gets or lists resource links.
+L1306: `Microsoft.Resources/links/write`  | Creates or updates a resource link.
+L1307: `Microsoft.Resources/links/delete`  | Deletes a resource link.
+L1308: `Microsoft.Resources/locations/moboOperationStatuses/read`  | Reads the Mobo Service Operation Status for the resource.
+L1309: `Microsoft.Resources/marketplace/purchase/action`  | Purchases a resource from the marketplace.
+L1310: `Microsoft.Resources/moboBrokers/read`  | Gets or lists mobo brokers
+L1311: `Microsoft.Resources/moboBrokers/write`  | Creates or updates a mobo broker
+L1312: `Microsoft.Resources/moboBrokers/delete`  | Deletes a mobo broker
+L1313: `Microsoft.Resources/providers/read`  | Get the list of providers.
+L1314: `Microsoft.Resources/resources/read`  | Get the list of resources based upon filters.
+L1315: `Microsoft.Resources/subscriptionRegistrations/read`  | Get Subscription Registration for a resource provider namespace.
+L1316: `Microsoft.Resources/subscriptions/read`  | Gets the list of subscriptions.
+L1317: `Microsoft.Resources/subscriptions/locations/read`  | Gets the list of locations supported.
+L1318: `Microsoft.Resources/subscriptions/operationresults/read`  | Get the subscription operation results.
+L1319: `Microsoft.Resources/subscriptions/providers/read`  | Gets or lists resource providers.
+L1320: `Microsoft.Resources/subscriptions/resourceGroups/read`  | Gets or lists resource groups.
+L1321: `Microsoft.Resources/subscriptions/resourceGroups/write`  | Creates or updates a resource group.
+L1322: `Microsoft.Resources/subscriptions/resourceGroups/delete`  | Deletes a resource group and all its resources.
+L1323: `Microsoft.Resources/subscriptions/resourceGroups/moveResources/action`  | Moves resources from one resource group to another.
+L1324: `Microsoft.Resources/subscriptions/resourceGroups/validateMoveResources/action`  | Validate move of resources from one resource group to another.
+L1325: `Microsoft.Resources/subscriptions/resourcegroups/deployments/read`  | Gets or lists deployments.
+L1326: `Microsoft.Resources/subscriptions/resourcegroups/deployments/write`  | Creates or updates an deployment.
+L1327: `Microsoft.Resources/subscriptions/resourcegroups/deployments/operations/read`  | Gets or lists deployment operations.
+L1328: `Microsoft.Resources/subscriptions/resourcegroups/deployments/operationstatuses/read`  | Gets or lists deployment operation statuses.
+L1329: `Microsoft.Resources/subscriptions/resourcegroups/resources/read`  | Gets the resources for the resource group.
+L1330: `Microsoft.Resources/subscriptions/resources/read`  | Gets resources of a subscription.
+L1331: `Microsoft.Resources/subscriptions/tagNames/read`  | Gets or lists subscription tags.
+L1332: `Microsoft.Resources/subscriptions/tagNames/write`  | Adds a subscription tag.
+L1333: `Microsoft.Resources/subscriptions/tagNames/delete`  | Deletes a subscription tag.
+L1334: `Microsoft.Resources/subscriptions/tagNames/tagValues/read`  | Gets or lists subscription tag values.
+L1335: `Microsoft.Resources/subscriptions/tagNames/tagValues/write`  | Adds a subscription tag value.
+L1336: `Microsoft.Resources/subscriptions/tagNames/tagValues/delete`  | Deletes a subscription tag value.
+L1337: `Microsoft.Resources/tags/read`  | Gets all the tags on a resource.
+L1338: `Microsoft.Resources/tags/write`  | Updates the tags on a resource by replacing or merging existing tags with a new set of tags, or removing existing tags.
+L1339: `Microsoft.Resources/tags/delete`  | Removes all the tags on a resource.
+L1340: `Microsoft.Resources/templateSpecs/read`  | Gets or lists template specs
+L1341: `Microsoft.Resources/templateSpecs/write`  | Creates or updates a template spec
+L1342: `Microsoft.Resources/templateSpecs/delete`  | Deletes a template spec
+L1343: `Microsoft.Resources/templateSpecs/versions/read`  | Gets or lists template specs
+L1344: `Microsoft.Resources/templateSpecs/versions/write`  | Creates or updates a template spec version
+L1345: `Microsoft.Resources/templateSpecs/versions/delete`  | Deletes a template spec version
+L1346: `Microsoft.Resources/tenants/read`  | Gets the list of tenants.
+L1347: ## Microsoft.Solutions
+L1348: 
+L1349: Find the solution to meet the needs of your application or business.
+L1350: 
+L1351: Azure service: cite25†Azure Managed Applications L1352: Action  | Description
+L1353: --- | ---
+L1354: `Microsoft.Solutions/register/action`  | Register the subscription for Microsoft.Solutions
+L1355: `Microsoft.Solutions/unregister/action`  | Unregister the subscription for Microsoft.Solutions
+L1356: `Microsoft.Solutions/portalRegistryPackage/action`  | Generates the registry package links for Managed Applications and Solution Templates.
+L1357: `Microsoft.Solutions/applicationDefinitions/read`  | Gets the managed application definition.
+L1358: `Microsoft.Solutions/applicationDefinitions/write`  | Creates or updates a managed application definition.
+L1359: `Microsoft.Solutions/applicationDefinitions/delete`  | Deletes the managed application definition.
+L1360: `Microsoft.Solutions/applicationDefinitions/write`  | Updates the managed application definition.
+L1361: `Microsoft.Solutions/applicationDefinitions/read`  | Lists the managed application definitions in a resource group.
+--------------------------------------------------------------------------------
+Microsoft.ContainerRegistry/registries 2025-11-01 - Bicep, ARM template & Terraform AzAPI reference | Microsoft Learn (https://learn.microsoft.com/en-us/azure/templates/microsoft.containerregistry/2025-11-01/registries)
+citeturn48view2 [wordlim: 200] Crawled: today; Content type: text/html; Source: find({"ref_id":"turn38view2","pattern":"LegacyRegistryPermissions"}); Total lines: 935
+L297: networkRuleBypassAllowedForTasks  | Whether or not Tasks allowed to bypass the network rules for this container registry.  | bool
+L298: networkRuleBypassOptions  | Whether to allow trusted Azure services to access a network restricted registry.  | 'AzureServices'
+L299: 'None'
+L300: networkRuleSet  | The network rule set for a container registry.  | cite71†NetworkRuleSet L301: policies  | The policies for a container registry.  | cite72†Policies L302: publicNetworkAccess  | Whether or not public network access is allowed for the container registry.  | 'Disabled'
+L303: 'Enabled'
+L304: roleAssignmentMode  | Determines registry role assignment mode.  | 'AbacRepositoryPermissions'
+L305: 'LegacyRegistryPermissions'
+L306: zoneRedundancy  | Whether or not zone redundancy is enabled for this container registry  | 'Disabled'
+L307: 'Enabled'
+L308: ### RetentionPolicy
+L309: 
+L310: Name  | Description  | Value
+L311: --- | --- | ---
+L312: days  | The number of days to retain an untagged manifest after which it gets purged.  | int
+L313: status  | The value that indicates whether the policy is enabled or not.  | 'disabled'
+L314: 'enabled'
+L315: 
+L316: ### Sku
+L317: 
+L318: Name  | Description  | Value
+L319: --- | --- | ---
+L320: name  | The SKU name of the container registry. Required for registry creation.  | 'Basic'
+L321: 'Classic'
+L322: 'Premium'
+L323: 'Standard' (required)
+L566: networkRuleBypassAllowedForTasks  | Whether or not Tasks allowed to bypass the network rules for this container registry.  | bool
+L567: networkRuleBypassOptions  | Whether to allow trusted Azure services to access a network restricted registry.  | 'AzureServices'
+L568: 'None'
+L569: networkRuleSet  | The network rule set for a container registry.  | cite111†NetworkRuleSet L570: policies  | The policies for a container registry.  | cite112†Policies L571: publicNetworkAccess  | Whether or not public network access is allowed for the container registry.  | 'Disabled'
+L572: 'Enabled'
+L573: roleAssignmentMode  | Determines registry role assignment mode.  | 'AbacRepositoryPermissions'
+L574: 'LegacyRegistryPermissions'
+L575: zoneRedundancy  | Whether or not zone redundancy is enabled for this container registry  | 'Disabled'
+L576: 'Enabled'
+L577: ### RetentionPolicy
+L578: 
+L579: Name  | Description  | Value
+L580: --- | --- | ---
+L581: days  | The number of days to retain an untagged manifest after which it gets purged.  | int
+L582: status  | The value that indicates whether the policy is enabled or not.  | 'disabled'
+L583: 'enabled'
+L584: 
+L585: ### Sku
+L586: 
+L587: Name  | Description  | Value
+L588: --- | --- | ---
+L589: name  | The SKU name of the container registry. Required for registry creation.  | 'Basic'
+L590: 'Classic'
+L591: 'Premium'
+L592: 'Standard' (required)
+L856: networkRuleBypassAllowedForTasks  | Whether or not Tasks allowed to bypass the network rules for this container registry.  | bool
+L857: networkRuleBypassOptions  | Whether to allow trusted Azure services to access a network restricted registry.  | 'AzureServices'
+L858: 'None'
+L859: networkRuleSet  | The network rule set for a container registry.  | cite126†NetworkRuleSet L860: policies  | The policies for a container registry.  | cite127†Policies L861: publicNetworkAccess  | Whether or not public network access is allowed for the container registry.  | 'Disabled'
+L862: 'Enabled'
+L863: roleAssignmentMode  | Determines registry role assignment mode.  | 'AbacRepositoryPermissions'
+L864: 'LegacyRegistryPermissions'
+L865: zoneRedundancy  | Whether or not zone redundancy is enabled for this container registry  | 'Disabled'
+L866: 'Enabled'
+L867: ### RetentionPolicy
+L868: 
+L869: Name  | Description  | Value
+L870: --- | --- | ---
+L871: days  | The number of days to retain an untagged manifest after which it gets purged.  | int
+L872: status  | The value that indicates whether the policy is enabled or not.  | 'disabled'
+L873: 'enabled'
+L874: 
+L875: ### Sku
+L876: 
+L877: Name  | Description  | Value
+L878: --- | --- | ---
+L879: name  | The SKU name of the container registry. Required for registry creation.  | 'Basic'
+L880: 'Classic'
+L881: 'Premium'
+L882: 'Standard' (required)
+L883: ### TrackedResourceTags
+L884: 
+L885: Name  | Description  | Value
+L886: --- | --- | ---
+L887: 
+L888: ### TrustPolicy
+L889: 
+L890: Name  | Description  | Value
+L891: --- | --- | ---
+L892: status  | The value that indicates whether the policy is enabled or not.  | 'disabled'
+L893: 'enabled'
+L894: type  | The type of trust policy.  | 'Notary'
+L895: 
+L896: ### UserIdentityProperties
+L897: 
+L898: Name  | Description  | Value
+L899: --- | --- | ---
+L900: 
+--------------------------------------------------------------------------------
+Microsoft.Authorization/roleDefinitions 2022-04-01 - Bicep, ARM template & Terraform AzAPI reference | Microsoft Learn (https://learn.microsoft.com/en-us/azure/templates/microsoft.authorization/2022-04-01/roledefinitions)
+citeturn48view3 [wordlim: 200] Crawled: today; Content type: text/html; Source: find({"ref_id":"turn46view2","pattern":"2022-04-01"}); Total lines: 397
+L24: # Microsoft.Authorization roleDefinitions 2022-04-01
+L25: 
+L26: Feedback
+L27: 
+L28: Summarize this article for me
+L29: 
+L30: ## In this article
+L31: 
+L32:   * cite4†Latest L33:   * cite5†2022-05-01-preview L34:   * cite6†2022-04-01 L35:   * cite7†2018-01-01-preview L36:   * cite8†2015-07-01 L37: 
+L38: ## Remarks
+L39: 
+L40: For guidance on creating role assignments and definitions, see cite9†Create Azure RBAC resources by using Bicep .
+L86: cite17†Configure Dev Box service†github.com | This template would create all Dev Box admin resources as per Dev Box quick start guide (/azure/dev-box/quickstart-create-dev-box). You can view all resources created, or directly go to DevPortal.microsoft.com to create your first Dev Box.
+L87: cite18†Create a new role def via a subscription level deployment†github.com | This template is a subscription level template that will create a role definition at subscription scope.
+L89: To create a Microsoft.Authorization/roleDefinitions resource, add the following Bicep to your template.
+L90: 
+L91:     `resource symbolicname 'Microsoft.Authorization/roleDefinitions@2022-04-01' = {
+L92:       scope: resourceSymbolicName or scope
+L93:       name: 'string'
+L94:       properties: {
+L95:         assignableScopes: [
+L96:           'string'
+L97:         ]
+L98:         description: 'string'
+L99:         permissions: [
+L100:           {
+L101:             actions: [
+L102:               'string'
+L103:             ]
+L104:             dataActions: [
+L105:               'string'
+L106:             ]
+L107:             notActions: [
+L108:               'string'
+L109:             ]
+L110:             notDataActions: [
+L111:               'string'
+L112:             ]
+L113:           }
+L114:         ]
+L115:         roleName: 'string'
+L116:         type: 'string'
+L117:       }
+L118:     }
+L119:     `
+L165:  | The Microsoft Azure Storage Account can now be used as a ILM Store to persist the Archive files and attachments from an SAP ILM system. An ILM Store is a component which fulfills the requirements of SAP ILM compliant storage systems. One can store archive files in a storage media using WebDAV interface standards while making use of SAP ILM Retention Management rules. For more information about SAP ILM Store, refer to the <a href='https://www.sap.com'> SAP Help Portal </a>.
+L166: cite30†Deploy Darktrace Autoscaling vSensors†github.com L167:  | This template allows you to deploy an automatically autoscaling deployment of Darktrace vSensors
+L168: cite31†IBM Cloud Pak for Data on Azure†github.com L169:  | This template deploys an Openshift cluster on Azure with all the required resources, infrastructure and then deploys IBM Cloud Pak for Data along with the add-ons that user chooses.
+L170: ## Resource format
+L171: To create a Microsoft.Authorization/roleDefinitions resource, add the following JSON to your template.
+L172: 
+L173:     `{
+L174:       "type": "Microsoft.Authorization/roleDefinitions",
+L175:       "apiVersion": "2022-04-01",
+L176:       "name": "string",
+L177:       "properties": {
+L178:         "assignableScopes": [ "string" ],
+L179:         "description": "string",
+L180:         "permissions": [
+L181:           {
+L182:             "actions": [ "string" ],
+L183:             "dataActions": [ "string" ],
+L184:             "notActions": [ "string" ],
+L185:             "notDataActions": [ "string" ]
+L186:           }
+L187:         ],
+L188:         "roleName": "string",
+L189:         "type": "string"
+L190:       }
+L191:     }
+L192:     `
+L193: ## Property Values
+L194: 
+L195: ### Microsoft.Authorization/roleDefinitions
+L196: 
+L197: Name  | Description  | Value
+L198: --- | --- | ---
+L199: apiVersion  | The api version  | '2022-04-01'
+L200: name  | The resource name  | string (required)
+L201: properties  | Role definition properties.  | cite32†RoleDefinitionProperties L202: type  | The resource type  | 'Microsoft.Authorization/roleDefinitions'
+L203: ### Permission
+L204: 
+L205: Name  | Description  | Value
+L206: --- | --- | ---
+L207: actions  | Allowed actions.  | string[]
+L208: dataActions  | Allowed Data actions.  | string[]
+L209: notActions  | Denied actions.  | string[]
+L210: notDataActions  | Denied Data actions.  | string[]
+L211: ### RoleDefinitionProperties
+L212: 
+L213: Name  | Description  | Value
+L214: --- | --- | ---
+L215: assignableScopes  | Role definition assignable scopes.  | string[]
+L216: description  | The role definition description.  | string
+L217: permissions  | Role definition permissions.  | cite33†Permission []
+L218: roleName  | The role name.  | string
+L219: type  | The role type.  | string
+L220: ## Terraform (AzAPI provider) resource definition
+L221: 
+L222: The roleDefinitions resource type can be deployed with operations that target:
+L223: 
+L224:   * Tenant* Management groups* Subscription* Resource groups For a list of changed properties in each API version, see cite14†change log .
+L225: 
+L226: ## Usage Examples
+L227: ### Terraform Samples
+L228: A basic example of deploying custom Role Definition.
+L229: 
+L230:     `terraform {
+L231:       required_providers {
+L232:         azapi = {
+L233:           source = "Azure/azapi"
+L234:         }
+L235:         azurerm = {
+L236:           source = "hashicorp/azurerm"
+L237:         }
+L238:       }
+L239:     }
+L240: 
+L241:     provider "azurerm" {
+L242:       features {
+L243:       }
+L244:     }
+L245: 
+L246:     provider "azapi" {
+L247:       skip_provider_registration = false
+L248:     }
+L249: 
+L250:     variable "resource_name" {
+L251:       type    = string
+L252:       default = "acctest0001"
+L253:     }
+L254: 
+L255:     variable "location" {
+L256:       type    = string
+L257:       default = "eastus"
+L258:     }
+L259: 
+L260:     data "azurerm_client_config" "current" {
+L261:     }
+L262: 
+L263:     data "azapi_resource" "subscription" {
+L264:       type                   = "Microsoft.Resources/subscriptions@2021-01-01"
+L265:       resource_id            = "/subscriptions/${data.azurerm_client_config.current.subscription_id}"
+L266:       response_export_values = ["*"]
+L267:     }
+L268: 
+L269:     resource "azapi_resource" "roleDefinition" {
+L270:       type      = "Microsoft.Authorization/roleDefinitions@2018-01-01-preview"
+L271:       parent_id = data.azapi_resource.subscription.id
+L272:       name      = "6faae21a-0cd6-4536-8c23-a278823d12ed"
+L273:       body = {
+L274:         properties = {
+L275:           assignableScopes = [
+L276:             data.azapi_resource.subscription.id,
+L277:           ]
+L278:           description = ""
+L279:           permissions = [
+L280:             {
+L281:               actions = [
+L282:                 "*",
+L283:               ]
+L284:               dataActions = [
+L285:               ]
+L286:               notActions = [
+L287:               ]
+L288:               notDataActions = [
+L289:               ]
+L290:             },
+L291:           ]
+L292:           roleName = var.resource_name
+L293:           type     = "CustomRole"
+L294:         }
+L295:       }
+L296:       schema_validation_enabled = false
+L297:       response_export_values    = ["*"]
+L298:     }
+L299:     `
+L300: ## Resource format
+L301: To create a Microsoft.Authorization/roleDefinitions resource, add the following Terraform to your template.
+L302: 
+L303:     `resource "azapi_resource" "symbolicname" {
+L304:       type = "Microsoft.Authorization/roleDefinitions@2022-04-01"
+L305:       name = "string"
+L306:       parent_id = "string"
+L307:       body = {
+L308:         properties = {
+L309:           assignableScopes = [
+L310:             "string"
+L311:           ]
+L312:           description = "string"
+L313:           permissions = [
+L314:             {
+L315:               actions = [
+L316:                 "string"
+L317:               ]
+L318:               dataActions = [
+L319:                 "string"
+L320:               ]
+L321:               notActions = [
+L322:                 "string"
+L323:               ]
+L324:               notDataActions = [
+L325:                 "string"
+L326:               ]
+L327:             }
+L328:           ]
+L329:           roleName = "string"
+L330:           type = "string"
+L331:         }
+L332:       }
+L333:     }
+L334:     `
+L335: ## Property Values
+L336: 
+L337: ### Microsoft.Authorization/roleDefinitions
+L338: 
+L339: Name  | Description  | Value
+L340: --- | --- | ---
+L341: name  | The resource name  | string (required)
+L342: parent_id  | The ID of the resource to apply this extension resource to.  | string (required)
+L343: properties  | Role definition properties.  | cite34†RoleDefinitionProperties L344: type  | The resource type  | "Microsoft.Authorization/roleDefinitions@2022-04-01"
+L345: ### Permission
+L346: 
+L347: Name  | Description  | Value
+L348: --- | --- | ---
+L349: actions  | Allowed actions.  | string[]
+L350: dataActions  | Allowed Data actions.  | string[]
+L351: notActions  | Denied actions.  | string[]
+L352: notDataActions  | Denied Data actions.  | string[]
+L353: ### RoleDefinitionProperties
+L354: 
+L355: Name  | Description  | Value
+L356: --- | --- | ---
+L357: assignableScopes  | Role definition assignable scopes.  | string[]
+L358: description  | The role definition description.  | string
+L359: permissions  | Role definition permissions.  | cite35†Permission []
+L360: roleName  | The role name.  | string
+L361: type  | The role type.  | string
+L362: 
+L363: * * *
+L364: ## Feedback
+L365: 
+L366: Was this page helpful?
+L367: 
+L368: Yes No No
+L369: 
+L370: Need help with this topic?
+L371: 
+L372: Want to try using Ask Learn to clarify or guide you through this topic?
+L373: 
+L374: Ask Learn Ask Learn
+L375: 
+L376: Suggest a fix?
+L377: 
+L378: * * *
+L379: 
+L380: ## Additional resources
+L381: 
+L382: * * *
+L383: 
+L384:   * Last updated on 2026-01-20
+L385: 
+L386: ### In this article
+L387: 
+L388: Was this page helpful?
+L389: 
+L390: Need help with this topic?
+L391: 
+L392: Want to try using Ask Learn to clarify or guide you through this topic?
+L393: 
+L394: Ask Learn Ask Learn
+L395: 
+L396: Suggest a fix?
+

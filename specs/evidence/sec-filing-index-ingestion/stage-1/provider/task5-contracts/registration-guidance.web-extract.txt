@@ -1,0 +1,315 @@
+Azure resource providers and types - Azure Resource Manager | Microsoft Learn (https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/resource-providers-and-types)
+citeturn49view0 [wordlim: 200] Crawled: today; Content type: text/html; Source: open({"ref_id":"https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/resource-providers-and-types","lineno":null}); Total lines: 531
+L0: cite0†Skip to main content cite1†Skip to Ask Learn chat experience L1: 
+L2: This browser is no longer supported.
+L3: 
+L4: Upgrade to Microsoft Edge to take advantage of the latest features, security updates, and technical support.
+L5: 
+L6: cite2†Download Microsoft Edge†go.microsoft.com cite3†More info about Internet Explorer and Microsoft Edge L7: 
+L8: Table of contents Exit editor mode
+L9: 
+L10: Ask Learn Ask Learn
+L11: 
+L12: Reading mode Table of contents cite1†Read in English Add Add to Plans cite4†Edit†github.com L13: 
+L14: * * *
+L15: 
+L16: Copy Markdown Print
+L17: 
+L18: * * *
+L19: 
+L20: Note
+L21: Access to this page requires authorization. You can try cite1†signing in or changing directories.
+L22: 
+L23: Access to this page requires authorization. You can try changing directories.
+L24: # Azure resource providers and types
+L25: 
+L26: Feedback
+L27: 
+L28: Summarize this article for me
+L29: ## In this article
+L30: 
+L31: An Azure resource provider is a set of REST operations that support functionality for a specific Azure service. For example, the Azure Key Vault service consists of a resource provider named Microsoft.KeyVault. The resource provider defines cite5†REST operations for managing vaults, secrets, keys, and certificates.
+L32: The resource provider defines the Azure resources you can deploy to your account. A resource type's name follows the format: {resource-provider}/{resource-type}. The resource type for a key vault is Microsoft.KeyVault/vaults.
+L33: 
+L34: In this article, you learn how to:
+L35:   * View all resource providers in Azure.
+L36:   * Check registration status of a resource provider.
+L37:   * Register a resource provider.
+L38:   * View resource types for a resource provider.
+L39:   * View valid locations for a resource type.
+L40:   * View valid API versions for a resource type.
+L41: 
+L42: For a list that maps resource providers to Azure services, see cite6†Azure resource providers and types .
+L43: ## Register resource provider
+L44: 
+L45: Before you use a resource provider, make sure your Azure subscription is registered for the resource provider. Registration configures your subscription to work with the resource provider.
+L46: 
+L47: Important
+L48: 
+L49: Register a resource provider only when you're ready to use it. This registration step helps maintain least privileges within your subscription. A malicious user can't use unregistered resource providers.
+L50: When you register a resource provider, Microsoft adds an app for the resource provider. Registering unnecessary resource providers can cause apps that you don't recognize to appear in your Microsoft Entra tenant. The Windows Azure Service Management API typically adds these apps. To limit unnecessary apps in your tenant, only register the resource providers that you need.
+L51: 
+L52: Some resource providers are registered by default. For a list of examples, see cite6†Resource providers for Azure services .
+L53: When you take certain actions, Azure automatically registers other resource providers. When you create a resource in the Azure portal, the portal typically registers the resource provider for you. When you deploy an Azure Resource Manager template or Bicep file, Azure automatically registers the resource providers defined in the template. Sometimes, a resource in the template requires supporting resources that aren't in the template. Common examples are monitoring or security resources.
+L54: You need to register those resource providers manually.
+L55: You might need to manually register a resource provider during other scenarios.
+L56: 
+L57: Important
+L58: Your application code shouldn't block the creation of resources for a resource provider that's in the registering state. When you register the resource provider, the operation is done individually for each supported region. To create resources in a region, the registration only needs to be completed in that region. When your application doesn't block a resource provider in the registering state, it can continue sooner than waiting for all regions to complete.
+L59: You must have permission to do the `/register/action` operation for the resource provider. The permission is included in the Contributor and Owner roles.
+L60: 
+L61: You can't unregister a resource provider when you still have resource types from that resource provider in your subscription.
+L62: 
+L63: Reregister a resource provider when the resource provider supports new locations that you need to use.
+L64: ## Azure portal
+L65: ### Register resource provider
+L66: 
+L67: To see all resource providers and the registration status for your subscription:
+L68: 
+L69:   1. Sign in to the cite7†Azure portal†portal.azure.com .
+L70: 
+L71:   2. On the Azure portal menu, search for Subscriptions. Select it from the available options.
+L72: 
+L73: cite8†Image: Screenshot of searching for subscriptions in the Azure portal. L74: 
+L75:   3. Select the subscription you want to view.
+L76: 
+L77:   4. On the left menu and under Settings, select Resource providers.
+L78: cite9†Image: Screenshot of selecting resource providers in the Azure portal. L79: 
+L80:   5. Find the resource provider you want to register.
+L81: 
+L82: cite10†Image: Screenshot of finding resource providers in the Azure portal. L83: 
+L84:   6. Select the resource provider to see the details of the resource provider.
+L85: 
+L86: cite11†Image: Screenshot of Resource provider details in the Azure portal. L87:   7. Select the resource provider, and select Register. To maintain least privileges in your subscription, only register the resource providers that you're ready to use.
+L88: 
+L89: cite12†Image: Screenshot of registering a resource provider in the Azure portal. L90: 
+L91: Important
+L92: As cite13†noted earlier , don't block the creation of resources for a resource provider that's in the registering state. When your application doesn't block a resource provider in the registering state, it can continue sooner than waiting for all regions to complete.
+L93: 
+L94:   8. Re-register a resource provider to use locations that you added since the previous registration.
+L95: 
+L96: cite14†Image: Screenshot of reregistering a resource provider in the Azure portal. L97: ### View resource provider
+L98: 
+L99: To see information for a particular resource provider:
+L100: 
+L101:   1. Sign in to the cite7†Azure portal†portal.azure.com .
+L102: 
+L103:   2. Select All services in the Azure portal menu.
+L104: 
+L105:   3. In the All services box, enter resource explorer, and select Resource Explorer.
+L106: 
+L107: cite15†Image: Screenshot of selecting All services in the Azure portal to access Azure Resource Explorer. L108: 
+L109:   4. Select the right arrow to expand Providers.
+L110: cite16†Image: Screenshot of expanding the Providers section in Resource Explorer. L111: 
+L112:   5. Expand the resource provider and resource type that you want to view.
+L113: 
+L114:   6. Resource Manager is supported in all regions, but the resources you deploy might not be supported in all regions. Also, there might be limitations on your subscription that prevent you from using some regions that support the resource. Resource Explorer displays valid locations for the resource type.
+L115: cite17†Image: Screenshot of displaying valid locations for a resource type in Resource Explorer. L116: 
+L117:   7. The API version corresponds to a version of the resource provider's REST API operations. As a resource provider enables new features, it releases a new version of the REST API. Resource Explorer displays valid API versions for the resource type.
+L118: 
+L119: cite18†Image: Screenshot of displaying valid API versions for a resource type in Resource Explorer. L120: ## Azure PowerShell
+L121: 
+L122: To see all resource providers in Azure and the registration status for your subscription, use:
+L123: 
+L124:     `Get-AzResourceProvider -ListAvailable | Select-Object ProviderNamespace, RegistrationState
+L125:     `
+L126: The command returns:
+L127: 
+L128:     `ProviderNamespace                RegistrationState
+L129:     -------------------------------- ------------------
+L130:     Microsoft.ClassicCompute         Registered
+L131:     Microsoft.ClassicNetwork         Registered
+L132:     Microsoft.ClassicStorage         Registered
+L133:     Microsoft.CognitiveServices      Registered
+L134:     ...
+L135:     `
+L136: To see all registered resource providers for your subscription, use:
+L137: 
+L138:     ` Get-AzResourceProvider -ListAvailable | Where-Object RegistrationState -eq "Registered" | Select-Object ProviderNamespace, RegistrationState | Sort-Object ProviderNamespace
+L139:     `
+L140: 
+L141: To maintain least privileges in your subscription, only register those resource providers that you're ready to use. To register a resource provider, use:
+L142: 
+L143:     `Register-AzResourceProvider -ProviderNamespace Microsoft.Batch
+L144:     `
+L145: The command returns:
+L146: 
+L147:     `ProviderNamespace : Microsoft.Batch
+L148:     RegistrationState : Registering
+L149:     ResourceTypes     : {batchAccounts, operations, locations, locations/quotas}
+L150:     Locations         : {West Europe, East US, East US 2, West US...}
+L151:     `
+L152: 
+L153: Important
+L154: As cite13†noted earlier , don't block the creation of resources for a resource provider that's in the registering state. When your application doesn't block a resource provider in the registering state, it can continue sooner than waiting for all regions to complete.
+L155: 
+L156: To use locations that Azure added since the previous registration, register a resource provider again. To reregister, run the registration command again.
+L157: To see information for a particular resource provider, use:
+L158: 
+L159:     `Get-AzResourceProvider -ProviderNamespace Microsoft.Batch
+L160:     `
+L161: 
+L162: The command returns:
+L163: 
+L164:     `{ProviderNamespace : Microsoft.Batch
+L165:     RegistrationState : Registered
+L166:     ResourceTypes     : {batchAccounts}
+L167:     Locations         : {West Europe, East US, East US 2, West US...}
+L168: 
+L169:     ...
+L170:     `
+L171: To see the resource types for a resource provider, use:
+L172: 
+L173:     `(Get-AzResourceProvider -ProviderNamespace Microsoft.Batch).ResourceTypes.ResourceTypeName
+L174:     `
+L175: 
+L176: The command returns:
+L177: 
+L178:     `batchAccounts
+L179:     operations
+L180:     locations
+L181:     locations/quotas
+L182:     `
+L183: 
+L184: The API version corresponds to a version of the resource provider's REST API operations. As a resource provider enables new features, it releases a new version of the REST API.
+L185: To get the available API versions for a resource type, use:
+L186: 
+L187:     `((Get-AzResourceProvider -ProviderNamespace Microsoft.Batch).ResourceTypes | Where-Object ResourceTypeName -eq batchAccounts).ApiVersions
+L188:     `
+L189: 
+L190: The command returns:
+L191: 
+L192:     `2023-05-01
+L193:     2022-10-01
+L194:     2022-06-01
+L195:     2022-01-01
+L196:     2021-06-01
+L197:     2021-01-01
+L198:     ...
+L199:     `
+L200: Resource Manager is supported in all regions, but the resources you deploy might not be supported in all regions. Also, there might be limitations on your subscription that prevent you from using some regions that support the resource.
+L201: 
+L202: To get the supported locations for a resource type, use:
+L203: 
+L204:     `((Get-AzResourceProvider -ProviderNamespace Microsoft.Batch).ResourceTypes | Where-Object ResourceTypeName -eq batchAccounts).Locations
+L205:     `
+L206: The command returns:
+L207: 
+L208:     `West Europe
+L209:     East US
+L210:     East US 2
+L211:     West US
+L212:     ...
+L213:     `
+L214: ## Azure CLI
+L215: 
+L216: To see all resource providers in Azure and the registration status for your subscription, use:
+L217: 
+L218:     `az provider list --query "[].{Provider:namespace, Status:registrationState}" --out table
+L219:     `
+L220: The command returns:
+L221: 
+L222:     `Provider                         Status
+L223:     -------------------------------- ----------------
+L224:     Microsoft.ClassicCompute         Registered
+L225:     Microsoft.ClassicNetwork         Registered
+L226:     Microsoft.ClassicStorage         Registered
+L227:     Microsoft.CognitiveServices      Registered
+L228:     ...
+L229:     `
+L230: To see all registered resource providers for your subscription, use:
+L231: 
+L232:     `az provider list --query "sort_by([?registrationState=='Registered'].{Provider:namespace, Status:registrationState}, &Provider)" --out table
+L233:     `
+L234: 
+L235: To maintain least privileges in your subscription, only register those resource providers that you're ready to use. To register a resource provider, use:
+L236: 
+L237:     `az provider register --namespace Microsoft.Batch
+L238:     `
+L239: 
+L240: The command returns a message that registration is ongoing.
+L241: To see information for a particular resource provider, use:
+L242: 
+L243:     `az provider show --namespace Microsoft.Batch
+L244:     `
+L245: 
+L246: The command returns:
+L247: 
+L248:     `{
+L249:         "id": "/subscriptions/####-####/providers/Microsoft.Batch",
+L250:         "namespace": "Microsoft.Batch",
+L251:         "registrationsState": "Registering",
+L252:         "resourceTypes:" [
+L253:             ...
+L254:         ]
+L255:     }
+L256:     `
+L257: 
+L258: Important
+L259: As cite13†noted earlier , don't block the creation of resources for a resource provider that's in the registering state. When your application doesn't block a resource provider in the registering state, it can continue sooner than waiting for all regions to complete.
+L260: 
+L261: To see the resource types for a resource provider, use:
+L262: 
+L263:     `az provider show --namespace Microsoft.Batch --query "resourceTypes[*].resourceType" --out table
+L264:     `
+L265: The command returns:
+L266: 
+L267:     `Result
+L268:     ---------------
+L269:     batchAccounts
+L270:     operations
+L271:     locations
+L272:     locations/quotas
+L273:     `
+L274: 
+L275: The API version corresponds to a version of the resource provider's REST API operations. As a resource provider enables new features, it releases a new version of the REST API.
+L276: To get the available API versions for a resource type, use:
+L277: 
+L278:     `az provider show --namespace Microsoft.Batch --query "resourceTypes[?resourceType=='batchAccounts'].apiVersions | [0]" --out table
+L279:     `
+L280: 
+L281: The command returns:
+L282: 
+L283:     `Result
+L284:     ---------------
+L285:     2023-05-01
+L286:     2022-10-01
+L287:     2022-06-01
+L288:     2022-01-01
+L289:     ...
+L290:     `
+L291: Resource Manager is supported in all regions, but the resources you deploy might not be supported in all regions. Also, there might be limitations on your subscription that prevent you from using some regions that support the resource.
+L292: 
+L293: To get the supported locations for a resource type, use:
+L294: 
+L295:     `az provider show --namespace Microsoft.Batch --query "resourceTypes[?resourceType=='batchAccounts'].locations | [0]" --out table
+L296:     `
+L297: The command returns:
+L298: 
+L299:     `Result
+L300:     ---------------
+L301:     West Europe
+L302:     East US
+L303:     East US 2
+L304:     West US
+L305:     ...
+L306:     `
+L307: ## Python
+L308: To see all resource providers in Azure and the registration status for your subscription, use:
+L309: 
+L310:     `import os
+L311:     from azure.identity import DefaultAzureCredential
+L312:     from azure.mgmt.resource import ResourceManagementClient
+L313: 
+L314:     # Authentication
+L315:     credential = DefaultAzureCredential()
+L316:     subscription_id = os.environ["AZURE_SUBSCRIPTION_ID"]
+L317: 
+L318:     # Initialize Resource Management client
+L319:     resource_management_client = ResourceManagementClient(credential, subscription_id)
+L320: 
+L321:     # List available resource providers and select ProviderNamespace and RegistrationState
+L322:     providers = resource_management_client.providers.list()
+L323: 
+L324:     for provider in providers:
+

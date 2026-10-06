@@ -1,0 +1,30 @@
+{
+  "tag": "docker.io/library/python:3.14.8-slim-bookworm",
+  "index_digest": "sha256:c8137f4c460908c8763f281c8f22c431eb5c538514ba9553fc3a89c06b7cfb88",
+  "child_digest": "sha256:d1e795fbdab8a4744432467f32f348c6baa99f07abc05ffde710913f65c8261d",
+  "platform": {
+    "architecture": "amd64",
+    "os": "linux"
+  },
+  "requests": "2.34.2",
+  "pyarrow": "25.0.1",
+  "pip": "26.2.1",
+  "azure-identity": "1.26.0",
+  "azure-storage-blob": "12.31.0",
+  "azure-data-tables": "12.7.0",
+  "base_reference": "docker.io/library/python@sha256:d1e795fbdab8a4744432467f32f348c6baa99f07abc05ffde710913f65c8261d",
+  "os_variant": "Debian bookworm slim",
+  "libc": "glibc; exact runtime value pending observed environment",
+  "installer": {
+    "name": "pip",
+    "version": "26.2.1",
+    "wheel_url": "https://files.pythonhosted.org/packages/f3/6e/1736e5b4ae2b778ef2f81c47d797de9f891d4d8acb047a24ca37a60294dd/pip-26.2.1-py3-none-any.whl",
+    "sha256": "71138adf1f4ca900cdb7d289c21b7494329f2332b6d85f0e1c42108c0384ed3e"
+  },
+  "registry": "Docker Hub official library/python",
+  "pull_authorization": "Public anonymous pull token in runtime memory; rate/availability limits still apply",
+  "rollback_image": "No prior worker/release image exists or is published by this probe; base digest alone is not rollback deployment evidence",
+  "datalake_omission": "Recorded operations use Blob content/conditions and Table entities; no DFS ACL/path rename/filesystem API operation selected",
+  "requests_choice": "Synchronous SEC transport candidate; also required by Azure core. No async operations justify additional HTTP client dependencies.",
+  "performance": "Native ACR Linux amd64 requested; no production worker fit or performance proof"
+}

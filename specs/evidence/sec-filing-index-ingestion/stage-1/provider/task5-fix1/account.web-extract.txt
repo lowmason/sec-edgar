@@ -1,0 +1,498 @@
+Storage Accounts - Create - REST API (Azure Storage Resource Provider) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/storagerp/storage-accounts/create?view=rest-storagerp-2025-06-01)
+citeturn71view0 [wordlim: 200] Crawled: today; Content type: text/html; Source: find({"ref_id":"https://learn.microsoft.com/en-us/rest/api/storagerp/storage-accounts/create?view=rest-storagerp-2025-06-01","pattern":"200 OK"}); Total lines: 8925
+L55: properties.allowCrossTenantReplication  |  | boolean  | Allow or disallow cross AAD tenant object replication. Set this property to true for new or existing accounts only if object replication policies will involve storage accounts in different AAD tenants. The default interpretation is false for new accounts to follow best security practices by default.
+L56: properties.allowSharedKeyAccess  |  | boolean  | Indicates whether the storage account permits requests to be authorized with the account access key via Shared Key. If false, then all requests, including shared access signatures, must be authorized with Azure Active Directory (Azure AD). The default value is null, which is equivalent to true.
+L57: properties.allowedCopyScope  |  | cite12†AllowedCopyScope | Restrict copy to and from Storage Accounts within an AAD tenant or with Private Links to the same VNet.
+L58: properties.azureFilesIdentityBasedAuthentication  |  | cite13†AzureFilesIdentityBasedAuthentication | Provides the identity based authentication settings for Azure Files.
+L59: properties.customDomain  |  | cite14†CustomDomain | User domain assigned to the storage account. Name is the CNAME source. Only one custom domain is supported per storage account at this time. To clear the existing custom domain, use an empty string for the custom domain name property.
+L60: properties.defaultToOAuthAuthentication  |  | boolean  | A boolean flag which indicates whether the default authentication is OAuth or not. The default interpretation is false for this property.
+L61: properties.dnsEndpointType  |  | cite15†DnsEndpointType | Allows you to specify the type of endpoint. Set this to AzureDNSZone to create a large number of accounts in a single subscription, which creates accounts in an Azure DNS Zone and the endpoint URL will have an alphanumeric DNS Zone identifier.
+L62: properties.dualStackEndpointPreference  |  | cite16†DualStackEndpointPreference | Maintains information about the Internet protocol opted by the user.
+L63: properties.enableExtendedGroups  |  | boolean  | Enables extended group support with local users feature, if set to true
+L64: properties.encryption  |  | cite17†Encryption | Encryption settings to be used for server-side encryption for the storage account.
+L65: properties.geoPriorityReplicationStatus  |  | cite18†GeoPriorityReplicationStatus | Status indicating whether Geo Priority Replication is enabled for the account.
+L66: properties.immutableStorageWithVersioning  |  | cite19†ImmutableStorageAccount | The property is immutable and can only be set to true at the account creation time. When set to true, it enables object level immutability for all the new containers in the account by default.
+L67: properties.isHnsEnabled  |  | boolean  | Account HierarchicalNamespace enabled if sets to true.
+L68: properties.isLocalUserEnabled  |  | boolean  | Enables local users feature, if set to true
+L69: properties.isNfsV3Enabled  |  | boolean  | NFS 3.0 protocol support enabled if set to true.
+L70: properties.isSftpEnabled  |  | boolean  | Enables Secure File Transfer Protocol, if set to true
+L71: properties.keyPolicy  |  | cite20†KeyPolicy | KeyPolicy assigned to the storage account.
+L72: properties.largeFileSharesState  |  | cite21†LargeFileSharesState | Allow large file shares if sets to Enabled. It cannot be disabled once it is enabled.
+L73: properties.minimumTlsVersion  |  | cite22†MinimumTlsVersion | Set the minimum TLS version to be permitted on requests to storage. The default interpretation is TLS 1.0 for this property. Minimum TLS version 1.3 version is not supported.
+L74: properties.networkAcls  |  | cite23†NetworkRuleSet | Network rule set
+L75: properties.publicNetworkAccess  |  | cite24†PublicNetworkAccess | Allow, disallow, or let Network Security Perimeter configuration to evaluate public network access to Storage Account. Value is optional but if passed in, must be 'Enabled', 'Disabled' or 'SecuredByPerimeter'.
+L76: properties.routingPreference  |  | cite25†RoutingPreference | Maintains information about the network routing choice opted by the user for data transfer
+L77: properties.sasPolicy  |  | cite26†SasPolicy | SasPolicy assigned to the storage account.
+L78: properties.supportsHttpsTrafficOnly  |  | boolean  | Allows https traffic only to storage service if sets to true. The default value is true since API version 2019-04-01.
+L79: tags  |  | object  | Gets or sets a list of key value pairs that describe the resource. These tags can be used for viewing and grouping this resource (across resource groups). A maximum of 15 tags can be provided for a resource. Each tag must have a key with a length no greater than 128 characters and a value with a length no greater than 256 characters.
+L80: zones  |  | string[]  | Optional. Gets or sets the pinned logical availability zone for the storage account.
+L81: ## Responses
+L82: 
+L83: Name  | Type  | Description
+L84: --- | --- | ---
+L85: 200 OK  | cite27†StorageAccount | Resource 'StorageAccount' update operation succeeded
+L86: 202 Accepted  |  | Resource operation accepted. Headers
+L87: 
+L88:   * Location: string
+L89:   * Retry-After: integer
+L90: Other Status Codes  | cite28†ErrorResponse | An unexpected error response.
+L91: 
+L92: ## Security
+L93: 
+L94: ### azure_auth
+L95: 
+L96: Azure Active Directory OAuth2 Flow.
+L97: 
+L98: Type: oauth2
+L99: Flow: implicit
+L100: Authorization URL: https://login.microsoftonline.com/common/oauth2/authorize
+L101: #### Scopes
+L102: 
+L103: Name  | Description
+L104: --- | ---
+L105: user_impersonation  | impersonate your user account
+L106: ## Examples
+L107: cite29†NfsV3AccountCreate L108: cite30†StorageAccountCreate L109: cite31†StorageAccountCreate_placement L110: cite32†StorageAccountCreate_zones L111: cite33†StorageAccountCreateAllowedCopyScopeToAAD L112: cite34†StorageAccountCreateAllowedCopyScopeToPrivateLink L113: cite35†StorageAccountCreateDisallowPublicNetworkAccess L114: cite36†StorageAccountCreateDnsEndpointTypeToAzureDnsZone L115: cite37†StorageAccountCreateDnsEndpointTypeToStandard L116: cite38†StorageAccountCreateEnablePublicNetworkAccess L117: cite39†StorageAccountCreatePremiumBlockBlobStorage L118: cite40†StorageAccountCreateUserAssignedEncryptionIdentityWithCMK L119: cite41†StorageAccountCreateUserAssignedIdentityWithFederatedIdentityClientId. L120: cite42†StorageAccountCreateWithImmutabilityPolicy L121: ### NfsV3AccountCreate
+L122: #### Sample request
+L123:   * cite43†HTTP L124:   * cite44†Java L125:   * cite45†Python L126:   * cite46†Go L127:   * cite47†JavaScript L128:   * cite48†dotnet L129: 
+L130:     `PUT https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/res9101/providers/Microsoft.Storage/storageAccounts/sto4445?api-version=2025-06-01
+L131: 
+L132:     {
+L133:       "kind": "BlockBlobStorage",
+L134:       "location": "eastus",
+L135:       "properties": {
+L136:         "enableExtendedGroups": true,
+L137:         "isHnsEnabled": true,
+L138:         "isNfsV3Enabled": true,
+L139:         "networkAcls": {
+L140:           "bypass": "AzureServices",
+L141:           "defaultAction": "Allow",
+L142:           "ipRules": [],
+L143:           "virtualNetworkRules": [
+L144:             {
+L145:               "id": "/subscriptions/{subscription-id}/resourceGroups/res9101/providers/Microsoft.Network/virtualNetworks/net123/subnets/subnet12"
+L146:             }
+L147:           ]
+L148:         },
+L149:         "supportsHttpsTrafficOnly": false
+L150:       },
+L151:       "sku": {
+L152:         "name": "Premium_LRS"
+L153:       }
+L154:     }
+L155: 
+L156:     `
+L157: 
+L158:     `
+L159:     import com.azure.resourcemanager.storage.models.Bypass;
+L160:     import com.azure.resourcemanager.storage.models.DefaultAction;
+L161:     import com.azure.resourcemanager.storage.models.Kind;
+L162:     import com.azure.resourcemanager.storage.models.NetworkRuleSet;
+L163:     import com.azure.resourcemanager.storage.models.Sku;
+L164:     import com.azure.resourcemanager.storage.models.SkuName;
+L165:     import com.azure.resourcemanager.storage.models.StorageAccountCreateParameters;
+L166:     import com.azure.resourcemanager.storage.models.VirtualNetworkRule;
+L167:     import java.util.Arrays;
+L168:     import java.util.HashMap;
+L169:     import java.util.Map;
+L170: 
+L171:     /**
+L172:      * Samples for StorageAccounts Create.
+L173:      */
+L174:     public final class Main {
+L175:         /*
+L176:          * x-ms-original-file:
+L177:          * specification/storage/resource-manager/Microsoft.Storage/stable/2025-06-01/examples/NfsV3AccountCreate.json
+L178:          */
+L179:         /**
+L180:          * Sample code: NfsV3AccountCreate.
+L181:          *
+L182:          * @param azure The entry point for accessing resource management APIs in Azure.
+L183:          */
+L184:         public static void nfsV3AccountCreate(com.azure.resourcemanager.AzureResourceManager azure) {
+L185:             azure.storageAccounts().manager().serviceClient().getStorageAccounts().create("res9101", "sto4445",
+L186:                 new StorageAccountCreateParameters().withSku(new Sku().withName(SkuName.PREMIUM_LRS))
+L187:                     .withKind(Kind.BLOCK_BLOB_STORAGE).withLocation("eastus")
+L188:                     .withNetworkRuleSet(new NetworkRuleSet().withBypass(Bypass.AZURE_SERVICES)
+L189:                         .withVirtualNetworkRules(Arrays.asList(new VirtualNetworkRule().withVirtualNetworkResourceId(
+L190:                             "/subscriptions/{subscription-id}/resourceGroups/res9101/providers/Microsoft.Network/virtualNetworks/net123/subnets/subnet12")))
+L191:                         .withIpRules(Arrays.asList()).withDefaultAction(DefaultAction.ALLOW))
+L192:                     .withEnableHttpsTrafficOnly(false).withEnableExtendedGroups(true).withIsHnsEnabled(true)
+L193:                     .withEnableNfsV3(true),
+L194:                 com.azure.core.util.Context.NONE);
+L195:         }
+L196: 
+L197:         // Use "Map.of" if available
+L198:         @SuppressWarnings("unchecked")
+L199:         private static <T> Map<String, T> mapOf(Object... inputs) {
+L200:             Map<String, T> map = new HashMap<>();
+L201:             for (int i = 0; i < inputs.length; i += 2) {
+L202:                 String key = (String) inputs[i];
+L203:                 T value = (T) inputs[i + 1];
+L204:                 map.put(key, value);
+L205:             }
+L206:             return map;
+L207:         }
+L208:     }
+L209: 
+L210:     `
+L211: To use the Azure SDK library in your project, see cite49†this documentation†github.com . To provide feedback on this code sample, cite50†open a GitHub issue†github.com L212: 
+L213:     `from azure.identity import DefaultAzureCredential
+L214: 
+L215:     from azure.mgmt.storage import StorageManagementClient
+L216: 
+L217:     """
+L218:     # PREREQUISITES
+L219:         pip install azure-identity
+L220:         pip install azure-mgmt-storage
+L221:     # USAGE
+L222:         python nfs_v3_account_create.py
+L223:         Before run the sample, please set the values of the client ID, tenant ID and client secret
+L224:         of the AAD application as environment variables: AZURE_CLIENT_ID, AZURE_TENANT_ID,
+L225:         AZURE_CLIENT_SECRET. For more info about how to get the value, please see:
+L226:         https://docs.microsoft.com/azure/active-directory/develop/howto-create-service-principal-portal
+L227:     """
+L228: 
+L229: 
+L230:     def main():
+L231:         client = StorageManagementClient(
+L232:             credential=DefaultAzureCredential(),
+L233:             subscription_id="{subscription-id}",
+L234:         )
+L235: 
+L236:         response = client.storage_accounts.begin_create(
+L237:             resource_group_name="res9101",
+L238:             account_name="sto4445",
+L239:             parameters={
+L240:                 "kind": "BlockBlobStorage",
+L241:                 "location": "eastus",
+L242:                 "properties": {
+L243:                     "enableExtendedGroups": True,
+L244:                     "isHnsEnabled": True,
+L245:                     "isNfsV3Enabled": True,
+L246:                     "networkAcls": {
+L247:                         "bypass": "AzureServices",
+L248:                         "defaultAction": "Allow",
+L249:                         "ipRules": [],
+L250:                         "virtualNetworkRules": [
+L251:                             {
+L252:                                 "id": "/subscriptions/{subscription-id}/resourceGroups/res9101/providers/Microsoft.Network/virtualNetworks/net123/subnets/subnet12"
+L253:                             }
+L254:                         ],
+L255:                     },
+L256:                     "supportsHttpsTrafficOnly": False,
+L257:                 },
+L258:                 "sku": {"name": "Premium_LRS"},
+L259:             },
+L260:         ).result()
+L261:         print(response)
+L262: 
+L263: 
+L264:     # x-ms-original-file: specification/storage/resource-manager/Microsoft.Storage/stable/2025-06-01/examples/NfsV3AccountCreate.json
+L265:     if __name__ == "__main__":
+L266:         main()
+L267: 
+L268:     `
+L269: To use the Azure SDK library in your project, see cite51†this documentation†github.com . To provide feedback on this code sample, cite50†open a GitHub issue†github.com L270: 
+L271:     `package armstorage_test
+L272: 
+L273:     import (
+L274:     	"context"
+L275:     	"log"
+L276: 
+L277:     	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
+L278:     	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+L279:     	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage/v3"
+L280:     )
+L281:     // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/blob/4e9df3afd38a1cfa00a5d49419dce51bd014601f/specification/storage/resource-manager/Microsoft.Storage/stable/2025-06-01/examples/NfsV3AccountCreate.json
+L282:     func ExampleAccountsClient_BeginCreate_nfsV3AccountCreate() {
+L283:     	cred, err := azidentity.NewDefaultAzureCredential(nil)
+L284:     	if err != nil {
+L285:     		log.Fatalf("failed to obtain a credential: %v", err)
+L286:     	}
+L287:     	ctx := context.Background()
+L288:     	clientFactory, err := armstorage.NewClientFactory("<subscription-id>", cred, nil)
+L289:     	if err != nil {
+L290:     		log.Fatalf("failed to create client: %v", err)
+L291:     	}
+L292:     	poller, err := clientFactory.NewAccountsClient().BeginCreate(ctx, "res9101", "sto4445", armstorage.AccountCreateParameters{
+L293:     		Kind:     to.Ptr(armstorage.KindBlockBlobStorage),
+L294:     		Location: to.Ptr("eastus"),
+L295:     		Properties: &armstorage.AccountPropertiesCreateParameters{
+L296:     			EnableExtendedGroups: to.Ptr(true),
+L297:     			IsHnsEnabled:         to.Ptr(true),
+L298:     			EnableNfsV3:          to.Ptr(true),
+L299:     			NetworkRuleSet: &armstorage.NetworkRuleSet{
+L300:     				Bypass:        to.Ptr(armstorage.BypassAzureServices),
+L301:     				DefaultAction: to.Ptr(armstorage.DefaultActionAllow),
+L302:     				IPRules:       []*armstorage.IPRule{},
+L303:     				VirtualNetworkRules: []*armstorage.VirtualNetworkRule{
+L304:     					{
+L305:     						VirtualNetworkResourceID: to.Ptr("/subscriptions/{subscription-id}/resourceGroups/res9101/providers/Microsoft.Network/virtualNetworks/net123/subnets/subnet12"),
+L306:     					}},
+L307:     			},
+L308:     			EnableHTTPSTrafficOnly: to.Ptr(false),
+L309:     		},
+L310:     		SKU: &armstorage.SKU{
+L311:     			Name: to.Ptr(armstorage.SKUNamePremiumLRS),
+L312:     		},
+L313:     	}, nil)
+L314:     	if err != nil {
+L315:     		log.Fatalf("failed to finish the request: %v", err)
+L316:     	}
+L317:     	res, err := poller.PollUntilDone(ctx, nil)
+L318:     	if err != nil {
+L319:     		log.Fatalf("failed to pull the result: %v", err)
+L320:     	}
+L321:     	// You could use response here. We use blank identifier for just demo purposes.
+L322:     	_ = res
+L323:     	// If the HTTP response code is 200 as defined in example definition, your response structure would look as follows. Please pay attention that all the values in the output are fake values for just demo purposes.
+L324:     	// res.Account = armstorage.Account{
+L325:     	// 	Name: to.Ptr("sto4445"),
+--------------------------------------------------------------------------------
+Storage Accounts - Get Properties - REST API (Azure Storage Resource Provider) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/storagerp/storage-accounts/get-properties?view=rest-storagerp-2025-06-01)
+citeturn71view1 [wordlim: 200] Crawled: today; Content type: text/html; Source: find({"ref_id":"https://learn.microsoft.com/en-us/rest/api/storagerp/storage-accounts/get-properties?view=rest-storagerp-2025-06-01","pattern":"200 OK"}); Total lines: 3057
+L0: cite0†Skip to main content cite1†Skip to in-page navigation cite2†Skip to Ask Learn chat experience L1: 
+L2: This browser is no longer supported.
+L3: 
+L4: Upgrade to Microsoft Edge to take advantage of the latest features, security updates, and technical support.
+L5: 
+L6: cite3†Download Microsoft Edge†go.microsoft.com cite4†More info about Internet Explorer and Microsoft Edge L7: 
+L8: Table of contents Exit editor mode
+L9: 
+L10: Ask Learn Ask Learn
+L11: 
+L12: Reading mode Table of contents cite2†Read in English Add Add to Plans cite5†Edit†github.com L13: 
+L14: * * *
+L15: Copy Markdown Print
+L16: 
+L17: * * *
+L18: 
+L19: Note
+L20: 
+L21: Access to this page requires authorization. You can try cite2†signing in or changing directories.
+L22: 
+L23: Access to this page requires authorization. You can try changing directories.
+L24: # Storage Accounts - Get Properties
+L25: 
+L26: Service:
+L27:     Storage Resource Provider
+L28: 
+L29: API Version:
+L30:     2025-06-01
+L31: ##
+L32: 
+L33: Returns the properties for the specified storage account including but not limited to name, SKU name, location, and account status. The ListKeys operation should be used to retrieve storage keys.
+L34: 
+L35:     `GET https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{accountName}?api-version=2025-06-01`
+L36: With optional parameters:
+L37: 
+L38:     `GET https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{accountName}?api-version=2025-06-01&$expand={$expand}`
+L39: ## URI Parameters
+L40: Name  | In  | Required  | Type  | Description
+L41: --- | --- | --- | --- | ---
+L42: accountName  | path  | True  | string minLength: 3
+L43: maxLength: 24
+L44: pattern: ^[a-z0-9]+$  | The name of the storage account within the specified resource group. Storage account names must be between 3 and 24 characters in length and use numbers and lower-case letters only.
+L45: resourceGroupName  | path  | True  | string minLength: 1
+L46: maxLength: 90  | The name of the resource group. The name is case insensitive.
+L47: subscriptionId  | path  | True  | string (uuid)  | The ID of the target subscription. The value must be an UUID.
+L48: api-version  | query  | True  | string minLength: 1  | The API version to use for this operation.
+L49: $expand  | query  |  | cite6†StorageAccountExpand | May be used to expand the properties within account's properties. By default, data is not included when fetching properties. Currently we only support geoReplicationStats and blobRestoreStatus.
+L50: ## Responses
+L51: 
+L52: Name  | Type  | Description
+L53: --- | --- | ---
+L54: 200 OK  | cite7†StorageAccount | Azure operation completed successfully.
+L55: Other Status Codes  | cite8†ErrorResponse | An unexpected error response.
+L56: 
+L57: ## Security
+L58: 
+L59: ### azure_auth
+L60: 
+L61: Azure Active Directory OAuth2 Flow.
+L62: 
+L63: Type: oauth2
+L64: Flow: implicit
+L65: Authorization URL: https://login.microsoftonline.com/common/oauth2/authorize
+L66: 
+L67: #### Scopes
+L68: 
+L69: Name  | Description
+L70: --- | ---
+L71: user_impersonation  | impersonate your user account
+L72: ## Examples
+L73: 
+L74: cite9†StorageAccountGetAsyncSkuConversionStatus L75: cite10†StorageAccountGetProperties L76: cite11†StorageAccountGetPropertiesCMKEnabled L77: cite12†StorageAccountGetPropertiesCMKVersionExpirationTime L78: cite13†StorageAccountGetPropertiesGeoReplicationStatscanFailoverFalse L79: cite14†StorageAccountGetPropertiesGeoReplicationStatscanFailoverTrue L80: 
+L81: ### StorageAccountGetAsyncSkuConversionStatus
+L82: #### Sample request
+L83:   * cite15†HTTP L84:   * cite16†Java L85:   * cite17†Python L86:   * cite18†Go L87:   * cite19†JavaScript L88:   * cite20†dotnet L89: 
+L90:     `GET https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/res9407/providers/Microsoft.Storage/storageAccounts/sto8596?api-version=2025-06-01
+L91:     `
+L92: 
+L93:     `
+L94:     /**
+L95:      * Samples for StorageAccounts GetByResourceGroup.
+L96:      */
+L97:     public final class Main {
+L98:         /*
+L99:          * x-ms-original-file: specification/storage/resource-manager/Microsoft.Storage/stable/2025-06-01/examples/
+L100:          * StorageAccountGetAsyncSkuConversionStatus.json
+L101:          */
+L102:         /**
+L103:          * Sample code: StorageAccountGetAsyncSkuConversionStatus.
+L104:          *
+L105:          * @param azure The entry point for accessing resource management APIs in Azure.
+L106:          */
+L107:         public static void storageAccountGetAsyncSkuConversionStatus(com.azure.resourcemanager.AzureResourceManager azure) {
+L108:             azure.storageAccounts().manager().serviceClient().getStorageAccounts().getByResourceGroupWithResponse("res9407",
+L109:                 "sto8596", null, com.azure.core.util.Context.NONE);
+L110:         }
+L111:     }
+L112: 
+L113:     `
+L114: To use the Azure SDK library in your project, see cite21†this documentation†github.com . To provide feedback on this code sample, cite22†open a GitHub issue†github.com L115: 
+L116:     `from azure.identity import DefaultAzureCredential
+L117: 
+L118:     from azure.mgmt.storage import StorageManagementClient
+L119: 
+L120:     """
+L121:     # PREREQUISITES
+L122:         pip install azure-identity
+L123:         pip install azure-mgmt-storage
+L124:     # USAGE
+L125:         python storage_account_get_async_sku_conversion_status.py
+L126:         Before run the sample, please set the values of the client ID, tenant ID and client secret
+L127:         of the AAD application as environment variables: AZURE_CLIENT_ID, AZURE_TENANT_ID,
+L128:         AZURE_CLIENT_SECRET. For more info about how to get the value, please see:
+L129:         https://docs.microsoft.com/azure/active-directory/develop/howto-create-service-principal-portal
+L130:     """
+L131: 
+L132: 
+L133:     def main():
+L134:         client = StorageManagementClient(
+L135:             credential=DefaultAzureCredential(),
+L136:             subscription_id="{subscription-id}",
+L137:         )
+L138: 
+L139:         response = client.storage_accounts.get_properties(
+L140:             resource_group_name="res9407",
+L141:             account_name="sto8596",
+L142:         )
+L143:         print(response)
+L144: 
+L145: 
+L146:     # x-ms-original-file: specification/storage/resource-manager/Microsoft.Storage/stable/2025-06-01/examples/StorageAccountGetAsyncSkuConversionStatus.json
+L147:     if __name__ == "__main__":
+L148:         main()
+L149: 
+L150:     `
+L151: To use the Azure SDK library in your project, see cite23†this documentation†github.com . To provide feedback on this code sample, cite22†open a GitHub issue†github.com L152: 
+L153:     `package armstorage_test
+L154: 
+L155:     import (
+L156:     	"context"
+L157:     	"log"
+L158: 
+L159:     	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+L160:     	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage/v3"
+L161:     )
+L162:     // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/blob/4e9df3afd38a1cfa00a5d49419dce51bd014601f/specification/storage/resource-manager/Microsoft.Storage/stable/2025-06-01/examples/StorageAccountGetAsyncSkuConversionStatus.json
+L163:     func ExampleAccountsClient_GetProperties_storageAccountGetAsyncSkuConversionStatus() {
+L164:     	cred, err := azidentity.NewDefaultAzureCredential(nil)
+L165:     	if err != nil {
+L166:     		log.Fatalf("failed to obtain a credential: %v", err)
+L167:     	}
+L168:     	ctx := context.Background()
+L169:     	clientFactory, err := armstorage.NewClientFactory("<subscription-id>", cred, nil)
+L170:     	if err != nil {
+L171:     		log.Fatalf("failed to create client: %v", err)
+L172:     	}
+L173:     	res, err := clientFactory.NewAccountsClient().GetProperties(ctx, "res9407", "sto8596", &armstorage.AccountsClientGetPropertiesOptions{Expand: nil})
+L174:     	if err != nil {
+L175:     		log.Fatalf("failed to finish the request: %v", err)
+L176:     	}
+L177:     	// You could use response here. We use blank identifier for just demo purposes.
+L178:     	_ = res
+L179:     	// If the HTTP response code is 200 as defined in example definition, your response structure would look as follows. Please pay attention that all the values in the output are fake values for just demo purposes.
+L180:     	// res.Account = armstorage.Account{
+L181:     	// 	Name: to.Ptr("sto8596"),
+L182:     	// 	Type: to.Ptr("Microsoft.Storage/storageAccounts"),
+L183:     	// 	ID: to.Ptr("/subscriptions/{subscription-id}/resourceGroups/res9407/providers/Microsoft.Storage/storageAccounts/sto8596"),
+L184:     	// 	Location: to.Ptr("eastus"),
+L185:     	// 	Kind: to.Ptr(armstorage.KindStorageV2),
+L186:     	// 	Properties: &armstorage.AccountProperties{
+L187:     	// 		AllowBlobPublicAccess: to.Ptr(false),
+L188:     	// 		MinimumTLSVersion: to.Ptr(armstorage.MinimumTLSVersionTLS12),
+L189:     	// 		StorageAccountSKUConversionStatus: &armstorage.AccountSKUConversionStatus{
+L190:     	// 			EndTime: to.Ptr("2021-09-02T02:53:39.0932539Z"),
+L191:     	// 			SKUConversionStatus: to.Ptr(armstorage.SKUConversionStatusInProgress),
+L192:     	// 			StartTime: to.Ptr("2022-09-01T02:53:39.0932539Z"),
+L193:     	// 			TargetSKUName: to.Ptr(armstorage.SKUNameStandardGRS),
+L194:     	// 		},
+L195:     	// 	},
+L196:     	// 	SKU: &armstorage.SKU{
+L197:     	// 		Name: to.Ptr(armstorage.SKUNameStandardGRS),
+L198:     	// 		Tier: to.Ptr(armstorage.SKUTierStandard),
+L199:     	// 	},
+L200:     	// }
+L201:     }
+L202: 
+L203:     `
+L204: To use the Azure SDK library in your project, see cite24†this documentation†github.com . To provide feedback on this code sample, cite22†open a GitHub issue†github.com L205: 
+L206:     `const { StorageManagementClient } = require("@azure/arm-storage");
+L207:     const { DefaultAzureCredential } = require("@azure/identity");
+L208:     require("dotenv/config");
+L209: 
+L210:     /**
+L211:      * This sample demonstrates how to Returns the properties for the specified storage account including but not limited to name, SKU name, location, and account status. The ListKeys operation should be used to retrieve storage keys.
+L212:      *
+L213:      * @summary Returns the properties for the specified storage account including but not limited to name, SKU name, location, and account status. The ListKeys operation should be used to retrieve storage keys.
+L214:      * x-ms-original-file: specification/storage/resource-manager/Microsoft.Storage/stable/2025-06-01/examples/StorageAccountGetAsyncSkuConversionStatus.json
+L215:      */
+L216:     async function storageAccountGetAsyncSkuConversionStatus() {
+L217:       const subscriptionId = process.env["STORAGE_SUBSCRIPTION_ID"] || "{subscription-id}";
+L218:       const resourceGroupName = process.env["STORAGE_RESOURCE_GROUP"] || "res9407";
+L219:       const accountName = "sto8596";
+L220:       const credential = new DefaultAzureCredential();
+L221:       const client = new StorageManagementClient(credential, subscriptionId);
+L222:       const result = await client.storageAccounts.getProperties(resourceGroupName, accountName);
+L223:       console.log(result);
+L224:     }
+L225: 
+L226:     `
+L227: To use the Azure SDK library in your project, see cite25†this documentation†github.com . To provide feedback on this code sample, cite22†open a GitHub issue†github.com L228: 
+L229:     `using Azure;
+L230:     using Azure.ResourceManager;
+L231:     using System;
+L232:     using System.Threading.Tasks;
+L233:     using Azure.Core;
+L234:     using Azure.Identity;
+L235:     using Azure.ResourceManager.Models;
+L236:     using Azure.ResourceManager.Storage.Models;
+L237:     using Azure.ResourceManager.Storage;
+L238:     // Generated from example definition: specification/storage/resource-manager/Microsoft.Storage/stable/2025-06-01/examples/StorageAccountGetAsyncSkuConversionStatus.json
+L239:     // this example is just showing the usage of "StorageAccounts_GetProperties" operation, for the dependent resources, they will have to be created separately.
+L240:     // get your azure access token, for more details of how Azure SDK get your access token, please refer to https://learn.microsoft.com/en-us/dotnet/azure/sdk/authentication?tabs=command-line
+L241:     TokenCredential cred = new DefaultAzureCredential();
+L242:     // authenticate your client
+L243:     ArmClient client = new ArmClient(cred);
+L244: 
+L245:     // this example assumes you already have this StorageAccountResource created on azure
+L246:     // for more information of creating StorageAccountResource, please refer to the document of StorageAccountResource
+L247:     string subscriptionId = "{subscription-id}";
+L248:     string resourceGroupName = "res9407";
+L249:     string accountName = "sto8596";
+L250:     ResourceIdentifier storageAccountResourceId = StorageAccountResource.CreateResourceIdentifier(subscriptionId, resourceGroupName, accountName);
+L251:     StorageAccountResource storageAccount = client.GetStorageAccountResource(storageAccountResourceId);
+L252:     // invoke the operation
+L253:     StorageAccountResource result = await storageAccount.GetAsync();
+L254: 
+L255:     // the variable result is a resource, you could call other operations on this instance as well
+L256:     // but just for demo, we get its data from this resource instance
+L257:     StorageAccountData resourceData = result.Data;
+L258:     // for demo we just print out the id
+L259:     Console.WriteLine($"Succeeded on id: {resourceData.Id}");
+L260: 
+L261:     `
+

@@ -1,0 +1,28 @@
+{
+  "argv": [
+    "az",
+    "acr",
+    "build",
+    "--subscription",
+    "3c92a216-8ed6-4897-b741-11ed287b8617",
+    "--registry",
+    "secedgarstage1probe20261005b8617",
+    "--resource-group",
+    "rg-sec-edgar-stage1-probe-20261005",
+    "--platform",
+    "linux/amd64",
+    "--cpu",
+    "2",
+    "--timeout",
+    "1800",
+    "--no-cache",
+    "--no-push",
+    "--file",
+    "Dockerfile",
+    "/private/tmp/sec-edgar-task4-resolve-02"
+  ],
+  "started_utc": "2026-10-06T00:35:09.184270+00:00",
+  "submission_ordinal": 1,
+  "accepted_max_submissions": 4,
+  "context_verification": "resolve-02-root-context-verification.json"
+}

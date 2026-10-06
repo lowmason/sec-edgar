@@ -1,0 +1,2110 @@
+# Task7 completion/retirement review
+
+Uncommitted delta against task-7-before-manifest.json; original approval HEAD321c93af78b54c7e63efbb0e69252c69a238fec6. Exact accepted F1 source/runtime/provider evidence unchanged; new process metadata and retired documentation reviewed here.
+
+## specs/completed/sec-filing-index-ingestion-stage-1-spec.md
+SHA256 87f366c5e7320437aeb4334889127c84420cee0a08942f215d584b6ec93285bb
+--- before/specs/completed/sec-filing-index-ingestion-stage-1-spec.md
++++ after/specs/completed/sec-filing-index-ingestion-stage-1-spec.md
+@@ -0,0 +1,346 @@
++# SEC filing-index ingestion — Stage 1: Scope and feasibility findings
++
++**Status: COMPLETE (2026-10-06)** — bounded Stage 1 investigation completed via plan 1; authoritative rollout stamp in §9.
++**Original spec approval:** APPROVED (2026-10-05) — written spec accepted by Lowell Mason; approval history is distinct from the exact F1 completion acceptance.
++**Owner and decider:** Lowell Mason.
++**Repository:** /Users/lowell/Projects/sec-edgar.
++**Authorization:** The owner authorized Stage 1 and approved its approach, scope, evidence boundary,
++deliverables and readiness criteria on 2026-10-05. The parent ADR and overall spec were formally
++accepted on that date; their acceptance records are in those documents.
++
++**Parent documents:** [Roadmap](../sec-filing-index-ingestion-roadmap.md),
++[overall design spec](../sec-filing-index-ingestion-spec.md), and
++[ADR](../sec-filing-index-ingestion-adr.md).
++
++## 1. Purpose and stage boundary
++
++Establish an accepted implementation boundary and resolve the source, runtime and deployment
++prerequisites needed by later stages. Stage 1 exits with an owner-accepted written readiness
++finding identifying a viable source/runtime combination and the decisions needed to proceed.
++
++Use an evidence-led review: current official documentation, a source-directory inventory,
++bounded retained source samples, and isolated runtime compatibility probes. Document facts,
++decisions and limits before concluding readiness.
++
++The workload remains filing indexes: historical quarterly backfill, ongoing daily ingestion,
++metadata ETL and reconciliation. Parent §2 defines its scope; parent §4.9 and the ADR Decision
++define the single sec-edgar-ingest implementation package. Accepting this stage does not expand
++that workload.
++
++Allowed investigation work includes read-only repository inspection, provider-document review,
++bounded SEC directory/source access, archive inspection and isolated dependency/container probes.
++Keep probe environments separate from the workspace packages. Retain evidence, not production
++ingestion modules.
++
++Package/workspace repairs belong to Stage 2. Ingestion implementation, production parsers and
++tests, Bicep resource definitions, Azure provisioning, production data publication and trigger
++activation are outside Stage 1. No resource-profile comparison is authorized. Actual worker
++memory/runtime measurements and live Azure integration remain Stage 7 checks.
++
++## 2. Contract authority
++
++The accepted parent spec remains the implementation contract. Reference it when recording
++decisions instead of creating a second version of its safeguards.
++
++| Boundary | Authoritative reference |
++|---|---|
++| Workload and service/package ownership | Parent §§2, 4.1, 4.9; ADR Decision |
++| Discovery, requested units, overlap and source coverage | Parent §4.2 |
++| Source acceptance and coordinated SEC access | Parent §4.3 |
++| Identity, precedence, reconciliation and withdrawal approval | Parent §4.4 |
++| Retained inputs, provenance and replay | Parent §§4.5–4.6 |
++| Generation publication and reader behavior | Parent §4.6 |
++| Recovery, observability, defaults and identity | Parent §§4.7–4.9 and §5 |
++| Verification and deployment/operational gates | Parent §§6–7 and 10 |
++
++An evidence conflict must be recorded with its affected contract, resolution and owner decision.
++Changing an accepted contract requires explicit acceptance of the revision. An assumption or
++unsupported source format cannot silently weaken a safeguard.
++
++## 3. Repository baseline
++
++Rechecked on 2026-10-05, before writing this stage spec:
++
++- The ingest, client and download packages contain only hello() scaffolds and type markers.
++  Their READMEs and the root README are empty.
++- No ingestion tests, worker implementation, CI definitions or Azure infrastructure were found.
++- [Root configuration](../../pyproject.toml) declares Python >=3.14, references the locally deleted
++  sec-edgar-index-ingest workspace member, includes the client/download scaffolds, and declares
++  a sec-edgar CLI targeting the absent sec_edgar module.
++- The existing deletions under packages/sec-edgar-index-ingest/ and the untracked roadmap are
++  local changes to preserve. No deployed Azure resources were inspected.
++
++Record any drift when the investigation starts. The parent spec's original statements about
++not inspecting a repository are draft provenance; this inventory supplies the Stage 1 baseline.
++The finding must identify the Stage 2 alignment work without performing those repairs.
++
++## 4. Accepted inputs and starting settings
++
++| Input | Owner-approved value |
++|---|---|
++| Intended historical range | 2010 Q1 through the open quarter, inclusive |
++| Initial development range | 2015 Q1 through the open quarter, inclusive |
++| End-quarter rule | Resolve and pin the end quarter at each run's start |
++| Daily handoff | 2026-10-01, retaining baseline overlap under parent §4.2 |
++| SEC User-Agent | Lowell Mason sec-edgar-ingest mason.lowell@mac.com |
++| Azure target | A new dedicated resource group in an existing subscription |
++| Region order | eastus, then eastus2, then centralus |
++| Networking | Public HTTPS endpoints, managed identities, scoped roles, anonymous blob access disabled |
++| Infrastructure as code | Bicep |
++| Python/container candidate | Python 3.14; Linux amd64 container |
++| Initial compute candidate | General-purpose Consumption workload profile; 2 vCPU and 4 GiB RAM |
++| Initial execution settings | One replica; parallelism 1; completion count 1; replica timeout 3,600 seconds |
++| Initial storage candidate | Standard general-purpose v2; hierarchical namespace enabled; Hot tier; ZRS |
++| Ingestion-artifact retention | Indefinite during initial development: raw snapshots, observations, generations, manifests, approvals, quarantine evidence and run reports |
++| Operational-log retention | 90 days |
++| Alert owner and destination | Lowell Mason; mason.lowell@mac.com |
++
++The owner accepted the parent §4.8 operating defaults, including the production schedules and
++retry/access policies. Select ADF's supported Eastern time-zone identifier from current evidence;
++preserve the accepted local schedule times and DST behavior.
++
++These resource settings are starting candidates, not measured capacity or freshness guarantees.
++Assess expansion and temporary-storage requirements without comparing resource profiles.
++If the evidence exposes an incompatibility, record it and obtain an explicit settings revision.
++Stage 7 validates the actual worker against the chosen memory/runtime limits.
++
++On 2026-10-05, the open quarter is 2026 Q4. The requested ranges therefore contain 68 intended
++quarterly units and 48 development units. The finding must record its own evaluation date and
++pinned end quarter; later runs resolve their endpoint afresh. New quarters require discovery and
++format validation under the parent contracts.
++
++## 5. Evidence requirements
++
++### 5.1 Source availability, discovery and formats
++
++Inventory every intended quarterly unit through the pinned end quarter, marking the development
++subset separately. Resolve actual archived-quarter and open-quarter full-index URLs, available
++representations, and directory-discovery methods. Inspect daily discovery from the handoff date
++and document historical daily-directory availability relevant to outage recovery.
++
++Use bounded retained samples covering:
++
++- 2010 Q1 and 2015 Q1;
++- the latest closed quarter and the open quarter;
++- the daily handoff and an already published daily index;
++- year/quarter transitions and each distinct format family found during inventory.
++
++Do not require every optional archive codec when a supported representation covers the source.
++Conversely, an unexamined representation or legacy row/path family cannot be declared supported.
++Record which representations are selected and why.
++
++For listings, capture URL, access time, response outcome, representation/schema, discovered
++children and source-selection decisions. Distinguish valid no-source outcomes from failed
++discovery. Account for unavailable directories or listed files without manufacturing calendar
++URLs or inferring withdrawals; parent §§4.2–4.4 govern those outcomes.
++
++For source samples, retain exact original bytes and record SHA-256, received byte count,
++available validators, content/transport encoding, archive member details, expanded size, text
++encoding, line endings, headers, representative fields/paths and observed date coverage.
++Investigate legacy path/accession conventions within both ranges, preserving parent §4.4's
++nullable-accession contract.
++
++When the selected source is compressed, retain the original archive as the raw specimen.
++Decoded index content is a derivative. The finding must reconcile the selected representation,
++raw filename/format metadata and parent §4.5's path examples without replacing original bytes
++with decoded content.
++
++Assess cumulative volume, the largest observed source, temporary disk needs and the assumptions
++required to fit bounded work within the starting allocation. Directory sizes are estimates;
++they do not prove archive expansion, parser working memory or worker runtime. Golden parser
++fixtures and ingestion coverage verification belong to the later build stages under parent §6.
++
++SEC investigation access uses the approved identity and parent §§4.3, 4.8 and §5 rate,
++identification and failure controls. Coordinate one bounded investigation issuer operationally,
++record the sampling window/request budget, and account for other owner traffic before access.
++The production Storage-backed lease is implemented in Stage 2; its absence does not authorize
++concurrent investigation issuers or independent request budgets. Do not make live SEC access a
++CI dependency.
++
++### 5.2 Python, container and dependency compatibility
++
++Select exact, reproducible versions for Python 3.14, the Linux amd64 base image, the SEC HTTP
++client, Azure identity/storage libraries and the Parquet implementation. Record the base-image
++digest, Python build/ABI, OS/architecture, direct and resolved dependencies, installer/tool
++versions and commands.
++
++The dependency matrix must cover azure-identity, azure-storage-blob and azure-data-tables,
++plus azure-storage-file-datalake if the selected operations need its DFS APIs, and relevant
++native/transitive dependencies. Record actual package Python requirements and wheel/platform
++availability; a minimum-version statement alone is not combined-runtime compatibility evidence.
++
++Isolated probes must demonstrate installation/imports, decoding the selected archive formats
++and a small Parquet write/read round trip. Retain commands, inputs, outputs and exit codes.
++Do not repair or build the broken root workspace to make these probes pass, and do not implement
++the ingestion parser/catalog as a compatibility probe.
++
++The Stage 1 base-image/dependency record is distinct from the built worker image and release
++digest delivered later. Record registry choice, image-pull authorization, rollback-image
++availability and deployment tool prerequisites as decisions.
++
++### 5.3 Azure management, identity and scheduling
++
++Use current official Microsoft documentation to select and record:
++
++- Management/resource API versions for Jobs creation/start/execution get/list, ADF pipelines
++  and triggers, Storage and the selected monitoring/registry resources. Keep related operation
++  versions consistent and record Bicep/tooling requirements.
++- Start-response and asynchronous-operation handling, exact execution correlation, documented
++  execution states, polling limits, and conservative treatment of uncertain outcomes. Explain
++  what documentation proves and what actual 200/202 response shapes still require Stage 7.
++- An actor/operation/resource-scope permission matrix: ADF job control and durable-result reads;
++  worker Blob/ADLS, lease and Table operations; registry pulls; readers/approval operators;
++  and deployment/role-assignment authority. Record identity type, token audience, role/actions
++  and scope. Newly created principal IDs are established during deployment.
++- Storage lease and conditional-entity-write capabilities, their limits, and any relevant
++  ADLS multi-protocol constraints. A lease on an Azure blob does not itself fence SEC requests
++  or create a Blob/Table transaction.
++- ADF Eastern time-zone identifier, Day/Week recurrence, DST semantics and trigger time
++  serialization. Specify expected local and UTC behavior across both DST transitions.
++- Public-endpoint authorization and network requirements for workers, ADF result reads, registry
++  pulls and telemetry; resource/profile, storage-redundancy and log-retention support.
++
++Resolve the concrete tenant/subscription binding and proposed resource-group name, operator
++authority, registry choice and environment naming before readiness acceptance. Documentation
++can establish capability and required permissions; effective deployed authorization is Stage 7
++evidence.
++
++Document the rationale for retaining zero native job retries despite Microsoft's maintenance
++interruption guidance. Preserve parent §4.1/§5 handling of ambiguous starts and §4.8's bounded
++confirmed-failure replay. Reserve the maintenance-failure recovery verification for Stage 7.
++
++### 5.4 Evidence record and discrepancy handling
++
++Every record identifies the claim/decision, category, method, direct official URL or retained
++artifact, access/receipt time, applicable versions, result and limitation. Source artifacts
++carry hashes; probes carry commands and exit codes.
++
++Use these categories explicitly:
++
++| Category | Meaning |
++|---|---|
++| Verified documentation | Capability or limit stated by the provider |
++| Source/probe observation | Result actually observed for the named input and environment |
++| Owner decision | Accepted scope, policy, setting or contract revision |
++| Assumption | Unverified proposition with impact and a resolution/check obligation |
++| Reserved Stage 7 check | Effective deployed behavior requiring the integrated system |
++
++Record failed checks and absent evidence as such. Resolve blocking uncertainty before a ready
++conclusion. The finding may conclude not ready, but accepting a not-ready report does not meet
++this stage's readiness exit.
++
++## 6. Initial evidence from brainstorming
++
++The following records were checked against official sources on 2026-10-05. Reverify them against
++the versions selected during the investigation. They guide the work; they are not a completed
++source survey, runtime probe or deployment finding.
++
++| Topic | Verified fact or bounded observation | Consequence for the investigation |
++|---|---|---|
++| SEC source families and discovery | SEC describes quarterly/current-quarter full indexes, daily indexes and HTML/XML/JSON directory metadata. [SEC access guidance](https://www.sec.gov/search-filings/edgar-search-assistance/accessing-edgar-data) | Verify actual listings, bodies, selected representations and coverage across the range. |
++| SEC access | The SEC publishes a user-wide ceiling of 10 requests/second across machines and identifying User-Agent guidance. [SEC developer resources](https://www.sec.gov/about/developer-resources) | The lower target and coordination policy remain owner/application contracts. |
++| SEC timing and corrections | Nightly index work starts around 22:00 Eastern; full/quarterly correction rebuilding is described as early Saturday. [SEC access guidance](https://www.sec.gov/search-filings/edgar-search-assistance/accessing-edgar-data) | The accepted schedules are operating choices; neither guarantees source readiness or correction completeness. |
++| Listed archive sizes | 2015 Q1 lists master.zip at 3,749 KB and master.idx at 27,214 KB; 2026 Q3 lists 3,420 KB and 26,884 KB respectively. [2015 Q1](https://www.sec.gov/Archives/edgar/full-index/2015/QTR1/), [2026 Q3](https://www.sec.gov/Archives/edgar/full-index/2026/QTR3/) | These two metadata observations do not establish maximum size, measured expansion or processing memory. |
++| Region shortlist | Microsoft's product matrix lists the required service products in all three candidate regions; general-purpose Consumption covers supported regions. [Regional matrix](https://azure.microsoft.com/en-us/explore/global-infrastructure/products-by-region/table/), [workload profiles](https://learn.microsoft.com/en-us/azure/container-apps/workload-profiles-overview) | This is product-level support. Jobs/profile eligibility, quota, capacity, policy and the selected storage/telemetry configuration remain deployment checks. |
++| Python/Parquet | PyArrow documents Python 3.14 support; official Python container tags include the 3.14 family. [PyArrow installation](https://arrow.apache.org/docs/python/install.html), [official Python image](https://hub.docker.com/_/python?tab=description) | Resolve exact versions and prove the selected combination locally. |
++| Azure SDK candidates | Current Microsoft references describe Identity 1.26.0, Blob 12.31.0 and Tables 12.7.0. [Identity](https://learn.microsoft.com/en-us/python/api/overview/azure/identity-readme?view=azure-python), [Blob](https://learn.microsoft.com/en-us/python/api/overview/azure/storage-blob-readme?view=azure-python), [Tables](https://learn.microsoft.com/en-us/python/api/overview/azure/data-tables-readme?view=azure-python) | These are documented candidates, not selected or tested dependency pins. |
++| ADF time zone | Eastern Standard Time observes DST; adjustment is supported for Day and higher recurrence, including Week. [Schedule triggers](https://learn.microsoft.com/en-us/azure/data-factory/how-to-create-schedule-trigger) | Record correct serialization and preserve the accepted local schedule times. |
++| ADF asynchronous calls | Web activity defaults to following a 202 Location through GET polling; that handles an HTTP operation. [Web activity](https://learn.microsoft.com/en-us/azure/data-factory/control-flow-web-activity) | ARM operation completion must remain separate from execution and matching worker-result success. |
++| Jobs API and states | Non-preview 2026-07-01 and 2025-07-01 Start references exist; 2026-07-01 documents 200 execution output and 202 Location/Retry-After. Exact execution GET lists seven states without fully defining each terminal meaning. [Start 2026](https://learn.microsoft.com/en-us/rest/api/resource-manager/containerapps/jobs/start?view=rest-resource-manager-containerapps-2026-07-01), [Start 2025](https://learn.microsoft.com/en-us/rest/api/resource-manager/containerapps/jobs/start?view=rest-resource-manager-containerapps-2025-07-01), [execution GET](https://learn.microsoft.com/en-us/rest/api/resource-manager/containerapps/job-execution/job-execution?view=rest-resource-manager-containerapps-2026-07-01) | Select versions and document conservative state/correlation handling; a start timeout is not an idempotency guarantee. |
++| Native retries | Zero retries is supported; Microsoft recommends at least one for long-running replicas affected by maintenance. [Jobs guidance](https://learn.microsoft.com/en-us/azure/container-apps/jobs) | Record the accepted zero-retry rationale and the required later recovery evidence. |
++| Storage coordination/publication | Renewable finite Blob leases allow 15–60 seconds; Table updates support ETag/If-Match and return 412 for a mismatch. [Lease Blob](https://learn.microsoft.com/en-us/rest/api/storageservices/lease-blob), [Update Entity](https://learn.microsoft.com/en-us/rest/api/storageservices/update-entity2) | Document primitive limits and preserve the parent coordination/publication safeguards. |
++| Temporary storage | Container Apps documentation ties ephemeral capacity to replica CPU and lists 8 GiB above one vCPU. [Storage mounts](https://learn.microsoft.com/en-us/azure/container-apps/storage-mounts) | Confirm applicability to the selected Jobs configuration; account for its temporary lifetime and verify actual use in Stage 7. |
++| Storage and identity | Standard GPv2 supports Blob/ADLS and Tables; Entra data operations have specific permissions. [Storage accounts](https://learn.microsoft.com/en-us/azure/storage/common/storage-account-overview), [Storage authorization](https://learn.microsoft.com/en-us/rest/api/storageservices/authorize-with-azure-active-directory) | Review selected account features, redundancy and scoped permissions; generic management authority does not prove data access. |
++| Logs and retention | Microsoft documents Container Apps log routing and workspace/table retention configuration. [Log options](https://learn.microsoft.com/en-us/azure/container-apps/log-options), [retention](https://learn.microsoft.com/en-us/azure/azure-monitor/logs/data-retention-configure) | Select settings that retain the relevant operational tables for 90 days and reserve delivery/alert verification for Stage 7. |
++
++SEC guidance does not guarantee historical daily retention, a publication SLA, every archive
++codec, or the completeness of each observed source. Directory timestamps alone do not establish
++correction coverage. Likewise, SDK minimum Python versions do not prove native dependency
++compatibility, and managed identity does not bypass network restrictions.
++
++## 7. Written finding to deliver
++
++Write the self-contained finding to
++specs/sec-filing-index-ingestion-stage-1-findings.md. Retain its evidence index and bounded
++specimens/probe reports under specs/evidence/sec-filing-index-ingestion/stage-1/.
++
++The finding must contain:
++
++1. A ready/not-ready conclusion, evaluated date/end quarter, parent/spec revisions and the precise
++   supported implementation boundary.
++2. The accepted decision record, including the concrete deployment bindings and remaining
++   deployment-gate conditions.
++3. The quarterly/daily source inventory, development subset, selected format/representation
++   coverage, specimen references/hashes and explicit gap resolutions.
++4. The reproducible runtime/dependency matrix and successful or failed probe reports.
++5. The versioned Azure API, execution-state/correlation, permission and Eastern-time/DST findings.
++6. The initial resource/temporary-storage assessment, its method and limitations, and the
++   zero-native-retry rationale.
++7. A discrepancy register linking evidence to resolutions and any explicitly accepted revisions.
++8. The repository-alignment handoff for Stage 2 and the distinct checks reserved for Stage 7.
++9. Owner acceptance naming the finding revision, date and accepted limitations.
++
++The Stage 7 check register must cover effective identity permissions, selected-region
++registration/profile/quota/capacity/policy, public endpoint reachability, registry pulls, actual
++job 200/202 start/correlation/status/result behavior, lease/CAS failure behavior, native-maintenance
++recovery, Eastern/DST trigger behavior, log/alert delivery and actual worker memory/runtime.
++Refer to parent §§6–7 for the required integration, smoke, offline replay and recovery evidence.
++Do not infer those results from documentation or local compatibility probes.
++
++## 8. Observable readiness exit criteria
++
++Stage 1 is ready to complete only when:
++
++- The decision record includes every input in §4, concrete deployment bindings, selected
++  runtime/tool/API versions, permission requirements and recorded parent acceptance.
++- The source matrix accounts for every requested quarterly unit and relevant daily discovery;
++  retained samples cover the selected representations and observed format families; gaps have
++  explicit accepted resolutions.
++- Exact base-image/dependency pins and retained successful isolated probe results identify a
++  reproducible viable runtime combination.
++- Official evidence supports the selected provider primitives, versions and scheduling behavior;
++  execution uncertainty and permission/network limitations have explicit handling/check duties.
++- No blocking uncertainty remains. A scope or contract revision has explicit owner acceptance;
++  reserved deployment checks are clearly identified rather than represented as passed.
++- The owner accepts the written ready finding by revision/date, including its limitations.
++- Existing local changes remain preserved and Stage 2 repairs have not been performed.
++
++Acceptance of this stage spec authorizes the investigation plan. It does not satisfy these
++readiness criteria or constitute accepted historical ingestion coverage.
++
++## 9. Rollout note
++
++Stage 1: COMPLETE (2026-10-06) — implemented by plan 1
++(specs/plans/completed/1-sec-filing-index-ingestion-stage-1-spec.md).
++Accepted ready finding: specs/sec-filing-index-ingestion-stage-1-findings.md,
++revision F1 (2026-10-05), SHA-256
++`939a724eccf22147015a59d5940ed57f02cc4e9fe9d942a9cd78ae73c34615ff`; accepted 2026-10-05.
++Accepted evidence manifest: specs/evidence/sec-filing-index-ingestion/stage-1/final-candidate/evidence-manifest.json,
++SHA-256 `124e96041548daba8216aa495fc69021751555b0f0e4c890ac85e934f512a131` (1,584 records).
++Next: resume the roadmap.
++
++Completion provenance: [implementing plan](../plans/completed/1-sec-filing-index-ingestion-stage-1-spec.md),
++[accepted finding and acceptance appendix](../sec-filing-index-ingestion-stage-1-findings.md),
++[owner acceptance receipt](../evidence/sec-filing-index-ingestion/stage-1/final-candidate/owner-acceptance.json),
++[immutable F1](../evidence/sec-filing-index-ingestion/stage-1/final-candidate/finding-F1-2026-10-05-939a724eccf22147015a59d5940ed57f02cc4e9fe9d942a9cd78ae73c34615ff.md),
++and [accepted manifest](../evidence/sec-filing-index-ingestion/stage-1/final-candidate/evidence-manifest.json).
++The receipt records controller UTC 2026-10-06T03:48:04.966448+00:00, accepted date 2026-10-05
++America/New_York; no owner-authored timestamp was supplied. All section 9 finding limitations
++and 22 reserved Stage 7 obligations remain in force. No later-stage plan or execution follows here.
++
++Original planning/approval rollout guidance below is retained as history. Its pre-execution
++instructions are superseded by the authoritative completion stamp above.
++
++
++After owner approval of this written spec, hand off to writing-plans in a fresh session for
++Stage 1 only, then stop this brainstorming session. The plan produces the finding and evidence;
++it does not implement or plan the remaining roadmap.
++
++Keep Stage 1 unticked until the investigation plan completes, its ready finding is accepted,
++and the authoritative completion stamp is recorded. The stamp must identify the completion date,
++implementing plan ID/path and accepted finding revision/reference. Only then tick Stage 1 and
++revalidate later stages against the decisions and evidence delivered. The subsequent transition
++is owner-initiated by resuming the roadmap.
++
++No Azure resources are provisioned and no production triggers are enabled by approving or
++committing this spec.
+
+## specs/evidence/sec-filing-index-ingestion/stage-1/completion/before/1-sec-filing-index-ingestion-stage-1-spec.md
+Retained reference: bytes52740, SHA256701cfc034e6fc5b02649befbb17582db83a61be4304962aa9c74b6f5917f5bb1.
+
+## specs/evidence/sec-filing-index-ingestion/stage-1/completion/before/controller-boundary.json
+Retained reference: bytes1102, SHA256235c622d086e02bb29c8379c7d8bd792447bfc658568defc84d4a0bd54ab5656.
+
+## specs/evidence/sec-filing-index-ingestion/stage-1/completion/before/sec-filing-index-ingestion-roadmap.md
+Retained reference: bytes13687, SHA2560ebd41eee69a00b2488296d145140bd2fa3db525f9d21b9fa4eb529f5db5dc17.
+
+## specs/evidence/sec-filing-index-ingestion/stage-1/completion/before/sec-filing-index-ingestion-stage-1-spec.md
+Retained reference: bytes25023, SHA256bb28b0c27646d4f7b15669660e56c230d3247148966e3b075b96ca196a0b5140.
+
+## specs/evidence/sec-filing-index-ingestion/stage-1/completion/before/task-7-before-manifest.json
+Retained reference: bytes378402, SHA256fe9cd0e238c588d89c13f21b6b84d9a338cf7560bb1830bed21a6d05b979608a.
+
+## specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/backlog-health-json.command.json
+SHA256 61e33cda2eb3d8a962aed85acb2a5d147a157e9a3a1f99abe3dce5ba9169da80
+--- before/specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/backlog-health-json.command.json
++++ after/specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/backlog-health-json.command.json
+@@ -0,0 +1,24 @@
++{
++  "argv": [
++    "uv",
++    "--cache-dir",
++    "/private/tmp/sec-edgar-stage-1-task7-uv-cache",
++    "run",
++    "--offline",
++    "--no-python-downloads",
++    "--no-project",
++    "--python",
++    "3.13",
++    "python",
++    "/Users/lowell/.agents/skills/writing-plans/scripts/deferred_stats.py",
++    "--json"
++  ],
++  "cwd": "/Users/lowell/Projects/sec-edgar",
++  "environment_overrides": {
++    "PYTHONDONTWRITEBYTECODE": "1"
++  },
++  "started_at_utc": "2026-10-06T03:53:14.047910+00:00",
++  "ended_at_utc": "2026-10-06T03:53:14.073759+00:00",
++  "exit_code": 0,
++  "scope": "offline documentation verification only"
++}
+
+## specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/backlog-health-json.stderr.txt
+SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+
+## specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/backlog-health-json.stdout.txt
+SHA256 015174c166de04d67417faf3ded8433223df7e0193411e679c5d2b4523647cb0
+--- before/specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/backlog-health-json.stdout.txt
++++ after/specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/backlog-health-json.stdout.txt
+@@ -0,0 +1,34 @@
++{
++  "exists": false,
++  "open": 0,
++  "closed": 0,
++  "total": 0,
++  "closure_rate": null,
++  "aged_days": 45,
++  "aged_open": 0,
++  "undated_open": 0,
++  "oldest_open_days": null,
++  "oldest_open_section": null,
++  "age_histogram": [
++    {
++      "label": "0-14d",
++      "count": 0
++    },
++    {
++      "label": "15-30d",
++      "count": 0
++    },
++    {
++      "label": "31-45d",
++      "count": 0
++    },
++    {
++      "label": "46-90d",
++      "count": 0
++    },
++    {
++      "label": "91d+",
++      "count": 0
++    }
++  ]
++}
+
+## specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/backlog-health.command.json
+SHA256 fc71773369e6170644a61a7fb976f5d50d03424d7e9eb7bc80260dd8ff1409a9
+--- before/specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/backlog-health.command.json
++++ after/specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/backlog-health.command.json
+@@ -0,0 +1,23 @@
++{
++  "argv": [
++    "uv",
++    "--cache-dir",
++    "/private/tmp/sec-edgar-stage-1-task7-uv-cache",
++    "run",
++    "--offline",
++    "--no-python-downloads",
++    "--no-project",
++    "--python",
++    "3.13",
++    "python",
++    "/Users/lowell/.agents/skills/writing-plans/scripts/deferred_stats.py"
++  ],
++  "cwd": "/Users/lowell/Projects/sec-edgar",
++  "environment_overrides": {
++    "PYTHONDONTWRITEBYTECODE": "1"
++  },
++  "started_at_utc": "2026-10-06T03:53:14.020381+00:00",
++  "ended_at_utc": "2026-10-06T03:53:14.047587+00:00",
++  "exit_code": 0,
++  "scope": "offline documentation verification only"
++}
+
+## specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/backlog-health.stderr.txt
+SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+
+## specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/backlog-health.stdout.txt
+SHA256 beabe774762f2cc301e3d091ada55939b6bd045b4142666b865100de0eeb59cd
+--- before/specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/backlog-health.stdout.txt
++++ after/specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/backlog-health.stdout.txt
+@@ -0,0 +1 @@
++Deferred backlog: no specs/deferred_items.md in this repo — nothing deferred.
+
+## specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/completion-date-rollover.command.json
+SHA256 501c677de5de4bbd813e471ab74f30e4f82619a644c46e1cd3d8b3b1b8a74572
+--- before/specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/completion-date-rollover.command.json
++++ after/specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/completion-date-rollover.command.json
+@@ -0,0 +1,14 @@
++{
++  "argv": [
++    "python3",
++    "specs/evidence/sec-filing-index-ingestion/stage-1/completion/verify_completion.py"
++  ],
++  "cwd": "/Users/lowell/Projects/sec-edgar",
++  "environment_overrides": {
++    "PYTHONDONTWRITEBYTECODE": "1"
++  },
++  "started_at_utc": "2026-10-06T04:01:09.264321+00:00",
++  "ended_at_utc": "2026-10-06T04:01:09.556783+00:00",
++  "exit_code": 0,
++  "scope": "Narrow completion-date rollover check; original dated receipts remain immutable"
++}
+
+## specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/completion-date-rollover.stderr.txt
+SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+
+## specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/completion-date-rollover.stdout.txt
+SHA256 6830815488f2bcf537f547a8f7ad817822ee814505039e9d129696e617442b47
+--- before/specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/completion-date-rollover.stdout.txt
++++ after/specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/completion-date-rollover.stdout.txt
+@@ -0,0 +1,27 @@
++{
++  "result": "PASS",
++  "scope": "offline acceptance/retirement documentation; no production build/tests or Stage7 proof",
++  "completion_date": "2026-10-06",
++  "accepted_manifest_hash": "124e96041548daba8216aa495fc69021751555b0f0e4c890ac85e934f512a131",
++  "accepted_manifest_records": 1584,
++  "task7_before_records_preserved": 1592,
++  "protected_tracked_paths": 24,
++  "completed_steps": 39,
++  "roadmap_checked_stages": [
++    1
++  ],
++  "later_stage_definitions": "byte-identical",
++  "local_links_resolved": 68,
++  "stage7_reserved_not_run": 22,
++  "backlog": {
++    "exists": false,
++    "open": 0,
++    "closure_rate": null,
++    "aged_open": 0
++  },
++  "git_diff_check": "PASS",
++  "staged_paths": [],
++  "roadmap_tracking": "untracked",
++  "head_observed": "321c93af78b54c7e63efbb0e69252c69a238fec6",
++  "controller_review_commit_archive": "not asserted by this checker"
++}
+
+## specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/completion-final.command.json
+SHA256 8b52de56eb1c81612019e9e98db138c6eceb424135b8c87b3591e6bbdb892e8f
+--- before/specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/completion-final.command.json
++++ after/specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/completion-final.command.json
+@@ -0,0 +1,14 @@
++{
++  "argv": [
++    "python3",
++    "specs/evidence/sec-filing-index-ingestion/stage-1/completion/verify_completion.py"
++  ],
++  "cwd": "/Users/lowell/Projects/sec-edgar",
++  "environment_overrides": {
++    "PYTHONDONTWRITEBYTECODE": "1"
++  },
++  "started_at_utc": "2026-10-06T03:57:35.872829+00:00",
++  "ended_at_utc": "2026-10-06T03:57:36.165285+00:00",
++  "exit_code": 0,
++  "scope": "Read-only completion documentation/provenance boundary, no build/tests/deployment"
++}
+
+## specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/completion-final.stderr.txt
+SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+
+## specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/completion-final.stdout.txt
+SHA256 111511ea162e20e71170fe39caf3fbaf00dab54cb36bc300d1f1d0d5a0427d98
+--- before/specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/completion-final.stdout.txt
++++ after/specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/completion-final.stdout.txt
+@@ -0,0 +1,27 @@
++{
++  "result": "PASS",
++  "scope": "offline acceptance/retirement documentation; no production build/tests or Stage7 proof",
++  "completion_date": "2026-10-05",
++  "accepted_manifest_hash": "124e96041548daba8216aa495fc69021751555b0f0e4c890ac85e934f512a131",
++  "accepted_manifest_records": 1584,
++  "task7_before_records_preserved": 1592,
++  "protected_tracked_paths": 24,
++  "completed_steps": 39,
++  "roadmap_checked_stages": [
++    1
++  ],
++  "later_stage_definitions": "byte-identical",
++  "local_links_resolved": 68,
++  "stage7_reserved_not_run": 22,
++  "backlog": {
++    "exists": false,
++    "open": 0,
++    "closure_rate": null,
++    "aged_open": 0
++  },
++  "git_diff_check": "PASS",
++  "staged_paths": [],
++  "roadmap_tracking": "untracked",
++  "head_observed": "321c93af78b54c7e63efbb0e69252c69a238fec6",
++  "controller_review_commit_archive": "not asserted by this checker"
++}
+
+## specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/completion-initial.command.json
+SHA256 f77dc0c0d60bd05e94c7ee9014dd53adc92f65db5fb32cc521db45100dc91344
+--- before/specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/completion-initial.command.json
++++ after/specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/completion-initial.command.json
+@@ -0,0 +1,13 @@
++{
++  "argv": [
++    "python3",
++    "specs/evidence/sec-filing-index-ingestion/stage-1/completion/verify_completion.py"
++  ],
++  "cwd": "/Users/lowell/Projects/sec-edgar",
++  "environment_overrides": {
++    "PYTHONDONTWRITEBYTECODE": "1"
++  },
++  "started_at_utc": "2026-10-06T03:55:15.281984+00:00",
++  "ended_at_utc": "2026-10-06T03:55:15.557927+00:00",
++  "exit_code": 0
++}
+
+## specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/completion-initial.stderr.txt
+SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+
+## specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/completion-initial.stdout.txt
+SHA256 111511ea162e20e71170fe39caf3fbaf00dab54cb36bc300d1f1d0d5a0427d98
+--- before/specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/completion-initial.stdout.txt
++++ after/specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/completion-initial.stdout.txt
+@@ -0,0 +1,27 @@
++{
++  "result": "PASS",
++  "scope": "offline acceptance/retirement documentation; no production build/tests or Stage7 proof",
++  "completion_date": "2026-10-05",
++  "accepted_manifest_hash": "124e96041548daba8216aa495fc69021751555b0f0e4c890ac85e934f512a131",
++  "accepted_manifest_records": 1584,
++  "task7_before_records_preserved": 1592,
++  "protected_tracked_paths": 24,
++  "completed_steps": 39,
++  "roadmap_checked_stages": [
++    1
++  ],
++  "later_stage_definitions": "byte-identical",
++  "local_links_resolved": 68,
++  "stage7_reserved_not_run": 22,
++  "backlog": {
++    "exists": false,
++    "open": 0,
++    "closure_rate": null,
++    "aged_open": 0
++  },
++  "git_diff_check": "PASS",
++  "staged_paths": [],
++  "roadmap_tracking": "untracked",
++  "head_observed": "321c93af78b54c7e63efbb0e69252c69a238fec6",
++  "controller_review_commit_archive": "not asserted by this checker"
++}
+
+## specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/git-diff-check.command.json
+SHA256 d89b6553b2e290b75564459e757f4a29bd71af6b093c895882b5c32d637c708f
+--- before/specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/git-diff-check.command.json
++++ after/specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/git-diff-check.command.json
+@@ -0,0 +1,15 @@
++{
++  "argv": [
++    "git",
++    "diff",
++    "--check"
++  ],
++  "cwd": "/Users/lowell/Projects/sec-edgar",
++  "environment_overrides": {
++    "PYTHONDONTWRITEBYTECODE": "1"
++  },
++  "started_at_utc": "2026-10-06T03:57:36.165672+00:00",
++  "ended_at_utc": "2026-10-06T03:57:36.170713+00:00",
++  "exit_code": 0,
++  "scope": "Read-only completion documentation/provenance boundary, no build/tests/deployment"
++}
+
+## specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/git-diff-check.stderr.txt
+SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+
+## specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/git-diff-check.stdout.txt
+SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+
+## specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/git-staged.command.json
+SHA256 9088e50f66d83bdc8e96163e25bdb466797d444bd7260fdefddd2502e9333cdd
+--- before/specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/git-staged.command.json
++++ after/specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/git-staged.command.json
+@@ -0,0 +1,16 @@
++{
++  "argv": [
++    "git",
++    "diff",
++    "--cached",
++    "--name-only"
++  ],
++  "cwd": "/Users/lowell/Projects/sec-edgar",
++  "environment_overrides": {
++    "PYTHONDONTWRITEBYTECODE": "1"
++  },
++  "started_at_utc": "2026-10-06T03:57:36.176614+00:00",
++  "ended_at_utc": "2026-10-06T03:57:36.181397+00:00",
++  "exit_code": 0,
++  "scope": "Read-only completion documentation/provenance boundary, no build/tests/deployment"
++}
+
+## specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/git-staged.stderr.txt
+SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+
+## specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/git-staged.stdout.txt
+SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+
+## specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/git-status.command.json
+SHA256 9a6772b98e8414979e08d2a5fd05ed689b53064d104af398e65afd8fcf0cb26b
+--- before/specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/git-status.command.json
++++ after/specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/git-status.command.json
+@@ -0,0 +1,15 @@
++{
++  "argv": [
++    "git",
++    "status",
++    "--porcelain=v1"
++  ],
++  "cwd": "/Users/lowell/Projects/sec-edgar",
++  "environment_overrides": {
++    "PYTHONDONTWRITEBYTECODE": "1"
++  },
++  "started_at_utc": "2026-10-06T03:57:36.170969+00:00",
++  "ended_at_utc": "2026-10-06T03:57:36.176305+00:00",
++  "exit_code": 0,
++  "scope": "Read-only completion documentation/provenance boundary, no build/tests/deployment"
++}
+
+## specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/git-status.stderr.txt
+SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+
+## specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/git-status.stdout.txt
+SHA256 028c5729f7664d9b5c05609369aa356b7a73569bb2f134a13a9645e96fac207e
+--- before/specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/git-status.stdout.txt
++++ after/specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/git-status.stdout.txt
+@@ -0,0 +1,10 @@
++ D packages/sec-edgar-index-ingest/README.md
++ D packages/sec-edgar-index-ingest/pyproject.toml
++ D packages/sec-edgar-index-ingest/src/sec_edgar_index_ingest/__init__.py
++ D packages/sec-edgar-index-ingest/src/sec_edgar_index_ingest/py.typed
++ D specs/sec-filing-index-ingestion-stage-1-spec.md
++?? specs/completed/
++?? specs/evidence/
++?? specs/plans/
++?? specs/sec-filing-index-ingestion-roadmap.md
++?? specs/sec-filing-index-ingestion-stage-1-findings.md
+
+## specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/pre-retirement-negative.command.json
+SHA256 e86966f2fafbd336ab23f4132b6a97b54c19483bdb919aa02359d6350bd8d7f1
+--- before/specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/pre-retirement-negative.command.json
++++ after/specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/pre-retirement-negative.command.json
+@@ -0,0 +1,14 @@
++{
++  "argv": [
++    "python3",
++    "specs/evidence/sec-filing-index-ingestion/stage-1/completion/verify_completion.py"
++  ],
++  "cwd": "/Users/lowell/Projects/sec-edgar",
++  "environment_overrides": {
++    "PYTHONDONTWRITEBYTECODE": "1"
++  },
++  "started_at_utc": "2026-10-06T03:53:13.780933+00:00",
++  "ended_at_utc": "2026-10-06T03:53:14.020008+00:00",
++  "exit_code": 1,
++  "scope": "offline documentation verification only"
++}
+
+## specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/pre-retirement-negative.stderr.txt
+SHA256 91ea3ff9a86bef406c8c5815ff52d10133bd700501c905d0ef06f13bf1400874
+--- before/specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/pre-retirement-negative.stderr.txt
++++ after/specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/pre-retirement-negative.stderr.txt
+@@ -0,0 +1,15 @@
++Traceback (most recent call last):
++  File "/Users/lowell/Projects/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-1/completion/verify_completion.py", line 153, in <module>
++    main()
++    ~~~~^^
++  File "/Users/lowell/Projects/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-1/completion/verify_completion.py", line 141, in main
++    retirement = check_retirement(context)
++  File "/Users/lowell/Projects/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-1/completion/verify_completion.py", line 88, in check_retirement
++    plan = (ROOT / PLAN).read_text()
++  File "/opt/homebrew/Cellar/python@3.14/3.14.7/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 787, in read_text
++    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
++         ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
++  File "/opt/homebrew/Cellar/python@3.14/3.14.7/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 771, in open
++    return io.open(self, mode, buffering, encoding, errors, newline)
++           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
++FileNotFoundError: [Errno 2] No such file or directory: '/Users/lowell/Projects/sec-edgar/specs/plans/completed/1-sec-filing-index-ingestion-stage-1-spec.md'
+
+## specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/pre-retirement-negative.stdout.txt
+SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+
+## specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/python-discovery.command.json
+SHA256 fd0b1fb1a77366f90d7cecfcb482b077e08e4b4ec48fced7a16a9cb80128b400
+--- before/specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/python-discovery.command.json
++++ after/specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/python-discovery.command.json
+@@ -0,0 +1,16 @@
++{
++  "argv": [
++    "uv",
++    "--cache-dir",
++    "/private/tmp/sec-edgar-stage-1-task7-uv-cache",
++    "python",
++    "find",
++    "--offline",
++    "--no-python-downloads",
++    "3.13"
++  ],
++  "cwd": "/Users/lowell/Projects/sec-edgar",
++  "started_at_utc": "2026-10-06T03:51:32.020215+00:00",
++  "ended_at_utc": "2026-10-06T03:51:32.073621+00:00",
++  "exit_code": 0
++}
+
+## specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/python-discovery.stderr.txt
+SHA256 b6e3b065112c677cf523c1a887deae849e3ac61708544560b0da7e918fa4ec25
+--- before/specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/python-discovery.stderr.txt
++++ after/specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/python-discovery.stderr.txt
+@@ -0,0 +1,6 @@
++warning: The requested interpreter resolved to Python 3.13.8, which is incompatible with the project's Python requirement: `>=3.14`.
++The following `requires-python` declarations do not permit this version:
++- sec-edgar: >=3.14
++- sec-edgar-client: >=3.14
++- sec-edgar-download: >=3.14
++- sec-edgar-ingest: >=3.14
+
+## specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/python-discovery.stdout.txt
+SHA256 22b34a3cbc9dbe3bb0732e1ce001ca4e71feeb3d4b54b57b557888c390c71f44
+--- before/specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/python-discovery.stdout.txt
++++ after/specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/python-discovery.stdout.txt
+@@ -0,0 +1 @@
++/opt/homebrew/opt/python@3.13/bin/python3.13
+
+## specs/evidence/sec-filing-index-ingestion/stage-1/completion/context.json
+SHA256 cf7f0795e631a30d45814a01a73bafb1c75367e32572380d2924f3dfdf32562f
+--- before/specs/evidence/sec-filing-index-ingestion/stage-1/completion/context.json
++++ after/specs/evidence/sec-filing-index-ingestion/stage-1/completion/context.json
+@@ -0,0 +1,177 @@
++{
++  "recorded_at_utc": "2026-10-06T03:51:32.015784+00:00",
++  "completion_date": "2026-10-06",
++  "timezone": "America/New_York",
++  "before_documents": [
++    {
++      "path": "specs/plans/1-sec-filing-index-ingestion-stage-1-spec.md",
++      "retained_path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/before/1-sec-filing-index-ingestion-stage-1-spec.md",
++      "bytes": 52740,
++      "sha256": "701cfc034e6fc5b02649befbb17582db83a61be4304962aa9c74b6f5917f5bb1"
++    },
++    {
++      "path": "specs/sec-filing-index-ingestion-stage-1-spec.md",
++      "retained_path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/before/sec-filing-index-ingestion-stage-1-spec.md",
++      "bytes": 25023,
++      "sha256": "bb28b0c27646d4f7b15669660e56c230d3247148966e3b075b96ca196a0b5140"
++    },
++    {
++      "path": "specs/sec-filing-index-ingestion-roadmap.md",
++      "retained_path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/before/sec-filing-index-ingestion-roadmap.md",
++      "bytes": 13687,
++      "sha256": "0ebd41eee69a00b2488296d145140bd2fa3db525f9d21b9fa4eb529f5db5dc17"
++    }
++  ],
++  "protected_tracked_paths": [
++    {
++      "path": ".DS_Store",
++      "present": true,
++      "sha256": "139575e3e8ee2e5c0c943d1b8a1aa11152b13c274b236d69d294acbe72e77f9e"
++    },
++    {
++      "path": ".gitignore",
++      "present": true,
++      "sha256": "ed7b84e816359d17276a801802de5c362c2c572ce3e50a8670c8362b08351380"
++    },
++    {
++      "path": ".python-version",
++      "present": true,
++      "sha256": "a876e0b10411037a012498b9fe18d9bc1df32ed8b722a13564dc944ddcfd9135"
++    },
++    {
++      "path": "README.md",
++      "present": true,
++      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
++    },
++    {
++      "path": "packages/sec-edgar-client/README.md",
++      "present": true,
++      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
++    },
++    {
++      "path": "packages/sec-edgar-client/pyproject.toml",
++      "present": true,
++      "sha256": "02625bc5a0a72a4385baaf0b942ca93ae2055dea0e748db49b63268a07940d00"
++    },
++    {
++      "path": "packages/sec-edgar-client/src/sec_edgar_client/__init__.py",
++      "present": true,
++      "sha256": "323521a89fd8ecc5e3baeefed2e064d3b5d3fce4911d2ad3e88097d13fe83000"
++    },
++    {
++      "path": "packages/sec-edgar-client/src/sec_edgar_client/py.typed",
++      "present": true,
++      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
++    },
++    {
++      "path": "packages/sec-edgar-download/README.md",
++      "present": true,
++      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
++    },
++    {
++      "path": "packages/sec-edgar-download/pyproject.toml",
++      "present": true,
++      "sha256": "21757246b18dc99f89a705e9d4278d22adb8baf8bd89c3fb75d3c97b977f0f8a"
++    },
++    {
++      "path": "packages/sec-edgar-download/src/sec_edgar_download/__init__.py",
++      "present": true,
++      "sha256": "636e719c4f0af27d9c6a6f65971554ae17471d87aa0342bccdb50b63558ebfa3"
++    },
++    {
++      "path": "packages/sec-edgar-download/src/sec_edgar_download/py.typed",
++      "present": true,
++      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
++    },
++    {
++      "path": "packages/sec-edgar-index-ingest/README.md",
++      "present": false,
++      "sha256": null
++    },
++    {
++      "path": "packages/sec-edgar-index-ingest/pyproject.toml",
++      "present": false,
++      "sha256": null
++    },
++    {
++      "path": "packages/sec-edgar-index-ingest/src/sec_edgar_index_ingest/__init__.py",
++      "present": false,
++      "sha256": null
++    },
++    {
++      "path": "packages/sec-edgar-index-ingest/src/sec_edgar_index_ingest/py.typed",
++      "present": false,
++      "sha256": null
++    },
++    {
++      "path": "packages/sec-edgar-ingest/README.md",
++      "present": true,
++      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
++    },
++    {
++      "path": "packages/sec-edgar-ingest/pyproject.toml",
++      "present": true,
++      "sha256": "d12a5eb36faca492230673a53300d8edd83509ecf5df54b328ee804f7411a920"
++    },
++    {
++      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/__init__.py",
++      "present": true,
++      "sha256": "914d19ac8eceba9339b8956357b86bdf030a74446086fb57701d2add76fb091c"
++    },
++    {
++      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/py.typed",
++      "present": true,
++      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
++    },
++    {
++      "path": "pyproject.toml",
++      "present": true,
++      "sha256": "8f77903f1843cf78aa2d9572535dad9ba905e85d510bdf5c556361e847641de1"
++    },
++    {
++      "path": "specs/sec-filing-index-ingestion-adr.md",
++      "present": true,
++      "sha256": "55852d3b85ba2e6f7c0cbf1559615e769f751fda01a7f781fb5e73ff6a337807"
++    },
++    {
++      "path": "specs/sec-filing-index-ingestion-spec.md",
++      "present": true,
++      "sha256": "6c4f27aead06659864497c737ddd8f29a07d4ee0f671cd5c22529da857e89b93"
++    },
++    {
++      "path": "specs/sec-filing-index-ingestion-stage-1-spec.md",
++      "present": true,
++      "sha256": "bb28b0c27646d4f7b15669660e56c230d3247148966e3b075b96ca196a0b5140"
++    }
++  ],
++  "initial_head": "321c93af78b54c7e63efbb0e69252c69a238fec6",
++  "owner_acceptance": "specs/evidence/sec-filing-index-ingestion/stage-1/final-candidate/owner-acceptance.json",
++  "task7_before_manifest": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/before/task-7-before-manifest.json",
++  "gate": "All Stage1 tasks and final findings resolved; exact F1 accepted. D10 Stage2 alignment and D11/22 reserved Stage7 duties are original downstream obligations, not skipped Stage1 tasks or new deferrals.",
++  "backlog_ticking_pass": "specs/deferred_items.md absent; no previous backlog entries to tick and no new deferrals; do not create a file.",
++  "boundary": "Task7 documentation implementation and filesystem retirement only; controller review, narrowly named commit, supplemental SDD retention/removal and final provenance remain controller work.",
++  "earlier_tool_failure": {
++    "argv": [
++      "uv",
++      "python",
++      "find",
++      "--offline",
++      "--no-python-downloads",
++      "3.13"
++    ],
++    "exit_code": 2,
++    "combined_output": "error: Failed to initialize cache at `/Users/lowell/.cache/uv`\n  cause: failed to open file `/Users/lowell/.cache/uv/sdists-v9/.git`: Operation not permitted (os error 1)\n",
++    "scope": "Read-only cached-runtime discovery failed; no runtime availability conclusion inferred."
++  },
++  "mutable_process_receipts": [
++    {
++      "path": "specs/evidence/sec-filing-index-ingestion/stage-1/final-fix/controller-boundary.json",
++      "retained_path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/before/controller-boundary.json",
++      "bytes": 1102,
++      "sha256": "235c622d086e02bb29c8379c7d8bd792447bfc658568defc84d4a0bd54ab5656",
++      "authorized_mutation": "Controller may change only completion from Task7 pending to COMPLETE after review; immutable retained alias preserves this pre-completion receipt in Task7 before-manifest checks. Receipt is excluded from accepted F1 manifest."
++    }
++  ],
++  "completion_date_authority": "completion_date is actual America/New_York date at Task7 execution. If controller final completion gate crosses midnight, controller must record a narrow date-rollover correction for status/stamp/roadmap completion metadata; exact F1 revision/accepted date remain 2026-10-05.",
++  "completion_date_rollover": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/date-rollover/receipt.json"
++}
+
+## specs/evidence/sec-filing-index-ingestion/stage-1/completion/date-rollover/before/1-sec-filing-index-ingestion-stage-1-spec.md
+Retained reference: bytes57460, SHA25608aa717a32371546519f531b2ce772d7ba99742db7098ff2b2adf63cb67d7957.
+
+## specs/evidence/sec-filing-index-ingestion/stage-1/completion/date-rollover/before/context.json
+Retained reference: bytes7468, SHA2565bc215d80daf422fb53826929dcafdef260d15fb108812961cfb8bb2f7d00f5d.
+
+## specs/evidence/sec-filing-index-ingestion/stage-1/completion/date-rollover/before/implementation-files.json
+Retained reference: bytes14791, SHA256f95eb6c343c4321bcd8695d801b96afb8aa741d2edb2916b53c11bc1c0efcc95.
+
+## specs/evidence/sec-filing-index-ingestion/stage-1/completion/date-rollover/before/implementer-report.md
+Retained reference: bytes11306, SHA2567cbeeeb037275aa582235f44cc7f5f3948c9ca99fd1badc90165745ee535f883.
+
+## specs/evidence/sec-filing-index-ingestion/stage-1/completion/date-rollover/before/sec-filing-index-ingestion-roadmap.md
+Retained reference: bytes15853, SHA256b13702cdfa8080d47cd218b0c5c90934e9982f0dd19869f0275e95fd02238d88.
+
+## specs/evidence/sec-filing-index-ingestion/stage-1/completion/date-rollover/before/sec-filing-index-ingestion-stage-1-spec.md
+Retained reference: bytes26715, SHA256b8d7be818ff21db0104bf1e5c7cb466b2457cdfc637c78d2c7a21cd702f439ef.
+
+## specs/evidence/sec-filing-index-ingestion/stage-1/completion/date-rollover/receipt.json
+SHA256 bb9a816f0c6337dffaa304ba4b2d3c1f6211146c8164ebbf866c290cfccdc358
+--- before/specs/evidence/sec-filing-index-ingestion/stage-1/completion/date-rollover/receipt.json
++++ after/specs/evidence/sec-filing-index-ingestion/stage-1/completion/date-rollover/receipt.json
+@@ -0,0 +1,46 @@
++{
++  "recorded_at_utc": "2026-10-06T04:01:09.261336+00:00",
++  "timezone": "America/New_York",
++  "prior_completion_date": "2026-10-05",
++  "actual_final_task7_completion_date": "2026-10-06",
++  "reason": "Local midnight crossed before Task7 implementation handoff; correct current completion date only. Exact F1 revision and acceptance remain2026-10-05.",
++  "original_metadata": [
++    {
++      "path": "specs/plans/completed/1-sec-filing-index-ingestion-stage-1-spec.md",
++      "retained_path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/date-rollover/before/1-sec-filing-index-ingestion-stage-1-spec.md",
++      "bytes": 57460,
++      "sha256": "08aa717a32371546519f531b2ce772d7ba99742db7098ff2b2adf63cb67d7957"
++    },
++    {
++      "path": "specs/completed/sec-filing-index-ingestion-stage-1-spec.md",
++      "retained_path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/date-rollover/before/sec-filing-index-ingestion-stage-1-spec.md",
++      "bytes": 26715,
++      "sha256": "b8d7be818ff21db0104bf1e5c7cb466b2457cdfc637c78d2c7a21cd702f439ef"
++    },
++    {
++      "path": "specs/sec-filing-index-ingestion-roadmap.md",
++      "retained_path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/date-rollover/before/sec-filing-index-ingestion-roadmap.md",
++      "bytes": 15853,
++      "sha256": "b13702cdfa8080d47cd218b0c5c90934e9982f0dd19869f0275e95fd02238d88"
++    },
++    {
++      "path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/context.json",
++      "retained_path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/date-rollover/before/context.json",
++      "bytes": 7468,
++      "sha256": "5bc215d80daf422fb53826929dcafdef260d15fb108812961cfb8bb2f7d00f5d"
++    },
++    {
++      "path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/implementation-files.json",
++      "retained_path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/date-rollover/before/implementation-files.json",
++      "bytes": 14791,
++      "sha256": "f95eb6c343c4321bcd8695d801b96afb8aa741d2edb2916b53c11bc1c0efcc95"
++    },
++    {
++      "path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/implementer-report.md",
++      "retained_path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/date-rollover/before/implementer-report.md",
++      "bytes": 11306,
++      "sha256": "7cbeeeb037275aa582235f44cc7f5f3948c9ca99fd1badc90165745ee535f883"
++    }
++  ],
++  "scope": "Current plan/spec COMPLETE status and stamp, roadmap completion note, context completion_date and report date; immutable prior receipt timestamps and accepted bytes unchanged."
++}
+
+## specs/evidence/sec-filing-index-ingestion/stage-1/completion/implementation-files.json
+SHA256 b76d9cc9428d72628b1146b297686ae04914cd705e9124c48570c9472e0a8aed
+--- before/specs/evidence/sec-filing-index-ingestion/stage-1/completion/implementation-files.json
++++ after/specs/evidence/sec-filing-index-ingestion/stage-1/completion/implementation-files.json
+@@ -0,0 +1,346 @@
++{
++  "recorded_at_utc": "2026-10-06T04:01:09.556783+00:00",
++  "scope": "Task7 implementation capture; controller review/commit/archive additions and metadata rollover are outside this capture.",
++  "artifact_records": [
++    {
++      "path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/before/1-sec-filing-index-ingestion-stage-1-spec.md",
++      "bytes": 52740,
++      "sha256": "701cfc034e6fc5b02649befbb17582db83a61be4304962aa9c74b6f5917f5bb1"
++    },
++    {
++      "path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/before/controller-boundary.json",
++      "bytes": 1102,
++      "sha256": "235c622d086e02bb29c8379c7d8bd792447bfc658568defc84d4a0bd54ab5656"
++    },
++    {
++      "path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/before/sec-filing-index-ingestion-roadmap.md",
++      "bytes": 13687,
++      "sha256": "0ebd41eee69a00b2488296d145140bd2fa3db525f9d21b9fa4eb529f5db5dc17"
++    },
++    {
++      "path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/before/sec-filing-index-ingestion-stage-1-spec.md",
++      "bytes": 25023,
++      "sha256": "bb28b0c27646d4f7b15669660e56c230d3247148966e3b075b96ca196a0b5140"
++    },
++    {
++      "path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/before/task-7-before-manifest.json",
++      "bytes": 378402,
++      "sha256": "fe9cd0e238c588d89c13f21b6b84d9a338cf7560bb1830bed21a6d05b979608a"
++    },
++    {
++      "path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/backlog-health-json.command.json",
++      "bytes": 606,
++      "sha256": "61e33cda2eb3d8a962aed85acb2a5d147a157e9a3a1f99abe3dce5ba9169da80"
++    },
++    {
++      "path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/backlog-health-json.stderr.txt",
++      "bytes": 0,
++      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
++    },
++    {
++      "path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/backlog-health-json.stdout.txt",
++      "bytes": 502,
++      "sha256": "015174c166de04d67417faf3ded8433223df7e0193411e679c5d2b4523647cb0"
++    },
++    {
++      "path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/backlog-health.command.json",
++      "bytes": 592,
++      "sha256": "fc71773369e6170644a61a7fb976f5d50d03424d7e9eb7bc80260dd8ff1409a9"
++    },
++    {
++      "path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/backlog-health.stderr.txt",
++      "bytes": 0,
++      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
++    },
++    {
++      "path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/backlog-health.stdout.txt",
++      "bytes": 80,
++      "sha256": "beabe774762f2cc301e3d091ada55939b6bd045b4142666b865100de0eeb59cd"
++    },
++    {
++      "path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/completion-date-rollover.command.json",
++      "bytes": 459,
++      "sha256": "501c677de5de4bbd813e471ab74f30e4f82619a644c46e1cd3d8b3b1b8a74572"
++    },
++    {
++      "path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/completion-date-rollover.stderr.txt",
++      "bytes": 0,
++      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
++    },
++    {
++      "path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/completion-date-rollover.stdout.txt",
++      "bytes": 862,
++      "sha256": "6830815488f2bcf537f547a8f7ad817822ee814505039e9d129696e617442b47"
++    },
++    {
++      "path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/completion-final.command.json",
++      "bytes": 461,
++      "sha256": "8b52de56eb1c81612019e9e98db138c6eceb424135b8c87b3591e6bbdb892e8f"
++    },
++    {
++      "path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/completion-final.stderr.txt",
++      "bytes": 0,
++      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
++    },
++    {
++      "path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/completion-final.stdout.txt",
++      "bytes": 862,
++      "sha256": "111511ea162e20e71170fe39caf3fbaf00dab54cb36bc300d1f1d0d5a0427d98"
++    },
++    {
++      "path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/completion-initial.command.json",
++      "bytes": 365,
++      "sha256": "f77dc0c0d60bd05e94c7ee9014dd53adc92f65db5fb32cc521db45100dc91344"
++    },
++    {
++      "path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/completion-initial.stderr.txt",
++      "bytes": 0,
++      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
++    },
++    {
++      "path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/completion-initial.stdout.txt",
++      "bytes": 862,
++      "sha256": "111511ea162e20e71170fe39caf3fbaf00dab54cb36bc300d1f1d0d5a0427d98"
++    },
++    {
++      "path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/git-diff-check.command.json",
++      "bytes": 395,
++      "sha256": "d89b6553b2e290b75564459e757f4a29bd71af6b093c895882b5c32d637c708f"
++    },
++    {
++      "path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/git-diff-check.stderr.txt",
++      "bytes": 0,
++      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
++    },
++    {
++      "path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/git-diff-check.stdout.txt",
++      "bytes": 0,
++      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
++    },
++    {
++      "path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/git-staged.command.json",
++      "bytes": 415,
++      "sha256": "9088e50f66d83bdc8e96163e25bdb466797d444bd7260fdefddd2502e9333cdd"
++    },
++    {
++      "path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/git-staged.stderr.txt",
++      "bytes": 0,
++      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
++    },
++    {
++      "path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/git-staged.stdout.txt",
++      "bytes": 0,
++      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
++    },
++    {
++      "path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/git-status.command.json",
++      "bytes": 404,
++      "sha256": "9a6772b98e8414979e08d2a5fd05ed689b53064d104af398e65afd8fcf0cb26b"
++    },
++    {
++      "path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/git-status.stderr.txt",
++      "bytes": 0,
++      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
++    },
++    {
++      "path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/git-status.stdout.txt",
++      "bytes": 450,
++      "sha256": "028c5729f7664d9b5c05609369aa356b7a73569bb2f134a13a9645e96fac207e"
++    },
++    {
++      "path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/pre-retirement-negative.command.json",
++      "bytes": 419,
++      "sha256": "e86966f2fafbd336ab23f4132b6a97b54c19483bdb919aa02359d6350bd8d7f1"
++    },
++    {
++      "path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/pre-retirement-negative.stderr.txt",
++      "bytes": 1338,
++      "sha256": "91ea3ff9a86bef406c8c5815ff52d10133bd700501c905d0ef06f13bf1400874"
++    },
++    {
++      "path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/pre-retirement-negative.stdout.txt",
++      "bytes": 0,
++      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
++    },
++    {
++      "path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/python-discovery.command.json",
++      "bytes": 358,
++      "sha256": "fd0b1fb1a77366f90d7cecfcb482b077e08e4b4ec48fced7a16a9cb80128b400"
++    },
++    {
++      "path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/python-discovery.stderr.txt",
++      "bytes": 309,
++      "sha256": "b6e3b065112c677cf523c1a887deae849e3ac61708544560b0da7e918fa4ec25"
++    },
++    {
++      "path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/python-discovery.stdout.txt",
++      "bytes": 45,
++      "sha256": "22b34a3cbc9dbe3bb0732e1ce001ca4e71feeb3d4b54b57b557888c390c71f44"
++    },
++    {
++      "path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/context.json",
++      "bytes": 7589,
++      "sha256": "cf7f0795e631a30d45814a01a73bafb1c75367e32572380d2924f3dfdf32562f"
++    },
++    {
++      "path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/date-rollover/before/1-sec-filing-index-ingestion-stage-1-spec.md",
++      "bytes": 57460,
++      "sha256": "08aa717a32371546519f531b2ce772d7ba99742db7098ff2b2adf63cb67d7957"
++    },
++    {
++      "path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/date-rollover/before/context.json",
++      "bytes": 7468,
++      "sha256": "5bc215d80daf422fb53826929dcafdef260d15fb108812961cfb8bb2f7d00f5d"
++    },
++    {
++      "path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/date-rollover/before/implementation-files.json",
++      "bytes": 14791,
++      "sha256": "f95eb6c343c4321bcd8695d801b96afb8aa741d2edb2916b53c11bc1c0efcc95"
++    },
++    {
++      "path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/date-rollover/before/implementer-report.md",
++      "bytes": 11306,
++      "sha256": "7cbeeeb037275aa582235f44cc7f5f3948c9ca99fd1badc90165745ee535f883"
++    },
++    {
++      "path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/date-rollover/before/sec-filing-index-ingestion-roadmap.md",
++      "bytes": 15853,
++      "sha256": "b13702cdfa8080d47cd218b0c5c90934e9982f0dd19869f0275e95fd02238d88"
++    },
++    {
++      "path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/date-rollover/before/sec-filing-index-ingestion-stage-1-spec.md",
++      "bytes": 26715,
++      "sha256": "b8d7be818ff21db0104bf1e5c7cb466b2457cdfc637c78d2c7a21cd702f439ef"
++    },
++    {
++      "path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/date-rollover/receipt.json",
++      "bytes": 2630,
++      "sha256": "bb9a816f0c6337dffaa304ba4b2d3c1f6211146c8164ebbf866c290cfccdc358"
++    },
++    {
++      "path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/stamp-before-roadmap.json",
++      "bytes": 366,
++      "sha256": "a1292f0559424c5471cb8798594a8e9254e22eea98c26b615a2d2112806a2f08"
++    },
++    {
++      "path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/verify_completion.py",
++      "bytes": 10515,
++      "sha256": "0eee7c29f201aea9434e2b0a04c104e2ee2e928db2552faa09f1387d0591352d"
++    },
++    {
++      "path": "specs/plans/completed/1-sec-filing-index-ingestion-stage-1-spec.md",
++      "bytes": 57460,
++      "sha256": "ebc66fe3a0f3eedcb9aa90ce9318b3b5b467a33fd00382acbbbcc4d6567bd14c"
++    },
++    {
++      "path": "specs/completed/sec-filing-index-ingestion-stage-1-spec.md",
++      "bytes": 26715,
++      "sha256": "87f366c5e7320437aeb4334889127c84420cee0a08942f215d584b6ec93285bb"
++    },
++    {
++      "path": "specs/sec-filing-index-ingestion-roadmap.md",
++      "bytes": 15853,
++      "sha256": "e4fdf810785daa3700a92c96b65e08f671f4afbdfe273eed6154dcd255a9cf02"
++    }
++  ],
++  "new_paths": [
++    "specs/evidence/sec-filing-index-ingestion/stage-1/completion/before/1-sec-filing-index-ingestion-stage-1-spec.md",
++    "specs/evidence/sec-filing-index-ingestion/stage-1/completion/before/controller-boundary.json",
++    "specs/evidence/sec-filing-index-ingestion/stage-1/completion/before/sec-filing-index-ingestion-roadmap.md",
++    "specs/evidence/sec-filing-index-ingestion/stage-1/completion/before/sec-filing-index-ingestion-stage-1-spec.md",
++    "specs/evidence/sec-filing-index-ingestion/stage-1/completion/before/task-7-before-manifest.json",
++    "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/backlog-health-json.command.json",
++    "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/backlog-health-json.stderr.txt",
++    "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/backlog-health-json.stdout.txt",
++    "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/backlog-health.command.json",
++    "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/backlog-health.stderr.txt",
++    "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/backlog-health.stdout.txt",
++    "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/completion-date-rollover.command.json",
++    "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/completion-date-rollover.stderr.txt",
++    "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/completion-date-rollover.stdout.txt",
++    "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/completion-final.command.json",
++    "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/completion-final.stderr.txt",
++    "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/completion-final.stdout.txt",
++    "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/completion-initial.command.json",
++    "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/completion-initial.stderr.txt",
++    "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/completion-initial.stdout.txt",
++    "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/git-diff-check.command.json",
++    "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/git-diff-check.stderr.txt",
++    "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/git-diff-check.stdout.txt",
++    "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/git-staged.command.json",
++    "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/git-staged.stderr.txt",
++    "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/git-staged.stdout.txt",
++    "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/git-status.command.json",
++    "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/git-status.stderr.txt",
++    "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/git-status.stdout.txt",
++    "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/pre-retirement-negative.command.json",
++    "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/pre-retirement-negative.stderr.txt",
++    "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/pre-retirement-negative.stdout.txt",
++    "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/python-discovery.command.json",
++    "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/python-discovery.stderr.txt",
++    "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/python-discovery.stdout.txt",
++    "specs/evidence/sec-filing-index-ingestion/stage-1/completion/context.json",
++    "specs/evidence/sec-filing-index-ingestion/stage-1/completion/date-rollover/before/1-sec-filing-index-ingestion-stage-1-spec.md",
++    "specs/evidence/sec-filing-index-ingestion/stage-1/completion/date-rollover/before/context.json",
++    "specs/evidence/sec-filing-index-ingestion/stage-1/completion/date-rollover/before/implementation-files.json",
++    "specs/evidence/sec-filing-index-ingestion/stage-1/completion/date-rollover/before/implementer-report.md",
++    "specs/evidence/sec-filing-index-ingestion/stage-1/completion/date-rollover/before/sec-filing-index-ingestion-roadmap.md",
++    "specs/evidence/sec-filing-index-ingestion/stage-1/completion/date-rollover/before/sec-filing-index-ingestion-stage-1-spec.md",
++    "specs/evidence/sec-filing-index-ingestion/stage-1/completion/date-rollover/receipt.json",
++    "specs/evidence/sec-filing-index-ingestion/stage-1/completion/implementation-files.json",
++    "specs/evidence/sec-filing-index-ingestion/stage-1/completion/implementer-report.md",
++    "specs/evidence/sec-filing-index-ingestion/stage-1/completion/stamp-before-roadmap.json",
++    "specs/evidence/sec-filing-index-ingestion/stage-1/completion/verify_completion.py",
++    ".sdd/1-sec-filing-index-ingestion-stage-1-spec/task-7-report.md"
++  ],
++  "changed_or_retired_final_paths": [
++    "specs/plans/completed/1-sec-filing-index-ingestion-stage-1-spec.md",
++    "specs/completed/sec-filing-index-ingestion-stage-1-spec.md",
++    "specs/sec-filing-index-ingestion-roadmap.md"
++  ],
++  "removed_active_paths": [
++    "specs/plans/1-sec-filing-index-ingestion-stage-1-spec.md",
++    "specs/sec-filing-index-ingestion-stage-1-spec.md"
++  ],
++  "hash_exclusions": [
++    "implementation-files.json (self)",
++    "implementer-report.md and SDD report copy (reports describe inventory boundary)"
++  ],
++  "controller_boundary_alias": [
++    {
++      "path": "specs/evidence/sec-filing-index-ingestion/stage-1/final-fix/controller-boundary.json",
++      "retained_path": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/before/controller-boundary.json",
++      "bytes": 1102,
++      "sha256": "235c622d086e02bb29c8379c7d8bd792447bfc658568defc84d4a0bd54ab5656",
++      "authorized_mutation": "Controller may change only completion from Task7 pending to COMPLETE after review; immutable retained alias preserves this pre-completion receipt in Task7 before-manifest checks. Receipt is excluded from accepted F1 manifest."
++    }
++  ],
++  "final_checks": {
++    "result": "PASS",
++    "scope": "offline acceptance/retirement documentation; no production build/tests or Stage7 proof",
++    "completion_date": "2026-10-06",
++    "accepted_manifest_hash": "124e96041548daba8216aa495fc69021751555b0f0e4c890ac85e934f512a131",
++    "accepted_manifest_records": 1584,
++    "task7_before_records_preserved": 1592,
++    "protected_tracked_paths": 24,
++    "completed_steps": 39,
++    "roadmap_checked_stages": [
++      1
++    ],
++    "later_stage_definitions": "byte-identical",
++    "local_links_resolved": 68,
++    "stage7_reserved_not_run": 22,
++    "backlog": {
++      "exists": false,
++      "open": 0,
++      "closure_rate": null,
++      "aged_open": 0
++    },
++    "git_diff_check": "PASS",
++    "staged_paths": [],
++    "roadmap_tracking": "untracked",
++    "head_observed": "321c93af78b54c7e63efbb0e69252c69a238fec6",
++    "controller_review_commit_archive": "not asserted by this checker"
++  },
++  "date_rollover_receipt": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/date-rollover/receipt.json"
++}
+
+## specs/evidence/sec-filing-index-ingestion/stage-1/completion/implementer-report.md
+SHA256 54a84e49a2590a122515efdd429cef3396581693f7067ec28ed4650e7fdb4263
+--- before/specs/evidence/sec-filing-index-ingestion/stage-1/completion/implementer-report.md
++++ after/specs/evidence/sec-filing-index-ingestion/stage-1/completion/implementer-report.md
+@@ -0,0 +1,52 @@
++# Task 7 completion/retirement implementation report
++
++Status: **DONE** for assigned Task 7 documentation implementation and filesystem retirement, executed via subagent-driven-development; focused final checks PASS. Actual execution completion date: 2026-10-06 America/New_York; report recorded UTC 2026-10-06T03:59:07.226110+00:00. Controller task review, narrowly named retirement commit, final SDD supplement/removal and final post-commit provenance remain pending controller actions and are not claimed complete here.
++
++## Gate and authoritative provenance
++
++Resolve-before-defer found no skipped/unanswered Stage 1 task or unresolved final review finding. Task 1 concrete decisions were closed through accepted Task 5 R3 owner records; final whole-branch corrections were scoped re-reviewed before exact F1 acceptance. D10 is the original Stage 2 alignment duty; D11 and all 22 reserved Stage7 checks are original later-stage obligations. No new deferrals were manufactured. Backlog ticking pass inspected `specs/deferred_items.md` (absent); no prior entries to tick and no empty section/file created. Isolated offline backlog health returned: **Deferred backlog: no specs/deferred_items.md in this repo — nothing deferred.** JSON health: 0 open / 0 closed, closure rate n/a, aged tail 0; no triage threshold met.
++
++Lowell Mason explicitly replied Approved to F1, revision date 2026-10-05, accepted 2026-10-05 America/New_York. Exact immutable pre-appendix finding SHA256 `939a724eccf22147015a59d5940ed57f02cc4e9fe9d942a9cd78ae73c34615ff`; accepted 1,584-record manifest SHA256 `124e96041548daba8216aa495fc69021751555b0f0e4c890ac85e934f512a131`. The owner receipt records controller UTC 2026-10-06T03:48:04.966448+00:00, without an owner-authored timestamp. Technical finding and section10 acceptance appendix were left byte-exact.
++
++Plan1 now lives at `specs/plans/completed/1-sec-filing-index-ingestion-stage-1-spec.md`; Stage 1 spec now lives at `specs/completed/sec-filing-index-ingestion-stage-1-spec.md`. Plan status records actual execution skill/date/nothing deferred, all 39 executed steps ticked, and relevant step-level deviation notes. The spec's authoritative rollout stamp identifies actual completion date, final plan path, full F1/manifest hashes and exact acceptance date. `completion/stamp-before-roadmap.json` records the stamped spec while Stage1 was still unticked; Stage 1-only roadmap mutation followed. All local retirement links were corrected. Original rollout/handoff paragraphs are explicitly historical; original planning-only review remains method/candidate history, not investigation proof.
++
++Roadmap change is one Stage1 checkbox plus a narrow appended completion/consistency note. Its original heading, baseline gap table and every Stage 2–8 definition are exact before bytes. Note preserves Stage 2 alignment, selected-family/cross-date/nullable accession golden obligations, historical daily gap/recovery duties, hash-bound approval/publication safeguards, all 22 Stage 7 effective checks and Stage 8 production acceptance. Parent design spec and ADR remain active and byte-exact; roadmap remains untracked/unstaged.
++
++## Exact changes and preserved versions
++
++- Retired/marked up only the active implementing plan and Stage 1 spec at the final paths above; the old tracked Stage 1 spec deletion is intentionally visible for the controller's explicit staging after review. The untracked plan could not use git mv, so filesystem moves were necessary. No Git mutation, staging or commit occurred.
++- Changed `specs/sec-filing-index-ingestion-roadmap.md` only in the described Stage1 scope.
++- Added `specs/evidence/sec-filing-index-ingestion/stage-1/completion/`: `before/` exact original plan/spec/roadmap, full 1,592-record Task 7-before manifest and exact pre-completion controller process receipt; `context.json` original 24 tracked-path hashes/date/scope/authorized aliases; `verify_completion.py` read-only verifier; stamp-order receipt; complete command/stdout/stderr records under `checks/`; this report and `implementation-files.json` exact file inventory.
++- Added the identical assigned report at `.sdd/1-sec-filing-index-ingestion-stage-1-spec/task-7-report.md`; controller must retain it and subsequent Task 7/reviewer/controller outputs in its final supplement before removing only this plan's SDD directory.
++
++`implementation-files.json` enumerates every exact created/changed/removed path and immutable artifact hashes at this implementation capture. Its own file and report copies are named separately to avoid self-referential hashing. All original evidence, findings, index/decisions/provider/runtime/source files, frozen manifests/reviews and current SDD files remain preserved. Existing four package deletions, parent/ADR/root configuration and other tracked files match their original protected hashes.
++
++## Focused commands and actual results
++
++Commands executed from `/Users/lowell/Projects/sec-edgar`, with PYTHONDONTWRITEBYTECODE=1 on recorded checks. These are offline document/evidence checks, not production build/tests or new native runtime/Azure/SEC probes:
++
++- `uv --cache-dir /private/tmp/sec-edgar-stage-1-task7-uv-cache run --offline --no-python-downloads --no-project --python 3.13 python /Users/lowell/.agents/skills/writing-plans/scripts/deferred_stats.py --json` — exit 0; complete streams and UTC execution receipt: `completion/checks/backlog-health-json.{stdout.txt,stderr.txt,command.json}`.
++- `uv --cache-dir /private/tmp/sec-edgar-stage-1-task7-uv-cache run --offline --no-python-downloads --no-project --python 3.13 python /Users/lowell/.agents/skills/writing-plans/scripts/deferred_stats.py` — exit 0; complete streams and UTC execution receipt: `completion/checks/backlog-health.{stdout.txt,stderr.txt,command.json}`.
++- `python3 specs/evidence/sec-filing-index-ingestion/stage-1/completion/verify_completion.py` — exit 0; complete streams and UTC execution receipt: `completion/checks/completion-final.{stdout.txt,stderr.txt,command.json}`.
++- `python3 specs/evidence/sec-filing-index-ingestion/stage-1/completion/verify_completion.py` — exit 0; complete streams and UTC execution receipt: `completion/checks/completion-initial.{stdout.txt,stderr.txt,command.json}`.
++- `git diff --check` — exit 0; complete streams and UTC execution receipt: `completion/checks/git-diff-check.{stdout.txt,stderr.txt,command.json}`.
++- `git diff --cached --name-only` — exit 0; complete streams and UTC execution receipt: `completion/checks/git-staged.{stdout.txt,stderr.txt,command.json}`.
++- `git status --porcelain=v1` — exit 0; complete streams and UTC execution receipt: `completion/checks/git-status.{stdout.txt,stderr.txt,command.json}`.
++- `python3 specs/evidence/sec-filing-index-ingestion/stage-1/completion/verify_completion.py` — exit 1; complete streams and UTC execution receipt: `completion/checks/pre-retirement-negative.{stdout.txt,stderr.txt,command.json}`.
++- `uv --cache-dir /private/tmp/sec-edgar-stage-1-task7-uv-cache python find --offline --no-python-downloads 3.13` — exit 0; complete streams and UTC execution receipt: `completion/checks/python-discovery.{stdout.txt,stderr.txt,command.json}`.
++
++Earlier unrecorded-stream runtime-discovery command `uv python find --offline --no-python-downloads 3.13` exited2 on the restricted default cache `.git`; its actual combined output is retained in context with no fabricated stream/timestamp. Isolated-cache discovery then found existing Python 3.13.8, with a compatibility warning about the root's >=3.14 requirement. Subsequent `uv run` used --no-project/--offline/--no-python-downloads with that isolated cache; no project build, install or download. The pre-retirement negative check exited1 because the retired plan path did not yet exist; retained traceback proves that boundary failure, not a production regression test. Initial and final completion checks both exited0; self-review corrected an acceptance-anchor link before adding explicit heading-anchor checks and rerunning final verification.
++
++Final verifier: 1,584 accepted manifest records reproduced using **only immutable F1 alias for the live finding**;1,592Task 7-before hashes reproduced using original before aliases for the three intentionally edited/retired documents and the one authorized mutable controller process receipt. Current live finding is exactly preserved and retains complete F1 prefix+acceptance appendix. All 24 protected tracked paths and original protected-state hashes checked, all 4 package deletions retained, original approval commit/spec bytes checked and approval remains ancestral. Root .venv/uv.lock absent. All 39 steps ticked, 68 local links/heading anchors resolve, only Stage 1 checked, Stage 2–8 definitions exact,22 Stage 7 rows reserved/not_run. Git diff --check exits0; final porcelain status contains original 4 package deletions, intended old spec deletion and scoped untracked artifacts; staged names output empty. Untracked changed-document whitespace is also checked explicitly.
++
++The checker is suitable after the controller's narrow commit and SDD removal: it has no SDD dependency and observes current HEAD while verifying ancestral approval. `completion/context.json` explicitly aliases immutable pre-completion `final-fix/controller-boundary.json` bytes; the controller may update only its live completion field from pending to COMPLETE after review. The accepted F1 manifest excludes that process receipt. Earlier generation verifiers retain their authentic pre-retirement paths/HEAD/pending-acceptance boundaries and were neither rewritten nor falsely claimed to pass post-retirement.
++
++## Deviations, self-review and remaining boundary
++
++Step-level notes faithfully record batched owner decisions resolved at Task 5; accepted temporary ACR exception/no local container; corrected CLI/no submitted run and actual ca1 failure followed by ca2/ca3/ca4 success; novel daily-family pause/accepted continuation; limited lost fixture diagnostics; exact historical daily CSV repair; isolated Ruff/root build failure with selective cleanup; index ID/categorized claim coverage/S7 condition corrections. No failed command became a passing test and no local/native evidence became deployed proof. Report/status and stamp agree on the exact accepted F1 reference. No new actionable concern or deferral remains in this implementation.
++
++Current completion_date is actual 2026-10-06 America/New_York and is exposed in context. If the controller's final completion gate crosses local midnight, it must record a narrow metadata-rollover correction for current status/stamp/roadmap/context; frozen finding revision and accepted date remain 2026-10-05. Stamp-order and check receipts remain their actual historical timestamps.
++
++No production build, parser/golden test, workspace repair, new source/provider investigation, probe compute, Azure provisioning, publication, trigger activation or later-stage plan occurred. The controller must independently review, explicitly stage only named authorized Stage 1/evidence/retirement paths while leaving the roadmap untracked, commit, retain later receipts and remove only the authorized SDD directory, then verify final provenance and stop. Subsequent transition requires the owner's separate request to resume the roadmap.
++
++Date-rollover correction recorded UTC 2026-10-06T04:01:09.261336+00:00: local midnight crossed before implementation handoff. Retained exact preceding plan/spec/roadmap/context/inventory/report bytes under `completion/date-rollover/before/`, with SHA256/length map in `completion/date-rollover/receipt.json`; only current completion metadata changed from 2026-10-05 to 2026-10-06. Accepted F1 revision/date, receipt and frozen bytes remain unchanged. Fresh `python3 specs/evidence/sec-filing-index-ingestion/stage-1/completion/verify_completion.py` exited 0 after correction, complete streams/argv/time/exit under `completion/checks/completion-date-rollover.*`; same 1,584 / 1,592 hashes, 24 protected paths, 39 steps, 68 links, 22 reserved, Stage 1-only tick and empty staged diff PASS. Earlier dated successful checks remain historical observations.
+
+## specs/evidence/sec-filing-index-ingestion/stage-1/completion/stamp-before-roadmap.json
+SHA256 a1292f0559424c5471cb8798594a8e9254e22eea98c26b615a2d2112806a2f08
+--- before/specs/evidence/sec-filing-index-ingestion/stage-1/completion/stamp-before-roadmap.json
++++ after/specs/evidence/sec-filing-index-ingestion/stage-1/completion/stamp-before-roadmap.json
+@@ -0,0 +1,8 @@
++{
++  "recorded_at_utc": "2026-10-06T03:55:02.109442+00:00",
++  "action_order": "Retired Stage1 spec with authoritative stamp written and inspected before Stage1 roadmap checkbox mutation",
++  "completion_date": "2026-10-05",
++  "spec_path": "specs/completed/sec-filing-index-ingestion-stage-1-spec.md",
++  "stamp_present": true,
++  "roadmap_stage1_still_unticked": true
++}
+
+## specs/evidence/sec-filing-index-ingestion/stage-1/completion/verify_completion.py
+SHA256 0eee7c29f201aea9434e2b0a04c104e2ee2e928db2552faa09f1387d0591352d
+--- before/specs/evidence/sec-filing-index-ingestion/stage-1/completion/verify_completion.py
++++ after/specs/evidence/sec-filing-index-ingestion/stage-1/completion/verify_completion.py
+@@ -0,0 +1,192 @@
++"""Read-only Stage 1 acceptance/retirement boundary checks; no deployment proof."""
++
++from __future__ import annotations
++
++import hashlib
++import json
++import re
++import subprocess
++from pathlib import Path
++
++ROOT = Path(__file__).resolve().parents[5]
++BASE = ROOT / 'specs/evidence/sec-filing-index-ingestion/stage-1'
++COMPLETION = BASE / 'completion'
++PLAN = 'specs/plans/completed/1-sec-filing-index-ingestion-stage-1-spec.md'
++SPEC = 'specs/completed/sec-filing-index-ingestion-stage-1-spec.md'
++ROADMAP = 'specs/sec-filing-index-ingestion-roadmap.md'
++FINDING = 'specs/sec-filing-index-ingestion-stage-1-findings.md'
++FINDING_HASH = '939a724eccf22147015a59d5940ed57f02cc4e9fe9d942a9cd78ae73c34615ff'
++MANIFEST_HASH = '124e96041548daba8216aa495fc69021751555b0f0e4c890ac85e934f512a131'
++CONSISTENCY_HEADING = '\n## Stage 1 completion and later-stage consistency\n'
++
++
++def digest(path: Path) -> str:
++    return hashlib.sha256(path.read_bytes()).hexdigest()
++
++
++def read_json(path: Path) -> dict:
++    return json.loads(path.read_text())
++
++
++def check_records(records: list[dict], aliases: dict[str, str]) -> int:
++    for record in records:
++        path = ROOT / aliases.get(record['path'], record['path'])
++        assert path.is_file(), f'Missing retained record: {path}'
++        assert path.stat().st_size == record['bytes'], f'Byte count changed: {path}'
++        assert digest(path) == record['sha256'], f'Hash changed: {path}'
++    return len(records)
++
++
++def git(*args: str) -> str:
++    result = subprocess.run(['git', *args], cwd=ROOT, capture_output=True, text=True)
++    assert result.returncode == 0, result.stderr
++    return result.stdout
++
++
++def check_acceptance() -> int:
++    acceptance = read_json(BASE / 'final-candidate/owner-acceptance.json')
++    assert acceptance['owner'] == 'Lowell Mason'
++    assert acceptance['owner_message'] == 'Approved'
++    assert acceptance['accepted_revision'] == 'F1'
++    assert acceptance['accepted_date'] == '2026-10-05'
++    assert acceptance['accepted_finding']['sha256'] == FINDING_HASH
++    assert acceptance['accepted_evidence_manifest']['sha256'] == MANIFEST_HASH
++    manifest_path = ROOT / acceptance['accepted_evidence_manifest']['path']
++    assert digest(manifest_path) == MANIFEST_HASH
++    immutable_finding = acceptance['immutable_finding']
++    assert digest(ROOT / immutable_finding) == FINDING_HASH
++    live = (ROOT / FINDING).read_bytes()
++    frozen = (ROOT / immutable_finding).read_bytes()
++    assert live.startswith(frozen), 'Accepted technical bytes changed'
++    assert b'## 10.' in live[len(frozen):], 'Acceptance appendix missing'
++    records = read_json(manifest_path)['records']
++    assert len(records) == 1584
++    return check_records(records, {FINDING: immutable_finding})
++
++
++def check_preservation(context: dict) -> int:
++    aliases = {record['path']: record['retained_path'] for record in context['before_documents']}
++    check_records(context['before_documents'], aliases)
++    for record in context['mutable_process_receipts']:
++        aliases[record['path']] = record['retained_path']
++        check_records([record], aliases)
++        retained = read_json(ROOT / record['retained_path'])
++        current = read_json(ROOT / record['path'])
++        before_completion = retained.pop('completion')
++        current_completion = current.pop('completion')
++        assert retained == current, 'Controller process receipt changed outside authorized completion field'
++        assert current_completion == before_completion or 'COMPLETE' in current_completion
++    records = read_json(ROOT / context['task7_before_manifest'])['records']
++    assert len(records) == 1592
++    check_records(records, aliases)
++    deleted = []
++    for record in context['protected_tracked_paths']:
++        path = ROOT / aliases.get(record['path'], record['path'])
++        if record['present']:
++            assert path.is_file(), f'Protected tracked path missing: {path}'
++            assert digest(path) == record['sha256'], f'Protected tracked path changed: {path}'
++        else:
++            assert not path.exists(), f'Original deletion restored: {path}'
++            deleted.append(record['path'])
++    assert len(deleted) == 4
++    assert all(path.startswith('packages/sec-edgar-index-ingest/') for path in deleted)
++    protected = read_json(BASE / 'protected-before-state.json')
++    for record in protected['protected_documents']:
++        path = ROOT / aliases.get(record['path'], record['path'])
++        assert digest(path) == record['sha256'], f'Original protected hash changed: {path}'
++    for record in protected['original_worktree']:
++        path = ROOT / aliases.get(record['path'], record['path'])
++        if record['before_status'] == 'deleted':
++            assert not path.exists(), f'Original package deletion restored: {path}'
++        else:
++            assert digest(path) == record['sha256'], f'Original worktree hash changed: {path}'
++    approved = subprocess.run(
++        ['git', 'show', f"{protected['approval_head']}:specs/sec-filing-index-ingestion-stage-1-spec.md"],
++        cwd=ROOT, capture_output=True,
++    )
++    assert approved.returncode == 0, approved.stderr
++    assert hashlib.sha256(approved.stdout).hexdigest() == protected['approved_spec_sha256']
++    ancestry = subprocess.run(
++        ['git', 'merge-base', '--is-ancestor', protected['approval_head'], 'HEAD'],
++        cwd=ROOT, capture_output=True,
++    )
++    assert ancestry.returncode == 0, 'Original approval is not ancestral to observed HEAD'
++    assert not (ROOT / '.venv').exists() and not (ROOT / 'uv.lock').exists()
++    return len(records)
++
++
++def check_retirement(context: dict) -> dict:
++    plan = (ROOT / PLAN).read_text()
++    spec = (ROOT / SPEC).read_text()
++    roadmap = (ROOT / ROADMAP).read_text()
++    before_roadmap = (COMPLETION / 'before' / Path(ROADMAP).name).read_text()
++    completion_date = context['completion_date']
++    assert f'**Status: COMPLETE ({completion_date})** — executed via subagent-driven-development; nothing deferred' in plan
++    assert f'**Status: COMPLETE ({completion_date})**' in spec
++    assert not (ROOT / 'specs/plans/1-sec-filing-index-ingestion-stage-1-spec.md').exists()
++    assert not (ROOT / 'specs/sec-filing-index-ingestion-stage-1-spec.md').exists()
++    assert not list((ROOT / 'specs/plans').glob('*-sec-filing-index-ingestion-stage-1-spec.md'))
++    steps = re.findall(r'^- \[([ x])\] \*\*Step ', plan, re.MULTILINE)
++    before_plan = (COMPLETION / 'before' / Path(PLAN).name).read_text()
++    assert len(steps) == len(re.findall(r'^- \[ \] \*\*Step ', before_plan, re.MULTILINE))
++    assert steps and all(mark == 'x' for mark in steps)
++    assert f'Stage 1: COMPLETE ({completion_date}) — implemented by plan 1' in spec
++    for required in [PLAN, FINDING, FINDING_HASH, MANIFEST_HASH, 'revision F1', 'accepted 2026-10-05', 'Next: resume the roadmap.']:
++        assert required in spec, f'Completion stamp missing: {required}'
++    assert CONSISTENCY_HEADING in roadmap
++    baseline, note = roadmap.split(CONSISTENCY_HEADING, 1)
++    assert baseline.replace('- [x] Stage 1:', '- [ ] Stage 1:') == before_roadmap.rstrip('\n')
++    stages = re.findall(r'^- \[([ x])\] Stage (\d):', roadmap, re.MULTILINE)
++    assert stages == [('x', '1'), *[(' ', str(number)) for number in range(2, 9)]]
++    for required in ['F1', FINDING_HASH, 'Stage 2', 'Stage 7', 'historical baseline', 'owner']:
++        assert required in note
++    return {'completed_steps': len(steps), 'roadmap_checked_stages': [1], 'later_stage_definitions': 'byte-identical'}
++
++
++def check_links() -> int:
++    checked = 0
++    for document in [PLAN, SPEC, ROADMAP, FINDING]:
++        path = ROOT / document
++        for link in re.findall(r'\]\(([^)]+)\)', path.read_text()):
++            if re.match(r'^[a-zA-Z][a-zA-Z0-9+.-]*:', link) or link.startswith('#'):
++                continue
++            target, _, fragment = link.partition('#')
++            resolved = path.parent / target.strip('<>')
++            assert resolved.exists(), f'Broken local link: {document}: {link}'
++            if fragment:
++                headings = re.findall(r'^#+\s+(.+)$', resolved.read_text(), re.MULTILINE)
++                anchors = [re.sub(r'[^\w\- ]', '', heading.lower()).replace(' ', '-') for heading in headings]
++                assert fragment in anchors, f'Broken local heading: {document}: {link}'
++            checked += 1
++    return checked
++
++
++def check_reserved_obligations() -> int:
++    rows = re.findall(r'^\| S7-(\d\d) .*$', (BASE / 'stage-7-checks.md').read_text(), re.MULTILINE)
++    assert rows == [f'{number:02d}' for number in range(1, 23)]
++    lines = [line for line in (BASE / 'stage-7-checks.md').read_text().splitlines() if line.startswith('| S7-')]
++    assert all(line.endswith('| reserved/not_run |') for line in lines)
++    assert not (ROOT / 'specs/deferred_items.md').exists(), 'Backlog boundary changed; inspect/tick explicitly'
++    return len(rows)
++
++
++def main() -> None:
++    context = read_json(COMPLETION / 'context.json')
++    accepted_records = check_acceptance()
++    preserved_records = check_preservation(context)
++    retirement = check_retirement(context)
++    links = check_links()
++    reserved = check_reserved_obligations()
++    for document in [PLAN, SPEC, ROADMAP, str(Path(__file__).relative_to(ROOT))]:
++        for number, line in enumerate((ROOT / document).read_text().splitlines(), 1):
++            assert line.rstrip() == line, f'Trailing whitespace: {document}:{number}'
++    assert not git('diff', '--cached', '--name-only'), 'Staged changes exist before controller review'
++    git('diff', '--check')
++    assert not git('ls-files', '--', ROADMAP), 'Roadmap was incidentally tracked'
++    status = git('status', '--porcelain=v1')
++    assert f'?? {ROADMAP}\n' in status, 'Roadmap not untracked'
++    print(json.dumps({'result': 'PASS', 'scope': 'offline acceptance/retirement documentation; no production build/tests or Stage7 proof', 'completion_date': context['completion_date'], 'accepted_manifest_hash': MANIFEST_HASH, 'accepted_manifest_records': accepted_records, 'task7_before_records_preserved': preserved_records, 'protected_tracked_paths': len(context['protected_tracked_paths']), **retirement, 'local_links_resolved': links, 'stage7_reserved_not_run': reserved, 'backlog': {'exists': False, 'open': 0, 'closure_rate': None, 'aged_open': 0}, 'git_diff_check': 'PASS', 'staged_paths': [], 'roadmap_tracking': 'untracked', 'head_observed': git('rev-parse', 'HEAD').strip(), 'controller_review_commit_archive': 'not asserted by this checker'}, indent=2))
++
++
++if __name__ == '__main__':
++    main()
+
+## Retired original path: specs/plans/1-sec-filing-index-ingestion-stage-1-spec.md
+Before SHA256 701cfc034e6fc5b02649befbb17582db83a61be4304962aa9c74b6f5917f5bb1; exact before bytes must remain retained.
+
+## specs/plans/completed/1-sec-filing-index-ingestion-stage-1-spec.md
+SHA256 ebc66fe3a0f3eedcb9aa90ce9318b3b5b467a33fd00382acbbbcc4d6567bd14c
+--- before/specs/plans/completed/1-sec-filing-index-ingestion-stage-1-spec.md
++++ after/specs/plans/completed/1-sec-filing-index-ingestion-stage-1-spec.md
+@@ -0,0 +1,350 @@
++# SEC filing-index ingestion — Stage 1 Investigation Implementation Plan
++
++> **For agentic workers:** REQUIRED SUB-SKILL: implement this plan task-by-task via subagent-driven-development (the default) — or executing-plans when your human partner chose inline execution at the handoff. Steps use checkbox (`- [ ]`) syntax for tracking.
++
++**Goal:** Produce retained investigation evidence and an owner-accepted ready finding identifying a viable source/runtime combination under the approved Stage 1 contract.
++
++**Architecture:** Review official provider documentation, inventory SEC sources with one bounded investigation issuer, retain representative original inputs, and run isolated Linux amd64 compatibility probes. Assemble a finding that distinguishes documented capabilities, observed results, owner decisions, assumptions and deployment checks; complete Stage 1 only after Lowell Mason accepts the exact ready-finding revision.
++
++**Tech Stack:** Markdown/CSV/JSON evidence; SEC HTTPS directory metadata and indexes; Python 3.14 and a digest-pinned official Linux amd64 Python container; isolated pip dependency resolution; Azure SDK and Parquet compatibility probes; official SEC/Microsoft resource and API documentation. Bicep is the accepted deployment tool, but no infrastructure is authored here.
++
++**Status: COMPLETE (2026-10-06)** — executed via subagent-driven-development; nothing deferred
++
++Original plan written 2026-10-05. Completion covers the accepted bounded investigation; every effective deployment/worker check remains reserved. Controller retirement review/commit and final SDD archive are subsequent provenance actions, not accomplishments claimed here.
++
++**Authority:** [Approved Stage 1 spec](../../completed/sec-filing-index-ingestion-stage-1-spec.md), accepted by Lowell Mason on 2026-10-05 at `321c93af78b54c7e63efbb0e69252c69a238fec6`; [roadmap](../../sec-filing-index-ingestion-roadmap.md), [parent design spec](../../sec-filing-index-ingestion-spec.md), [ADR](../../sec-filing-index-ingestion-adr.md). Parent contracts remain authoritative; this plan supplies investigation methods, not replacement safeguards.
++
++**Completion provenance:** Stage 1 COMPLETE (2026-10-06); [accepted F1 finding](../../sec-filing-index-ingestion-stage-1-findings.md), accepted 2026-10-05, exact SHA-256 `939a724eccf22147015a59d5940ed57f02cc4e9fe9d942a9cd78ae73c34615ff`; [authoritative stage stamp](../../completed/sec-filing-index-ingestion-stage-1-spec.md#9-rollout-note). Later stages remain unticked; resume requires the owner’s separate request.
++
++**Completion restriction:** The line above takes effect only after all investigation tasks complete, the ready finding is accepted by revision/date and the authoritative Stage 1 stamp is recorded. Writing or approving this plan does not tick Stage 1. Accepting a not-ready report does not discharge the readiness exit. Later-stage transitions remain owner-initiated by resuming the roadmap.
++
++## Global Constraints
++
++- Repository: `/Users/lowell/Projects/sec-edgar`; owner and decider: Lowell Mason.
++- Workload remains filing indexes: historical quarterly backfill, ongoing daily ingestion, metadata ETL and reconciliation. One implementation package is `packages/sec-edgar-ingest/`, distribution/CLI `sec-edgar-ingest`, import `sec_edgar_ingest`; see parent §§2, 4.1, 4.9 and ADR Decision.
++- Intended historical range: 2010 Q1 through the open quarter, inclusive. Initial development range: 2015 Q1 through the open quarter, inclusive. End-quarter rule: Resolve and pin the end quarter at each run's start.
++- Daily handoff: 2026-10-01, retaining baseline overlap under parent §4.2.
++- SEC User-Agent: Lowell Mason sec-edgar-ingest mason.lowell@mac.com.
++- Azure target: A new dedicated resource group in an existing subscription. Region order: eastus, then eastus2, then centralus.
++- Networking: Public HTTPS endpoints, managed identities, scoped roles, anonymous blob access disabled. Infrastructure as code: Bicep.
++- Python/container candidate: Python 3.14; Linux amd64 container.
++- Initial compute candidate: General-purpose Consumption workload profile; 2 vCPU and 4 GiB RAM. Initial execution settings: One replica; parallelism 1; completion count 1; replica timeout 3,600 seconds.
++- Initial storage candidate: Standard general-purpose v2; hierarchical namespace enabled; Hot tier; ZRS.
++- Ingestion-artifact retention: Indefinite during initial development: raw snapshots, observations, generations, manifests, approvals, quarantine evidence and run reports.
++- Operational-log retention: 90 days. Alert owner and destination: Lowell Mason; mason.lowell@mac.com.
++- Accepted parent §4.8 defaults: daily 05:00 Eastern; Sunday reconciliation 06:00 Eastern; 3 requests/second, no bursts; 1 active collector; 5 total HTTP attempts; 2 s exponential/jitter base and 120 s local cap while honoring longer server delays; 15 s connection / 60 s read timeout; zero native job retries; at most 1 confirmed-transient-failure replay. Parent §§4.3, 4.8 and §5 govern all SEC investigation access.
++- Preserve existing local deletions in `packages/sec-edgar-index-ingest/` and the untracked roadmap. Preserve any additional execution-time changes. No broad staging, stash, reset, restoration or package repair.
++- Read-only inspection, bounded source/archive inspection and isolated dependency/container probes are authorized. No production ingestion modules, parser/catalog implementation, golden parser tests, workspace repairs, Bicep resource definitions, provisioning, publication or trigger activation.
++- No resource-profile comparison. Actual worker memory/runtime and live integrated Azure behavior belong to Stage 7. A local probe has no deployment authority.
++
++## Evidence design and file ownership
++
++All execution outputs below are relative to the repository root. Each has one responsibility. The finding links the evidence; it must remain readable without this planning conversation.
++
++| Path | Responsibility |
++|---|---|
++| `specs/sec-filing-index-ingestion-stage-1-findings.md` | Self-contained conclusion, boundary, decisions, evidence, limitations and owner acceptance |
++| `specs/evidence/sec-filing-index-ingestion/stage-1/index.csv` | Evidence index; one row per independently supportable claim |
++| `specs/evidence/sec-filing-index-ingestion/stage-1/baseline.md` | Repository status, revisions, protected-change hashes and scope drift |
++| `specs/evidence/sec-filing-index-ingestion/stage-1/decisions.md` | Accepted settings and concrete environment/deployment choices |
++| `specs/evidence/sec-filing-index-ingestion/stage-1/access-window.md` | Single issuer, other owner traffic, request/byte/time budgets and access history |
++| `specs/evidence/sec-filing-index-ingestion/stage-1/provider-review.md` | Versioned official documentation findings and retrieval failures |
++| `specs/evidence/sec-filing-index-ingestion/stage-1/provider/` | Retained provider extracts/snapshots with URL/time and hash |
++| `specs/evidence/sec-filing-index-ingestion/stage-1/requests.csv` | Every SEC attempt, including listing, failure and retry requests |
++| `specs/evidence/sec-filing-index-ingestion/stage-1/listings/` | Exact directory response bodies and metadata sidecars |
++| `specs/evidence/sec-filing-index-ingestion/stage-1/quarterly.csv` | Every requested quarter, development membership, actual discovered sources and outcome |
++| `specs/evidence/sec-filing-index-ingestion/stage-1/daily.csv` | Handoff/outage-recovery listing coverage, published files and gaps |
++| `specs/evidence/sec-filing-index-ingestion/stage-1/specimens/` | Original source bytes and metadata; content-addressed filenames preserve archive extension |
++| `specs/evidence/sec-filing-index-ingestion/stage-1/source-assessment.md` | Inspected format/path families, coverage limits, volume and temporary-space assessment |
++| `specs/evidence/sec-filing-index-ingestion/stage-1/runtime/` | Exact base/platform record, direct requirements, hashed resolution, probe inputs/scripts/logs/results |
++| `specs/evidence/sec-filing-index-ingestion/stage-1/azure-contracts.md` | API versions, polling/correlation and operation-level actor permissions |
++| `specs/evidence/sec-filing-index-ingestion/stage-1/schedules.md` | Eastern serialization and expected DST behavior |
++| `specs/evidence/sec-filing-index-ingestion/stage-1/discrepancies.csv` | Evidence conflict, affected contract, blocking flag, disposition and acceptance |
++| `specs/evidence/sec-filing-index-ingestion/stage-1/stage-7-checks.md` | Explicit reserved integrated checks and passing evidence required later |
++| `specs/evidence/sec-filing-index-ingestion/stage-1/readiness-checklist.md` | Requirement-to-evidence coverage and acceptance gate results |
++
++Temporary probe installations, wheel caches and container output staging go in a new `/private/tmp/sec-edgar-stage-1-*` directory. Retain only scripts, inputs, resolution metadata and reports in `runtime/`; no environment or production image is added to workspace packages. Do not overwrite prior evidence: use receipt-time/hash suffixes and append attempt records.
++
++Evidence-index columns: `evidence_id,claim,category,method,url_or_artifact,accessed_or_received_at_utc,versions,result,limitation,sha256,command,exit_code`. Categories are exactly **Verified documentation**, **Source/probe observation**, **Owner decision**, **Assumption**, **Reserved Stage 7 check**. Split a mixed claim across rows. Documentation needs a direct official URL and retrieval time; source bytes need receipt metadata and hash; probes need complete commands, outputs and exit codes; decisions need owner/date/revision. An assumption needs an impact, owner and resolution obligation. Do not classify a retrieval error as a verified fact.
++
++Each task ends with a reviewable deliverable and checkpoint. Steps are short actions; inventory/sampling steps repeat per directory/specimen. There is no library implementation test cycle in this investigation. Evidence checks and isolated assertions replace red/green production tests. Execute in order: later conclusions depend on earlier observations. Parallel agents must not create concurrent SEC issuers.
++
++## Planning-time official review (2026-10-05)
++
++These documentation checks were made while writing the plan. They establish methods and candidates only. Execution must re-access the selected versions, retain evidence and record precise timestamps. No archive sizes from brainstorming, live source outcomes, image digests or successful local probes are carried forward as verified execution evidence.
++
++| Topic | Verified documentation / limitation | Direct official reference |
++|---|---|---|
++| SEC discovery and corrections | Directory metadata includes HTML/XML/JSON; full indexes bridge the current quarter to daily indexes. Nightly work begins around 22:00 ET; full/quarterly rebuilds incorporate later corrections weekly. No historical-daily-retention or publication SLA inferred. | [Accessing EDGAR](https://www.sec.gov/search-filings/edgar-search-assistance/accessing-edgar-data) |
++| SEC owner-wide access | Published ceiling is 10 requests/s per user across machines. The accepted lower target and single-issuer policy remain application decisions. | [Developer resources](https://www.sec.gov/about/developer-resources) |
++| Jobs operations | Non-preview 2026-07-01 create/update, start, execution GET and execution list references exist. Start documents 200 execution output and 202 Location/Retry-After. Documentation does not prove deployed response/correlation behavior. | [Create/update](https://learn.microsoft.com/en-us/rest/api/resource-manager/containerapps/jobs/create-or-update?view=rest-resource-manager-containerapps-2026-07-01), [Start](https://learn.microsoft.com/en-us/rest/api/resource-manager/containerapps/jobs/start?view=rest-resource-manager-containerapps-2026-07-01), [Execution GET](https://learn.microsoft.com/en-us/rest/api/resource-manager/containerapps/job-execution/job-execution?view=rest-resource-manager-containerapps-2026-07-01), [List](https://learn.microsoft.com/en-us/rest/api/resource-manager/containerapps/jobs-executions/list?view=rest-resource-manager-containerapps-2026-07-01) |
++| Jobs states | GET enumerates Running, Processing, Stopped, Degraded, Failed, Unknown, Succeeded; individual descriptions do not fully define terminal semantics. | [Execution GET](https://learn.microsoft.com/en-us/rest/api/resource-manager/containerapps/job-execution/job-execution?view=rest-resource-manager-containerapps-2026-07-01) |
++| Jobs retry/authority | Zero retries is supported; maintenance guidance recommends at least one. Start permission can override templates and use attached identities. Built-in Job roles include broad actions; review exact needed permissions. | [Jobs](https://learn.microsoft.com/en-us/azure/container-apps/jobs) |
++| ADF Web | Default 202 handling follows Location with GET; managed-identity ARM audience is `https://management.azure.com/`. HTTP-operation completion is distinct from worker completion. Web output is limited to 4 MB and requires JSON. | [Web activity](https://learn.microsoft.com/en-us/azure/data-factory/control-flow-web-activity) |
++| Eastern scheduling | `Eastern Standard Time` observes DST; documented local timestamp format has no Z. Day-or-higher recurrence supports DST adjustment. | [Schedule triggers](https://learn.microsoft.com/en-us/azure/data-factory/how-to-create-schedule-trigger) |
++| Coordination primitives | Finite blob leases allow 15–60 s. Table ETag mismatch returns 412; wildcard If-Match bypasses concurrency. Neither primitive provides a Blob/Table transaction or fences external SEC traffic. | [Lease Blob](https://learn.microsoft.com/en-us/rest/api/storageservices/lease-blob), [Update Entity](https://learn.microsoft.com/en-us/rest/api/storageservices/update-entity2) |
++| ADLS multi-protocol | Blob and DFS can access the same data, with restrictions on mixing write APIs for an individual file and on block operations. | [ADLS known issues](https://learn.microsoft.com/en-us/azure/storage/blobs/data-lake-storage-known-issues) |
++| Temporary storage | Apps documentation lists 8 GiB for replicas above one vCPU, with ephemeral lifetime. Applicability/effective capacity for selected Jobs must be resolved without calling it measured worker capacity. | [Storage mounts](https://learn.microsoft.com/en-us/azure/container-apps/storage-mounts) |
++| Resource support | Consumption, GPv2/redundancy, image pulls and log retention have provider capability documentation. Product-region page retrieval supplied no usable service matrix in this review; shortlist eligibility is unresolved here. | [Profiles](https://learn.microsoft.com/en-us/azure/container-apps/workload-profiles-overview), [Accounts](https://learn.microsoft.com/en-us/azure/storage/common/storage-account-overview), [Redundancy](https://learn.microsoft.com/en-us/azure/storage/common/storage-redundancy), [Region matrix](https://azure.microsoft.com/en-us/explore/global-infrastructure/products-by-region/table/), [Image pulls](https://learn.microsoft.com/en-us/azure/container-apps/managed-identity-image-pull), [Log options](https://learn.microsoft.com/en-us/azure/container-apps/log-options), [Retention](https://learn.microsoft.com/en-us/azure/azure-monitor/logs/data-retention-configure) |
++| Runtime candidates | Microsoft pages identify Identity 1.26.0, Blob 12.31.0 and Tables 12.7.0 candidates. Arrow installation and official Python image references are available; this review selects no combined runtime pins. | [Identity](https://learn.microsoft.com/en-us/python/api/overview/azure/identity-readme?view=azure-python), [Blob](https://learn.microsoft.com/en-us/python/api/overview/azure/storage-blob-readme?view=azure-python), [Tables](https://learn.microsoft.com/en-us/python/api/overview/azure/data-tables-readme?view=azure-python), [Arrow](https://arrow.apache.org/docs/python/install.html), [Python image](https://hub.docker.com/_/python?tab=description) |
++
++### Task 1: Establish baseline, decision register and access boundary
++
++**Files:** Create `baseline.md`, `decisions.md`, `access-window.md`, `index.csv`, `discrepancies.csv` under the evidence root above.
++
++**Interfaces:** Consumes approved spec/parent/ADR/roadmap and current worktree. Produces protected baseline, pinned investigation endpoint, recorded decisions and an exclusive bounded access window for Task 2.
++
++- [x] **Step 1: Capture the repository baseline without mutation.** Run from the repository:
++
++  ```bash
++  git status --porcelain=v1
++  git rev-parse HEAD
++  git show 321c93a:specs/sec-filing-index-ingestion-stage-1-spec.md
++  git diff -- specs/sec-filing-index-ingestion-stage-1-spec.md
++  git ls-files
++  rg --files --hidden -g '!.git' -g '!.venv'
++  shasum -a 256 specs/sec-filing-index-ingestion-roadmap.md pyproject.toml
++  ```
++
++  Record outputs/exit codes and hashes of every changed/untracked file, including roadmap bytes. Expected initial HEAD is approval commit `321c93a`; four index-ingest files are deleted and roadmap is untracked. Record drift rather than forcing this state. Read package configs/scaffolds and root CLI configuration; identify Stage 2 alignment needs without changing them.
++
++- [x] **Step 2: Initialize evidence registers using the schemas in this plan.** Discrepancy columns are `id,claim,evidence_ids,parent_reference,blocking,proposed_resolution,owner,accepted_revision,accepted_date,status`. Use status `open`, `resolved` or `reserved_stage_7`; a required input left unchosen is open/blocking, not a deferral.
++
++- [x] **Step 3: Pin evaluation date and end quarter.** Use America/New_York for the run-start date. Store endpoint once and enumerate quarter ordinals inclusively. On 2026-10-05, endpoint is 2026 Q4, yielding 68 intended and 48 development units; on another date recompute both counts and latest closed quarter. Keep these as requested units, separate from discovered source units.
++
++- [x] **Step 4: Record every approved §4 input and parent acceptance, then request the missing concrete decisions as one batch.** Obtain tenant/subscription UUIDs and cloud, proposed dedicated resource-group name, environment/naming scheme, deployment operator identity and authority, registry location/type and permission mode, pull identity choice, rollback digest retention/availability policy, and deployment-tool prerequisites. Record owner confirmation of these choices; never substitute example UUIDs or a guessed default subscription. New resource principal IDs remain Stage 7 deployment records. Registry and tooling may be proposed during Tasks 4–5, but all concrete choices must be accepted before readiness.
++
++> Deviation: Concrete production choices were deliberately left open at the Task 1 checkpoint and resolved by the exact R3 batched owner acceptances and Task 5 owner checkpoint before readiness; no answer was inferred.
++
++- [x] **Step 5: Establish one investigation issuer and account for other owner traffic before SEC access.** Record issuer/operator, coordination method, exclusive sampling window and owner traffic allocation. Proposed bounded window: at most 45 minutes, 240 total HTTP attempts including retries, 512 MiB received and 12 initial complete source specimens; request starts spaced at least 1/3 second, sequential, no bursts. Reduce the rate if other owner traffic requires it. This is an investigation limit, not a production settings revision. Pause at the first exhausted budget, new format family or required additional sampling; record a bounded continuation window before resuming. No second issuer, independent retry budget or identity rotation. Honor longer Retry-After; halt on 403/access-denial content. Record unresolved traffic allocation as blocking; independent documentation work can continue.
++
++> Deviation: The owner confirmed all other SEC traffic paused; only the controller issued requests, and the novel daily family caused an explicit pause and accepted bounded continuation before further sampling.
++
++**Checkpoint:** Baseline protections and decision statuses are reviewable. No live SEC request proceeds without the recorded traffic/window boundary. No readiness is inferred from spec approval.
++
++### Task 2: Inventory requested quarterly and relevant daily sources
++
++**Files:** Create `requests.csv`, `quarterly.csv`, `daily.csv`, `listings/`; update access and evidence registers.
++
++**Interfaces:** Consumes Task 1 endpoint/window. Produces exhaustive requested-quarter accounting, actual discovered URLs, representations, daily retention observations and specimen candidates for Task 3.
++
++- [x] **Step 1: Define row contracts before requesting directories.** Quarterly columns: `quarter,development_subset,requested_at,listing_evidence_id,discovered_url,representation,listed_size,listed_size_unit,source_status,selection_reason,gap_id`. Keep one summary outcome per requested quarter plus child representation rows. Daily columns: `directory_period,listing_evidence_id,discovered_url,listed_date,representation,handoff_relation,outcome,gap_id`. Request ledger columns: `attempt_id,issuer,start_utc,end_utc,url,status,received_bytes,body_sha256,response_headers_artifact,exit_code,retry_reason,next_allowed_at,outcome`. Sidecars preserve URL, UTC receipt, HTTP status, headers, transport/content encoding, redirect chain, schema, discovered children and selection decision. Avoid automatic client retry/redirect behavior that escapes the shared attempt ledger.
++
++- [x] **Step 2: Discover the full-index hierarchy from official roots.** Start at `https://www.sec.gov/Archives/edgar/full-index/index.json`; follow validated child entries through years and quarters within the requested range. Inspect current-quarter root representations too; record the actual relationship between root and year/QTR full indexes rather than assuming they are equivalent. Resolve canonical HTTPS SEC URLs only within the accepted Archives index families. Capture exact listing bytes and hash before inspecting JSON. If JSON is absent or malformed, inspect the documented XML/HTML representation under the same budget and record the fallback/schema. Generated quarter labels are allowed for expected coverage; generated file URLs are not evidence of availability.
++
++- [x] **Step 3: Inventory every intended quarter and mark the development subset.** Repeat listing capture per unit and enumerate master representations/extensions, sizes and dates. Record `available`, `valid_no_source`, `discovery_failed`, or `listed_source_pending` based on evidence. A missing/inaccessible directory is not a successful empty listing; a listed file's 404 is pending. Follow parent §§4.2–4.4, retain all failed outcomes and do not infer withdrawals. Record selected representation per observed family; no need to support optional codecs when an inspected alternative covers the source.
++
++- [x] **Step 4: Inspect daily discovery from the handoff and across outage boundaries.** Start at `https://www.sec.gov/Archives/edgar/daily-index/index.json`; follow its actual hierarchy. Inspect current and preceding quarters, the handoff quarter, available year directories throughout the intended range and at least the first/last available quarter of each discovered historical year. Record which historical directories exist and which remain uninspected. If the proposed supported outage horizon exceeds observed daily availability, inspect the relevant additional directories in another bounded window or obtain an explicit gap resolution. Discover dates from listings; never manufacture weekend/holiday filenames. Keep 2026-10-01 as a required inspection even if absent, and select an already-published daily body from a successful listing.
++
++- [x] **Step 5: Check inventory completeness against the pinned requested set.** Independently recompute inclusive quarter count; verify no duplicate/missing quarter summary and correct 2015 Q1 subset boundary. Cross-check each successful row against retained child entries. Record receipt-date-sensitive open-quarter status. Record every gap and its effect on supported range/recovery; obtain owner acceptance of an actual range/contract revision if needed rather than calling absence harmless.
++
++> Deviation: The incomplete-read chain was fixed and checked before Task 2 acceptance; no failed or incomplete listing was recast as complete.
++
++**Checkpoint:** All requested quarters have evidence-linked outcomes; daily discovery has a documented historical observation boundary. Listings alone do not establish format support or historical ingestion coverage.
++
++### Task 3: Retain specimens and assess formats, paths and space
++
++**Files:** Create `specimens/`, `source-assessment.md`; update `quarterly.csv`, `daily.csv`, discrepancies and index.
++
++**Interfaces:** Consumes discovered sources. Produces format/representation support boundary, original-byte samples, archive decoding inputs for Task 4 and bounded volume/space assessment.
++
++- [x] **Step 1: Choose the bounded specimen matrix from actual inventory.** Include 2010 Q1, 2015 Q1, latest closed and open quarter; handoff daily and already-published daily; closed/open transition daily pair where listed; a year-transition pair; every distinct selected format/legacy path family exposed by inventory or inspection. Multiple samples can cover one requirement. For absent handoff/transition files record absence and inspect the nearest listed files on both sides; seek explicit accepted resolution of unmet required coverage. Expand beyond the initial 12 only through a recorded continuation budget. Do not download all representations speculatively.
++
++> Deviation: Ten body receipts satisfied the selected coverage matrix under the accepted continuation; no global family or nullable-accession golden coverage is claimed.
++
++- [x] **Step 2: Retain original bodies and receipt evidence.** Each archive stays an archive named by hash plus original extension; decoded content is a separate derivative. Preserve HTTP transport bytes/content-encoding interpretation explicitly: use Accept-Encoding identity where supported and disable transparent body decoding in the acquisition tool. Hash the bytes actually retained; preserve advertised Content-Length and compare when applicable. Record User-Agent, validators, MIME type, received byte count, UTC receipt, status and body hash. Quarantine HTML/truncation/error bodies as evidence; they are not source specimens. Use bounded reads and parent failure rules.
++
++- [x] **Step 3: Inspect archives safely and retain member reports.** List member names, codec, compressed/expanded sizes and checksums; reject unexpected members, traversal/absolute paths, excess count or expansion before extraction. Decode to the isolated directory, not repository package paths. Proposed investigation expansion cap is 512 MiB per specimen; an over-cap source remains unexamined pending a bounded revision. Record actual expanded byte count and derivative hash, integrity-check output and exit code. Do not overwrite archive bytes with `master.idx`.
++
++- [x] **Step 4: Inspect source text and legacy conventions without building the parser.** Record encoding evidence and decoding failures (never use lossy replacement), BOM, newline distribution, header/column separator, representative raw rows/fields/paths and observed minimum/maximum filing dates with the inspection method. Inspect early-range path families, accession-shaped and non-extractable paths; preserve nullable accession under parent §4.4. If a complete format-family scan is not performed, state the inspected-row boundary. Additional bodies may be needed when metadata cannot reveal format changes. No unexamined family becomes supported merely by analogy; later golden parser verification remains required under parent §6.
++
++> Deviation: A novel daily header/date/newline family required the accepted continuation; original bytes and cross-quarter filing dates were preserved. Initial misnamed fixture diagnostics were overwritten; the limited evidence loss remains disclosed, with corrected red/green receipts retained.
++
++- [x] **Step 5: Reconcile raw representation with parent §4.5 examples.** Record selected archive extension/member and original-byte raw naming. Parent `master.idx` is an example and does not permit storing decoded content as original bytes. If a chosen durable naming scheme changes an accepted contract, record the proposed revision and owner acceptance before readiness. Otherwise explain how original extension/format metadata and derivative paths preserve the contract.
++
++> Deviation: The annotation helper initially mishandled historical daily CSV rows; the exact frozen Task 2 rows and order were restored, versioned, and independently checked before acceptance.
++
++- [x] **Step 6: Calculate bounded volume and disk requirements.** Sum listed quarterly sizes by representation with explicit units/unknowns; use observed download sizes separately. Report largest listed and largest retained source, expansion ratio per inspected archive, sample count and uninspected-tail uncertainty. Calculate temporary peak as simultaneous original archives + expanded derivatives + planned observation/output scratch + candidate-generation scratch + installer/runtime/log reserve. Identify which terms are measured and which are assumptions; recommend bounded source units without designing the worker. Compare with documented candidate temporary capacity, never call it a measured 4 GiB-memory or 3,600-second-runtime fit. Blocking incompatibility requires an accepted setting revision; actual memory/runtime belongs to Stage 7.
++
++> Deviation: The one-unit space model uses measured inputs plus explicit scratch/reserve assumptions; documented 8 GiB applicability remains an assumption and actual worker fit stays reserved for Stage 7.
++
++**Checkpoint:** Every supported selected representation/family has retained evidence; unknowns/gaps have explicit dispositions. Hashes independently recompute with `shasum -a 256` on each original and derivative. Directory size estimates are not expansion or processing measurements.
++
++### Task 4: Prove an exact isolated Python/container dependency combination
++
++**Files:** Create `runtime/base-image.json`, `runtime/requirements.in`, `runtime/requirements.lock`, `runtime/dependency-matrix.csv`, `runtime/probe.py`, `runtime/commands.md`, `runtime/results/`; update index/discrepancies.
++
++**Interfaces:** Consumes Task 3 formats and specimen bytes. Produces exact reproducible base/runtime pins, dependency/wheel metadata and retained successful compatibility results, or a blocking failure.
++
++- [x] **Step 1: Inspect tool prerequisites outside the workspace.** Record `docker version`, `docker buildx version`, `uv --version`, `az version`, and `az bicep version` when installed, with exit codes. Missing tools are evidence, not permission to install or repair packages. Use an available isolated container facility; if none can run Linux amd64, record the runtime proof as blocked. Native macOS/arm64 imports alone do not satisfy this task.
++
++> Deviation: Local Docker was absent; the owner explicitly accepted the bounded temporary ACR Tasks setup exception. Azure CLI 2.90.0 was installed/authenticated under separate authorization; Bicep remained absent.
++
++- [x] **Step 2: Select and inspect one exact Python 3.14 patch image.** Resolve an official Debian slim Python tag to immutable registry manifest and Linux amd64 child digest using `docker buildx imagetools inspect` and retain its output. Record tag, registry, manifest/child digest, OS variant and libc, `sys.version`, implementation/ABI (`sysconfig.get_config_var('SOABI')`), architecture and installer versions. Re-run by digest with `--platform linux/amd64`; do not select `latest`. Label emulated amd64 as such and do not infer production performance. Exact patch/digests are outputs of investigation, not invented pins in this plan.
++
++> Deviation: Official registry/publisher metadata and retained SDK/API requests replaced unavailable local Docker inspection; immutable Linux amd64 child digest and exact platform pins were retained.
++
++- [x] **Step 3: Resolve a minimal direct dependency set in that image.** Start with documented Identity 1.26.0, Blob 12.31.0 and Tables 12.7.0 candidates; select an exact SEC HTTP client and PyArrow version from current publisher package metadata. Use synchronous requests unless selected operations justify async dependencies. Include azure-storage-file-datalake only if the recorded operation map requires DFS APIs; record why omitted otherwise. Freeze exact direct pins into `requirements.in`, resolve all transitives into a hash-locked `requirements.lock` with the recorded installer version, and preserve downloaded artifact hashes/metadata. Matrix columns: `distribution,version,direct_or_transitive,requires_python,artifact_filename,wheel_tags,sha256,source_url,install_result,import_result,limitation`. Cover cryptography/cffi, Azure core/MSAL and Parquet native artifacts when resolved. A package minimum version is insufficient evidence; if a source build is needed record build prerequisites and prove it in the selected image or select a supported wheel combination.
++
++- [x] **Step 4: Reinstall the lock in a fresh container, not the resolver environment.** Bind evidence read-only as `/evidence`, bind a new isolated output directory as `/out`; record complete expanded commands, stdout/stderr and exit codes. Commands use the selected digest and exact installer pins recorded in `base-image.json`/`commands.md`, never an unconstrained tag. Run `python -m pip install --require-hashes -r /evidence/runtime/requirements.lock`, `python -m pip check`, `python -m pip inspect`, `python -m pip debug --verbose`, and `python /evidence/runtime/probe.py`. Expected install/check/probe exit code: 0; retain nonzero results too. No `uv sync` at repository root. Install is networked dependency access, not an Azure authentication test.
++
++> Deviation: Fresh uncached ACR Tasks contexts replaced local read-only bind mounts; frozen input hashes and separate export receipts prove retained inputs/results. The first CLI command failed locally on unsupported arguments and submitted no task.
++
++- [x] **Step 5: Run this offline import/Parquet probe and decode each selected archive separately.** Save the following complete core probe as `runtime/probe.py`; inputs are synthetic compatibility rows, not normalized SEC data:
++
++  ```python
++  import importlib
++  import json
++  import platform
++  import sys
++  import sysconfig
++  from importlib.metadata import version
++  from pathlib import Path
++
++  import pyarrow as pa
++  import pyarrow.parquet as pq
++
++  matrix = Path('/evidence/runtime/dependency-matrix.csv').read_text()
++  modules = ['azure.identity', 'azure.storage.blob', 'azure.data.tables']
++  if 'azure-storage-file-datalake,' in matrix:
++      modules.append('azure.storage.filedatalake')
++  for module in modules:
++      importlib.import_module(module)
++  direct = Path('/evidence/runtime/requirements.in').read_text().splitlines()
++  installed = {}
++  for line in direct:
++      line = line.strip()
++      if line and not line.startswith('#'):
++          name, pin = line.split('==')
++          assert version(name) == pin, (name, pin, version(name))
++          installed[name] = pin
++  assert sys.version_info[:2] == (3, 14)
++  assert platform.machine() in ('x86_64', 'amd64'), platform.machine()
++  rows = pa.table({'probe_id': [1, 2], 'text': ['SEC', 'café'],
++                   'optional': pa.array([None, 'x'], type=pa.string())})
++  target = Path('/out/roundtrip.parquet')
++  pq.write_table(rows, target)
++  restored = pq.read_table(target)
++  assert restored.equals(rows)
++  print(json.dumps({'python': sys.version, 'machine': platform.machine(),
++                    'abi': sysconfig.get_config_var('SOABI'),
++                    'installed': installed, 'parquet_roundtrip': 'passed'}))
++  ```
++
++  Import the chosen HTTP-client module with a separate `python -c` command; it must make no requests. For selected ZIP use `python -m zipfile -t` and the bounded member inspection from Task 3 in the fresh container. For selected gzip use `gzip -t` if available plus bounded decompression; for another codec use its documented exact decoder and retain commands/exit codes. Compare decoded hashes to Task 3 derivatives. Plain `.idx` needs a recorded no-archive decision and exact-byte/encoding check. Include every selected codec; optional unselected codecs remain unsupported. Do not implement SEC row parsing/catalog publication in this probe.
++
++- [x] **Step 6: Repeat reproducibility verification and record limits.** Fresh-container installation plus imports, selected-archive decoding and Parquet round trip must all pass for one exact combination. Retain failed candidates with discrepancy resolutions. Distinguish base-image digest from a future built worker/release digest. Include registry choice, pull authorization requirements, rollback-image availability decision and exact deployment tool versions/prerequisites in the decision record, without building/pushing a worker or accessing deployed resources.
++
++> Deviation: Actual ca1 failed during ACR dependency scanning on FROM --platform grammar; ca2 resolved and ca3/ca4 independently validated the corrected pinned context. All four accepted runs are retained; temporary registry/group deletion and absence were verified.
++
++**Checkpoint:** The combined Linux amd64/Python 3.14 matrix is supported by actual successful isolated outputs with hashes, commands and exit codes. No successful Azure data access, production worker capacity or parser coverage is implied.
++
++### Task 5: Resolve versioned Azure capability, permissions and schedules
++
++**Files:** Create `provider-review.md`, `provider/`, `azure-contracts.md`, `schedules.md`, `stage-7-checks.md`; update decisions and discrepancies.
++
++**Interfaces:** Consumes accepted architecture/settings and source/runtime limits. Produces documented selected API/tool versions, identity/operation matrix, schedule expectations and explicit deployment obligations for the readiness finding.
++
++- [x] **Step 1: Reverify and retain official evidence for the selected operation versions.** Use planning references above as starting URLs. For each resource record resource type, exact version, operation, method/path, response schema, source URL/time and any unsupported field. Select one consistent non-preview Jobs family for create/start/execution GET/list (2026-07-01 is a documented candidate); record any justified departure. Resolve ADF factory/pipeline/trigger versions from [pipeline reference](https://learn.microsoft.com/en-us/azure/templates/microsoft.datafactory/factories/pipelines) and [trigger reference](https://learn.microsoft.com/en-us/azure/templates/microsoft.datafactory/factories/triggers). Resolve Storage account/blob/table resource and service `x-ms-version` choices from [Storage reference](https://learn.microsoft.com/en-us/azure/templates/microsoft.storage/storageaccounts) and selected SDK implementation metadata; management versions and data-plane versions are separate columns. Include managed environments, identities/role assignments, registry, Log Analytics workspace/tables, diagnostic settings, action groups and selected alert resource types via their official Microsoft resource references. Record exact Azure CLI/Bicep versions required; no resource definitions or deployment are created. A missing reference/version remains unresolved, not guessed.
++
++> Deviation: A project-aware uv Ruff attempt failed in the broken root editable build and created task-local .venv/lock artifacts; only proven task-created artifacts were removed, with receipts. No workspace repair or lint pass is claimed.
++
++- [x] **Step 2: Write the start/correlation decision table.** Separate ARM start acceptance/async completion, exact execution state and matching durable worker-result validation. Record 200 execution-reference extraction, 202 Location/Retry-After handling, approved host/path/token audience, and ADF `turnOffAsync` choice supported by the selected design. If ADF's async output cannot prove exact correlation, require operator recovery and Stage 7 evidence rather than selecting the latest execution. Correlation includes execution id, ADF run id, command/attempt, workset and image digest. Timeout/unknown id is `execution_unknown`, never an automatic launch retry. List-by-time alone cannot prove identity. Record documented request/async limits separately from application polling settings; Jobs event `pollingInterval` is not ADF execution polling. Proposed bounded status polling: 30 s base, honor longer server delay, explicit 4,200 s application observation deadline including the 3,600 s replica allowance; classify deadline/unknown outcome conservatively and seek owner acceptance of this new setting. No observed 200/202 shape is claimed until Stage 7.
++
++- [x] **Step 3: Map all seven documented states conservatively.** Running/Processing continue bounded observation; Succeeded is only a candidate success requiring the exact matching successful durable result. Failed is failed; Stopped is unsuccessful; Degraded/Unknown remain uncertain unless authoritative selected-version evidence resolves them. Unknown enum, unavailable GET or deadline cannot pass; no uncertain state authorizes transient replay. Record per-state documented meaning, policy decision and Stage 7 check. Confirmed transient failure may use at most the accepted one replay with durable workset/attempt handling; do not invent idempotency from start response semantics.
++
++- [x] **Step 4: Produce the actor/operation/resource-scope permission matrix.** Columns: actor, identity type, token audience, exact API/operation, management Actions or data DataActions, role/custom-role choice, assignment scope, network prerequisite, evidence and Stage 7 proof. Review [Storage Entra authorization](https://learn.microsoft.com/en-us/rest/api/storageservices/authorize-with-azure-active-directory), [ACR roles](https://learn.microsoft.com/en-us/azure/container-registry/container-registry-rbac-built-in-roles-overview) and image-pull docs. Required actor coverage:
++
++> Deviation: The owner accepted worker approval bookkeeping and the human approval boundary in exact R3/F1 records; scoped reviews corrected role-union denial claims and preserved hash-bound application safeguards.
++
++  | Actor | Required operation coverage |
++  |---|---|
++  | ADF managed identity | Job read/start, exact execution GET/list and necessary async-operation read; durable JSON result Blob read with Storage audience `https://storage.azure.com/`; separate ARM `https://management.azure.com/` audience |
++  | Collector/worker managed identity | Raw/workset/result/quarantine/generation Blob or DFS read/write; lease acquire/renew/release; source/attempt/pointer/approval Table read and conditional write; explicit container/table scopes |
++  | Registry pull identity | Repository/image pull by digest; permission-mode-specific role and registry token audience; registry ARM-token authentication prerequisite where applicable |
++  | Reader | Active-pointer Table read and manifest/data Blob read; document scope limitations for table/container granularity |
++  | Approval/rollback operator | Read exact candidate evidence and write approved records/pointer operations under the application contract; do not describe RBAC alone as enforcing hash-bound approval |
++  | Deployment/role-assignment operator | Resource creation/update, provider-registration requirements and role-assignment authority at the chosen scopes; separate management authority from data authority |
++
++  Verify Actions/DataActions against official definitions, not role names alone. Avoid using broad Jobs role wildcards as least-privilege proof. Start authority can execute overrides using attached identities; record the resulting trust boundary. Resolve identity type and concrete operator authority before ready acceptance; actual new principal IDs and effective authorization remain reserved.
++
++- [x] **Step 5: Record Storage/network/resource/log limits.** Review lease durations/renewal/break semantics and conditional Table writes (no wildcard If-Match for CAS); retain parent takeover/in-flight requirements because blob leases do not fence SEC requests. Review DFS/Blob write restrictions, choosing an API per object write lifecycle; determine DFS dependency need for Task 4 and repeat that probe if the selection changes. Verify GPv2 HNS/Hot/ZRS and Table coexistence, chosen regional service capability, Consumption Jobs CPU/memory eligibility and temporary storage applicability without profile comparison. If regional matrix is inaccessible, retain the failed retrieval and use another current official Microsoft source or leave it unresolved. Product support is distinct from subscription registration, Jobs profile eligibility, quota, capacity and policy. Record public HTTPS paths for worker SEC/Storage/Entra/registry/telemetry and ADF ARM/results, DNS/TLS/egress and firewall implications; managed identity does not bypass network controls. Select log routing and relevant tables with 90-day operational retention, alert resource/API and destination; neither retention configuration nor docs prove delivery.
++
++- [x] **Step 6: Record Eastern serialization and both DST transitions.** Select `Eastern Standard Time`, daily Day interval 1 with hours `[5]`/minutes `[0]`, weekly Week interval 1 with Sunday hours `[6]`/minutes `[0]`. Record local `startTime`/`endTime` format `yyyy-MM-ddTHH:mm:ss` without Z for this zone; monitoring query timestamps are UTC. Keep production triggers disabled in later deployment; this task authors no trigger definition. Expected values for local conversion checks:
++
++  | Local date/time | UTC daily 05:00 | UTC Sunday 06:00 |
++  |---|---|---|
++  | 2026-03-07 before spring change | 10:00 | Standard-time expectation 11:00 |
++  | 2026-03-08 after spring change | 09:00 | 10:00 |
++  | 2026-10-31 before fall change | 09:00 | Daylight-time expectation 10:00 |
++  | 2026-11-01 after fall change | 10:00 | 11:00 |
++
++  Saturday rows show offset expectations; they do not imply a reconciliation run on Saturday. Check the Sunday before/after each transition as well. Use Python `zoneinfo.ZoneInfo('America/New_York')` only as a local conversion observation, not proof that ADF's Windows-zone trigger executed. Record zone-data version. If evaluation year differs, include that year's transitions too. Actual trigger/DST execution evidence is Stage 7.
++
++- [x] **Step 7: Record zero-native-retry rationale and Stage 7 obligations.** Retain Microsoft's maintenance recommendation alongside the accepted policy: central orchestration distinguishes ambiguous starts from confirmed transient failures and limits replay, while durable source worksets preserve progress. Zero retries can leave maintenance-interrupted work incomplete; it is a trade-off, not a maintenance guarantee. Require Stage 7 maintenance-failure recovery evidence and owner review of the rationale without silently changing the accepted default.
++
++- [x] **Step 8: Populate the reserved Stage 7 register.** Every entry has parent reference, selected configuration/version, unresolved effective behavior, required passing artifact and responsible role. Cover effective identity permissions; region registration/profile/quota/capacity/policy; public endpoint reachability; registry pulls; actual job 200/202 start/correlation/status/durable-result behavior; lease/CAS failure and takeover; maintenance recovery; Eastern/DST trigger behavior; logs/alerts; actual worker memory/runtime. Include parent §§6–7 integration/fault injection, bounded quarterly/daily smoke, SEC-disabled replay, withdrawal approval and rollback evidence. Mark all `reserved/not_run`; do not plan their implementation here.
++
++**Checkpoint:** Provider capability and uncertainty policies are evidenced; owner decisions are recorded; exact deployment behavior stays reserved. Revisit Task 4 if SDK/DFS/tool selections change, and surface the dependency deviation.
++
++### Task 6: Assemble readiness finding and obtain exact-revision acceptance
++
++**Files:** Create `specs/sec-filing-index-ingestion-stage-1-findings.md` and `readiness-checklist.md`; finalize index, discrepancies, decisions and evidence hashes.
++
++**Interfaces:** Consumes Tasks 1–5 artifacts. Produces a ready/not-ready finding and, only when ready, owner acceptance naming its immutable revision/hash and limitations.
++
++- [x] **Step 1: Write the nine required finding sections.** Use the Stage 1 §7 list as the exact content checklist: conclusion/evaluation endpoint/contract revisions/boundary; decisions and deployment bindings; quarterly/daily inventory and gaps; exact runtime/probes; Azure APIs/states/permissions/DST; resource/space and retry rationale; discrepancy resolutions; Stage 2 handoff and Stage 7 register; owner acceptance. Cite evidence ids and paths for every material claim. Record parent §4.2 overlap, §4.4 nullable accession/withdrawal rules, §§4.5–4.6 original-byte/replay/publication safeguards without rewriting them. Stage 2 handoff identifies broken root workspace membership/CLI and redundant scaffolds; no repairs are performed and no Stage 2 plan is written.
++
++- [x] **Step 2: Run the §8 readiness gate line by line.** Map each requirement to artifact/row/decision and pass/block status. Confirm complete requested-quarter accounting; required daily/transition/family specimens or explicitly accepted gap revisions; exact digest/locks; successful isolated combined probes; selected provider/API/tool/permission evidence; concrete tenant/subscription/group/operator/registry/naming decisions; recorded parent acceptance. Missing runtime proof, traffic allocation, binding or unresolved required capability is blocking, not merely a Stage 7 entry. Genuine integrated-deployment checks may remain reserved with clear obligations.
++
++- [x] **Step 3: Resolve discrepancies before a ready conclusion.** Show the owner one batch of decisions/contract revisions that need acceptance, linked to evidence and effects. Update the affected accepted contract only with explicit revision acceptance. Repeat impacted checks/probes and update references; unsupported sources/settings cannot weaken safeguards. If blocked, conclude not ready and preserve all evidence. A not-ready report can be reviewed, but the plan and Stage 1 remain incomplete; no completion protocol or stage tick follows.
++
++> Deviation: Required owner decisions were resolved at Task 5, so no unanswered decision batch remained at the final gate; D10 Stage 2 alignment and D11/22 Stage 7 obligations remain original later-stage duties.
++
++- [x] **Step 4: Validate evidence integrity and preservation.** Recompute hashes, verify every local evidence link exists, match specimen byte counts, check all required probes' exit codes, reconcile counts/categories and scan for unsupported success claims. Run `git diff --check` (expected exit 0) and `git status --porcelain=v1`; compare protected paths/status/hashes with Task 1. Recheck original approval commit/reference. No code build/test is needed to validate documentation, and the broken workspace must not be repaired for this check.
++
++> Deviation: Four duplicate index IDs were normalized with immutable before versions; final whole-branch review required additional categorized claim coverage and an obsolete Stage 7 condition correction. Both were fixed and scoped re-reviewed; historical generation verifiers retain their original boundaries.
++
++- [x] **Step 5: Present the ready finding for owner acceptance by revision/date.** First freeze the reviewable evidence/finding revision (commit restricted paths when authorized, or use finding SHA-256 plus evidence-manifest SHA-256). Request acceptance from Lowell Mason of that exact ready conclusion, supported boundary, decisions and listed limitations. Record the accepted pre-acceptance finding hash/revision and acceptance date in the finding; retain the reviewed version so adding the acceptance record does not invalidate its referent. Any material change after acceptance requires renewed acceptance of the new revision. No automatic acceptance inferred from a prior spec approval or silence.
++
++> Deviation: Restricted-path commit was deferred to the controller; exact immutable F1 finding SHA-256 plus the 1,584-record manifest SHA-256 identify the accepted candidate. Lowell Mason explicitly replied Approved, accepted 2026-10-05; the controller receipt timestamp is not owner-authored.
++
++**Checkpoint:** An owner-accepted **ready** finding exists with reproducible evidence and no blocking uncertainty. Until this checkpoint passes, retain the unexecuted/in-progress plan and unticked Stage 1.
++
++### Task 7: Record gated completion and stop at the Stage 1 boundary
++
++**Files:** Only after Task 6 acceptance: update this plan, Stage 1 spec rollout stamp and roadmap Stage 1 checkbox; retire this plan/Stage 1 spec according to writing-plans completion protocol. Parent design spec, ADR and roadmap remain active.
++
++**Interfaces:** Consumes the exact accepted ready finding/reference. Produces authoritative Stage 1 completion provenance and consistency notes; no later-stage plan or execution.
++
++- [x] **Step 1: Run resolve-before-defer before completion markup.** Missing Stage 1 exit evidence cannot be deferred to manufacture readiness. Resolve skipped tasks/findings requiring owner input. Stage 7 checks are required later-stage obligations, not invented Stage 1 accomplishments. Apply writing-plans deferred-item rules only to legitimate nonblocking leftovers; preserve existing backlog entries.
++
++- [x] **Step 2: Mark this plan complete and retire with correct links.** Only after all exit gates pass, tick completed steps and record actual execution skill/date and deviations. Apply writing-plans Plan Completion Protocol (backlog tick/append if applicable, health report/triage and restricted-path retirement). Plan 1 final path is `specs/plans/completed/1-sec-filing-index-ingestion-stage-1-spec.md`; Stage 1 spec final path is `specs/completed/sec-filing-index-ingestion-stage-1-spec.md` if no other live plan implements it. Fix links for the extra directory depth; finding/evidence paths stay stable. Do not retire the parent spec or roadmap.
++
++> Deviation: The implementing plan was untracked, so filesystem moves replaced git mv. Controller review, the named-path retirement commit and final SDD retention/removal remain separate controller actions; no Git mutation occurred here.
++
++- [x] **Step 3: Write the authoritative Stage 1 rollout stamp before ticking the roadmap.** Stamp the Stage 1 spec with actual completion date, plan 1 final path and the accepted finding revision/reference, using:
++
++  ```text
++  Stage 1: COMPLETE (YYYY-MM-DD) — implemented by plan 1
++  (specs/plans/completed/1-sec-filing-index-ingestion-stage-1-spec.md).
++  Accepted ready finding: specs/sec-filing-index-ingestion-stage-1-findings.md,
++  revision/reference as recorded in its owner acceptance record; accepted YYYY-MM-DD.
++  Next: resume the roadmap.
++  ```
++
++  Substitute the recorded actual dates and exact accepted revision, not the planning date or example text. Tick Stage 1 only after this stamp exists. Revalidate later roadmap stages against the delivered decisions/evidence as consistency notes or explicitly accepted corrections; do not investigate or plan those stages. Roadmap's draft gap-analysis statements about missing acceptance remain historical baseline, not current completion evidence.
++
++- [x] **Step 4: Verify final provenance and stop.** Run `git diff --check`, inspect final `git status --porcelain=v1`, recompute protected-change hashes and verify completion stamp/accepted finding/final plan links resolve. If committing, stage only named Stage 1 artifacts and intentionally accepted rollout/retirement edits, never `git add .` or `git add -A`; the formerly untracked roadmap must not be committed incidentally. Report Stage 1 evidence/acceptance/stamp and reserved checks. Later transition requires the owner's separate request to resume the roadmap.
++
++> Deviation: Completion checks verify the intentionally retired paths and accepted immutable F1 alias rather than rewriting earlier pre-retirement generation checks; this task asserts no controller review, commit or SDD removal.
++
++**Checkpoint:** Checkbox, completion stamp, retired implementing plan and exact accepted finding agree. Stop here.
++
++## Historical planning self-review and execution handoff (2026-10-05)
++
++Coverage: Stage spec §§1–3 → Task 1 and global constraints; §4 → Tasks 1/4/5; §5.1 → Tasks 2–3; §5.2 → Task 4; §5.3 → Task 5; §5.4 → evidence schema/all checkpoints; §6 → official review and reverification; §§7–8 → Task 6; §9 → Task 7. No ingestion implementation, package repair, Azure provisioning or later-stage planning is included.
++
++The original planning handoff below is historical, not investigation evidence or current status. At that handoff all task checkboxes were empty; Stage 1 stays unticked and its spec stays approved, without a completion stamp.
++
++Recommended: open a fresh execution session with this plan as the complete handoff. Choose subagent-driven-development or inline executing-plans there. Keep one operational SEC issuer regardless of execution method. The original planning request authorized writing this Stage 1 plan only; do not start investigation tasks as a side effect of saving it.
+
+## specs/sec-filing-index-ingestion-roadmap.md
+SHA256 e4fdf810785daa3700a92c96b65e08f671f4afbdfe273eed6154dcd255a9cf02
+--- before/specs/sec-filing-index-ingestion-roadmap.md
++++ after/specs/sec-filing-index-ingestion-roadmap.md
+@@ -59,7 +59,7 @@
+ tests; Stage 7 consolidates acceptance evidence rather than postponing testing until deployment.
+ Production triggers remain disabled through Stage 7 (§7).
+ 
+-- [ ] Stage 1: Scope and feasibility findings
++- [x] Stage 1: Scope and feasibility findings
+       Objective: Establish an accepted implementation boundary and resolve source, runtime and deployment prerequisites before building.
+       Spec: §§2, 4.8–4.9, 7 step 1, 10; ADR Decision and Consequences.
+       Gap closed: Readiness.
+@@ -162,3 +162,28 @@
+ spec to `specs/completed/` only after the conformance audit accounts for every requirement. If the
+ owner parks the work earlier, preserve the remaining stages as self-contained deferred items and
+ mark the retired roadmap `PARKED (YYYY-MM-DD) — N of M stages complete`.
++## Stage 1 completion and later-stage consistency
++
++Stage 1 completed 2026-10-06 through [plan 1](plans/completed/1-sec-filing-index-ingestion-stage-1-spec.md)
++and its [authoritative Stage 1 spec stamp](completed/sec-filing-index-ingestion-stage-1-spec.md#9-rollout-note).
++Lowell Mason accepted [finding F1](sec-filing-index-ingestion-stage-1-findings.md), revision date
++2026-10-05, accepted 2026-10-05, exact SHA-256
++`939a724eccf22147015a59d5940ed57f02cc4e9fe9d942a9cd78ae73c34615ff`, with the complete limitations.
++The [accepted 1,584-record manifest](evidence/sec-filing-index-ingestion/stage-1/final-candidate/evidence-manifest.json)
++has SHA-256 `124e96041548daba8216aa495fc69021751555b0f0e4c890ac85e934f512a131`;
++the [owner receipt](evidence/sec-filing-index-ingestion/stage-1/final-candidate/owner-acceptance.json)
++records the exact acceptance context. The gap-analysis heading/table above remains the historical baseline
++from roadmap derivation, including its then-missing acceptance statements; the accepted finding and stamp
++supply current Stage 1 evidence.
++
++Stages 2–8 remain unticked and their definitions unchanged. Stage 2 workspace/CLI alignment (D10)
++remains required. Selected source families, cross-quarter filing dates and nullable accession require later
++golden parser verification; accepted historical daily listing gaps remain explicit recovery obligations.
++Raw-byte retention/replay, shared request coordination, publication/recovery and hash-bound approval
++safeguards remain consistent with the parent contract and the accepted finding. Stage 7 must produce
++all [22 reserved integrated checks](evidence/sec-filing-index-ingestion/stage-1/stage-7-checks.md),
++including effective permissions, start/correlation/results, connectivity, release/rollback availability,
++DST, observability and actual worker memory/runtime; documentation selections and native compatibility
++probes do not discharge them. Stage 8 production coverage and scheduled-operation acceptance remain required.
++This consistency note begins no later-stage investigation, implementation or plan. Stop at this boundary;
++the owner must separately request “resume the roadmap.”
+
+## Retired original path: specs/sec-filing-index-ingestion-stage-1-spec.md
+Before SHA256 bb28b0c27646d4f7b15669660e56c230d3247148966e3b075b96ca196a0b5140; exact before bytes must remain retained.
+

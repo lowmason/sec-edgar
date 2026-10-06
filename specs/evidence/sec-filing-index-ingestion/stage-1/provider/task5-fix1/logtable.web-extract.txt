@@ -1,0 +1,571 @@
+Tables - Create Or Update - REST API (Azure Log Analytics) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/loganalytics/tables/create-or-update?view=rest-loganalytics-2025-07-01)
+citeturn79view0 [wordlim: 200] Crawled: today; Content type: text/html; Source: find({"ref_id":"https://learn.microsoft.com/en-us/rest/api/loganalytics/tables/create-or-update?view=rest-loganalytics-2025-07-01","pattern":"200 OK"}); Total lines: 781
+L0: cite0†Skip to main content cite1†Skip to in-page navigation cite2†Skip to Ask Learn chat experience L1: 
+L2: This browser is no longer supported.
+L3: 
+L4: Upgrade to Microsoft Edge to take advantage of the latest features, security updates, and technical support.
+L5: 
+L6: cite3†Download Microsoft Edge†go.microsoft.com cite4†More info about Internet Explorer and Microsoft Edge L7: 
+L8: Table of contents Exit editor mode
+L9: 
+L10: Ask Learn Ask Learn
+L11: 
+L12: Reading mode Table of contents cite2†Read in English Add Add to Plans cite5†Edit†github.com L13: 
+L14: * * *
+L15: Copy Markdown Print
+L16: 
+L17: * * *
+L18: 
+L19: Note
+L20: 
+L21: Access to this page requires authorization. You can try cite2†signing in or changing directories.
+L22: 
+L23: Access to this page requires authorization. You can try changing directories.
+L24: # Tables - Create Or Update
+L25: 
+L26: Service:
+L27:     Log Analytics
+L28: 
+L29: API Version:
+L30:     2025-07-01
+L31: 
+L32: ##
+L33: 
+L34: Update or Create a Log Analytics workspace table.
+L35: 
+L36:     `PUT https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.OperationalInsights/workspaces/{workspaceName}/tables/{tableName}?api-version=2025-07-01`
+L37: ## URI Parameters
+L38: Name  | In  | Required  | Type  | Description
+L39: --- | --- | --- | --- | ---
+L40: resourceGroupName  | path  | True  | string minLength: 1
+L41: maxLength: 90  | The name of the resource group. The name is case insensitive.
+L42: subscriptionId  | path  | True  | string (uuid)  | The ID of the target subscription. The value must be an UUID.
+L43: tableName  | path  | True  | string minLength: 4
+L44: maxLength: 63
+L45: pattern: ^[A-Za-z0-9-_]+$  | The name of the table.
+L46: workspaceName  | path  | True  | string minLength: 4
+L47: maxLength: 63
+L48: pattern: ^[A-Za-z0-9][A-Za-z0-9-]+[A-Za-z0-9]$  | The name of the workspace.
+L49: api-version  | query  | True  | string minLength: 1  | The API version to use for this operation.
+L50: ## Request Body
+L51: Name  | Type  | Description
+L52: --- | --- | ---
+L53: properties.plan  | cite6†TablePlanEnum | Instruct the system how to handle and charge the logs ingested to this table.
+L54: properties.restoredLogs  | cite7†RestoredLogs | Parameters of the restore operation that initiated this table.
+L55: properties.retentionInDays  | integer (int32) minimum: 4
+L56: maximum: 730  | In Analytics table: the tables analytics retention in days, between 4 and 730. Setting this property to -1 will default to the workspace retention. In Basic and Auxiliary table: read only property.
+L57: properties.schema  | cite8†Schema | Table schema.
+L58: properties.searchResults  | cite9†SearchResults | Parameters of the search job that initiated this table.
+L59: properties.totalRetentionInDays  | integer (int32) minimum: 4
+L60: maximum: 4383  | The table total retention in days, between 4 and 4383. Setting this property to -1 will default to retentionInDays.
+L61: ## Responses
+L62: 
+L63: Name  | Type  | Description
+L64: --- | --- | ---
+L65: 200 OK  | cite10†Table | Resource 'Table' update operation succeeded
+L66: 202 Accepted  |  | Resource operation accepted. Headers
+L67: 
+L68:   * Azure-AsyncOperation: string
+L69:   * Retry-After: integer
+L70: Other Status Codes  | cite11†ErrorResponse | An unexpected error response.
+L71: 
+L72: ## Security
+L73: 
+L74: ### azure_auth
+L75: 
+L76: Azure Active Directory OAuth2 Flow.
+L77: 
+L78: Type: oauth2
+L79: Flow: implicit
+L80: Authorization URL: https://login.microsoftonline.com/common/oauth2/authorize
+L81: #### Scopes
+L82: 
+L83: Name  | Description
+L84: --- | ---
+L85: user_impersonation  | impersonate your user account
+L86: 
+L87: ## Examples
+L88: 
+L89: ### TablesUpsert
+L90: #### Sample request
+L91:   * cite12†HTTP L92:   * cite13†Java L93:   * cite14†Python L94:   * cite15†Go L95:   * cite16†JavaScript L96: 
+L97:     `PUT https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/oiautorest6685/providers/Microsoft.OperationalInsights/workspaces/oiautorest6685/tables/AzureNetworkFlow?api-version=2025-07-01
+L98: 
+L99:     {
+L100:       "properties": {
+L101:         "schema": {
+L102:           "name": "AzureNetworkFlow",
+L103:           "columns": [
+L104:             {
+L105:               "name": "MyNewColumn",
+L106:               "type": "guid"
+L107:             }
+L108:           ]
+L109:         },
+L110:         "retentionInDays": 45,
+L111:         "totalRetentionInDays": 70
+L112:       }
+L113:     }
+L114: 
+L115:     `
+L116: 
+L117:     `
+L118:     import com.azure.resourcemanager.loganalytics.models.Column;
+L119:     import com.azure.resourcemanager.loganalytics.models.ColumnTypeEnum;
+L120:     import com.azure.resourcemanager.loganalytics.models.Schema;
+L121:     import java.util.Arrays;
+L122: 
+L123:     /**
+L124:      * Samples for Tables CreateOrUpdate.
+L125:      */
+L126:     public final class Main {
+L127:         /*
+L128:          * x-ms-original-file: 2025-07-01/TablesUpsertForTable.json
+L129:          */
+L130:         /**
+L131:          * Sample code: TablesUpsert.
+L132:          *
+L133:          * @param manager Entry point to LogAnalyticsManager.
+L134:          */
+L135:         public static void tablesUpsert(com.azure.resourcemanager.loganalytics.LogAnalyticsManager manager) {
+L136:             manager.tables().define("AzureNetworkFlow").withExistingWorkspace("oiautorest6685", "oiautorest6685")
+L137:                 .withRetentionInDays(45).withTotalRetentionInDays(70)
+L138:                 .withSchema(new Schema().withName("AzureNetworkFlow")
+L139:                     .withColumns(Arrays.asList(new Column().withName("MyNewColumn").withType(ColumnTypeEnum.GUID))))
+L140:                 .create();
+L141:         }
+L142:     }
+L143: 
+L144:     `
+L145: To use the Azure SDK library in your project, see cite17†this documentation†github.com . To provide feedback on this code sample, cite18†open a GitHub issue†github.com L146: 
+L147:     `from azure.identity import DefaultAzureCredential
+L148: 
+L149:     from azure.mgmt.loganalytics import LogAnalyticsManagementClient
+L150: 
+L151:     """
+L152:     # PREREQUISITES
+L153:         pip install azure-identity
+L154:         pip install azure-mgmt-loganalytics
+L155:     # USAGE
+L156:         python tables_upsert_for_table.py
+L157:         Before run the sample, please set the values of the client ID, tenant ID and client secret
+L158:         of the AAD application as environment variables: AZURE_CLIENT_ID, AZURE_TENANT_ID,
+L159:         AZURE_CLIENT_SECRET. For more info about how to get the value, please see:
+L160:         https://docs.microsoft.com/azure/active-directory/develop/howto-create-service-principal-portal
+L161:     """
+L162: 
+L163: 
+L164:     def main():
+L165:         client = LogAnalyticsManagementClient(
+L166:             credential=DefaultAzureCredential(),
+L167:             subscription_id="SUBSCRIPTION_ID",
+L168:         )
+L169: 
+L170:         response = client.tables.begin_create_or_update(
+L171:             resource_group_name="oiautorest6685",
+L172:             workspace_name="oiautorest6685",
+L173:             table_name="AzureNetworkFlow",
+L174:             parameters={
+L175:                 "properties": {
+L176:                     "retentionInDays": 45,
+L177:                     "schema": {"columns": [{"name": "MyNewColumn", "type": "guid"}], "name": "AzureNetworkFlow"},
+L178:                     "totalRetentionInDays": 70,
+L179:                 }
+L180:             },
+L181:         ).result()
+L182:         print(response)
+L183: 
+L184: 
+L185:     # x-ms-original-file: 2025-07-01/TablesUpsertForTable.json
+L186:     if __name__ == "__main__":
+L187:         main()
+L188: 
+L189:     `
+L190: To use the Azure SDK library in your project, see cite19†this documentation†github.com . To provide feedback on this code sample, cite18†open a GitHub issue†github.com L191: 
+L192:     `package armoperationalinsights_test
+L193: 
+L194:     import (
+L195:     	"context"
+L196:     	"log"
+L197: 
+L198:     	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
+L199:     	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+L200:     	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/operationalinsights/armoperationalinsights/v3"
+L201:     )
+L202:     // Generated from example definition: 2025-07-01/TablesUpsertForTable.json
+L203:     func ExampleTablesClient_BeginCreateOrUpdate() {
+L204:     	cred, err := azidentity.NewDefaultAzureCredential(nil)
+L205:     	if err != nil {
+L206:     		log.Fatalf("failed to obtain a credential: %v", err)
+L207:     	}
+L208:     	ctx := context.Background()
+L209:     	clientFactory, err := armoperationalinsights.NewClientFactory("00000000-0000-0000-0000-000000000000", cred, nil)
+L210:     	if err != nil {
+L211:     		log.Fatalf("failed to create client: %v", err)
+L212:     	}
+L213:     	poller, err := clientFactory.NewTablesClient().BeginCreateOrUpdate(ctx, "oiautorest6685", "oiautorest6685", "AzureNetworkFlow", armoperationalinsights.Table{
+L214:     		Properties: &armoperationalinsights.TableProperties{
+L215:     			Schema: &armoperationalinsights.Schema{
+L216:     				Name: to.Ptr("AzureNetworkFlow"),
+L217:     				Columns: []*armoperationalinsights.Column{
+L218:     					{
+L219:     						Name: to.Ptr("MyNewColumn"),
+L220:     						Type: to.Ptr(armoperationalinsights.ColumnTypeEnumGUID),
+L221:     					},
+L222:     				},
+L223:     			},
+L224:     			RetentionInDays:      to.Ptr[int32](45),
+L225:     			TotalRetentionInDays: to.Ptr[int32](70),
+L226:     		},
+L227:     	}, nil)
+L228:     	if err != nil {
+L229:     		log.Fatalf("failed to finish the request: %v", err)
+L230:     	}
+L231:     	res, err := poller.PollUntilDone(ctx, nil)
+L232:     	if err != nil {
+L233:     		log.Fatalf("failed to poll the result: %v", err)
+L234:     	}
+L235:     	// You could use response here. We use blank identifier for just demo purposes.
+L236:     	_ = res
+L237:     	// If the HTTP response code is 200 as defined in example definition, your response structure would look as follows. Please pay attention that all the values in the output are fake values for just demo purposes.
+L238:     	// res = armoperationalinsights.TablesClientCreateOrUpdateResponse{
+L239:     	// 	Table: armoperationalinsights.Table{
+L240:     	// 		Name: to.Ptr("AzureNetworkFlow"),
+L241:     	// 		ID: to.Ptr("/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/oiautorest6685/providers/Microsoft.OperationalInsights/workspaces/oiautorest6685/tables/AzureNetworkFlow"),
+L242:     	// 		Properties: &armoperationalinsights.TableProperties{
+L243:     	// 			Schema: &armoperationalinsights.Schema{
+L244:     	// 				Name: to.Ptr("AzureNetworkFlow"),
+L245:     	// 				Columns: []*armoperationalinsights.Column{
+L246:     	// 					{
+L247:     	// 						Name: to.Ptr("MyNewColumn"),
+L248:     	// 						Type: to.Ptr(armoperationalinsights.ColumnTypeEnumGUID),
+L249:     	// 						IsDefaultDisplay: to.Ptr(false),
+L250:     	// 						IsHidden: to.Ptr(false),
+L251:     	// 					},
+L252:     	// 				},
+L253:     	// 				Solutions: []*string{
+L254:     	// 					to.Ptr("LogManagement"),
+L255:     	// 				},
+L256:     	// 				StandardColumns: []*armoperationalinsights.Column{
+L257:     	// 					{
+L258:     	// 						Name: to.Ptr("TenantId"),
+L259:     	// 						Type: to.Ptr(armoperationalinsights.ColumnTypeEnumGUID),
+L260:     	// 						IsDefaultDisplay: to.Ptr(false),
+L261:     	// 						IsHidden: to.Ptr(true),
+L262:     	// 					},
+L263:     	// 					{
+L264:     	// 						Name: to.Ptr("SourceSystem"),
+L265:     	// 						Type: to.Ptr(armoperationalinsights.ColumnTypeEnumString),
+L266:     	// 						IsDefaultDisplay: to.Ptr(false),
+L267:     	// 						IsHidden: to.Ptr(false),
+L268:     	// 					},
+L269:     	// 					{
+L270:     	// 						Name: to.Ptr("TimeGenerated"),
+L271:     	// 						Type: to.Ptr(armoperationalinsights.ColumnTypeEnumDateTime),
+L272:     	// 						IsDefaultDisplay: to.Ptr(false),
+L273:     	// 						IsHidden: to.Ptr(false),
+L274:     	// 					},
+L275:     	// 					{
+L276:     	// 						Name: to.Ptr("AgentID"),
+L277:     	// 						Type: to.Ptr(armoperationalinsights.ColumnTypeEnumString),
+L278:     	// 						IsDefaultDisplay: to.Ptr(false),
+L279:     	// 						IsHidden: to.Ptr(false),
+L280:     	// 					},
+L281:     	// 					{
+L282:     	// 						Name: to.Ptr("SourceIP"),
+L283:     	// 						Type: to.Ptr(armoperationalinsights.ColumnTypeEnumString),
+L284:     	// 						IsDefaultDisplay: to.Ptr(false),
+L285:     	// 						IsHidden: to.Ptr(false),
+L286:     	// 					},
+L287:     	// 					{
+L288:     	// 						Name: to.Ptr("Protocol"),
+L289:     	// 						Type: to.Ptr(armoperationalinsights.ColumnTypeEnumString),
+L290:     	// 						IsDefaultDisplay: to.Ptr(false),
+L291:     	// 						IsHidden: to.Ptr(false),
+L292:     	// 					},
+L293:     	// 					{
+L294:     	// 						Name: to.Ptr("SourcePort"),
+L295:     	// 						Type: to.Ptr(armoperationalinsights.ColumnTypeEnumInt),
+L296:     	// 						IsDefaultDisplay: to.Ptr(false),
+L297:     	// 						IsHidden: to.Ptr(false),
+L298:     	// 					},
+L299:     	// 					{
+L300:     	// 						Name: to.Ptr("DestinationPort"),
+L301:     	// 						Type: to.Ptr(armoperationalinsights.ColumnTypeEnumInt),
+L302:     	// 						IsDefaultDisplay: to.Ptr(false),
+--------------------------------------------------------------------------------
+Tables - Get - REST API (Azure Log Analytics) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/loganalytics/tables/get?view=rest-loganalytics-2025-07-01)
+citeturn79view1 [wordlim: 200] Crawled: yesterday; Content type: text/html; Source: find({"ref_id":"https://learn.microsoft.com/en-us/rest/api/loganalytics/tables/get?view=rest-loganalytics-2025-07-01","pattern":"200 OK"}); Total lines: 654
+L0: cite0†Skip to main content cite1†Skip to in-page navigation cite2†Skip to Ask Learn chat experience L1: 
+L2: This browser is no longer supported.
+L3: 
+L4: Upgrade to Microsoft Edge to take advantage of the latest features, security updates, and technical support.
+L5: 
+L6: cite3†Download Microsoft Edge†go.microsoft.com cite4†More info about Internet Explorer and Microsoft Edge L7: 
+L8: Table of contents Exit editor mode
+L9: 
+L10: Ask Learn Ask Learn
+L11: 
+L12: Reading mode Table of contents cite2†Read in English Add Add to Plans cite5†Edit†github.com L13: 
+L14: * * *
+L15: Copy Markdown Print
+L16: 
+L17: * * *
+L18: 
+L19: Note
+L20: 
+L21: Access to this page requires authorization. You can try cite2†signing in or changing directories.
+L22: 
+L23: Access to this page requires authorization. You can try changing directories.
+L24: # Tables - Get
+L25: 
+L26: Service:
+L27:     Log Analytics
+L28: 
+L29: API Version:
+L30:     2025-07-01
+L31: 
+L32: ##
+L33: 
+L34: Gets a Log Analytics workspace table.
+L35: 
+L36:     `GET https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.OperationalInsights/workspaces/{workspaceName}/tables/{tableName}?api-version=2025-07-01`
+L37: ## URI Parameters
+L38: Name  | In  | Required  | Type  | Description
+L39: --- | --- | --- | --- | ---
+L40: resourceGroupName  | path  | True  | string minLength: 1
+L41: maxLength: 90  | The name of the resource group. The name is case insensitive.
+L42: subscriptionId  | path  | True  | string (uuid)  | The ID of the target subscription. The value must be an UUID.
+L43: tableName  | path  | True  | string minLength: 4
+L44: maxLength: 63
+L45: pattern: ^[A-Za-z0-9-_]+$  | The name of the table.
+L46: workspaceName  | path  | True  | string minLength: 4
+L47: maxLength: 63
+L48: pattern: ^[A-Za-z0-9][A-Za-z0-9-]+[A-Za-z0-9]$  | The name of the workspace.
+L49: api-version  | query  | True  | string minLength: 1  | The API version to use for this operation.
+L50: ## Responses
+L51: 
+L52: Name  | Type  | Description
+L53: --- | --- | ---
+L54: 200 OK  | cite6†Table | Azure operation completed successfully.
+L55: Other Status Codes  | cite7†ErrorResponse | An unexpected error response.
+L56: 
+L57: ## Security
+L58: 
+L59: ### azure_auth
+L60: 
+L61: Azure Active Directory OAuth2 Flow.
+L62: 
+L63: Type: oauth2
+L64: Flow: implicit
+L65: Authorization URL: https://login.microsoftonline.com/common/oauth2/authorize
+L66: 
+L67: #### Scopes
+L68: 
+L69: Name  | Description
+L70: --- | ---
+L71: user_impersonation  | impersonate your user account
+L72: 
+L73: ## Examples
+L74: 
+L75: ### TablesGet
+L76: #### Sample request
+L77:   * cite8†HTTP L78:   * cite9†Java L79:   * cite10†Python L80:   * cite11†Go L81:   * cite12†JavaScript L82: 
+L83:     `GET https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/oiautorest6685/providers/Microsoft.OperationalInsights/workspaces/oiautorest6685/tables/table1_SRCH?api-version=2025-07-01
+L84:     `
+L85: 
+L86:     `
+L87:     /**
+L88:      * Samples for Tables Get.
+L89:      */
+L90:     public final class Main {
+L91:         /*
+L92:          * x-ms-original-file: 2025-07-01/TablesGet.json
+L93:          */
+L94:         /**
+L95:          * Sample code: TablesGet.
+L96:          *
+L97:          * @param manager Entry point to LogAnalyticsManager.
+L98:          */
+L99:         public static void tablesGet(com.azure.resourcemanager.loganalytics.LogAnalyticsManager manager) {
+L100:             manager.tables().getWithResponse("oiautorest6685", "oiautorest6685", "table1_SRCH",
+L101:                 com.azure.core.util.Context.NONE);
+L102:         }
+L103:     }
+L104: 
+L105:     `
+L106: To use the Azure SDK library in your project, see cite13†this documentation†github.com . To provide feedback on this code sample, cite14†open a GitHub issue†github.com L107: 
+L108:     `from azure.identity import DefaultAzureCredential
+L109: 
+L110:     from azure.mgmt.loganalytics import LogAnalyticsManagementClient
+L111: 
+L112:     """
+L113:     # PREREQUISITES
+L114:         pip install azure-identity
+L115:         pip install azure-mgmt-loganalytics
+L116:     # USAGE
+L117:         python tables_get.py
+L118:         Before run the sample, please set the values of the client ID, tenant ID and client secret
+L119:         of the AAD application as environment variables: AZURE_CLIENT_ID, AZURE_TENANT_ID,
+L120:         AZURE_CLIENT_SECRET. For more info about how to get the value, please see:
+L121:         https://docs.microsoft.com/azure/active-directory/develop/howto-create-service-principal-portal
+L122:     """
+L123: 
+L124: 
+L125:     def main():
+L126:         client = LogAnalyticsManagementClient(
+L127:             credential=DefaultAzureCredential(),
+L128:             subscription_id="SUBSCRIPTION_ID",
+L129:         )
+L130: 
+L131:         response = client.tables.get(
+L132:             resource_group_name="oiautorest6685",
+L133:             workspace_name="oiautorest6685",
+L134:             table_name="table1_SRCH",
+L135:         )
+L136:         print(response)
+L137: 
+L138: 
+L139:     # x-ms-original-file: 2025-07-01/TablesGet.json
+L140:     if __name__ == "__main__":
+L141:         main()
+L142: 
+L143:     `
+L144: To use the Azure SDK library in your project, see cite15†this documentation†github.com . To provide feedback on this code sample, cite14†open a GitHub issue†github.com L145: 
+L146:     `package armoperationalinsights_test
+L147: 
+L148:     import (
+L149:     	"context"
+L150:     	"log"
+L151: 
+L152:     	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+L153:     	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/operationalinsights/armoperationalinsights/v3"
+L154:     )
+L155: 
+L156:     // Generated from example definition: 2025-07-01/TablesGet.json
+L157:     func ExampleTablesClient_Get() {
+L158:     	cred, err := azidentity.NewDefaultAzureCredential(nil)
+L159:     	if err != nil {
+L160:     		log.Fatalf("failed to obtain a credential: %v", err)
+L161:     	}
+L162:     	ctx := context.Background()
+L163:     	clientFactory, err := armoperationalinsights.NewClientFactory("00000000-0000-0000-0000-000000000000", cred, nil)
+L164:     	if err != nil {
+L165:     		log.Fatalf("failed to create client: %v", err)
+L166:     	}
+L167:     	res, err := clientFactory.NewTablesClient().Get(ctx, "oiautorest6685", "oiautorest6685", "table1_SRCH", nil)
+L168:     	if err != nil {
+L169:     		log.Fatalf("failed to finish the request: %v", err)
+L170:     	}
+L171:     	// You could use response here. We use blank identifier for just demo purposes.
+L172:     	_ = res
+L173:     	// If the HTTP response code is 200 as defined in example definition, your response structure would look as follows. Please pay attention that all the values in the output are fake values for just demo purposes.
+L174:     	// res = armoperationalinsights.TablesClientGetResponse{
+L175:     	// 	Table: armoperationalinsights.Table{
+L176:     	// 		Name: to.Ptr("table1_SRCH"),
+L177:     	// 		ID: to.Ptr("/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/oiautorest6685/providers/Microsoft.OperationalInsights/workspaces/oiautorest6685/tables/table1_SRCH"),
+L178:     	// 		Properties: &armoperationalinsights.TableProperties{
+L179:     	// 			Schema: &armoperationalinsights.Schema{
+L180:     	// 				Name: to.Ptr("table1_SRCH"),
+L181:     	// 				Columns: []*armoperationalinsights.Column{
+L182:     	// 				},
+L183:     	// 				Solutions: []*string{
+L184:     	// 					to.Ptr("LogManagement"),
+L185:     	// 				},
+L186:     	// 				StandardColumns: []*armoperationalinsights.Column{
+L187:     	// 					{
+L188:     	// 						Name: to.Ptr("TenantId"),
+L189:     	// 						Type: to.Ptr(armoperationalinsights.ColumnTypeEnumGUID),
+L190:     	// 						IsDefaultDisplay: to.Ptr(false),
+L191:     	// 						IsHidden: to.Ptr(false),
+L192:     	// 					},
+L193:     	// 					{
+L194:     	// 						Name: to.Ptr("SourceSystem"),
+L195:     	// 						Type: to.Ptr(armoperationalinsights.ColumnTypeEnumString),
+L196:     	// 						IsDefaultDisplay: to.Ptr(false),
+L197:     	// 						IsHidden: to.Ptr(false),
+L198:     	// 					},
+L199:     	// 					{
+L200:     	// 						Name: to.Ptr("MG"),
+L201:     	// 						Type: to.Ptr(armoperationalinsights.ColumnTypeEnumGUID),
+L202:     	// 						IsDefaultDisplay: to.Ptr(false),
+L203:     	// 						IsHidden: to.Ptr(false),
+L204:     	// 					},
+L205:     	// 					{
+L206:     	// 						Name: to.Ptr("ManagementGroupName"),
+L207:     	// 						Type: to.Ptr(armoperationalinsights.ColumnTypeEnumString),
+L208:     	// 						IsDefaultDisplay: to.Ptr(false),
+L209:     	// 						IsHidden: to.Ptr(false),
+L210:     	// 					},
+L211:     	// 					{
+L212:     	// 						Name: to.Ptr("TimeGenerated"),
+L213:     	// 						Type: to.Ptr(armoperationalinsights.ColumnTypeEnumDateTime),
+L214:     	// 						IsDefaultDisplay: to.Ptr(false),
+L215:     	// 						IsHidden: to.Ptr(false),
+L216:     	// 					},
+L217:     	// 					{
+L218:     	// 						Name: to.Ptr("Computer"),
+L219:     	// 						Type: to.Ptr(armoperationalinsights.ColumnTypeEnumString),
+L220:     	// 						IsDefaultDisplay: to.Ptr(false),
+L221:     	// 						IsHidden: to.Ptr(false),
+L222:     	// 					},
+L223:     	// 					{
+L224:     	// 						Name: to.Ptr("RawData"),
+L225:     	// 						Type: to.Ptr(armoperationalinsights.ColumnTypeEnumString),
+L226:     	// 						IsDefaultDisplay: to.Ptr(false),
+L227:     	// 						IsHidden: to.Ptr(false),
+L228:     	// 					},
+L229:     	// 				},
+L230:     	// 				TableSubType: to.Ptr(armoperationalinsights.TableSubTypeEnumDataCollectionRuleBased),
+L231:     	// 				TableType: to.Ptr(armoperationalinsights.TableTypeEnumSearchResults),
+L232:     	// 			},
+L233:     	// 			ArchiveRetentionInDays: to.Ptr[int32](0),
+L234:     	// 			Plan: to.Ptr(armoperationalinsights.TablePlanEnumAnalytics),
+L235:     	// 			ProvisioningState: to.Ptr(armoperationalinsights.TableProvisioningStateInProgress),
+L236:     	// 			ResultStatistics: &armoperationalinsights.ResultStatistics{
+L237:     	// 				IngestedRecords: to.Ptr[int32](5),
+L238:     	// 				Progress: to.Ptr[float32](75),
+L239:     	// 				ScannedGb: to.Ptr[float32](23.5),
+L240:     	// 			},
+L241:     	// 			RetentionInDays: to.Ptr[int32](50),
+L242:     	// 			RetentionInDaysAsDefault: to.Ptr(false),
+L243:     	// 			SearchResults: &armoperationalinsights.SearchResults{
+L244:     	// 				Description: to.Ptr("This table was created using a Search Job with the following query: 'Heartbeat | where SourceSystem != '' | project SourceSystem'."),
+L245:     	// 				EndSearchTime: to.Ptr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-02-02T04:05:06Z"); return t}()),
+L246:     	// 				Limit: to.Ptr[int32](1000),
+L247:     	// 				Query: to.Ptr("Heartbeat | where SourceSystem != '' | project SourceSystem"),
+L248:     	// 				SourceTable: to.Ptr("Heartbeat"),
+L249:     	// 				StartSearchTime: to.Ptr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-02-03T04:05:06Z"); return t}()),
+L250:     	// 			},
+L251:     	// 			TotalRetentionInDays: to.Ptr[int32](50),
+L252:     	// 			TotalRetentionInDaysAsDefault: to.Ptr(true),
+L253:     	// 		},
+L254:     	// 		SystemData: &armoperationalinsights.SystemData{
+L255:     	// 			CreatedAt: to.Ptr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-02-03T04:05:06Z"); return t}()),
+L256:     	// 			CreatedBy: to.Ptr("00000000-0000-0000-0000-000000000000"),
+L257:     	// 		},
+L258:     	// 	},
+L259:     	// }
+L260:     }
+L261: 
+L262:     `
+L263: To use the Azure SDK library in your project, see cite16†this documentation†github.com . To provide feedback on this code sample, cite14†open a GitHub issue†github.com L264: 
+L265:     `const { OperationalInsightsManagementClient } = require("@azure/arm-operationalinsights");
+L266:     const { DefaultAzureCredential } = require("@azure/identity");
+L267: 
+L268:     /**
+L269:      * This sample demonstrates how to gets a Log Analytics workspace table.
+L270:      *
+L271:      * @summary gets a Log Analytics workspace table.
+L272:      * x-ms-original-file: 2025-07-01/TablesGet.json
+L273:      */
+L274:     async function tablesGet() {
+L275:       const credential = new DefaultAzureCredential();
+L276:       const subscriptionId = "00000000-0000-0000-0000-000000000000";
+L277:       const client = new OperationalInsightsManagementClient(credential, subscriptionId);
+L278:       const result = await client.tables.get("oiautorest6685", "oiautorest6685", "table1_SRCH");
+L279:       console.log(result);
+L280:     }
+L281: 
+L282:     `
+

@@ -1,0 +1,418 @@
+Web Activity - Azure Data Factory & Azure Synapse | Microsoft Learn (https://learn.microsoft.com/en-us/azure/data-factory/control-flow-web-activity)
+citeturn39view0 [wordlim: 200] Crawled: today; Content type: text/html; Source: find({"ref_id":"turn34view3","pattern":"turnOffAsync"}); Total lines: 339
+L105: headers  | Headers that are sent to the request. For example, to set the language and type on a request: `"headers" : { "Accept-Language": "en-us", "Content-Type": "application/json" }`.  | String (or expression with resultType of string)  | No
+L106: body  | Represents the payload that is sent to the endpoint.  | String (or expression with resultType of string).
+L107: See the schema of the request payload in cite11†Request payload schema section.  | Required for POST/PUT/PATCH methods. Optional for DELETE method.
+L108: authentication  | Authentication method used for calling the endpoint. Supported Types are "Basic, Client Certificate, System-assigned Managed Identity, User-assigned Managed Identity, Service Principal." For more information, see cite12†Authentication section. If authentication isn't required, exclude this property.  | String (or expression with resultType of string)  | No
+L109: turnOffAsync  | Option to disable invoking HTTP GET on location field in the response header of an HTTP 202 Response. If set true, it stops invoking HTTP GET on http location given in response header. If set false then it continues to invoke HTTP GET call on location given in http response headers.  | Allowed values are false (default) and true.  | No
+L110: disableCertValidation  | Removes server side certificate validation (not recommended unless you're connecting to a trusted server that doesn't use a standard CA cert).  | Allowed values are false (default) and true.  | No
+L111: datasets  | List of datasets passed to the endpoint.  | Array of dataset references. Can be an empty array.  | Yes
+L112: linkedServices  | List of linked services passed to endpoint.  | Array of linked service references. Can be an empty array.  | Yes
+L113: connectVia  | The cite13†integration runtime to be used to connect to the data store. You can use the Azure integration runtime or the self-hosted integration runtime (if your data store is in a private network). If this property isn't specified, the service uses the default Azure integration runtime.  | The integration runtime reference.  | No
+L114: Note
+L115: 
+L116: REST endpoints that the web activity invokes must return a response of type JSON. The activity will time out at 1 minute with an error if it doesn't receive a response from the endpoint. For endpoints that support cite14†Asynchronous Request-Reply pattern , the web activity continues to wait without timing out (upto 7 day) or until the endpoints signals completion of the job.
+L117: 
+L118: The following table shows the requirements for JSON content:
+L119: Value type  | Request body  | Response body
+L120: --- | --- | ---
+L121: JSON object  | Supported  | Supported
+L122: JSON array  | Supported
+L123: (Currently, JSON arrays don't work as a result of a bug. A fix is in progress.)  | Unsupported
+L124: JSON value  | Supported  | Unsupported
+L125: Non-JSON type  | Unsupported  | Unsupported
+L126:  |  |
+L127: ## Authentication
+L128: 
+L129: Below are the supported authentication types in the web activity.
+L130: 
+L131: ### None
+L132: 
+L133: If authentication isn't required, don't include the "authentication" property.
+L134: 
+L135: ### Basic
+L136: 
+L137: Specify user name and password to use with the basic authentication.
+L138: 
+L139:     `"authentication":{
+L140:        "type":"Basic",
+--------------------------------------------------------------------------------
+Web Activity - Azure Data Factory & Azure Synapse | Microsoft Learn (https://learn.microsoft.com/en-us/azure/data-factory/control-flow-web-activity)
+citeturn39view1 [wordlim: 200] Crawled: today; Content type: text/html; Source: find({"ref_id":"turn34view3","pattern":"4 MB"}); Total lines: 339
+L0: cite0†Skip to main content cite1†Skip to Ask Learn chat experience L1: 
+L2: This browser is no longer supported.
+L3: 
+L4: Upgrade to Microsoft Edge to take advantage of the latest features, security updates, and technical support.
+L5: 
+L6: cite2†Download Microsoft Edge†go.microsoft.com cite3†More info about Internet Explorer and Microsoft Edge L7: 
+L8: Table of contents Exit editor mode
+L9: 
+L10: Ask Learn Ask Learn
+L11: 
+L12: Reading mode Table of contents cite1†Read in English Add Add to Plans cite4†Edit†github.com L13: 
+L14: * * *
+L15: 
+L16: Copy Markdown Print
+L17: 
+L18: * * *
+L19: 
+L20: Note
+L21: Access to this page requires authorization. You can try cite1†signing in or changing directories.
+L22: 
+L23: Access to this page requires authorization. You can try changing directories.
+L24: # Web activity in Azure Data Factory and Azure Synapse Analytics
+L25: 
+L26: Feedback
+L27: 
+L28: Summarize this article for me
+L29: ## In this article
+L30: 
+L31: APPLIES TO: cite5†Image Azure Data Factory cite5†Image Azure Synapse Analytics
+L32: 
+L33: Tip
+L34: 
+L35: For the equivalent activity in Data Factory in Microsoft Fabric, see cite6†Web activity .
+L36: 
+L37: Web Activity can be used to call a custom REST endpoint from an Azure Data Factory or Synapse pipeline. You can pass datasets and linked services to be consumed and accessed by the activity.
+L38: 
+L39: Note
+L40: Web Activity is supported for invoking URLs that are hosted in a private virtual network as well by using a self-hosted integration runtime. The integration runtime should have a line of sight to the URL endpoint.
+L41: 
+L42: Note
+L43: 
+L44: The maximum supported output response payload size is 4 MB.
+L45: ## Create a Web activity with UI
+L46: 
+L47: To use a Web activity in a pipeline, complete the following steps:
+L48: 
+L49:   1. Search for Web in the pipeline Activities pane, and drag a Web activity to the pipeline canvas.
+L50: 
+L51:   2. Select the new Web activity on the canvas if it isn't already selected, and its Settings tab, to edit its details.
+L52: 
+L53: cite7†Image: Shows the UI for a Web activity. L54:   3. Specify a URL, which can be a literal URL string, or any combination of dynamic cite8†expressions, functions , cite9†system variables , or cite10†outputs from other activities . Provide other details to be submitted with the request.
+L55: 
+L56:   4. Use the output from the activity as the input to any other activity, and reference the output anywhere dynamic content is supported in the destination activity.
+L57: ## Syntax
+L58: 
+L59:     `{
+L60:        "name":"MyWebActivity",
+L61:        "type":"WebActivity",
+L62:        "typeProperties":{
+L63:           "method":"Post",
+L64:           "url":"<URLEndpoint>",
+L65:           "httpRequestTimeout": "00:01:00"
+L66:           "connectVia": {
+L67:               "referenceName": "<integrationRuntimeName>",
+L68:               "type": "IntegrationRuntimeReference"
+L69:           }
+L70:           "headers":{
+L71:              "Content-Type":"application/json"
+L72:           },
+L73:           "authentication":{
+L74:              "type":"ClientCertificate",
+L75:              "pfx":"****",
+L76:              "password":"****"
+L77:           },
+L78:           "datasets":[
+L79:              {
+L80:                 "referenceName":"<ConsumedDatasetName>",
+L81:                 "type":"DatasetReference",
+L82:                 "parameters":{
+L83:                    ...
+L84:                 }
+L85:              }
+L86:           ],
+L87:           "linkedServices":[
+L88:              {
+L89:                 "referenceName":"<ConsumedLinkedServiceName>",
+L90:                 "type":"LinkedServiceReference"
+L91:              }
+L92:           ]
+L93:        }
+L94:     }
+--------------------------------------------------------------------------------
+Create schedule triggers - Azure Data Factory & Azure Synapse | Microsoft Learn (https://learn.microsoft.com/en-us/azure/data-factory/how-to-create-schedule-trigger)
+citeturn39view2 [wordlim: 200] Crawled: today; Content type: text/html; Source: find({"ref_id":"turn34view4","pattern":"Eastern Standard Time"}); Total lines: 619
+L474: JSON property  | Type  | Required  | Default value  | Valid values  | Example
+L475: --- | --- | --- | --- | --- | ---
+L476: `startTime`  | String  | Yes  | None  | ISO-8601 Date-Times  | For the UTC time zone: `"startTime" : "2013-01-09T09:30:00-08:00Z"`
+L477: For other time zones: `"2013-01-09T09:30:00-08:00"`
+L478: `timeZone`  | String  | Yes  | None  | cite57†Time zone values | `"UTC"`
+L479: `recurrence`  | Object  | Yes  | None  | Recurrence object  | `"recurrence" : { "frequency" : "monthly", "interval" : 1 }`
+L480: `interval`  | Number  | No  | 1  | 1 to 1,000  | `"interval":10`
+L481: `endTime`  | String  | Yes  | None  | Date-Time value that represents a time in the future  | For the UTC time zone: `"endTime" : "2013-02-09T09:30:00-08:00Z"`
+L482: For other time zones: `"endTime" : "2013-02-09T09:30:00-08:00"`
+L483: `schedule`  | Object  | No  | None  | Schedule object  | `"schedule" : { "minute" : [30], "hour" : [8,17] }`
+L484: ### Time zone option
+L485: 
+L486: Here are some of the time zones supported for schedule triggers.
+L487: Time zone  | UTC offset (Non-daylight saving)  | timeZone value  | Observe daylight saving  | Time stamp format
+L488: --- | --- | --- | --- | ---
+L489: Coordinated Universal Time  | 0  | `UTC`  | No  | `'yyyy-MM-ddTHH:mm:ssZ'`
+L490: Pacific Time (PT)  | -8  | `Pacific Standard Time`  | Yes  | `'yyyy-MM-ddTHH:mm:ss'`
+L491: Central Time (CT)  | -6  | `Central Standard Time`  | Yes  | `'yyyy-MM-ddTHH:mm:ss'`
+L492: Eastern Time (ET)  | -5  | `Eastern Standard Time`  | Yes  | `'yyyy-MM-ddTHH:mm:ss'`
+L493: Greenwich Mean Time (GMT)  | 0  | `GMT Standard Time`  | Yes  | `'yyyy-MM-ddTHH:mm:ss'`
+L494: Central European Standard Time  | +1  | `W. Europe Standard Time`  | Yes  | `'yyyy-MM-ddTHH:mm:ss'`
+L495: India Standard Time (IST)  | +5:30  | `India Standard Time`  | No  | `'yyyy-MM-ddTHH:mm:ss'`
+L496: China Standard Time  | +8  | `China Standard Time`  | No  | `'yyyy-MM-ddTHH:mm:ss'`
+L497: This list is incomplete. For a complete list of time-zone options, see the cite58†Trigger creation page in the portal.
+L498: ### startTime property
+L499: 
+L500: The following table shows you how the `startTime` property controls a trigger run.
+L501: startTime value  | Recurrence without schedule  | Recurrence with schedule
+L502: --- | --- | ---
+L503: Start time in past  | Calculates the first future execution time after the start time and runs at that time.
+L504: Runs subsequent executions based on calculating from the last execution time.
+L505: See the example that follows this table.  | The trigger starts no sooner than the specified start time. The first occurrence is based on the schedule that's calculated from the start time.
+L506: Runs subsequent executions based on the recurrence schedule.
+L507: Start time in future or at present  | Runs once at the specified start time.
+L508: Runs subsequent executions based on calculating from the last execution time.  | The trigger starts no sooner than the specified start time. The first occurrence is based on the schedule that's calculated from the start time.
+L509: Runs subsequent executions based on the recurrence schedule.
+L510: Let's see an example of what happens when the start time is in the past, with a recurrence, but no schedule. Assume that the current time is `2017-04-08 13:00`, the start time is `2017-04-07 14:00`, and the recurrence is every two days. (The `recurrence` value is defined by setting the `frequency` property to `day` and the `interval` property to `2`.) Notice that the `startTime` value is in the past and occurs before the current time.
+L511: Under these conditions, the first execution is at `2017-04-09` at `14:00`. The Scheduler engine calculates execution occurrences from the start time. Any instances in the past are discarded. The engine uses the next instance that occurs in the future. In this scenario, the start time is `2017-04-07` at `2:00pm`, so the next instance is two days from that time, which is `2017-04-09` at `2:00pm`.
+--------------------------------------------------------------------------------
+Create schedule triggers - Azure Data Factory & Azure Synapse | Microsoft Learn (https://learn.microsoft.com/en-us/azure/data-factory/how-to-create-schedule-trigger)
+citeturn39view3 [wordlim: 200] Crawled: today; Content type: text/html; Source: find({"ref_id":"turn34view4","pattern":"yyyy-MM-ddTHH:mm:ss"}); Total lines: 619
+L173:      * The `endTime` element is one hour after the value of the `startTime` element. As such, the trigger runs the pipeline 15 minutes, 30 minutes, and 45 minutes after the start time. Don't forget to update the start time to the current UTC time and the end time to one hour past the start time.
+L174: 
+L175: Important
+L176: 
+L177: For the UTC time zone, `startTime` and `endTime` need to follow the format `yyyy-MM-ddTHH:mm:ss`Z. For other time zones, `startTime` and `endTime` follow the `yyyy-MM-ddTHH:mm:ss` format.
+L259:      * The `endTime` element is one hour after the value of the `startTime` element. As such, the trigger runs the pipeline 15 minutes, 30 minutes, and 45 minutes after the start time. Don't forget to update the start time to the current UTC time and the end time to one hour past the start time.
+L260: 
+L261: Important
+L262: 
+L263: For the UTC time zone, the `startTime` and endTime need to follow the format `yyyy-MM-ddTHH:mm:ss`Z. For other time zones, `startTime` and `endTime` follow the `yyyy-MM-ddTHH:mm:ss` format.
+L264: Per the ISO 8601 standard, the Z suffix is used to timestamp mark the datetime to the UTC time zone and render the `timeZone` field useless. If the Z suffix is missing for the UTC time zone, the result is an error upon trigger activation.
+L265: 
+L266:      * The trigger is associated with the `Adfv2QuickStartPipeline` pipeline. To associate multiple pipelines with a trigger, add more `pipelineReference` sections.
+L434:                 {
+L435:                     "pipelineReference": {
+L436:                         "type": "PipelineReference",
+L437:                         "referenceName": "<Name of your pipeline>"
+L438:                     },
+L439:                     "parameters": {
+L440:                         "<parameter 1 Name>": {
+L441:                             "type": "Expression",
+L442:                             "value": "<parameter 1 Value>"
+L443:                         },
+L444:                         "<parameter 2 Name>" : "<parameter 2 Value>"
+L445:                     }
+L446:                }
+L447:           ]
+L448:       }
+L449:     }
+L450:     `
+L451: Important
+L452: 
+L453: The `parameters` property is a mandatory property of the `pipelines` element. If your pipeline doesn't take any parameters, you must include an empty JSON definition for the `parameters` property.
+L454: ### Schema overview
+L455: 
+L456: The following table provides a high-level overview of the major schema elements that are related to recurrence and scheduling of a trigger.
+L457: JSON property  | Description
+L458: --- | ---
+L459: `startTime`  | A Date-Time value. For simple schedules, the value of the `startTime` property applies to the first occurrence. For complex schedules, the trigger starts no sooner than the specified `startTime` value.
+L460: For the UTC time zone, the format is `'yyyy-MM-ddTHH:mm:ssZ'`. For other time zones, the format is `yyyy-MM-ddTHH:mm:ss`.
+L461: `endTime`  | The end date and time for the trigger. The trigger doesn't execute after the specified end date and time. The value for the property can't be in the past. This property is optional.
+L462: For the UTC time zone, the format is `'yyyy-MM-ddTHH:mm:ssZ'`. For other time zones, the format is `yyyy-MM-ddTHH:mm:ss`.
+L463: `timeZone`  | The time zone in which the trigger is created. This setting affects `startTime`, `endTime`, and `schedule`. See a cite57†list of supported time zones .
+L464: `recurrence`  | A recurrence object that specifies the recurrence rules for the trigger. The recurrence object supports the `frequency`, `interval`, `endTime`, `count`, and `schedule` elements. When a recurrence object is defined, the `frequency` element is required. The other elements of the recurrence object are optional.
+L465: `frequency`  | The unit of frequency at which the trigger recurs. The supported values include `minute,` `hour,` `day`, `week`, and `month`.
+L466: `interval`  | A positive integer that denotes the interval for the `frequency` value, which determines how often the trigger runs. For example, if the `interval` is `3` and the `frequency` is `week`, the trigger recurs every 3 weeks.
+L467: `schedule`  | The recurrence schedule for the trigger. A trigger with a specified `frequency` value alters its recurrence based on a recurrence schedule. The `schedule` property contains modifications for the recurrence that are based on minutes, hours, weekdays, month days, and week number.
+L468: Important
+L469: 
+L470: For the UTC time zone, `startTime` and `endTime` need to follow the format `yyyy-MM-ddTHH:mm:ss`Z. For other time zones, `startTime` and `endTime` follow the `yyyy-MM-ddTHH:mm:ss` format.
+L471: 
+L472: Per the ISO 8601 standard, the Z suffix is used to timestamp mark the datetime to the UTC time zone and render the `timeZone` field useless. If the Z suffix is missing for the UTC time zone, the result is an error upon trigger activation.
+L473: ### Schema defaults, limits, and examples
+L474: JSON property  | Type  | Required  | Default value  | Valid values  | Example
+L475: --- | --- | --- | --- | --- | ---
+L476: `startTime`  | String  | Yes  | None  | ISO-8601 Date-Times  | For the UTC time zone: `"startTime" : "2013-01-09T09:30:00-08:00Z"`
+L477: For other time zones: `"2013-01-09T09:30:00-08:00"`
+L478: `timeZone`  | String  | Yes  | None  | cite57†Time zone values | `"UTC"`
+L479: `recurrence`  | Object  | Yes  | None  | Recurrence object  | `"recurrence" : { "frequency" : "monthly", "interval" : 1 }`
+L480: `interval`  | Number  | No  | 1  | 1 to 1,000  | `"interval":10`
+L481: `endTime`  | String  | Yes  | None  | Date-Time value that represents a time in the future  | For the UTC time zone: `"endTime" : "2013-02-09T09:30:00-08:00Z"`
+L482: For other time zones: `"endTime" : "2013-02-09T09:30:00-08:00"`
+L483: `schedule`  | Object  | No  | None  | Schedule object  | `"schedule" : { "minute" : [30], "hour" : [8,17] }`
+L484: ### Time zone option
+L485: 
+L486: Here are some of the time zones supported for schedule triggers.
+L487: Time zone  | UTC offset (Non-daylight saving)  | timeZone value  | Observe daylight saving  | Time stamp format
+L488: --- | --- | --- | --- | ---
+L489: Coordinated Universal Time  | 0  | `UTC`  | No  | `'yyyy-MM-ddTHH:mm:ssZ'`
+L490: Pacific Time (PT)  | -8  | `Pacific Standard Time`  | Yes  | `'yyyy-MM-ddTHH:mm:ss'`
+L491: Central Time (CT)  | -6  | `Central Standard Time`  | Yes  | `'yyyy-MM-ddTHH:mm:ss'`
+L492: Eastern Time (ET)  | -5  | `Eastern Standard Time`  | Yes  | `'yyyy-MM-ddTHH:mm:ss'`
+L493: Greenwich Mean Time (GMT)  | 0  | `GMT Standard Time`  | Yes  | `'yyyy-MM-ddTHH:mm:ss'`
+L494: Central European Standard Time  | +1  | `W. Europe Standard Time`  | Yes  | `'yyyy-MM-ddTHH:mm:ss'`
+L495: India Standard Time (IST)  | +5:30  | `India Standard Time`  | No  | `'yyyy-MM-ddTHH:mm:ss'`
+L496: China Standard Time  | +8  | `China Standard Time`  | No  | `'yyyy-MM-ddTHH:mm:ss'`
+L497: This list is incomplete. For a complete list of time-zone options, see the cite58†Trigger creation page in the portal.
+L498: ### startTime property
+L499: 
+L500: The following table shows you how the `startTime` property controls a trigger run.
+L501: startTime value  | Recurrence without schedule  | Recurrence with schedule
+L502: --- | --- | ---
+L503: Start time in past  | Calculates the first future execution time after the start time and runs at that time.
+L504: Runs subsequent executions based on calculating from the last execution time.
+L505: See the example that follows this table.  | The trigger starts no sooner than the specified start time. The first occurrence is based on the schedule that's calculated from the start time.
+L506: Runs subsequent executions based on the recurrence schedule.
+L507: Start time in future or at present  | Runs once at the specified start time.
+L508: Runs subsequent executions based on calculating from the last execution time.  | The trigger starts no sooner than the specified start time. The first occurrence is based on the schedule that's calculated from the start time.
+L509: Runs subsequent executions based on the recurrence schedule.
+L510: Let's see an example of what happens when the start time is in the past, with a recurrence, but no schedule. Assume that the current time is `2017-04-08 13:00`, the start time is `2017-04-07 14:00`, and the recurrence is every two days. (The `recurrence` value is defined by setting the `frequency` property to `day` and the `interval` property to `2`.) Notice that the `startTime` value is in the past and occurs before the current time.
+L511: Under these conditions, the first execution is at `2017-04-09` at `14:00`. The Scheduler engine calculates execution occurrences from the start time. Any instances in the past are discarded. The engine uses the next instance that occurs in the future. In this scenario, the start time is `2017-04-07` at `2:00pm`, so the next instance is two days from that time, which is `2017-04-09` at `2:00pm`.
+L512: The first execution time is the same even if the `startTime` value is `2017-04-05 14:00` or `2017-04-01 14:00`. After the first execution, subsequent executions are calculated by using the schedule. Therefore, the subsequent executions are at `2017-04-11` at `2:00pm`, then `2017-04-13` at `2:00pm`, then `2017-04-15` at `2:00pm`, and so on.
+L513: 
+L514: Finally, when the hours or minutes aren't set in the schedule for a trigger, the hours or minutes of the first execution are used as the defaults.
+--------------------------------------------------------------------------------
+Release notes & updates – Azure CLI | Microsoft Learn (https://learn.microsoft.com/en-us/cli/azure/release-notes-azure-cli)
+citeturn39view4 [wordlim: 200] Crawled: today; Content type: text/html; Source: find({"ref_id":"turn38view9","pattern":"2.90.0"}); Redirected to URL: https://learn.microsoft.com/en-us/cli/azure/release-notes-azure-cli?view=azure-cli-latest; Total lines: 13621
+L0: cite0†Skip to main content cite1†Skip to Ask Learn chat experience L1: 
+L2: This browser is no longer supported.
+L3: 
+L4: Upgrade to Microsoft Edge to take advantage of the latest features, security updates, and technical support.
+L5: 
+L6: cite2†Download Microsoft Edge†go.microsoft.com cite3†More info about Internet Explorer and Microsoft Edge L7: 
+L8: Table of contents Exit editor mode
+L9: 
+L10: Ask Learn Ask Learn
+L11: 
+L12: Reading mode Table of contents cite1†Read in English Add Add to Plans cite4†Edit†github.com L13: 
+L14: * * *
+L15: 
+L16: Copy Markdown Print
+L17: 
+L18: * * *
+L19: 
+L20: Note
+L21: Access to this page requires authorization. You can try cite1†signing in or changing directories.
+L22: 
+L23: Access to this page requires authorization. You can try changing directories.
+L24: # Azure CLI release notes
+L25: 
+L26: Feedback
+L27: 
+L28: Summarize this article for me
+L29: 
+L30: ## In this article
+L31: 
+L32: ## September 01, 2026
+L33: 
+L34: Version 2.90.0
+L35: 
+L36: ### ACR
+L37: 
+L38:   * `az acr network-rule list/add/remove`: Fix `virtualNetworkRules` entries returning `virtualNetworkResourceId` as null and surface the `virtualNetworkSubnetResourceId` field
+L39: ### AKS
+L40:   * `az aks create`, `az aks nodepool add`: Support `--enable-cluster-autoscaler` for VirtualMachines agent pools to create pools in autoscale mode
+L41:   * `az aks nodepool update`: Support `--enable-cluster-autoscaler` for VirtualMachines agent pools by converting manual scale profiles to autoscale profiles
+L42:   * `az aks nodepool update`: Support `--disable-cluster-autoscaler` for VirtualMachines agent pools by converting autoscale profiles back to manual profiles
+L43:   * `az aks nodepool update`: Block `--update-cluster-autoscaler` for VirtualMachines agent pools and direct to `az aks nodepool auto-scale update`
+L44:   * `az aks nodepool auto-scale add`: Add command to add an autoscale profile to a VirtualMachines agent pool
+L45:   * `az aks nodepool auto-scale update`: Add command to update an autoscale profile of a VirtualMachines agent pool
+L46:   * `az aks nodepool auto-scale delete`: Add command to delete an autoscale profile from a VirtualMachines agent pool
+L47:   * Fix missing wait on LRO pollers when provisioning Azure Monitor metrics artifacts (DCE/DCR/DCRA/Grafana link) for `az aks create --sku automatic`
+L48:   * `az aks create`: Skip SSH key configuration for Automatic SKU clusters
+L49:   * `az aks nodepool rollback`: Show an accurate warning when only the node OS upgrade channel is enabled
+L50:   * Implement enable/disable flags for user-defined scheduler configuration
+L51:   * `az aks update`: Fix Azure Container Storage configuration detection for lowercase and boolean extension settings
+L52: ### App Config
+L53: 
+L54:   * Sanitize resource group name in data-plane test recordings
+L55: ### App Service
+L56:   * `az webapp exec`: Add command to run an interactive shell or execute commands in Linux web app containers (preview)
+L57:   * `az webapp create/list-runtimes`: Change Node.js 26 runtime identifier
+L58:   * `az appservice plan create`: Fix Windows plan help examples to include `--is-linux false`, consistent with the default Linux behavior when the flag is omitted
+L59:   * `az webapp config set`: Fix `--generic-configurations` silently dropping camelCase site config properties (e.g. `webJobsEnabled`)
+--------------------------------------------------------------------------------
+Release v0.38.33 · Azure/bicep · GitHub (https://github.com/Azure/bicep/releases/tag/v0.38.33)
+citeturn39view5 [wordlim: 200] Crawled: 2 weeks ago; Content type: text/html; Source: find({"ref_id":"turn38view8","pattern":"v0.38.33"}); Total lines: 195
+L84:     * PROGRAMS
+L85:       * cite50†Security Lab†securitylab.github.com L86:       * cite51†Maintainer Community†maintainers.github.com L87:       * cite52†GitHub Stars†stars.github.com L88:       * cite53†Archive Program†archiveprogram.github.com L89: 
+L90:     * REPOSITORIES
+L91:       * cite54†Topics L92:       * cite55†Trending L93:       * cite56†Collections L94: 
+L95:   * Enterprise
+L96: 
+L97:     * ENTERPRISE SOLUTIONS
+L98:       * cite19†Enterprise platformAI-powered developer platform L99:     * AVAILABLE ADD-ONS
+L100:       * cite10†GitHub Advanced SecurityEnterprise-grade security features L101:       * cite57†Copilot for BusinessEnterprise-grade AI features L102:       * cite58†Premium SupportEnterprise-grade 24/7 support L103: 
+L104:   * cite59†Pricing L105: 
+L106: Search`/`
+L107: 
+L108: cite1†Sign in L109: 
+L110: cite60†Sign up L111: 
+L112: Appearance settings
+L113: You signed in with another tab or window. Reload to refresh your session. You signed out in another tab or window. Reload to refresh your session. You switched accounts on another tab or window. Reload to refresh your session. Dismiss alert
+L114: ### Uh oh!
+L115: 
+L116: There was an error while loading. Please reload this page.
+L117: 
+L118: cite61†Azure / cite62†bicep Public
+L119: 
+L120:   * cite63†Notifications You must be signed in to change notification settings
+L121:   * cite63†Fork 830 L122:   * cite63†Star L123: 
+L124:   * cite64†Code L125:   * cite65†Issues 1k L126:   * cite66†Pull requests 33 L127:   * cite67†Discussions L128:   * cite68†Actions L129:   * cite69†Projects L130:   * cite70†Security and quality 0 L131:   * cite71†Insights L132: 
+L133: Additional navigation options
+L134: 
+L135: # v0.38.33
+L136: 
+L137: Compare
+L138: 
+L139: # Choose a tag to compare
+L140: ## Sorry, something went wrong.
+L141: 
+L142: Filter
+L143: 
+L144: Loading [Input]
+L145: 
+L146: ## Sorry, something went wrong.
+L147: 
+L148: ### Uh oh!
+L149: 
+L150: There was an error while loading. Please reload this page.
+L151: ## No results found
+L152: 
+L153: cite72†View all tags L154: 
+L155: cite73†Image: @anthony-c-martin†avatars.githubusercontent.com cite74†anthony-c-martin released this 06 Oct 16:55
+L156: 
+L157: · cite75†1399 commits to main since this release
+L158: 
+L159: cite64†v0.38.33 L160: 
+L161: cite76†`6bb5d5f` L162: 
+L163: This commit was created on GitHub.com and signed with GitHub’s verified signature.
+L164: 
+L165: GPG key ID: B5690EEEBB952194
+L166: 
+L167: Verified
+L168: 
+L169: cite77†Learn about vigilant mode†docs.github.com .
+L170: ## Bug Fixes
+L171: 
+L172:   * Fix for incorrect error diagnostic on policyDefinitions existing resource usage (cite78†#18169 )
+L173:   * Fix regression on secure inline object types and resource-derived string and object types (cite79†#18170 )
+L174:   * Bicep.RpcClient - use PipeReader & PipeWriter APIs (cite80†#18212 )
+L175: 
+L176: Assets 35
+L177: 
+L178: Loading
+L179: ### Uh oh!
+L180: 
+L181: There was an error while loading. Please reload this page.
+L182: 
+L183: [Input][Input] [Input]
+L184: 
+L185: ANT0071, 0xfeeddeadbeef, zec-hue, and donnalangston69 reacted with thumbs up emoji feliasson reacted with rocket emoji
+L186: 
+L187: All reactions
+L188: 
+L189:   * 4 reactions
+L190:   * 1 reaction
+L191: 
+L192: 5 people reacted
+L193: 
+L194: You can’t perform that action at this time.
+

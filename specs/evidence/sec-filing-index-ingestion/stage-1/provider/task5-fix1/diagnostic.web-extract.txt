@@ -1,0 +1,529 @@
+Diagnostic Settings - Create Or Update - REST API (Azure Monitor) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/monitor/diagnostic-settings/create-or-update?view=rest-monitor-2021-05-01-preview)
+citeturn80view0 [wordlim: 200] Crawled: today; Content type: text/html; Source: find({"ref_id":"https://learn.microsoft.com/en-us/rest/api/monitor/diagnostic-settings/create-or-update?view=rest-monitor-2021-05-01-preview","pattern":"200 OK"}); Total lines: 619
+L0: cite0†Skip to main content cite1†Skip to in-page navigation cite2†Skip to Ask Learn chat experience L1: 
+L2: This browser is no longer supported.
+L3: 
+L4: Upgrade to Microsoft Edge to take advantage of the latest features, security updates, and technical support.
+L5: 
+L6: cite3†Download Microsoft Edge†go.microsoft.com cite4†More info about Internet Explorer and Microsoft Edge L7: 
+L8: Table of contents Exit editor mode
+L9: 
+L10: Ask Learn Ask Learn
+L11: 
+L12: Reading mode Table of contents cite2†Read in English Add Add to Plans cite5†Edit†github.com L13: 
+L14: * * *
+L15: Copy Markdown Print
+L16: 
+L17: * * *
+L18: 
+L19: Note
+L20: 
+L21: Access to this page requires authorization. You can try cite2†signing in or changing directories.
+L22: 
+L23: Access to this page requires authorization. You can try changing directories.
+L24: # Diagnostic Settings - Create Or Update
+L25: 
+L26: Service:
+L27:     Monitor
+L28: 
+L29: API Version:
+L30:     2021-05-01-preview
+L31: 
+L32: ##
+L33: 
+L34: Creates or updates diagnostic settings for the specified resource.
+L35: 
+L36:     `PUT https://management.azure.com/{resourceUri}/providers/Microsoft.Insights/diagnosticSettings/{name}?api-version=2021-05-01-preview`
+L37: ## URI Parameters
+L38: 
+L39: Name  | In  | Required  | Type  | Description
+L40: --- | --- | --- | --- | ---
+L41: name  | path  | True  | string  | The name of the diagnostic setting.
+L42: resourceUri  | path  | True  | string  | The identifier of the resource.
+L43: api-version  | query  | True  | string minLength: 1  | The API version to use for this operation.
+L44: ## Request Body
+L45: Name  | Type  | Description
+L46: --- | --- | ---
+L47: properties.eventHubAuthorizationRuleId  | string  | The resource Id for the event hub authorization rule.
+L48: properties.eventHubName  | string  | The name of the event hub. If none is specified, the default event hub will be selected.
+L49: properties.logAnalyticsDestinationType  | string  | A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type constructed as follows: <normalized service identity>_<normalized category name>. Possible values are: Dedicated and null (null is default.)
+L50: properties.logs  | cite6†LogSettings []  | The list of logs settings.
+L51: properties.marketplacePartnerId  | string  | The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs.
+L52: properties.metrics  | cite7†MetricSettings []  | The list of metric settings.
+L53: properties.serviceBusRuleId  | string  | The service bus rule Id of the diagnostic setting. This is here to maintain backwards compatibility.
+L54: properties.storageAccountId  | string  | The resource ID of the storage account to which you would like to send Diagnostic Logs.
+L55: properties.workspaceId  | string  | The full ARM resource ID of the Log Analytics workspace to which you would like to send Diagnostic Logs. Example: /subscriptions/4b9e8510-67ab-4e9a-95a9-e2f1e570ea9c/resourceGroups/insights-integration/providers/Microsoft.OperationalInsights/workspaces/viruela2
+L56: ## Responses
+L57: 
+L58: Name  | Type  | Description
+L59: --- | --- | ---
+L60: 200 OK  | cite8†DiagnosticSettingsResource | Successful request to create a diagnostic setting
+L61: Other Status Codes  | cite9†ErrorResponse | Error response describing why the operation failed.
+L62: 
+L63: ## Security
+L64: 
+L65: ### azure_auth
+L66: 
+L67: Azure Active Directory OAuth2 Flow
+L68: 
+L69: Type: oauth2
+L70: Flow: implicit
+L71: Authorization URL: https://login.microsoftonline.com/common/oauth2/authorize
+L72: #### Scopes
+L73: 
+L74: Name  | Description
+L75: --- | ---
+L76: user_impersonation  | impersonate your user account
+L77: 
+L78: ## Examples
+L79: 
+L80: cite10†Creates or Updates the diagnostic setting L81: cite11†Creates or Updates the diagnostic setting for category L82: 
+L83: ### Creates or Updates the diagnostic setting
+L84: #### Sample request
+L85:   * cite12†HTTP L86:   * cite13†Go L87:   * cite14†JavaScript L88: 
+L89:     `PUT https://management.azure.com/subscriptions/1a66ce04-b633-4a0b-b2bc-a912ec8986a6/resourcegroups/viruela1/providers/microsoft.logic/workflows/viruela6/providers/Microsoft.Insights/diagnosticSettings/mysetting?api-version=2021-05-01-preview
+L90: 
+L91:     {
+L92:       "properties": {
+L93:         "eventHubAuthorizationRuleId": "/subscriptions/1a66ce04-b633-4a0b-b2bc-a912ec8986a6/resourceGroups/montest/providers/microsoft.eventhub/namespaces/mynamespace/authorizationrules/myrule",
+L94:         "eventHubName": "myeventhub",
+L95:         "logAnalyticsDestinationType": "Dedicated",
+L96:         "logs": [
+L97:           {
+L98:             "categoryGroup": "allLogs",
+L99:             "enabled": true,
+L100:             "retentionPolicy": {
+L101:               "days": 0,
+L102:               "enabled": false
+L103:             }
+L104:           }
+L105:         ],
+L106:         "marketplacePartnerId": "/subscriptions/abcdeabc-1234-1234-ab12-123a1234567a/resourceGroups/test-rg/providers/Microsoft.Datadog/monitors/dd1",
+L107:         "metrics": [
+L108:           {
+L109:             "category": "WorkflowMetrics",
+L110:             "enabled": true,
+L111:             "retentionPolicy": {
+L112:               "days": 0,
+L113:               "enabled": false
+L114:             }
+L115:           }
+L116:         ],
+L117:         "storageAccountId": "/subscriptions/df602c9c-7aa0-407d-a6fb-eb20c8bd1192/resourceGroups/apptest/providers/Microsoft.Storage/storageAccounts/appteststorage1",
+L118:         "workspaceId": ""
+L119:       }
+L120:     }
+L121: 
+L122:     `
+L123: 
+L124:     `package armmonitor_test
+L125: 
+L126:     import (
+L127:     	"context"
+L128:     	"log"
+L129: 
+L130:     	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
+L131:     	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+L132:     	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/monitor/armmonitor"
+L133:     )
+L134:     // Generated from example definition: 2021-05-01-preview/createOrUpdateDiagnosticSetting.json
+L135:     func ExampleDiagnosticSettingsClient_CreateOrUpdate_createsOrUpdatesTheDiagnosticSetting() {
+L136:     	cred, err := azidentity.NewDefaultAzureCredential(nil)
+L137:     	if err != nil {
+L138:     		log.Fatalf("failed to obtain a credential: %v", err)
+L139:     	}
+L140:     	ctx := context.Background()
+L141:     	clientFactory, err := armmonitor.NewClientFactory("<subscriptionID>", cred, nil)
+L142:     	if err != nil {
+L143:     		log.Fatalf("failed to create client: %v", err)
+L144:     	}
+L145:     	res, err := clientFactory.NewDiagnosticSettingsClient().CreateOrUpdate(ctx, "subscriptions/1a66ce04-b633-4a0b-b2bc-a912ec8986a6/resourcegroups/viruela1/providers/microsoft.logic/workflows/viruela6", "mysetting", armmonitor.DiagnosticSettingsResource{
+L146:     		Properties: &armmonitor.DiagnosticSettings{
+L147:     			EventHubAuthorizationRuleID: to.Ptr("/subscriptions/1a66ce04-b633-4a0b-b2bc-a912ec8986a6/resourceGroups/montest/providers/microsoft.eventhub/namespaces/mynamespace/authorizationrules/myrule"),
+L148:     			EventHubName:                to.Ptr("myeventhub"),
+L149:     			LogAnalyticsDestinationType: to.Ptr("Dedicated"),
+L150:     			Logs: []*armmonitor.LogSettings{
+L151:     				{
+L152:     					CategoryGroup: to.Ptr("allLogs"),
+L153:     					Enabled:       to.Ptr(true),
+L154:     					RetentionPolicy: &armmonitor.RetentionPolicy{
+L155:     						Days:    to.Ptr[int32](0),
+L156:     						Enabled: to.Ptr(false),
+L157:     					},
+L158:     				},
+L159:     			},
+L160:     			MarketplacePartnerID: to.Ptr("/subscriptions/abcdeabc-1234-1234-ab12-123a1234567a/resourceGroups/test-rg/providers/Microsoft.Datadog/monitors/dd1"),
+L161:     			Metrics: []*armmonitor.MetricSettings{
+L162:     				{
+L163:     					Category: to.Ptr("WorkflowMetrics"),
+L164:     					Enabled:  to.Ptr(true),
+L165:     					RetentionPolicy: &armmonitor.RetentionPolicy{
+L166:     						Days:    to.Ptr[int32](0),
+L167:     						Enabled: to.Ptr(false),
+L168:     					},
+L169:     				},
+L170:     			},
+L171:     			StorageAccountID: to.Ptr("/subscriptions/df602c9c-7aa0-407d-a6fb-eb20c8bd1192/resourceGroups/apptest/providers/Microsoft.Storage/storageAccounts/appteststorage1"),
+L172:     			WorkspaceID:      to.Ptr(""),
+L173:     		},
+L174:     	}, nil)
+L175:     	if err != nil {
+L176:     		log.Fatalf("failed to finish the request: %v", err)
+L177:     	}
+L178:     	// You could use response here. We use blank identifier for just demo purposes.
+L179:     	_ = res
+L180:     	// If the HTTP response code is 200 as defined in example definition, your response structure would look as follows. Please pay attention that all the values in the output are fake values for just demo purposes.
+L181:     	// res = armmonitor.DiagnosticSettingsClientCreateOrUpdateResponse{
+L182:     	// 	DiagnosticSettingsResource: armmonitor.DiagnosticSettingsResource{
+L183:     	// 		Name: to.Ptr("mysetting"),
+L184:     	// 		Type: to.Ptr("Microsoft.Insights/diagnosticSettings"),
+L185:     	// 		ID: to.Ptr("/subscriptions/1a66ce04-b633-4a0b-b2bc-a912ec8986a6/resourcegroups/viruela1/providers/microsoft.logic/workflows/viruela6/providers/microsoft.insights/diagnosticSettings/mysetting"),
+L186:     	// 		Properties: &armmonitor.DiagnosticSettings{
+L187:     	// 			EventHubAuthorizationRuleID: to.Ptr("/subscriptions/1a66ce04-b633-4a0b-b2bc-a912ec8986a6/resourceGroups/montest/providers/microsoft.eventhub/namespaces/mynamespace/authorizationrules/myrule"),
+L188:     	// 			EventHubName: to.Ptr("myeventhub"),
+L189:     	// 			LogAnalyticsDestinationType: to.Ptr("Dedicated"),
+L190:     	// 			Logs: []*armmonitor.LogSettings{
+L191:     	// 				{
+L192:     	// 					CategoryGroup: to.Ptr("allLogs"),
+L193:     	// 					Enabled: to.Ptr(true),
+L194:     	// 					RetentionPolicy: &armmonitor.RetentionPolicy{
+L195:     	// 						Days: to.Ptr[int32](0),
+L196:     	// 						Enabled: to.Ptr(false),
+L197:     	// 					},
+L198:     	// 				},
+L199:     	// 			},
+L200:     	// 			MarketplacePartnerID: to.Ptr("/subscriptions/abcdeabc-1234-1234-ab12-123a1234567a/resourceGroups/test-rg/providers/Microsoft.Datadog/monitors/dd1"),
+L201:     	// 			Metrics: []*armmonitor.MetricSettings{
+L202:     	// 				{
+L203:     	// 					Category: to.Ptr("WorkflowMetrics"),
+L204:     	// 					Enabled: to.Ptr(true),
+L205:     	// 					RetentionPolicy: &armmonitor.RetentionPolicy{
+L206:     	// 						Days: to.Ptr[int32](0),
+L207:     	// 						Enabled: to.Ptr(false),
+L208:     	// 					},
+L209:     	// 				},
+L210:     	// 			},
+L211:     	// 			StorageAccountID: to.Ptr("/subscriptions/df602c9c-7aa0-407d-a6fb-eb20c8bd1192/resourceGroups/apptest/providers/Microsoft.Storage/storageAccounts/appteststorage1"),
+L212:     	// 			WorkspaceID: to.Ptr(""),
+L213:     	// 		},
+L214:     	// 	},
+L215:     	// }
+L216:     }
+L217: 
+L218:     `
+L219: To use the Azure SDK library in your project, see cite15†this documentation†github.com . To provide feedback on this code sample, cite16†open a GitHub issue†github.com L220: 
+L221:     `const { MonitorClient } = require("@azure/arm-monitor");
+L222:     const { DefaultAzureCredential } = require("@azure/identity");
+L223: 
+L224:     /**
+L225:      * This sample demonstrates how to creates or updates diagnostic settings for the specified resource.
+L226:      *
+L227:      * @summary creates or updates diagnostic settings for the specified resource.
+L228:      * x-ms-original-file: 2021-05-01-preview/createOrUpdateDiagnosticSetting.json
+L229:      */
+L230:     async function createsOrUpdatesTheDiagnosticSetting() {
+L231:       const credential = new DefaultAzureCredential();
+L232:       const client = new MonitorClient(credential);
+L233:       const result = await client.diagnosticSettings.createOrUpdate(
+L234:         "subscriptions/1a66ce04-b633-4a0b-b2bc-a912ec8986a6/resourcegroups/viruela1/providers/microsoft.logic/workflows/viruela6",
+L235:         "mysetting",
+L236:         {
+L237:           eventHubAuthorizationRuleId:
+L238:             "/subscriptions/1a66ce04-b633-4a0b-b2bc-a912ec8986a6/resourceGroups/montest/providers/microsoft.eventhub/namespaces/mynamespace/authorizationrules/myrule",
+L239:           eventHubName: "myeventhub",
+L240:           logAnalyticsDestinationType: "Dedicated",
+L241:           logs: [
+L242:             { categoryGroup: "allLogs", enabled: true, retentionPolicy: { days: 0, enabled: false } },
+L243:           ],
+L244:           marketplacePartnerId:
+L245:             "/subscriptions/abcdeabc-1234-1234-ab12-123a1234567a/resourceGroups/test-rg/providers/Microsoft.Datadog/monitors/dd1",
+L246:           metrics: [
+L247:             {
+L248:               category: "WorkflowMetrics",
+L249:               enabled: true,
+L250:               retentionPolicy: { days: 0, enabled: false },
+L251:             },
+L252:           ],
+L253:           storageAccountId:
+L254:             "/subscriptions/df602c9c-7aa0-407d-a6fb-eb20c8bd1192/resourceGroups/apptest/providers/Microsoft.Storage/storageAccounts/appteststorage1",
+L255:           workspaceId: "",
+L256:         },
+L257:       );
+L258:       console.log(result);
+L259:     }
+L260: 
+L261:     `
+L262: To use the Azure SDK library in your project, see cite17†this documentation†github.com . To provide feedback on this code sample, cite16†open a GitHub issue†github.com L263: #### Sample response
+L264: Status code:
+L265:     200
+L266: 
+L267:     `{
+L268:       "name": "mysetting",
+L269:       "type": "Microsoft.Insights/diagnosticSettings",
+L270:       "id": "/subscriptions/1a66ce04-b633-4a0b-b2bc-a912ec8986a6/resourcegroups/viruela1/providers/microsoft.logic/workflows/viruela6/providers/microsoft.insights/diagnosticSettings/mysetting",
+L271:       "properties": {
+L272:         "eventHubAuthorizationRuleId": "/subscriptions/1a66ce04-b633-4a0b-b2bc-a912ec8986a6/resourceGroups/montest/providers/microsoft.eventhub/namespaces/mynamespace/authorizationrules/myrule",
+L273:         "eventHubName": "myeventhub",
+L274:         "logAnalyticsDestinationType": "Dedicated",
+L275:         "logs": [
+L276:           {
+L277:             "categoryGroup": "allLogs",
+L278:             "enabled": true,
+L279:             "retentionPolicy": {
+L280:               "days": 0,
+L281:               "enabled": false
+L282:             }
+L283:           }
+L284:         ],
+--------------------------------------------------------------------------------
+Diagnostic Settings - Get - REST API (Azure Monitor) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/monitor/diagnostic-settings/get?view=rest-monitor-2021-05-01-preview)
+citeturn80view1 [wordlim: 200] Crawled: today; Content type: text/html; Source: find({"ref_id":"https://learn.microsoft.com/en-us/rest/api/monitor/diagnostic-settings/get?view=rest-monitor-2021-05-01-preview","pattern":"200 OK"}); Total lines: 430
+L0: cite0†Skip to main content cite1†Skip to in-page navigation cite2†Skip to Ask Learn chat experience L1: 
+L2: This browser is no longer supported.
+L3: 
+L4: Upgrade to Microsoft Edge to take advantage of the latest features, security updates, and technical support.
+L5: 
+L6: cite3†Download Microsoft Edge†go.microsoft.com cite4†More info about Internet Explorer and Microsoft Edge L7: 
+L8: Table of contents Exit editor mode
+L9: 
+L10: Ask Learn Ask Learn
+L11: 
+L12: Reading mode Table of contents cite2†Read in English Add Add to Plans cite5†Edit†github.com L13: 
+L14: * * *
+L15: Copy Markdown Print
+L16: 
+L17: * * *
+L18: 
+L19: Note
+L20: 
+L21: Access to this page requires authorization. You can try cite2†signing in or changing directories.
+L22: 
+L23: Access to this page requires authorization. You can try changing directories.
+L24: # Diagnostic Settings - Get
+L25: 
+L26: Service:
+L27:     Monitor
+L28: 
+L29: API Version:
+L30:     2021-05-01-preview
+L31: 
+L32: ##
+L33: 
+L34: Gets the active diagnostic settings for the specified resource.
+L35: 
+L36:     `GET https://management.azure.com/{resourceUri}/providers/Microsoft.Insights/diagnosticSettings/{name}?api-version=2021-05-01-preview`
+L37: ## URI Parameters
+L38: 
+L39: Name  | In  | Required  | Type  | Description
+L40: --- | --- | --- | --- | ---
+L41: name  | path  | True  | string  | The name of the diagnostic setting.
+L42: resourceUri  | path  | True  | string  | The identifier of the resource.
+L43: api-version  | query  | True  | string minLength: 1  | The API version to use for this operation.
+L44: ## Responses
+L45: 
+L46: Name  | Type  | Description
+L47: --- | --- | ---
+L48: 200 OK  | cite6†DiagnosticSettingsResource | Successful request to get more information about diagnostic setting
+L49: Other Status Codes  | cite7†ErrorResponse | Error response describing why the operation failed.
+L50: 
+L51: ## Security
+L52: 
+L53: ### azure_auth
+L54: 
+L55: Azure Active Directory OAuth2 Flow
+L56: 
+L57: Type: oauth2
+L58: Flow: implicit
+L59: Authorization URL: https://login.microsoftonline.com/common/oauth2/authorize
+L60: #### Scopes
+L61: 
+L62: Name  | Description
+L63: --- | ---
+L64: user_impersonation  | impersonate your user account
+L65: 
+L66: ## Examples
+L67: 
+L68: cite8†Gets the diagnostic setting L69: cite9†Gets the diagnostic setting for category L70: 
+L71: ### Gets the diagnostic setting
+L72: #### Sample request
+L73:   * cite10†HTTP L74:   * cite11†Go L75:   * cite12†JavaScript L76: 
+L77:     `GET https://management.azure.com/subscriptions/1a66ce04-b633-4a0b-b2bc-a912ec8986a6/resourcegroups/viruela1/providers/microsoft.logic/workflows/viruela6/providers/Microsoft.Insights/diagnosticSettings/mysetting?api-version=2021-05-01-preview
+L78:     `
+L79: 
+L80:     `package armmonitor_test
+L81: 
+L82:     import (
+L83:     	"context"
+L84:     	"log"
+L85: 
+L86:     	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+L87:     	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/monitor/armmonitor"
+L88:     )
+L89: 
+L90:     // Generated from example definition: 2021-05-01-preview/getDiagnosticSetting.json
+L91:     func ExampleDiagnosticSettingsClient_Get_getsTheDiagnosticSetting() {
+L92:     	cred, err := azidentity.NewDefaultAzureCredential(nil)
+L93:     	if err != nil {
+L94:     		log.Fatalf("failed to obtain a credential: %v", err)
+L95:     	}
+L96:     	ctx := context.Background()
+L97:     	clientFactory, err := armmonitor.NewClientFactory("<subscriptionID>", cred, nil)
+L98:     	if err != nil {
+L99:     		log.Fatalf("failed to create client: %v", err)
+L100:     	}
+L101:     	res, err := clientFactory.NewDiagnosticSettingsClient().Get(ctx, "subscriptions/1a66ce04-b633-4a0b-b2bc-a912ec8986a6/resourcegroups/viruela1/providers/microsoft.logic/workflows/viruela6", "mysetting", nil)
+L102:     	if err != nil {
+L103:     		log.Fatalf("failed to finish the request: %v", err)
+L104:     	}
+L105:     	// You could use response here. We use blank identifier for just demo purposes.
+L106:     	_ = res
+L107:     	// If the HTTP response code is 200 as defined in example definition, your response structure would look as follows. Please pay attention that all the values in the output are fake values for just demo purposes.
+L108:     	// res = armmonitor.DiagnosticSettingsClientGetResponse{
+L109:     	// 	DiagnosticSettingsResource: armmonitor.DiagnosticSettingsResource{
+L110:     	// 		Name: to.Ptr("mysetting"),
+L111:     	// 		Type: to.Ptr("Microsoft.Insights/diagnosticSettings"),
+L112:     	// 		ID: to.Ptr("/subscriptions/1a66ce04-b633-4a0b-b2bc-a912ec8986a6/resourcegroups/viruela1/providers/microsoft.logic/workflows/viruela6/providers/microsoft.insights/diagnosticSettings/mysetting"),
+L113:     	// 		Properties: &armmonitor.DiagnosticSettings{
+L114:     	// 			EventHubAuthorizationRuleID: to.Ptr("/subscriptions/1a66ce04-b633-4a0b-b2bc-a912ec8986a6/resourceGroups/montest/providers/microsoft.eventhub/namespaces/mynamespace/authorizationrules/myrule"),
+L115:     	// 			Logs: []*armmonitor.LogSettings{
+L116:     	// 				{
+L117:     	// 					CategoryGroup: to.Ptr("allLogs"),
+L118:     	// 					Enabled: to.Ptr(true),
+L119:     	// 					RetentionPolicy: &armmonitor.RetentionPolicy{
+L120:     	// 						Days: to.Ptr[int32](0),
+L121:     	// 						Enabled: to.Ptr(false),
+L122:     	// 					},
+L123:     	// 				},
+L124:     	// 			},
+L125:     	// 			MarketplacePartnerID: to.Ptr("/subscriptions/abcdeabc-1234-1234-ab12-123a1234567a/resourceGroups/test-rg/providers/Microsoft.Datadog/monitors/dd1"),
+L126:     	// 			Metrics: []*armmonitor.MetricSettings{
+L127:     	// 				{
+L128:     	// 					Category: to.Ptr("WorkflowMetrics"),
+L129:     	// 					Enabled: to.Ptr(true),
+L130:     	// 					RetentionPolicy: &armmonitor.RetentionPolicy{
+L131:     	// 						Days: to.Ptr[int32](0),
+L132:     	// 						Enabled: to.Ptr(false),
+L133:     	// 					},
+L134:     	// 				},
+L135:     	// 			},
+L136:     	// 			StorageAccountID: to.Ptr("/subscriptions/df602c9c-7aa0-407d-a6fb-eb20c8bd1192/resourceGroups/apptest/providers/Microsoft.Storage/storageAccounts/appteststorage1"),
+L137:     	// 			WorkspaceID: to.Ptr(""),
+L138:     	// 		},
+L139:     	// 	},
+L140:     	// }
+L141:     }
+L142: 
+L143:     `
+L144: To use the Azure SDK library in your project, see cite13†this documentation†github.com . To provide feedback on this code sample, cite14†open a GitHub issue†github.com L145: 
+L146:     `const { MonitorClient } = require("@azure/arm-monitor");
+L147:     const { DefaultAzureCredential } = require("@azure/identity");
+L148: 
+L149:     /**
+L150:      * This sample demonstrates how to gets the active diagnostic settings for the specified resource.
+L151:      *
+L152:      * @summary gets the active diagnostic settings for the specified resource.
+L153:      * x-ms-original-file: 2021-05-01-preview/getDiagnosticSetting.json
+L154:      */
+L155:     async function getsTheDiagnosticSetting() {
+L156:       const credential = new DefaultAzureCredential();
+L157:       const client = new MonitorClient(credential);
+L158:       const result = await client.diagnosticSettings.get(
+L159:         "subscriptions/1a66ce04-b633-4a0b-b2bc-a912ec8986a6/resourcegroups/viruela1/providers/microsoft.logic/workflows/viruela6",
+L160:         "mysetting",
+L161:       );
+L162:       console.log(result);
+L163:     }
+L164: 
+L165:     `
+L166: To use the Azure SDK library in your project, see cite15†this documentation†github.com . To provide feedback on this code sample, cite14†open a GitHub issue†github.com L167: #### Sample response
+L168: Status code:
+L169:     200
+L170: 
+L171:     `{
+L172:       "name": "mysetting",
+L173:       "type": "Microsoft.Insights/diagnosticSettings",
+L174:       "id": "/subscriptions/1a66ce04-b633-4a0b-b2bc-a912ec8986a6/resourcegroups/viruela1/providers/microsoft.logic/workflows/viruela6/providers/microsoft.insights/diagnosticSettings/mysetting",
+L175:       "properties": {
+L176:         "eventHubAuthorizationRuleId": "/subscriptions/1a66ce04-b633-4a0b-b2bc-a912ec8986a6/resourceGroups/montest/providers/microsoft.eventhub/namespaces/mynamespace/authorizationrules/myrule",
+L177:         "logs": [
+L178:           {
+L179:             "categoryGroup": "allLogs",
+L180:             "enabled": true,
+L181:             "retentionPolicy": {
+L182:               "days": 0,
+L183:               "enabled": false
+L184:             }
+L185:           }
+L186:         ],
+L187:         "marketplacePartnerId": "/subscriptions/abcdeabc-1234-1234-ab12-123a1234567a/resourceGroups/test-rg/providers/Microsoft.Datadog/monitors/dd1",
+L188:         "metrics": [
+L189:           {
+L190:             "category": "WorkflowMetrics",
+L191:             "enabled": true,
+L192:             "retentionPolicy": {
+L193:               "days": 0,
+L194:               "enabled": false
+L195:             }
+L196:           }
+L197:         ],
+L198:         "storageAccountId": "/subscriptions/df602c9c-7aa0-407d-a6fb-eb20c8bd1192/resourceGroups/apptest/providers/Microsoft.Storage/storageAccounts/appteststorage1",
+L199:         "workspaceId": ""
+L200:       }
+L201:     }`
+L202: ### Gets the diagnostic setting for category
+L203: #### Sample request
+L204:   * cite10†HTTP L205:   * cite11†Go L206:   * cite12†JavaScript L207: 
+L208:     `GET https://management.azure.com/subscriptions/1a66ce04-b633-4a0b-b2bc-a912ec8986a6/resourcegroups/viruela1/providers/microsoft.logic/workflows/viruela6/providers/Microsoft.Insights/diagnosticSettings/mysetting?api-version=2021-05-01-preview
+L209:     `
+L210: 
+L211:     `package armmonitor_test
+L212: 
+L213:     import (
+L214:     	"context"
+L215:     	"log"
+L216: 
+L217:     	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+L218:     	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/monitor/armmonitor"
+L219:     )
+L220: 
+L221:     // Generated from example definition: 2021-05-01-preview/getDiagnosticSettingCategory.json
+L222:     func ExampleDiagnosticSettingsClient_Get_getsTheDiagnosticSettingForCategory() {
+L223:     	cred, err := azidentity.NewDefaultAzureCredential(nil)
+L224:     	if err != nil {
+L225:     		log.Fatalf("failed to obtain a credential: %v", err)
+L226:     	}
+L227:     	ctx := context.Background()
+L228:     	clientFactory, err := armmonitor.NewClientFactory("<subscriptionID>", cred, nil)
+L229:     	if err != nil {
+L230:     		log.Fatalf("failed to create client: %v", err)
+L231:     	}
+L232:     	res, err := clientFactory.NewDiagnosticSettingsClient().Get(ctx, "subscriptions/1a66ce04-b633-4a0b-b2bc-a912ec8986a6/resourcegroups/viruela1/providers/microsoft.logic/workflows/viruela6", "mysetting", nil)
+L233:     	if err != nil {
+L234:     		log.Fatalf("failed to finish the request: %v", err)
+L235:     	}
+L236:     	// You could use response here. We use blank identifier for just demo purposes.
+L237:     	_ = res
+L238:     	// If the HTTP response code is 200 as defined in example definition, your response structure would look as follows. Please pay attention that all the values in the output are fake values for just demo purposes.
+L239:     	// res = armmonitor.DiagnosticSettingsClientGetResponse{
+L240:     	// 	DiagnosticSettingsResource: armmonitor.DiagnosticSettingsResource{
+L241:     	// 		Name: to.Ptr("mysetting"),
+L242:     	// 		Type: to.Ptr(""),
+L243:     	// 		ID: to.Ptr("/subscriptions/1a66ce04-b633-4a0b-b2bc-a912ec8986a6/resourcegroups/viruela1/providers/microsoft.logic/workflows/viruela6/diagnosticSettings/service"),
+L244:     	// 		Properties: &armmonitor.DiagnosticSettings{
+L245:     	// 			EventHubAuthorizationRuleID: to.Ptr("/subscriptions/1a66ce04-b633-4a0b-b2bc-a912ec8986a6/resourceGroups/montest/providers/microsoft.eventhub/namespaces/mynamespace/authorizationrules/myrule"),
+L246:     	// 			Logs: []*armmonitor.LogSettings{
+L247:     	// 				{
+L248:     	// 					Category: to.Ptr("WorkflowRuntime"),
+L249:     	// 					Enabled: to.Ptr(true),
+L250:     	// 					RetentionPolicy: &armmonitor.RetentionPolicy{
+L251:     	// 						Days: to.Ptr[int32](0),
+L252:     	// 						Enabled: to.Ptr(false),
+L253:     	// 					},
+L254:     	// 				},
+L255:     	// 			},
+L256:     	// 			MarketplacePartnerID: to.Ptr("/subscriptions/abcdeabc-1234-1234-ab12-123a1234567a/resourceGroups/test-rg/providers/Microsoft.Datadog/monitors/dd1"),
+L257:     	// 			Metrics: []*armmonitor.MetricSettings{
+L258:     	// 				{
+L259:     	// 					Category: to.Ptr("WorkflowMetrics"),
+L260:     	// 					Enabled: to.Ptr(true),
+

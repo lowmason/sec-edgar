@@ -1,0 +1,19 @@
+{
+  "argv": [
+    "az",
+    "account",
+    "show",
+    "--query",
+    "{id:id,tenantId:tenantId,environmentName:environmentName,user:user}",
+    "-o",
+    "json",
+    "--subscription",
+    "3c92a216-8ed6-4897-b741-11ed287b8617"
+  ],
+  "command": "az account show --query '{id:id,tenantId:tenantId,environmentName:environmentName,user:user}' -o json --subscription 3c92a216-8ed6-4897-b741-11ed287b8617",
+  "started_at_utc": "2026-10-05T23:24:41.941228+00:00",
+  "ended_at_utc": "2026-10-05T23:24:42.081835+00:00",
+  "exit_code": 0,
+  "stdout": "{\n  \"environmentName\": \"AzureCloud\",\n  \"id\": \"3c92a216-8ed6-4897-b741-11ed287b8617\",\n  \"tenantId\": \"0bb72127-3aa2-408f-a5e4-ba9abcfc6db6\",\n  \"user\": {\n    \"name\": \"mason.lowell@mac.com\",\n    \"type\": \"user\"\n  }\n}\n",
+  "stderr": ""
+}

@@ -1,0 +1,57 @@
+{
+  "evidence_id": "SEC-0147",
+  "original_bytes": 481733,
+  "expanded_bytes": 481733,
+  "observations": {
+    "text_family": "daily compact-date master",
+    "column_header": "CIK|Company Name|Form Type|Date Filed|File Name",
+    "date_shape_counts": {
+      "YYYYMMDD": 5527
+    },
+    "strict_encoding": "ascii",
+    "decoder_failures": [],
+    "bom_hex": null,
+    "newline_counts": {
+      "crlf": 0,
+      "lone_lf": 5533,
+      "lone_cr": 0
+    },
+    "header_lines": [
+      "Description:           Daily Index of EDGAR Dissemination Feed",
+      "Last Data Received:    Oct 1, 2026",
+      "Comments:              webmaster@sec.gov",
+      "Anonymous FTP:         ftp://ftp.sec.gov/edgar/",
+      " ",
+      "CIK|Company Name|Form Type|Date Filed|File Name",
+      "--------------------------------------------------------------------------------"
+    ],
+    "separator": "|",
+    "scan_boundary": "Every nonempty post-header row in retained body",
+    "row_count": 5527,
+    "field_count_distribution": {
+      "5": 5527
+    },
+    "path_families": {
+      "edgar/data/CIK/dashed-accession.txt": 5527
+    },
+    "minimum_filing_date": "20260812",
+    "maximum_filing_date": "20261001",
+    "date_bound_raw_rows": {
+      "minimum": "2079013|Hall Chadwick Acquisition Corp|DRS|20260812|edgar/data/2079013/0001829126-26-008713.txt",
+      "maximum": "1000275|ROYAL BANK OF CANADA|424B2|20261001|edgar/data/1000275/0000950103-26-014887.txt"
+    },
+    "invalid_dates": [],
+    "representative_raw_rows": {
+      "edgar/data/CIK/dashed-accession.txt": "1000275|ROYAL BANK OF CANADA|424B2|20261001|edgar/data/1000275/0000950103-26-014887.txt"
+    },
+    "nonextractable_examples": [],
+    "representative_fields": [
+      "1000275",
+      "ROYAL BANK OF CANADA",
+      "424B2",
+      "20261001",
+      "edgar/data/1000275/0000950103-26-014887.txt"
+    ],
+    "non_ascii_byte_count": 0
+  }
+}

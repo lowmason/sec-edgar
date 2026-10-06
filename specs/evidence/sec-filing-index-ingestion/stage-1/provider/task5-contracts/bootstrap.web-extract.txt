@@ -1,0 +1,578 @@
+Azure built-in roles for Privileged - Azure RBAC | Microsoft Learn (https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles/privileged)
+citeturn46view0 [wordlim: 200] Crawled: today; Content type: text/html; Source: open({"ref_id":"https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles/privileged#user-access-administrator","lineno":null}); Total lines: 307
+L0: cite0†Skip to main content cite1†Skip to Ask Learn chat experience L1: 
+L2: This browser is no longer supported.
+L3: 
+L4: Upgrade to Microsoft Edge to take advantage of the latest features, security updates, and technical support.
+L5: 
+L6: cite2†Download Microsoft Edge†go.microsoft.com cite3†More info about Internet Explorer and Microsoft Edge L7: 
+L8: Table of contents Exit editor mode
+L9: 
+L10: Ask Learn Ask Learn
+L11: 
+L12: Reading mode Table of contents cite1†Read in English Add Add to Plans cite4†Edit†github.com L13: 
+L14: * * *
+L15: 
+L16: Copy Markdown Print
+L17: 
+L18: * * *
+L19: 
+L20: Note
+L21: Access to this page requires authorization. You can try cite1†signing in or changing directories.
+L22: 
+L23: Access to this page requires authorization. You can try changing directories.
+L24: # Azure built-in roles for Privileged
+L25: 
+L26: Feedback
+L27: 
+L28: Summarize this article for me
+L29: 
+L30: ## In this article
+L31: 
+L32: This article lists the Azure built-in roles in the Privileged category.
+L33: ## Contributor
+L34: 
+L35: Grants full access to manage all resources, but does not allow you to assign roles in Azure RBAC, manage assignments in Azure Blueprints, or share image galleries.
+L36: 
+L37: cite5†Learn more L38: Actions  | Description
+L39: --- | ---
+L40: *  | Create and manage resources of all types
+L41: NotActions  |
+L42: cite6†Microsoft.Authorization /*/Delete  | Delete roles, policy assignments, policy definitions and policy set definitions
+L43: cite6†Microsoft.Authorization /*/Write  | Create roles, role assignments, policy assignments, policy definitions and policy set definitions
+L44: cite6†Microsoft.Authorization /elevateAccess/Action  | Grants the caller User Access Administrator access at the tenant scope
+L45: cite7†Microsoft.Blueprint /blueprintAssignments/write  | Create or update any blueprint assignments
+L46: cite7†Microsoft.Blueprint /blueprintAssignments/delete  | Delete any blueprint assignments
+L47: cite8†Microsoft.Compute /galleries/share/action  | Shares a Gallery to different scopes
+L48: cite9†Microsoft.Purview /consents/write  | Create or Update a Consent Resource.
+L49: cite9†Microsoft.Purview /consents/delete  | Delete the Consent Resource.
+L50: cite10†Microsoft.Resources /deploymentStacks/manageDenySetting/action  | Manage the denySettings property of a deployment stack.
+L51: cite11†Microsoft.Subscription /cancel/action  | Cancels the Subscription
+L52: cite11†Microsoft.Subscription /enable/action  | Reactivates the Subscription
+L53: DataActions  |
+L54: none  |
+L55: NotDataActions  |
+L56: none  |
+L57: 
+L58:     `{
+L59:       "assignableScopes": [
+L60:         "/"
+L61:       ],
+L62:       "description": "Grants full access to manage all resources, but does not allow you to assign roles in Azure RBAC, manage assignments in Azure Blueprints, or share image galleries.",
+L63:       "id": "/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c",
+L64:       "name": "b24988ac-6180-42a0-ab88-20f7382dd24c",
+L65:       "permissions": [
+L66:         {
+L67:           "actions": [
+L68:             "*"
+L69:           ],
+L70:           "notActions": [
+L71:             "Microsoft.Authorization/*/Delete",
+L72:             "Microsoft.Authorization/*/Write",
+L73:             "Microsoft.Authorization/elevateAccess/Action",
+L74:             "Microsoft.Blueprint/blueprintAssignments/write",
+L75:             "Microsoft.Blueprint/blueprintAssignments/delete",
+L76:             "Microsoft.Compute/galleries/share/action",
+L77:             "Microsoft.Purview/consents/write",
+L78:             "Microsoft.Purview/consents/delete",
+L79:             "Microsoft.Resources/deploymentStacks/manageDenySetting/action",
+L80:             "Microsoft.Subscription/cancel/action",
+L81:             "Microsoft.Subscription/enable/action"
+L82:           ],
+L83:           "dataActions": [],
+L84:           "notDataActions": []
+L85:         }
+L86:       ],
+L87:       "roleName": "Contributor",
+L88:       "roleType": "BuiltInRole",
+L89:       "type": "Microsoft.Authorization/roleDefinitions"
+L90:     }
+L91:     `
+L92: ## Owner
+L93: 
+L94: Grants full access to manage all resources, including the ability to assign roles in Azure RBAC.
+L95: 
+L96: cite5†Learn more L97: Actions  | Description
+L98: --- | ---
+L99: *  | Create and manage resources of all types
+L100: NotActions  |
+L101: none  |
+L102: DataActions  |
+L103: none  |
+L104: NotDataActions  |
+L105: none  |
+L106: 
+L107:     `{
+L108:       "assignableScopes": [
+L109:         "/"
+L110:       ],
+L111:       "description": "Grants full access to manage all resources, including the ability to assign roles in Azure RBAC.",
+L112:       "id": "/providers/Microsoft.Authorization/roleDefinitions/8e3af657-a8ff-443c-a75c-2fe8c4bcb635",
+L113:       "name": "8e3af657-a8ff-443c-a75c-2fe8c4bcb635",
+L114:       "permissions": [
+L115:         {
+L116:           "actions": [
+L117:             "*"
+L118:           ],
+L119:           "notActions": [],
+L120:           "dataActions": [],
+L121:           "notDataActions": []
+L122:         }
+L123:       ],
+L124:       "roleName": "Owner",
+L125:       "roleType": "BuiltInRole",
+L126:       "type": "Microsoft.Authorization/roleDefinitions"
+L127:     }
+L128:     `
+L129: ## Reservations Administrator
+L130: 
+L131: Lets one read and manage all the reservations in a tenant
+L132: 
+L133: cite12†Learn more L134: Actions  | Description
+L135: --- | ---
+L136: cite13†Microsoft.Capacity /*/read  |
+L137: cite13†Microsoft.Capacity /*/action  |
+L138: cite13†Microsoft.Capacity /*/write  |
+L139: cite6†Microsoft.Authorization /roleAssignments/read  | Get information about a role assignment.
+L140: cite6†Microsoft.Authorization /roleDefinitions/read  | Get information about a role definition.
+L141: cite6†Microsoft.Authorization /roleAssignments/write  | Create a role assignment at the specified scope.
+L142: cite6†Microsoft.Authorization /roleAssignments/delete  | Delete a role assignment at the specified scope.
+L143: NotActions  |
+L144: none  |
+L145: DataActions  |
+L146: none  |
+L147: NotDataActions  |
+L148: none  |
+L149: 
+L150:     `{
+L151:       "assignableScopes": [
+L152:         "/providers/Microsoft.Capacity"
+L153:       ],
+L154:       "description": "Lets one read and manage all the reservations in a tenant",
+L155:       "id": "/providers/Microsoft.Authorization/roleDefinitions/a8889054-8d42-49c9-bc1c-52486c10e7cd",
+L156:       "name": "a8889054-8d42-49c9-bc1c-52486c10e7cd",
+L157:       "permissions": [
+L158:         {
+L159:           "actions": [
+L160:             "Microsoft.Capacity/*/read",
+L161:             "Microsoft.Capacity/*/action",
+L162:             "Microsoft.Capacity/*/write",
+L163:             "Microsoft.Authorization/roleAssignments/read",
+L164:             "Microsoft.Authorization/roleDefinitions/read",
+L165:             "Microsoft.Authorization/roleAssignments/write",
+L166:             "Microsoft.Authorization/roleAssignments/delete"
+L167:           ],
+L168:           "notActions": [],
+L169:           "dataActions": [],
+L170:           "notDataActions": []
+L171:         }
+L172:       ],
+L173:       "roleName": "Reservations Administrator",
+L174:       "roleType": "BuiltInRole",
+L175:       "type": "Microsoft.Authorization/roleDefinitions"
+L176:     }
+L177:     `
+L178: ## Role Based Access Control Administrator
+L179: 
+L180: Manage access to Azure resources by assigning roles using Azure RBAC. This role does not allow you to manage access using other ways, such as Azure Policy.
+L181: 
+L182: Note
+L183: 
+L184: This role includes the `*/read` action for the control plane. Users that are assigned this role can read cite14†control plane information for all Azure resources.
+L185: Actions  | Description
+L186: --- | ---
+L187: cite6†Microsoft.Authorization /roleAssignments/write  | Create a role assignment at the specified scope.
+L188: cite6†Microsoft.Authorization /roleAssignments/delete  | Delete a role assignment at the specified scope.
+L189: */read  | Read control plane information for all Azure resources.
+L190: cite15†Microsoft.Support /*  | Create and update a support ticket
+L191: NotActions  |
+L192: none  |
+L193: DataActions  |
+L194: none  |
+L195: NotDataActions  |
+L196: none  |
+L197: 
+L198:     `{
+L199:       "assignableScopes": [
+L200:         "/"
+L201:       ],
+L202:       "description": "Manage access to Azure resources by assigning roles using Azure RBAC. This role does not allow you to manage access using other ways, such as Azure Policy.",
+L203:       "id": "/providers/Microsoft.Authorization/roleDefinitions/f58310d9-a9f6-439a-9e8d-f62e7b41a168",
+L204:       "name": "f58310d9-a9f6-439a-9e8d-f62e7b41a168",
+L205:       "permissions": [
+L206:         {
+L207:           "actions": [
+L208:             "Microsoft.Authorization/roleAssignments/write",
+L209:             "Microsoft.Authorization/roleAssignments/delete",
+L210:             "*/read",
+L211:             "Microsoft.Support/*"
+L212:           ],
+L213:           "notActions": [],
+L214:           "dataActions": [],
+L215:           "notDataActions": []
+L216:         }
+L217:       ],
+L218:       "roleName": "Role Based Access Control Administrator",
+L219:       "roleType": "BuiltInRole",
+L220:       "type": "Microsoft.Authorization/roleDefinitions"
+L221:     }
+L222:     `
+L223: ## User Access Administrator
+L224: 
+L225: Lets you manage user access to Azure resources.
+L226: 
+L227: Note
+L228: 
+L229: This role includes the `*/read` action for the control plane. Users that are assigned this role can read cite14†control plane information for all Azure resources.
+L230: 
+L231: cite5†Learn more L232: Actions  | Description
+L233: --- | ---
+L234: */read  | Read control plane information for all Azure resources.
+L235: cite6†Microsoft.Authorization /*  | Manage authorization
+L236: cite15†Microsoft.Support /*  | Create and update a support ticket
+L237: NotActions  |
+L238: none  |
+L239: DataActions  |
+L240: none  |
+L241: NotDataActions  |
+L242: none  |
+L243: 
+L244:     `{
+L245:       "assignableScopes": [
+L246:         "/"
+L247:       ],
+L248:       "description": "Lets you manage user access to Azure resources.",
+L249:       "id": "/providers/Microsoft.Authorization/roleDefinitions/18d7d88d-d35e-4fb5-a5c3-7773c20a72d9",
+L250:       "name": "18d7d88d-d35e-4fb5-a5c3-7773c20a72d9",
+L251:       "permissions": [
+L252:         {
+L253:           "actions": [
+L254:             "*/read",
+L255:             "Microsoft.Authorization/*",
+L256:             "Microsoft.Support/*"
+L257:           ],
+L258:           "notActions": [],
+L259:           "dataActions": [],
+L260:           "notDataActions": []
+L261:         }
+L262:       ],
+L263:       "roleName": "User Access Administrator",
+L264:       "roleType": "BuiltInRole",
+L265:       "type": "Microsoft.Authorization/roleDefinitions"
+L266:     }
+L267:     `
+L268: ## Next steps
+L269: 
+L270:   * cite16†Assign Azure roles using the Azure portal L271: 
+L272: * * *
+L273: 
+L274: ## Feedback
+L275: 
+L276: Was this page helpful?
+L277: 
+L278: Yes No No
+L279: 
+L280: Need help with this topic?
+L281: 
+L282: Want to try using Ask Learn to clarify or guide you through this topic?
+L283: 
+L284: Ask Learn Ask Learn
+L285: 
+L286: Suggest a fix?
+L287: 
+L288: * * *
+L289: 
+L290: ## Additional resources
+L291: 
+L292: * * *
+L293: 
+L294:   * Last updated on 2026-07-01
+L295: 
+L296: ### In this article
+L297: 
+L298: Was this page helpful?
+L299: 
+L300: Need help with this topic?
+L301: 
+L302: Want to try using Ask Learn to clarify or guide you through this topic?
+L303: 
+L304: Ask Learn Ask Learn
+L305: 
+L306: Suggest a fix?
+--------------------------------------------------------------------------------
+Azure permissions for General - Azure RBAC | Microsoft Learn (https://learn.microsoft.com/en-us/azure/role-based-access-control/permissions/general)
+citeturn46view1 [wordlim: 200] Crawled: today; Content type: text/html; Source: open({"ref_id":"https://learn.microsoft.com/en-us/azure/role-based-access-control/permissions/general#microsoftresources","lineno":null}); Total lines: 256
+L0: cite0†Skip to main content cite1†Skip to Ask Learn chat experience L1: 
+L2: This browser is no longer supported.
+L3: 
+L4: Upgrade to Microsoft Edge to take advantage of the latest features, security updates, and technical support.
+L5: 
+L6: cite2†Download Microsoft Edge†go.microsoft.com cite3†More info about Internet Explorer and Microsoft Edge L7: 
+L8: Table of contents Exit editor mode
+L9: 
+L10: Ask Learn Ask Learn
+L11: 
+L12: Reading mode Table of contents cite1†Read in English Add Add to Plans cite4†Edit†github.com L13: 
+L14: * * *
+L15: 
+L16: Copy Markdown Print
+L17: 
+L18: * * *
+L19: 
+L20: Note
+L21: Access to this page requires authorization. You can try cite1†signing in or changing directories.
+L22: 
+L23: Access to this page requires authorization. You can try changing directories.
+L24: # Azure permissions for General
+L25: 
+L26: Feedback
+L27: 
+L28: Summarize this article for me
+L29: 
+L30: ## In this article
+L31: 
+L32: This article lists the permissions for the Azure resource providers in the General category. You can use these permissions in your own cite5†Azure custom roles to provide granular access control to resources in Azure. Permission strings have the following format: `{Company}.{ProviderName}/{resourceType}/{action}`
+L33: ## Microsoft.Addons
+L34: 
+L35: Azure service: core
+L36: Action  | Description
+L37: --- | ---
+L38: `Microsoft.Addons/register/action`  | Register the specified subscription with Microsoft.Addons
+L39: `Microsoft.Addons/operations/read`  | Gets supported RP operations.
+L40: `Microsoft.Addons/supportProviders/listsupportplaninfo/action`  | Lists current support plan information for the specified subscription.
+L41: `Microsoft.Addons/supportProviders/supportPlanTypes/read`  | Get the specified Canonical support plan state.
+L42: `Microsoft.Addons/supportProviders/supportPlanTypes/write`  | Adds the Canonical support plan type specified.
+L43: `Microsoft.Addons/supportProviders/supportPlanTypes/delete`  | Removes the specified Canonical support plan
+L44: ## Microsoft.Capacity
+L45: 
+L46: Azure service: core
+L47: Action  | Description
+L48: --- | ---
+L49: `Microsoft.Capacity/calculateprice/action`  | Calculate any Reservation Price
+L50: `Microsoft.Capacity/checkoffers/action`  | Check any Subscription Offers
+L51: `Microsoft.Capacity/checkscopes/action`  | Check any Subscription
+L52: `Microsoft.Capacity/validatereservationorder/action`  | Validate any Reservation
+L53: `Microsoft.Capacity/reservationorders/action`  | Update any Reservation
+L54: `Microsoft.Capacity/register/action`  | Registers the Capacity resource provider and enables the creation of Capacity resources.
+L55: `Microsoft.Capacity/unregister/action`  | Unregister any Tenant
+L56: `Microsoft.Capacity/calculateexchange/action`  | Computes the exchange amount and price of new purchase and returns policy Errors.
+L57: `Microsoft.Capacity/exchange/action`  | Exchange any Reservation
+L58: `Microsoft.Capacity/listSkus/action`  | Lists SKUs with filters and without any restrictions
+L59: `Microsoft.Capacity/appliedreservations/read`  | Read All Reservations
+L60: `Microsoft.Capacity/catalogs/read`  | Read catalog of Reservation
+L61: `Microsoft.Capacity/commercialreservationorders/read`  | Get Reservation Orders created in any Tenant
+L62: `Microsoft.Capacity/operations/read`  | Read any Operation
+L63: `Microsoft.Capacity/reservationorders/changedirectory/action`  | Change directory of any reservation
+L64: `Microsoft.Capacity/reservationorders/availablescopes/action`  | Find any Available Scope
+L65: `Microsoft.Capacity/reservationorders/read`  | Read All Reservations
+L66: `Microsoft.Capacity/reservationorders/write`  | Create any Reservation
+L67: `Microsoft.Capacity/reservationorders/delete`  | Delete any Reservation
+L68: `Microsoft.Capacity/reservationorders/reservations/action`  | Update any Reservation
+L69: `Microsoft.Capacity/reservationorders/return/action`  | Return any Reservation
+L70: `Microsoft.Capacity/reservationorders/swap/action`  | Swap any Reservation
+L71: `Microsoft.Capacity/reservationorders/split/action`  | Split any Reservation
+L72: `Microsoft.Capacity/reservationorders/changeBilling/action`  | Reservation billing change
+L73: `Microsoft.Capacity/reservationorders/merge/action`  | Merge any Reservation
+L74: `Microsoft.Capacity/reservationorders/calculaterefund/action`  | Computes the refund amount and price of new purchase and returns policy Errors.
+L75: `Microsoft.Capacity/reservationorders/changebillingoperationresults/read`  | Poll any Reservation billing change operation
+L76: `Microsoft.Capacity/reservationorders/mergeoperationresults/read`  | Poll any merge operation
+L77: `Microsoft.Capacity/reservationorders/reservations/availablescopes/action`  | Find any Available Scope
+L78: `Microsoft.Capacity/reservationorders/reservations/read`  | Read All Reservations
+L79: `Microsoft.Capacity/reservationorders/reservations/write`  | Create any Reservation
+L80: `Microsoft.Capacity/reservationorders/reservations/delete`  | Delete any Reservation
+L81: `Microsoft.Capacity/reservationorders/reservations/archive/action`  | Archive a reservation which is in a terminal state like Expired, Split etc.
+L82: `Microsoft.Capacity/reservationorders/reservations/unarchive/action`  | Unarchive a Reservation which was previously archived
+L83: `Microsoft.Capacity/reservationorders/reservations/revisions/read`  | Read All Reservations
+L84: `Microsoft.Capacity/reservationorders/splitoperationresults/read`  | Poll any split operation
+L85: `Microsoft.Capacity/resourceProviders/locations/serviceLimits/read`  | Get the current service limit or quota of the specified resource and location
+L86: `Microsoft.Capacity/resourceProviders/locations/serviceLimits/write`  | Create service limit or quota for the specified resource and location
+L87: `Microsoft.Capacity/resourceProviders/locations/serviceLimitsRequests/read`  | Get any service limit request for the specified resource and location
+L88: `Microsoft.Capacity/tenants/register/action`  | Register any Tenant
+L89: ## Microsoft.Commerce
+L90: 
+L91: Azure service: core
+L92: Action  | Description
+L93: --- | ---
+L94: `Microsoft.Commerce/register/action`  | Register Subscription for Microsoft Commerce UsageAggregate
+L95: `Microsoft.Commerce/unregister/action`  | Unregister Subscription for Microsoft Commerce UsageAggregate
+L96: `Microsoft.Commerce/RateCard/read`  | Returns offer data, resource/meter metadata and rates for the given subscription.
+L97: `Microsoft.Commerce/UsageAggregates/read`  | Retrieves Microsoft Azure's consumption by a subscription. The result contains aggregates usage data, subscription and resource related information, on a particular time range.
+L98: ## Microsoft.Marketplace
+L99: 
+L100: Azure service: core
+L101: Action  | Description
+L102: --- | ---
+L103: `Microsoft.Marketplace/register/action`  | Registers Microsoft.Marketplace resource provider in the subscription.
+L104: `Microsoft.Marketplace/privateStores/action`  | Updates PrivateStore.
+L105: `Microsoft.Marketplace/search/action`  | Returns a list of azure private store marketplace catalog offers and total count and facets
+L106: `Microsoft.Marketplace/locations/edgeZones/products/read`  | Returns a list of products for specific edgezone and location
+L107: `Microsoft.Marketplace/mysolutions/read`  | Get user solutions
+L108: `Microsoft.Marketplace/mysolutions/write`  | Create or update user solutions
+L109: `Microsoft.Marketplace/mysolutions/delete`  | Remove user solutions
+L110: `Microsoft.Marketplace/offers/read`  | Returns an offer
+L111: `Microsoft.Marketplace/offerTypes/publishers/offers/plans/agreements/read`  | Returns an Agreement.
+L112: `Microsoft.Marketplace/offerTypes/publishers/offers/plans/agreements/write`  | Accepts a signed agreement.
+L113: `Microsoft.Marketplace/offerTypes/publishers/offers/plans/configs/read`  | Returns a config.
+L114: `Microsoft.Marketplace/offerTypes/publishers/offers/plans/configs/write`  | Saves a config.
+L115: `Microsoft.Marketplace/offerTypes/publishers/offers/plans/configs/importImage/action`  | Imports an image to the end user's ACR.
+L116: `Microsoft.Marketplace/privateStores/write`  | Creates PrivateStore.
+L117: `Microsoft.Marketplace/privateStores/delete`  | Deletes PrivateStore.
+L118: `Microsoft.Marketplace/privateStores/offers/action`  | Updates offer in PrivateStore.
+L119: `Microsoft.Marketplace/privateStores/read`  | Reads PrivateStores.
+L120: `Microsoft.Marketplace/privateStores/requestApprovals/action`  | Update request approvals
+L121: `Microsoft.Marketplace/privateStores/fetchAllSubscriptionsInTenant/action`  | Admin fetches all subscriptions in tenant
+L122: `Microsoft.Marketplace/privateStores/listStopSellOffersPlansNotifications/action`  | List stop sell offers plans notifications
+L123: `Microsoft.Marketplace/privateStores/listSubscriptionsContext/action`  | List the subscription in private store context
+L124: `Microsoft.Marketplace/privateStores/listNewPlansNotifications/action`  | List new plans notifications
+L125: `Microsoft.Marketplace/privateStores/queryUserOffers/action`  | Fetch the approved offers from the offers ids and the user subscriptions in the payload
+L126: `Microsoft.Marketplace/privateStores/queryUserRules/action`  | Fetch the approved rules for the user under the user subscriptions
+L127: `Microsoft.Marketplace/privateStores/anyExistingOffersInTheStore/action`  | Return true if there is an existing offer for at least one enabled collection
+L128: `Microsoft.Marketplace/privateStores/queryInternalOfferIds/action`  | List of all internal offers under given azure application and plans
+L129: `Microsoft.Marketplace/privateStores/adminRequestApprovals/read`  | Read all request approvals details, only admins
+L130: `Microsoft.Marketplace/privateStores/adminRequestApprovals/write`  | Admin update the request with decision on the request
+L131: `Microsoft.Marketplace/privateStores/collections/approveAllItems/action`  | Delete all specific approved items and set collection to allItemsApproved
+L132: `Microsoft.Marketplace/privateStores/collections/disableApproveAllItems/action`  | Set approve all items property to false for the collection
+L133: `Microsoft.Marketplace/privateStores/collections/setRules/action`  | Set Rules on a given collection
+L134: `Microsoft.Marketplace/privateStores/collections/queryRules/action`  | Get Rules on a given collection
+L135: `Microsoft.Marketplace/privateStores/collections/upsertOfferWithMultiContext/action`  | Upsert an offer with different contexts
+L136: `Microsoft.Marketplace/privateStores/collections/offers/action`  | Get Collection Offers By Public and Subscriptions Context
+L137: `Microsoft.Marketplace/privateStores/collections/offers/contextsView/action`  | Retrieves offer details and plans for multiple subscription contexts, including approved stop-sell and hidden plans
+L138: `Microsoft.Marketplace/privateStores/offers/write`  | Creates offer in PrivateStore.
+L139: `Microsoft.Marketplace/privateStores/offers/delete`  | Deletes offer from PrivateStore.
+L140: `Microsoft.Marketplace/privateStores/offers/read`  | Reads PrivateStore offers.
+L141: `Microsoft.Marketplace/privateStores/queryNotificationsState/read`  | Read notifications state details, only admins
+L142: `Microsoft.Marketplace/privateStores/requestApprovals/read`  | Read request approvals
+L143: `Microsoft.Marketplace/privateStores/requestApprovals/write`  | Create request approval
+L144: `Microsoft.Marketplace/privateStores/RequestApprovals/offer/acknowledgeNotification/write`  | Acknowledge a notification, Admins only
+L145: `Microsoft.Marketplace/privateStores/RequestApprovals/withdrawPlan/write`  | Withdraw a plan from offer's notifications
+L146: `Microsoft.Marketplace/products/read`  | Returns a Product
+L147: ## Microsoft.MarketplaceOrdering
+L148: 
+L149: Azure service: core
+L150: Action  | Description
+L151: --- | ---
+L152: `Microsoft.MarketplaceOrdering/agreements/read`  | Return all agreements under given subscription
+L153: `Microsoft.MarketplaceOrdering/agreements/offers/plans/read`  | Return an agreement for a given marketplace item
+L154: `Microsoft.MarketplaceOrdering/agreements/offers/plans/sign/action`  | Sign an agreement for a given marketplace item
+L155: `Microsoft.MarketplaceOrdering/agreements/offers/plans/cancel/action`  | Cancel an agreement for a given marketplace item
+L156: `Microsoft.MarketplaceOrdering/offertypes/publishers/offers/plans/agreements/read`  | Get an agreement for a given marketplace virtual machine item
+L157: `Microsoft.MarketplaceOrdering/offertypes/publishers/offers/plans/agreements/write`  | Sign or Cancel an agreement for a given marketplace virtual machine item
+L158: `Microsoft.MarketplaceOrdering/operations/read`  | List all possible operations in the API
+L159: ## Microsoft.Quota
+L160: 
+L161: Azure service: cite6†Azure Quotas L162: Action  | Description
+L163: --- | ---
+L164: `Microsoft.Quota/register/action`  | Register the subscription with Microsoft.Quota Resource Provider
+L165: `Microsoft.Quota/groupQuotas/read`  | Get the GroupQuota
+L166: `Microsoft.Quota/groupQuotas/write`  | Creates the GroupQuota resource
+L167: `Microsoft.Quota/groupQuotas/delete`  | Deletes the GroupQuota resource
+L168: `Microsoft.Quota/groupQuotas/groupQuotaLimits/read`  | Get the current GroupQuota of the specified resource
+L169: `Microsoft.Quota/groupQuotas/groupQuotaLimits/write`  | Creates the GroupQuota request for the specified resource
+L170: `Microsoft.Quota/groupQuotas/groupQuotaRequests/read`  | Get the GroupQuota request status for the specific request
+L171: `Microsoft.Quota/groupQuotas/quotaAllocationRequests/read`  | Get the GroupQuota to Subscription Quota allocation request status for the specific request
+L172: `Microsoft.Quota/groupQuotas/quotaAllocations/read`  | Get the current GroupQuota to Subscription Quota allocation
+L173: `Microsoft.Quota/groupQuotas/quotaAllocations/write`  | Creates the GroupQuota to subscription Quota limit request for the specified resource
+L174: `Microsoft.Quota/groupQuotas/subscriptions/read`  | Get the GroupQuota subscriptions
+L175: `Microsoft.Quota/groupQuotas/subscriptions/write`  | Add Subscriptions to GroupQuota resource
+L176: `Microsoft.Quota/groupQuotas/subscriptions/delete`  | Deletes Subscriptions from GroupQuota resource
+L177: `Microsoft.Quota/operations/read`  | Get the Operations supported by Microsoft.Quota
+L178: `Microsoft.Quota/quotaRequests/read`  | Get any service limit request for the specified resource
+L179: `Microsoft.Quota/quotas/read`  | Get the current Service limit or quota of the specified resource
+L180: `Microsoft.Quota/quotas/write`  | Creates the service limit or quota request for the specified resource
+L181: `Microsoft.Quota/usages/read`  | Get the usages for resource providers
+L182: ## Microsoft.Subscription
+L183: 
+L184: Azure service: core
+L185: Action  | Description
+L186: --- | ---
+L187: `Microsoft.Subscription/cancel/action`  | Cancels the Subscription
+L188: `Microsoft.Subscription/rename/action`  | Renames the Subscription
+L189: `Microsoft.Subscription/enable/action`  | Reactivates the Subscription
+L190: `Microsoft.Subscription/aliases/write`  | Create subscription alias
+L191: `Microsoft.Subscription/aliases/read`  | Get subscription alias
+L192: `Microsoft.Subscription/aliases/delete`  | Delete subscription alias
+L193: `Microsoft.Subscription/changeTenantRequest/write`  | Change tenant request of the Subscription
+L194: `Microsoft.Subscription/Policies/write`  | Create tenant policy
+L195: `Microsoft.Subscription/Policies/default/read`  | Get tenant policy
+L196: `Microsoft.Subscription/subscriptions/acceptOwnership/action`  | Accept ownership of Subscription
+L197: `Microsoft.Subscription/subscriptions/acceptChangeTenant/action`  | Accept Change tenant request of the Subscription
+L198: `Microsoft.Subscription/subscriptions/acceptOwnershipStatus/read`  | Get the status of accepting ownership of Subscription
+L199: `Microsoft.Subscription/subscriptions/changeTenantStatus/read`  | Change tenant status of the Subscription
+L200: ## Microsoft.Support
+L201: 
+L202: Azure service: core
+L203: Action  | Description
+L204: --- | ---
+L205: `Microsoft.Support/register/action`  | Registers Support Resource Provider
+L206: `Microsoft.Support/lookUpResourceId/action`  | Looks up resource Id for resource type
+L207: `Microsoft.Support/checkNameAvailability/action`  | Checks that name is valid and not in use for resource type
+L208: `Microsoft.Support/classifyServices/action`  | Lists one or all classified services
+L209: `Microsoft.Support/operationresults/read`  | Gets the result of the asynchronous operation
+L210: `Microsoft.Support/operations/read`  | Lists all operations available on Microsoft.Support resource provider
+L211: `Microsoft.Support/operationsstatus/read`  | Gets the status of the asynchronous operation
+L212: `Microsoft.Support/services/read`  | Lists one or all Azure services available for support
+L213: `Microsoft.Support/services/classifyProblems/action`  | Lists one or all classified problems
+L214: `Microsoft.Support/services/problemClassifications/read`  | Lists one or all problem classifications for an Azure service
+L215: `Microsoft.Support/supportTickets/read`  | Lists one or all support tickets
+L216: `Microsoft.Support/supportTickets/write`  | Allows creating and updating a support ticket
+L217: ## Next steps
+L218: 
+L219:   * cite7†Azure resource providers and types L220: 
+L221: * * *
+L222: 
+L223: ## Feedback
+L224: 
+L225: Was this page helpful?
+L226: 
+L227: Yes No No
+L228: 
+L229: Need help with this topic?
+L230: 
+L231: Want to try using Ask Learn to clarify or guide you through this topic?
+L232: 
+L233: Ask Learn Ask Learn
+L234: 
+L235: Suggest a fix?
+L236: 
+L237: * * *
+L238: 
+L239: ## Additional resources
+L240: 
+L241: * * *
+L242: 
+L243:   * Last updated on 2026-07-01
+L244: 
+L245: ### In this article
+L246: 
+L247: Was this page helpful?
+L248: 
+L249: Need help with this topic?
+L250: 
+L251: Want to try using Ask Learn to clarify or guide you through this topic?
+L252: 
+L253: Ask Learn Ask Learn
+L254: 
+L255: Suggest a fix?
+--------------------------------------------------------------------------------
+Microsoft.Authorization/roleDefinitions 2022-04-01 - Bicep, ARM template & Terraform AzAPI reference | Microsoft Learn (https://learn.microsoft.com/en-us/azure/templates/microsoft.authorization/2022-04-01/roledefinitions)
+citeturn46view2 [wordlim: 200] Crawled: today; Content type: text/html; Source: open({"ref_id":"https://learn.microsoft.com/en-us/azure/templates/microsoft.authorization/2022-04-01/roledefinitions","lineno":null}); Total lines: 397
+L0: cite0†Skip to main content cite1†Skip to Ask Learn chat experience L1: 
+L2: This browser is no longer supported.
+L3: 
+L4: Upgrade to Microsoft Edge to take advantage of the latest features, security updates, and technical support.
+L5: 
+L6: cite2†Download Microsoft Edge†go.microsoft.com cite3†More info about Internet Explorer and Microsoft Edge L7: 
+L8: Table of contents Exit editor mode
+L9: 
+L10: Ask Learn Ask Learn
+L11: 
+L12: Reading mode Table of contents cite1†Read in English Add Add to Plans Edit
+L13: 
+L14: * * *
+L15: 
+L16: Copy Markdown Print
+L17: 
+L18: * * *
+L19: 
+L20: Note
+

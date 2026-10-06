@@ -1,0 +1,557 @@
+Storage Accounts - Get Properties - REST API (Azure Storage Resource Provider) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/storagerp/storage-accounts/get-properties?view=rest-storagerp-2025-06-01)
+citeturn90view0 [wordlim: 200] Crawled: today; Content type: text/html; Source: find({"ref_id":"https://learn.microsoft.com/en-us/rest/api/storagerp/storage-accounts/get-properties?view=rest-storagerp-2025-06-01","pattern":"### StorageAccount"}); Total lines: 3057
+L2832: ### SkuName
+L2833: 
+L2834: Enumeration
+L2835: 
+L2836: The SKU name. Required for account creation; optional for update. Note that in older versions, SKU name was called accountType.
+L2837: 
+L2838: Value  | Description
+L2839: --- | ---
+L2840: Standard_LRS  |
+L2841: Standard_GRS  |
+L2842: Standard_RAGRS  |
+L2843: Standard_ZRS  |
+L2844: Premium_LRS  |
+L2845: Premium_ZRS  |
+L2846: Standard_GZRS  |
+L2847: Standard_RAGZRS  |
+L2848: StandardV2_LRS  |
+L2849: StandardV2_GRS  |
+L2850: StandardV2_ZRS  |
+L2851: StandardV2_GZRS  |
+L2852: PremiumV2_LRS  |
+L2853: PremiumV2_ZRS  |
+L2854: ### SkuTier
+L2855: 
+L2856: Enumeration
+L2857: 
+L2858: The SKU tier. This is based on the SKU name.
+L2859: 
+L2860: Value  | Description
+L2861: --- | ---
+L2862: Standard  |
+L2863: Premium  |
+L2864: 
+L2865: ### SmbOAuthSettings
+L2866: 
+L2867: Object
+L2868: 
+L2869: Setting property for Managed Identity access over SMB using OAuth
+L2870: 
+L2871: Name  | Type  | Description
+L2872: --- | --- | ---
+L2873: isSmbOAuthEnabled  | boolean  | Specifies if managed identities can access SMB shares using OAuth. The default interpretation is false for this property.
+L2874: ### State
+L2875: 
+L2876: Enumeration
+L2877: 
+L2878: Gets the state of virtual network rule.
+L2879: 
+L2880: Value  | Description
+L2881: --- | ---
+L2882: Provisioning  |
+L2883: Deprovisioning  |
+L2884: Succeeded  |
+L2885: Failed  |
+L2886: NetworkSourceDeleted  |
+L2887: ### StorageAccount
+L2888: 
+L2889: Object
+L2890: 
+L2891: The storage account.
+L2892: Name  | Type  | Description
+L2893: --- | --- | ---
+L2894: extendedLocation  | cite55†ExtendedLocation | The extendedLocation of the resource.
+L2895: id  | string (arm-id)  | Fully qualified resource ID for the resource. E.g. "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}"
+L2896: identity  | cite60†Identity | The identity of the resource.
+L2897: kind  | cite69†Kind | Gets the Kind.
+L2898: location  | string  | The geo-location where the resource lives
+L2899: name  | string  | The name of the resource
+L2900: placement  | cite73†Placement | Optional. Gets or sets the zonal placement details for the storage account.
+L2901: properties.accessTier  | cite27†AccessTier | Required for storage accounts where kind = BlobStorage. The access tier is used for billing. The 'Premium' access tier is the default value for premium block blobs storage account type and it cannot be changed for the premium block blobs storage account type.
+L2902: properties.accountMigrationInProgress  | boolean  | If customer initiated account migration is in progress, the value will be true else it will be null.
+L2903: properties.allowBlobPublicAccess  | boolean  | Allow or disallow public access to all blobs or containers in the storage account. The default interpretation is false for this property.
+L2904: properties.allowCrossTenantReplication  | boolean  | Allow or disallow cross AAD tenant object replication. Set this property to true for new or existing accounts only if object replication policies will involve storage accounts in different AAD tenants. The default interpretation is false for new accounts to follow best security practices by default.
+L2905: properties.allowSharedKeyAccess  | boolean  | Indicates whether the storage account permits requests to be authorized with the account access key via Shared Key. If false, then all requests, including shared access signatures, must be authorized with Azure Active Directory (Azure AD). The default value is null, which is equivalent to true.
+L2906: properties.allowedCopyScope  | cite34†AllowedCopyScope | Restrict copy to and from Storage Accounts within an AAD tenant or with Private Links to the same VNet.
+--------------------------------------------------------------------------------
+Blob Containers - Get - REST API (Azure Storage Resource Provider) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/storagerp/blob-containers/get?view=rest-storagerp-2025-06-01)
+citeturn90view1 [wordlim: 200] Crawled: today; Content type: text/html; Source: find({"ref_id":"https://learn.microsoft.com/en-us/rest/api/storagerp/blob-containers/get?view=rest-storagerp-2025-06-01","pattern":"### BlobContainer"}); Total lines: 942
+L49: ## Responses
+L50: 
+L51: Name  | Type  | Description
+L52: --- | --- | ---
+L53: 200 OK  | cite6†BlobContainer | Azure operation completed successfully.
+L54: Other Status Codes  | cite7†ErrorResponse | An unexpected error response.
+L55: 
+L56: ## Security
+L57: 
+L58: ### azure_auth
+L59: 
+L60: Azure Active Directory OAuth2 Flow.
+L61: 
+L62: Type: oauth2
+L63: Flow: implicit
+L64: Authorization URL: https://login.microsoftonline.com/common/oauth2/authorize
+L65: 
+L66: #### Scopes
+L67: 
+L68: Name  | Description
+L69: --- | ---
+L70: user_impersonation  | impersonate your user account
+L174:     	// You could use response here. We use blank identifier for just demo purposes.
+L175:     	_ = res
+L176:     	// If the HTTP response code is 200 as defined in example definition, your response structure would look as follows. Please pay attention that all the values in the output are fake values for just demo purposes.
+L177:     	// res.BlobContainer = armstorage.BlobContainer{
+L178:     	// 	Name: to.Ptr("container1634"),
+L179:     	// 	Type: to.Ptr("Microsoft.Storage/storageAccounts/blobServices/containers"),
+L301:     BlobContainerResource blobContainer = client.GetBlobContainerResource(blobContainerResourceId);
+L302: 
+L303:     // invoke the operation
+L304:     BlobContainerResource result = await blobContainer.GetAsync();
+L305: 
+L306:     // the variable result is a resource, you could call other operations on this instance as well
+L307:     // but just for demo, we get its data from this resource instance
+L308:     BlobContainerData resourceData = result.Data;
+L309:     // for demo we just print out the id
+L492:     	// If the HTTP response code is 200 as defined in example definition, your response structure would look as follows. Please pay attention that all the values in the output are fake values for just demo purposes.
+L493:     	// res.BlobContainer = armstorage.BlobContainer{
+L494:     	// 	Name: to.Ptr("container1634"),
+L495:     	// 	Type: to.Ptr("Microsoft.Storage/storageAccounts/blobServices/containers"),
+L599:     TokenCredential cred = new DefaultAzureCredential();
+L600:     // authenticate your client
+L601:     ArmClient client = new ArmClient(cred);
+L602: 
+L603:     // this example assumes you already have this BlobContainerResource created on azure
+L604:     // for more information of creating BlobContainerResource, please refer to the document of BlobContainerResource
+L605:     string subscriptionId = "{subscription-id}";
+L606:     string resourceGroupName = "res9871";
+L607:     string accountName = "sto6217";
+L608:     string containerName = "container1634";
+L609:     ResourceIdentifier blobContainerResourceId = BlobContainerResource.CreateResourceIdentifier(subscriptionId, resourceGroupName, accountName, containerName);
+L610:     BlobContainerResource blobContainer = client.GetBlobContainerResource(blobContainerResourceId);
+L611: 
+L612:     // invoke the operation
+L613:     BlobContainerResource result = await blobContainer.GetAsync();
+L614: 
+L615:     // the variable result is a resource, you could call other operations on this instance as well
+L616:     // but just for demo, we get its data from this resource instance
+L617:     BlobContainerData resourceData = result.Data;
+L618:     // for demo we just print out the id
+L619:     Console.WriteLine($"Succeeded on id: {resourceData.Id}");
+L620: 
+L621:     `
+L622: To use the Azure SDK library in your project, see cite21†this documentation†github.com . To provide feedback on this code sample, cite17†open a GitHub issue†github.com L623: #### Sample response
+L624: Status code:
+L625:     200
+L626: 
+L627:     `{
+L628:       "name": "container1634",
+L629:       "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+L630:       "etag": "\"0x8D592D74CC20EBA\"",
+L631:       "id": "/subscriptions/{subscription-id}/resourceGroups/res9871/providers/Microsoft.Storage/storageAccounts/sto6217/blobServices/default/containers/container1634",
+L632:       "properties": {
+L633:         "hasImmutabilityPolicy": true,
+L634:         "hasLegalHold": true,
+L635:         "immutabilityPolicy": {
+L636:           "etag": "\"8d592d74cb3011a\"",
+L674:               "tenantId": "72f988bf-86f1-41af-91ab-2d7cd011db47",
+L675:               "timestamp": "2018-03-26T05:06:09.6964643Z"
+L676:             },
+L677:             {
+L678:               "objectIdentifier": "ce7cd28a-fc25-4bf1-8fb9-e1b9833ffd4b",
+L679:               "tag": "tag2",
+L680:               "tenantId": "72f988bf-86f1-41af-91ab-2d7cd011db47",
+L681:               "timestamp": "2018-03-26T05:06:09.6964643Z"
+L682:             },
+L683:             {
+L684:               "objectIdentifier": "ce7cd28a-fc25-4bf1-8fb9-e1b9833ffd4b",
+L685:               "tag": "tag3",
+L686:               "tenantId": "72f988bf-86f1-41af-91ab-2d7cd011db47",
+L687:               "timestamp": "2018-03-26T05:06:09.6964643Z"
+L688:             }
+L689:           ]
+L690:         },
+L691:         "publicAccess": "None"
+L692:       }
+L693:     }`
+L694: ## Definitions
+L695: Name  | Description
+L696: --- | ---
+L697: cite6†BlobContainer | Properties of the blob container, including Id, resource name, resource type, Etag.
+L698: cite22†createdByType | The type of identity that created the resource.
+L699: cite7†ErrorResponse | An error response from the storage resource provider.
+L700: cite23†ErrorResponseBody | Error response body contract.
+L701: cite24†ImmutabilityPolicyProperties | The properties of an ImmutabilityPolicy of a blob container.
+L702: cite25†ImmutabilityPolicyState | The ImmutabilityPolicy state of a blob container, possible values include: Locked and Unlocked.
+L703: cite26†ImmutabilityPolicyUpdateType | The ImmutabilityPolicy update type of a blob container, possible values include: put, lock and extend.
+L704: cite27†ImmutableStorageWithVersioning | Object level immutability properties of the container.
+L705: cite28†LeaseDuration | Specifies whether the lease on a container is of infinite or fixed duration, only when the container is leased.
+L706: cite29†LeaseState | Lease state of the container.
+L707: cite30†LeaseStatus | The lease status of the container.
+L708: cite31†LegalHoldProperties | The LegalHold property of a blob container.
+L709: cite32†MigrationState | This property denotes the container level immutability to object level immutability migration state.
+L710: cite33†ProtectedAppendWritesHistory | Protected append writes history setting for the blob container with Legal holds.
+L711: cite34†PublicAccess | Specifies whether data in the container may be accessed publicly and the level of access.
+L712: cite35†systemData | Metadata pertaining to creation and last modification of the resource.
+L713: cite36†TagProperty | A tag of the LegalHold of a blob container.
+L714: cite37†UpdateHistoryProperty | An update history of the ImmutabilityPolicy of a blob container.
+L715: ### BlobContainer
+L716: 
+L717: Object
+L718: 
+L719: Properties of the blob container, including Id, resource name, resource type, Etag.
+L720: Name  | Type  | Description
+L721: --- | --- | ---
+L722: etag  | string  | Resource Etag.
+L723: id  | string (arm-id)  | Fully qualified resource ID for the resource. E.g. "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}"
+L724: name  | string  | The name of the resource
+L725: properties.defaultEncryptionScope  | string  | Default the container to use specified encryption scope for all writes.
+L726: properties.deleted  | boolean  | Indicates whether the blob container was deleted.
+L727: properties.deletedTime  | string (date-time)  | Blob container deletion time.
+L728: properties.denyEncryptionScopeOverride  | boolean  | Block override of encryption scope from the container default.
+L729: properties.enableNfsV3AllSquash  | boolean  | Enable NFSv3 all squash on blob container.
+L730: properties.enableNfsV3RootSquash  | boolean  | Enable NFSv3 root squash on blob container.
+L731: properties.hasImmutabilityPolicy  | boolean  | The hasImmutabilityPolicy public property is set to true by SRP if ImmutabilityPolicy has been created for this container. The hasImmutabilityPolicy public property is set to false by SRP if ImmutabilityPolicy has not been created for this container.
+L732: properties.hasLegalHold  | boolean  | The hasLegalHold public property is set to true by SRP if there are at least one existing tag. The hasLegalHold public property is set to false by SRP if all existing legal hold tags are cleared out. There can be a maximum of 1000 blob containers with hasLegalHold=true for a given account.
+L733: properties.immutabilityPolicy  | cite24†ImmutabilityPolicyProperties | The ImmutabilityPolicy property of the container.
+L734: properties.immutableStorageWithVersioning  | cite27†ImmutableStorageWithVersioning | The object level immutability property of the container. The property is immutable and can only be set to true at the container creation time. Existing containers must undergo a migration process.
+L735: properties.lastModifiedTime  | string (date-time)  | Returns the date and time the container was last modified.
+--------------------------------------------------------------------------------
+Table - Get - REST API (Azure Storage Resource Provider) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/storagerp/table/get?view=rest-storagerp-2025-06-01)
+citeturn90view2 [wordlim: 200] Crawled: last week; Content type: text/html; Source: find({"ref_id":"https://learn.microsoft.com/en-us/rest/api/storagerp/table/get?view=rest-storagerp-2025-06-01","pattern":"### Table"}); Total lines: 363
+L24: # Table - Get
+L25: 
+L26: Service:
+L27:     Storage Resource Provider
+L28: 
+L29: API Version:
+L30:     2025-06-01
+L31: 
+L32: ##
+L33: 
+L34: Gets the table with the specified table name, under the specified account if it exists.
+L35: 
+L36:     `GET https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{accountName}/tableServices/default/tables/{tableName}?api-version=2025-06-01`
+L45: subscriptionId  | path  | True  | string (uuid)  | The ID of the target subscription. The value must be an UUID.
+L46: tableName  | path  | True  | string minLength: 3
+L47: maxLength: 63
+L48: pattern: ^[A-Za-z][A-Za-z0-9]{2,62}$  | A table name must be unique within a storage account and must be between 3 and 63 characters.The name must comprise of only alphanumeric characters and it cannot begin with a numeric character.
+L49: api-version  | query  | True  | string minLength: 1  | The API version to use for this operation.
+L50: ## Responses
+L51: 
+L52: Name  | Type  | Description
+L53: --- | --- | ---
+L54: 200 OK  | cite6†Table | Azure operation completed successfully.
+L55: Other Status Codes  | cite7†CloudError | An unexpected error response.
+L56: 
+L57: ## Security
+L58: 
+L59: ### azure_auth
+L60: 
+L61: Azure Active Directory OAuth2 Flow.
+L62: 
+L63: Type: oauth2
+L64: Flow: implicit
+L65: Authorization URL: https://login.microsoftonline.com/common/oauth2/authorize
+L66: 
+L67: #### Scopes
+L68: 
+L69: Name  | Description
+L70: --- | ---
+L71: user_impersonation  | impersonate your user account
+L72: 
+L73: ## Examples
+L74: 
+L75: ### TableOperationGet
+L77:   * cite8†HTTP L78:   * cite9†Java L79:   * cite10†Python L80:   * cite11†Go L81:   * cite12†JavaScript L82:   * cite13†dotnet L83: 
+L84:     `GET https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/res3376/providers/Microsoft.Storage/storageAccounts/sto328/tableServices/default/tables/table6185?api-version=2025-06-01
+L85:     `
+L86: 
+L87:     `
+L88:     /**
+L89:      * Samples for Table Get.
+L90:      */
+L91:     public final class Main {
+L92:         /*
+L93:          * x-ms-original-file:
+L130:             subscription_id="{subscription-id}",
+L131:         )
+L132: 
+L133:         response = client.table.get(
+L134:             resource_group_name="res3376",
+L135:             account_name="sto328",
+L136:             table_name="table6185",
+L137:         )
+L138:         print(response)
+L139: 
+L140: 
+L141:     # x-ms-original-file: specification/storage/resource-manager/Microsoft.Storage/stable/2025-06-01/examples/TableOperationGet.json
+L142:     if __name__ == "__main__":
+L143:         main()
+L144: 
+L145:     `
+L174:     	// If the HTTP response code is 200 as defined in example definition, your response structure would look as follows. Please pay attention that all the values in the output are fake values for just demo purposes.
+L175:     	// res.Table = armstorage.Table{
+L176:     	// 	Name: to.Ptr("table6185"),
+L177:     	// 	Type: to.Ptr("Microsoft.Storage/storageAccounts/tableServices/tables"),
+L178:     	// 	ID: to.Ptr("/subscriptions/{subscription-id}/resourceGroups/res3376/providers/Microsoft.Storage/storageAccounts/sto328/tableServices/default/tables/table6185"),
+L179:     	// 	TableProperties: &armstorage.TableProperties{
+L180:     	// 		TableName: to.Ptr("table6185"),
+L181:     	// 	},
+L182:     	// }
+L183:     }
+L184: 
+L185:     `
+L186: To use the Azure SDK library in your project, see cite17†this documentation†github.com . To provide feedback on this code sample, cite15†open a GitHub issue†github.com L187: 
+L188:     `const { StorageManagementClient } = require("@azure/arm-storage");
+L189:     const { DefaultAzureCredential } = require("@azure/identity");
+L190:     require("dotenv/config");
+L191: 
+L192:     /**
+L193:      * This sample demonstrates how to Gets the table with the specified table name, under the specified account if it exists.
+L194:      *
+L195:      * @summary Gets the table with the specified table name, under the specified account if it exists.
+L196:      * x-ms-original-file: specification/storage/resource-manager/Microsoft.Storage/stable/2025-06-01/examples/TableOperationGet.json
+L197:      */
+L198:     async function tableOperationGet() {
+L199:       const subscriptionId = process.env["STORAGE_SUBSCRIPTION_ID"] || "{subscription-id}";
+L200:       const resourceGroupName = process.env["STORAGE_RESOURCE_GROUP"] || "res3376";
+L201:       const accountName = "sto328";
+L241:     NullableResponse<TableResource> response = await collection.GetIfExistsAsync(tableName);
+L242:     TableResource result = response.HasValue ? response.Value : null;
+L243: 
+L244:     if (result == null)
+L245:     {
+L246:         Console.WriteLine("Succeeded with null as result");
+L247:     }
+L248:     else
+L249:     {
+L250:         // the variable result is a resource, you could call other operations on this instance as well
+L251:         // but just for demo, we get its data from this resource instance
+L252:         TableData resourceData = result.Data;
+L253:         // for demo we just print out the id
+L254:         Console.WriteLine($"Succeeded on id: {resourceData.Id}");
+L255:     }
+L256: 
+L257:     `
+L258: To use the Azure SDK library in your project, see cite19†this documentation†github.com . To provide feedback on this code sample, cite15†open a GitHub issue†github.com L259: #### Sample response
+L260: 
+L261: Status code:
+L262:     200
+L263: 
+L264:     `{
+L265:       "name": "table6185",
+L266:       "type": "Microsoft.Storage/storageAccounts/tableServices/tables",
+L267:       "id": "/subscriptions/{subscription-id}/resourceGroups/res3376/providers/Microsoft.Storage/storageAccounts/sto328/tableServices/default/tables/table6185",
+L268:       "properties": {
+L269:         "tableName": "table6185"
+L270:       }
+L271:     }`
+L272: ## Definitions
+L273: Name  | Description
+L274: --- | ---
+L275: cite7†CloudError | An error response from the Storage service.
+L276: cite20†CloudErrorBody | An error response from the Storage service.
+L277: cite21†createdByType | The type of identity that created the resource.
+L278: cite22†systemData | Metadata pertaining to creation and last modification of the resource.
+L279: cite6†Table | Properties of the table, including Id, resource name, resource type.
+L280: cite23†TableAccessPolicy | Table Access Policy Properties Object.
+L281: cite24†TableSignedIdentifier | Object to set Table Access Policy.
+L282: ### CloudError
+L283: 
+L284: Object
+L285: 
+L286: An error response from the Storage service.
+L287: 
+L288: Name  | Type  | Description
+L289: --- | --- | ---
+L290: error  | cite20†CloudErrorBody | An error response from the Storage service.
+L291: ### CloudErrorBody
+L292: 
+L293: Object
+L294: 
+L295: An error response from the Storage service.
+L296: Name  | Type  | Description
+L297: --- | --- | ---
+L298: code  | string  | An identifier for the error. Codes are invariant and are intended to be consumed programmatically.
+L299: details  | cite20†CloudErrorBody []  | A list of additional details about the error.
+L300: message  | string  | A message describing the error, intended to be suitable for display in a user interface.
+L301: target  | string  | The target of the particular error. For example, the name of the property in error.
+L302: ### createdByType
+L303: 
+L304: Enumeration
+L305: 
+L306: The type of identity that created the resource.
+L307: 
+L308: Value  | Description
+L309: --- | ---
+L310: User  |
+L311: Application  |
+L312: ManagedIdentity  |
+L313: Key  |
+L314: ### systemData
+L315: 
+L316: Object
+L317: 
+L318: Metadata pertaining to creation and last modification of the resource.
+L319: Name  | Type  | Description
+L320: --- | --- | ---
+L321: createdAt  | string (date-time)  | The timestamp of resource creation (UTC).
+L322: createdBy  | string  | The identity that created the resource.
+L323: createdByType  | cite21†createdByType | The type of identity that created the resource.
+L324: lastModifiedAt  | string (date-time)  | The timestamp of resource last modification (UTC)
+L325: lastModifiedBy  | string  | The identity that last modified the resource.
+L326: lastModifiedByType  | cite21†createdByType | The type of identity that last modified the resource.
+L327: ### Table
+L328: 
+L329: Object
+L330: 
+L331: Properties of the table, including Id, resource name, resource type.
+L332: Name  | Type  | Description
+L333: --- | --- | ---
+L334: id  | string (arm-id)  | Fully qualified resource ID for the resource. E.g. "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}"
+L335: name  | string  | The name of the resource
+L336: properties.signedIdentifiers  | cite24†TableSignedIdentifier []  | List of stored access policies specified on the table.
+L337: properties.tableName  | string  | Table name under the specified account
+L338: systemData  | cite22†systemData | Azure Resource Manager metadata containing createdBy and modifiedBy information.
+L339: type  | string  | The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or "Microsoft.Storage/storageAccounts"
+L340: ### TableAccessPolicy
+L341: 
+L342: Object
+L343: 
+L344: Table Access Policy Properties Object.
+L345: 
+L346: Name  | Type  | Description
+L347: --- | --- | ---
+L348: expiryTime  | string (date-time)  | Expiry time of the access policy
+L349: permission  | string  | Required. List of abbreviated permissions. Supported permission values include 'r','a','u','d'
+L350: startTime  | string (date-time)  | Start time of the access policy
+L351: ### TableSignedIdentifier
+L352: 
+L353: Object
+L354: 
+L355: Object to set Table Access Policy.
+L356: 
+L357: Name  | Type  | Description
+L358: --- | --- | ---
+L359: accessPolicy  | cite23†TableAccessPolicy | Access policy
+L360: id  | string  | unique-64-character-value of the stored access policy.
+L361: 
+L362: ### In this article
+--------------------------------------------------------------------------------
+User Assigned Identities - Get - REST API (Azure Managed Identity) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/managedidentity/user-assigned-identities/get?view=rest-managedidentity-2024-11-30)
+citeturn90view3 [wordlim: 200] Crawled: today; Content type: text/html; Source: find({"ref_id":"https://learn.microsoft.com/en-us/rest/api/managedidentity/user-assigned-identities/get?view=rest-managedidentity-2024-11-30","pattern":"### Identity"}); Total lines: 180
+L45: ## Responses
+L46: 
+L47: Name  | Type  | Description
+L48: --- | --- | ---
+L49: 200 OK  | cite6†Identity | Azure operation completed successfully.
+L50: Other Status Codes  | cite7†CloudError | An unexpected error response.
+L51: 
+L52: ## Security
+L53: 
+L78: Status code:
+L79:     200
+L80: 
+L81:     `{
+L82:       "name": "identityName",
+L83:       "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+L84:       "id": "/subscriptions/subid/resourcegroups/rgName/providers/Microsoft.ManagedIdentity/userAssignedIdentities/identityName",
+L85:       "location": "eastus",
+L86:       "properties": {
+L87:         "clientId": "4024ab25-56a8-4370-aea6-6389221caf29",
+L88:         "isolationScope": "None",
+L89:         "principalId": "25cc773c-7f05-40fc-a104-32d2300754ad",
+L90:         "tenantId": "b6c948ef-f6b5-4384-8354-da3a15eca969"
+L91:       },
+L92:       "tags": {
+L93:         "key1": "value1",
+L94:         "key2": "value2"
+L95:       }
+L96:     }`
+L97: ## Definitions
+L98: Name  | Description
+L99: --- | ---
+L100: cite7†CloudError | An error response from the ManagedServiceIdentity service.
+L101: cite9†CloudErrorBody | An error response from the ManagedServiceIdentity service.
+L102: cite10†createdByType | The type of identity that created the resource.
+L103: cite6†Identity | Describes an identity resource.
+L104: cite11†IsolationScope | Enum to configure regional restrictions on identity assignment, as necessary.
+L105: cite12†systemData | Metadata pertaining to creation and last modification of the resource.
+L106: ### CloudError
+L107: 
+L108: Object
+L109: 
+L110: An error response from the ManagedServiceIdentity service.
+L111: 
+L112: Name  | Type  | Description
+L113: --- | --- | ---
+L114: error  | cite9†CloudErrorBody | A list of additional details about the error.
+L115: ### CloudErrorBody
+L116: 
+L117: Object
+L118: 
+L119: An error response from the ManagedServiceIdentity service.
+L120: 
+L121: Name  | Type  | Description
+L122: --- | --- | ---
+L123: code  | string  | An identifier for the error.
+L124: details  | cite9†CloudErrorBody []  | A list of additional details about the error.
+L125: message  | string  | A message describing the error, intended to be suitable for display in a user interface.
+L126: target  | string  | The target of the particular error. For example, the name of the property in error.
+L127: ### createdByType
+L128: 
+L129: Enumeration
+L130: 
+L131: The type of identity that created the resource.
+L132: 
+L133: Value  | Description
+L134: --- | ---
+L135: User  |
+L136: Application  |
+L137: ManagedIdentity  |
+L138: Key  |
+L139: ### Identity
+L140: 
+L141: Object
+L142: 
+L143: Describes an identity resource.
+L144: Name  | Type  | Description
+L145: --- | --- | ---
+L146: id  | string (arm-id)  | Fully qualified resource ID for the resource. E.g. "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}"
+L147: location  | string  | The geo-location where the resource lives
+L148: name  | string  | The name of the resource
+L149: properties.clientId  | string (uuid)  | The id of the app associated with the identity. This is a random generated UUID by MSI.
+L150: properties.isolationScope  | cite11†IsolationScope | Enum to configure regional restrictions on identity assignment, as necessary.
+L151: properties.principalId  | string (uuid)  | The id of the service principal object associated with the created identity.
+L152: properties.tenantId  | string (uuid)  | The id of the tenant which the identity belongs to.
+L153: systemData  | cite12†systemData | Azure Resource Manager metadata containing createdBy and modifiedBy information.
+L154: tags  | object  | Resource tags.
+L155: type  | string  | The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or "Microsoft.Storage/storageAccounts"
+L156: ### IsolationScope
+L157: 
+L158: Enumeration
+L159: 
+L160: Enum to configure regional restrictions on identity assignment, as necessary.
+L161: 
+L162: Value  | Description
+L163: --- | ---
+L164: None  |
+L165: Regional  |
+L166: ### systemData
+L167: 
+L168: Object
+L169: 
+L170: Metadata pertaining to creation and last modification of the resource.
+L171: Name  | Type  | Description
+L172: --- | --- | ---
+L173: createdAt  | string (date-time)  | The timestamp of resource creation (UTC).
+L174: createdBy  | string  | The identity that created the resource.
+L175: createdByType  | cite10†createdByType | The type of identity that created the resource.
+L176: lastModifiedAt  | string (date-time)  | The timestamp of resource last modification (UTC)
+L177: lastModifiedBy  | string  | The identity that last modified the resource.
+L178: lastModifiedByType  | cite10†createdByType | The type of identity that last modified the resource.
+L179: ### In this article
+

@@ -1,0 +1,383 @@
+ (https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/specification/monitor/resource-manager/Microsoft.Insights/Insights/stable/2023-01-01/actionGroups_API.json)
+citeturn87view0 [wordlim: 200] Crawled: 3 days ago; Content type: text/plain; Source: open({"ref_id":"https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/specification/monitor/resource-manager/Microsoft.Insights/Insights/stable/2023-01-01/actionGroups_API.json","lineno":null}); Total lines: 1223
+L0: {
+L1:   "swagger": "2.0",
+L2:   "info": {
+L3:     "title": "Azure Action Groups API",
+L4:     "x-ms-code-generation-settings": {
+L5:       "name": "MonitorManagementClient"
+L6:     },
+L7:     "version": "2023-01-01"
+L8:   },
+L9:   "host": "management.azure.com",
+L10:   "schemes": [
+L11:     "https"
+L12:   ],
+L13:   "consumes": [
+L14:     "application/json"
+L15:   ],
+L16:   "produces": [
+L17:     "application/json"
+L18:   ],
+L19:   "security": [
+L20:     {
+L21:       "azure_auth": [
+L22:         "user_impersonation"
+L23:       ]
+L24:     }
+L25:   ],
+L26:   "securityDefinitions": {
+L27:     "azure_auth": {
+L28:       "type": "oauth2",
+L29:       "authorizationUrl": "https://login.microsoftonline.com/common/oauth2/authorize",
+L30:       "flow": "implicit",
+L31:       "description": "Azure Active Directory OAuth2 Flow",
+L32:       "scopes": {
+L33:         "user_impersonation": "impersonate your user account"
+L34:       }
+L35:     }
+L36:   },
+L37:   "paths": {
+L38:     "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Insights/actionGroups/{actionGroupName}": {
+L39:       "put": {
+L40:         "description": "Create a new action group or update an existing one.",
+L41:         "operationId": "ActionGroups_CreateOrUpdate",
+L42:         "x-ms-examples": {
+L43:           "Create or update an action group": {
+L44:             "$ref": "./examples/createOrUpdateActionGroup.json"
+L45:           }
+L46:         },
+L47:         "parameters": [
+L48:           {
+L49:             "$ref": "../../../../../../common-types/resource-management/v3/types.json#/parameters/ResourceGroupNameParameter"
+L50:           },
+L51:           {
+L52:             "$ref": "#/parameters/ActionGroupNameParameter"
+L53:           },
+L54:           {
+L55:             "name": "actionGroup",
+L56:             "in": "body",
+L57:             "required": true,
+L58:             "schema": {
+L59:               "$ref": "#/definitions/ActionGroupResource"
+L60:             },
+L61:             "description": "The action group to create or use for the update."
+L62:           },
+L63:           {
+L64:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/SubscriptionIdParameter"
+L65:           },
+L66:           {
+L67:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/ApiVersionParameter"
+L68:           }
+L69:         ],
+L70:         "responses": {
+L71:           "200": {
+L72:             "description": "An existing action group was successfully updated.",
+L73:             "schema": {
+L74:               "$ref": "#/definitions/ActionGroupResource"
+L75:             }
+L76:           },
+L77:           "201": {
+L78:             "description": "A new action group was successfully created.",
+L79:             "schema": {
+L80:               "$ref": "#/definitions/ActionGroupResource"
+L81:             }
+L82:           },
+L83:           "default": {
+L84:             "description": "An error occurred and the action group could not be created or updated.",
+L85:             "schema": {
+L86:               "$ref": "#/definitions/ErrorResponse"
+L87:             }
+L88:           }
+L89:         }
+L90:       },
+L91:       "get": {
+L92:         "description": "Get an action group.",
+L93:         "operationId": "ActionGroups_Get",
+L94:         "x-ms-examples": {
+L95:           "Get an action group": {
+L96:             "$ref": "./examples/getActionGroup.json"
+L97:           }
+L98:         },
+L99:         "parameters": [
+L100:           {
+L101:             "$ref": "../../../../../../common-types/resource-management/v3/types.json#/parameters/ResourceGroupNameParameter"
+L102:           },
+L103:           {
+L104:             "$ref": "#/parameters/ActionGroupNameParameter"
+L105:           },
+L106:           {
+L107:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/SubscriptionIdParameter"
+L108:           },
+L109:           {
+L110:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/ApiVersionParameter"
+L111:           }
+L112:         ],
+L113:         "responses": {
+L114:           "200": {
+L115:             "description": "The request succeeded.",
+L116:             "schema": {
+L117:               "$ref": "#/definitions/ActionGroupResource"
+L118:             }
+L119:           },
+L120:           "default": {
+L121:             "description": "An error occurred and the action group could not be retrieved. 404: The action group does not exist.",
+L122:             "schema": {
+L123:               "$ref": "#/definitions/ErrorResponse"
+L124:             }
+L125:           }
+L126:         }
+L127:       },
+L128:       "delete": {
+L129:         "description": "Delete an action group.",
+L130:         "operationId": "ActionGroups_Delete",
+L131:         "x-ms-examples": {
+L132:           "Delete an action group": {
+L133:             "$ref": "./examples/deleteActionGroup.json"
+L134:           }
+L135:         },
+L136:         "parameters": [
+L137:           {
+L138:             "$ref": "../../../../../../common-types/resource-management/v3/types.json#/parameters/ResourceGroupNameParameter"
+L139:           },
+L140:           {
+L141:             "$ref": "#/parameters/ActionGroupNameParameter"
+L142:           },
+L143:           {
+L144:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/SubscriptionIdParameter"
+L145:           },
+L146:           {
+L147:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/ApiVersionParameter"
+L148:           }
+L149:         ],
+L150:         "responses": {
+L151:           "200": {
+L152:             "description": "The action group was successfully deleted."
+L153:           },
+L154:           "204": {
+L155:             "description": "The action group does not exist. It may have already been deleted."
+L156:           },
+L157:           "default": {
+L158:             "description": "An error occurred and the action group could not be deleted.",
+L159:             "schema": {
+L160:               "$ref": "#/definitions/ErrorResponse"
+L161:             }
+L162:           }
+L163:         }
+L164:       },
+L165:       "patch": {
+L166:         "description": "Updates an existing action group's tags. To update other fields use the CreateOrUpdate method.",
+L167:         "operationId": "ActionGroups_Update",
+L168:         "parameters": [
+L169:           {
+L170:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/SubscriptionIdParameter"
+L171:           },
+L172:           {
+L173:             "$ref": "../../../../../../common-types/resource-management/v3/types.json#/parameters/ResourceGroupNameParameter"
+L174:           },
+L175:           {
+L176:             "$ref": "#/parameters/ActionGroupNameParameter"
+L177:           },
+L178:           {
+L179:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/ApiVersionParameter"
+L180:           },
+L181:           {
+L182:             "name": "actionGroupPatch",
+L183:             "in": "body",
+L184:             "required": true,
+L185:             "schema": {
+L186:               "$ref": "#/definitions/ActionGroupPatchBody"
+L187:             },
+L188:             "description": "Parameters supplied to the operation."
+L189:           }
+L190:         ],
+L191:         "responses": {
+L192:           "default": {
+L193:             "description": "Error response describing why the operation failed.",
+L194:             "schema": {
+L195:               "$ref": "#/definitions/ErrorResponse"
+L196:             }
+L197:           },
+L198:           "200": {
+L199:             "description": "An existing action group was successfully updated.",
+L200:             "schema": {
+L201:               "$ref": "#/definitions/ActionGroupResource"
+L202:             }
+L203:           }
+L204:         },
+L205:         "x-ms-examples": {
+L206:           "Patch an action group": {
+L207:             "$ref": "./examples/patchActionGroup.json"
+L208:           }
+L209:         }
+L210:       }
+L211:     },
+L212:     "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Insights/actionGroups/{actionGroupName}/createNotifications": {
+L213:       "post": {
+L214:         "x-ms-long-running-operation": true,
+L215:         "x-ms-long-running-operation-options": {
+L216:           "final-state-via": "location"
+L217:         },
+L218:         "description": "Send test notifications to a set of provided receivers",
+L219:         "operationId": "ActionGroups_CreateNotificationsAtActionGroupResourceLevel",
+L220:         "x-ms-examples": {
+L221:           "Create notifications at resource group level": {
+L222:             "$ref": "./examples/postTestNotificationsAtActionGroupResourceLevel.json"
+L223:           }
+L224:         },
+L225:         "parameters": [
+L226:           {
+L227:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/SubscriptionIdParameter"
+L228:           },
+L229:           {
+L230:             "$ref": "../../../../../../common-types/resource-management/v3/types.json#/parameters/ResourceGroupNameParameter"
+L231:           },
+L232:           {
+L233:             "$ref": "#/parameters/ActionGroupNameParameter"
+L234:           },
+L235:           {
+L236:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/ApiVersionParameter"
+L237:           },
+L238:           {
+L239:             "name": "notificationRequest",
+L240:             "in": "body",
+L241:             "required": true,
+L242:             "schema": {
+L243:               "$ref": "#/definitions/NotificationRequestBody"
+L244:             },
+L245:             "description": "The notification request body which includes the contact details"
+L246:           }
+L247:         ],
+L248:         "responses": {
+L249:           "202": {
+L250:             "description": "The notification request accepted",
+L251:             "headers": {
+L252:               "location": {
+L253:                 "type": "string",
+L254:                 "description": "The location header that has the polling uri."
+L255:               }
+L256:             }
+L257:           },
+L258:           "200": {
+L259:             "description": "The notification succeeded",
+L260:             "schema": {
+L261:               "$ref": "#/definitions/TestNotificationDetailsResponse"
+L262:             }
+L263:           },
+L264:           "default": {
+L265:             "description": "An error occurred while sending the test notifications",
+L266:             "schema": {
+L267:               "$ref": "#/definitions/ErrorResponse"
+L268:             }
+L269:           }
+L270:         }
+L271:       }
+L272:     },
+L273:     "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Insights/actionGroups/{actionGroupName}/notificationStatus/{notificationId}": {
+L274:       "get": {
+L275:         "description": "Get the test notifications by the notification id",
+L276:         "operationId": "ActionGroups_GetTestNotificationsAtActionGroupResourceLevel",
+L277:         "x-ms-examples": {
+L278:           "Get notification details at resource group level": {
+L279:             "$ref": "./examples/getTestNotificationsAtActionGroupResourceLevel.json"
+L280:           }
+L281:         },
+L282:         "parameters": [
+L283:           {
+L284:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/SubscriptionIdParameter"
+L285:           },
+L286:           {
+L287:             "$ref": "../../../../../../common-types/resource-management/v3/types.json#/parameters/ResourceGroupNameParameter"
+L288:           },
+L289:           {
+L290:             "$ref": "#/parameters/ActionGroupNameParameter"
+L291:           },
+L292:           {
+L293:             "$ref": "#/parameters/NotificationIdParameter"
+L294:           },
+L295:           {
+L296:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/ApiVersionParameter"
+L297:           }
+L298:         ],
+L299:         "responses": {
+L300:           "200": {
+L301:             "description": "The notification details",
+L302:             "schema": {
+L303:               "$ref": "#/definitions/TestNotificationDetailsResponse"
+L304:             }
+L305:           },
+L306:           "default": {
+L307:             "description": "An error occurred while sending the test notifications",
+L308:             "schema": {
+L309:               "$ref": "#/definitions/ErrorResponse"
+L310:             }
+L311:           }
+L312:         }
+L313:       }
+L314:     },
+L315:     "/subscriptions/{subscriptionId}/providers/Microsoft.Insights/actionGroups": {
+L316:       "get": {
+L317:         "description": "Get a list of all action groups in a subscription.",
+L318:         "operationId": "ActionGroups_ListBySubscriptionId",
+L319:         "x-ms-examples": {
+L320:           "List action groups at subscription level": {
+L321:             "$ref": "./examples/listActionGroups.json"
+L322:           }
+L323:         },
+L324:         "x-ms-pageable": {
+L325:           "nextLinkName": null
+L326:         },
+L327:         "parameters": [
+L328:           {
+L329:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/SubscriptionIdParameter"
+L330:           },
+L331:           {
+L332:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/ApiVersionParameter"
+L333:           }
+L334:         ],
+L335:         "responses": {
+L336:           "200": {
+L337:             "description": "The request succeeded.",
+L338:             "schema": {
+L339:               "$ref": "#/definitions/ActionGroupList"
+L340:             }
+L341:           },
+L342:           "default": {
+L343:             "description": "An error occurred and the list of action groups could not be retrieved.",
+L344:             "schema": {
+L345:               "$ref": "#/definitions/ErrorResponse"
+L346:             }
+L347:           }
+L348:         }
+L349:       }
+L350:     },
+L351:     "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Insights/actionGroups": {
+L352:       "get": {
+L353:         "description": "Get a list of all action groups in a resource group.",
+L354:         "operationId": "ActionGroups_ListByResourceGroup",
+L355:         "x-ms-examples": {
+L356:           "List action groups at resource group level": {
+L357:             "$ref": "./examples/listActionGroups.json"
+L358:           }
+L359:         },
+L360:         "x-ms-pageable": {
+L361:           "nextLinkName": null
+L362:         },
+L363:         "parameters": [
+L364:           {
+L365:             "$ref": "../../../../../../common-types/resource-management/v3/types.json#/parameters/ResourceGroupNameParameter"
+L366:           },
+L367:           {
+L368:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/SubscriptionIdParameter"
+L369:           },
+L370:           {
+L371:             "$ref": "../../../../../../common-types/resource-management/v2/types.json#/parameters/ApiVersionParameter"
+L372:           }
+L373:         ],
+L374:         "responses": {
+L375:           "200": {
+L376:             "description": "The request succeeded.",
+--------------------------------------------------------------------------------
+ (https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/specification/monitor/resource-manager/Microsoft.Insights/Insights/stable/2023-12-01/scheduledQueryRule_API.json)
+citeturn87view1 [wordlim: 200] Crawled: 5 days ago; Content type: text/plain; Source: open({"ref_id":"https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/specification/monitor/resource-manager/Microsoft.Insights/Insights/stable/2023-12-01/scheduledQueryRule_API.json","lineno":null}); Total lines: 785
+

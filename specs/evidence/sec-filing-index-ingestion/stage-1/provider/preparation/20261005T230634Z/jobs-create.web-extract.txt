@@ -1,0 +1,573 @@
+Jobs - Create Or Update - REST API (Azure Azure Container Apps) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/resource-manager/containerapps/jobs/create-or-update?view=rest-resource-manager-containerapps-2026-07-01)
+citeturn0view0 [wordlim: 200] Crawled: today; Content type: text/html; Source: open({"ref_id":"https://learn.microsoft.com/en-us/rest/api/resource-manager/containerapps/jobs/create-or-update?view=rest-resource-manager-containerapps-2026-07-01","lineno":null}); Total lines: 2613
+L0: cite0†Skip to main content cite1†Skip to in-page navigation cite2†Skip to Ask Learn chat experience L1: 
+L2: This browser is no longer supported.
+L3: 
+L4: Upgrade to Microsoft Edge to take advantage of the latest features, security updates, and technical support.
+L5: 
+L6: cite3†Download Microsoft Edge†go.microsoft.com cite4†More info about Internet Explorer and Microsoft Edge L7: 
+L8: Table of contents Exit editor mode
+L9: 
+L10: Ask Learn Ask Learn
+L11: 
+L12: Reading mode Table of contents cite2†Read in English Add Add to Plans cite5†Edit†github.com L13: 
+L14: * * *
+L15: Copy Markdown Print
+L16: 
+L17: * * *
+L18: 
+L19: Note
+L20: 
+L21: Access to this page requires authorization. You can try cite2†signing in or changing directories.
+L22: 
+L23: Access to this page requires authorization. You can try changing directories.
+L24: # Jobs - Create Or Update
+L25: 
+L26: Service:
+L27:     Azure Container Apps
+L28: 
+L29: API Version:
+L30:     2026-07-01
+L31: 
+L32: ##
+L33: 
+L34: Create or Update a Container Apps Job.
+L35: 
+L36:     `PUT https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.App/jobs/{jobName}?api-version=2026-07-01`
+L37: ## URI Parameters
+L38: 
+L39: Name  | In  | Required  | Type  | Description
+L40: --- | --- | --- | --- | ---
+L41: jobName  | path  | True  | string pattern: ^[-\w\._\(\)]+$  | Job Name
+L42: resourceGroupName  | path  | True  | string minLength: 1
+L43: maxLength: 90  | The name of the resource group. The name is case insensitive.
+L44: subscriptionId  | path  | True  | string (uuid)  | The ID of the target subscription. The value must be an UUID.
+L45: api-version  | query  | True  | string minLength: 1  | The API version to use for this operation.
+L46: ## Request Body
+L47: Name  | Required  | Type  | Description
+L48: --- | --- | --- | ---
+L49: location  | True  | string  | The geo-location where the resource lives
+L50: identity  |  | cite6†ManagedServiceIdentity | The managed service identities assigned to this resource.
+L51: properties.configuration  |  | cite7†JobConfiguration | Container Apps Job configuration properties.
+L52: properties.environmentId  |  | string  | Resource ID of environment.
+L53: properties.template  |  | cite8†JobTemplate | Container Apps job definition.
+L54: properties.workloadProfileName  |  | string  | Workload profile name to pin for container apps job execution.
+L55: tags  |  | object  | Resource tags.
+L56: ## Responses
+L57: 
+L58: Name  | Type  | Description
+L59: --- | --- | ---
+L60: 200 OK  | cite9†Job | Resource 'Job' update operation succeeded
+L61: 201 Created  | cite9†Job | Resource 'Job' create operation succeeded Headers
+L62: 
+L63:   * Azure-AsyncOperation: string
+L64:   * Retry-After: integer
+L65: Other Status Codes  | cite10†DefaultErrorResponse | An unexpected error response.
+L66: 
+L67: ## Security
+L68: 
+L69: ### azure_auth
+L70: 
+L71: Azure Active Directory OAuth2 Flow.
+L72: 
+L73: Type: oauth2
+L74: Flow: implicit
+L75: Authorization URL: https://login.microsoftonline.com/common/oauth2/authorize
+L76: #### Scopes
+L77: 
+L78: Name  | Description
+L79: --- | ---
+L80: user_impersonation  | impersonate your user account
+L81: 
+L82: ## Examples
+L83: 
+L84: cite11†Create or Update Container Apps Job L85: cite12†Create or Update Container Apps Job On A Connected Environment L86: cite13†Create or Update Container Apps Job With Event Driven Trigger L87: 
+L88: ### Create or Update Container Apps Job
+L89: #### Sample request
+L90:   * cite14†HTTP L91:   * cite15†Java L92:   * cite16†Python L93:   * cite17†Go L94:   * cite18†JavaScript L95: 
+L96:     `PUT https://management.azure.com/subscriptions/34adfa4f-cedf-4dc0-ba29-b6d1a69ab345/resourceGroups/rg/providers/Microsoft.App/jobs/testcontainerAppsJob0?api-version=2026-07-01
+L97: 
+L98:     {
+L99:       "identity": {
+L100:         "type": "SystemAssigned,UserAssigned",
+L101:         "userAssignedIdentities": {
+L102:           "/subscriptions/34adfa4f-cedf-4dc0-ba29-b6d1a69ab345/resourcegroups/rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/myidentity": {}
+L103:         }
+L104:       },
+L105:       "location": "East US",
+L106:       "properties": {
+L107:         "configuration": {
+L108:           "identitySettings": [
+L109:             {
+L110:               "identity": "/subscriptions/34adfa4f-cedf-4dc0-ba29-b6d1a69ab345/resourcegroups/rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/myidentity",
+L111:               "lifecycle": "All"
+L112:             },
+L113:             {
+L114:               "identity": "system",
+L115:               "lifecycle": "Init"
+L116:             }
+L117:           ],
+L118:           "manualTriggerConfig": {
+L119:             "parallelism": 4,
+L120:             "replicaCompletionCount": 1
+L121:           },
+L122:           "replicaRetryLimit": 10,
+L123:           "replicaTimeout": 10,
+L124:           "triggerType": "Manual"
+L125:         },
+L126:         "environmentId": "/subscriptions/34adfa4f-cedf-4dc0-ba29-b6d1a69ab345/resourceGroups/rg/providers/Microsoft.App/managedEnvironments/demokube",
+L127:         "template": {
+L128:           "containers": [
+L129:             {
+L130:               "name": "testcontainerAppsJob0",
+L131:               "image": "repo/testcontainerAppsJob0:v1",
+L132:               "probes": [
+L133:                 {
+L134:                   "type": "Liveness",
+L135:                   "httpGet": {
+L136:                     "path": "/health",
+L137:                     "httpHeaders": [
+L138:                       {
+L139:                         "name": "Custom-Header",
+L140:                         "value": "Awesome"
+L141:                       }
+L142:                     ],
+L143:                     "port": 8080
+L144:                   },
+L145:                   "initialDelaySeconds": 5,
+L146:                   "periodSeconds": 3
+L147:                 }
+L148:               ],
+L149:               "volumeMounts": [
+L150:                 {
+L151:                   "mountPath": "/mnt/path1",
+L152:                   "subPath": "subPath1",
+L153:                   "volumeName": "azurefile"
+L154:                 },
+L155:                 {
+L156:                   "mountPath": "/mnt/path2",
+L157:                   "subPath": "subPath2",
+L158:                   "volumeName": "nfsazurefile"
+L159:                 }
+L160:               ]
+L161:             }
+L162:           ],
+L163:           "initContainers": [
+L164:             {
+L165:               "name": "testinitcontainerAppsJob0",
+L166:               "args": [
+L167:                 "-c",
+L168:                 "while true; do echo hello; sleep 10;done"
+L169:               ],
+L170:               "command": [
+L171:                 "/bin/sh"
+L172:               ],
+L173:               "image": "repo/testcontainerAppsJob0:v4",
+L174:               "resources": {
+L175:                 "cpu": 0.2,
+L176:                 "memory": "100Mi"
+L177:               }
+L178:             }
+L179:           ]
+L180:         }
+L181:       }
+L182:     }
+L183: 
+L184:     `
+L185: 
+L186:     `
+L187:     import com.azure.resourcemanager.appcontainers.models.Container;
+L188:     import com.azure.resourcemanager.appcontainers.models.ContainerAppProbe;
+L189:     import com.azure.resourcemanager.appcontainers.models.ContainerAppProbeHttpGet;
+L190:     import com.azure.resourcemanager.appcontainers.models.ContainerAppProbeHttpGetHttpHeadersItem;
+L191:     import com.azure.resourcemanager.appcontainers.models.ContainerResources;
+L192:     import com.azure.resourcemanager.appcontainers.models.IdentitySettings;
+L193:     import com.azure.resourcemanager.appcontainers.models.IdentitySettingsLifeCycle;
+L194:     import com.azure.resourcemanager.appcontainers.models.InitContainer;
+L195:     import com.azure.resourcemanager.appcontainers.models.JobConfiguration;
+L196:     import com.azure.resourcemanager.appcontainers.models.JobConfigurationManualTriggerConfig;
+L197:     import com.azure.resourcemanager.appcontainers.models.JobTemplate;
+L198:     import com.azure.resourcemanager.appcontainers.models.ManagedServiceIdentity;
+L199:     import com.azure.resourcemanager.appcontainers.models.ManagedServiceIdentityType;
+L200:     import com.azure.resourcemanager.appcontainers.models.TriggerType;
+L201:     import com.azure.resourcemanager.appcontainers.models.Type;
+L202:     import com.azure.resourcemanager.appcontainers.models.UserAssignedIdentity;
+L203:     import com.azure.resourcemanager.appcontainers.models.VolumeMount;
+L204:     import java.util.Arrays;
+L205:     import java.util.HashMap;
+L206:     import java.util.Map;
+L207: 
+L208:     /**
+L209:      * Samples for Jobs CreateOrUpdate.
+L210:      */
+L211:     public final class Main {
+L212:         /*
+L213:          * x-ms-original-file: 2026-07-01/Job_CreateorUpdate.json
+L214:          */
+L215:         /**
+L216:          * Sample code: Create or Update Container Apps Job.
+L217:          *
+L218:          * @param manager Entry point to ContainerAppsApiManager.
+L219:          */
+L220:         public static void
+L221:             createOrUpdateContainerAppsJob(com.azure.resourcemanager.appcontainers.ContainerAppsApiManager manager) {
+L222:             manager.jobs().define("testcontainerAppsJob0").withRegion("East US").withExistingResourceGroup("rg")
+L223:                 .withIdentity(new ManagedServiceIdentity()
+L224:                     .withType(ManagedServiceIdentityType.SYSTEM_ASSIGNED_USER_ASSIGNED)
+L225:                     .withUserAssignedIdentities(mapOf(
+L226:                         "/subscriptions/34adfa4f-cedf-4dc0-ba29-b6d1a69ab345/resourcegroups/rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/myidentity",
+L227:                         new UserAssignedIdentity())))
+L228:                 .withEnvironmentId(
+L229:                     "/subscriptions/34adfa4f-cedf-4dc0-ba29-b6d1a69ab345/resourceGroups/rg/providers/Microsoft.App/managedEnvironments/demokube")
+L230:                 .withConfiguration(new JobConfiguration().withTriggerType(TriggerType.MANUAL).withReplicaTimeout(10)
+L231:                     .withReplicaRetryLimit(10)
+L232:                     .withManualTriggerConfig(
+L233:                         new JobConfigurationManualTriggerConfig().withReplicaCompletionCount(1).withParallelism(4))
+L234:                     .withIdentitySettings(Arrays.asList(new IdentitySettings().withIdentity(
+L235:                         "/subscriptions/34adfa4f-cedf-4dc0-ba29-b6d1a69ab345/resourcegroups/rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/myidentity")
+L236:                         .withLifecycle(IdentitySettingsLifeCycle.ALL),
+L237:                         new IdentitySettings().withIdentity("system").withLifecycle(IdentitySettingsLifeCycle.INIT))))
+L238:                 .withTemplate(
+L239:                     new JobTemplate()
+L240:                         .withInitContainers(Arrays.asList(new InitContainer().withImage("repo/testcontainerAppsJob0:v4")
+L241:                             .withName("testinitcontainerAppsJob0").withCommand(Arrays.asList("/bin/sh"))
+L242:                             .withArgs(Arrays.asList("-c", "while true; do echo hello; sleep 10;done"))
+L243:                             .withResources(new ContainerResources().withCpu(0.2D).withMemory("100Mi"))))
+L244:                         .withContainers(Arrays.asList(
+L245:                             new Container().withImage("repo/testcontainerAppsJob0:v1").withName("testcontainerAppsJob0")
+L246:                                 .withVolumeMounts(Arrays.asList(
+L247:                                     new VolumeMount().withVolumeName("azurefile").withMountPath("/mnt/path1")
+L248:                                         .withSubPath("subPath1"),
+L249:                                     new VolumeMount().withVolumeName("nfsazurefile").withMountPath("/mnt/path2")
+L250:                                         .withSubPath("subPath2")))
+L251:                                 .withProbes(Arrays.asList(new ContainerAppProbe()
+L252:                                     .withHttpGet(new ContainerAppProbeHttpGet()
+L253:                                         .withHttpHeaders(Arrays.asList(new ContainerAppProbeHttpGetHttpHeadersItem()
+L254:                                             .withName("Custom-Header").withValue("Awesome")))
+L255:                                         .withPath("/health").withPort(8080))
+L256:                                     .withInitialDelaySeconds(5).withPeriodSeconds(3).withType(Type.LIVENESS))))))
+L257:                 .create();
+L258:         }
+L259: 
+L260:         // Use "Map.of" if available
+L261:         @SuppressWarnings("unchecked")
+L262:         private static <T> Map<String, T> mapOf(Object... inputs) {
+L263:             Map<String, T> map = new HashMap<>();
+L264:             for (int i = 0; i < inputs.length; i += 2) {
+L265:                 String key = (String) inputs[i];
+L266:                 T value = (T) inputs[i + 1];
+L267:                 map.put(key, value);
+L268:             }
+L269:             return map;
+L270:         }
+L271:     }
+L272: 
+L273:     `
+L274: To use the Azure SDK library in your project, see cite19†this documentation†github.com . To provide feedback on this code sample, cite20†open a GitHub issue†github.com L275: 
+L276:     `from azure.identity import DefaultAzureCredential
+L277: 
+L278:     from azure.mgmt.appcontainers import ContainerAppsAPIClient
+L279: 
+L280:     """
+L281:     # PREREQUISITES
+L282:         pip install azure-identity
+L283:         pip install azure-mgmt-appcontainers
+L284:     # USAGE
+L285:         python job_createor_update.py
+L286:         Before run the sample, please set the values of the client ID, tenant ID and client secret
+L287:         of the AAD application as environment variables: AZURE_CLIENT_ID, AZURE_TENANT_ID,
+L288:         AZURE_CLIENT_SECRET. For more info about how to get the value, please see:
+L289:         https://docs.microsoft.com/azure/active-directory/develop/howto-create-service-principal-portal
+L290:     """
+L291: 
+L292: 
+L293:     def main():
+L294:         client = ContainerAppsAPIClient(
+L295:             credential=DefaultAzureCredential(),
+L296:             subscription_id="SUBSCRIPTION_ID",
+L297:         )
+L298: 
+L299:         response = client.jobs.begin_create_or_update(
+L300:             resource_group_name="rg",
+L301:             job_name="testcontainerAppsJob0",
+L302:             job_envelope={
+L303:                 "identity": {
+L304:                     "type": "SystemAssigned,UserAssigned",
+L305:                     "userAssignedIdentities": {
+L306:                         "/subscriptions/34adfa4f-cedf-4dc0-ba29-b6d1a69ab345/resourcegroups/rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/myidentity": {}
+L307:                     },
+L308:                 },
+L309:                 "location": "East US",
+L310:                 "properties": {
+L311:                     "configuration": {
+L312:                         "identitySettings": [
+L313:                             {
+L314:                                 "identity": "/subscriptions/34adfa4f-cedf-4dc0-ba29-b6d1a69ab345/resourcegroups/rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/myidentity",
+L315:                                 "lifecycle": "All",
+L316:                             },
+L317:                             {"identity": "system", "lifecycle": "Init"},
+L318:                         ],
+L319:                         "manualTriggerConfig": {"parallelism": 4, "replicaCompletionCount": 1},
+L320:                         "replicaRetryLimit": 10,
+L321:                         "replicaTimeout": 10,
+L322:                         "triggerType": "Manual",
+L323:                     },
+L324:                     "environmentId": "/subscriptions/34adfa4f-cedf-4dc0-ba29-b6d1a69ab345/resourceGroups/rg/providers/Microsoft.App/managedEnvironments/demokube",
+L325:                     "template": {
+L326:                         "containers": [
+L327:                             {
+L328:                                 "image": "repo/testcontainerAppsJob0:v1",
+L329:                                 "name": "testcontainerAppsJob0",
+L330:                                 "probes": [
+L331:                                     {
+L332:                                         "httpGet": {
+L333:                                             "httpHeaders": [{"name": "Custom-Header", "value": "Awesome"}],
+L334:                                             "path": "/health",
+L335:                                             "port": 8080,
+L336:                                         },
+L337:                                         "initialDelaySeconds": 5,
+L338:                                         "periodSeconds": 3,
+L339:                                         "type": "Liveness",
+L340:                                     }
+L341:                                 ],
+L342:                                 "volumeMounts": [
+L343:                                     {"mountPath": "/mnt/path1", "subPath": "subPath1", "volumeName": "azurefile"},
+L344:                                     {"mountPath": "/mnt/path2", "subPath": "subPath2", "volumeName": "nfsazurefile"},
+L345:                                 ],
+L346:                             }
+L347:                         ],
+L348:                         "initContainers": [
+L349:                             {
+L350:                                 "args": ["-c", "while true; do echo hello; sleep 10;done"],
+L351:                                 "command": ["/bin/sh"],
+L352:                                 "image": "repo/testcontainerAppsJob0:v4",
+L353:                                 "name": "testinitcontainerAppsJob0",
+L354:                                 "resources": {"cpu": 0.2, "memory": "100Mi"},
+L355:                             }
+L356:                         ],
+L357:                     },
+L358:                 },
+L359:             },
+L360:         ).result()
+L361:         print(response)
+L362: 
+L363: 
+L364:     # x-ms-original-file: 2026-07-01/Job_CreateorUpdate.json
+L365:     if __name__ == "__main__":
+L366:         main()
+L367: 
+L368:     `
+L369: To use the Azure SDK library in your project, see cite21†this documentation†github.com . To provide feedback on this code sample, cite20†open a GitHub issue†github.com L370: 
+L371:     `package armappcontainers_test
+L372: 
+L373:     import (
+L374:     	"context"
+L375:     	"log"
+L376: 
+L377:     	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
+L378:     	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+L379:     	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/appcontainers/armappcontainers/v5"
+L380:     )
+L381:     // Generated from example definition: 2026-07-01/Job_CreateorUpdate.json
+L382:     func ExampleJobsClient_BeginCreateOrUpdate_createOrUpdateContainerAppsJob() {
+L383:     	cred, err := azidentity.NewDefaultAzureCredential(nil)
+L384:     	if err != nil {
+L385:     		log.Fatalf("failed to obtain a credential: %v", err)
+L386:     	}
+L387:     	ctx := context.Background()
+L388:     	clientFactory, err := armappcontainers.NewClientFactory("34adfa4f-cedf-4dc0-ba29-b6d1a69ab345", cred, nil)
+L389:     	if err != nil {
+L390:     		log.Fatalf("failed to create client: %v", err)
+L391:     	}
+L392:     	poller, err := clientFactory.NewJobsClient().BeginCreateOrUpdate(ctx, "rg", "testcontainerAppsJob0", armappcontainers.Job{
+L393:     		Identity: &armappcontainers.ManagedServiceIdentity{
+L394:     			Type: to.Ptr(armappcontainers.ManagedServiceIdentityTypeSystemAssignedUserAssigned),
+L395:     			UserAssignedIdentities: map[string]*armappcontainers.UserAssignedIdentity{
+L396:     				"/subscriptions/34adfa4f-cedf-4dc0-ba29-b6d1a69ab345/resourcegroups/rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/myidentity": {},
+L397:     			},
+L398:     		},
+L399:     		Location: to.Ptr("East US"),
+L400:     		Properties: &armappcontainers.JobProperties{
+L401:     			Configuration: &armappcontainers.JobConfiguration{
+L402:     				IdentitySettings: []*armappcontainers.IdentitySettings{
+L403:     					{
+L404:     						Identity:  to.Ptr("/subscriptions/34adfa4f-cedf-4dc0-ba29-b6d1a69ab345/resourcegroups/rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/myidentity"),
+L405:     						Lifecycle: to.Ptr(armappcontainers.IdentitySettingsLifeCycleAll),
+L406:     					},
+L407:     					{
+L408:     						Identity:  to.Ptr("system"),
+L409:     						Lifecycle: to.Ptr(armappcontainers.IdentitySettingsLifeCycleInit),
+L410:     					},
+L411:     				},
+L412:     				ManualTriggerConfig: &armappcontainers.JobConfigurationManualTriggerConfig{
+L413:     					Parallelism:            to.Ptr[int32](4),
+L414:     					ReplicaCompletionCount: to.Ptr[int32](1),
+L415:     				},
+L416:     				ReplicaRetryLimit: to.Ptr[int32](10),
+L417:     				ReplicaTimeout:    to.Ptr[int32](10),
+L418:     				TriggerType:       to.Ptr(armappcontainers.TriggerTypeManual),
+L419:     			},
+L420:     			EnvironmentID: to.Ptr("/subscriptions/34adfa4f-cedf-4dc0-ba29-b6d1a69ab345/resourceGroups/rg/providers/Microsoft.App/managedEnvironments/demokube"),
+L421:     			Template: &armappcontainers.JobTemplate{
+L422:     				Containers: []*armappcontainers.Container{
+L423:     					{
+L424:     						Name:  to.Ptr("testcontainerAppsJob0"),
+L425:     						Image: to.Ptr("repo/testcontainerAppsJob0:v1"),
+L426:     						Probes: []*armappcontainers.ContainerAppProbe{
+L427:     							{
+L428:     								Type: to.Ptr(armappcontainers.TypeLiveness),
+L429:     								HTTPGet: &armappcontainers.ContainerAppProbeHTTPGet{
+L430:     									Path: to.Ptr("/health"),
+L431:     									HTTPHeaders: []*armappcontainers.ContainerAppProbeHTTPGetHTTPHeadersItem{
+L432:     										{
+L433:     											Name:  to.Ptr("Custom-Header"),
+L434:     											Value: to.Ptr("Awesome"),
+L435:     										},
+L436:     									},
+L437:     									Port: to.Ptr[int32](8080),
+L438:     								},
+L439:     								InitialDelaySeconds: to.Ptr[int32](5),
+L440:     								PeriodSeconds:       to.Ptr[int32](3),
+L441:     							},
+L442:     						},
+L443:     						VolumeMounts: []*armappcontainers.VolumeMount{
+L444:     							{
+L445:     								MountPath:  to.Ptr("/mnt/path1"),
+L446:     								SubPath:    to.Ptr("subPath1"),
+L447:     								VolumeName: to.Ptr("azurefile"),
+L448:     							},
+L449:     							{
+L450:     								MountPath:  to.Ptr("/mnt/path2"),
+L451:     								SubPath:    to.Ptr("subPath2"),
+L452:     								VolumeName: to.Ptr("nfsazurefile"),
+L453:     							},
+L454:     						},
+L455:     					},
+L456:     				},
+L457:     				InitContainers: []*armappcontainers.InitContainer{
+L458:     					{
+L459:     						Name: to.Ptr("testinitcontainerAppsJob0"),
+L460:     						Args: []*string{
+L461:     							to.Ptr("-c"),
+L462:     							to.Ptr("while true; do echo hello; sleep 10;done"),
+L463:     						},
+L464:     						Command: []*string{
+L465:     							to.Ptr("/bin/sh"),
+L466:     						},
+L467:     						Image: to.Ptr("repo/testcontainerAppsJob0:v4"),
+L468:     						Resources: &armappcontainers.ContainerResources{
+L469:     							CPU:    to.Ptr[float64](0.2),
+L470:     							Memory: to.Ptr("100Mi"),
+L471:     						},
+L472:     					},
+L473:     				},
+L474:     			},
+L475:     		},
+L476:     	}, nil)
+L477:     	if err != nil {
+L478:     		log.Fatalf("failed to finish the request: %v", err)
+L479:     	}
+L480:     	res, err := poller.PollUntilDone(ctx, nil)
+L481:     	if err != nil {
+L482:     		log.Fatalf("failed to poll the result: %v", err)
+L483:     	}
+L484:     	// You could use response here. We use blank identifier for just demo purposes.
+L485:     	_ = res
+L486:     	// If the HTTP response code is 200 as defined in example definition, your response structure would look as follows. Please pay attention that all the values in the output are fake values for just demo purposes.
+L487:     	// res = armappcontainers.JobsClientCreateOrUpdateResponse{
+L488:     	// 	Job: armappcontainers.Job{
+L489:     	// 		Name: to.Ptr("testcontainerAppsJob0"),
+L490:     	// 		Type: to.Ptr("Microsoft.App/jobs"),
+L491:     	// 		ID: to.Ptr("/subscriptions/34adfa4f-cedf-4dc0-ba29-b6d1a69ab345/resourceGroups/rg/providers/Microsoft.App/jobs/testcontainerAppsJob0"),
+L492:     	// 		Identity: &armappcontainers.ManagedServiceIdentity{
+L493:     	// 			Type: to.Ptr(armappcontainers.ManagedServiceIdentityTypeSystemAssignedUserAssigned),
+L494:     	// 			PrincipalID: to.Ptr("24adfa4f-dedf-8dc0-ca29-b6d1a69ab319"),
+L495:     	// 			TenantID: to.Ptr("23adfa4f-eedf-1dc0-ba29-a6d1a69ab3d0"),
+L496:     	// 			UserAssignedIdentities: map[string]*armappcontainers.UserAssignedIdentity{
+L497:     	// 				"/subscriptions/34adfa4f-cedf-4dc0-ba29-b6d1a69ab345/resourcegroups/rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/myidentity": &armappcontainers.UserAssignedIdentity{
+L498:     	// 					ClientID: to.Ptr("14adfa4f-eedf-1dc0-ba29-a6d1a69ab3df"),
+L499:     	// 					PrincipalID: to.Ptr("74adfa4f-dedf-8dc0-ca29-b6d1a69ab312"),
+L500:     	// 				},
+L501:     	// 			},
+L502:     	// 		},
+L503:     	// 		Location: to.Ptr("East US"),
+L504:     	// 		Properties: &armappcontainers.JobProperties{
+L505:     	// 			Configuration: &armappcontainers.JobConfiguration{
+L506:     	// 				IdentitySettings: []*armappcontainers.IdentitySettings{
+L507:     	// 					{
+L508:     	// 						Identity: to.Ptr("/subscriptions/34adfa4f-cedf-4dc0-ba29-b6d1a69ab345/resourcegroups/rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/myidentity"),
+L509:     	// 						Lifecycle: to.Ptr(armappcontainers.IdentitySettingsLifeCycleAll),
+L510:     	// 					},
+L511:     	// 					{
+L512:     	// 						Identity: to.Ptr("system"),
+L513:     	// 						Lifecycle: to.Ptr(armappcontainers.IdentitySettingsLifeCycleInit),
+L514:     	// 					},
+L515:     	// 				},
+L516:     	// 				ManualTriggerConfig: &armappcontainers.JobConfigurationManualTriggerConfig{
+L517:     	// 					Parallelism: to.Ptr[int32](4),
+L518:     	// 					ReplicaCompletionCount: to.Ptr[int32](1),
+L519:     	// 				},
+L520:     	// 				ReplicaRetryLimit: to.Ptr[int32](10),
+L521:     	// 				ReplicaTimeout: to.Ptr[int32](10),
+L522:     	// 				TriggerType: to.Ptr(armappcontainers.TriggerTypeManual),
+L523:     	// 			},
+L524:     	// 			EnvironmentID: to.Ptr("/subscriptions/34adfa4f-cedf-4dc0-ba29-b6d1a69ab345/resourceGroups/rg/providers/Microsoft.App/managedEnvironments/demokube"),
+L525:     	// 			EventStreamEndpoint: to.Ptr("testEndpoint"),
+L526:     	// 			ProvisioningState: to.Ptr(armappcontainers.JobProvisioningStateInProgress),
+L527:     	// 			Template: &armappcontainers.JobTemplate{
+L528:     	// 				Containers: []*armappcontainers.Container{
+L529:     	// 					{
+L530:     	// 						Name: to.Ptr("testcontainerAppsJob0"),
+L531:     	// 						Image: to.Ptr("repo/testcontainerAppsJob0:v4"),
+L532:     	// 						Probes: []*armappcontainers.ContainerAppProbe{
+L533:     	// 							{
+L534:     	// 								Type: to.Ptr(armappcontainers.TypeLiveness),
+L535:     	// 								HTTPGet: &armappcontainers.ContainerAppProbeHTTPGet{
+L536:     	// 									Path: to.Ptr("/health"),
+L537:     	// 									HTTPHeaders: []*armappcontainers.ContainerAppProbeHTTPGetHTTPHeadersItem{
+L538:     	// 										{
+L539:     	// 											Name: to.Ptr("Custom-Header"),
+L540:     	// 											Value: to.Ptr("Awesome"),
+L541:     	// 										},
+L542:     	// 									},
+L543:     	// 									Port: to.Ptr[int32](8080),
+L544:     	// 								},
+L545:     	// 								InitialDelaySeconds: to.Ptr[int32](3),
+L546:     	// 								PeriodSeconds: to.Ptr[int32](3),
+L547:     	// 							},
+L548:     	// 						},
+L549:     	// 						Resources: &armappcontainers.ContainerResources{
+L550:     	// 							CPU: to.Ptr[float64](0.2),
+L551:     	// 							Memory: to.Ptr("100Mi"),
+L552:     	// 						},
+L553:     	// 						VolumeMounts: []*armappcontainers.VolumeMount{
+L554:     	// 							{
+L555:     	// 								MountPath: to.Ptr("/mnt/path1"),
+L556:     	// 								SubPath: to.Ptr("subPath1"),
+L557:     	// 								VolumeName: to.Ptr("azurefile"),
+L558:     	// 							},
+L559:     	// 							{
+L560:     	// 								MountPath: to.Ptr("/mnt/path2"),
+L561:     	// 								SubPath: to.Ptr("subPath2"),
+L562:     	// 								VolumeName: to.Ptr("nfsazurefile"),
+L563:     	// 							},
+L564:     	// 						},
+L565:     	// 					},
+L566:     	// 				},
+L567:     	// 				InitContainers: []*armappcontainers.InitContainer{
+L568:     	// 					{
+L569:     	// 						Name: to.Ptr("testinitcontainerAppsJob0"),
+L570:     	// 						Args: []*string{
+L571:     	// 							to.Ptr("-c"),
+L572:     	// 							to.Ptr("while true; do echo hello; sleep 10;done"),
+L573:     	// 						},
+L574:     	// 						Command: []*string{
+L575:     	// 							to.Ptr("/bin/sh"),
+L576:     	// 						},
+L577:     	// 						Image: to.Ptr("repo/testcontainerAppsJob0:v4"),
+L578:     	// 						Resources: &armappcontainers.ContainerResources{
+L579:     	// 							CPU: to.Ptr[float64](0.2),
+L580:     	// 							Memory: to.Ptr("100Mi"),
+L581:     	// 						},
+L582:     	// 					},
+L583:     	// 				},

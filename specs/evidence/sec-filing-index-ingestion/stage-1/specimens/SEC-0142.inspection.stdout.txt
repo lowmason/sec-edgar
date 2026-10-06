@@ -1,0 +1,61 @@
+{
+  "evidence_id": "SEC-0142",
+  "original_bytes": 3901000,
+  "expanded_bytes": 28748322,
+  "observations": {
+    "text_family": "quarterly ISO-date master",
+    "column_header": "CIK|Company Name|Form Type|Date Filed|Filename",
+    "date_shape_counts": {
+      "YYYY-MM-DD": 318647
+    },
+    "strict_encoding": "ascii",
+    "decoder_failures": [],
+    "bom_hex": null,
+    "newline_counts": {
+      "crlf": 318657,
+      "lone_lf": 0,
+      "lone_cr": 0
+    },
+    "header_lines": [
+      "Description:           Master Index of EDGAR Dissemination Feed",
+      "Last Data Received:    March 31, 2015",
+      "Comments:              webmaster@sec.gov",
+      "Anonymous FTP:         ftp://ftp.sec.gov/edgar/",
+      "Cloud HTTP:            https://www.sec.gov/Archives/",
+      "",
+      "",
+      "",
+      "",
+      "CIK|Company Name|Form Type|Date Filed|Filename",
+      "--------------------------------------------------------------------------------"
+    ],
+    "separator": "|",
+    "scan_boundary": "Every nonempty post-header row in retained body",
+    "row_count": 318647,
+    "field_count_distribution": {
+      "5": 318647
+    },
+    "path_families": {
+      "edgar/data/CIK/dashed-accession.txt": 318647
+    },
+    "minimum_filing_date": "2015-01-02",
+    "maximum_filing_date": "2015-03-31",
+    "date_bound_raw_rows": {
+      "minimum": "1000209|MEDALLION FINANCIAL CORP|8-K|2015-01-02|edgar/data/1000209/0001193125-15-000678.txt",
+      "maximum": "1000209|MEDALLION FINANCIAL CORP|3|2015-03-31|edgar/data/1000209/0001209191-15-030465.txt"
+    },
+    "invalid_dates": [],
+    "representative_raw_rows": {
+      "edgar/data/CIK/dashed-accession.txt": "1000032|BINCH JAMES G|4|2015-03-03|edgar/data/1000032/0001209191-15-021425.txt"
+    },
+    "nonextractable_examples": [],
+    "representative_fields": [
+      "1000032",
+      "BINCH JAMES G",
+      "4",
+      "2015-03-03",
+      "edgar/data/1000032/0001209191-15-021425.txt"
+    ],
+    "non_ascii_byte_count": 0
+  }
+}

@@ -1,0 +1,529 @@
+Jobs Executions - List - REST API (Azure Azure Container Apps) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/resource-manager/containerapps/jobs-executions/list?view=rest-resource-manager-containerapps-2026-07-01)
+citeturn12view0 [wordlim: 200] Crawled: today; Content type: text/html; Source: open({"ref_id":"https://learn.microsoft.com/en-us/rest/api/resource-manager/containerapps/jobs-executions/list?view=rest-resource-manager-containerapps-2026-07-01","lineno":null}); Total lines: 539
+L0: cite0†Skip to main content cite1†Skip to in-page navigation cite2†Skip to Ask Learn chat experience L1: 
+L2: This browser is no longer supported.
+L3: 
+L4: Upgrade to Microsoft Edge to take advantage of the latest features, security updates, and technical support.
+L5: 
+L6: cite3†Download Microsoft Edge†go.microsoft.com cite4†More info about Internet Explorer and Microsoft Edge L7: 
+L8: Table of contents Exit editor mode
+L9: 
+L10: Ask Learn Ask Learn
+L11: 
+L12: Reading mode Table of contents cite2†Read in English Add Add to Plans cite5†Edit†github.com L13: 
+L14: * * *
+L15: Copy Markdown Print
+L16: 
+L17: * * *
+L18: 
+L19: Note
+L20: 
+L21: Access to this page requires authorization. You can try cite2†signing in or changing directories.
+L22: 
+L23: Access to this page requires authorization. You can try changing directories.
+L24: # Jobs Executions - List
+L25: 
+L26: Service:
+L27:     Azure Container Apps
+L28: 
+L29: API Version:
+L30:     2026-07-01
+L31: ##
+L32: 
+L33: Get a Container Apps Job's executions
+L34: 
+L35:     `GET https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.App/jobs/{jobName}/executions?api-version=2026-07-01`
+L36: 
+L37: With optional parameters:
+L38: 
+L39:     `GET https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.App/jobs/{jobName}/executions?api-version=2026-07-01&$filter={$filter}`
+L40: ## URI Parameters
+L41: Name  | In  | Required  | Type  | Description
+L42: --- | --- | --- | --- | ---
+L43: jobName  | path  | True  | string pattern: ^[-\w\._\(\)]+$  | Job Name
+L44: resourceGroupName  | path  | True  | string minLength: 1
+L45: maxLength: 90  | The name of the resource group. The name is case insensitive.
+L46: subscriptionId  | path  | True  | string (uuid)  | The ID of the target subscription. The value must be an UUID.
+L47: api-version  | query  | True  | string minLength: 1  | The API version to use for this operation.
+L48: $filter  | query  |  | string  | The filter to apply on the operation.
+L49: ## Responses
+L50: 
+L51: Name  | Type  | Description
+L52: --- | --- | ---
+L53: 200 OK  | cite6†ContainerAppJobExecutions | Azure operation completed successfully.
+L54: Other Status Codes  | cite7†DefaultErrorResponse | An unexpected error response.
+L55: 
+L56: ## Security
+L57: 
+L58: ### azure_auth
+L59: 
+L60: Azure Active Directory OAuth2 Flow.
+L61: 
+L62: Type: oauth2
+L63: Flow: implicit
+L64: Authorization URL: https://login.microsoftonline.com/common/oauth2/authorize
+L65: 
+L66: #### Scopes
+L67: 
+L68: Name  | Description
+L69: --- | ---
+L70: user_impersonation  | impersonate your user account
+L71: 
+L72: ## Examples
+L73: ### Get a Container Apps Job Executions
+L74: #### Sample request
+L75:   * cite8†HTTP L76:   * cite9†Java L77:   * cite10†Python L78:   * cite11†Go L79:   * cite12†JavaScript L80: 
+L81:     `GET https://management.azure.com/subscriptions/34adfa4f-cedf-4dc0-ba29-b6d1a69ab345/resourceGroups/rg/providers/Microsoft.App/jobs/testcontainerAppsJob0/executions?api-version=2026-07-01
+L82:     `
+L83: 
+L84:     `
+L85:     /**
+L86:      * Samples for JobsExecutions List.
+L87:      */
+L88:     public final class Main {
+L89:         /*
+L90:          * x-ms-original-file: 2026-07-01/Job_Executions_Get.json
+L91:          */
+L92:         /**
+L93:          * Sample code: Get a Container Apps Job Executions.
+L94:          *
+L95:          * @param manager Entry point to ContainerAppsApiManager.
+L96:          */
+L97:         public static void
+L98:             getAContainerAppsJobExecutions(com.azure.resourcemanager.appcontainers.ContainerAppsApiManager manager) {
+L99:             manager.jobsExecutions().list("rg", "testcontainerAppsJob0", null, com.azure.core.util.Context.NONE);
+L100:         }
+L101:     }
+L102: 
+L103:     `
+L104: To use the Azure SDK library in your project, see cite13†this documentation†github.com . To provide feedback on this code sample, cite14†open a GitHub issue†github.com L105: 
+L106:     `from azure.identity import DefaultAzureCredential
+L107: 
+L108:     from azure.mgmt.appcontainers import ContainerAppsAPIClient
+L109: 
+L110:     """
+L111:     # PREREQUISITES
+L112:         pip install azure-identity
+L113:         pip install azure-mgmt-appcontainers
+L114:     # USAGE
+L115:         python job_executions_get.py
+L116:         Before run the sample, please set the values of the client ID, tenant ID and client secret
+L117:         of the AAD application as environment variables: AZURE_CLIENT_ID, AZURE_TENANT_ID,
+L118:         AZURE_CLIENT_SECRET. For more info about how to get the value, please see:
+L119:         https://docs.microsoft.com/azure/active-directory/develop/howto-create-service-principal-portal
+L120:     """
+L121: 
+L122: 
+L123:     def main():
+L124:         client = ContainerAppsAPIClient(
+L125:             credential=DefaultAzureCredential(),
+L126:             subscription_id="SUBSCRIPTION_ID",
+L127:         )
+L128: 
+L129:         response = client.jobs_executions.list(
+L130:             resource_group_name="rg",
+L131:             job_name="testcontainerAppsJob0",
+L132:         )
+L133:         for item in response:
+L134:             print(item)
+L135: 
+L136: 
+L137:     # x-ms-original-file: 2026-07-01/Job_Executions_Get.json
+L138:     if __name__ == "__main__":
+L139:         main()
+L140: 
+L141:     `
+L142: To use the Azure SDK library in your project, see cite15†this documentation†github.com . To provide feedback on this code sample, cite14†open a GitHub issue†github.com L143: 
+L144:     `package armappcontainers_test
+L145: 
+L146:     import (
+L147:     	"context"
+L148:     	"log"
+L149: 
+L150:     	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+L151:     	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/appcontainers/armappcontainers/v5"
+L152:     )
+L153: 
+L154:     // Generated from example definition: 2026-07-01/Job_Executions_Get.json
+L155:     func ExampleJobsExecutionsClient_NewListPager() {
+L156:     	cred, err := azidentity.NewDefaultAzureCredential(nil)
+L157:     	if err != nil {
+L158:     		log.Fatalf("failed to obtain a credential: %v", err)
+L159:     	}
+L160:     	ctx := context.Background()
+L161:     	clientFactory, err := armappcontainers.NewClientFactory("34adfa4f-cedf-4dc0-ba29-b6d1a69ab345", cred, nil)
+L162:     	if err != nil {
+L163:     		log.Fatalf("failed to create client: %v", err)
+L164:     	}
+L165:     	pager := clientFactory.NewJobsExecutionsClient().NewListPager("rg", "testcontainerAppsJob0", nil)
+L166:     	for pager.More() {
+L167:     		page, err := pager.NextPage(ctx)
+L168:     		if err != nil {
+L169:     			log.Fatalf("failed to advance page: %v", err)
+L170:     		}
+L171:     		for _, v := range page.Value {
+L172:     			// You could use page here. We use blank identifier for just demo purposes.
+L173:     			_ = v
+L174:     		}
+L175:     		// If the HTTP response code is 200 as defined in example definition, your page structure would look as follows. Please pay attention that all the values in the output are fake values for just demo purposes.
+L176:     		// page = armappcontainers.JobsExecutionsClientListResponse{
+L177:     		// 	ContainerAppJobExecutions: armappcontainers.ContainerAppJobExecutions{
+L178:     		// 		Value: []*armappcontainers.JobExecution{
+L179:     		// 			{
+L180:     		// 				Name: to.Ptr("testcontainerAppJob-27944454"),
+L181:     		// 				ID: to.Ptr("/subscriptions/34adfa4f-cedf-4dc0-ba29-b6d1a69ab345/resourceGroups/rg/providers/Microsoft.App/jobs/testcontainerAppsJob0/executions/testcontainerAppJob-27944454"),
+L182:     		// 				Properties: &armappcontainers.JobExecutionProperties{
+L183:     		// 					DetailedStatus: &armappcontainers.ExecutionStatus{
+L184:     		// 						Replicas: []*armappcontainers.ReplicaExecutionStatus{
+L185:     		// 							{
+L186:     		// 								Name: to.Ptr("testcontainerappsjob0-0"),
+L187:     		// 								Containers: []*armappcontainers.ContainerExecutionStatus{
+L188:     		// 									{
+L189:     		// 										Name: to.Ptr("container1"),
+L190:     		// 										AdditionalInformation: to.Ptr("Completed"),
+L191:     		// 										Code: to.Ptr[int32](0),
+L192:     		// 										Status: to.Ptr("Succeeded"),
+L193:     		// 									},
+L194:     		// 									{
+L195:     		// 										Name: to.Ptr("container2"),
+L196:     		// 										AdditionalInformation: to.Ptr("Completed"),
+L197:     		// 										Code: to.Ptr[int32](0),
+L198:     		// 										Status: to.Ptr("Succeeded"),
+L199:     		// 									},
+L200:     		// 								},
+L201:     		// 							},
+L202:     		// 						},
+L203:     		// 					},
+L204:     		// 					EndTime: to.Ptr(time.Date(2023, time.February, 13, 20, 47, 30, 0, time.UTC)),
+L205:     		// 					Message: to.Ptr("Job has reached the specified backoff limit"),
+L206:     		// 					Reason: to.Ptr("BackoffLimitExceeded"),
+L207:     		// 					StartTime: to.Ptr(time.Date(2023, time.February, 13, 20, 37, 30, 0, time.UTC)),
+L208:     		// 					Status: to.Ptr(armappcontainers.JobExecutionRunningStateRunning),
+L209:     		// 					Template: &armappcontainers.JobExecutionTemplate{
+L210:     		// 						Containers: []*armappcontainers.JobExecutionContainer{
+L211:     		// 							{
+L212:     		// 								Name: to.Ptr("testcontainerappsjob0"),
+L213:     		// 								Image: to.Ptr("repo/testcontainerappsjob0:v4"),
+L214:     		// 								Resources: &armappcontainers.ContainerResources{
+L215:     		// 									CPU: to.Ptr[float64](0.5),
+L216:     		// 									Memory: to.Ptr("1Gi"),
+L217:     		// 								},
+L218:     		// 							},
+L219:     		// 						},
+L220:     		// 						InitContainers: []*armappcontainers.JobExecutionContainer{
+L221:     		// 							{
+L222:     		// 								Name: to.Ptr("testinitcontainerAppsJob0"),
+L223:     		// 								Args: []*string{
+L224:     		// 									to.Ptr("-c"),
+L225:     		// 									to.Ptr("while true; do echo hello; sleep 10;done"),
+L226:     		// 								},
+L227:     		// 								Command: []*string{
+L228:     		// 									to.Ptr("/bin/sh"),
+L229:     		// 								},
+L230:     		// 								Image: to.Ptr("repo/testcontainerappsjob0:v4"),
+L231:     		// 								Resources: &armappcontainers.ContainerResources{
+L232:     		// 									CPU: to.Ptr[float64](0.5),
+L233:     		// 									Memory: to.Ptr("1Gi"),
+L234:     		// 								},
+L235:     		// 							},
+L236:     		// 						},
+L237:     		// 					},
+L238:     		// 				},
+L239:     		// 			},
+L240:     		// 		},
+L241:     		// 	},
+L242:     		// }
+L243:     	}
+L244:     }
+L245: 
+L246:     `
+L247: To use the Azure SDK library in your project, see cite16†this documentation†github.com . To provide feedback on this code sample, cite14†open a GitHub issue†github.com L248: 
+L249:     `const { ContainerAppsAPIClient } = require("@azure/arm-appcontainers");
+L250:     const { DefaultAzureCredential } = require("@azure/identity");
+L251: 
+L252:     /**
+L253:      * This sample demonstrates how to get a Container Apps Job's executions
+L254:      *
+L255:      * @summary get a Container Apps Job's executions
+L256:      * x-ms-original-file: 2026-07-01/Job_Executions_Get.json
+L257:      */
+L258:     async function getAContainerAppsJobExecutions() {
+L259:       const credential = new DefaultAzureCredential();
+L260:       const subscriptionId = "34adfa4f-cedf-4dc0-ba29-b6d1a69ab345";
+L261:       const client = new ContainerAppsAPIClient(credential, subscriptionId);
+L262:       const resArray = new Array();
+L263:       for await (const item of client.jobsExecutions.list("rg", "testcontainerAppsJob0")) {
+L264:         resArray.push(item);
+L265:       }
+L266:       console.log(resArray);
+L267:     }
+L268: 
+L269:     `
+L270: To use the Azure SDK library in your project, see cite17†this documentation†github.com . To provide feedback on this code sample, cite14†open a GitHub issue†github.com L271: #### Sample response
+L272: Status code:
+L273:     200
+L274: 
+L275:     `{
+L276:       "nextLink": null,
+L277:       "value": [
+L278:         {
+L279:           "name": "testcontainerAppJob-27944454",
+L280:           "id": "/subscriptions/34adfa4f-cedf-4dc0-ba29-b6d1a69ab345/resourceGroups/rg/providers/Microsoft.App/jobs/testcontainerAppsJob0/executions/testcontainerAppJob-27944454",
+L281:           "properties": {
+L282:             "detailedStatus": {
+L283:               "replicas": [
+L284:                 {
+L285:                   "name": "testcontainerappsjob0-0",
+L286:                   "containers": [
+L287:                     {
+L288:                       "name": "container1",
+L289:                       "additionalInformation": "Completed",
+L290:                       "code": 0,
+L291:                       "status": "Succeeded"
+L292:                     },
+L293:                     {
+L294:                       "name": "container2",
+L295:                       "additionalInformation": "Completed",
+L296:                       "code": 0,
+L297:                       "status": "Succeeded"
+L298:                     }
+L299:                   ]
+L300:                 }
+L301:               ]
+L302:             },
+L303:             "endTime": "2023-02-13T20:47:30+00:00",
+L304:             "message": "Job has reached the specified backoff limit",
+L305:             "reason": "BackoffLimitExceeded",
+L306:             "startTime": "2023-02-13T20:37:30+00:00",
+L307:             "status": "Running",
+L308:             "template": {
+L309:               "containers": [
+L310:                 {
+L311:                   "name": "testcontainerappsjob0",
+L312:                   "image": "repo/testcontainerappsjob0:v4",
+L313:                   "resources": {
+L314:                     "cpu": 0.5,
+L315:                     "memory": "1Gi"
+L316:                   }
+L317:                 }
+L318:               ],
+L319:               "initContainers": [
+L320:                 {
+L321:                   "name": "testinitcontainerAppsJob0",
+L322:                   "args": [
+L323:                     "-c",
+L324:                     "while true; do echo hello; sleep 10;done"
+L325:                   ],
+L326:                   "command": [
+L327:                     "/bin/sh"
+L328:                   ],
+L329:                   "image": "repo/testcontainerappsjob0:v4",
+L330:                   "resources": {
+L331:                     "cpu": 0.5,
+L332:                     "memory": "1Gi"
+L333:                   }
+L334:                 }
+L335:               ]
+L336:             }
+L337:           }
+L338:         }
+L339:       ]
+L340:     }`
+L341: ## Definitions
+L342: Name  | Description
+L343: --- | ---
+L344: cite6†ContainerAppJobExecutions | Container App executions collection ARM resource.
+L345: cite18†ContainerExecutionStatus | Container Apps Job execution container status. Contains status code and reason
+L346: cite19†ContainerResources | Container App container resource requirements.
+L347: cite20†createdByType | The type of identity that created the resource.
+L348: cite7†DefaultErrorResponse | App Service error response.
+L349: cite21†DefaultErrorResponseError | Error model.
+L350: cite22†DefaultErrorResponseErrorDetailsItem | Detailed errors.
+L351: cite23†EnvironmentVar | Container App container environment variable.
+L352: cite24†ExecutionStatus | Container Apps Job execution status.
+L353: cite25†JobExecution | Container Apps Job execution.
+L354: cite26†JobExecutionContainer | Container Apps Jobs execution container definition.
+L355: cite27†JobExecutionRunningState | Current running State of the job
+L356: cite28†JobExecutionTemplate | Job's execution template, containing container configuration for a job's execution
+L357: cite29†ReplicaExecutionStatus | Container Apps Job execution replica status.
+L358: cite30†systemData | Metadata pertaining to creation and last modification of the resource.
+L359: ### ContainerAppJobExecutions
+L360: 
+L361: Object
+L362: 
+L363: Container App executions collection ARM resource.
+L364: 
+L365: Name  | Type  | Description
+L366: --- | --- | ---
+L367: nextLink  | string (uri)  | The link to the next page of items
+L368: value  | cite25†JobExecution []  | The JobExecution items on this page
+L369: ### ContainerExecutionStatus
+L370: 
+L371: Object
+L372: 
+L373: Container Apps Job execution container status. Contains status code and reason
+L374: 
+L375: Name  | Type  | Description
+L376: --- | --- | ---
+L377: additionalInformation  | string  | Additional information for the container status
+L378: code  | integer (int32)  | Exit code
+L379: name  | string  | Container Name.
+L380: status  | string  | Status of the container
+L381: ### ContainerResources
+L382: 
+L383: Object
+L384: 
+L385: Container App container resource requirements.
+L386: 
+L387: Name  | Type  | Description
+L388: --- | --- | ---
+L389: cpu  | number (double)  | Required CPU in cores, e.g. 0.5
+L390: ephemeralStorage  | string  | Ephemeral Storage, e.g. "1Gi"
+L391: memory  | string  | Required memory, e.g. "250Mb"
+L392: 
+L393: ### createdByType
+L394: 
+L395: Enumeration
+L396: 
+L397: The type of identity that created the resource.
+L398: 
+L399: Value  | Description
+L400: --- | ---
+L401: User  |
+L402: Application  |
+L403: ManagedIdentity  |
+L404: Key  |
+L405: ### DefaultErrorResponse
+L406: 
+L407: Object
+L408: 
+L409: App Service error response.
+L410: 
+L411: Name  | Type  | Description
+L412: --- | --- | ---
+L413: error  | cite21†DefaultErrorResponseError | Error model.
+L414: ### DefaultErrorResponseError
+L415: 
+L416: Object
+L417: 
+L418: Error model.
+L419: 
+L420: Name  | Type  | Description
+L421: --- | --- | ---
+L422: code  | string  | Standardized string to programmatically identify the error.
+L423: details  | cite22†DefaultErrorResponseErrorDetailsItem []  | Details or the error
+L424: innererror  | string  | More information to debug error.
+L425: message  | string  | Detailed error description and debugging information.
+L426: target  | string  | Detailed error description and debugging information.
+L427: ### DefaultErrorResponseErrorDetailsItem
+L428: 
+L429: Object
+L430: 
+L431: Detailed errors.
+L432: 
+L433: Name  | Type  | Description
+L434: --- | --- | ---
+L435: code  | string  | Standardized string to programmatically identify the error.
+L436: message  | string  | Detailed error description and debugging information.
+L437: target  | string  | Detailed error description and debugging information.
+L438: ### EnvironmentVar
+L439: 
+L440: Object
+L441: 
+L442: Container App container environment variable.
+L443: 
+L444: Name  | Type  | Description
+L445: --- | --- | ---
+L446: name  | string  | Environment variable name.
+L447: secretRef  | string  | Name of the Container App secret from which to pull the environment variable value.
+L448: value  | string  | Non-secret environment variable value.
+L449: ### ExecutionStatus
+L450: 
+L451: Object
+L452: 
+L453: Container Apps Job execution status.
+L454: 
+L455: Name  | Type  | Description
+L456: --- | --- | ---
+L457: replicas  | cite29†ReplicaExecutionStatus []  | Replicas in the execution.
+L458: ### JobExecution
+L459: 
+L460: Object
+L461: 
+L462: Container Apps Job execution.
+L463: Name  | Type  | Description
+L464: --- | --- | ---
+L465: id  | string (arm-id)  | Fully qualified resource ID for the resource. E.g. "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}"
+L466: name  | string  | The name of the resource
+L467: properties.detailedStatus  | cite24†ExecutionStatus | Detailed status of the job execution.
+L468: properties.endTime  | string (date-time)  | Job execution end time.
+L469: properties.message  | string  | Human readable message indicating details about the current condition of the job execution.
+L470: properties.reason  | string  | Reason for the current condition of job execution.
+L471: properties.startTime  | string (date-time)  | Job execution start time.
+L472: properties.status  | cite27†JobExecutionRunningState | Current running State of the job
+L473: properties.template  | cite28†JobExecutionTemplate | Job's execution container.
+L474: systemData  | cite30†systemData | Azure Resource Manager metadata containing createdBy and modifiedBy information.
+L475: type  | string  | The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or "Microsoft.Storage/storageAccounts"
+L476: ### JobExecutionContainer
+L477: 
+L478: Object
+L479: 
+L480: Container Apps Jobs execution container definition.
+L481: 
+L482: Name  | Type  | Description
+L483: --- | --- | ---
+L484: args  | string[]  | Container start command arguments.
+L485: command  | string[]  | Container start command.
+L486: env  | cite23†EnvironmentVar []  | Container environment variables.
+L487: image  | string  | Container image tag.
+L488: name  | string  | Custom container name.
+L489: resources  | cite19†ContainerResources | Container resource requirements.
+L490: ### JobExecutionRunningState
+L491: 
+L492: Enumeration
+L493: 
+L494: Current running State of the job
+L495: 
+L496: Value  | Description
+L497: --- | ---
+L498: Running  | Running
+L499: Processing  | Processing
+L500: Stopped  | Stopped
+L501: Degraded  | Degraded
+L502: Failed  | Failed
+L503: Unknown  | Unknown
+L504: Succeeded  | Succeeded
+L505: ### JobExecutionTemplate
+L506: 
+L507: Object
+L508: 
+L509: Job's execution template, containing container configuration for a job's execution
+L510: 
+L511: Name  | Type  | Description
+L512: --- | --- | ---
+L513: containers  | cite26†JobExecutionContainer []  | List of container definitions for the Container Apps Job.
+L514: initContainers  | cite26†JobExecutionContainer []  | List of specialized containers that run before job containers.
+L515: ### ReplicaExecutionStatus
+L516: 
+L517: Object
+L518: 
+L519: Container Apps Job execution replica status.
+L520: 
+L521: Name  | Type  | Description
+L522: --- | --- | ---
+L523: containers  | cite18†ContainerExecutionStatus []  | Containers in the execution replica
+L524: name  | string  | Replica Name.
+L525: ### systemData
+L526: 
+L527: Object
+L528: 
+L529: Metadata pertaining to creation and last modification of the resource.
+L530: Name  | Type  | Description
+L531: --- | --- | ---
+L532: createdAt  | string (date-time)  | The timestamp of resource creation (UTC).
+L533: createdBy  | string  | The identity that created the resource.
+L534: createdByType  | cite20†createdByType | The type of identity that created the resource.
+L535: lastModifiedAt  | string (date-time)  | The timestamp of resource last modification (UTC)
+L536: lastModifiedBy  | string  | The identity that last modified the resource.
+L537: lastModifiedByType  | cite20†createdByType | The type of identity that last modified the resource.
+L538: ### In this article

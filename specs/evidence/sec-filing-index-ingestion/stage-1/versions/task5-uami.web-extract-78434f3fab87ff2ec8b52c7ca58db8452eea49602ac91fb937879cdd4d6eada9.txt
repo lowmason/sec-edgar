@@ -1,0 +1,394 @@
+User Assigned Identities - Create Or Update - REST API (Azure Managed Identity) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/managedidentity/user-assigned-identities/create-or-update?view=rest-managedidentity-2024-11-30)
+citeturn74view0 [wordlim: 200] Crawled: today; Content type: text/html; Source: find({"ref_id":"https://learn.microsoft.com/en-us/rest/api/managedidentity/user-assigned-identities/create-or-update?view=rest-managedidentity-2024-11-30","pattern":"200 OK"}); Total lines: 216
+L0: cite0†Skip to main content cite1†Skip to in-page navigation cite2†Skip to Ask Learn chat experience L1: 
+L2: This browser is no longer supported.
+L3: 
+L4: Upgrade to Microsoft Edge to take advantage of the latest features, security updates, and technical support.
+L5: 
+L6: cite3†Download Microsoft Edge†go.microsoft.com cite4†More info about Internet Explorer and Microsoft Edge L7: 
+L8: Table of contents Exit editor mode
+L9: 
+L10: Ask Learn Ask Learn
+L11: 
+L12: Reading mode Table of contents cite2†Read in English Add Add to Plans cite5†Edit†github.com L13: 
+L14: * * *
+L15: Copy Markdown Print
+L16: 
+L17: * * *
+L18: 
+L19: Note
+L20: 
+L21: Access to this page requires authorization. You can try cite2†signing in or changing directories.
+L22: 
+L23: Access to this page requires authorization. You can try changing directories.
+L24: # User Assigned Identities - Create Or Update
+L25: 
+L26: Service:
+L27:     Managed Identity
+L28: 
+L29: API Version:
+L30:     2024-11-30
+L31: 
+L32: ##
+L33: 
+L34: Create or update an identity in the specified subscription and resource group.
+L35: 
+L36:     `PUT https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/{resourceName}?api-version=2024-11-30`
+L37: ## URI Parameters
+L38: Name  | In  | Required  | Type  | Description
+L39: --- | --- | --- | --- | ---
+L40: resourceGroupName  | path  | True  | string minLength: 1
+L41: maxLength: 90  | The name of the resource group. The name is case insensitive.
+L42: resourceName  | path  | True  | string  | The name of the identity resource.
+L43: subscriptionId  | path  | True  | string (uuid)  | The ID of the target subscription. The value must be an UUID.
+L44: api-version  | query  | True  | string minLength: 1  | The API version to use for this operation.
+L45: ## Request Body
+L46: 
+L47: Name  | Required  | Type  | Description
+L48: --- | --- | --- | ---
+L49: location  | True  | string  | The geo-location where the resource lives
+L50: properties.isolationScope  |  | cite6†IsolationScope | Enum to configure regional restrictions on identity assignment, as necessary.
+L51: tags  |  | object  | Resource tags.
+L52: ## Responses
+L53: 
+L54: Name  | Type  | Description
+L55: --- | --- | ---
+L56: 200 OK  | cite7†Identity | Resource 'Identity' update operation succeeded
+L57: 201 Created  | cite7†Identity | Resource 'Identity' create operation succeeded
+L58: Other Status Codes  | cite8†CloudError | An unexpected error response.
+L59: 
+L60: ## Security
+L61: 
+L62: ### azure_auth
+L63: 
+L64: Azure Active Directory OAuth2 Flow.
+L65: 
+L66: Type: oauth2
+L67: Flow: implicit
+L68: Authorization URL: https://login.microsoftonline.com/common/oauth2/authorize
+L69: #### Scopes
+L70: 
+L71: Name  | Description
+L72: --- | ---
+L73: user_impersonation  | impersonate your user account
+L74: 
+L75: ## Examples
+L76: 
+L77: ### IdentityCreate
+L78: 
+L79: #### Sample request
+L80: 
+L81:   * cite9†HTTP L82: 
+L83:     `PUT https://management.azure.com/subscriptions/12345678-1234-5678-9012-123456789012/resourceGroups/rgName/providers/Microsoft.ManagedIdentity/userAssignedIdentities/resourceName?api-version=2024-11-30
+L84: 
+L85:     {
+L86:       "location": "eastus",
+L87:       "tags": {
+L88:         "key1": "value1",
+L89:         "key2": "value2"
+L90:       }
+L91:     }
+L92: 
+L93:     `
+L94: #### Sample response
+L95: Status code:
+L96:     200
+L97: 
+L98:     `{
+L99:       "name": "identityName",
+L100:       "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+L101:       "id": "/subscriptions/subid/resourcegroups/rgName/providers/Microsoft.ManagedIdentity/userAssignedIdentities/identityName",
+L102:       "location": "eastus",
+L103:       "properties": {
+L104:         "clientId": "4024ab25-56a8-4370-aea6-6389221caf29",
+L105:         "isolationScope": "None",
+L106:         "principalId": "25cc773c-7f05-40fc-a104-32d2300754ad",
+L107:         "tenantId": "b6c948ef-f6b5-4384-8354-da3a15eca969"
+L108:       },
+L109:       "tags": {
+L110:         "key1": "value1",
+L111:         "key2": "value2"
+L112:       }
+L113:     }`
+L114: Status code:
+L115:     201
+L116: 
+L117:     `{
+L118:       "name": "identityName",
+L119:       "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+L120:       "id": "/subscriptions/subid/resourcegroups/rgName/providers/Microsoft.ManagedIdentity/userAssignedIdentities/identityName",
+L121:       "location": "eastus",
+L122:       "properties": {
+L123:         "clientId": "4024ab25-56a8-4370-aea6-6389221caf29",
+L124:         "isolationScope": "None",
+L125:         "principalId": "25cc773c-7f05-40fc-a104-32d2300754ad",
+L126:         "tenantId": "b6c948ef-f6b5-4384-8354-da3a15eca969"
+L127:       },
+L128:       "tags": {
+L129:         "key1": "value1",
+L130:         "key2": "value2"
+L131:       }
+L132:     }`
+L133: ## Definitions
+L134: Name  | Description
+L135: --- | ---
+L136: cite8†CloudError | An error response from the ManagedServiceIdentity service.
+L137: cite10†CloudErrorBody | An error response from the ManagedServiceIdentity service.
+L138: cite11†createdByType | The type of identity that created the resource.
+L139: cite7†Identity | Describes an identity resource.
+L140: cite6†IsolationScope | Enum to configure regional restrictions on identity assignment, as necessary.
+L141: cite12†systemData | Metadata pertaining to creation and last modification of the resource.
+L142: ### CloudError
+L143: 
+L144: Object
+L145: 
+L146: An error response from the ManagedServiceIdentity service.
+L147: 
+L148: Name  | Type  | Description
+L149: --- | --- | ---
+L150: error  | cite10†CloudErrorBody | A list of additional details about the error.
+L151: ### CloudErrorBody
+L152: 
+L153: Object
+L154: 
+L155: An error response from the ManagedServiceIdentity service.
+L156: 
+L157: Name  | Type  | Description
+L158: --- | --- | ---
+L159: code  | string  | An identifier for the error.
+L160: details  | cite10†CloudErrorBody []  | A list of additional details about the error.
+L161: message  | string  | A message describing the error, intended to be suitable for display in a user interface.
+L162: target  | string  | The target of the particular error. For example, the name of the property in error.
+L163: ### createdByType
+L164: 
+L165: Enumeration
+L166: 
+L167: The type of identity that created the resource.
+L168: 
+L169: Value  | Description
+L170: --- | ---
+L171: User  |
+L172: Application  |
+L173: ManagedIdentity  |
+L174: Key  |
+L175: ### Identity
+L176: 
+L177: Object
+L178: 
+L179: Describes an identity resource.
+L180: Name  | Type  | Description
+L181: --- | --- | ---
+L182: id  | string (arm-id)  | Fully qualified resource ID for the resource. E.g. "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}"
+L183: location  | string  | The geo-location where the resource lives
+L184: name  | string  | The name of the resource
+L185: properties.clientId  | string (uuid)  | The id of the app associated with the identity. This is a random generated UUID by MSI.
+L186: properties.isolationScope  | cite6†IsolationScope | Enum to configure regional restrictions on identity assignment, as necessary.
+L187: properties.principalId  | string (uuid)  | The id of the service principal object associated with the created identity.
+L188: properties.tenantId  | string (uuid)  | The id of the tenant which the identity belongs to.
+L189: systemData  | cite12†systemData | Azure Resource Manager metadata containing createdBy and modifiedBy information.
+L190: tags  | object  | Resource tags.
+L191: type  | string  | The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or "Microsoft.Storage/storageAccounts"
+L192: ### IsolationScope
+L193: 
+L194: Enumeration
+L195: 
+L196: Enum to configure regional restrictions on identity assignment, as necessary.
+L197: 
+L198: Value  | Description
+L199: --- | ---
+L200: None  |
+L201: Regional  |
+L202: ### systemData
+L203: 
+L204: Object
+L205: 
+L206: Metadata pertaining to creation and last modification of the resource.
+L207: Name  | Type  | Description
+L208: --- | --- | ---
+L209: createdAt  | string (date-time)  | The timestamp of resource creation (UTC).
+L210: createdBy  | string  | The identity that created the resource.
+L211: createdByType  | cite11†createdByType | The type of identity that created the resource.
+L212: lastModifiedAt  | string (date-time)  | The timestamp of resource last modification (UTC)
+L213: lastModifiedBy  | string  | The identity that last modified the resource.
+L214: lastModifiedByType  | cite11†createdByType | The type of identity that last modified the resource.
+L215: ### In this article
+--------------------------------------------------------------------------------
+User Assigned Identities - Get - REST API (Azure Managed Identity) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/managedidentity/user-assigned-identities/get?view=rest-managedidentity-2024-11-30)
+citeturn74view1 [wordlim: 200] Crawled: today; Content type: text/html; Source: find({"ref_id":"https://learn.microsoft.com/en-us/rest/api/managedidentity/user-assigned-identities/get?view=rest-managedidentity-2024-11-30","pattern":"200 OK"}); Total lines: 180
+L0: cite0†Skip to main content cite1†Skip to in-page navigation cite2†Skip to Ask Learn chat experience L1: 
+L2: This browser is no longer supported.
+L3: 
+L4: Upgrade to Microsoft Edge to take advantage of the latest features, security updates, and technical support.
+L5: 
+L6: cite3†Download Microsoft Edge†go.microsoft.com cite4†More info about Internet Explorer and Microsoft Edge L7: 
+L8: Table of contents Exit editor mode
+L9: 
+L10: Ask Learn Ask Learn
+L11: 
+L12: Reading mode Table of contents cite2†Read in English Add Add to Plans cite5†Edit†github.com L13: 
+L14: * * *
+L15: Copy Markdown Print
+L16: 
+L17: * * *
+L18: 
+L19: Note
+L20: 
+L21: Access to this page requires authorization. You can try cite2†signing in or changing directories.
+L22: 
+L23: Access to this page requires authorization. You can try changing directories.
+L24: # User Assigned Identities - Get
+L25: 
+L26: Service:
+L27:     Managed Identity
+L28: 
+L29: API Version:
+L30:     2024-11-30
+L31: 
+L32: ##
+L33: 
+L34: Gets the identity.
+L35: 
+L36:     `GET https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/{resourceName}?api-version=2024-11-30`
+L37: ## URI Parameters
+L38: Name  | In  | Required  | Type  | Description
+L39: --- | --- | --- | --- | ---
+L40: resourceGroupName  | path  | True  | string minLength: 1
+L41: maxLength: 90  | The name of the resource group. The name is case insensitive.
+L42: resourceName  | path  | True  | string  | The name of the identity resource.
+L43: subscriptionId  | path  | True  | string (uuid)  | The ID of the target subscription. The value must be an UUID.
+L44: api-version  | query  | True  | string minLength: 1  | The API version to use for this operation.
+L45: ## Responses
+L46: 
+L47: Name  | Type  | Description
+L48: --- | --- | ---
+L49: 200 OK  | cite6†Identity | Azure operation completed successfully.
+L50: Other Status Codes  | cite7†CloudError | An unexpected error response.
+L51: 
+L52: ## Security
+L53: 
+L54: ### azure_auth
+L55: 
+L56: Azure Active Directory OAuth2 Flow.
+L57: 
+L58: Type: oauth2
+L59: Flow: implicit
+L60: Authorization URL: https://login.microsoftonline.com/common/oauth2/authorize
+L61: 
+L62: #### Scopes
+L63: 
+L64: Name  | Description
+L65: --- | ---
+L66: user_impersonation  | impersonate your user account
+L67: 
+L68: ## Examples
+L69: 
+L70: ### IdentityGet
+L71: #### Sample request
+L72: 
+L73:   * cite8†HTTP L74: 
+L75:     `GET https://management.azure.com/subscriptions/12345678-1234-5678-9012-123456789012/resourceGroups/rgName/providers/Microsoft.ManagedIdentity/userAssignedIdentities/resourceName?api-version=2024-11-30
+L76:     `
+L77: #### Sample response
+L78: Status code:
+L79:     200
+L80: 
+L81:     `{
+L82:       "name": "identityName",
+L83:       "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+L84:       "id": "/subscriptions/subid/resourcegroups/rgName/providers/Microsoft.ManagedIdentity/userAssignedIdentities/identityName",
+L85:       "location": "eastus",
+L86:       "properties": {
+L87:         "clientId": "4024ab25-56a8-4370-aea6-6389221caf29",
+L88:         "isolationScope": "None",
+L89:         "principalId": "25cc773c-7f05-40fc-a104-32d2300754ad",
+L90:         "tenantId": "b6c948ef-f6b5-4384-8354-da3a15eca969"
+L91:       },
+L92:       "tags": {
+L93:         "key1": "value1",
+L94:         "key2": "value2"
+L95:       }
+L96:     }`
+L97: ## Definitions
+L98: Name  | Description
+L99: --- | ---
+L100: cite7†CloudError | An error response from the ManagedServiceIdentity service.
+L101: cite9†CloudErrorBody | An error response from the ManagedServiceIdentity service.
+L102: cite10†createdByType | The type of identity that created the resource.
+L103: cite6†Identity | Describes an identity resource.
+L104: cite11†IsolationScope | Enum to configure regional restrictions on identity assignment, as necessary.
+L105: cite12†systemData | Metadata pertaining to creation and last modification of the resource.
+L106: ### CloudError
+L107: 
+L108: Object
+L109: 
+L110: An error response from the ManagedServiceIdentity service.
+L111: 
+L112: Name  | Type  | Description
+L113: --- | --- | ---
+L114: error  | cite9†CloudErrorBody | A list of additional details about the error.
+L115: ### CloudErrorBody
+L116: 
+L117: Object
+L118: 
+L119: An error response from the ManagedServiceIdentity service.
+L120: 
+L121: Name  | Type  | Description
+L122: --- | --- | ---
+L123: code  | string  | An identifier for the error.
+L124: details  | cite9†CloudErrorBody []  | A list of additional details about the error.
+L125: message  | string  | A message describing the error, intended to be suitable for display in a user interface.
+L126: target  | string  | The target of the particular error. For example, the name of the property in error.
+L127: ### createdByType
+L128: 
+L129: Enumeration
+L130: 
+L131: The type of identity that created the resource.
+L132: 
+L133: Value  | Description
+L134: --- | ---
+L135: User  |
+L136: Application  |
+L137: ManagedIdentity  |
+L138: Key  |
+L139: ### Identity
+L140: 
+L141: Object
+L142: 
+L143: Describes an identity resource.
+L144: Name  | Type  | Description
+L145: --- | --- | ---
+L146: id  | string (arm-id)  | Fully qualified resource ID for the resource. E.g. "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}"
+L147: location  | string  | The geo-location where the resource lives
+L148: name  | string  | The name of the resource
+L149: properties.clientId  | string (uuid)  | The id of the app associated with the identity. This is a random generated UUID by MSI.
+L150: properties.isolationScope  | cite11†IsolationScope | Enum to configure regional restrictions on identity assignment, as necessary.
+L151: properties.principalId  | string (uuid)  | The id of the service principal object associated with the created identity.
+L152: properties.tenantId  | string (uuid)  | The id of the tenant which the identity belongs to.
+L153: systemData  | cite12†systemData | Azure Resource Manager metadata containing createdBy and modifiedBy information.
+L154: tags  | object  | Resource tags.
+L155: type  | string  | The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or "Microsoft.Storage/storageAccounts"
+L156: ### IsolationScope
+L157: 
+L158: Enumeration
+L159: 
+L160: Enum to configure regional restrictions on identity assignment, as necessary.
+L161: 
+L162: Value  | Description
+L163: --- | ---
+L164: None  |
+L165: Regional  |
+L166: ### systemData
+L167: 
+L168: Object
+L169: 
+L170: Metadata pertaining to creation and last modification of the resource.
+L171: Name  | Type  | Description
+L172: --- | --- | ---
+L173: createdAt  | string (date-time)  | The timestamp of resource creation (UTC).
+L174: createdBy  | string  | The identity that created the resource.
+L175: createdByType  | cite10†createdByType | The type of identity that created the resource.
+L176: lastModifiedAt  | string (date-time)  | The timestamp of resource last modification (UTC)
+L177: lastModifiedBy  | string  | The identity that last modified the resource.
+L178: lastModifiedByType  | cite10†createdByType | The type of identity that last modified the resource.
+L179: ### In this article
+

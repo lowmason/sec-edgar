@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "evidence_id": "T5-PERM-storage-operation-mapping",
+  "source_url": "https://learn.microsoft.com/en-us/rest/api/storageservices/authorize-with-azure-active-directory",
+  "retrieved_at_utc": "2026-10-06T01:11:54Z",
+  "source_version": "Rolling REST authorization catalog",
+  "retrieval_method": "public Microsoft Learn via web.run; curated extract",
+  "status": "success",
+  "extract": "Update Entity and Merge Entity: Microsoft.Storage/storageAccounts/tableServices/tables/entities/write OR Microsoft.Storage/storageAccounts/tableServices/tables/entities/update/action.\nInsert Entity: entities/write OR entities/add/action under the same tableServices/tables prefix.\nInsert Or Merge Entity and Insert Or Replace Entity: entities/write OR both entities/add/action and entities/update/action.\nBlob get/read and put/write authorize using blobs/read and blobs/write under Microsoft.Storage/storageAccounts/blobServices/containers/.\nOAuth access token resource is https://storage.azure.com/.",
+  "limitations": "Documentation evidence only. No Azure authorization or live operation tested."
+}

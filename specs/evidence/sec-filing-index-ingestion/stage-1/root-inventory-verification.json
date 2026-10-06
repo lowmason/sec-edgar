@@ -1,0 +1,10 @@
+{
+  "received_at_utc": "2026-10-05T23:43:37.530607+00:00",
+  "command": [
+    "python3",
+    "specs/evidence/sec-filing-index-ingestion/stage-1/investigation-tools/check_inventory_evidence.py"
+  ],
+  "exit_code": 0,
+  "stdout": "{\n  \"method\": \"Offline retained-evidence cross-check; no SEC requests\",\n  \"pinned_end_quarter\": \"2026Q4\",\n  \"requested_quarter_summaries\": 68,\n  \"development_quarter_summaries\": 48,\n  \"quarterly_summary_outcomes\": {\n    \"available\": 68\n  },\n  \"quarterly_representation_rows\": 304,\n  \"daily_rows\": 2176,\n  \"daily_boundary_outcomes\": {\n    \"available\": 36,\n    \"listed_uninspected\": 33\n  },\n  \"required_handoff\": {\n    \"directory_period\": \"2026Q4\",\n    \"listing_evidence_id\": \"SEC-0139\",\n    \"discovered_url\": \"https://www.sec.gov/Archives/edgar/daily-index/2026/QTR4/index.json\",\n    \"listed_date\": \"20261001\",\n    \"representation\": \"required_handoff_summary\",\n    \"handoff_relation\": \"handoff\",\n    \"outcome\": \"listed_source_pending\",\n    \"gap_id\": \"\"\n  },\n  \"attempts\": 140,\n  \"received_bytes\": 1689512,\n  \"request_outcomes\": {\n    \"success\": 140\n  },\n  \"byte_hash_intent_cross_checks\": \"PASS\",\n  \"crosscheck_retained_child_entries\": \"PASS\",\n  \"start_spacing\": \"PASS\",\n  \"limitation\": \"Availability accounting is separate from source-body format support or ingestion completeness\"\n}\n",
+  "stderr": ""
+}

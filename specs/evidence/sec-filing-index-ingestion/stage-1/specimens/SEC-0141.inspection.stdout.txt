@@ -1,0 +1,61 @@
+{
+  "evidence_id": "SEC-0141",
+  "original_bytes": 3729148,
+  "expanded_bytes": 27083681,
+  "observations": {
+    "text_family": "quarterly ISO-date master",
+    "column_header": "CIK|Company Name|Form Type|Date Filed|Filename",
+    "date_shape_counts": {
+      "YYYY-MM-DD": 300561
+    },
+    "strict_encoding": "ascii",
+    "decoder_failures": [],
+    "bom_hex": null,
+    "newline_counts": {
+      "crlf": 300571,
+      "lone_lf": 0,
+      "lone_cr": 0
+    },
+    "header_lines": [
+      "Description:           Master Index of EDGAR Dissemination Feed",
+      "Last Data Received:    March 31, 2010",
+      "Comments:              webmaster@sec.gov",
+      "Anonymous FTP:         ftp://ftp.sec.gov/edgar/",
+      "Cloud HTTP:            https://www.sec.gov/Archives/",
+      "",
+      "",
+      "",
+      "",
+      "CIK|Company Name|Form Type|Date Filed|Filename",
+      "--------------------------------------------------------------------------------"
+    ],
+    "separator": "|",
+    "scan_boundary": "Every nonempty post-header row in retained body",
+    "row_count": 300561,
+    "field_count_distribution": {
+      "5": 300561
+    },
+    "path_families": {
+      "edgar/data/CIK/dashed-accession.txt": 300561
+    },
+    "minimum_filing_date": "2010-01-02",
+    "maximum_filing_date": "2010-03-31",
+    "date_bound_raw_rows": {
+      "minimum": "1111247|RIGHTNOW TECHNOLOGIES INC|UPLOAD|2010-01-02|edgar/data/1111247/0000000000-10-000005.txt",
+      "maximum": "1000209|MEDALLION FINANCIAL CORP|40-APP/A|2010-03-31|edgar/data/1000209/0001193125-10-073211.txt"
+    },
+    "invalid_dates": [],
+    "representative_raw_rows": {
+      "edgar/data/CIK/dashed-accession.txt": "1000032|BINCH JAMES G|4|2010-03-02|edgar/data/1000032/0001181431-10-013095.txt"
+    },
+    "nonextractable_examples": [],
+    "representative_fields": [
+      "1000032",
+      "BINCH JAMES G",
+      "4",
+      "2010-03-02",
+      "edgar/data/1000032/0001181431-10-013095.txt"
+    ],
+    "non_ascii_byte_count": 0
+  }
+}

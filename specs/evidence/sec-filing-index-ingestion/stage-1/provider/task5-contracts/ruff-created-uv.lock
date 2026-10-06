@@ -1,0 +1,31 @@
+version = 1
+revision = 3
+requires-python = ">=3.14"
+
+[manifest]
+members = [
+    "sec-edgar",
+    "sec-edgar-client",
+    "sec-edgar-download",
+    "sec-edgar-ingest",
+]
+
+[[package]]
+name = "sec-edgar"
+version = "0.1.0"
+source = { editable = "." }
+
+[[package]]
+name = "sec-edgar-client"
+version = "0.1.0"
+source = { editable = "packages/sec-edgar-client" }
+
+[[package]]
+name = "sec-edgar-download"
+version = "0.1.0"
+source = { editable = "packages/sec-edgar-download" }
+
+[[package]]
+name = "sec-edgar-ingest"
+version = "0.1.0"
+source = { editable = "packages/sec-edgar-ingest" }

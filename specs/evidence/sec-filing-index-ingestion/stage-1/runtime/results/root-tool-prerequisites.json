@@ -1,0 +1,59 @@
+[
+  {
+    "argv": [
+      "docker",
+      "version"
+    ],
+    "started_utc": "2026-10-06T00:34:23.869524+00:00",
+    "ended_utc": "2026-10-06T00:34:23.871165+00:00",
+    "exit_code": 127,
+    "stdout": "",
+    "stderr": "[Errno 2] No such file or directory: 'docker'"
+  },
+  {
+    "argv": [
+      "docker",
+      "buildx",
+      "version"
+    ],
+    "started_utc": "2026-10-06T00:34:23.871171+00:00",
+    "ended_utc": "2026-10-06T00:34:23.872583+00:00",
+    "exit_code": 127,
+    "stdout": "",
+    "stderr": "[Errno 2] No such file or directory: 'docker'"
+  },
+  {
+    "argv": [
+      "uv",
+      "--version"
+    ],
+    "started_utc": "2026-10-06T00:34:23.872588+00:00",
+    "ended_utc": "2026-10-06T00:34:23.877911+00:00",
+    "exit_code": 0,
+    "stdout": "uv 0.12.15 (Homebrew 2026-09-15 aarch64-apple-darwin)\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "az",
+      "version"
+    ],
+    "started_utc": "2026-10-06T00:34:23.877917+00:00",
+    "ended_utc": "2026-10-06T00:34:23.959993+00:00",
+    "exit_code": 1,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"/opt/homebrew/Cellar/azure-cli/2.90.0/libexec/lib/python3.14/site-packages/azure/cli/core/_session.py\", line 36, in load\n    self.save()\n    ~~~~~~~~~^^\n  File \"/opt/homebrew/Cellar/azure-cli/2.90.0/libexec/lib/python3.14/site-packages/azure/cli/core/_session.py\", line 54, in save\n    with open(self.filename, 'w', encoding=self._encoding) as f:\n         ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nPermissionError: [Errno 1] Operation not permitted: '/Users/lowell/.azure/az.sess'\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"<frozen runpy>\", line 203, in _run_module_as_main\n  File \"<frozen runpy>\", line 88, in _run_code\n  File \"/opt/homebrew/Cellar/azure-cli/2.90.0/libexec/lib/python3.14/site-packages/azure/cli/__main__.py\", line 30, in <module>\n    az_cli = get_default_cli()\n  File \"/opt/homebrew/Cellar/azure-cli/2.90.0/libexec/lib/python3.14/site-packages/azure/cli/core/__init__.py\", line 1542, in get_default_cli\n    return AzCli(cli_name='az',\n                 config_dir=GLOBAL_CONFIG_DIR,\n    ...<5 lines>...\n                 output_cls=AzOutputProducer,\n                 help_cls=AzCliHelp)\n  File \"/opt/homebrew/Cellar/azure-cli/2.90.0/libexec/lib/python3.14/site-packages/azure/cli/core/__init__.py\", line 99, in __init__\n    SESSION.load(os.path.join(azure_folder, 'az.sess'), max_age=3600)\n    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/homebrew/Cellar/azure-cli/2.90.0/libexec/lib/python3.14/site-packages/azure/cli/core/_session.py\", line 50, in load\n    self.save()\n    ~~~~~~~~~^^\n  File \"/opt/homebrew/Cellar/azure-cli/2.90.0/libexec/lib/python3.14/site-packages/azure/cli/core/_session.py\", line 54, in save\n    with open(self.filename, 'w', encoding=self._encoding) as f:\n         ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nPermissionError: [Errno 1] Operation not permitted: '/Users/lowell/.azure/az.sess'\n"
+  },
+  {
+    "argv": [
+      "az",
+      "bicep",
+      "version"
+    ],
+    "started_utc": "2026-10-06T00:34:23.960006+00:00",
+    "ended_utc": "2026-10-06T00:34:24.024171+00:00",
+    "exit_code": 1,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"/opt/homebrew/Cellar/azure-cli/2.90.0/libexec/lib/python3.14/site-packages/azure/cli/core/_session.py\", line 36, in load\n    self.save()\n    ~~~~~~~~~^^\n  File \"/opt/homebrew/Cellar/azure-cli/2.90.0/libexec/lib/python3.14/site-packages/azure/cli/core/_session.py\", line 54, in save\n    with open(self.filename, 'w', encoding=self._encoding) as f:\n         ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nPermissionError: [Errno 1] Operation not permitted: '/Users/lowell/.azure/az.sess'\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"<frozen runpy>\", line 203, in _run_module_as_main\n  File \"<frozen runpy>\", line 88, in _run_code\n  File \"/opt/homebrew/Cellar/azure-cli/2.90.0/libexec/lib/python3.14/site-packages/azure/cli/__main__.py\", line 30, in <module>\n    az_cli = get_default_cli()\n  File \"/opt/homebrew/Cellar/azure-cli/2.90.0/libexec/lib/python3.14/site-packages/azure/cli/core/__init__.py\", line 1542, in get_default_cli\n    return AzCli(cli_name='az',\n                 config_dir=GLOBAL_CONFIG_DIR,\n    ...<5 lines>...\n                 output_cls=AzOutputProducer,\n                 help_cls=AzCliHelp)\n  File \"/opt/homebrew/Cellar/azure-cli/2.90.0/libexec/lib/python3.14/site-packages/azure/cli/core/__init__.py\", line 99, in __init__\n    SESSION.load(os.path.join(azure_folder, 'az.sess'), max_age=3600)\n    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/homebrew/Cellar/azure-cli/2.90.0/libexec/lib/python3.14/site-packages/azure/cli/core/_session.py\", line 50, in load\n    self.save()\n    ~~~~~~~~~^^\n  File \"/opt/homebrew/Cellar/azure-cli/2.90.0/libexec/lib/python3.14/site-packages/azure/cli/core/_session.py\", line 54, in save\n    with open(self.filename, 'w', encoding=self._encoding) as f:\n         ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nPermissionError: [Errno 1] Operation not permitted: '/Users/lowell/.azure/az.sess'\n"
+  }
+]

@@ -1,0 +1,57 @@
+{
+  "evidence_id": "SEC-0148",
+  "original_bytes": 621000,
+  "expanded_bytes": 621000,
+  "observations": {
+    "text_family": "daily compact-date master",
+    "column_header": "CIK|Company Name|Form Type|Date Filed|File Name",
+    "date_shape_counts": {
+      "YYYYMMDD": 7159
+    },
+    "strict_encoding": "ascii",
+    "decoder_failures": [],
+    "bom_hex": null,
+    "newline_counts": {
+      "crlf": 0,
+      "lone_lf": 7165,
+      "lone_cr": 0
+    },
+    "header_lines": [
+      "Description:           Daily Index of EDGAR Dissemination Feed",
+      "Last Data Received:    Oct 2, 2026",
+      "Comments:              webmaster@sec.gov",
+      "Anonymous FTP:         ftp://ftp.sec.gov/edgar/",
+      " ",
+      "CIK|Company Name|Form Type|Date Filed|File Name",
+      "--------------------------------------------------------------------------------"
+    ],
+    "separator": "|",
+    "scan_boundary": "Every nonempty post-header row in retained body",
+    "row_count": 7159,
+    "field_count_distribution": {
+      "5": 7159
+    },
+    "path_families": {
+      "edgar/data/CIK/dashed-accession.txt": 7159
+    },
+    "minimum_filing_date": "20260331",
+    "maximum_filing_date": "20261002",
+    "date_bound_raw_rows": {
+      "minimum": "715837|LPC LTD|DRS|20260331|edgar/data/715837/0001213900-26-037256.txt",
+      "maximum": "1000275|ROYAL BANK OF CANADA|424B2|20261002|edgar/data/1000275/0000950103-26-014973.txt"
+    },
+    "invalid_dates": [],
+    "representative_raw_rows": {
+      "edgar/data/CIK/dashed-accession.txt": "1000275|ROYAL BANK OF CANADA|424B2|20261002|edgar/data/1000275/0000950103-26-014973.txt"
+    },
+    "nonextractable_examples": [],
+    "representative_fields": [
+      "1000275",
+      "ROYAL BANK OF CANADA",
+      "424B2",
+      "20261002",
+      "edgar/data/1000275/0000950103-26-014973.txt"
+    ],
+    "non_ascii_byte_count": 0
+  }
+}

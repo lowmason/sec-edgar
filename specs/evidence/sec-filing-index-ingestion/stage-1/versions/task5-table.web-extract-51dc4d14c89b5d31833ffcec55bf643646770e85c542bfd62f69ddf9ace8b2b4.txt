@@ -1,0 +1,582 @@
+Table - Create - REST API (Azure Storage Resource Provider) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/storagerp/table/create?view=rest-storagerp-2025-06-01)
+citeturn73view0 [wordlim: 200] Crawled: yesterday; Content type: text/html; Source: find({"ref_id":"https://learn.microsoft.com/en-us/rest/api/storagerp/table/create?view=rest-storagerp-2025-06-01","pattern":"200 OK"}); Total lines: 440
+L0: cite0†Skip to main content cite1†Skip to in-page navigation cite2†Skip to Ask Learn chat experience L1: 
+L2: This browser is no longer supported.
+L3: 
+L4: Upgrade to Microsoft Edge to take advantage of the latest features, security updates, and technical support.
+L5: 
+L6: cite3†Download Microsoft Edge†go.microsoft.com cite4†More info about Internet Explorer and Microsoft Edge L7: 
+L8: Table of contents Exit editor mode
+L9: 
+L10: Ask Learn Ask Learn
+L11: 
+L12: Reading mode Table of contents cite2†Read in English Add Add to Plans cite5†Edit†github.com L13: 
+L14: * * *
+L15: Copy Markdown Print
+L16: 
+L17: * * *
+L18: 
+L19: Note
+L20: 
+L21: Access to this page requires authorization. You can try cite2†signing in or changing directories.
+L22: 
+L23: Access to this page requires authorization. You can try changing directories.
+L24: # Table - Create
+L25: 
+L26: Service:
+L27:     Storage Resource Provider
+L28: 
+L29: API Version:
+L30:     2025-06-01
+L31: 
+L32: ##
+L33: 
+L34: Creates a new table with the specified table name, under the specified account.
+L35: 
+L36:     `PUT https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{accountName}/tableServices/default/tables/{tableName}?api-version=2025-06-01`
+L37: ## URI Parameters
+L38: Name  | In  | Required  | Type  | Description
+L39: --- | --- | --- | --- | ---
+L40: accountName  | path  | True  | string minLength: 3
+L41: maxLength: 24
+L42: pattern: ^[a-z0-9]+$  | The name of the storage account within the specified resource group. Storage account names must be between 3 and 24 characters in length and use numbers and lower-case letters only.
+L43: resourceGroupName  | path  | True  | string minLength: 1
+L44: maxLength: 90  | The name of the resource group. The name is case insensitive.
+L45: subscriptionId  | path  | True  | string (uuid)  | The ID of the target subscription. The value must be an UUID.
+L46: tableName  | path  | True  | string minLength: 3
+L47: maxLength: 63
+L48: pattern: ^[A-Za-z][A-Za-z0-9]{2,62}$  | A table name must be unique within a storage account and must be between 3 and 63 characters.The name must comprise of only alphanumeric characters and it cannot begin with a numeric character.
+L49: api-version  | query  | True  | string minLength: 1  | The API version to use for this operation.
+L50: ## Request Body
+L51: 
+L52: Name  | Type  | Description
+L53: --- | --- | ---
+L54: properties.signedIdentifiers  | cite6†TableSignedIdentifier []  | List of stored access policies specified on the table.
+L55: 
+L56: ## Responses
+L57: 
+L58: Name  | Type  | Description
+L59: --- | --- | ---
+L60: 200 OK  | cite7†Table | Resource 'Table' update operation succeeded
+L61: Other Status Codes  | cite8†CloudError | An unexpected error response.
+L62: 
+L63: ## Security
+L64: ### azure_auth
+L65: 
+L66: Azure Active Directory OAuth2 Flow.
+L67: 
+L68: Type: oauth2
+L69: Flow: implicit
+L70: Authorization URL: https://login.microsoftonline.com/common/oauth2/authorize
+L71: 
+L72: #### Scopes
+L73: 
+L74: Name  | Description
+L75: --- | ---
+L76: user_impersonation  | impersonate your user account
+L77: 
+L78: ## Examples
+L79: 
+L80: cite9†TableOperationPut L81: cite10†TableOperationPutOrPatchAcls L82: 
+L83: ### TableOperationPut
+L84: #### Sample request
+L85:   * cite11†HTTP L86:   * cite12†Java L87:   * cite13†Python L88:   * cite14†Go L89:   * cite15†JavaScript L90:   * cite16†dotnet L91: 
+L92:     `PUT https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/res3376/providers/Microsoft.Storage/storageAccounts/sto328/tableServices/default/tables/table6185?api-version=2025-06-01
+L93:     `
+L94: 
+L95:     `
+L96:     /**
+L97:      * Samples for Table Create.
+L98:      */
+L99:     public final class Main {
+L100:         /*
+L101:          * x-ms-original-file:
+L102:          * specification/storage/resource-manager/Microsoft.Storage/stable/2025-06-01/examples/TableOperationPut.json
+L103:          */
+L104:         /**
+L105:          * Sample code: TableOperationPut.
+L106:          *
+L107:          * @param azure The entry point for accessing resource management APIs in Azure.
+L108:          */
+L109:         public static void tableOperationPut(com.azure.resourcemanager.AzureResourceManager azure) {
+L110:             azure.storageAccounts().manager().serviceClient().getTables().createWithResponse("res3376", "sto328",
+L111:                 "table6185", null, com.azure.core.util.Context.NONE);
+L112:         }
+L113:     }
+L114: 
+L115:     `
+L116: To use the Azure SDK library in your project, see cite17†this documentation†github.com . To provide feedback on this code sample, cite18†open a GitHub issue†github.com L117: 
+L118:     `from azure.identity import DefaultAzureCredential
+L119: 
+L120:     from azure.mgmt.storage import StorageManagementClient
+L121: 
+L122:     """
+L123:     # PREREQUISITES
+L124:         pip install azure-identity
+L125:         pip install azure-mgmt-storage
+L126:     # USAGE
+L127:         python table_operation_put.py
+L128:         Before run the sample, please set the values of the client ID, tenant ID and client secret
+L129:         of the AAD application as environment variables: AZURE_CLIENT_ID, AZURE_TENANT_ID,
+L130:         AZURE_CLIENT_SECRET. For more info about how to get the value, please see:
+L131:         https://docs.microsoft.com/azure/active-directory/develop/howto-create-service-principal-portal
+L132:     """
+L133: 
+L134: 
+L135:     def main():
+L136:         client = StorageManagementClient(
+L137:             credential=DefaultAzureCredential(),
+L138:             subscription_id="{subscription-id}",
+L139:         )
+L140: 
+L141:         response = client.table.create(
+L142:             resource_group_name="res3376",
+L143:             account_name="sto328",
+L144:             table_name="table6185",
+L145:         )
+L146:         print(response)
+L147: 
+L148: 
+L149:     # x-ms-original-file: specification/storage/resource-manager/Microsoft.Storage/stable/2025-06-01/examples/TableOperationPut.json
+L150:     if __name__ == "__main__":
+L151:         main()
+L152: 
+L153:     `
+L154: To use the Azure SDK library in your project, see cite19†this documentation†github.com . To provide feedback on this code sample, cite18†open a GitHub issue†github.com L155: 
+L156:     `package armstorage_test
+L157: 
+L158:     import (
+L159:     	"context"
+L160:     	"log"
+L161: 
+L162:     	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+L163:     	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage/v3"
+L164:     )
+L165:     // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/blob/4e9df3afd38a1cfa00a5d49419dce51bd014601f/specification/storage/resource-manager/Microsoft.Storage/stable/2025-06-01/examples/TableOperationPut.json
+L166:     func ExampleTableClient_Create_tableOperationPut() {
+L167:     	cred, err := azidentity.NewDefaultAzureCredential(nil)
+L168:     	if err != nil {
+L169:     		log.Fatalf("failed to obtain a credential: %v", err)
+L170:     	}
+L171:     	ctx := context.Background()
+L172:     	clientFactory, err := armstorage.NewClientFactory("<subscription-id>", cred, nil)
+L173:     	if err != nil {
+L174:     		log.Fatalf("failed to create client: %v", err)
+L175:     	}
+L176:     	res, err := clientFactory.NewTableClient().Create(ctx, "res3376", "sto328", "table6185", &armstorage.TableClientCreateOptions{Parameters: nil})
+L177:     	if err != nil {
+L178:     		log.Fatalf("failed to finish the request: %v", err)
+L179:     	}
+L180:     	// You could use response here. We use blank identifier for just demo purposes.
+L181:     	_ = res
+L182:     	// If the HTTP response code is 200 as defined in example definition, your response structure would look as follows. Please pay attention that all the values in the output are fake values for just demo purposes.
+L183:     	// res.Table = armstorage.Table{
+L184:     	// 	Name: to.Ptr("table6185"),
+L185:     	// 	Type: to.Ptr("Microsoft.Storage/storageAccounts/tableServices/tables"),
+L186:     	// 	ID: to.Ptr("/subscriptions/{subscription-id}/resourceGroups/res3376/providers/Microsoft.Storage/storageAccounts/sto328/tableServices/default/tables/table6185"),
+L187:     	// 	TableProperties: &armstorage.TableProperties{
+L188:     	// 		TableName: to.Ptr("table6185"),
+L189:     	// 	},
+L190:     	// }
+L191:     }
+L192: 
+L193:     `
+L194: To use the Azure SDK library in your project, see cite20†this documentation†github.com . To provide feedback on this code sample, cite18†open a GitHub issue†github.com L195: 
+L196:     `const { StorageManagementClient } = require("@azure/arm-storage");
+L197:     const { DefaultAzureCredential } = require("@azure/identity");
+L198:     require("dotenv/config");
+L199: 
+L200:     /**
+L201:      * This sample demonstrates how to Creates a new table with the specified table name, under the specified account.
+L202:      *
+L203:      * @summary Creates a new table with the specified table name, under the specified account.
+L204:      * x-ms-original-file: specification/storage/resource-manager/Microsoft.Storage/stable/2025-06-01/examples/TableOperationPut.json
+L205:      */
+L206:     async function tableOperationPut() {
+L207:       const subscriptionId = process.env["STORAGE_SUBSCRIPTION_ID"] || "{subscription-id}";
+L208:       const resourceGroupName = process.env["STORAGE_RESOURCE_GROUP"] || "res3376";
+L209:       const accountName = "sto328";
+L210:       const tableName = "table6185";
+L211:       const credential = new DefaultAzureCredential();
+L212:       const client = new StorageManagementClient(credential, subscriptionId);
+L213:       const result = await client.tableOperations.create(resourceGroupName, accountName, tableName);
+L214:       console.log(result);
+L215:     }
+L216: 
+L217:     `
+L218: To use the Azure SDK library in your project, see cite21†this documentation†github.com . To provide feedback on this code sample, cite18†open a GitHub issue†github.com L219: 
+L220:     `using Azure;
+L221:     using Azure.ResourceManager;
+L222:     using System;
+L223:     using System.Threading.Tasks;
+L224:     using Azure.Core;
+L225:     using Azure.Identity;
+L226:     using Azure.ResourceManager.Storage.Models;
+L227:     using Azure.ResourceManager.Storage;
+L228:     // Generated from example definition: specification/storage/resource-manager/Microsoft.Storage/stable/2025-06-01/examples/TableOperationPut.json
+L229:     // this example is just showing the usage of "Table_Create" operation, for the dependent resources, they will have to be created separately.
+L230: 
+L231:     // get your azure access token, for more details of how Azure SDK get your access token, please refer to https://learn.microsoft.com/en-us/dotnet/azure/sdk/authentication?tabs=command-line
+L232:     TokenCredential cred = new DefaultAzureCredential();
+L233:     // authenticate your client
+L234:     ArmClient client = new ArmClient(cred);
+L235: 
+L236:     // this example assumes you already have this TableServiceResource created on azure
+L237:     // for more information of creating TableServiceResource, please refer to the document of TableServiceResource
+L238:     string subscriptionId = "{subscription-id}";
+L239:     string resourceGroupName = "res3376";
+L240:     string accountName = "sto328";
+L241:     ResourceIdentifier tableServiceResourceId = TableServiceResource.CreateResourceIdentifier(subscriptionId, resourceGroupName, accountName);
+L242:     TableServiceResource tableService = client.GetTableServiceResource(tableServiceResourceId);
+L243: 
+L244:     // get the collection of this TableResource
+L245:     TableCollection collection = tableService.GetTables();
+L246: 
+L247:     // invoke the operation
+L248:     string tableName = "table6185";
+L249:     TableData data = new TableData();
+L250:     ArmOperation<TableResource> lro = await collection.CreateOrUpdateAsync(WaitUntil.Completed, tableName, data);
+L251:     TableResource result = lro.Value;
+L252: 
+L253:     // the variable result is a resource, you could call other operations on this instance as well
+L254:     // but just for demo, we get its data from this resource instance
+L255:     TableData resourceData = result.Data;
+L256:     // for demo we just print out the id
+L257:     Console.WriteLine($"Succeeded on id: {resourceData.Id}");
+L258: 
+L259:     `
+L260: To use the Azure SDK library in your project, see cite22†this documentation†github.com . To provide feedback on this code sample, cite18†open a GitHub issue†github.com L261: #### Sample response
+L262: 
+L263: Status code:
+L264:     200
+L265: 
+L266:     `{
+L267:       "name": "table6185",
+L268:       "type": "Microsoft.Storage/storageAccounts/tableServices/tables",
+L269:       "id": "/subscriptions/{subscription-id}/resourceGroups/res3376/providers/Microsoft.Storage/storageAccounts/sto328/tableServices/default/tables/table6185",
+L270:       "properties": {
+L271:         "tableName": "table6185"
+L272:       }
+L273:     }`
+L274: 
+L275: ### TableOperationPutOrPatchAcls
+L276: #### Sample request
+L277:   * cite11†HTTP L278:   * cite12†Java L279:   * cite13†Python L280:   * cite14†Go L281:   * cite15†JavaScript L282:   * cite16†dotnet L283: 
+L284:     `PUT https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/res3376/providers/Microsoft.Storage/storageAccounts/sto328/tableServices/default/tables/table6185?api-version=2025-06-01
+L285: 
+L286:     {
+L287:       "properties": {
+L288:         "signedIdentifiers": [
+L289:           {
+L290:             "accessPolicy": {
+L291:               "expiryTime": "2022-03-20T08:49:37.0000000Z",
+L292:               "permission": "raud",
+L293:               "startTime": "2022-03-17T08:49:37.0000000Z"
+L294:             },
+L295:             "id": "MTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTI"
+L296:           },
+L297:           {
+L298:             "accessPolicy": {
+L299:               "expiryTime": "2022-03-20T08:49:37.0000000Z",
+L300:               "permission": "rad",
+L301:               "startTime": "2022-03-17T08:49:37.0000000Z"
+L302:             },
+L303:             "id": "PTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODklMTI"
+L304:           }
+L305:         ]
+L306:       }
+L307:     }
+L308: 
+L309:     `
+--------------------------------------------------------------------------------
+Table - Get - REST API (Azure Storage Resource Provider) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/storagerp/table/get?view=rest-storagerp-2025-06-01)
+citeturn73view1 [wordlim: 200] Crawled: last week; Content type: text/html; Source: find({"ref_id":"https://learn.microsoft.com/en-us/rest/api/storagerp/table/get?view=rest-storagerp-2025-06-01","pattern":"200 OK"}); Total lines: 363
+L0: cite0†Skip to main content cite1†Skip to in-page navigation cite2†Skip to Ask Learn chat experience L1: 
+L2: This browser is no longer supported.
+L3: 
+L4: Upgrade to Microsoft Edge to take advantage of the latest features, security updates, and technical support.
+L5: 
+L6: cite3†Download Microsoft Edge†go.microsoft.com cite4†More info about Internet Explorer and Microsoft Edge L7: 
+L8: Table of contents Exit editor mode
+L9: 
+L10: Ask Learn Ask Learn
+L11: 
+L12: Reading mode Table of contents cite2†Read in English Add Add to Plans cite5†Edit†github.com L13: 
+L14: * * *
+L15: Copy Markdown Print
+L16: 
+L17: * * *
+L18: 
+L19: Note
+L20: 
+L21: Access to this page requires authorization. You can try cite2†signing in or changing directories.
+L22: 
+L23: Access to this page requires authorization. You can try changing directories.
+L24: # Table - Get
+L25: 
+L26: Service:
+L27:     Storage Resource Provider
+L28: 
+L29: API Version:
+L30:     2025-06-01
+L31: 
+L32: ##
+L33: 
+L34: Gets the table with the specified table name, under the specified account if it exists.
+L35: 
+L36:     `GET https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{accountName}/tableServices/default/tables/{tableName}?api-version=2025-06-01`
+L37: ## URI Parameters
+L38: Name  | In  | Required  | Type  | Description
+L39: --- | --- | --- | --- | ---
+L40: accountName  | path  | True  | string minLength: 3
+L41: maxLength: 24
+L42: pattern: ^[a-z0-9]+$  | The name of the storage account within the specified resource group. Storage account names must be between 3 and 24 characters in length and use numbers and lower-case letters only.
+L43: resourceGroupName  | path  | True  | string minLength: 1
+L44: maxLength: 90  | The name of the resource group. The name is case insensitive.
+L45: subscriptionId  | path  | True  | string (uuid)  | The ID of the target subscription. The value must be an UUID.
+L46: tableName  | path  | True  | string minLength: 3
+L47: maxLength: 63
+L48: pattern: ^[A-Za-z][A-Za-z0-9]{2,62}$  | A table name must be unique within a storage account and must be between 3 and 63 characters.The name must comprise of only alphanumeric characters and it cannot begin with a numeric character.
+L49: api-version  | query  | True  | string minLength: 1  | The API version to use for this operation.
+L50: ## Responses
+L51: 
+L52: Name  | Type  | Description
+L53: --- | --- | ---
+L54: 200 OK  | cite6†Table | Azure operation completed successfully.
+L55: Other Status Codes  | cite7†CloudError | An unexpected error response.
+L56: 
+L57: ## Security
+L58: 
+L59: ### azure_auth
+L60: 
+L61: Azure Active Directory OAuth2 Flow.
+L62: 
+L63: Type: oauth2
+L64: Flow: implicit
+L65: Authorization URL: https://login.microsoftonline.com/common/oauth2/authorize
+L66: 
+L67: #### Scopes
+L68: 
+L69: Name  | Description
+L70: --- | ---
+L71: user_impersonation  | impersonate your user account
+L72: 
+L73: ## Examples
+L74: 
+L75: ### TableOperationGet
+L76: #### Sample request
+L77:   * cite8†HTTP L78:   * cite9†Java L79:   * cite10†Python L80:   * cite11†Go L81:   * cite12†JavaScript L82:   * cite13†dotnet L83: 
+L84:     `GET https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/res3376/providers/Microsoft.Storage/storageAccounts/sto328/tableServices/default/tables/table6185?api-version=2025-06-01
+L85:     `
+L86: 
+L87:     `
+L88:     /**
+L89:      * Samples for Table Get.
+L90:      */
+L91:     public final class Main {
+L92:         /*
+L93:          * x-ms-original-file:
+L94:          * specification/storage/resource-manager/Microsoft.Storage/stable/2025-06-01/examples/TableOperationGet.json
+L95:          */
+L96:         /**
+L97:          * Sample code: TableOperationGet.
+L98:          *
+L99:          * @param azure The entry point for accessing resource management APIs in Azure.
+L100:          */
+L101:         public static void tableOperationGet(com.azure.resourcemanager.AzureResourceManager azure) {
+L102:             azure.storageAccounts().manager().serviceClient().getTables().getWithResponse("res3376", "sto328", "table6185",
+L103:                 com.azure.core.util.Context.NONE);
+L104:         }
+L105:     }
+L106: 
+L107:     `
+L108: To use the Azure SDK library in your project, see cite14†this documentation†github.com . To provide feedback on this code sample, cite15†open a GitHub issue†github.com L109: 
+L110:     `from azure.identity import DefaultAzureCredential
+L111: 
+L112:     from azure.mgmt.storage import StorageManagementClient
+L113: 
+L114:     """
+L115:     # PREREQUISITES
+L116:         pip install azure-identity
+L117:         pip install azure-mgmt-storage
+L118:     # USAGE
+L119:         python table_operation_get.py
+L120:         Before run the sample, please set the values of the client ID, tenant ID and client secret
+L121:         of the AAD application as environment variables: AZURE_CLIENT_ID, AZURE_TENANT_ID,
+L122:         AZURE_CLIENT_SECRET. For more info about how to get the value, please see:
+L123:         https://docs.microsoft.com/azure/active-directory/develop/howto-create-service-principal-portal
+L124:     """
+L125: 
+L126: 
+L127:     def main():
+L128:         client = StorageManagementClient(
+L129:             credential=DefaultAzureCredential(),
+L130:             subscription_id="{subscription-id}",
+L131:         )
+L132: 
+L133:         response = client.table.get(
+L134:             resource_group_name="res3376",
+L135:             account_name="sto328",
+L136:             table_name="table6185",
+L137:         )
+L138:         print(response)
+L139: 
+L140: 
+L141:     # x-ms-original-file: specification/storage/resource-manager/Microsoft.Storage/stable/2025-06-01/examples/TableOperationGet.json
+L142:     if __name__ == "__main__":
+L143:         main()
+L144: 
+L145:     `
+L146: To use the Azure SDK library in your project, see cite16†this documentation†github.com . To provide feedback on this code sample, cite15†open a GitHub issue†github.com L147: 
+L148:     `package armstorage_test
+L149: 
+L150:     import (
+L151:     	"context"
+L152:     	"log"
+L153: 
+L154:     	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+L155:     	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage/v3"
+L156:     )
+L157:     // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/blob/4e9df3afd38a1cfa00a5d49419dce51bd014601f/specification/storage/resource-manager/Microsoft.Storage/stable/2025-06-01/examples/TableOperationGet.json
+L158:     func ExampleTableClient_Get() {
+L159:     	cred, err := azidentity.NewDefaultAzureCredential(nil)
+L160:     	if err != nil {
+L161:     		log.Fatalf("failed to obtain a credential: %v", err)
+L162:     	}
+L163:     	ctx := context.Background()
+L164:     	clientFactory, err := armstorage.NewClientFactory("<subscription-id>", cred, nil)
+L165:     	if err != nil {
+L166:     		log.Fatalf("failed to create client: %v", err)
+L167:     	}
+L168:     	res, err := clientFactory.NewTableClient().Get(ctx, "res3376", "sto328", "table6185", nil)
+L169:     	if err != nil {
+L170:     		log.Fatalf("failed to finish the request: %v", err)
+L171:     	}
+L172:     	// You could use response here. We use blank identifier for just demo purposes.
+L173:     	_ = res
+L174:     	// If the HTTP response code is 200 as defined in example definition, your response structure would look as follows. Please pay attention that all the values in the output are fake values for just demo purposes.
+L175:     	// res.Table = armstorage.Table{
+L176:     	// 	Name: to.Ptr("table6185"),
+L177:     	// 	Type: to.Ptr("Microsoft.Storage/storageAccounts/tableServices/tables"),
+L178:     	// 	ID: to.Ptr("/subscriptions/{subscription-id}/resourceGroups/res3376/providers/Microsoft.Storage/storageAccounts/sto328/tableServices/default/tables/table6185"),
+L179:     	// 	TableProperties: &armstorage.TableProperties{
+L180:     	// 		TableName: to.Ptr("table6185"),
+L181:     	// 	},
+L182:     	// }
+L183:     }
+L184: 
+L185:     `
+L186: To use the Azure SDK library in your project, see cite17†this documentation†github.com . To provide feedback on this code sample, cite15†open a GitHub issue†github.com L187: 
+L188:     `const { StorageManagementClient } = require("@azure/arm-storage");
+L189:     const { DefaultAzureCredential } = require("@azure/identity");
+L190:     require("dotenv/config");
+L191: 
+L192:     /**
+L193:      * This sample demonstrates how to Gets the table with the specified table name, under the specified account if it exists.
+L194:      *
+L195:      * @summary Gets the table with the specified table name, under the specified account if it exists.
+L196:      * x-ms-original-file: specification/storage/resource-manager/Microsoft.Storage/stable/2025-06-01/examples/TableOperationGet.json
+L197:      */
+L198:     async function tableOperationGet() {
+L199:       const subscriptionId = process.env["STORAGE_SUBSCRIPTION_ID"] || "{subscription-id}";
+L200:       const resourceGroupName = process.env["STORAGE_RESOURCE_GROUP"] || "res3376";
+L201:       const accountName = "sto328";
+L202:       const tableName = "table6185";
+L203:       const credential = new DefaultAzureCredential();
+L204:       const client = new StorageManagementClient(credential, subscriptionId);
+L205:       const result = await client.tableOperations.get(resourceGroupName, accountName, tableName);
+L206:       console.log(result);
+L207:     }
+L208: 
+L209:     `
+L210: To use the Azure SDK library in your project, see cite18†this documentation†github.com . To provide feedback on this code sample, cite15†open a GitHub issue†github.com L211: 
+L212:     `using Azure;
+L213:     using Azure.ResourceManager;
+L214:     using System;
+L215:     using System.Threading.Tasks;
+L216:     using Azure.Core;
+L217:     using Azure.Identity;
+L218:     using Azure.ResourceManager.Storage.Models;
+L219:     using Azure.ResourceManager.Storage;
+L220:     // Generated from example definition: specification/storage/resource-manager/Microsoft.Storage/stable/2025-06-01/examples/TableOperationGet.json
+L221:     // this example is just showing the usage of "Table_Get" operation, for the dependent resources, they will have to be created separately.
+L222: 
+L223:     // get your azure access token, for more details of how Azure SDK get your access token, please refer to https://learn.microsoft.com/en-us/dotnet/azure/sdk/authentication?tabs=command-line
+L224:     TokenCredential cred = new DefaultAzureCredential();
+L225:     // authenticate your client
+L226:     ArmClient client = new ArmClient(cred);
+L227: 
+L228:     // this example assumes you already have this TableServiceResource created on azure
+L229:     // for more information of creating TableServiceResource, please refer to the document of TableServiceResource
+L230:     string subscriptionId = "{subscription-id}";
+L231:     string resourceGroupName = "res3376";
+L232:     string accountName = "sto328";
+L233:     ResourceIdentifier tableServiceResourceId = TableServiceResource.CreateResourceIdentifier(subscriptionId, resourceGroupName, accountName);
+L234:     TableServiceResource tableService = client.GetTableServiceResource(tableServiceResourceId);
+L235: 
+L236:     // get the collection of this TableResource
+L237:     TableCollection collection = tableService.GetTables();
+L238: 
+L239:     // invoke the operation
+L240:     string tableName = "table6185";
+L241:     NullableResponse<TableResource> response = await collection.GetIfExistsAsync(tableName);
+L242:     TableResource result = response.HasValue ? response.Value : null;
+L243: 
+L244:     if (result == null)
+L245:     {
+L246:         Console.WriteLine("Succeeded with null as result");
+L247:     }
+L248:     else
+L249:     {
+L250:         // the variable result is a resource, you could call other operations on this instance as well
+L251:         // but just for demo, we get its data from this resource instance
+L252:         TableData resourceData = result.Data;
+L253:         // for demo we just print out the id
+L254:         Console.WriteLine($"Succeeded on id: {resourceData.Id}");
+L255:     }
+L256: 
+L257:     `
+L258: To use the Azure SDK library in your project, see cite19†this documentation†github.com . To provide feedback on this code sample, cite15†open a GitHub issue†github.com L259: #### Sample response
+L260: 
+L261: Status code:
+L262:     200
+L263: 
+L264:     `{
+L265:       "name": "table6185",
+L266:       "type": "Microsoft.Storage/storageAccounts/tableServices/tables",
+L267:       "id": "/subscriptions/{subscription-id}/resourceGroups/res3376/providers/Microsoft.Storage/storageAccounts/sto328/tableServices/default/tables/table6185",
+L268:       "properties": {
+L269:         "tableName": "table6185"
+L270:       }
+L271:     }`
+L272: ## Definitions
+L273: Name  | Description
+L274: --- | ---
+L275: cite7†CloudError | An error response from the Storage service.
+L276: cite20†CloudErrorBody | An error response from the Storage service.
+L277: cite21†createdByType | The type of identity that created the resource.
+L278: cite22†systemData | Metadata pertaining to creation and last modification of the resource.
+L279: cite6†Table | Properties of the table, including Id, resource name, resource type.
+L280: cite23†TableAccessPolicy | Table Access Policy Properties Object.
+L281: cite24†TableSignedIdentifier | Object to set Table Access Policy.
+L282: ### CloudError
+L283: 
+L284: Object
+L285: 
+L286: An error response from the Storage service.
+L287: 
+L288: Name  | Type  | Description
+L289: --- | --- | ---
+L290: error  | cite20†CloudErrorBody | An error response from the Storage service.
+L291: ### CloudErrorBody
+L292: 
+L293: Object
+L294: 
+L295: An error response from the Storage service.
+L296: Name  | Type  | Description
+L297: --- | --- | ---
+L298: code  | string  | An identifier for the error. Codes are invariant and are intended to be consumed programmatically.
+L299: details  | cite20†CloudErrorBody []  | A list of additional details about the error.
+L300: message  | string  | A message describing the error, intended to be suitable for display in a user interface.
+L301: target  | string  | The target of the particular error. For example, the name of the property in error.
+

@@ -1,0 +1,579 @@
+Jobs - Create Or Update - REST API (Azure Azure Container Apps) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/resource-manager/containerapps/jobs/create-or-update?view=rest-resource-manager-containerapps-2026-07-01)
+citeturn60view0 [wordlim: 200] Crawled: today; Content type: text/html; Source: find({"ref_id":"https://learn.microsoft.com/en-us/rest/api/resource-manager/containerapps/jobs/create-or-update?view=rest-resource-manager-containerapps-2026-07-01","pattern":"ephemeralStorage"}); Total lines: 2613
+L2181: periodSeconds  | integer (int32)  | How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1. Maximum value is 240.
+L2182: successThreshold  | integer (int32)  | Minimum consecutive successes for the probe to be considered successful after having failed. Defaults to 1. Must be 1 for liveness and startup. Minimum value is 1. Maximum value is 10.
+L2183: tcpSocket  | cite28†ContainerAppProbeTcpSocket | TCPSocket specifies an action involving a TCP port. TCP hooks not yet supported.
+L2184: terminationGracePeriodSeconds  | integer (int64)  | Optional duration in seconds the pod needs to terminate gracefully upon probe failure. The grace period is the duration in seconds after the processes running in the pod are sent a termination signal and the time when the processes are forcibly halted with a kill signal. Set this value longer than the expected cleanup time for your process. If this value is nil, the pod's terminationGracePeriodSeconds will be used.
+L2185: Otherwise, this value overrides the value provided by the pod spec. Value must be non-negative integer. The value zero indicates stop immediately via the kill signal (no opportunity to shut down). This is an alpha field and requires enabling ProbeTerminationGracePeriod feature gate. Maximum value is 3600 seconds (1 hour)
+L2186: timeoutSeconds  | integer (int32)  | Number of seconds after which the probe times out. Defaults to 1 second. Minimum value is 1. Maximum value is 240.
+L2187: type  | cite53†Type | The type of probe.
+L2188: ### ContainerAppProbeHttpGet
+L2189: 
+L2190: Object
+L2191: 
+L2192: HTTPGet specifies the http request to perform.
+L2193: Name  | Type  | Description
+L2194: --- | --- | ---
+L2195: host  | string  | Host name to connect to, defaults to the pod IP. You probably want to set "Host" in httpHeaders instead.
+L2196: httpHeaders  | cite27†ContainerAppProbeHttpGetHttpHeadersItem []  | Custom headers to set in the request. HTTP allows repeated headers.
+L2197: path  | string  | Path to access on the HTTP server.
+L2198: port  | integer (int32)  | Name or number of the port to access on the container. Number must be in the range 1 to 65535. Name must be an IANA_SVC_NAME.
+L2199: scheme  | cite47†Scheme | Scheme to use for connecting to the host. Defaults to HTTP.
+L2200: ### ContainerAppProbeHttpGetHttpHeadersItem
+L2201: 
+L2202: Object
+L2203: 
+L2204: HTTPHeader describes a custom header to be used in HTTP probes
+L2205: 
+L2206: Name  | Type  | Description
+L2207: --- | --- | ---
+L2208: name  | string  | The header field name
+L2209: value  | string  | The header field value
+L2210: ### ContainerAppProbeTcpSocket
+L2211: 
+L2212: Object
+L2213: 
+L2214: TCPSocket specifies an action involving a TCP port. TCP hooks not yet supported.
+L2215: 
+L2216: Name  | Type  | Description
+L2217: --- | --- | ---
+L2218: host  | string  | Optional: Host name to connect to, defaults to the pod IP.
+L2219: port  | integer (int32)  | Number or name of the port to access on the container. Number must be in the range 1 to 65535. Name must be an IANA_SVC_NAME.
+L2220: ### ContainerResources
+L2221: 
+L2222: Object
+L2223: 
+L2224: Container App container resource requirements.
+L2225: 
+L2226: Name  | Type  | Description
+L2227: --- | --- | ---
+L2228: cpu  | number (double)  | Required CPU in cores, e.g. 0.5
+L2229: ephemeralStorage  | string  | Ephemeral Storage, e.g. "1Gi"
+L2230: memory  | string  | Required memory, e.g. "250Mb"
+L2231: 
+L2232: ### createdByType
+L2233: 
+L2234: Enumeration
+L2235: 
+L2236: The type of identity that created the resource.
+L2237: 
+L2238: Value  | Description
+L2239: --- | ---
+L2240: User  |
+L2241: Application  |
+L2242: ManagedIdentity  |
+L2243: Key  |
+L2244: ### DefaultErrorResponse
+L2245: 
+L2246: Object
+L2247: 
+L2248: App Service error response.
+L2249: 
+L2250: Name  | Type  | Description
+L2251: --- | --- | ---
+L2252: error  | cite31†DefaultErrorResponseError | Error model.
+L2253: ### DefaultErrorResponseError
+L2254: 
+L2255: Object
+L2256: 
+L2257: Error model.
+L2258: 
+L2259: Name  | Type  | Description
+L2260: --- | --- | ---
+L2261: code  | string  | Standardized string to programmatically identify the error.
+L2262: details  | cite32†DefaultErrorResponseErrorDetailsItem []  | Details or the error
+L2263: innererror  | string  | More information to debug error.
+L2264: message  | string  | Detailed error description and debugging information.
+L2265: target  | string  | Detailed error description and debugging information.
+L2266: ### DefaultErrorResponseErrorDetailsItem
+L2267: 
+L2268: Object
+L2269: 
+L2270: Detailed errors.
+L2271: 
+L2272: Name  | Type  | Description
+L2273: --- | --- | ---
+L2274: code  | string  | Standardized string to programmatically identify the error.
+L2275: message  | string  | Detailed error description and debugging information.
+L2276: target  | string  | Detailed error description and debugging information.
+L2277: ### EnvironmentVar
+L2278: 
+L2279: Object
+L2280: 
+L2281: Container App container environment variable.
+L2282: 
+L2283: Name  | Type  | Description
+L2284: --- | --- | ---
+L2285: name  | string  | Environment variable name.
+L2286: secretRef  | string  | Name of the Container App secret from which to pull the environment variable value.
+L2287: value  | string  | Non-secret environment variable value.
+L2288: ### IdentitySettings
+L2289: 
+L2290: Object
+L2291: 
+L2292: Optional settings for a Managed Identity that is assigned to the Container App.
+L2293: 
+L2294: Name  | Type  | Default value  | Description
+L2295: --- | --- | --- | ---
+L2296: identity  | string  |  | The resource ID of a user-assigned managed identity that is assigned to the Container App, or 'system' for system-assigned identity.
+L2297: lifecycle  | cite35†IdentitySettingsLifeCycle | All  | Use to select the lifecycle stages of a Container App during which the Managed Identity should be available.
+L2298: ### IdentitySettingsLifeCycle
+L2299: 
+L2300: Enumeration
+L2301: 
+L2302: Use to select the lifecycle stages of a Container App during which the Managed Identity should be available.
+L2303: 
+L2304: Value  | Description
+L2305: --- | ---
+L2306: None  | Do not use managed identity during any lifecycle stage.
+L2307: Main  | Use managed identity during the main stage of the Container App lifecycle.
+L2308: Init  | Use managed identity during the init stage of the Container App lifecycle.
+L2309: All  | Use managed identity during all lifecycle stages of the Container App.
+L2310: ### InitContainer
+L2311: 
+L2312: Object
+L2313: 
+L2314: Container App init container definition
+L2315: 
+L2316: Name  | Type  | Description
+L2317: --- | --- | ---
+L2318: args  | string[]  | Container start command arguments.
+L2319: command  | string[]  | Container start command.
+L2320: env  | cite33†EnvironmentVar []  | Container environment variables.
+L2321: image  | string  | Container image tag.
+L2322: name  | string  | Custom container name.
+L2323: resources  | cite29†ContainerResources | Container resource requirements.
+L2324: volumeMounts  | cite56†VolumeMount []  | Container volume mounts.
+L2325: ### Job
+L2326: 
+L2327: Object
+L2328: 
+L2329: Container App Job
+L2330: Name  | Type  | Description
+L2331: --- | --- | ---
+L2332: id  | string (arm-id)  | Fully qualified resource ID for the resource. E.g. "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}"
+L2333: identity  | cite6†ManagedServiceIdentity | The managed service identities assigned to this resource.
+L2334: location  | string  | The geo-location where the resource lives
+L2335: name  | string  | The name of the resource
+L2336: properties.configuration  | cite7†JobConfiguration | Container Apps Job configuration properties.
+L2337: properties.environmentId  | string  | Resource ID of environment.
+L2338: properties.eventStreamEndpoint  | string  | The endpoint of the eventstream of the container apps job.
+L2339: properties.outboundIpAddresses  | string[]  | Outbound IP Addresses of a container apps job.
+L2340: properties.provisioningState  | cite40†JobProvisioningState | Provisioning state of the Container Apps Job.
+L2341: properties.runningState  | cite41†JobRunningState | Current running state of the job
+L2342: properties.template  | cite8†JobTemplate | Container Apps job definition.
+L2343: properties.workloadProfileName  | string  | Workload profile name to pin for container apps job execution.
+L2344: systemData  | cite51†systemData | Azure Resource Manager metadata containing createdBy and modifiedBy information.
+L2345: tags  | object  | Resource tags.
+L2346: type  | string  | The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or "Microsoft.Storage/storageAccounts"
+L2347: ### JobConfiguration
+L2348: 
+L2349: Object
+L2350: 
+L2351: Non versioned Container Apps Job configuration properties
+L2352: Name  | Type  | Default value  | Description
+L2353: --- | --- | --- | ---
+L2354: eventTriggerConfig  | cite37†JobConfigurationEventTriggerConfig |  | Trigger configuration of an event driven job.
+L2355: identitySettings  | cite34†IdentitySettings []  |  | Optional settings for Managed Identities that are assigned to the Container App Job. If a Managed Identity is not specified here, default settings will be used.
+L2356: manualTriggerConfig  | cite38†JobConfigurationManualTriggerConfig |  | Manual trigger configuration for a single execution job. Properties replicaCompletionCount and parallelism would be set to 1 by default
+L2357: registries  | cite45†RegistryCredentials []  |  | Collection of private container registry credentials used by a Container apps job
+L2358: replicaRetryLimit  | integer (int32)  |  | Maximum number of retries before failing the job.
+L2359: replicaTimeout  | integer (int32)  |  | Maximum number of seconds a replica is allowed to run.
+L2360: scheduleTriggerConfig  | cite39†JobConfigurationScheduleTriggerConfig |  | Cron formatted repeating trigger schedule ("* * * * *") for cronjobs. Properties completions and parallelism would be set to 1 by default
+L2361: secrets  | cite48†Secret []  |  | Collection of secrets used by a Container Apps Job
+L2362: triggerType  | cite52†TriggerType | Manual  | Trigger type of the job
+L2363: ### JobConfigurationEventTriggerConfig
+L2364: 
+L2365: Object
+L2366: 
+L2367: Trigger configuration of an event driven job.
+L2368: 
+L2369: Name  | Type  | Description
+L2370: --- | --- | ---
+L2371: parallelism  | integer (int32)  | Number of parallel replicas of a job that can run at a given time.
+L2372: replicaCompletionCount  | integer (int32)  | Minimum number of successful replica completions before overall job completion.
+L2373: scale  | cite42†JobScale | Scaling configurations for event driven jobs.
+--------------------------------------------------------------------------------
+Jobs - Create Or Update - REST API (Azure Azure Container Apps) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/resource-manager/containerapps/jobs/create-or-update?view=rest-resource-manager-containerapps-2026-07-01)
+citeturn60view1 [wordlim: 200] Crawled: today; Content type: text/html; Source: find({"ref_id":"https://learn.microsoft.com/en-us/rest/api/resource-manager/containerapps/jobs/create-or-update?view=rest-resource-manager-containerapps-2026-07-01","pattern":"EmptyDir"}); Total lines: 2613
+L2139: cite42†JobScale | Scaling configurations for event driven jobs.
+L2140: cite43†JobScaleRule | Scaling rule.
+L2141: cite8†JobTemplate | Container Apps Job versioned application definition. Defines the desired state of an immutable revision. Any changes to this section Will result in a new revision being created
+L2142: cite6†ManagedServiceIdentity | Managed service identity (system assigned and/or user assigned identities)
+L2143: cite44†ManagedServiceIdentityType | Type of managed service identity (where both SystemAssigned and UserAssigned types are allowed).
+L2144: cite45†RegistryCredentials | Container App Private Registry
+L2145: cite46†ScaleRuleAuth | Auth Secrets for Scale Rule
+L2146: cite47†Scheme | Scheme to use for connecting to the host. Defaults to HTTP.
+L2147: cite48†Secret | Secret definition.
+L2148: cite49†SecretVolumeItem | Secret to be added to volume.
+L2149: cite50†StorageType | Storage type for the volume. If not provided, use EmptyDir.
+L2150: cite51†systemData | Metadata pertaining to creation and last modification of the resource.
+L2151: cite52†TriggerType | Trigger type of the job
+L2152: cite53†Type | The type of probe.
+L2153: cite54†UserAssignedIdentity | User assigned identity properties
+L2154: cite55†Volume | Volume definitions for the Container App.
+L2155: cite56†VolumeMount | Volume mount for the Container App.
+L2156: ### Container
+L2157: 
+L2158: Object
+L2159: 
+L2160: Container App container definition
+L2161: Name  | Type  | Description
+L2162: --- | --- | ---
+L2163: args  | string[]  | Container start command arguments.
+L2164: command  | string[]  | Container start command.
+L2165: env  | cite33†EnvironmentVar []  | Container environment variables.
+L2166: image  | string  | Container image tag.
+L2167: name  | string  | Custom container name.
+L2168: probes  | cite25†ContainerAppProbe []  | List of probes for the container.
+L2169: resources  | cite29†ContainerResources | Container resource requirements.
+L2170: volumeMounts  | cite56†VolumeMount []  | Container volume mounts.
+L2447: Name  | Type  | Description
+L2448: --- | --- | ---
+L2449: containers  | cite24†Container []  | List of container definitions for the Container App.
+L2450: initContainers  | cite36†InitContainer []  | List of specialized containers that run before app containers.
+L2452: ### ManagedServiceIdentity
+L2453: 
+L2454: Object
+L2455: 
+L2456: Managed service identity (system assigned and/or user assigned identities)
+L2457: Name  | Type  | Description
+L2458: --- | --- | ---
+L2459: principalId  | string (uuid)  | The service principal ID of the system assigned identity. This property will only be provided for a system assigned identity.
+L2460: tenantId  | string (uuid)  | The tenant ID of the system assigned identity. This property will only be provided for a system assigned identity.
+L2461: type  | cite44†ManagedServiceIdentityType | Type of managed service identity (where both SystemAssigned and UserAssigned types are allowed).
+L2462: userAssignedIdentities  | <string,  cite54†UserAssignedIdentity >  | User-Assigned Identities
+L2463: The set of user assigned identities associated with the resource. The userAssignedIdentities dictionary keys will be ARM resource ids in the form: '/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/{identityName}. The dictionary values can be empty objects ({}) in requests.
+L2464: ### ManagedServiceIdentityType
+L2465: 
+L2466: Enumeration
+L2467: 
+L2468: Type of managed service identity (where both SystemAssigned and UserAssigned types are allowed).
+L2469: 
+L2470: Value  | Description
+L2471: --- | ---
+L2472: None  |
+L2473: SystemAssigned  |
+L2474: UserAssigned  |
+L2475: SystemAssigned,UserAssigned  |
+L2476: ### RegistryCredentials
+L2477: 
+L2478: Object
+L2479: 
+L2480: Container App Private Registry
+L2481: Name  | Type  | Description
+L2482: --- | --- | ---
+L2483: identity  | string  | A Managed Identity to use to authenticate with Azure Container Registry. For user-assigned identities, use the full user-assigned identity Resource ID. For system-assigned identities, use 'system'
+L2484: passwordSecretRef  | string  | The name of the Secret that contains the registry login password
+L2485: server  | string  | Container Registry Server
+L2486: username  | string  | Container Registry Username
+L2487: ### ScaleRuleAuth
+L2488: 
+L2489: Object
+L2490: 
+L2491: Auth Secrets for Scale Rule
+L2492: 
+L2493: Name  | Type  | Description
+L2494: --- | --- | ---
+L2495: secretRef  | string  | Name of the secret from which to pull the auth params.
+L2496: triggerParameter  | string  | Trigger Parameter that uses the secret
+L2497: 
+L2498: ### Scheme
+L2499: 
+L2500: Enumeration
+L2501: 
+L2502: Scheme to use for connecting to the host. Defaults to HTTP.
+L2503: 
+L2504: Value  | Description
+L2505: --- | ---
+L2506: HTTP  | HTTP
+L2507: HTTPS  | HTTPS
+L2508: ### Secret
+L2509: 
+L2510: Object
+L2511: 
+L2512: Secret definition.
+L2513: 
+L2514: Name  | Type  | Description
+L2515: --- | --- | ---
+L2516: identity  | string  | Resource ID of a managed identity to authenticate with Azure Key Vault, or System to use a system-assigned identity.
+L2517: keyVaultUrl  | string  | Azure Key Vault URL pointing to the secret referenced by the container app.
+L2518: name  | string  | Secret Name.
+L2519: value  | string (password)  | Secret Value.
+L2520: ### SecretVolumeItem
+L2521: 
+L2522: Object
+L2523: 
+L2524: Secret to be added to volume.
+L2525: 
+L2526: Name  | Type  | Description
+L2527: --- | --- | ---
+L2528: path  | string  | Path to project secret to. If no path is provided, path defaults to name of secret listed in secretRef.
+L2529: secretRef  | string  | Name of the Container App secret from which to pull the secret value.
+L2530: ### StorageType
+L2531: 
+L2532: Enumeration
+L2533: 
+L2534: Storage type for the volume. If not provided, use EmptyDir.
+L2535: 
+L2536: Value  | Description
+L2537: --- | ---
+L2538: AzureFile  | AzureFile
+L2539: EmptyDir  | EmptyDir
+L2540: Secret  | Secret
+L2541: NfsAzureFile  | NfsAzureFile
+L2542: ### systemData
+L2543: 
+L2544: Object
+L2545: 
+L2546: Metadata pertaining to creation and last modification of the resource.
+L2547: Name  | Type  | Description
+L2548: --- | --- | ---
+L2549: createdAt  | string (date-time)  | The timestamp of resource creation (UTC).
+L2550: createdBy  | string  | The identity that created the resource.
+L2551: createdByType  | cite30†createdByType | The type of identity that created the resource.
+L2552: lastModifiedAt  | string (date-time)  | The timestamp of resource last modification (UTC)
+L2553: lastModifiedBy  | string  | The identity that last modified the resource.
+L2554: lastModifiedByType  | cite30†createdByType | The type of identity that last modified the resource.
+L2555: ### TriggerType
+L2556: 
+L2557: Enumeration
+L2558: 
+L2559: Trigger type of the job
+L2560: 
+L2561: Value  | Description
+L2562: --- | ---
+L2563: Schedule  | Schedule
+L2564: Event  | Event
+L2565: Manual  | Manual
+L2566: 
+L2567: ### Type
+L2568: 
+L2569: Enumeration
+L2570: 
+L2571: The type of probe.
+L2572: 
+L2573: Value  | Description
+L2574: --- | ---
+L2575: Liveness  | Liveness
+L2576: Readiness  | Readiness
+L2577: Startup  | Startup
+L2578: ### UserAssignedIdentity
+L2579: 
+L2580: Object
+L2581: 
+L2582: User assigned identity properties
+L2583: 
+L2584: Name  | Type  | Description
+L2585: --- | --- | ---
+L2586: clientId  | string (uuid)  | The client ID of the assigned identity.
+L2587: principalId  | string (uuid)  | The principal ID of the assigned identity.
+L2588: ### Volume
+L2589: 
+L2590: Object
+L2591: 
+L2592: Volume definitions for the Container App.
+L2593: Name  | Type  | Description
+L2594: --- | --- | ---
+L2595: mountOptions  | string  | Mount options used while mounting the Azure file share or NFS Azure file share. Must be a comma-separated string.
+L2596: name  | string  | Volume name.
+L2597: secrets  | cite49†SecretVolumeItem []  | List of secrets to be added in volume. If no secrets are provided, all secrets in collection will be added to volume.
+L2598: storageName  | string  | Name of storage resource. No need to provide for EmptyDir and Secret.
+L2599: storageType  | cite50†StorageType | Storage type for the volume. If not provided, use EmptyDir.
+L2600: ### VolumeMount
+L2601: 
+L2602: Object
+L2603: 
+L2604: Volume mount for the Container App.
+L2605: 
+L2606: Name  | Type  | Description
+L2607: --- | --- | ---
+L2608: mountPath  | string  | Path within the container at which the volume should be mounted.Must not contain ':'.
+L2609: subPath  | string  | Path within the volume from which the container's volume should be mounted. Defaults to "" (volume's root).
+L2610: volumeName  | string  | This must match the Name of a Volume.
+L2611: 
+L2612: ### In this article
+--------------------------------------------------------------------------------
+Containers in Azure Container Apps | Microsoft Learn (https://learn.microsoft.com/en-us/azure/container-apps/containers)
+citeturn60view2 [wordlim: 200] Crawled: today; Content type: text/html; Source: find({"ref_id":"https://learn.microsoft.com/en-us/azure/container-apps/containers","pattern":"Jobs features"}); Total lines: 326
+L0: cite0†Skip to main content cite1†Skip to Ask Learn chat experience L1: 
+L2: This browser is no longer supported.
+L3: 
+L4: Upgrade to Microsoft Edge to take advantage of the latest features, security updates, and technical support.
+L5: 
+L6: cite2†Download Microsoft Edge†go.microsoft.com cite3†More info about Internet Explorer and Microsoft Edge L7: 
+L8: Table of contents Exit editor mode
+L9: 
+L10: Ask Learn Ask Learn
+L11: 
+L12: Reading mode Table of contents cite1†Read in English Add Add to Plans cite4†Edit†github.com L13: 
+L14: * * *
+L15: 
+L16: Copy Markdown Print
+L17: 
+L18: * * *
+L19: 
+L20: Note
+L21: Access to this page requires authorization. You can try cite1†signing in or changing directories.
+L22: 
+L23: Access to this page requires authorization. You can try changing directories.
+L24: # Containers in Azure Container Apps
+L25: 
+L26: Feedback
+L27: 
+L28: Summarize this article for me
+L29: ## In this article
+L30: 
+L31: Azure Container Apps manages the details of Kubernetes and container orchestration for you. Containers in Azure Container Apps can use any runtime, programming language, or development stack of your choice.
+L32: 
+L33: cite5†Image: Azure Container Apps: Containers L34: 
+L35: Azure Container Apps supports:
+L36: 
+L37:   * Any Linux-based x86-64 (`linux/amd64`) container image
+L38:   * Containers from any public or private container registry
+L39:   * Optional cite6†sidecar and cite7†init containers
+L40: 
+L41: Features also include:
+L42:   * Apps use the `template` configuration section to define the container image and other settings. Changes to the `template` configuration section trigger a new cite8†container app revision .
+L43:   * If a container crashes, it automatically restarts.
+L44: 
+L45: Jobs features include:
+L46:   * Job executions use the `template` configuration section to define the container image and other settings when each execution starts.
+L47:   * If a container exits with a non-zero exit code, the job execution is marked as failed. You can configure a job to retry failed executions.
+L48: ## Configuration
+L49: Most container apps have a single container. In advanced scenarios, an app can also have sidecar and init containers. In a container app definition, the main app and its sidecar containers are listed in the `containers` array in the cite9†`properties.template` section, and init containers are listed in the `initContainers` array. The following excerpt shows the available configuration options when setting up an app's containers.
+L50: 
+L51:     `{
+L52:       "properties": {
+L53:         "template": {
+L54:           "containers": [
+L55:             {
+L56:               "name": "main",
+L57:               "image": "[parameters('container_image')]",
+L58:               "env": [
+L59:                 {
+L60:                   "name": "HTTP_PORT",
+L61:                   "value": "80"
+L62:                 },
+L63:                 {
+L64:                   "name": "SECRET_VAL",
+L65:                   "secretRef": "mysecret"
+L66:                 }
+L67:               ],
+L68:               "resources": {
+L69:                 "cpu": 0.5,
+L70:                 "memory": "1Gi"
+L71:               },
+L72:               "volumeMounts": [
+L73:                 {
+L74:                   "mountPath": "/appsettings",
+L75:                   "volumeName": "appsettings-volume"
+L76:                 }
+L77:               ],
+L78:               "probes": [
+L79:                 {
+L80:                   "type": "liveness",
+L81:                   "httpGet": {
+L82:                     "path": "/health",
+L83:                     "port": 8080,
+L84:                     "httpHeaders": [
+L85:                       {
+L86:                         "name": "Custom-Header",
+L87:                         "value": "liveness probe"
+L88:                       }
+L89:                     ]
+L90:                   },
+L91:                   "initialDelaySeconds": 7,
+L92:                   "periodSeconds": 3
+L93:                 },
+L94:                 {
+L95:                   "type": "readiness",
+L96:                   "tcpSocket": {
+L97:                     "port": 8081
+L98:                   },
+L99:                   "initialDelaySeconds": 10,
+L100:                   "periodSeconds": 3
+L101:                 },
+L102:                 {
+L103:                   "type": "startup",
+L104:                   "httpGet": {
+L105:                     "path": "/startup",
+L106:                     "port": 8080,
+L107:                     "httpHeaders": [
+L108:                       {
+L109:                         "name": "Custom-Header",
+L110:                         "value": "startup probe"
+L111:                       }
+L112:                     ]
+L113:                   },
+L114:                   "initialDelaySeconds": 3,
+L115:                   "periodSeconds": 3
+L116:                 }
+L117:               ]
+L118:             }
+L119:           ]
+L120:         },
+L121:         "initContainers": [
+L122:           {
+L123:             "name": "init",
+L124:             "image": "[parameters('init_container_image')]",
+L125:             "resources": {
+L126:               "cpu": 0.25,
+L127:               "memory": "0.5Gi"
+L128:             },
+L129:             "volumeMounts": [
+L130:               {
+L131:                 "mountPath": "/appsettings",
+L132:                 "volumeName": "appsettings-volume"
+L133:               }
+L134:             ]
+L135:           }
+L136:         ]
+L137:         ...
+L138:       }
+L139:       ...
+L140:     }
+L141:     `
+L142: Setting  | Description  | Remarks
+L143: --- | --- | ---
+L144: `image`  | The container image name for your container app.  | This value takes the form of `repository/<IMAGE_NAME>:<TAG>`.
+L145: Avoid using static tags like `latest` for container images. Using static tags can lead to caching problems and can make your app difficult to troubleshoot. Instead, use unique tags for each deployment, such as a Git hash or date and time to ensure that updates are properly tracked and deployed.
+L146: `name`  | Friendly name of the container.  | Used for reporting and identification.
+L147: `command`  | The container's startup command.  | Equivalent to Docker's cite10†entrypoint†docs.docker.com field.
+L148: `args`  | Start up command arguments.  | Entries in the array are joined together to create a parameter list to pass to the startup command.
+L149: `env`  | An array of name/value pairs that define environment variables.  | Use `secretRef` instead of the `value` field when referencing a secret.
+L150: `resources.cpu`  | The number of CPUs allocated to the container.  | See cite11†vCPU and memory allocation requirements L151: `resources.memory`  | The amount of RAM allocated to the container.  | See cite11†vCPU and memory allocation requirements L152: `volumeMounts`  | An array of volume mount definitions.  | You can define a temporary or permanent storage volumes for your container. For more information about storage volumes, see cite12†Use storage mounts in Azure Container Apps .
+L153: `probes`  | An array of health probes enabled in the container.  | For more information about probes settings, see cite13†Health probes in Azure Container Apps .
+L154: ### vCPU and memory allocation requirements
+L155: 
+L156: When you use the Consumption plan, the total CPU and memory allocated to all the containers in a container app must add up to one of the following combinations.
+L157: vCPUs (cores)  | Memory
+L158: --- | ---
+L159: `0.25`  | `0.5Gi`
+L160: `0.5`  | `1.0Gi`
+L161: `0.75`  | `1.5Gi`
+L162: `1.0`  | `2.0Gi`
+L163: `1.25`  | `2.5Gi`
+L164: `1.5`  | `3.0Gi`
+L165: `1.75`  | `3.5Gi`
+L166: `2.0`  | `4.0Gi`
+L167: `2.25`  | `4.5Gi`
+L168: `2.5`  | `5.0Gi`
+L169: `2.75`  | `5.5Gi`
+L170: `3.0`  | `6.0Gi`
+L171: `3.25`  | `6.5Gi`
+L172: `3.5`  | `7.0Gi`
+L173: `3.75`  | `7.5Gi`
+L174: `4.0`  | `8.0Gi`
+L175: 
+L176: Note
+L177: 
+L178: Apps using the Consumption plan in a Consumption only environment are limited to a maximum of 2 cores and 4Gi of memory.
+L179: ## Multiple containers
+L180: 
+L181: In advanced scenarios, you can run multiple containers in a single container app. Use this pattern only in specific instances where your containers are tightly coupled.
+L182: 
+L183: For most microservice scenarios, the best practice is to deploy each service as a separate container app.
+L184: 
+L185: Multiple containers in the same container app share hard disk and network resources and experience the same cite8†application lifecycle .
+

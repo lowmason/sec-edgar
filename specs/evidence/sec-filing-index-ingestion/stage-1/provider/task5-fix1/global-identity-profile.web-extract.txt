@@ -1,0 +1,542 @@
+Workload profiles in Azure Container Apps | Microsoft Learn (https://learn.microsoft.com/en-us/azure/container-apps/workload-profiles-overview)
+citeturn94search0 [wordlim: 200] Crawled: 2 weeks ago; A workload profile determines the type and amount of compute and memory resources available to container apps deployed in an Azure Container Apps environment. ... Dedicated  | GPU  | Profiles with GPU‑enabled compute are available in select regions only. ... All Consumption profiles support serverless scaling and are billed based on per‑replica usage. ... You can limit the memory and CPU usage for each app within a workload profile.
+
+# Workload profiles in Azure Container Apps
+
+Feedback
+
+Summarize this article for me
+
+## In this article
+
+  1. Profile types
+  2. Workload profile form factors
+  3. Profile details
+  4. Resource consumption and scaling
+  5. Networking
+  6. Next steps
+Show 2 more
+
+A workload profile determines the type and amount of compute and memory resources available to container apps deployed in an Azure Container Apps environment. You can configure different profiles to fit the different needs of your applications.
+
+## Profile types
+
+Azure Container Apps supports three workload profile types: Consumption, Dedicated, and Flex.
+
+Each profile type determines how your apps scale, the level of resource isolation, and how you're billed.
+
+  * Consumption profiles use a serverless architecture. Apps on this profile automatically scale in and out on-demand and optionally scale to zero when idle. You pay only for the resources your running apps use. The serverless-oriented billing also applies to serverless GPUs for specialized workloads. 
+## Workload profile form factors
+
+Different workload profile types offer different form factors such as general purpose, memory‑optimized, GPU, or blended.
+
+Expand table
+
+Profile type  | Form factors  | Description  | Potential use
+--- | --- | --- | ---
+Consumption  | General purpose  | Automatically added to new environments and runs on serverless Consumption infrastructure.  | Apps that don't require specific hardware requirements.
+Consumption  | GPU  | Scale‑to‑zero serverless GPUs are available in regions like West US, Australia East, and Sweden Central. To see a full list of available regions, see serverless GPU supported regions  | Apps that require GPU acceleration.
+Dedicated  | General purpose  | Profiles with a balance of CPU and memory resources.  | Apps that require larger amounts of CPU or memory.
+Dedicated  | Memory optimized  | Profiles with increased memory resources for in‑memory data or machine‑learning models.  | Apps with high memory requirements.
+Dedicated  | GPU  | Profiles with GPU‑enabled compute are available in select regions only. GPU‑enabled Dedicated profiles must be configured when creating an environment.  | Apps that require GPU acceleration and dedicated hardware.
+
+Note
+
+When using GPU‑enabled profiles, ensure your application runs the latest version of CUDA.
+
+## Profile details
+
+The following tables summarize the available workload profiles by profile type, grouping similar sizes together to help you decide which option is best for you. The vCPU and memory fields show the range of resources across profile sizes.
+
+### Consumption profile details
+
+Expand table
+
+Profile names  | vCPU range  | Memory range  | GPU type  | Regions  | Allocation
+--- | --- | --- | --- | --- | ---
+Consumption  | 0.25-4  | 0.5-8 GiB  |  | All supported regions  | per replica
+Consumption-GPU-NC24-A100, Consumption-GPU-NC8as-T4  | 8–24  | 56–220 GiB  | NVIDIA T4, A100  | To see a full list of available regions, see serverless GPU supported regions  | per replica
+
+All Consumption profiles support serverless scaling and are billed based on per‑replica usage.
+
+### Dedicated profile details
+
+Expand table
+
+Classification  | Profile names  | vCPU range  | Memory range  | GPU type  | Regions  | Allocation
+--- | --- | --- | --- | --- | --- | ---
+General Purpose  | D4, D8, D16, D32  | 4–32  | 16–128 GiB  | None  | All supported regions  | per node
+Memory Optimized  | E4, E8, E16, E32  | 4–32  | 32–256 GiB  | None  | All supported regions  | per node
+Confidential Compute  | DC4, DC8, DC16, DC32, DC48, DC64, DC96  | 4-96  | 16-384 GiB  | None  | UAENorth  | per node
+GPU  | NC24-A100, NC48-A100, NC96-A100  | 24–96  | 220–880 GiB  | A100  | West US 3, North Europe  | per node
+
+Note
+
+GPU‑enabled Dedicated profiles allocate capacity on a per‑case basis. You must submit a support ticket to request the required capacity.
+
+### Flexible profile details (preview)
+
+Expand table
+
+Profile names  | vCPU range  | Memory range  | Regions  | Allocation
+--- | --- | --- | --- | ---
+Flexible  | 0.25-4  | 0.5-16 GiB  | Australia East, Brazil South, Canada Central, Canada East, Central India, East Asia, Germany West Central, Korea Central, North Europe, Southeast Asia, Sweden Central, UK West, West Central US, West US 3  | per replica
+
+## Resource consumption and scaling
+
+You can limit the memory and CPU usage for each app within a workload profile. As multiple apps can share a single profile instance, you might need to adjust the profile’s memory settings to ensure adequate resources for all apps.
+
+Keep in mind that the total resources available to your apps are slightly less than the profile’s allocation, as the runtime reserves some compute resources. When demand increases beyond the current resources, the system automatically adds more profile instances. As demand decreases, the system removes instances. You can control scaling by setting minimum and maximum instance counts. Billing is based on the number of running profile instances.
+
+## Networking
+
+Workload profile environments expose extra networking features, such as user‑defined routes, to secure ingress and egress traffic. See the networking documentation for details.
+
+## Next steps
+
+  * Manage workload profiles with the CLI--------------------------------------------------------------------------------
+Isolation Scope For User Assigned Managed Identities - Managed identities for Azure resources | Microsoft Learn (https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/managed-identities-isolation-scope)
+citeturn94search1 [wordlim: 200] Crawled: last week; Regional isolation for user-assigned managed identities helps improve security and resilience by restricting where managed identities can be used. ... If the isolation scope property on a user-assigned managed identity isn't set or set to `None` (the default), the identity can be used across all regions. ...   * Use one managed identity per region: Create separate managed identities for each Azure region where your services are deployed
+
+# Isolation scope for user-assigned managed identities
+
+Feedback
+
+Summarize this article for me
+
+## In this article
+
+  1. Understand regional isolation
+  2. Benefits of regional isolation
+  3. Risks of setting isolation scope to none
+  4. Best practices
+  5. Next steps
+
+You can set your managed identity's isolation scope value to either `None` or `Regional`:
+
+  * None (default): The identity can be used across all regions
+  * Regional: The identity can only be used by source resources in the same region as the managed identity
+
+Setting the isolation scope to `Regional` ensures that the managed identity usage is tightly scoped and aligned with your security and operational boundaries. Regional isolation for user-assigned managed identities helps improve security and resilience by restricting where managed identities can be used.
+
+## Understand regional isolation
+
+When you're working with managed identities, there are two types of resources:
+
+  * Source resource: The resource that has the managed identity assigned to it
+  * Target resource: The resource that the source resource accesses using the managed identity
+
+For example, if an App Service needs to access a Storage Account using a managed identity, the App Service is the source resource and the Storage Account is the target resource.
+
+Regional isolation applies to the relationship between the managed identity and the source resource. When you enable regional isolation scope:
+
+  * The managed identity can only be assigned to source resources in the same region.
+  * Source resources can still access target resources in other regions (with proper role permissions). For example, a managed identity assigned to a source resource in West US can be used to access target resources in Spain Central or UAE North.
+
+## Benefits of regional isolation
+
+Regional isolation provides several key benefits:
+
+### Minimizes security exposure
+
+By scoping a managed identity to a single region, you prevent it from being used across regions, reducing the blast radius if the identity is ever compromised. 
+With region-specific identities, you can design independent recovery strategies per region. This avoids scenarios where a global identity becomes a bottleneck or single point of failure during regional failover or recovery.
+
+## Risks of setting isolation scope to none
+
+If the isolation scope property on a user-assigned managed identity isn't set or set to `None` (the default), the identity can be used across all regions. This introduces several risks:
+
+  * Cross-region token usage: A token issued in one region could be used to access resources in another, violating data residency or compliance boundaries.
+  * Unintended access: You might unknowingly assign the identity to resources in multiple regions, leading to broader-than-intended access.
+  * Harder to audit and troubleshoot: Without isolation, it becomes difficult to trace which resources are using the identity and where, complicating incident response.
+  * Increased blast radius: A compromised identity could be used to access resources across your entire deployment, not just in one region.
+
+To avoid these risks, set isolation scope to `Regional` when creating a user-assigned managed identity.
+
+## Best practices
+
+To maximize the benefits of regional isolation:
+
+  * Use one managed identity per region: Create separate managed identities for each Azure region where your services are deployed
+  * Match managed identity region to compute resources: Ensure managed identities reside in the same region as their source resources
+  * Plan for dependencies: Ensure all compute resources sharing a managed identity have access to the same dependencies. These dependencies are the downstream services, resources, or systems that a compute resource (like a VM, Function App, or App Service) needs to access using its managed identity.
+
+## Next steps
+
+  * Enable regional isolation for user-assigned managed identities--------------------------------------------------------------------------------
+Available Workload Profiles - Get - REST API (Azure Azure Container Apps) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/resource-manager/containerapps/available-workload-profiles/get?view=rest-resource-manager-containerapps-2026-01-01)
+citeturn94search2 [wordlim: 200] Crawled: 2 months ago; Get all available workload profiles for a location. ...     from azure.mgmt.appcontainers import ContainerAppsAPIClient ... AvailableWorkloadProfile  | A workload profile with specific hardware configure to run container apps. ... location  | string  | Region of the workload profile.
+
+Note
+
+Access to this page requires authorization. You can try signing in or changing directories.
+
+Access to this page requires authorization. You can try changing directories.
+
+# Available Workload Profiles - Get
+
+Service:
+    Azure Container Apps
+
+API Version:
+    2026-01-01
+
+## In this article
+
+  1. URI Parameters
+  2. Responses
+  3. Security
+  4. Examples
+  5. Definitions
+
+Get available workload profiles by location.
+Get all available workload profiles for a location.
+
+HTTP
+
+Copy Try It
+    
+    `GET https://management.azure.com/subscriptions/{subscriptionId}/providers/Microsoft.App/locations/{location}/availableManagedEnvironmentsWorkloadProfileTypes?api-version=2026-01-01`
+
+## URI Parameters
+
+Expand table
+
+Name  | In  | Required  | Type  | Description
+--- | --- | --- | --- | ---
+location  | path  | True  | string minLength: 1  | The name of the Azure region.
+subscriptionId  | path  | True  | string (uuid)  | The ID of the target subscription. --------------------------------------------------------------------------------
+Available Workload Profiles - Get - REST API (Azure Azure Container Apps) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/resource-manager/containerapps/available-workload-profiles/get?view=rest-resource-manager-containerapps-2025-07-01)
+citeturn94search3 [wordlim: 200] Crawled: 2 months ago; Get all available workload profiles for a location. ...     # x-ms-original-file: specification/app/resource-manager/Microsoft.App/ContainerApps/stable/2025-07-01/examples/AvailableWorkloadProfiles_Get.json ... location  | string  | Region of the workload profile.
+
+Note
+
+Access to this page requires authorization. You can try signing in or changing directories.
+
+Access to this page requires authorization. You can try changing directories.
+
+# Available Workload Profiles - Get
+
+Service:
+    Azure Container Apps
+
+API Version:
+    2025-07-01
+
+## 
+
+Get available workload profiles by location.
+Get all available workload profiles for a location.
+    
+    `GET https://management.azure.com/subscriptions/{subscriptionId}/providers/Microsoft.App/locations/{location}/availableManagedEnvironmentsWorkloadProfileTypes?api-version=2025-07-01`
+
+## URI Parameters
+
+Name  | In  | Required  | Type  | Description
+--- | --- | --- | --- | ---
+location  | path  | True  | string minLength: 1  | The name of Azure region.
+subscriptionId  | path  | True  | string minLength: 1  | The ID of the target subscription.
+api-version  | query  | True  | string minLength: 1  | The API version to use for this operation.
+
+## Responses
+
+Name  | Type  | Description
+--- | --- | ---
+200 OK  | AvailableWorkloadProfilesCollection  | OK
+## Definitions
+
+Name  | Description
+--- | ---
+Applicability  | indicates whether the profile is default for the location.
+AvailableWorkloadProfile  | A workload profile with specific hardware configure to run container apps.
+AvailableWorkloadProfilesCollection  | Collection of available workload profiles in the location.
+createdByType  | The type of identity that created the resource.
+ErrorAdditionalInfo  | The resource management error additional info.
+ErrorDetail  | The error detail.
+ErrorResponse  | Error response
+Properties  | Revision resource specific properties
+systemData  | Metadata pertaining to creation and last modification of the resource.
+
+### Applicability
+
+Enumeration
+
+indicates whether the profile is default for the location.
+
+Value  | Description
+--- | ---
+LocationDefault  | 
+Custom  | 
+
+### AvailableWorkloadProfile
+
+Object
+
+A workload profile with specific hardware configure to run container apps.
+--------------------------------------------------------------------------------
+Managed identities for Azure resources frequently asked questions - Managed identities for Azure resources | Microsoft Learn (https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/managed-identities-faq)
+citeturn94search4 [wordlim: 200] Crawled: 2 weeks ago; Leave all other settings at their defaults and choose Review + Create ... Managed identities don't have an application object in the directory, which is what is commonly used to grant app permissions for Microsoft Graph. ... ### Can the same managed identity be used across multiple regions? ... The longer answer is that while user assigned managed identities are created as regional resources the associated service principal (SP) created in Microsoft Entra ID is available globally.The service principal can be used from any Azure region and its availability is dependent on the availability of Microsoft Entra ID.For example, if you created a user assigned managed identity in the South-Central region and that region becomes unavailable this issue only impacts control plane activities on the managed identity itself.
+
+In short, yes you can use user assigned managed identities in more than one Azure region. The longer answer is that while user assigned managed identities are created as regional resources the associated service principal (SP) created in Microsoft Entra ID is available globally. The service principal can be used from any Azure region and its availability is dependent on the availability of Microsoft Entra ID. For example, if you created a user assigned managed identity in the South-Central region and that region becomes unavailable this issue only impacts control plane activities on the managed identity itself. The activities performed by any resources already configured to use the managed identities wouldn't be impacted.
+
+### Does managed identities for Azure resources work with Azure Cloud Services (Classic)?
+
+Managed identities for Azure resources don’t have support for Azure Cloud Services (classic) at this time.
+
+### What is the security boundary of managed identities for Azure resources?
+--------------------------------------------------------------------------------
+Perfiles de carga de trabajo en Azure Container Apps | Microsoft Learn (https://learn.microsoft.com/es-es/azure/container-apps/workload-profiles-overview)
+citeturn94search5 [wordlim: 200] Crawled: 4 days ago; # Perfiles de carga de trabajo en Azure Container Apps ... Nombres de perfil  | Intervalo de vCPU  | Intervalo de memoria  | Tipo de GPU  | Regions  | Asignación
+
+En las tablas siguientes se resumen los perfiles de carga de trabajo disponibles por tipo de perfil, agrupando tamaños similares para ayudarle a decidir qué opción es mejor para usted. Los campos vCPU y memoria muestran el intervalo de recursos entre tamaños de perfil.
+
+### Detalles del perfil de consumo
+
+Expandir tabla
+
+Nombres de perfil  | Intervalo de vCPU  | Intervalo de memoria  | Tipo de GPU  | Regions  | Asignación
+--- | --- | --- | --- | --- | ---
+Consumo  | 0.25-4  | 0.5-8 GiB  |  | Todas las regiones admitidas  | por réplica
+Consumption-GPU-NC24-A100, Consumption-GPU-NC8as-T4  | 8–24  | 56–220 GiB  | NVIDIA T4, A100  | Para ver una lista completa de las regiones disponibles, consulte Regiones compatibles con GPU sin servidor.  | por réplica
+
+Todos los perfiles de consumo admiten el escalado sin servidor y se facturan en función del uso por réplica.
+
+### Detalles del perfil dedicado
+
+Expandir tabla
+
+Classification  | Nombres de perfil  | Intervalo de vCPU  | Intervalo de memoria  | Tipo de GPU  | Regions  | Asignación
+--- | --- | --- | --- | --- | --- | ---
+General Purpose  | D4, D8, D16, D32  | 4–32  | 16–128 GiB  | Ninguno  | Todas las regiones admitidas  | por nodo
+Memoria optimizada  | E4, E8, E16, E32  | 4–32  | 32–256 GiB  | Ninguno  | Todas las regiones admitidas  | por nodo
+Cómputo Confidencial  | DC4, DC8, DC16, DC32, DC48, DC64, DC96  | 4-96  | 16-384 GiB  | Ninguno  | UAENorth  | por nodo
+Unidad de Procesamiento Gráfico (GPU)  | NC24-A100, NC48-A100, NC96-A100  | 24–96  | 220–880 GiB  | A100  | Oeste de EE. UU. 3, Norte de Europa  | por nodo
+
+Nota:
+
+Los perfiles dedicados habilitados para GPU asignan capacidad por caso. Debe enviar una solicitud de soporte para solicitar la capacidad necesaria.
+
+### Detalles de perfil flexibles (versión preliminar)
+
+Expandir tabla
+
+Nombres de perfil  | Intervalo de vCPU  | Intervalo de memoria  | Regions  | Asignación
+--- | --- | --- | --- | ---
+Flexible  | 0.25-4  | 0.5-16 GiB  | Este de Australia, Sur de Brasil, Centro de Canadá, Este de Canadá, Centro de la India, Este de Asia, Centro de Alemania, Centro de Corea del Norte, Norte de Europa, Sudeste asiático, Centro de Suecia, Oeste de Reino Unido, Centro-oeste de EE. --------------------------------------------------------------------------------
+Confidential compute in Azure Container Apps | Microsoft Learn (https://learn.microsoft.com/en-us/azure/container-apps/confidential-compute)
+citeturn94search6 [wordlim: 200] Crawled: 2 weeks ago; The following example creates a Container Apps environment with a DC-series workload profile and deploys a container app assigned to that profile: ... Availability of these workload profiles depends on the region.Not all regions with DC-series profiles support confidential compute.For the current list of regions where confidential compute is available, see Supported regions.
+
+Output
+
+Copy
+    
+    `my-wp-confidential
+    `
+
+  2. Get the workload profile type for that profile in the environment.
+
+Azure CLI
+
+Copy
+    
+    `az containerapp env workload-profile list \
+      --name <ENVIRONMENT_NAME> \
+      --resource-group <RESOURCE_GROUP_NAME> \
+      --query "[].{name:name,workloadProfileType:workloadProfileType}"
+    `
+
+Example output:
+
+Output
+
+Copy
+    
+    `[
+      {
+        "name": "my-wp-confidential",
+        "workloadProfileType": "DC4"
+      }
+    ]
+    `
+
+In this example, `my-wp-confidential` is a sample profile name. Your profile name can be different.
+
+If the profile assigned to your app has a `workloadProfileType` value that starts with `DC`, such as `DC4` or `DC8`, the app is running on confidential compute infrastructure.
+
+### Azure portal
+
+  1. In the Azure portal, go to your container app.
+  2. On the Overview page, note the Environment value and go to that environment.
+  3. In the Container Apps environment, go to Workload profiles.
+  4. Find the workload profile used by your app and verify that the profile type and size starts with `DC`, such as `DC4` or `DC8`.
+
+## Supported workload profiles
+
+Confidential compute is available only on DC-series dedicated workload profiles. Supported sizes include:
+
+  * DC4
+  * DC8
+  * DC16
+  * DC32
+  * DC48
+  * DC64
+  * DC96
+
+Availability of these workload profiles depends on the region. Not all regions with DC-series profiles support confidential compute. For the current list of regions where confidential compute is available, see Supported regions.
+
+## Supported regions
+
+Azure Container Apps supports confidential compute in the UAE North region. To request region, submit an issue on GitHub.--------------------------------------------------------------------------------
+az containerapp env workload-profile | Microsoft Learn (https://learn.microsoft.com/en-us/cli/azure/containerapp/env/workload-profile?view=azure-cli-latest)
+citeturn94search7 [wordlim: 200] Crawled: 4 days ago; az containerapp env workload-profile list  | List the workload profiles from a Container Apps environment. ... az containerapp env workload-profile list-supported  | List the supported workload profiles in a region.
+
+# az containerapp env workload-profile
+
+## In this article
+
+  1. Commands
+  2. az containerapp env workload-profile add
+  3. az containerapp env workload-profile delete
+  4. az containerapp env workload-profile list
+  5. az containerapp env workload-profile list-supported
+  6. az containerapp env workload-profile show
+  7. az containerapp env workload-profile update
+Show 3 more
+
+Manage the workload profiles of a Container Apps environment.
+
+## Commands
+
+Expand table
+
+Name  | Description  | Type  | Status
+--- | --- | --- | ---
+az containerapp env workload-profile add  | Create a workload profile in a Container Apps environment.  | Core  | GA
+az containerapp env workload-profile delete  | Delete a workload profile from a Container Apps environment.  | Core  | GA
+az containerapp env workload-profile list  | List the workload profiles from a Container Apps environment.  | Core  | GA
+az containerapp env workload-profile list-supported  | List the supported workload profiles in a region.  
+Azure CLI
+
+Copy Open Cloud Shell
+    
+    `az containerapp env workload-profile list -g MyResourceGroup -n MyEnvironment`
+
+### Required Parameters
+
+--name -n
+
+The name of the Container App environment.
+
+--resource-group -g
+
+Name of resource group. You can configure the default group using `az configure --defaults group=<name>`.
+
+## az containerapp env workload-profile list-supported
+
+Edit
+
+List the supported workload profiles in a region.
+
+Azure CLI
+
+Copy
+    
+    `az containerapp env workload-profile list-supported --location
+                                                        [--acquire-policy-token]
+                                                        [--change-reference]`
+
+### Examples
+
+List the supported workload profiles in a region
+
+Azure CLI
+
+Copy Open Cloud Shell
+    
+    `az containerapp env workload-profile list-supported -l region`
+
+### Required Parameters
+
+--location -l
+
+Location of resource. Examples: eastus2, northeurope.
+
+### Optional Parameters
+
+The following parameters are optional, but depending on the context, one or more might become required for the command to execute successfully.
+--------------------------------------------------------------------------------
+Available Workload Profiles - REST API (Azure Azure Container Apps) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/resource-manager/containerapps/available-workload-profiles?view=rest-resource-manager-containerapps-2026-01-01)
+citeturn94search8 [wordlim: 200] Crawled: last month; # Available Workload Profiles ...     Azure Container Apps
+--------------------------------------------------------------------------------
+Profils de charge de travail dans Azure Container Apps | Microsoft Learn (https://learn.microsoft.com/fr-fr/azure/container-apps/workload-profiles-overview)
+citeturn94search9 [wordlim: 200] Published: 3 months ago; Crawled: 2 months ago; Dédié  | Mémoire optimisée  | Profils avec des ressources de mémoire accrues pour les données en mémoire ou les modèles Machine Learning. ... GPU (unité de traitement graphique)  | NC24-A100, NC48-A100, NC96-A100  | 24–96  | 220 à 880 Gio  | A100  | USA Ouest 3, Europe Nord  | par nœud ... Les profils dédiés avec GPU allouent la capacité par cas.
+--------------------------------------------------------------------------------
+Available Workload Profiles - Get - REST API (Azure Azure Container Apps) | Microsoft Learn (https://learn.microsoft.com/id-id/rest/api/resource-manager/containerapps/available-workload-profiles/get?view=rest-resource-manager-containerapps-2025-07-01)
+citeturn94search10 [wordlim: 200] Crawled: 5 months ago;     `GET https://management.azure.com/subscriptions/{subscriptionId}/providers/Microsoft.App/locations/{location}/availableManagedEnvironmentsWorkloadProfileTypes? ...          * x-ms-original-file: specification/app/resource-manager/Microsoft.App/ContainerApps/stable/2025-07-01/examples/
+--------------------------------------------------------------------------------
+Compute and billing structures in Azure Container Apps | Microsoft Learn (https://learn.microsoft.com/en-us/azure/container-apps/structure)
+citeturn94search11 [wordlim: 200] Crawled: 4 days ago; Each profile features different amounts of compute resources, and is tailored specifically to meet your app's needs. ... Any new Azure Container Apps environments you create should be a Workload profiles (v2) environment. ... A v2 environment gives you all the consumption functionality you need along with access to more robust networking features. ... Workload profiles determine the specific compute resources available to your environment, and each profile works either on the dedicated or the consumption plan.
+--------------------------------------------------------------------------------
+Groups in Microsoft 365 for IT Architects (https://learn.microsoft.com/en-us/office365/enterprise/downloads/msft-m365-groups.pdf)
+citeturn94search12 [wordlim: 200] Published: 6.4 years ago; Identity-based security perimeterIdentity and access managed and secured centrally for all ... Manage all group types Microsoft 365 admin center Azure AD admin center Exchange admin center | Manage most groups types None --- | ---· ... Edit the email address for distribution ... Not available
+--------------------------------------------------------------------------------
+Active Directory Assessment: (https://learn.microsoft.com/en-us/services-hub/sfbus/health/assessment_prereq_docs/prereqsadassessment.pdf)
+citeturn94search13 [wordlim: 200] Published: 6.1 years ago; A domain account (can be a user or a Managed Service Account) with the following rights: ... The data collection machine is used to connect to all domain controllers in the forest and retrieve information ... The machine is communicating over Remote Procedure Call (RPC), Server Message Block (SMB), WMI, ... PowerShell on the tools machine is used to scan the servers for installed security patches as well as audit policy ... Windows Update Agent must be running on all domain controllers for the security update scan ... It is available for download here
+--------------------------------------------------------------------------------
+Build a firm IT foundation upon which Microsoft 365 applications and (https://learn.microsoft.com/en-us/microsoft-365/media/deploy-foundation-infrastructure/microsoft365enterprisefoundinfra.pdf?view=o365-21vianet)
+citeturn94search14 [wordlim: 200] Published: 6.8 years ago; · Which MFA methods to support · How to protect global admin accounts (MFA, Azure AD Privileged Identity Management [E5 only]) · How to simplify password management (password writeback and self-service password reset) · Which custom words to prevent in passwords · How to manage group membership: Manual, dynamic, or self-service · How to manage licenses: manual or group-based · Which groups to manage for access reviews | · Choose a deployment strategy · In-place upgrade · PC imaging · Autopilot · Choose deployment and configuration tools: · Microsoft Endpoint Configuration Manager · MDT · Intune · Group Policy · Windows PowerShell · Create a phased deployment plan · Plan a servicing strategy · Assign devices to update rings · Optimize update delivery · Analyze and validate updates | · How to manage licenses and address network capability and application compatibility · How to install: upgrade or clean install · How to deploy: · Microsoft Endpoint Configuration Manager · Office Deployment Tool · Self-install from the Office portal · Where to deploy from: cloud or local source on your network · What to include in Office installation packages: which Office apps, languages, and architectures · How to manage updates and which update channels to use | · Choose cloud-only or co- management device management · Choose how Android, macOS, iOS, and Windows devices are managed · Use Azure AD groups for app and device access · Deploy Office, Win32, and other apps to devices · Force compliance with conditional access rules · Allow or block device features and settings | · Which security and information protection levels · How to use sensitivity labels and Azure Information Protection labels · Which sensitive information types for DLP · Which Office 365 ATP policies · How to use Microsoft Cloud App Security (E5 only) · How to use privileged access management (E5 only) Configuration results | Deployment phases · All offices have local Internet connections with local DNS servers · Appropriate network hairpins are bypassed · Edge devices and browsers are configured for traffic bypass | · Azure AD Connect settings for PHS, PTA, SSO, password writeback · Global admin account protection with MFA and Azure AD PIM (E5 only) · Security groups for: · Identity-based conditional access policies · Password writeback and self-service reset enabled · Dynamic group membership and automatic licensing | Infrastructure and settings for: · Deploying new devices · Deploying OS upgrades · Deploying OS updates · Enabling Windows Defender Antivirus · Deploying Windows Defender Advanced Threat Protection · Deploying attack surface reduction rules | · Deployment infrastructure is in place · Update management infrastructure is in place · Installation packages are defined · All client devices are assigned to deployment groups · Office applications, architectures, and languages are assigned to go to client devices | · Access is controlled using new or existing Azure AD groups · Devices are enrolled, and apps, features, and settings are applied · Users with personal devices get secure access to organization apps, such as email · Conditional access is enforced when devices are compliant with IT rules | · Information protection levels · Sensitive information types · Sensitivity or Azure Information Protection labels · Retention labels · DLP policies · Microsoft Cloud App Security settings (E5 only) · Privileged access management policies (E5 only) | Deployment phases | | | | | Onboard a new user | Deployment phases Connect them to an on- premises network (wired or wireless) | Add user account to the Azure AD security groups for: · Identity-based conditional access policies · Password reset · Automatic licensing | Add computer account/HW ID/other or group to the appropriate security groups for: · Windows Autopilot · Device upgrades · Windows 10 Enterprise security features | Add the client device to the appropriate deployment group.
+--------------------------------------------------------------------------------
+Mobile Data Protection (https://learn.microsoft.com/en-us/openspecs/interopevents/interopevents/media/index/pdfs/devdays%20asia%202020_deck-mam.pdf)
+citeturn94search15 [wordlim: 200] Published: 6.1 years ago; Mobile Application Management: app-level protection ... your corporate apps, data and identities from personal ones. ... Managed apps ... Copy ... Multi-identity support
+--------------------------------------------------------------------------------
+This topic is 1 of 5 (https://learn.microsoft.com/Office365/Enterprise/downloads/Microsoft-365-tenant-to-tenant-migration.pdf)
+citeturn94search16 [wordlim: 200] Published: 11 months ago; Contoso synchronizes identities ... Contoso retains an Exchangemanagement server on premises ... Licenses must be available ... Enable forwarding and reverse
+--------------------------------------------------------------------------------
+Build a firm IT foundation upon which Microsoft 365 applications and (https://learn.microsoft.com/pt-br/microsoft-365/media/deploy-foundation-infrastructure/microsoft365enterprisefoundinfra.pdf?view=o365-worldwide)
+citeturn94search17 [wordlim: 200] Published: 11 months ago;  | Networking  | Identity  | Windows 10 Enterprise  | Office 365 ProPlus  | Mobile Device ... | Admins: Authentication is secured and identities areprotected and managed at scale using hybrid and ... all devices ... Privileged Identity Management [E5 only]) ... · Group Policy ... · Security groups for: ... (E5 only) and Azure AD reporting  | · Monitor device health and compliance with
+--------------------------------------------------------------------------------
+ (https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/specification/monitor/resource-manager/Microsoft.Insights/Insights/stable/2023-01-01/actionGroups_API.json)
+citeturn94view0 [wordlim: 200] Crawled: 3 days ago; Content type: text/plain; Source: find({"ref_id":"https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/specification/monitor/resource-manager/Microsoft.Insights/Insights/stable/2023-01-01/actionGroups_API.json","pattern":"\"AzureResource\":"}); Total lines: 1223
+L433:               "$ref": "#/definitions/ErrorResponse"
+L434:             }
+L435:           }
+L436:         }
+L437:       }
+L438:     }
+L439:   },
+L440:   "definitions": {
+L441:     "AzureResource": {
+L442:       "properties": {
+L443:         "id": {
+L444:           "type": "string",
+L445:           "readOnly": true,
+L446:           "description": "Azure resource Id"
+L447:         },
+L448:         "name": {
+L449:           "type": "string",
+L450:           "readOnly": true,
+L451:           "description": "Azure resource name"
+L452:         },
+L453:         "type": {
+L454:           "type": "string",
+L455:           "readOnly": true,
+L550:           "description": "The source of the notification request"
+L551:         },
+L552:         "contextType": {
+L553:           "type": "string",
+L554:           "description": "The context id type"
+L555:         }
+L556:       }
+L557:     },
+L558:     "ActionGroupResource": {
+L559:       "description": "An action group resource.",
+L560:       "type": "object",
+L561:       "allOf": [
+L562:         {
+L563:           "$ref": "#/definitions/AzureResource"
+L564:         }
+L565:       ],
+L566:       "properties": {
+L567:         "properties": {
+L568:           "x-ms-client-flatten": true,
+

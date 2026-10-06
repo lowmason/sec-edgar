@@ -1,0 +1,81 @@
+{
+  "checked_at_utc": "2026-10-05T23:52:53.300502+00:00",
+  "status": "PASS: root creation and fresh verification receipts match accepted setup",
+  "checks": {
+    "root-reconcile-group.json": {
+      "sha256": "47a0915dd51f7f35fdd50df5660eaddccdb9e3b119ab63d67e65b7dd07823e96",
+      "command": "az group exists --name rg-sec-edgar-stage1-probe-20261005 -o json --subscription 3c92a216-8ed6-4897-b741-11ed287b8617",
+      "exit_code": 0,
+      "exact_subscription": true,
+      "started_at_utc": "2026-10-05T23:50:02.094349+00:00",
+      "ended_at_utc": "2026-10-05T23:50:03.088829+00:00"
+    },
+    "root-reconcile-registries.json": {
+      "sha256": "091d13e9dee26ad0c06802e50d532f21be914afe86643074937a47a7a259bfb1",
+      "command": "az acr list --query '[].{name:name,id:id}' -o json --subscription 3c92a216-8ed6-4897-b741-11ed287b8617",
+      "exit_code": 0,
+      "exact_subscription": true,
+      "started_at_utc": "2026-10-05T23:50:03.089087+00:00",
+      "ended_at_utc": "2026-10-05T23:50:03.790084+00:00"
+    },
+    "root-reconcile-name.json": {
+      "sha256": "a23bcd5539b029588bb24b02878d241f56c880c2cf9965c64934919d0b8c443e",
+      "command": "az acr check-name --name secedgarstage1probe20261005b8617 -o json --subscription 3c92a216-8ed6-4897-b741-11ed287b8617",
+      "exit_code": 0,
+      "exact_subscription": true,
+      "started_at_utc": "2026-10-05T23:50:03.790360+00:00",
+      "ended_at_utc": "2026-10-05T23:50:04.892312+00:00"
+    },
+    "root-create-group.json": {
+      "sha256": "462d775bac71a292c9e7604f0f298b6b445b3a0bb33293f2c723d2e9fa70ba9b",
+      "command": "az group create --name rg-sec-edgar-stage1-probe-20261005 --location eastus --tags purpose=stage1-compatibility-probe owner=LowellMason expiresAtUTC=2026-10-06T23:50:30.922520+00:00 -o json --subscription 3c92a216-8ed6-4897-b741-11ed287b8617",
+      "exit_code": 0,
+      "exact_subscription": true,
+      "started_at_utc": "2026-10-05T23:50:30.922520+00:00",
+      "ended_at_utc": "2026-10-05T23:50:33.314314+00:00"
+    },
+    "root-create-registry.json": {
+      "sha256": "2acc5ffe93a1c622063427ba030a7154b5ea501178254ac8763d5397921f2f71",
+      "command": "az acr create --resource-group rg-sec-edgar-stage1-probe-20261005 --name secedgarstage1probe20261005b8617 --location eastus --sku Basic --admin-enabled false --public-network-enabled true --role-assignment-mode rbac --tags purpose=stage1-compatibility-probe owner=LowellMason expiresAtUTC=2026-10-06T23:50:30.922520+00:00 -o json --subscription 3c92a216-8ed6-4897-b741-11ed287b8617",
+      "exit_code": 0,
+      "exact_subscription": true,
+      "started_at_utc": "2026-10-05T23:50:51.519155+00:00",
+      "ended_at_utc": "2026-10-05T23:50:58.861020+00:00"
+    },
+    "root-verify-registry.json": {
+      "sha256": "6b0ae5ea2058749b554d1285545303203ccc547362c45392a029d9de6226c2a1",
+      "command": "az acr show --resource-group rg-sec-edgar-stage1-probe-20261005 --name secedgarstage1probe20261005b8617 --query '{id:id,location:location,sku:sku.name,adminUserEnabled:adminUserEnabled,anonymousPullEnabled:anonymousPullEnabled,roleAssignmentMode:roleAssignmentMode,provisioningState:provisioningState,publicNetworkAccess:publicNetworkAccess,loginServer:loginServer,creationDate:creationDate,systemData:systemData,tags:tags}' -o json --subscription 3c92a216-8ed6-4897-b741-11ed287b8617",
+      "exit_code": 0,
+      "exact_subscription": true,
+      "started_at_utc": "2026-10-05T23:51:23.437096+00:00",
+      "ended_at_utc": "2026-10-05T23:51:24.178084+00:00"
+    },
+    "root-verify-task-list.json": {
+      "sha256": "4ade8dc44efb87a5225d2de9a04c9cb060d49c0601ff4ec9f024c772b1cad723",
+      "command": "az acr task list --registry secedgarstage1probe20261005b8617 -o json --subscription 3c92a216-8ed6-4897-b741-11ed287b8617",
+      "exit_code": 0,
+      "exact_subscription": true,
+      "started_at_utc": "2026-10-05T23:51:24.178378+00:00",
+      "ended_at_utc": "2026-10-05T23:51:25.434795+00:00"
+    },
+    "root-verify-group-inventory.json": {
+      "sha256": "a01cabea99941df6120a289e35584643f2e3045ef12e6f94c9906b3165c5d964",
+      "command": "az resource list --resource-group rg-sec-edgar-stage1-probe-20261005 --query '[].{id:id,type:type,name:name}' -o json --subscription 3c92a216-8ed6-4897-b741-11ed287b8617",
+      "exit_code": 0,
+      "exact_subscription": true,
+      "started_at_utc": "2026-10-05T23:51:25.435045+00:00",
+      "ended_at_utc": "2026-10-05T23:51:26.342677+00:00"
+    }
+  },
+  "group_id": "/subscriptions/3c92a216-8ed6-4897-b741-11ed287b8617/resourceGroups/rg-sec-edgar-stage1-probe-20261005",
+  "registry_id": "/subscriptions/3c92a216-8ed6-4897-b741-11ed287b8617/resourceGroups/rg-sec-edgar-stage1-probe-20261005/providers/Microsoft.ContainerRegistry/registries/secedgarstage1probe20261005b8617",
+  "first_create_command_start_utc": "2026-10-05T23:50:30.922520+00:00",
+  "group_creation_time_limitation": "Azure group create response contains no server-side createdAt; command interval retained instead.",
+  "registry_created_at_utc": "2026-10-05T23:50:52.211421+00:00",
+  "cleanup_deadline_utc": "2026-10-06T23:50:30.922520+00:00",
+  "persistent_task_count": 0,
+  "quick_tasks_submitted_during_setup": 0,
+  "task_engine_execution_authority": "Unverified; no task runs submitted",
+  "actual_billing": "Unverified; no cost query during setup",
+  "proposal_hash_unchanged": true
+}

@@ -1,0 +1,559 @@
+Workspaces - Create Or Update - REST API (Azure Log Analytics) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/loganalytics/workspaces/create-or-update?view=rest-loganalytics-2025-07-01)
+citeturn78view0 [wordlim: 200] Crawled: today; Content type: text/html; Source: find({"ref_id":"https://learn.microsoft.com/en-us/rest/api/loganalytics/workspaces/create-or-update?view=rest-loganalytics-2025-07-01","pattern":"200 OK"}); Total lines: 640
+L0: cite0†Skip to main content cite1†Skip to in-page navigation cite2†Skip to Ask Learn chat experience L1: 
+L2: This browser is no longer supported.
+L3: 
+L4: Upgrade to Microsoft Edge to take advantage of the latest features, security updates, and technical support.
+L5: 
+L6: cite3†Download Microsoft Edge†go.microsoft.com cite4†More info about Internet Explorer and Microsoft Edge L7: 
+L8: Table of contents Exit editor mode
+L9: 
+L10: Ask Learn Ask Learn
+L11: 
+L12: Reading mode Table of contents cite2†Read in English Add Add to Plans cite5†Edit†github.com L13: 
+L14: * * *
+L15: Copy Markdown Print
+L16: 
+L17: * * *
+L18: 
+L19: Note
+L20: 
+L21: Access to this page requires authorization. You can try cite2†signing in or changing directories.
+L22: 
+L23: Access to this page requires authorization. You can try changing directories.
+L24: # Workspaces - Create Or Update
+L25: 
+L26: Service:
+L27:     Log Analytics
+L28: 
+L29: API Version:
+L30:     2025-07-01
+L31: 
+L32: ##
+L33: 
+L34: Create or update a workspace.
+L35: 
+L36:     `PUT https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.OperationalInsights/workspaces/{workspaceName}?api-version=2025-07-01`
+L37: ## URI Parameters
+L38: Name  | In  | Required  | Type  | Description
+L39: --- | --- | --- | --- | ---
+L40: resourceGroupName  | path  | True  | string minLength: 1
+L41: maxLength: 90  | The name of the resource group. The name is case insensitive.
+L42: subscriptionId  | path  | True  | string (uuid)  | The ID of the target subscription. The value must be an UUID.
+L43: workspaceName  | path  | True  | string minLength: 4
+L44: maxLength: 63
+L45: pattern: ^[A-Za-z0-9][A-Za-z0-9-]+[A-Za-z0-9]$  | The name of the workspace.
+L46: api-version  | query  | True  | string minLength: 1  | The API version to use for this operation.
+L47: ## Request Body
+L48: Name  | Required  | Type  | Description
+L49: --- | --- | --- | ---
+L50: location  | True  | string  | The geo-location where the resource lives
+L51: etag  |  | string  | The etag of the workspace.
+L52: identity  |  | cite6†Identity | The identity of the resource.
+L53: properties.defaultDataCollectionRuleResourceId  |  | string  | The resource ID of the default Data Collection Rule to use for this workspace. Expected format is - /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Insights/dataCollectionRules/{dcrName}.
+L54: properties.failover  |  | cite7†WorkspaceFailoverProperties | workspace failover properties.
+L55: properties.features  |  | cite8†WorkspaceFeatures | Workspace features.
+L56: properties.forceCmkForQuery  |  | boolean  | Indicates whether customer managed storage is mandatory for query management.
+L57: properties.publicNetworkAccessForIngestion  |  | cite9†PublicNetworkAccessType | The network access type for accessing Log Analytics ingestion.
+L58: properties.publicNetworkAccessForQuery  |  | cite9†PublicNetworkAccessType | The network access type for accessing Log Analytics query.
+L59: properties.replication  |  | cite10†WorkspaceReplicationProperties | workspace replication properties.
+L60: properties.retentionInDays  |  | integer (int32)  | The workspace data retention in days. Allowed values are per pricing plan. See pricing tiers documentation for details.
+L61: properties.sku  |  | cite11†WorkspaceSku | The SKU of the workspace.
+L62: properties.workspaceCapping  |  | cite12†WorkspaceCapping | The daily volume cap for ingestion.
+L63: tags  |  | object  | Resource tags.
+L64: ## Responses
+L65: 
+L66: Name  | Type  | Description
+L67: --- | --- | ---
+L68: 200 OK  | cite13†Workspace | Resource 'Workspace' update operation succeeded
+L69: 201 Created  | cite13†Workspace | Resource 'Workspace' create operation succeeded Headers
+L70: 
+L71:   * Location: string
+L72:   * Retry-After: integer
+L73: 202 Accepted  |  | Resource operation accepted. Headers
+L74: 
+L75:   * Location: string
+L76:   * Retry-After: integer
+L77: Other Status Codes  | cite14†ErrorResponse | An unexpected error response.
+L78: 
+L79: ## Security
+L80: ### azure_auth
+L81: 
+L82: Azure Active Directory OAuth2 Flow.
+L83: 
+L84: Type: oauth2
+L85: Flow: implicit
+L86: Authorization URL: https://login.microsoftonline.com/common/oauth2/authorize
+L87: 
+L88: #### Scopes
+L89: 
+L90: Name  | Description
+L91: --- | ---
+L92: user_impersonation  | impersonate your user account
+L93: 
+L94: ## Examples
+L95: 
+L96: ### WorkspacesCreate
+L97: #### Sample request
+L98:   * cite15†HTTP L99:   * cite16†Java L100:   * cite17†Python L101:   * cite18†Go L102:   * cite19†JavaScript L103: 
+L104:     `PUT https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/oiautorest6685/providers/Microsoft.OperationalInsights/workspaces/oiautorest6685?api-version=2025-07-01
+L105: 
+L106:     {
+L107:       "location": "australiasoutheast",
+L108:       "properties": {
+L109:         "retentionInDays": 30,
+L110:         "sku": {
+L111:           "name": "PerGB2018"
+L112:         }
+L113:       },
+L114:       "tags": {
+L115:         "tag1": "val1"
+L116:       }
+L117:     }
+L118: 
+L119:     `
+L120: 
+L121:     `
+L122:     import com.azure.resourcemanager.loganalytics.models.WorkspaceSku;
+L123:     import com.azure.resourcemanager.loganalytics.models.WorkspaceSkuNameEnum;
+L124:     import java.util.HashMap;
+L125:     import java.util.Map;
+L126: 
+L127:     /**
+L128:      * Samples for Workspaces CreateOrUpdate.
+L129:      */
+L130:     public final class Main {
+L131:         /*
+L132:          * x-ms-original-file: 2025-07-01/WorkspacesCreate.json
+L133:          */
+L134:         /**
+L135:          * Sample code: WorkspacesCreate.
+L136:          *
+L137:          * @param manager Entry point to LogAnalyticsManager.
+L138:          */
+L139:         public static void workspacesCreate(com.azure.resourcemanager.loganalytics.LogAnalyticsManager manager) {
+L140:             manager.workspaces().define("oiautorest6685").withRegion("australiasoutheast")
+L141:                 .withExistingResourceGroup("oiautorest6685").withTags(mapOf("tag1", "val1"))
+L142:                 .withSku(new WorkspaceSku().withName(WorkspaceSkuNameEnum.PER_GB2018)).withRetentionInDays(30).create();
+L143:         }
+L144:         // Use "Map.of" if available
+L145:         @SuppressWarnings("unchecked")
+L146:         private static <T> Map<String, T> mapOf(Object... inputs) {
+L147:             Map<String, T> map = new HashMap<>();
+L148:             for (int i = 0; i < inputs.length; i += 2) {
+L149:                 String key = (String) inputs[i];
+L150:                 T value = (T) inputs[i + 1];
+L151:                 map.put(key, value);
+L152:             }
+L153:             return map;
+L154:         }
+L155:     }
+L156: 
+L157:     `
+L158: To use the Azure SDK library in your project, see cite20†this documentation†github.com . To provide feedback on this code sample, cite21†open a GitHub issue†github.com L159: 
+L160:     `from azure.identity import DefaultAzureCredential
+L161: 
+L162:     from azure.mgmt.loganalytics import LogAnalyticsManagementClient
+L163: 
+L164:     """
+L165:     # PREREQUISITES
+L166:         pip install azure-identity
+L167:         pip install azure-mgmt-loganalytics
+L168:     # USAGE
+L169:         python workspaces_create.py
+L170:         Before run the sample, please set the values of the client ID, tenant ID and client secret
+L171:         of the AAD application as environment variables: AZURE_CLIENT_ID, AZURE_TENANT_ID,
+L172:         AZURE_CLIENT_SECRET. For more info about how to get the value, please see:
+L173:         https://docs.microsoft.com/azure/active-directory/develop/howto-create-service-principal-portal
+L174:     """
+L175: 
+L176: 
+L177:     def main():
+L178:         client = LogAnalyticsManagementClient(
+L179:             credential=DefaultAzureCredential(),
+L180:             subscription_id="SUBSCRIPTION_ID",
+L181:         )
+L182: 
+L183:         response = client.workspaces.begin_create_or_update(
+L184:             resource_group_name="oiautorest6685",
+L185:             workspace_name="oiautorest6685",
+L186:             parameters={
+L187:                 "location": "australiasoutheast",
+L188:                 "properties": {"retentionInDays": 30, "sku": {"name": "PerGB2018"}},
+L189:                 "tags": {"tag1": "val1"},
+L190:             },
+L191:         ).result()
+L192:         print(response)
+L193:     # x-ms-original-file: 2025-07-01/WorkspacesCreate.json
+L194:     if __name__ == "__main__":
+L195:         main()
+L196: 
+L197:     `
+L198: To use the Azure SDK library in your project, see cite22†this documentation†github.com . To provide feedback on this code sample, cite21†open a GitHub issue†github.com L199: 
+L200:     `package armoperationalinsights_test
+L201: 
+L202:     import (
+L203:     	"context"
+L204:     	"log"
+L205: 
+L206:     	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
+L207:     	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+L208:     	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/operationalinsights/armoperationalinsights/v3"
+L209:     )
+L210:     // Generated from example definition: 2025-07-01/WorkspacesCreate.json
+L211:     func ExampleWorkspacesClient_BeginCreateOrUpdate() {
+L212:     	cred, err := azidentity.NewDefaultAzureCredential(nil)
+L213:     	if err != nil {
+L214:     		log.Fatalf("failed to obtain a credential: %v", err)
+L215:     	}
+L216:     	ctx := context.Background()
+L217:     	clientFactory, err := armoperationalinsights.NewClientFactory("00000000-0000-0000-0000-000000000000", cred, nil)
+L218:     	if err != nil {
+L219:     		log.Fatalf("failed to create client: %v", err)
+L220:     	}
+L221:     	poller, err := clientFactory.NewWorkspacesClient().BeginCreateOrUpdate(ctx, "oiautorest6685", "oiautorest6685", armoperationalinsights.Workspace{
+L222:     		Location: to.Ptr("australiasoutheast"),
+L223:     		Properties: &armoperationalinsights.WorkspaceProperties{
+L224:     			RetentionInDays: to.Ptr[int32](30),
+L225:     			SKU: &armoperationalinsights.WorkspaceSKU{
+L226:     				Name: to.Ptr(armoperationalinsights.WorkspaceSKUNameEnumPerGB2018),
+L227:     			},
+L228:     		},
+L229:     		Tags: map[string]*string{
+L230:     			"tag1": to.Ptr("val1"),
+L231:     		},
+L232:     	}, nil)
+L233:     	if err != nil {
+L234:     		log.Fatalf("failed to finish the request: %v", err)
+L235:     	}
+L236:     	res, err := poller.PollUntilDone(ctx, nil)
+L237:     	if err != nil {
+L238:     		log.Fatalf("failed to poll the result: %v", err)
+L239:     	}
+L240:     	// You could use response here. We use blank identifier for just demo purposes.
+L241:     	_ = res
+L242:     	// If the HTTP response code is 200 as defined in example definition, your response structure would look as follows. Please pay attention that all the values in the output are fake values for just demo purposes.
+L243:     	// res = armoperationalinsights.WorkspacesClientCreateOrUpdateResponse{
+L244:     	// 	Workspace: armoperationalinsights.Workspace{
+L245:     	// 		Name: to.Ptr("AzTest2170"),
+L246:     	// 		Type: to.Ptr("Microsoft.OperationalInsights/workspaces"),
+L247:     	// 		ID: to.Ptr("/subscriptions/00000000-0000-0000-0000-000000000005/resourcegroups/oiautorest6685/providers/microsoft.operationalinsights/workspaces/aztest2170"),
+L248:     	// 		Location: to.Ptr("australiasoutheast"),
+L249:     	// 		Properties: &armoperationalinsights.WorkspaceProperties{
+L250:     	// 			CustomerID: to.Ptr("bc089d7b-485c-4aff-a71e-c00f362d8d2f"),
+L251:     	// 			ProvisioningState: to.Ptr(armoperationalinsights.WorkspaceEntityStatusCreating),
+L252:     	// 			PublicNetworkAccessForIngestion: to.Ptr(armoperationalinsights.PublicNetworkAccessTypeEnabled),
+L253:     	// 			PublicNetworkAccessForQuery: to.Ptr(armoperationalinsights.PublicNetworkAccessTypeEnabled),
+L254:     	// 			RetentionInDays: to.Ptr[int32](30),
+L255:     	// 			SKU: &armoperationalinsights.WorkspaceSKU{
+L256:     	// 				Name: to.Ptr(armoperationalinsights.WorkspaceSKUNameEnumPerGB2018),
+L257:     	// 			},
+L258:     	// 		},
+L259:     	// 		Tags: map[string]*string{
+L260:     	// 			"tag1": to.Ptr("val1"),
+L261:     	// 		},
+L262:     	// 	},
+L263:     	// }
+L264:     }
+L265: 
+L266:     `
+L267: To use the Azure SDK library in your project, see cite23†this documentation†github.com . To provide feedback on this code sample, cite21†open a GitHub issue†github.com L268: 
+L269:     `const { OperationalInsightsManagementClient } = require("@azure/arm-operationalinsights");
+L270:     const { DefaultAzureCredential } = require("@azure/identity");
+L271: 
+L272:     /**
+L273:      * This sample demonstrates how to create or update a workspace.
+L274:      *
+L275:      * @summary create or update a workspace.
+L276:      * x-ms-original-file: 2025-07-01/WorkspacesCreate.json
+L277:      */
+L278:     async function workspacesCreate() {
+L279:       const credential = new DefaultAzureCredential();
+L280:       const subscriptionId = "00000000-0000-0000-0000-000000000000";
+L281:       const client = new OperationalInsightsManagementClient(credential, subscriptionId);
+L282:       const result = await client.workspaces.createOrUpdate("oiautorest6685", "oiautorest6685", {
+L283:         location: "australiasoutheast",
+L284:         retentionInDays: 30,
+L285:         sku: { name: "PerGB2018" },
+L286:         tags: { tag1: "val1" },
+L287:       });
+L288:       console.log(result);
+L289:     }
+L290: 
+L291:     `
+L292: To use the Azure SDK library in your project, see cite24†this documentation†github.com . To provide feedback on this code sample, cite21†open a GitHub issue†github.com L293: #### Sample response
+L294: Status code:
+L295:     200
+L296: 
+L297:     `{
+L298:       "name": "AzTest2170",
+L299:       "type": "Microsoft.OperationalInsights/workspaces",
+L300:       "id": "/subscriptions/00000000-0000-0000-0000-000000000005/resourcegroups/oiautorest6685/providers/microsoft.operationalinsights/workspaces/aztest2170",
+L301:       "location": "australiasoutheast",
+L302:       "properties": {
+L303:         "customerId": "bc089d7b-485c-4aff-a71e-c00f362d8d2f",
+L304:         "provisioningState": "Creating",
+L305:         "publicNetworkAccessForIngestion": "Enabled",
+--------------------------------------------------------------------------------
+Workspaces - Get - REST API (Azure Log Analytics) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/loganalytics/workspaces/get?view=rest-loganalytics-2025-07-01)
+citeturn78view1 [wordlim: 200] Crawled: today; Content type: text/html; Source: find({"ref_id":"https://learn.microsoft.com/en-us/rest/api/loganalytics/workspaces/get?view=rest-loganalytics-2025-07-01","pattern":"200 OK"}); Total lines: 554
+L0: cite0†Skip to main content cite1†Skip to in-page navigation cite2†Skip to Ask Learn chat experience L1: 
+L2: This browser is no longer supported.
+L3: 
+L4: Upgrade to Microsoft Edge to take advantage of the latest features, security updates, and technical support.
+L5: 
+L6: cite3†Download Microsoft Edge†go.microsoft.com cite4†More info about Internet Explorer and Microsoft Edge L7: 
+L8: Table of contents Exit editor mode
+L9: 
+L10: Ask Learn Ask Learn
+L11: 
+L12: Reading mode Table of contents cite2†Read in English Add Add to Plans cite5†Edit†github.com L13: 
+L14: * * *
+L15: Copy Markdown Print
+L16: 
+L17: * * *
+L18: 
+L19: Note
+L20: 
+L21: Access to this page requires authorization. You can try cite2†signing in or changing directories.
+L22: 
+L23: Access to this page requires authorization. You can try changing directories.
+L24: # Workspaces - Get
+L25: 
+L26: Service:
+L27:     Log Analytics
+L28: 
+L29: API Version:
+L30:     2025-07-01
+L31: 
+L32: ##
+L33: 
+L34: Gets a workspace instance.
+L35: 
+L36:     `GET https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.OperationalInsights/workspaces/{workspaceName}?api-version=2025-07-01`
+L37: ## URI Parameters
+L38: Name  | In  | Required  | Type  | Description
+L39: --- | --- | --- | --- | ---
+L40: resourceGroupName  | path  | True  | string minLength: 1
+L41: maxLength: 90  | The name of the resource group. The name is case insensitive.
+L42: subscriptionId  | path  | True  | string (uuid)  | The ID of the target subscription. The value must be an UUID.
+L43: workspaceName  | path  | True  | string minLength: 4
+L44: maxLength: 63
+L45: pattern: ^[A-Za-z0-9][A-Za-z0-9-]+[A-Za-z0-9]$  | The name of the workspace.
+L46: api-version  | query  | True  | string minLength: 1  | The API version to use for this operation.
+L47: ## Responses
+L48: 
+L49: Name  | Type  | Description
+L50: --- | --- | ---
+L51: 200 OK  | cite6†Workspace | Azure operation completed successfully.
+L52: Other Status Codes  | cite7†ErrorResponse | An unexpected error response.
+L53: 
+L54: ## Security
+L55: 
+L56: ### azure_auth
+L57: 
+L58: Azure Active Directory OAuth2 Flow.
+L59: 
+L60: Type: oauth2
+L61: Flow: implicit
+L62: Authorization URL: https://login.microsoftonline.com/common/oauth2/authorize
+L63: 
+L64: #### Scopes
+L65: 
+L66: Name  | Description
+L67: --- | ---
+L68: user_impersonation  | impersonate your user account
+L69: 
+L70: ## Examples
+L71: 
+L72: ### WorkspaceGet
+L73: #### Sample request
+L74:   * cite8†HTTP L75:   * cite9†Java L76:   * cite10†Python L77:   * cite11†Go L78:   * cite12†JavaScript L79: 
+L80:     `GET https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/oiautorest6685/providers/Microsoft.OperationalInsights/workspaces/oiautorest6685?api-version=2025-07-01
+L81:     `
+L82: 
+L83:     `
+L84:     /**
+L85:      * Samples for Workspaces GetByResourceGroup.
+L86:      */
+L87:     public final class Main {
+L88:         /*
+L89:          * x-ms-original-file: 2025-07-01/WorkspacesGet.json
+L90:          */
+L91:         /**
+L92:          * Sample code: WorkspaceGet.
+L93:          *
+L94:          * @param manager Entry point to LogAnalyticsManager.
+L95:          */
+L96:         public static void workspaceGet(com.azure.resourcemanager.loganalytics.LogAnalyticsManager manager) {
+L97:             manager.workspaces().getByResourceGroupWithResponse("oiautorest6685", "oiautorest6685",
+L98:                 com.azure.core.util.Context.NONE);
+L99:         }
+L100:     }
+L101: 
+L102:     `
+L103: To use the Azure SDK library in your project, see cite13†this documentation†github.com . To provide feedback on this code sample, cite14†open a GitHub issue†github.com L104: 
+L105:     `from azure.identity import DefaultAzureCredential
+L106: 
+L107:     from azure.mgmt.loganalytics import LogAnalyticsManagementClient
+L108: 
+L109:     """
+L110:     # PREREQUISITES
+L111:         pip install azure-identity
+L112:         pip install azure-mgmt-loganalytics
+L113:     # USAGE
+L114:         python workspaces_get.py
+L115:         Before run the sample, please set the values of the client ID, tenant ID and client secret
+L116:         of the AAD application as environment variables: AZURE_CLIENT_ID, AZURE_TENANT_ID,
+L117:         AZURE_CLIENT_SECRET. For more info about how to get the value, please see:
+L118:         https://docs.microsoft.com/azure/active-directory/develop/howto-create-service-principal-portal
+L119:     """
+L120: 
+L121: 
+L122:     def main():
+L123:         client = LogAnalyticsManagementClient(
+L124:             credential=DefaultAzureCredential(),
+L125:             subscription_id="SUBSCRIPTION_ID",
+L126:         )
+L127: 
+L128:         response = client.workspaces.get(
+L129:             resource_group_name="oiautorest6685",
+L130:             workspace_name="oiautorest6685",
+L131:         )
+L132:         print(response)
+L133: 
+L134: 
+L135:     # x-ms-original-file: 2025-07-01/WorkspacesGet.json
+L136:     if __name__ == "__main__":
+L137:         main()
+L138: 
+L139:     `
+L140: To use the Azure SDK library in your project, see cite15†this documentation†github.com . To provide feedback on this code sample, cite14†open a GitHub issue†github.com L141: 
+L142:     `package armoperationalinsights_test
+L143: 
+L144:     import (
+L145:     	"context"
+L146:     	"log"
+L147: 
+L148:     	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+L149:     	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/operationalinsights/armoperationalinsights/v3"
+L150:     )
+L151: 
+L152:     // Generated from example definition: 2025-07-01/WorkspacesGet.json
+L153:     func ExampleWorkspacesClient_Get() {
+L154:     	cred, err := azidentity.NewDefaultAzureCredential(nil)
+L155:     	if err != nil {
+L156:     		log.Fatalf("failed to obtain a credential: %v", err)
+L157:     	}
+L158:     	ctx := context.Background()
+L159:     	clientFactory, err := armoperationalinsights.NewClientFactory("00000000-0000-0000-0000-000000000000", cred, nil)
+L160:     	if err != nil {
+L161:     		log.Fatalf("failed to create client: %v", err)
+L162:     	}
+L163:     	res, err := clientFactory.NewWorkspacesClient().Get(ctx, "oiautorest6685", "oiautorest6685", nil)
+L164:     	if err != nil {
+L165:     		log.Fatalf("failed to finish the request: %v", err)
+L166:     	}
+L167:     	// You could use response here. We use blank identifier for just demo purposes.
+L168:     	_ = res
+L169:     	// If the HTTP response code is 200 as defined in example definition, your response structure would look as follows. Please pay attention that all the values in the output are fake values for just demo purposes.
+L170:     	// res = armoperationalinsights.WorkspacesClientGetResponse{
+L171:     	// 	Workspace: armoperationalinsights.Workspace{
+L172:     	// 		Name: to.Ptr("oiautorest6685"),
+L173:     	// 		Type: to.Ptr("Microsoft.OperationalInsights/workspaces"),
+L174:     	// 		ID: to.Ptr("/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/oiautorest6685/providers/microsoft.operationalinsights/workspaces/oiautorest6685"),
+L175:     	// 		Location: to.Ptr("eastus"),
+L176:     	// 		Properties: &armoperationalinsights.WorkspaceProperties{
+L177:     	// 			CustomerID: to.Ptr("5b02755b-5bf4-430c-9487-45502a2a7e62"),
+L178:     	// 			Failover: &armoperationalinsights.WorkspaceFailoverProperties{
+L179:     	// 				LastModifiedDate: to.Ptr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-07-05T07:35:51Z"); return t}()),
+L180:     	// 				State: to.Ptr(armoperationalinsights.WorkspaceFailoverStateActive),
+L181:     	// 			},
+L182:     	// 			ProvisioningState: to.Ptr(armoperationalinsights.WorkspaceEntityStatusSucceeded),
+L183:     	// 			PublicNetworkAccessForIngestion: to.Ptr(armoperationalinsights.PublicNetworkAccessTypeEnabled),
+L184:     	// 			PublicNetworkAccessForQuery: to.Ptr(armoperationalinsights.PublicNetworkAccessTypeEnabled),
+L185:     	// 			Replication: &armoperationalinsights.WorkspaceReplicationProperties{
+L186:     	// 				CreatedDate: to.Ptr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-07-04T07:35:51Z"); return t}()),
+L187:     	// 				Enabled: to.Ptr(true),
+L188:     	// 				LastModifiedDate: to.Ptr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-07-04T07:35:51Z"); return t}()),
+L189:     	// 				Location: to.Ptr("westus3"),
+L190:     	// 				ProvisioningState: to.Ptr(armoperationalinsights.WorkspaceReplicationStateSucceeded),
+L191:     	// 			},
+L192:     	// 			RetentionInDays: to.Ptr[int32](30),
+L193:     	// 			SKU: &armoperationalinsights.WorkspaceSKU{
+L194:     	// 				Name: to.Ptr(armoperationalinsights.WorkspaceSKUNameEnumPerGB2018),
+L195:     	// 			},
+L196:     	// 		},
+L197:     	// 	},
+L198:     	// }
+L199:     }
+L200: 
+L201:     `
+L202: To use the Azure SDK library in your project, see cite16†this documentation†github.com . To provide feedback on this code sample, cite14†open a GitHub issue†github.com L203: 
+L204:     `const { OperationalInsightsManagementClient } = require("@azure/arm-operationalinsights");
+L205:     const { DefaultAzureCredential } = require("@azure/identity");
+L206: 
+L207:     /**
+L208:      * This sample demonstrates how to gets a workspace instance.
+L209:      *
+L210:      * @summary gets a workspace instance.
+L211:      * x-ms-original-file: 2025-07-01/WorkspacesGet.json
+L212:      */
+L213:     async function workspaceGet() {
+L214:       const credential = new DefaultAzureCredential();
+L215:       const subscriptionId = "00000000-0000-0000-0000-000000000000";
+L216:       const client = new OperationalInsightsManagementClient(credential, subscriptionId);
+L217:       const result = await client.workspaces.get("oiautorest6685", "oiautorest6685");
+L218:       console.log(result);
+L219:     }
+L220: 
+L221:     `
+L222: To use the Azure SDK library in your project, see cite17†this documentation†github.com . To provide feedback on this code sample, cite14†open a GitHub issue†github.com L223: #### Sample response
+L224: Status code:
+L225:     200
+L226: 
+L227:     `{
+L228:       "name": "oiautorest6685",
+L229:       "type": "Microsoft.OperationalInsights/workspaces",
+L230:       "id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/oiautorest6685/providers/microsoft.operationalinsights/workspaces/oiautorest6685",
+L231:       "location": "eastus",
+L232:       "properties": {
+L233:         "customerId": "5b02755b-5bf4-430c-9487-45502a2a7e62",
+L234:         "failover": {
+L235:           "lastModifiedDate": "2020-07-05T07:35:51Z",
+L236:           "state": "Active"
+L237:         },
+L238:         "provisioningState": "Succeeded",
+L239:         "publicNetworkAccessForIngestion": "Enabled",
+L240:         "publicNetworkAccessForQuery": "Enabled",
+L241:         "replication": {
+L242:           "createdDate": "2020-07-04T07:35:51Z",
+L243:           "enabled": true,
+L244:           "lastModifiedDate": "2020-07-04T07:35:51Z",
+L245:           "location": "westus3",
+L246:           "provisioningState": "Succeeded"
+L247:         },
+L248:         "retentionInDays": 30,
+L249:         "sku": {
+L250:           "name": "PerGB2018"
+L251:         }
+L252:       }
+L253:     }`
+L254: ## Definitions
+L255: Name  | Description
+L256: --- | ---
+L257: cite18†createdByType | The type of identity that created the resource.
+L258: cite19†DataIngestionStatus | The status of data ingestion for this workspace.
+L259: cite20†ErrorAdditionalInfo | The resource management error additional info.
+L260: cite21†ErrorDetail | The error detail.
+L261: cite7†ErrorResponse | Error response
+L262: cite22†Identity | Identity for the resource.
+L263: cite23†IdentityType | Type of managed service identity.
+L264: cite24†PrivateLinkScopedResource | The private link scope resource reference.
+L265: cite25†PublicNetworkAccessType | The network access type for accessing Log Analytics ingestion.
+L266: cite26†systemData | Metadata pertaining to creation and last modification of the resource.
+L267: cite27†UserIdentityProperties | User assigned identity properties.
+L268: cite6†Workspace | The top level Workspace resource container.
+L269: cite28†WorkspaceCapping | The daily volume cap for ingestion.
+L270: cite29†WorkspaceEntityStatus | The provisioning state of the workspace.
+

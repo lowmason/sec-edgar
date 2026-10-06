@@ -1,0 +1,454 @@
+Create schedule triggers - Azure Data Factory & Azure Synapse | Microsoft Learn (https://learn.microsoft.com/en-us/azure/data-factory/how-to-create-schedule-trigger)
+citeturn13view0 [wordlim: 200] Crawled: today; Content type: text/html; Source: click({"ref_id":"turn5view0","id":57}); Total lines: 619
+L0: cite0†Skip to main content cite1†Skip to Ask Learn chat experience L1: 
+L2: This browser is no longer supported.
+L3: 
+L4: Upgrade to Microsoft Edge to take advantage of the latest features, security updates, and technical support.
+L5: 
+L6: cite2†Download Microsoft Edge†go.microsoft.com cite3†More info about Internet Explorer and Microsoft Edge L7: 
+L8: Table of contents Exit editor mode
+L9: 
+L10: Ask Learn Ask Learn
+L11: 
+L12: Reading mode Table of contents cite1†Read in English Add Add to Plans cite4†Edit†github.com L13: 
+L14: * * *
+L15: 
+L16: Copy Markdown Print
+L17: 
+L18: * * *
+L19: 
+L20: Note
+L21: Access to this page requires authorization. You can try cite1†signing in or changing directories.
+L22: 
+L23: Access to this page requires authorization. You can try changing directories.
+L24: # Create a trigger that runs a pipeline on a schedule
+L25: 
+L26: Feedback
+L27: 
+L28: Summarize this article for me
+L29: ## In this article
+L30: 
+L31: APPLIES TO: cite5†Image Azure Data Factory cite5†Image Azure Synapse Analytics
+L32: 
+L33: Tip
+L34: 
+L35: cite6†Data Factory in Microsoft Fabric is the next generation of Azure Data Factory, with a simpler architecture, built-in AI, and new features. If you're new to data integration, start with Fabric Data Factory. Existing ADF workloads can upgrade to Fabric to access new capabilities across data science, real-time analytics, and reporting.
+L36:   * cite7†Start a Fabric free trial .
+L37:   * cite8†Upgrade from Azure Data Factory to Data Factory in Microsoft Fabric .
+L38: 
+L39: This article provides information about the schedule trigger and the steps to create, start, and monitor a schedule trigger. For other types of triggers, see cite9†Pipeline execution and triggers .
+L40: When you create a schedule trigger, you specify a schedule like a start date, recurrence, or end date for the trigger and associate it with a pipeline. Pipelines and triggers have a many-to-many relationship. Multiple triggers can kick off a single pipeline. A single trigger can kick off multiple pipelines.
+L41: 
+L42: The following sections provide steps to create a schedule trigger in different ways.
+L43: ## Azure Data Factory and Azure Synapse portal experience
+L44: 
+L45: You can create a schedule trigger to schedule a pipeline to run periodically, such as hourly or daily.
+L46: 
+L47: Note
+L48: 
+L49: For a complete walkthrough of creating a pipeline and a schedule trigger, which associates the trigger with the pipeline and runs and monitors the pipeline, see cite10†Quickstart: Create a data factory by using Data Factory UI .
+L50: 
+L51:   1. Switch to the Edit tab in Data Factory or the Integrate tab in Azure Synapse.
+L52:      * cite11†Azure Data Factory L53:      * cite12†Azure Synapse L54: 
+L55: cite13†Image: Screenshot that shows switching to the Edit tab. L56: 
+L57: cite14†Image: Screenshot that shows switching to the Integrate tab. L58: 
+L59: * * *
+L60: 
+L61:   2. Select Trigger on the menu, and then select New/Edit.
+L62: 
+L63: cite15†Image: Screenshot that shows the New trigger menu. L64: 
+L65:   3. On the Add triggers page, select Choose trigger, and then select New.
+L66: 
+L67: cite16†Image: Screenshot that shows the Add triggers pane. L68: 
+L69:   4. On the New trigger page:
+L70:     1. Confirm that Schedule is selected for Type.
+L71: 
+L72:     2. Specify the start datetime of the trigger for Start Date. It's set to the current datetime in Coordinated Universal Time (UTC) by default.
+L73:     3. Specify the time zone in which the trigger is created. The time zone setting applies to Start Date, End Date, and Schedule Execution Times in Advanced recurrence options. Changing the Time Zone setting doesn't automatically change your start date. Make sure the start date is correct in the specified time zone. The Scheduled Execution time of Trigger is considered post the start date.
+L74: (Ensure that the start date is at least 1 minute less than the execution time or else it triggers the pipeline in the next recurrence.)
+L75: Note
+L76: 
+L77: For time zones that observe daylight saving, trigger time auto-adjusts for the twice-a-year change, if the recurrence is set to Days or above. To opt out of the daylight saving change, select a time zone that doesn't observe daylight saving, for instance, UTC.
+L78: 
+L79: Daylight saving adjustment only happens for a trigger with the recurrence set to Days or above. If the trigger is set to Hours or Minutes frequency, it continues to fire at regular intervals.
+L80:     4. Specify Recurrence for the trigger. Select one of the values from the dropdown list (Every minute, Hourly, Daily, Weekly, or Monthly). Enter the multiplier in the text box. For example, if you want the trigger to run once for every 15 minutes, you select Every Minute and enter 15 in the text box.
+L81: 
+L82:     5. Under Recurrence, if you choose Day(s), Week(s), or Month(s) from the dropdown list, you can see Advanced recurrence options.
+L83: cite17†Image: Screenshot that shows the advanced recurrence options of Day(s), Week(s), and Month(s). L84: 
+L85:     6. To specify an end-date time, select Specify an end date. Specify the Ends On information, and then select OK.
+L86: A cost is associated with each pipeline run. If you're testing, you might want to ensure that the pipeline is triggered only a couple of times. However, ensure that there's enough time for the pipeline to run between the publish time and the end time. The trigger comes into effect only after you publish the solution, not when you save the trigger in the UI.
+L87: 
+L88: cite18†Image: Screenshot that shows the trigger settings. L89: 
+L90: cite19†Image: Screenshot that shows trigger settings for the end date and time. L91:   5. In the New Trigger window, select Yes in the Activated option, and then select OK. You can use this checkbox to deactivate the trigger later.
+L92: 
+L93: cite20†Image: Screenshot that shows the Activated option. L94: 
+L95:   6. In the New Trigger window, review the warning message and then select OK.
+L96: 
+L97: cite21†Image: Screenshot that shows selecting the OK button. L98: 
+L99:   7. Select Publish all to publish the changes. Until you publish the changes, the trigger doesn't start triggering the pipeline runs.
+L100: cite22†Image: Screenshot that shows the Publish all button. L101: 
+L102:   8. Switch to the Pipeline runs tab on the left, and then select Refresh to refresh the list. You see the pipeline runs triggered by the scheduled trigger. Notice the values in the Triggered By column. If you use the Trigger Now option, you see the manual trigger run in the list.
+L103: 
+L104:      * cite23†Azure Data Factory L105:      * cite24†Azure Synapse L106: 
+L107: cite25†Image: Screenshot that shows monitoring triggered runs in Data Factory. L108: cite26†Image: Screenshot that shows monitoring triggered runs in Synapse Analytics. L109: 
+L110: * * *
+L111: 
+L112:   9. Switch to the Trigger runs > Schedule view.
+L113: 
+L114:      * cite27†Azure Data Factory L115:      * cite28†Azure Synapse L116: 
+L117: cite29†Image: Screenshot that shows monitoring the schedule for trigger runs in Data Factory. L118: 
+L119: cite30†Image: Screenshot that shows monitoring the schedule for trigger runs in Synapse Analytics. L120: 
+L121: * * *
+L122: ## Azure PowerShell
+L123: 
+L124: Note
+L125: 
+L126: We recommend that you use the Azure Az PowerShell module to interact with Azure. To get started, see cite31†Install Azure PowerShell . To learn how to migrate to the Az PowerShell module, see cite32†Migrate Azure PowerShell from AzureRM to Az .
+L127: This section shows you how to use Azure PowerShell to create, start, and monitor a schedule trigger. To see this sample working, first go through cite33†Quickstart: Create a data factory by using Azure PowerShell . Then, add the following code to the main method, which creates and starts a schedule trigger that runs every 15 minutes. The trigger is associated with a pipeline named `Adfv2QuickStartPipeline` that you create as part of the quickstart.
+L128: ### Prerequisites
+L129: 
+L130:   * Azure subscription. If you don't have an Azure subscription, cite34†create a free account†azure.microsoft.com before you begin.
+L131:   * Azure PowerShell. Follow the instructions in cite31†Install Azure PowerShell on Windows with PowerShellGet .
+L132: ### Sample code
+L133: 
+L134:   1. Create a JSON file named MyTrigger.json in the *C:\ADFv2QuickStartPSH* folder with the following content:
+L135: 
+L136: Important
+L137: Before you save the JSON file, set the value of the `startTime` element to the current UTC time. Set the value of the `endTime` element to one hour past the current UTC time.
+L138: 
+L139:     `{
+L140:         "properties": {
+L141:             "name": "MyTrigger",
+L142:             "type": "ScheduleTrigger",
+L143:             "typeProperties": {
+L144:                 "recurrence": {
+L145:                     "frequency": "Minute",
+L146:                     "interval": 15,
+L147:                     "startTime": "2017-12-08T00:00:00Z",
+L148:                     "endTime": "2017-12-08T01:00:00Z",
+L149:                     "timeZone": "UTC"
+L150:                 }
+L151:             },
+L152:             "pipelines": [{
+L153:                     "pipelineReference": {
+L154:                         "type": "PipelineReference",
+L155:                         "referenceName": "Adfv2QuickStartPipeline"
+L156:                     },
+L157:                     "parameters": {
+L158:                         "inputPath": "adftutorial/input",
+L159:                         "outputPath": "adftutorial/output"
+L160:                     }
+L161:                 }
+L162:             ]
+L163:         }
+L164:     }
+L165:     `
+L166: In the JSON snippet:
+L167: 
+L168:      * The `type` element of the trigger is set to `ScheduleTrigger`.
+L169: 
+L170:      * The `frequency` element is set to `Minute` and the `interval` element is set to `15`. As such, the trigger runs the pipeline every 15 minutes between the start and end times.
+L171: 
+L172:      * The `timeZone` element specifies the time zone in which the trigger is created. This setting affects both `startTime` and `endTime`.
+L173:      * The `endTime` element is one hour after the value of the `startTime` element. As such, the trigger runs the pipeline 15 minutes, 30 minutes, and 45 minutes after the start time. Don't forget to update the start time to the current UTC time and the end time to one hour past the start time.
+L174: 
+L175: Important
+L176: 
+L177: For the UTC time zone, `startTime` and `endTime` need to follow the format `yyyy-MM-ddTHH:mm:ss`Z. For other time zones, `startTime` and `endTime` follow the `yyyy-MM-ddTHH:mm:ss` format.
+L178: Per the ISO 8601 standard, the `Z` suffix is used to timestamp mark the datetime to the UTC time zone and render the `timeZone` field useless. If the `Z` suffix for the UTC time zone is missing, the result is an error upon trigger activation.
+L179: 
+L180:      * The trigger is associated with the `Adfv2QuickStartPipeline` pipeline. To associate multiple pipelines with a trigger, add more `pipelineReference` sections.
+L181:      * The pipeline in the quickstart takes two `parameters` values: `inputPath` and `outputPath`. You pass values for these parameters from the trigger.
+L182: 
+L183:   2. Create a trigger by using the cite35†Set-AzDataFactoryV2Trigger cmdlet:
+L184: 
+L185:     `Set-AzDataFactoryV2Trigger -ResourceGroupName $ResourceGroupName -DataFactoryName $DataFactoryName -Name "MyTrigger" -DefinitionFile "C:\ADFv2QuickStartPSH\MyTrigger.json"
+L186:     `
+L187:   3. Confirm that the status of the trigger is Stopped by using the cite36†Get-AzDataFactoryV2Trigger cmdlet:
+L188: 
+L189:     `Get-AzDataFactoryV2Trigger -ResourceGroupName $ResourceGroupName -DataFactoryName $DataFactoryName -Name "MyTrigger"
+L190:     `
+L191: 
+L192:   4. Start the trigger by using the cite37†Start-AzDataFactoryV2Trigger cmdlet:
+L193: 
+L194:     `Start-AzDataFactoryV2Trigger -ResourceGroupName $ResourceGroupName -DataFactoryName $DataFactoryName -Name "MyTrigger"
+L195:     `
+L196:   5. Confirm that the status of the trigger is Started by using the cite36†Get-AzDataFactoryV2Trigger cmdlet:
+L197: 
+L198:     `Get-AzDataFactoryV2Trigger -ResourceGroupName $ResourceGroupName -DataFactoryName $DataFactoryName -Name "MyTrigger"
+L199:     `
+L200:   6. Get the trigger runs in Azure PowerShell by using the cite38†Get-AzDataFactoryV2TriggerRun cmdlet. To get the information about the trigger runs, execute the following command periodically. Update the `TriggerRunStartedAfter` and `TriggerRunStartedBefore` values to match the values in your trigger definition:
+L201:     `Get-AzDataFactoryV2TriggerRun -ResourceGroupName $ResourceGroupName -DataFactoryName $DataFactoryName -TriggerName "MyTrigger" -TriggerRunStartedAfter "2017-12-08T00:00:00" -TriggerRunStartedBefore "2017-12-08T01:00:00"
+L202:     `
+L203: Note
+L204: 
+L205: The trigger time of schedule triggers are specified in the UTC timestamp. `TriggerRunStartedAfter` and `TriggerRunStartedBefore` also expect the UTC timestamp.
+L206: 
+L207: To monitor the trigger runs and pipeline runs in the Azure portal, see cite39†Monitor pipeline runs .
+L208: ## Azure CLI
+L209: 
+L210: This section shows you how to use the Azure CLI to create, start, and monitor a schedule trigger. To see this sample working, first go through cite40†Quickstart: Create an Azure Data Factory by using the Azure CLI . Then, follow the steps to create and start a schedule trigger that runs every 15 minutes. The trigger is associated with a pipeline named `Adfv2QuickStartPipeline` that you create as part of the quickstart.
+L211: ### Prerequisites
+L212: 
+L213:   * Use the Bash environment in cite41†Azure Cloud Shell . For more information, see cite42†Get started with Azure Cloud Shell .
+L214: 
+L215:   * If you prefer to run CLI reference commands locally, cite43†install the Azure CLI. If you're running on Windows or macOS, consider running Azure CLI in a Docker container. For more information, see cite44†How to run the Azure CLI in a Docker container .
+L216:     * If you're using a local installation, sign in to the Azure CLI by using the cite45†az login command. To finish the authentication process, follow the steps displayed in your terminal. For other sign-in options, see cite46†Authenticate to Azure using Azure CLI .
+L217: 
+L218:     * When you're prompted, install the Azure CLI extension on first use. For more information about extensions, see cite47†Use and manage extensions with the Azure CLI .
+L219:     * Run cite48†az version to find the version and dependent libraries that are installed. To upgrade to the latest version, run cite49†az upgrade .
+L220: ### Sample code
+L221: 
+L222:   1. In your working directory, create a JSON file named MyTrigger.json with the trigger's properties. For this example, use the following content:
+L223: 
+L224: Important
+L225: Before you save the JSON file, set the value of the `startTime` element to the current UTC time. Set the value of the `endTime` element to one hour past the current UTC time.
+L226: 
+L227:     `{
+L228:         "name": "MyTrigger",
+L229:         "type": "ScheduleTrigger",
+L230:         "typeProperties": {
+L231:             "recurrence": {
+L232:                 "frequency": "Minute",
+L233:                 "interval": 15,
+L234:                 "startTime": "2017-12-08T00:00:00Z",
+L235:                 "endTime": "2017-12-08T01:00:00Z",
+L236:                 "timeZone": "UTC"
+L237:             }
+L238:         },
+L239:         "pipelines": [{
+L240:                 "pipelineReference": {
+L241:                     "type": "PipelineReference",
+L242:                     "referenceName": "Adfv2QuickStartPipeline"
+L243:                 },
+L244:                 "parameters": {
+L245:                     "inputPath": "adftutorial/input",
+L246:                     "outputPath": "adftutorial/output"
+L247:                 }
+L248:             }
+L249:         ]
+L250:     }
+L251:     `
+L252: In the JSON snippet:
+L253: 
+L254:      * The `type` element of the trigger is set to `ScheduleTrigger`.
+L255: 
+L256:      * The `frequency` element is set to `Minute` and the `interval` element is set to `15`. As such, the trigger runs the pipeline every 15 minutes between the start and end times.
+L257: 
+L258:      * The `timeZone` element specifies the time zone in which the trigger is created. This setting affects both `startTime` and `endTime`.
+L259:      * The `endTime` element is one hour after the value of the `startTime` element. As such, the trigger runs the pipeline 15 minutes, 30 minutes, and 45 minutes after the start time. Don't forget to update the start time to the current UTC time and the end time to one hour past the start time.
+L260: 
+L261: Important
+L262: 
+L263: For the UTC time zone, the `startTime` and endTime need to follow the format `yyyy-MM-ddTHH:mm:ss`Z. For other time zones, `startTime` and `endTime` follow the `yyyy-MM-ddTHH:mm:ss` format.
+L264: Per the ISO 8601 standard, the Z suffix is used to timestamp mark the datetime to the UTC time zone and render the `timeZone` field useless. If the Z suffix is missing for the UTC time zone, the result is an error upon trigger activation.
+L265: 
+L266:      * The trigger is associated with the `Adfv2QuickStartPipeline` pipeline. To associate multiple pipelines with a trigger, add more `pipelineReference` sections.
+L267:      * The pipeline in the quickstart takes two `parameters` values: `inputPath` and `outputPath`. You pass values for these parameters from the trigger.
+L268: 
+L269:   2. Create a trigger by using the cite50†az datafactory trigger create command:
+L270: 
+L271:     `az datafactory trigger create --resource-group "ADFQuickStartRG" --factory-name "ADFTutorialFactory"  --name "MyTrigger" --properties @MyTrigger.json
+L272:     `
+L273:   3. Confirm that the status of the trigger is Stopped by using the cite51†az datafactory trigger show command:
+L274: 
+L275:     `az datafactory trigger show --resource-group "ADFQuickStartRG" --factory-name "ADFTutorialFactory" --name "MyTrigger"
+L276:     `
+L277: 
+L278:   4. Start the trigger by using the cite52†az datafactory trigger start command:
+L279: 
+L280:     `az datafactory trigger start --resource-group "ADFQuickStartRG" --factory-name "ADFTutorialFactory" --name "MyTrigger"
+L281:     `
+L282:   5. Confirm that the status of the trigger is Started by using the cite51†az datafactory trigger show command:
+L283: 
+L284:     `az datafactory trigger show --resource-group "ADFQuickStartRG" --factory-name "ADFTutorialFactory" --name "MyTrigger"
+L285:     `
+L286:   6. Get the trigger runs in the Azure CLI by using the cite53†az datafactory trigger-run query-by-factory command. To get information about the trigger runs, execute the following command periodically. Update the `last-updated-after` and `last-updated-before` values to match the values in your trigger definition:
+L287:     `az datafactory trigger-run query-by-factory --resource-group "ADFQuickStartRG" --factory-name "ADFTutorialFactory" --filters operand="TriggerName" operator="Equals" values="MyTrigger" --last-updated-after "2017-12-08T00:00:00" --last-updated-before "2017-12-08T01:00:00"
+L288:     `
+L289: Note
+L290: 
+L291: The trigger times of schedule triggers are specified in the UTC timestamp. last-updated-after and last-updated-before also expects the UTC timestamp.
+L292: 
+L293: To monitor the trigger runs and pipeline runs in the Azure portal, see cite39†Monitor pipeline runs .
+L294: ## .NET SDK
+L295: 
+L296: This section shows you how to use the .NET SDK to create, start, and monitor a trigger. To see this sample working, first go through cite54†Quickstart: Create a data factory by using the .NET SDK . Then, add the following code to the main method, which creates and starts a schedule trigger that runs every 15 minutes. The trigger is associated with a pipeline named `Adfv2QuickStartPipeline` that you create as part of the quickstart.
+L297: To create and start a schedule trigger that runs every 15 minutes, add the following code to the main method:
+L298: 
+L299:     `            // Create the trigger
+L300:                 Console.WriteLine("Creating the trigger");
+L301: 
+L302:                 // Set the start time to the current UTC time
+L303:                 DateTime startTime = DateTime.UtcNow;
+L304: 
+L305:                 // Specify values for the inputPath and outputPath parameters
+L306:                 Dictionary<string, object> pipelineParameters = new Dictionary<string, object>();
+L307:                 pipelineParameters.Add("inputPath", "adftutorial/input");
+L308:                 pipelineParameters.Add("outputPath", "adftutorial/output");
+L309: 
+L310:                 // Create a schedule trigger
+L311:                 string triggerName = "MyTrigger";
+L312:                 ScheduleTrigger myTrigger = new ScheduleTrigger()
+L313:                 {
+L314:                     Pipelines = new List<TriggerPipelineReference>()
+L315:                     {
+L316:                         // Associate the Adfv2QuickStartPipeline pipeline with the trigger
+L317:                         new TriggerPipelineReference()
+L318:                         {
+L319:                             PipelineReference = new PipelineReference(pipelineName),
+L320:                             Parameters = pipelineParameters,
+L321:                         }
+L322:                     },
+L323:                     Recurrence = new ScheduleTriggerRecurrence()
+L324:                     {
+L325:                         // Set the start time to the current UTC time and the end time to one hour after the start time
+L326:                         StartTime = startTime,
+L327:                         TimeZone = "UTC",
+L328:                         EndTime = startTime.AddHours(1),
+L329:                         Frequency = RecurrenceFrequency.Minute,
+L330:                         Interval = 15,
+L331:                     }
+L332:                 };
+L333: 
+L334:                 // Now, create the trigger by invoking the CreateOrUpdate method
+L335:                 TriggerResource triggerResource = new TriggerResource()
+L336:                 {
+L337:                     Properties = myTrigger
+L338:                 };
+L339:                 client.Triggers.CreateOrUpdate(resourceGroup, dataFactoryName, triggerName, triggerResource);
+L340: 
+L341:                 // Start the trigger
+L342:                 Console.WriteLine("Starting the trigger");
+L343:                 client.Triggers.Start(resourceGroup, dataFactoryName, triggerName);
+L344:     `
+L345: To create triggers in a different time zone, other than UTC, the following settings are required:
+L346: 
+L347:     `<<ClientInstance>>.SerializationSettings.DateFormatHandling = Newtonsoft.Json.DateFormatHandling.IsoDateFormat;
+L348:     <<ClientInstance>>.SerializationSettings.DateTimeZoneHandling = Newtonsoft.Json.DateTimeZoneHandling.Unspecified;
+L349:     <<ClientInstance>>.SerializationSettings.DateParseHandling = DateParseHandling.None;
+L350:     <<ClientInstance>>.DeserializationSettings.DateParseHandling = DateParseHandling.None;
+L351:     <<ClientInstance>>.DeserializationSettings.DateFormatHandling = Newtonsoft.Json.DateFormatHandling.IsoDateFormat;
+L352:     <<ClientInstance>>.DeserializationSettings.DateTimeZoneHandling = Newtonsoft.Json.DateTimeZoneHandling.Unspecified;
+L353:     `
+L354: To monitor a trigger run, add the following code before the last `Console.WriteLine` statement in the sample:
+L355: 
+L356:     `            // Check that the trigger runs every 15 minutes
+L357:                 Console.WriteLine("Trigger runs. You see the output every 15 minutes");
+L358: 
+L359:                 for (int i = 0; i < 3; i++)
+L360:                 {
+L361:                     System.Threading.Thread.Sleep(TimeSpan.FromMinutes(15));
+L362:                     List<TriggerRun> triggerRuns = client.Triggers.ListRuns(resourceGroup, dataFactoryName, triggerName, DateTime.UtcNow.AddMinutes(-15 * (i + 1)), DateTime.UtcNow.AddMinutes(2)).ToList();
+L363:                     Console.WriteLine("{0} trigger runs found", triggerRuns.Count);
+L364: 
+L365:                     foreach (TriggerRun run in triggerRuns)
+L366:                     {
+L367:                         foreach (KeyValuePair<string, string> triggeredPipeline in run.TriggeredPipelines)
+L368:                         {
+L369:                             PipelineRun triggeredPipelineRun = client.PipelineRuns.Get(resourceGroup, dataFactoryName, triggeredPipeline.Value);
+L370:                             Console.WriteLine("Pipeline run ID: {0}, Status: {1}", triggeredPipelineRun.RunId, triggeredPipelineRun.Status);
+L371:                             List<ActivityRun> runs = client.ActivityRuns.ListByPipelineRun(resourceGroup, dataFactoryName, triggeredPipelineRun.RunId, run.TriggerRunTimestamp.Value, run.TriggerRunTimestamp.Value.AddMinutes(20)).ToList();
+L372:                         }
+L373:                     }
+L374:                 }
+L375:     `
+L376: To monitor the trigger runs and pipeline runs in the Azure portal, see cite39†Monitor pipeline runs .
+L377: ## Python SDK
+L378: This section shows you how to use the Python SDK to create, start, and monitor a trigger. To see this sample working, first go through cite55†Quickstart: Create a data factory by using the Python SDK . Then, add the following code block after the `monitor the pipeline run` code block in the Python script. This code creates a schedule trigger that runs every 15 minutes between the specified start and end times.
+L379: Update the `start_time` variable to the current UTC time and the `end_time` variable to one hour past the current UTC time.
+L380: 
+L381:     `    # Create a trigger
+L382:         tr_name = 'mytrigger'
+L383:         scheduler_recurrence = ScheduleTriggerRecurrence(frequency='Minute', interval='15',start_time='2017-12-12T04:00:00Z', end_time='2017-12-12T05:00:00Z', time_zone='UTC')
+L384:         pipeline_parameters = {'inputPath':'adftutorial/input', 'outputPath':'adftutorial/output'}
+L385:         pipelines_to_run = []
+L386:         pipeline_reference = PipelineReference('copyPipeline')
+L387:         pipelines_to_run.append(TriggerPipelineReference(pipeline_reference, pipeline_parameters))
+L388:         tr_properties = TriggerResource(properties=ScheduleTrigger(description='My scheduler trigger', pipelines = pipelines_to_run, recurrence=scheduler_recurrence))
+L389:         adf_client.triggers.create_or_update(rg_name, df_name, tr_name, tr_properties)
+L390: 
+L391:         # Start the trigger
+L392:         adf_client.triggers.start(rg_name, df_name, tr_name)
+L393:     `
+L394: To monitor the trigger runs and pipeline runs in the Azure portal, see cite39†Monitor pipeline runs .
+L395: ## Azure Resource Manager template
+L396: 
+L397: You can use an Azure Resource Manager template to create a trigger. For step-by-step instructions, see cite56†Create an Azure data factory by using an Azure Resource Manager template .
+L398: ## Pass the trigger start time to a pipeline
+L399: Azure Data Factory version 1 supports reading or writing partitioned data by using the system variables `SliceStart`, `SliceEnd`, `WindowStart`, and `WindowEnd`. In the current version of Data Factory and Azure Synapse pipelines, you can achieve this behavior by using a pipeline parameter. The start time and scheduled time for the trigger are set as the value for the pipeline parameter.
+L400: In the following example, the scheduled time for the trigger is passed as a value to the pipeline `scheduledRunTime` parameter:
+L401: 
+L402:     `"parameters": {
+L403:         "scheduledRunTime": "@trigger().scheduledTime"
+L404:     }
+L405:     `
+L406: ## JSON schema
+L407: The following JSON definition shows you how to create a schedule trigger with scheduling and recurrence:
+L408: 
+L409:     `{
+L410:       "properties": {
+L411:         "type": "ScheduleTrigger",
+L412:         "typeProperties": {
+L413:           "recurrence": {
+L414:             "frequency": <<Minute, Hour, Day, Week, Month>>,
+L415:             "interval": <<int>>,             // Optional, specifies how often to fire (default to 1)
+L416:             "startTime": <<datetime>>,
+L417:             "endTime": <<datetime - optional>>,
+L418:             "timeZone": "UTC"
+L419:             "schedule": {                    // Optional (advanced scheduling specifics)
+L420:               "hours": [<<0-23>>],
+L421:               "weekDays": [<<Monday-Sunday>>],
+L422:               "minutes": [<<0-59>>],
+L423:               "monthDays": [<<1-31>>],
+L424:               "monthlyOccurrences": [
+L425:                    {
+L426:                         "day": <<Monday-Sunday>>,
+L427:                         "occurrence": <<1-5>>
+L428:                    }
+L429:                ]
+L430:             }
+L431:           }
+L432:         },
+L433:        "pipelines": [
+L434:                 {
+L435:                     "pipelineReference": {
+L436:                         "type": "PipelineReference",
+L437:                         "referenceName": "<Name of your pipeline>"
+L438:                     },
+L439:                     "parameters": {
+L440:                         "<parameter 1 Name>": {
+L441:                             "type": "Expression",
+L442:                             "value": "<parameter 1 Value>"
+L443:                         },
+L444:                         "<parameter 2 Name>" : "<parameter 2 Value>"
+L445:                     }
+L446:                }
+L447:           ]
+L448:       }
+L449:     }
+L450:     `
+L451: Important
+L452: 
+L453: The `parameters` property is a mandatory property of the `pipelines` element. If your pipeline doesn't take any parameters, you must include an empty JSON definition for the `parameters` property.
+L454: ### Schema overview
+L455: 
+L456: The following table provides a high-level overview of the major schema elements that are related to recurrence and scheduling of a trigger.
+L457: JSON property  | Description
+L458: --- | ---
+L459: `startTime`  | A Date-Time value. For simple schedules, the value of the `startTime` property applies to the first occurrence. For complex schedules, the trigger starts no sooner than the specified `startTime` value.
+L460: For the UTC time zone, the format is `'yyyy-MM-ddTHH:mm:ssZ'`. For other time zones, the format is `yyyy-MM-ddTHH:mm:ss`.
+L461: `endTime`  | The end date and time for the trigger. The trigger doesn't execute after the specified end date and time. The value for the property can't be in the past. This property is optional.
+L462: For the UTC time zone, the format is `'yyyy-MM-ddTHH:mm:ssZ'`. For other time zones, the format is `yyyy-MM-ddTHH:mm:ss`.
+L463: `timeZone`  | The time zone in which the trigger is created. This setting affects `startTime`, `endTime`, and `schedule`. See a cite57†list of supported time zones .
+L464: `recurrence`  | A recurrence object that specifies the recurrence rules for the trigger. The recurrence object supports the `frequency`, `interval`, `endTime`, `count`, and `schedule` elements. When a recurrence object is defined, the `frequency` element is required. The other elements of the recurrence object are optional.
+L465: `frequency`  | The unit of frequency at which the trigger recurs. The supported values include `minute,` `hour,` `day`, `week`, and `month`.
+L466: `interval`  | A positive integer that denotes the interval for the `frequency` value, which determines how often the trigger runs. For example, if the `interval` is `3` and the `frequency` is `week`, the trigger recurs every 3 weeks.
+L467: `schedule`  | The recurrence schedule for the trigger. A trigger with a specified `frequency` value alters its recurrence based on a recurrence schedule. The `schedule` property contains modifications for the recurrence that are based on minutes, hours, weekdays, month days, and week number.
+L468: Important
+L469: 
+L470: For the UTC time zone, `startTime` and `endTime` need to follow the format `yyyy-MM-ddTHH:mm:ss`Z. For other time zones, `startTime` and `endTime` follow the `yyyy-MM-ddTHH:mm:ss` format.
+L471: 
+L472: Per the ISO 8601 standard, the Z suffix is used to timestamp mark the datetime to the UTC time zone and render the `timeZone` field useless. If the Z suffix is missing for the UTC time zone, the result is an error upon trigger activation.
+L473: ### Schema defaults, limits, and examples
+L474: JSON property  | Type  | Required  | Default value  | Valid values  | Example

@@ -1,0 +1,9 @@
+{
+  "root_report_received_at_utc": "2026-10-05T23:15:09.473633+00:00",
+  "timestamp_limitation": "Receipt time for root report, not exact ARM access time",
+  "command": "az vm list --subscription 3c92a216-8ed6-4897-b741-11ed287b8617 --query '[].{name:name,resourceGroup:resourceGroup,location:location,osType:storageProfile.osDisk.osType,size:hardwareProfile.vmSize,id:id}' --output json",
+  "exit_code": 0,
+  "result": [],
+  "limitation": "Successful ARM inventory read in observed subscription returned no VMs to this actor. Does not prove absence elsewhere or authorization beyond this read; deployment binding remains undecided. No VM created or accessed.",
+  "followup": "Root asked owner for specific existing VM resource ID and access method."
+}

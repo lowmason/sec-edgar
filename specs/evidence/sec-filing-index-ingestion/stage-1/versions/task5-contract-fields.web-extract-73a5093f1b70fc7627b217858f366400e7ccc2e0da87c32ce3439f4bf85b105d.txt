@@ -1,0 +1,800 @@
+Microsoft.DataFactory/factories/pipelines 2018-06-01 - Bicep, ARM template & Terraform AzAPI reference | Microsoft Learn (https://learn.microsoft.com/en-us/azure/templates/microsoft.datafactory/2018-06-01/factories/pipelines)
+citeturn40view0 [wordlim: 200] Crawled: yesterday; Content type: text/html; Source: find({"ref_id":"turn36view1","pattern":"httpRequestTimeout"}); Total lines: 22407
+L677: For SalesforceV2Sink, use:
+L678: 
+L679:     `{
+L680:       externalIdFieldName: any(...)
+L681:       ignoreNullValues: any(...)
+L682:       type: 'SalesforceV2Sink'
+L683:       writeBehavior: 'string'
+L684:     }
+L685:     `
+L686: 
+L687: For SapCloudForCustomerSink, use:
+L688: 
+L689:     `{
+L690:       httpRequestTimeout: any(...)
+L691:       type: 'SapCloudForCustomerSink'
+L692:       writeBehavior: 'string'
+L693:     }
+L694:     `
+L3818: For SapBwSource, use:
+L3819: 
+L3820:     `{
+L3821:       additionalColumns: any(...)
+L3822:       query: any(...)
+L3823:       queryTimeout: any(...)
+L3824:       type: 'SapBwSource'
+L3825:     }
+L3826:     `
+L3827: 
+L3828: For SapCloudForCustomerSource, use:
+L3829: 
+L3830:     `{
+L3831:       additionalColumns: any(...)
+L3832:       httpRequestTimeout: any(...)
+L3833:       query: any(...)
+L3834:       queryTimeout: any(...)
+L3835:       type: 'SapCloudForCustomerSource'
+L3836:     }
+L3837:     `
+L3838: For SapEccSource, use:
+L3839: 
+L3840:     `{
+L3841:       additionalColumns: any(...)
+L3842:       httpRequestTimeout: any(...)
+L3843:       query: any(...)
+L3844:       queryTimeout: any(...)
+L3845:       type: 'SapEccSource'
+L3846:     }
+L3847:     `
+L3848: 
+L3849: For SapHanaSource, use:
+L3850: 
+L3851:     `{
+L3852:       additionalColumns: any(...)
+L3853:       packetSize: any(...)
+L3854:       partitionOption: any(...)
+L3855:       partitionSettings: {
+L3856:         partitionColumnName: any(...)
+L3857:       }
+L3858:       query: any(...)
+L3859:       queryTimeout: any(...)
+L3860:       type: 'SapHanaSource'
+L3861:     }
+L3862:     `
+L3938: For SharePointOnlineListSource, use:
+L3939: 
+L3940:     `{
+L3941:       httpRequestTimeout: any(...)
+L3942:       query: any(...)
+L3943:       type: 'SharePointOnlineListSource'
+L3944:     }
+L3945:     `
+L3946: 
+L3947: For ShopifySource, use:
+L3948: 
+L3949:     `{
+L3950:       additionalColumns: any(...)
+L3951:       query: any(...)
+L3952:       queryTimeout: any(...)
+L3953:       type: 'ShopifySource'
+L3954:     }
+L3955:     `
+L8063: For RestSink, use:
+L8064: 
+L8065:     `{
+L8066:       "additionalHeaders": {},
+L8067:       "httpCompressionType": {},
+L8068:       "httpRequestTimeout": {},
+L8069:       "requestInterval": {},
+L8070:       "requestMethod": {},
+L8071:       "type": "RestSink"
+L8072:     }
+L8073:     `
+L8074: 
+L8075: For SalesforceServiceCloudSink, use:
+L8076: 
+L8077:     `{
+L8078:       "externalIdFieldName": {},
+L8079:       "ignoreNullValues": {},
+L8080:       "type": "SalesforceServiceCloudSink",
+L8081:       "writeBehavior": "string"
+L8082:     }
+L8083:     `
+L8103: For SalesforceV2Sink, use:
+L8104: 
+L8105:     `{
+L8106:       "externalIdFieldName": {},
+L8107:       "ignoreNullValues": {},
+L8108:       "type": "SalesforceV2Sink",
+L8109:       "writeBehavior": "string"
+L8110:     }
+L8111:     `
+L8112: 
+L8113: For SapCloudForCustomerSink, use:
+L8114: 
+L8115:     `{
+L8116:       "httpRequestTimeout": {},
+L8117:       "type": "SapCloudForCustomerSink",
+L8118:       "writeBehavior": "string"
+L8119:     }
+L8120:     `
+L10939: For NetezzaSource, use:
+L10940: 
+L10941:     `{
+L10942:       "additionalColumns": {},
+L10943:       "partitionOption": {},
+L10944:       "partitionSettings": {
+L10945:         "partitionColumnName": {},
+L10946:         "partitionLowerBound": {},
+L10947:         "partitionUpperBound": {}
+L10948:       },
+L10949:       "query": {},
+L10950:       "queryTimeout": {},
+L10951:       "type": "NetezzaSource"
+L10952:     }
+L10953:     `
+L10954: 
+L10955: For ODataSource, use:
+L10956: 
+L10957:     `{
+L10958:       "additionalColumns": {},
+L10959:       "httpRequestTimeout": {},
+L10960:       "query": {},
+L10961:       "type": "ODataSource"
+L10962:     }
+L11122: For RestSource, use:
+L11123: 
+L11124:     `{
+L11125:       "additionalColumns": {},
+L11126:       "additionalHeaders": {},
+L11127:       "httpRequestTimeout": {},
+L11128:       "paginationRules": {},
+L11129:       "requestBody": {},
+L11130:       "requestInterval": {},
+L11131:       "requestMethod": {},
+L11132:       "type": "RestSource"
+L11133:     }
+L11134:     `
+L11135: 
+L11136: For SalesforceMarketingCloudSource, use:
+L11137: 
+L11138:     `{
+L11139:       "additionalColumns": {},
+L11140:       "query": {},
+L11141:       "queryTimeout": {},
+L11142:       "type": "SalesforceMarketingCloudSource"
+L11143:     }
+L11144:     `
+L11165: For SalesforceSource, use:
+L11166: 
+L11167:     `{
+L11168:       "additionalColumns": {},
+L11169:       "query": {},
+L11170:       "queryTimeout": {},
+L11171:       "readBehavior": {},
+L11172:       "type": "SalesforceSource"
+L11173:     }
+L11174:     `
+L11175: 
+L11176: For SalesforceV2Source, use:
+L11177: 
+L11178:     `{
+L11179:       "additionalColumns": {},
+L11180:       "includeDeletedObjects": {},
+L11181:       "pageSize": {},
+L11182:       "partitionOption": {},
+L11183:       "query": {},
+L11184:       "queryTimeout": {},
+L11185:       "SOQLQuery": {},
+L11186:       "type": "SalesforceV2Source"
+L11187:     }
+L11188:     `
+L11189: For SapBwSource, use:
+L11190: 
+L11191:     `{
+L11192:       "additionalColumns": {},
+L11193:       "query": {},
+L11194:       "queryTimeout": {},
+L11195:       "type": "SapBwSource"
+L11196:     }
+L11197:     `
+L11198: 
+L11199: For SapCloudForCustomerSource, use:
+L11200: 
+L11201:     `{
+L11202:       "additionalColumns": {},
+L11203:       "httpRequestTimeout": {},
+L11204:       "query": {},
+L11205:       "queryTimeout": {},
+L11206:       "type": "SapCloudForCustomerSource"
+L11207:     }
+L11208:     `
+L11209: For SapEccSource, use:
+L11210: 
+L11211:     `{
+L11212:       "additionalColumns": {},
+L11213:       "httpRequestTimeout": {},
+L11214:       "query": {},
+L11215:       "queryTimeout": {},
+L11216:       "type": "SapEccSource"
+L11217:     }
+L11218:     `
+L11219: 
+L11220: For SapHanaSource, use:
+L11221: 
+L11222:     `{
+L11223:       "additionalColumns": {},
+L11224:       "packetSize": {},
+L11225:       "partitionOption": {},
+L11226:       "partitionSettings": {
+L11227:         "partitionColumnName": {}
+L11228:       },
+L11229:       "query": {},
+L11230:       "queryTimeout": {},
+L11231:       "type": "SapHanaSource"
+L11232:     }
+L11233:     `
+L11234: For SapOdpSource, use:
+L11235: 
+L11236:     `{
+L11237:       "additionalColumns": {},
+L11238:       "extractionMode": {},
+L11239:       "projection": {},
+L11240:       "queryTimeout": {},
+L11241:       "selection": {},
+L11242:       "subscriberProcess": {},
+L11243:       "type": "SapOdpSource"
+L11244:     }
+L11245:     `
+L11280: For ServiceNowSource, use:
+L11281: 
+L11282:     `{
+L11283:       "additionalColumns": {},
+L11284:       "query": {},
+L11285:       "queryTimeout": {},
+L11286:       "type": "ServiceNowSource"
+L11287:     }
+L11288:     `
+L11289: 
+L11290: For ServiceNowV2Source, use:
+L11291: 
+L11292:     `{
+L11293:       "additionalColumns": {},
+L11294:       "expression": {
+L11295:         "operands": [
+L11296:           ...
+L11297:         ],
+L11298:         "operators": [ "string" ],
+L11299:         "type": "string",
+L11300:         "value": {}
+L11301:       },
+L11302:       "pageSize": {},
+L11303:       "queryTimeout": {},
+L11304:       "type": "ServiceNowV2Source"
+L11305:     }
+L11306:     `
+L11307: For SharePointOnlineListSource, use:
+L11308: 
+L11309:     `{
+L11310:       "httpRequestTimeout": {},
+L11311:       "query": {},
+L11312:       "type": "SharePointOnlineListSource"
+L11313:     }
+L11314:     `
+L11315: 
+L11316: For ShopifySource, use:
+L11317: 
+L11318:     `{
+L11319:       "additionalColumns": {},
+L11320:       "query": {},
+L11321:       "queryTimeout": {},
+L11322:       "type": "ShopifySource"
+L11323:     }
+L11324:     `
+L15505: For RestSink, use:
+L15506: 
+L15507:     `{
+L15508:       additionalHeaders = ?
+L15509:       httpCompressionType = ?
+L15510:       httpRequestTimeout = ?
+L15511:       requestInterval = ?
+L15512:       requestMethod = ?
+L15513:       type = "RestSink"
+L15514:     }
+L15515:     `
+L15516: 
+L15517: For SalesforceServiceCloudSink, use:
+L15518: 
+L15519:     `{
+L15520:       externalIdFieldName = ?
+L15521:       ignoreNullValues = ?
+L15522:       type = "SalesforceServiceCloudSink"
+L15523:       writeBehavior = "string"
+L15524:     }
+L15525:     `
+L15545: For SalesforceV2Sink, use:
+L15546: 
+L15547:     `{
+L15548:       externalIdFieldName = ?
+L15549:       ignoreNullValues = ?
+L15550:       type = "SalesforceV2Sink"
+L15551:       writeBehavior = "string"
+L15552:     }
+L15553:     `
+L15554: 
+L15555: For SapCloudForCustomerSink, use:
+L15556: 
+L15557:     `{
+L15558:       httpRequestTimeout = ?
+L15559:       type = "SapCloudForCustomerSink"
+L15560:       writeBehavior = "string"
+L15561:     }
+L15562:     `
+L18439: For NetezzaSource, use:
+L18440: 
+L18441:     `{
+L18442:       additionalColumns = ?
+L18443:       partitionOption = ?
+L18444:       partitionSettings = {
+L18445:         partitionColumnName = ?
+L18446:         partitionLowerBound = ?
+L18447:         partitionUpperBound = ?
+L18448:       }
+L18449:       query = ?
+L18450:       queryTimeout = ?
+L18451:       type = "NetezzaSource"
+L18452:     }
+L18453:     `
+L18454: 
+L18455: For ODataSource, use:
+L18456: 
+L18457:     `{
+L18458:       additionalColumns = ?
+L18459:       httpRequestTimeout = ?
+L18460:       query = ?
+L18461:       type = "ODataSource"
+L18462:     }
+L18463:     `
+L18622: For RestSource, use:
+L18623: 
+L18624:     `{
+L18625:       additionalColumns = ?
+L18626:       additionalHeaders = ?
+L18627:       httpRequestTimeout = ?
+L18628:       paginationRules = ?
+L18629:       requestBody = ?
+L18630:       requestInterval = ?
+L18631:       requestMethod = ?
+L18632:       type = "RestSource"
+L18633:     }
+L18634:     `
+L18635: 
+L18636: For SalesforceMarketingCloudSource, use:
+L18637: 
+L18638:     `{
+L18639:       additionalColumns = ?
+L18640:       query = ?
+L18641:       queryTimeout = ?
+L18642:       type = "SalesforceMarketingCloudSource"
+L18643:     }
+L18644:     `
+L18689: For SapBwSource, use:
+L18690: 
+L18691:     `{
+L18692:       additionalColumns = ?
+L18693:       query = ?
+L18694:       queryTimeout = ?
+L18695:       type = "SapBwSource"
+L18696:     }
+L18697:     `
+L18698: 
+L18699: For SapCloudForCustomerSource, use:
+L18700: 
+L18701:     `{
+L18702:       additionalColumns = ?
+L18703:       httpRequestTimeout = ?
+L18704:       query = ?
+L18705:       queryTimeout = ?
+L18706:       type = "SapCloudForCustomerSource"
+L18707:     }
+L18708:     `
+L18709: 
+L18710: For SapEccSource, use:
+L18711: 
+L18712:     `{
+L18713:       additionalColumns = ?
+L18714:       httpRequestTimeout = ?
+L18715:       query = ?
+L18716:       queryTimeout = ?
+L18717:       type = "SapEccSource"
+L18718:     }
+L18719:     `
+L18810: For SharePointOnlineListSource, use:
+L18811: 
+L18812:     `{
+L18813:       httpRequestTimeout = ?
+L18814:       query = ?
+L18815:       type = "SharePointOnlineListSource"
+L18816:     }
+L18817:     `
+L18818: 
+L18819: For ShopifySource, use:
+L18820: 
+L18821:     `{
+L18822:       additionalColumns = ?
+L18823:       query = ?
+L18824:       queryTimeout = ?
+L18825:       type = "ShopifySource"
+L18826:     }
+L18827:     `
+--------------------------------------------------------------------------------
+Microsoft.DataFactory/factories/triggers 2018-06-01 - Bicep, ARM template & Terraform AzAPI reference | Microsoft Learn (https://learn.microsoft.com/en-us/azure/templates/microsoft.datafactory/2018-06-01/factories/triggers)
+citeturn40view1 [wordlim: 200] Crawled: 3 days ago; Content type: text/html; Source: find({"ref_id":"turn36view2","pattern":"weekDays"}); Total lines: 1744
+L272:               int
+L273:             ]
+L274:             minutes: [
+L275:               int
+L276:             ]
+L277:             monthDays: [
+L278:               int
+L279:             ]
+L280:             monthlyOccurrences: [
+L281:               {
+L282:                 day: 'string'
+L283:                 occurrence: int
+L284:               }
+L285:             ]
+L286:             weekDays: [
+L287:               'string'
+L288:             ]
+L289:           }
+L290:           startTime: 'string'
+L291:           timeZone: 'string'
+L292:         }
+L293:       }
+L294:     }
+L295:     `
+L777:             "hours": [ "int" ],
+L778:             "minutes": [ "int" ],
+L779:             "monthDays": [ "int" ],
+L780:             "monthlyOccurrences": [
+L781:               {
+L782:                 "day": "string",
+L783:                 "occurrence": "int"
+L784:               }
+L785:             ],
+L786:             "weekDays": [ "string" ]
+L787:           },
+L788:           "startTime": "string",
+L789:           "timeZone": "string"
+L790:         }
+L791:       }
+L792:     }
+L793:     `
+L1380:               int
+L1381:             ]
+L1382:             minutes = [
+L1383:               int
+L1384:             ]
+L1385:             monthDays = [
+L1386:               int
+L1387:             ]
+L1388:             monthlyOccurrences = [
+L1389:               {
+L1390:                 day = "string"
+L1391:                 occurrence = int
+L1392:               }
+L1393:             ]
+L1394:             weekDays = [
+L1395:               "string"
+L1396:             ]
+L1397:           }
+L1398:           startTime = "string"
+L1399:           timeZone = "string"
+L1400:         }
+L1401:       }
+L1402:     }
+L1403:     `
+--------------------------------------------------------------------------------
+Microsoft.ContainerRegistry/registries 2025-11-01 - Bicep, ARM template & Terraform AzAPI reference | Microsoft Learn (https://learn.microsoft.com/en-us/azure/templates/microsoft.containerregistry/2025-11-01/registries)
+citeturn40view2 [wordlim: 200] Crawled: today; Content type: text/html; Source: find({"ref_id":"turn38view2","pattern":"roleAssignmentMode"}); Total lines: 935
+L461:         "publicNetworkAccess": "string",
+L462:         "roleAssignmentMode": "string",
+L463:         "zoneRedundancy": "string"
+L464:       },
+L465:       "sku": {
+L466:         "name": "string"
+L467:       },
+L468:       "tags": {
+L469:         "{customized property}": "string"
+L470:       }
+L471:     }
+L472:     `
+L750:               status = "string"
+L751:               type = "string"
+L752:             }
+L753:           }
+L754:           publicNetworkAccess = "string"
+L755:           roleAssignmentMode = "string"
+L756:           zoneRedundancy = "string"
+L757:         }
+L758:         sku = {
+L759:           name = "string"
+L760:         }
+L761:       }
+L762:     }
+L763:     `
+--------------------------------------------------------------------------------
+Microsoft.OperationalInsights/workspaces 2025-07-01 - Bicep, ARM template & Terraform AzAPI reference | Microsoft Learn (https://learn.microsoft.com/en-us/azure/templates/microsoft.operationalinsights/2025-07-01/workspaces)
+citeturn40view3 [wordlim: 200] Crawled: today; Content type: text/html; Source: find({"ref_id":"turn38view3","pattern":"retentionInDays"}); Total lines: 783
+L72:         publicNetworkAccessForQuery: 'Enabled'
+L73:         retentionInDays: 30
+L74:         sku: {
+L75:           name: 'PerGB2018'
+L76:         }
+L77:         workspaceCapping: {
+L78:           dailyQuotaGb: -1
+L79:         }
+L80:       }
+L81:     }
+L82:     `
+L582:             disableLocalAuth                            = false
+L583:             enableLogAccessUsingOnlyResourcePermissions = true
+L584:           }
+L585:           publicNetworkAccessForIngestion = "Enabled"
+L586:           publicNetworkAccessForQuery     = "Enabled"
+L587:           retentionInDays                 = 30
+L588:           sku = {
+L589:             name = "PerGB2018"
+L590:           }
+L591:           workspaceCapping = {
+L592:             dailyQuotaGb = -1
+L593:           }
+L594:         }
+L595:       }
+L596:       schema_validation_enabled = false
+L640:           replication = {
+L641:             enabled = bool
+L642:             location = "string"
+L643:           }
+L644:           retentionInDays = int
+L645:           sku = {
+L646:             capacityReservationLevel = int
+L647:             name = "string"
+L648:           }
+L649:           workspaceCapping = {
+L650:             dailyQuotaGb = int
+L651:           }
+L652:         }
+L653:       }
+L654:     }
+L655:     `
+--------------------------------------------------------------------------------
+Microsoft.OperationalInsights/workspaces/tables 2025-07-01 - Bicep, ARM template & Terraform AzAPI reference | Microsoft Learn (https://learn.microsoft.com/en-us/azure/templates/microsoft.operationalinsights/2025-07-01/workspaces/tables)
+citeturn40view4 [wordlim: 200] Crawled: today; Content type: text/html; Source: find({"ref_id":"turn38view4","pattern":"totalRetentionInDays"}); Total lines: 912
+L263:         totalRetentionInDays: int
+L264:       }
+L265:     }
+L266:     `
+L381:           "startSearchTime": "string"
+L382:         },
+L383:         "totalRetentionInDays": "int"
+L384:       }
+L385:     }
+L386:     `
+--------------------------------------------------------------------------------
+Microsoft.Insights/diagnosticSettings 2021-05-01-preview - Bicep, ARM template & Terraform AzAPI reference | Microsoft Learn (https://learn.microsoft.com/en-us/azure/templates/microsoft.insights/2021-05-01-preview/diagnosticsettings)
+citeturn40view5 [wordlim: 200] Crawled: today; Content type: text/html; Source: find({"ref_id":"turn38view5","pattern":"logAnalyticsDestinationType"}); Total lines: 670
+L172: To create a Microsoft.Insights/diagnosticSettings resource, add the following Bicep to your template.
+L173: 
+L174:     `resource symbolicname 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+L175:       scope: resourceSymbolicName or scope
+L176:       name: 'string'
+L177:       properties: {
+L178:         eventHubAuthorizationRuleId: 'string'
+L179:         eventHubName: 'string'
+L180:         logAnalyticsDestinationType: 'string'
+L181:         logs: [
+L182:           {
+L183:             category: 'string'
+L184:             categoryGroup: 'string'
+L224: logAnalyticsDestinationType  | A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type constructed as follows: <normalized service identity>_<normalized category name>. Possible values are: Dedicated and null (null is default.)  | string
+L225: logs  | The list of logs settings.  | cite46†LogSettings []
+L318: To create a Microsoft.Insights/diagnosticSettings resource, add the following JSON to your template.
+L319: 
+L320:     `{
+L321:       "type": "Microsoft.Insights/diagnosticSettings",
+L322:       "apiVersion": "2021-05-01-preview",
+L323:       "name": "string",
+L324:       "properties": {
+L325:         "eventHubAuthorizationRuleId": "string",
+L326:         "eventHubName": "string",
+L327:         "logAnalyticsDestinationType": "string",
+L328:         "logs": [
+L329:           {
+L330:             "category": "string",
+L331:             "categoryGroup": "string",
+L372: logAnalyticsDestinationType  | A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type constructed as follows: <normalized service identity>_<normalized category name>. Possible values are: Dedicated and null (null is default.)  | string
+L373: logs  | The list of logs settings.  | cite80†LogSettings []
+L550: To create a Microsoft.Insights/diagnosticSettings resource, add the following Terraform to your template.
+L551: 
+L552:     `resource "azapi_resource" "symbolicname" {
+L553:       type = "Microsoft.Insights/diagnosticSettings@2021-05-01-preview"
+L554:       name = "string"
+L555:       parent_id = "string"
+L556:       body = {
+L557:         properties = {
+L558:           eventHubAuthorizationRuleId = "string"
+L559:           eventHubName = "string"
+L560:           logAnalyticsDestinationType = "string"
+L561:           logs = [
+L562:             {
+L606: logAnalyticsDestinationType  | A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type constructed as follows: <normalized service identity>_<normalized category name>. Possible values are: Dedicated and null (null is default.)  | string
+L607: logs  | The list of logs settings.  | cite84†LogSettings []
+--------------------------------------------------------------------------------
+Microsoft.Insights/scheduledQueryRules 2023-12-01 - Bicep, ARM template & Terraform AzAPI reference | Microsoft Learn (https://learn.microsoft.com/en-us/azure/templates/microsoft.insights/2023-12-01/scheduledqueryrules)
+citeturn40view6 [wordlim: 200] Crawled: today; Content type: text/html; Source: find({"ref_id":"turn38view7","pattern":"evaluationFrequency"}); Total lines: 933
+L88:               operator: 'Equal'
+L89:               query: ''' requests
+L90:     | summarize CountByCountry=count() by client_CountryOrRegion
+L91:     '''
+L92:               threshold: 5
+L93:               timeAggregation: 'Count'
+L94:             }
+L95:           ]
+L96:         }
+L97:         enabled: true
+L98:         evaluationFrequency: 'PT5M'
+L99:         scopes: [
+L100:           component.id
+L101:         ]
+L102:         severity: 3
+L103:         skipQueryValidation: false
+L104:         windowSize: 'PT5M'
+L105:       }
+L106:     }
+L107:     `
+L169:         displayName: 'string'
+L170:         enabled: bool
+L171:         evaluationFrequency: 'string'
+L172:         muteActionsDuration: 'string'
+L173:         overrideQueryTimeRange: 'string'
+L174:         resolveConfiguration: {
+L175:           autoResolved: bool
+L176:           timeToResolve: 'string'
+L177:         }
+L178:         scopes: [
+L179:           'string'
+L180:         ]
+L181:         severity: int
+L182:         skipQueryValidation: bool
+L183:         targetResourceTypes: [
+L184:           'string'
+L185:         ]
+L186:         windowSize: 'string'
+L187:       }
+L188:       tags: {
+L374:             }
+L375:           ]
+L376:         },
+L377:         "description": "string",
+L378:         "displayName": "string",
+L379:         "enabled": "bool",
+L380:         "evaluationFrequency": "string",
+L381:         "muteActionsDuration": "string",
+L382:         "overrideQueryTimeRange": "string",
+L383:         "resolveConfiguration": {
+L384:           "autoResolved": "bool",
+L385:           "timeToResolve": "string"
+L386:         },
+L387:         "scopes": [ "string" ],
+L388:         "severity": "int",
+L389:         "skipQueryValidation": "bool",
+L588:                 dimensions      = null
+L589:                 operator        = "Equal"
+L590:                 query           = " requests\n| summarize CountByCountry=count() by client_CountryOrRegion\n"
+L591:                 threshold       = 5
+L592:                 timeAggregation = "Count"
+L593:               },
+L594:             ]
+L595:           }
+L596:           enabled             = true
+L597:           evaluationFrequency = "PT5M"
+L598:           scopes = [
+L599:             azapi_resource.component.id,
+L600:           ]
+L601:           severity            = 3
+L675:                 dimensions      = null
+L676:                 operator        = "Equal"
+L677:                 query           = " requests\n| summarize CountByCountry=count() by client_CountryOrRegion\n"
+L678:                 threshold       = 5
+L679:                 timeAggregation = "Count"
+L680:               },
+L681:             ]
+L682:           }
+L683:           enabled             = true
+L684:           evaluationFrequency = "PT5M"
+L685:           scopes = [
+L686:             azapi_resource.component.id,
+L687:           ]
+L688:           severity            = 3
+L752:                 resourceIdColumn = "string"
+L753:                 threshold = int
+L754:                 timeAggregation = "string"
+L755:               }
+L756:             ]
+L757:           }
+L758:           description = "string"
+L759:           displayName = "string"
+L760:           enabled = bool
+L761:           evaluationFrequency = "string"
+L762:           muteActionsDuration = "string"
+L763:           overrideQueryTimeRange = "string"
+L764:           resolveConfiguration = {
+L765:             autoResolved = bool
+L766:             timeToResolve = "string"
+L767:           }
+--------------------------------------------------------------------------------
+Microsoft.App/managedEnvironments 2026-07-01 - Bicep, ARM template & Terraform AzAPI reference | Microsoft Learn (https://learn.microsoft.com/en-us/azure/templates/microsoft.app/2026-07-01/managedenvironments)
+citeturn40view7 [wordlim: 200] Crawled: yesterday; Content type: text/html; Source: find({"ref_id":"turn36view3","pattern":"appLogsConfiguration"}); Total lines: 1276
+L334: Name  | Description  | Value
+L335: --- | --- | ---
+L336: appInsightsConfiguration  | Environment level Application Insights configuration  | cite46†AppInsightsConfiguration L337: appLogsConfiguration  | Cluster configuration which enables the log daemon to export app logs to configured destination  | cite47†AppLogsConfiguration L338: customDomainConfiguration  | Custom domain configuration for the environment  | cite48†CustomDomainConfiguration L496:           "connectionString": "string"
+L497:         },
+L498:         "appLogsConfiguration": {
+L499:           "destination": "string",
+L500:           "logAnalyticsConfiguration": {
+L501:             "customerId": "string",
+L502:             "sharedKey": "string"
+L503:           }
+L504:         },
+L505:         "customDomainConfiguration": {
+L506:           "certificateKeyVaultProperties": {
+L507:             "identity": "string",
+L508:             "keyVaultUrl": "string"
+L509:           },
+L510:           "certificatePassword": "string",
+L511:           "certificateValue": "string",
+L691: Name  | Description  | Value
+L692: --- | --- | ---
+L693: appInsightsConfiguration  | Environment level Application Insights configuration  | cite80†AppInsightsConfiguration L694: appLogsConfiguration  | Cluster configuration which enables the log daemon to export app logs to configured destination  | cite81†AppLogsConfiguration L695: customDomainConfiguration  | Custom domain configuration for the environment  | cite82†CustomDomainConfiguration L881:       location  = var.location
+L882:       body = {
+L883:         properties = {
+L884:           appLogsConfiguration = {
+L885:             destination = "log-analytics"
+L886:             logAnalyticsConfiguration = {
+L887:               customerId = azapi_resource.workspace.output.properties.customerId
+L888:               sharedKey  = data.azapi_resource_action.sharedKeys.output.primarySharedKey
+L889:             }
+L890:           }
+L891:           vnetConfiguration = {
+L892:           }
+L893:         }
+L894:       }
+L895:       schema_validation_enabled = false
+L925:         properties = {
+L926:           appInsightsConfiguration = {
+L927:             connectionString = "string"
+L928:           }
+L929:           appLogsConfiguration = {
+L930:             destination = "string"
+L931:             logAnalyticsConfiguration = {
+L932:               customerId = "string"
+L933:               sharedKey = "string"
+L934:             }
+L935:           }
+L936:           customDomainConfiguration = {
+L937:             certificateKeyVaultProperties = {
+L938:               identity = "string"
+L939:               keyVaultUrl = "string"
+L940:             }
+L1048: ### AppLogsConfiguration
+L1049: 
+L1050: Name  | Description  | Value
+L1051: --- | --- | ---
+L1052: destination  | Logs destination, can be 'log-analytics', 'azure-monitor' or 'none'  | string
+L1053: logAnalyticsConfiguration  | Log Analytics configuration, must only be provided when destination is configured as 'log-analytics'  | cite102†LogAnalyticsConfiguration L1125: Name  | Description  | Value
+L1126: --- | --- | ---
+L1127: appInsightsConfiguration  | Environment level Application Insights configuration  | cite106†AppInsightsConfiguration L1128: appLogsConfiguration  | Cluster configuration which enables the log daemon to export app logs to configured destination  | cite107†AppLogsConfiguration L1129: customDomainConfiguration  | Custom domain configuration for the environment  | cite108†CustomDomainConfiguration 

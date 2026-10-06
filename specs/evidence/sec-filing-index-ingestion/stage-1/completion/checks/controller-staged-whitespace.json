@@ -1,0 +1,38 @@
+{
+  "recorded_at_utc": "2026-10-06T04:08:02.897097+00:00",
+  "all_staged_check": {
+    "argv": [
+      "git",
+      "diff",
+      "--cached",
+      "--check"
+    ],
+    "started_at_utc": "2026-10-06T04:08:00.112354+00:00",
+    "exit_code": 2,
+    "merged_output_gzip": "specs/evidence/sec-filing-index-ingestion/stage-1/completion/checks/controller-staged-whitespace.full.txt.gz",
+    "uncompressed_bytes": 297504707,
+    "uncompressed_sha256": "6f3dc45f855c1792fda32708a9f36220e5efc5e4d80c7e54ff5189e5ad6049a1",
+    "gzip_sha256": "4e7b56f73369fc1bc701513ecd61a7a095db2dbac6c4442ee2ed33476b35b4f9"
+  },
+  "root_cause": "Git whitespace diagnostics include exact retained SEC padded text/CRLF/CSV and immutable patch/history bytes; these are evidence content, preserved as accepted. No source bytes normalized or success claimed for full staged check.",
+  "authored_completion_check": {
+    "argv": [
+      "git",
+      "diff",
+      "--cached",
+      "--check",
+      "--",
+      "specs/plans/completed/1-sec-filing-index-ingestion-stage-1-spec.md",
+      "specs/completed/sec-filing-index-ingestion-stage-1-spec.md",
+      "specs/sec-filing-index-ingestion-stage-1-findings.md",
+      "specs/evidence/sec-filing-index-ingestion/stage-1/completion/verify_completion.py",
+      "specs/evidence/sec-filing-index-ingestion/stage-1/completion/context.json",
+      "specs/evidence/sec-filing-index-ingestion/stage-1/completion/implementer-report.md"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "staged_paths_verified": 1648,
+  "scope": "Named Stage1 artifacts only; original package deletions and untracked roadmap excluded."
+}

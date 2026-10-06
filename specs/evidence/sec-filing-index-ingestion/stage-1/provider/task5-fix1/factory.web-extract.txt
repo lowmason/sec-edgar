@@ -1,0 +1,571 @@
+Factories - Create Or Update - REST API (Azure Data Factory) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/datafactory/factories/create-or-update?view=rest-datafactory-2018-06-01)
+citeturn68view0 [wordlim: 200] Crawled: today; Content type: text/html; Source: find({"ref_id":"https://learn.microsoft.com/en-us/rest/api/datafactory/factories/create-or-update?view=rest-datafactory-2018-06-01","pattern":"200 OK"}); Total lines: 518
+L0: cite0†Skip to main content cite1†Skip to in-page navigation cite2†Skip to Ask Learn chat experience L1: 
+L2: This browser is no longer supported.
+L3: 
+L4: Upgrade to Microsoft Edge to take advantage of the latest features, security updates, and technical support.
+L5: 
+L6: cite3†Download Microsoft Edge†go.microsoft.com cite4†More info about Internet Explorer and Microsoft Edge L7: 
+L8: Table of contents Exit editor mode
+L9: 
+L10: Ask Learn Ask Learn
+L11: 
+L12: Reading mode Table of contents cite2†Read in English Add Add to Plans cite5†Edit†github.com L13: 
+L14: * * *
+L15: Copy Markdown Print
+L16: 
+L17: * * *
+L18: 
+L19: Note
+L20: 
+L21: Access to this page requires authorization. You can try cite2†signing in or changing directories.
+L22: 
+L23: Access to this page requires authorization. You can try changing directories.
+L24: # Factories - Create Or Update
+L25: 
+L26: Service:
+L27:     Data Factory
+L28: 
+L29: API Version:
+L30:     2018-06-01
+L31: 
+L32: ##
+L33: 
+L34: Creates or updates a factory.
+L35: 
+L36:     `PUT https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}?api-version=2018-06-01`
+L37: ## URI Parameters
+L38: Name  | In  | Required  | Type  | Description
+L39: --- | --- | --- | --- | ---
+L40: factoryName  | path  | True  | string minLength: 3
+L41: maxLength: 63
+L42: pattern: ^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$  | The factory name.
+L43: resourceGroupName  | path  | True  | string minLength: 1
+L44: maxLength: 90  | The name of the resource group. The name is case insensitive.
+L45: subscriptionId  | path  | True  | string (uuid)  | The ID of the target subscription. The value must be an UUID.
+L46: api-version  | query  | True  | string minLength: 1  | The API version to use for this operation.
+L47: ## Request Header
+L48: 
+L49: Name  | Required  | Type  | Description
+L50: --- | --- | --- | ---
+L51: if-match  |  | string  | ETag of the factory entity. Should only be specified for update, for which it should match existing entity or can be * for unconditional update.
+L52: ## Request Body
+L53: Name  | Type  | Description
+L54: --- | --- | ---
+L55: identity  | cite6†FactoryIdentity | Managed service identity of the factory.
+L56: location  | string  | The resource location.
+L57: properties.encryption  | cite7†EncryptionConfiguration | Properties to enable Customer Managed Key for the factory.
+L58: properties.globalParameters  | <string,  cite8†GlobalParameterSpecification >  | List of parameters for factory.
+L59: properties.publicNetworkAccess  | cite9†PublicNetworkAccess | Whether or not public network access is allowed for the data factory.
+L60: properties.purviewConfiguration  | cite10†PurviewConfiguration | Purview information of the factory.
+L61: properties.repoConfiguration  | FactoryRepoConfiguration:
+L62:   * cite11†FactoryGitHubConfiguration L63:   * cite12†FactoryVSTSConfiguration L64:  | Git repo information of the factory.
+L65: tags  | object  | The resource tags.
+L66: ## Responses
+L67: 
+L68: Name  | Type  | Description
+L69: --- | --- | ---
+L70: 200 OK  | cite13†Factory | Resource 'Factory' update operation succeeded
+L71: Other Status Codes  | cite14†CloudError | An unexpected error response.
+L72: 
+L73: ## Security
+L74: 
+L75: ### azure_auth
+L76: 
+L77: Azure Active Directory OAuth2 Flow.
+L78: 
+L79: Type: oauth2
+L80: Flow: implicit
+L81: Authorization URL: https://login.microsoftonline.com/common/oauth2/authorize
+L82: 
+L83: #### Scopes
+L84: 
+L85: Name  | Description
+L86: --- | ---
+L87: user_impersonation  | impersonate your user account
+L88: 
+L89: ## Examples
+L90: ### Factories_CreateOrUpdate
+L91: #### Sample request
+L92:   * cite15†HTTP L93:   * cite16†Java L94:   * cite17†Python L95:   * cite18†Go L96:   * cite19†JavaScript L97:   * cite20†dotnet L98: 
+L99:     `PUT https://management.azure.com/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/exampleResourceGroup/providers/Microsoft.DataFactory/factories/exampleFactoryName?api-version=2018-06-01
+L100: 
+L101:     {
+L102:       "location": "East US"
+L103:     }
+L104: 
+L105:     `
+L106: 
+L107:     `
+L108:     /**
+L109:      * Samples for Factories CreateOrUpdate.
+L110:      */
+L111:     public final class Main {
+L112:         /*
+L113:          * x-ms-original-file: 2018-06-01/Factories_CreateOrUpdate.json
+L114:          */
+L115:         /**
+L116:          * Sample code: Factories_CreateOrUpdate.
+L117:          *
+L118:          * @param manager Entry point to DataFactoryManager.
+L119:          */
+L120:         public static void factoriesCreateOrUpdate(com.azure.resourcemanager.datafactory.DataFactoryManager manager) {
+L121:             manager.factories().define("exampleFactoryName").withExistingResourceGroup("exampleResourceGroup")
+L122:                 .withRegion("East US").create();
+L123:         }
+L124:     }
+L125: 
+L126:     `
+L127: To use the Azure SDK library in your project, see cite21†this documentation†github.com . To provide feedback on this code sample, cite22†open a GitHub issue†github.com L128: 
+L129:     `from azure.identity import DefaultAzureCredential
+L130: 
+L131:     from azure.mgmt.datafactory import DataFactoryManagementClient
+L132: 
+L133:     """
+L134:     # PREREQUISITES
+L135:         pip install azure-identity
+L136:         pip install azure-mgmt-datafactory
+L137:     # USAGE
+L138:         python factories_create_or_update.py
+L139:         Before run the sample, please set the values of the client ID, tenant ID and client secret
+L140:         of the AAD application as environment variables: AZURE_CLIENT_ID, AZURE_TENANT_ID,
+L141:         AZURE_CLIENT_SECRET. For more info about how to get the value, please see:
+L142:         https://docs.microsoft.com/azure/active-directory/develop/howto-create-service-principal-portal
+L143:     """
+L144: 
+L145: 
+L146:     def main():
+L147:         client = DataFactoryManagementClient(
+L148:             credential=DefaultAzureCredential(),
+L149:             subscription_id="SUBSCRIPTION_ID",
+L150:         )
+L151: 
+L152:         response = client.factories.create_or_update(
+L153:             resource_group_name="exampleResourceGroup",
+L154:             factory_name="exampleFactoryName",
+L155:             factory={"location": "East US"},
+L156:         )
+L157:         print(response)
+L158: 
+L159: 
+L160:     # x-ms-original-file: 2018-06-01/Factories_CreateOrUpdate.json
+L161:     if __name__ == "__main__":
+L162:         main()
+L163: 
+L164:     `
+L165: To use the Azure SDK library in your project, see cite23†this documentation†github.com . To provide feedback on this code sample, cite22†open a GitHub issue†github.com L166: 
+L167:     `package armdatafactory_test
+L168: 
+L169:     import (
+L170:     	"context"
+L171:     	"log"
+L172: 
+L173:     	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
+L174:     	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+L175:     	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/datafactory/armdatafactory/v11"
+L176:     )
+L177:     // Generated from example definition: 2018-06-01/Factories_CreateOrUpdate.json
+L178:     func ExampleFactoriesClient_CreateOrUpdate() {
+L179:     	cred, err := azidentity.NewDefaultAzureCredential(nil)
+L180:     	if err != nil {
+L181:     		log.Fatalf("failed to obtain a credential: %v", err)
+L182:     	}
+L183:     	ctx := context.Background()
+L184:     	clientFactory, err := armdatafactory.NewClientFactory("12345678-1234-1234-1234-123456789012", cred, nil)
+L185:     	if err != nil {
+L186:     		log.Fatalf("failed to create client: %v", err)
+L187:     	}
+L188:     	res, err := clientFactory.NewFactoriesClient().CreateOrUpdate(ctx, "exampleResourceGroup", "exampleFactoryName", armdatafactory.Factory{
+L189:     		Location: to.Ptr("East US"),
+L190:     	}, nil)
+L191:     	if err != nil {
+L192:     		log.Fatalf("failed to finish the request: %v", err)
+L193:     	}
+L194:     	// You could use response here. We use blank identifier for just demo purposes.
+L195:     	_ = res
+L196:     	// If the HTTP response code is 200 as defined in example definition, your response structure would look as follows. Please pay attention that all the values in the output are fake values for just demo purposes.
+L197:     	// res = armdatafactory.FactoriesClientCreateOrUpdateResponse{
+L198:     	// 	Factory: armdatafactory.Factory{
+L199:     	// 		Name: to.Ptr("exampleFactoryName"),
+L200:     	// 		Type: to.Ptr("Microsoft.DataFactory/factories"),
+L201:     	// 		ETag: to.Ptr("\"00003e04-0000-0000-0000-5b28979e0000\""),
+L202:     	// 		ID: to.Ptr("/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/exampleResourceGroup/providers/Microsoft.DataFactory/factories/exampleFactoryName"),
+L203:     	// 		Location: to.Ptr("East US"),
+L204:     	// 		Properties: &armdatafactory.FactoryProperties{
+L205:     	// 			CreateTime: to.Ptr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-06-19T05:41:50.0041314Z"); return t}()),
+L206:     	// 			ProvisioningState: to.Ptr("Succeeded"),
+L207:     	// 			Version: to.Ptr("2018-06-01"),
+L208:     	// 		},
+L209:     	// 		Tags: map[string]*string{
+L210:     	// 		},
+L211:     	// 	},
+L212:     	// }
+L213:     }
+L214: 
+L215:     `
+L216: To use the Azure SDK library in your project, see cite24†this documentation†github.com . To provide feedback on this code sample, cite22†open a GitHub issue†github.com L217: 
+L218:     `const { DataFactoryManagementClient } = require("@azure/arm-datafactory");
+L219:     const { DefaultAzureCredential } = require("@azure/identity");
+L220: 
+L221:     /**
+L222:      * This sample demonstrates how to creates or updates a factory.
+L223:      *
+L224:      * @summary creates or updates a factory.
+L225:      * x-ms-original-file: 2018-06-01/Factories_CreateOrUpdate.json
+L226:      */
+L227:     async function factoriesCreateOrUpdate() {
+L228:       const credential = new DefaultAzureCredential();
+L229:       const subscriptionId = "12345678-1234-1234-1234-123456789012";
+L230:       const client = new DataFactoryManagementClient(credential, subscriptionId);
+L231:       const result = await client.factories.createOrUpdate(
+L232:         "exampleResourceGroup",
+L233:         "exampleFactoryName",
+L234:         { location: "East US" },
+L235:       );
+L236:       console.log(result);
+L237:     }
+L238: 
+L239:     `
+L240: To use the Azure SDK library in your project, see cite25†this documentation†github.com . To provide feedback on this code sample, cite22†open a GitHub issue†github.com L241: 
+L242:     `using Azure;
+L243:     using Azure.ResourceManager;
+L244:     using System;
+L245:     using System.Threading.Tasks;
+L246:     using Azure.Core;
+L247:     using Azure.Identity;
+L248:     using Azure.ResourceManager.Resources;
+L249:     using Azure.ResourceManager.DataFactory;
+L250:     // Generated from example definition: specification/datafactory/resource-manager/Microsoft.DataFactory/DataFactory/stable/2018-06-01/examples/Factories_CreateOrUpdate.json
+L251:     // this example is just showing the usage of "Factories_CreateOrUpdate" operation, for the dependent resources, they will have to be created separately.
+L252:     // get your azure access token, for more details of how Azure SDK get your access token, please refer to https://learn.microsoft.com/en-us/dotnet/azure/sdk/authentication?tabs=command-line
+L253:     TokenCredential cred = new DefaultAzureCredential();
+L254:     // authenticate your client
+L255:     ArmClient client = new ArmClient(cred);
+L256: 
+L257:     // this example assumes you already have this ResourceGroupResource created on azure
+L258:     // for more information of creating ResourceGroupResource, please refer to the document of ResourceGroupResource
+L259:     string subscriptionId = "12345678-1234-1234-1234-12345678abc";
+L260:     string resourceGroupName = "exampleResourceGroup";
+L261:     ResourceIdentifier resourceGroupResourceId = ResourceGroupResource.CreateResourceIdentifier(subscriptionId, resourceGroupName);
+L262:     ResourceGroupResource resourceGroupResource = client.GetResourceGroupResource(resourceGroupResourceId);
+L263:     // get the collection of this DataFactoryResource
+L264:     DataFactoryCollection collection = resourceGroupResource.GetDataFactories();
+L265: 
+L266:     // invoke the operation
+L267:     string factoryName = "exampleFactoryName";
+L268:     DataFactoryData data = new DataFactoryData(new AzureLocation("East US"));
+L269:     ArmOperation<DataFactoryResource> lro = await collection.CreateOrUpdateAsync(WaitUntil.Completed, factoryName, data);
+L270:     DataFactoryResource result = lro.Value;
+L271:     // the variable result is a resource, you could call other operations on this instance as well
+L272:     // but just for demo, we get its data from this resource instance
+L273:     DataFactoryData resourceData = result.Data;
+L274:     // for demo we just print out the id
+L275:     Console.WriteLine($"Succeeded on id: {resourceData.Id}");
+L276: 
+L277:     `
+L278: To use the Azure SDK library in your project, see cite26†this documentation†github.com . To provide feedback on this code sample, cite22†open a GitHub issue†github.com L279: #### Sample response
+L280: 
+L281: Status code:
+L282:     200
+L283: 
+L284:     `Date: Tue, 19 Jun 2018 05:41:50 GMT
+L285:     X-Content-Type-Options: nosniff
+L286:     x-ms-correlation-request-id: 657028b7-5e63-4d7c-b8e7-cb336ed92ff0
+L287:     x-ms-ratelimit-remaining-subscription-writes: 1193
+L288:     x-ms-request-id: 657028b7-5e63-4d7c-b8e7-cb336ed92ff0`
+L289: 
+L290: 
+L291:     `{
+L292:       "name": "exampleFactoryName",
+L293:       "type": "Microsoft.DataFactory/factories",
+L294:       "eTag": "\"00003e04-0000-0000-0000-5b28979e0000\"",
+L295:       "id": "/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/exampleResourceGroup/providers/Microsoft.DataFactory/factories/exampleFactoryName",
+L296:       "location": "East US",
+L297:       "properties": {
+L298:         "createTime": "2018-06-19T05:41:50.0041314Z",
+L299:         "provisioningState": "Succeeded",
+L300:         "version": "2018-06-01"
+L301:       },
+--------------------------------------------------------------------------------
+Factories - Get - REST API (Azure Data Factory) | Microsoft Learn (https://learn.microsoft.com/en-us/rest/api/datafactory/factories/get?view=rest-datafactory-2018-06-01)
+citeturn68view1 [wordlim: 200] Crawled: today; Content type: text/html; Source: find({"ref_id":"https://learn.microsoft.com/en-us/rest/api/datafactory/factories/get?view=rest-datafactory-2018-06-01","pattern":"200 OK"}); Total lines: 533
+L0: cite0†Skip to main content cite1†Skip to in-page navigation cite2†Skip to Ask Learn chat experience L1: 
+L2: This browser is no longer supported.
+L3: 
+L4: Upgrade to Microsoft Edge to take advantage of the latest features, security updates, and technical support.
+L5: 
+L6: cite3†Download Microsoft Edge†go.microsoft.com cite4†More info about Internet Explorer and Microsoft Edge L7: 
+L8: Table of contents Exit editor mode
+L9: 
+L10: Ask Learn Ask Learn
+L11: 
+L12: Reading mode Table of contents cite2†Read in English Add Add to Plans cite5†Edit†github.com L13: 
+L14: * * *
+L15: Copy Markdown Print
+L16: 
+L17: * * *
+L18: 
+L19: Note
+L20: 
+L21: Access to this page requires authorization. You can try cite2†signing in or changing directories.
+L22: 
+L23: Access to this page requires authorization. You can try changing directories.
+L24: # Factories - Get
+L25: 
+L26: Service:
+L27:     Data Factory
+L28: 
+L29: API Version:
+L30:     2018-06-01
+L31: 
+L32: ##
+L33: 
+L34: Gets a factory.
+L35: 
+L36:     `GET https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}?api-version=2018-06-01`
+L37: ## URI Parameters
+L38: Name  | In  | Required  | Type  | Description
+L39: --- | --- | --- | --- | ---
+L40: factoryName  | path  | True  | string minLength: 3
+L41: maxLength: 63
+L42: pattern: ^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$  | The factory name.
+L43: resourceGroupName  | path  | True  | string minLength: 1
+L44: maxLength: 90  | The name of the resource group. The name is case insensitive.
+L45: subscriptionId  | path  | True  | string (uuid)  | The ID of the target subscription. The value must be an UUID.
+L46: api-version  | query  | True  | string minLength: 1  | The API version to use for this operation.
+L47: ## Request Header
+L48: 
+L49: Name  | Required  | Type  | Description
+L50: --- | --- | --- | ---
+L51: if-none-match  |  | string  | ETag of the factory entity. Should only be specified for get. If the ETag matches the existing entity tag, or if * was provided, then no content will be returned.
+L52: ## Responses
+L53: 
+L54: Name  | Type  | Description
+L55: --- | --- | ---
+L56: 200 OK  | cite6†Factory | Azure operation completed successfully.
+L57: Other Status Codes  |  | The client has made a conditional request and the resource has not been modified.
+L58: Other Status Codes  | cite7†CloudError | An unexpected error response.
+L59: 
+L60: ## Security
+L61: 
+L62: ### azure_auth
+L63: 
+L64: Azure Active Directory OAuth2 Flow.
+L65: 
+L66: Type: oauth2
+L67: Flow: implicit
+L68: Authorization URL: https://login.microsoftonline.com/common/oauth2/authorize
+L69: #### Scopes
+L70: 
+L71: Name  | Description
+L72: --- | ---
+L73: user_impersonation  | impersonate your user account
+L74: 
+L75: ## Examples
+L76: 
+L77: ### Factories_Get
+L78: #### Sample request
+L79:   * cite8†HTTP L80:   * cite9†Java L81:   * cite10†Python L82:   * cite11†Go L83:   * cite12†JavaScript L84:   * cite13†dotnet L85: 
+L86:     `GET https://management.azure.com/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/exampleResourceGroup/providers/Microsoft.DataFactory/factories/exampleFactoryName?api-version=2018-06-01
+L87:     `
+L88: 
+L89:     `
+L90:     /**
+L91:      * Samples for Factories GetByResourceGroup.
+L92:      */
+L93:     public final class Main {
+L94:         /*
+L95:          * x-ms-original-file: 2018-06-01/Factories_Get.json
+L96:          */
+L97:         /**
+L98:          * Sample code: Factories_Get.
+L99:          *
+L100:          * @param manager Entry point to DataFactoryManager.
+L101:          */
+L102:         public static void factoriesGet(com.azure.resourcemanager.datafactory.DataFactoryManager manager) {
+L103:             manager.factories().getByResourceGroupWithResponse("exampleResourceGroup", "exampleFactoryName", null,
+L104:                 com.azure.core.util.Context.NONE);
+L105:         }
+L106:     }
+L107: 
+L108:     `
+L109: To use the Azure SDK library in your project, see cite14†this documentation†github.com . To provide feedback on this code sample, cite15†open a GitHub issue†github.com L110: 
+L111:     `from azure.identity import DefaultAzureCredential
+L112: 
+L113:     from azure.mgmt.datafactory import DataFactoryManagementClient
+L114: 
+L115:     """
+L116:     # PREREQUISITES
+L117:         pip install azure-identity
+L118:         pip install azure-mgmt-datafactory
+L119:     # USAGE
+L120:         python factories_get.py
+L121:         Before run the sample, please set the values of the client ID, tenant ID and client secret
+L122:         of the AAD application as environment variables: AZURE_CLIENT_ID, AZURE_TENANT_ID,
+L123:         AZURE_CLIENT_SECRET. For more info about how to get the value, please see:
+L124:         https://docs.microsoft.com/azure/active-directory/develop/howto-create-service-principal-portal
+L125:     """
+L126: 
+L127: 
+L128:     def main():
+L129:         client = DataFactoryManagementClient(
+L130:             credential=DefaultAzureCredential(),
+L131:             subscription_id="SUBSCRIPTION_ID",
+L132:         )
+L133: 
+L134:         response = client.factories.get(
+L135:             resource_group_name="exampleResourceGroup",
+L136:             factory_name="exampleFactoryName",
+L137:         )
+L138:         print(response)
+L139: 
+L140: 
+L141:     # x-ms-original-file: 2018-06-01/Factories_Get.json
+L142:     if __name__ == "__main__":
+L143:         main()
+L144: 
+L145:     `
+L146: To use the Azure SDK library in your project, see cite16†this documentation†github.com . To provide feedback on this code sample, cite15†open a GitHub issue†github.com L147: 
+L148:     `package armdatafactory_test
+L149: 
+L150:     import (
+L151:     	"context"
+L152:     	"log"
+L153: 
+L154:     	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+L155:     	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/datafactory/armdatafactory/v11"
+L156:     )
+L157: 
+L158:     // Generated from example definition: 2018-06-01/Factories_Get.json
+L159:     func ExampleFactoriesClient_Get() {
+L160:     	cred, err := azidentity.NewDefaultAzureCredential(nil)
+L161:     	if err != nil {
+L162:     		log.Fatalf("failed to obtain a credential: %v", err)
+L163:     	}
+L164:     	ctx := context.Background()
+L165:     	clientFactory, err := armdatafactory.NewClientFactory("12345678-1234-1234-1234-123456789012", cred, nil)
+L166:     	if err != nil {
+L167:     		log.Fatalf("failed to create client: %v", err)
+L168:     	}
+L169:     	res, err := clientFactory.NewFactoriesClient().Get(ctx, "exampleResourceGroup", "exampleFactoryName", nil)
+L170:     	if err != nil {
+L171:     		log.Fatalf("failed to finish the request: %v", err)
+L172:     	}
+L173:     	// You could use response here. We use blank identifier for just demo purposes.
+L174:     	_ = res
+L175:     	// If the HTTP response code is 200 as defined in example definition, your response structure would look as follows. Please pay attention that all the values in the output are fake values for just demo purposes.
+L176:     	// res = armdatafactory.FactoriesClientGetResponse{
+L177:     	// 	Factory: armdatafactory.Factory{
+L178:     	// 		Name: to.Ptr("exampleFactoryName"),
+L179:     	// 		Type: to.Ptr("Microsoft.DataFactory/factories"),
+L180:     	// 		ETag: to.Ptr("\"00004004-0000-0000-0000-5b28979e0000\""),
+L181:     	// 		ID: to.Ptr("/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/exampleResourceGroup/providers/Microsoft.DataFactory/factories/exampleFactoryName"),
+L182:     	// 		Location: to.Ptr("East US"),
+L183:     	// 		Properties: &armdatafactory.FactoryProperties{
+L184:     	// 			CreateTime: to.Ptr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-06-19T05:41:50.0041314Z"); return t}()),
+L185:     	// 			ProvisioningState: to.Ptr("Succeeded"),
+L186:     	// 			PurviewConfiguration: &armdatafactory.PurviewConfiguration{
+L187:     	// 				PurviewResourceID: to.Ptr("/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/exampleResourceGroup/providers/Microsoft.Purview/accounts/examplePurview"),
+L188:     	// 			},
+L189:     	// 			RepoConfiguration: &armdatafactory.FactoryVSTSConfiguration{
+L190:     	// 				Type: to.Ptr("FactoryVSTSConfiguration"),
+L191:     	// 				AccountName: to.Ptr("ADF"),
+L192:     	// 				CollaborationBranch: to.Ptr("master"),
+L193:     	// 				LastCommitID: to.Ptr(""),
+L194:     	// 				ProjectName: to.Ptr("project"),
+L195:     	// 				RepositoryName: to.Ptr("repo"),
+L196:     	// 				RootFolder: to.Ptr("/"),
+L197:     	// 				TenantID: to.Ptr(""),
+L198:     	// 			},
+L199:     	// 			Version: to.Ptr("2018-06-01"),
+L200:     	// 		},
+L201:     	// 		Tags: map[string]*string{
+L202:     	// 			"exampleTag": to.Ptr("exampleValue"),
+L203:     	// 		},
+L204:     	// 	},
+L205:     	// }
+L206:     }
+L207: 
+L208:     `
+L209: To use the Azure SDK library in your project, see cite17†this documentation†github.com . To provide feedback on this code sample, cite15†open a GitHub issue†github.com L210: 
+L211:     `const { DataFactoryManagementClient } = require("@azure/arm-datafactory");
+L212:     const { DefaultAzureCredential } = require("@azure/identity");
+L213: 
+L214:     /**
+L215:      * This sample demonstrates how to gets a factory.
+L216:      *
+L217:      * @summary gets a factory.
+L218:      * x-ms-original-file: 2018-06-01/Factories_Get.json
+L219:      */
+L220:     async function factoriesGet() {
+L221:       const credential = new DefaultAzureCredential();
+L222:       const subscriptionId = "12345678-1234-1234-1234-123456789012";
+L223:       const client = new DataFactoryManagementClient(credential, subscriptionId);
+L224:       const result = await client.factories.get("exampleResourceGroup", "exampleFactoryName");
+L225:       console.log(result);
+L226:     }
+L227: 
+L228:     `
+L229: To use the Azure SDK library in your project, see cite18†this documentation†github.com . To provide feedback on this code sample, cite15†open a GitHub issue†github.com L230: 
+L231:     `using Azure;
+L232:     using Azure.ResourceManager;
+L233:     using System;
+L234:     using System.Threading.Tasks;
+L235:     using Azure.Core;
+L236:     using Azure.Identity;
+L237:     using Azure.ResourceManager.Resources;
+L238:     using Azure.ResourceManager.DataFactory;
+L239:     // Generated from example definition: specification/datafactory/resource-manager/Microsoft.DataFactory/DataFactory/stable/2018-06-01/examples/Factories_Get.json
+L240:     // this example is just showing the usage of "Factories_Get" operation, for the dependent resources, they will have to be created separately.
+L241: 
+L242:     // get your azure access token, for more details of how Azure SDK get your access token, please refer to https://learn.microsoft.com/en-us/dotnet/azure/sdk/authentication?tabs=command-line
+L243:     TokenCredential cred = new DefaultAzureCredential();
+L244:     // authenticate your client
+L245:     ArmClient client = new ArmClient(cred);
+L246: 
+L247:     // this example assumes you already have this ResourceGroupResource created on azure
+L248:     // for more information of creating ResourceGroupResource, please refer to the document of ResourceGroupResource
+L249:     string subscriptionId = "12345678-1234-1234-1234-12345678abc";
+L250:     string resourceGroupName = "exampleResourceGroup";
+L251:     ResourceIdentifier resourceGroupResourceId = ResourceGroupResource.CreateResourceIdentifier(subscriptionId, resourceGroupName);
+L252:     ResourceGroupResource resourceGroupResource = client.GetResourceGroupResource(resourceGroupResourceId);
+L253: 
+L254:     // get the collection of this DataFactoryResource
+L255:     DataFactoryCollection collection = resourceGroupResource.GetDataFactories();
+L256: 
+L257:     // invoke the operation
+L258:     string factoryName = "exampleFactoryName";
+L259:     NullableResponse<DataFactoryResource> response = await collection.GetIfExistsAsync(factoryName);
+L260:     DataFactoryResource result = response.HasValue ? response.Value : null;
+L261: 
+L262:     if (result == null)
+L263:     {
+L264:         Console.WriteLine("Succeeded with null as result");
+L265:     }
+L266:     else
+L267:     {
+L268:         // the variable result is a resource, you could call other operations on this instance as well
+L269:         // but just for demo, we get its data from this resource instance
+L270:         DataFactoryData resourceData = result.Data;
+L271:         // for demo we just print out the id
+L272:         Console.WriteLine($"Succeeded on id: {resourceData.Id}");
+L273:     }
+L274: 
+L275:     `
+L276: To use the Azure SDK library in your project, see cite19†this documentation†github.com . To provide feedback on this code sample, cite15†open a GitHub issue†github.com L277: #### Sample response
+L278: 
+L279: Status code:
+L280:     200
+L281: 
+L282:     `Date: Tue, 19 Jun 2018 05:41:50 GMT
+L283:     X-Content-Type-Options: nosniff
+L284:     x-ms-correlation-request-id: d84e59aa-718c-4b1a-951c-076ffff766c8
+L285:     x-ms-ratelimit-remaining-subscription-reads: 14994
+L286:     x-ms-request-id: d84e59aa-718c-4b1a-951c-076ffff766c8`
+L287: 
+L288: 
+L289:     `{
+L290:       "name": "exampleFactoryName",
+L291:       "type": "Microsoft.DataFactory/factories",
+L292:       "eTag": "\"00004004-0000-0000-0000-5b28979e0000\"",
+
