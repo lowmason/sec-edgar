@@ -1,4 +1,4 @@
-Plan: /Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/plans/3-sec-filing-index-ingestion-stage-3-spec.md
+Plan: /Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/plans/completed/3-sec-filing-index-ingestion-stage-3-spec.md
 
 Primary: /Users/lowell/Projects/sec-edgar
 Worktree: /Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar
@@ -121,3 +121,5 @@ Acceptance amendment landedfee0f9659a2d6d7d0132c1ac5ddb111e362e3b1f; controller 
 Fresh acceptance task review: Spec PASS/Quality Approved, no Critical/Important/Minor findings for3898502d→fee0f965. Exact source refusal artifacts/stores/inventories independently checked; unchanged production contracts resolved by prior whole-branch review452/full/installed evidence plus fresh unchanged-domain proof. No range/capacity claim. Owner gate resolved, no leftovers/deferred items. Controller starts completion protocol markup/retirement.
 
 Completion protocol executed:34 steps ticked,6 one-line deviations, no skipped/deferred/unfixed items. Plan/spec moved together to completed/ with all relative links repaired. Fresh guarded controller audit exits0 in3.276s:104local links, primary19088records/294399711bytes/4absences/statusHEAD/originalroadmap intact, reviewed implementation unchanged, frozen proof/acceptance inventories exact, newacceptance0/originalspecimens1, retained452successes. Isolated roadmap onlyStage3checkbox+appendix, archived copy bound, ignore policy unchanged. Final scoped whole-branch completion review follows retirement commit; live closed/all22reserved.
+
+Final completion review: same capable whole-branch reviewer resumes fee0f965→7303ac89; Spec PASS/Quality Approved/no Critical,Important,Minor findings. Exact owner acceptance blocker RESOLVED, strict whole-source refusal intact. Independently checked all104links,4frozen roots,9618old mapped delivery entries,19088primaryrecords/294399711bytes/4absences and actual immutable refusal stores. All34steps complete/6deviations/nothing deferred. Final review and receipt retained in completion-checkpoint; final inventory binds all current payloads without circular self-hash. Only final metadata commit/read-only delivery verification and exact W cleanup remain. Branch/worktree retained pending explicit integration choice; live closed/all22reserved/Stage4separate owner resume.
