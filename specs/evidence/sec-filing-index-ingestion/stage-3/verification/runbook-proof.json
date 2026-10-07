@@ -1,0 +1,42 @@
+{
+  "all22_stage7_checks": "reserved",
+  "argv": [
+    ".sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/runbook-example.py"
+  ],
+  "cwd": "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar",
+  "dependencies": {
+    "azure-data-tables": "12.7.0",
+    "azure-identity": "1.26.0",
+    "azure-storage-blob": "12.31.0",
+    "pyarrow": "25.0.1",
+    "requests": "2.34.2",
+    "sec-edgar-ingest": "0.1.0"
+  },
+  "executable": "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.venv/bin/python",
+  "exit": 0,
+  "network_guard": true,
+  "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+  "pointer_unchanged": true,
+  "python": "3.14.0 (main, Oct 14 2025, 21:10:22) [Clang 20.1.4 ]",
+  "rows": [
+    {
+      "accession_number": "0000123456-26-000001",
+      "archive_path": "edgar/data/123456/0000123456-26-000001.txt",
+      "cik": "0000123456",
+      "company_name": "Example",
+      "filing_date": "2026-10-01",
+      "form_type": "10-K",
+      "parser_version": "fixture-index-parser-v2",
+      "schema_version": "sec-index-v1",
+      "source_id": "6cf7f339fd98f08d888586fbf41d907cb071d3a54259128e659f51e1f7caaa72",
+      "source_sha256": "5d8f6ad2355d80ee0d0a1e176d43da6987419276a69c40507135d0c793038fd1"
+    }
+  ],
+  "saved_capture": {
+    "generation_id": "f77694be199038ef58235abd3992360018d7c1bd78ce2d2909ea535ac095116b",
+    "manifest_bytes": 2693,
+    "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=f77694be199038ef58235abd3992360018d7c1bd78ce2d2909ea535ac095116b/manifest.json",
+    "manifest_sha256": "74593e642e81ee43ffba115e7abb9c9e08f8e7fbd95069da108a915b995827ee",
+    "quarter": "2026Q4"
+  }
+}

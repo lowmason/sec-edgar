@@ -1,0 +1,15 @@
+{
+  "argv": [
+    "uv",
+    "run",
+    "--offline",
+    "--frozen",
+    "--package",
+    "sec-edgar-ingest",
+    "python",
+    "-c",
+    "import sys; sys.path.insert(0, 'packages/sec-edgar-ingest/tests'); import network_guard; network_guard.main(['test_etl_parser','test_validation','-v'])"
+  ],
+  "cwd": "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar",
+  "exit": 1
+}

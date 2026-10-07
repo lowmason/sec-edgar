@@ -1,0 +1,944 @@
+{
+  "full-check/processes": {
+    "candidate.after_data": {
+      "boundary": "candidate.after_data",
+      "exit": 73,
+      "pid": 38174,
+      "same_frozen_intents": {
+        ".fixture-state/objects/runs/sec/death/publish/publish/command.json": {
+          "bytes": 2195,
+          "sha256": "657fd876275683d16690b80bfb6f88ba951f6cfbcc77f19d2ed34a3de7acf558"
+        },
+        ".fixture-state/objects/runs/sec/death/transform/transform/command.json": {
+          "bytes": 2199,
+          "sha256": "16784f293e338c170fbed9a6a7878a9fed3446f4658b58dad9d07d7c9ea11604"
+        }
+      }
+    },
+    "etl_result.after_object": {
+      "boundary": "etl_result.after_object",
+      "exit": 73,
+      "pid": 38183,
+      "same_frozen_intents": {
+        ".fixture-state/objects/runs/sec/death/publish/publish/command.json": {
+          "bytes": 2195,
+          "sha256": "28517cbe211bf1a608f0422c0427d846dce6b2fac9e2e43ee7e4722e8a195c31"
+        },
+        ".fixture-state/objects/runs/sec/death/transform/transform/command.json": {
+          "bytes": 2199,
+          "sha256": "d6ff9f91eadc3111dceb044f91aad45cb5043ded9d7fe1164ab2c3081807cae9"
+        }
+      }
+    },
+    "gate": {
+      "children": [
+        {
+          "cas": [
+            {
+              "base": null,
+              "candidate": {
+                "generation_id": "89994b519e1c9e7622b29c186de94fa7aa95b5fd086b2510e18ce96a4b0b1082",
+                "manifest_bytes": 2622,
+                "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=89994b519e1c9e7622b29c186de94fa7aa95b5fd086b2510e18ce96a4b0b1082/manifest.json",
+                "manifest_sha256": "bc7dbb3affcecb7b6c11050e959280d99ca49b97979ed88cdc106bab299b66f9",
+                "quarter": "2026Q4",
+                "source_fingerprint": "28b8b10dbff3eba4e6b00ac790605f8fbf7d5e53e67ff658c340dd242f2dafdf"
+              },
+              "event": "cas",
+              "version": "68adfc8805594476a2da7b2e393c5115"
+            }
+          ],
+          "pid": 38167,
+          "rebuilds": 0,
+          "result": {
+            "candidate_ref": null,
+            "conflicts": 0,
+            "generation_id": "89994b519e1c9e7622b29c186de94fa7aa95b5fd086b2510e18ce96a4b0b1082",
+            "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=89994b519e1c9e7622b29c186de94fa7aa95b5fd086b2510e18ce96a4b0b1082/manifest.json",
+            "outcome": "published",
+            "quarter": "2026Q4"
+          }
+        },
+        {
+          "cas": [
+            {
+              "base": null,
+              "candidate": {
+                "generation_id": "12da95cbeec69fc6544656591e55887bc71055d996d72804f5813e2a0ec02d7a",
+                "manifest_bytes": 4047,
+                "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=12da95cbeec69fc6544656591e55887bc71055d996d72804f5813e2a0ec02d7a/manifest.json",
+                "manifest_sha256": "5e743343d210d0b058d54e8ff013afa8d1f38385b7e0669f5c9d6c5cfe228f52",
+                "quarter": "2026Q4",
+                "source_fingerprint": "f3ccb8ea5988aefd3eceab4cad8b2262b3191c736a5f5f5a0b73ef3156fb2188"
+              },
+              "event": "cas",
+              "exception": "AlreadyExists"
+            }
+          ],
+          "pid": 38168,
+          "rebuilds": 1,
+          "result": {
+            "candidate_ref": "worksets/sec/candidates/sha256=43f3fd8cf5557fa1fe296f122a8b04dce948c33e63f0899785d557118c4f400f/candidate.json",
+            "conflicts": 1,
+            "generation_id": null,
+            "manifest_ref": null,
+            "outcome": "awaiting_approval",
+            "quarter": "2026Q4"
+          }
+        }
+      ],
+      "exits": [
+        0,
+        0
+      ]
+    },
+    "insert": {
+      "children": [
+        {
+          "cas": [
+            {
+              "base": null,
+              "candidate": {
+                "generation_id": "2874c2fd49f218d0408768aaead40ce8c7c0d874bbcdd58e256dc0cda68af7ce",
+                "manifest_bytes": 2620,
+                "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=2874c2fd49f218d0408768aaead40ce8c7c0d874bbcdd58e256dc0cda68af7ce/manifest.json",
+                "manifest_sha256": "1ae44e18eed20df649a35c209a066bdf71c2595e63e020b1cdb894cc5f67fabf",
+                "quarter": "2026Q4",
+                "source_fingerprint": "826fced99564ad7b5f1bf02a2387fd45a23b5c1e76f1f8ba8ae0f0d802309737"
+              },
+              "event": "cas",
+              "version": "cf7129f402654946ab068b89121399a8"
+            }
+          ],
+          "pid": 38155,
+          "rebuilds": 0,
+          "result": {
+            "candidate_ref": null,
+            "conflicts": 0,
+            "generation_id": "2874c2fd49f218d0408768aaead40ce8c7c0d874bbcdd58e256dc0cda68af7ce",
+            "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=2874c2fd49f218d0408768aaead40ce8c7c0d874bbcdd58e256dc0cda68af7ce/manifest.json",
+            "outcome": "published",
+            "quarter": "2026Q4"
+          }
+        },
+        {
+          "cas": [
+            {
+              "base": null,
+              "candidate": {
+                "generation_id": "896fc50c181ae42ac99a97cd5604616e9e4d810039bc9389cfc1f4b8eb874f18",
+                "manifest_bytes": 2620,
+                "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=896fc50c181ae42ac99a97cd5604616e9e4d810039bc9389cfc1f4b8eb874f18/manifest.json",
+                "manifest_sha256": "eb4c329123781354747deb0a72b983d34c090d4620d62ab260d6d64867c00011",
+                "quarter": "2026Q4",
+                "source_fingerprint": "799e9bfac341ffb8be22f6c334a850025c8593e37664d4ad5c46ceef2fccd978"
+              },
+              "event": "cas",
+              "exception": "AlreadyExists"
+            },
+            {
+              "base": {
+                "value": {
+                  "generation_id": "2874c2fd49f218d0408768aaead40ce8c7c0d874bbcdd58e256dc0cda68af7ce",
+                  "manifest_bytes": 2620,
+                  "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=2874c2fd49f218d0408768aaead40ce8c7c0d874bbcdd58e256dc0cda68af7ce/manifest.json",
+                  "manifest_sha256": "1ae44e18eed20df649a35c209a066bdf71c2595e63e020b1cdb894cc5f67fabf",
+                  "quarter": "2026Q4",
+                  "source_fingerprint": "826fced99564ad7b5f1bf02a2387fd45a23b5c1e76f1f8ba8ae0f0d802309737"
+                },
+                "version": "cf7129f402654946ab068b89121399a8"
+              },
+              "candidate": {
+                "generation_id": "72d5871c64c6095a371aab39725f16abe5a2bf44e89913546443d2b03810c884",
+                "manifest_bytes": 4124,
+                "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=72d5871c64c6095a371aab39725f16abe5a2bf44e89913546443d2b03810c884/manifest.json",
+                "manifest_sha256": "759de2c42cf3c06bbfde169dd69f50058e27fa3730da21f2084e09fcd232cb74",
+                "quarter": "2026Q4",
+                "source_fingerprint": "936d3f2c0823a42637f118e81819455ced5aa1ad9d173dcc6f8292359dff7b76"
+              },
+              "event": "cas",
+              "version": "7096891087c342508937694fedc8a7b8"
+            }
+          ],
+          "pid": 38156,
+          "rebuilds": 1,
+          "result": {
+            "candidate_ref": null,
+            "conflicts": 1,
+            "generation_id": "72d5871c64c6095a371aab39725f16abe5a2bf44e89913546443d2b03810c884",
+            "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=72d5871c64c6095a371aab39725f16abe5a2bf44e89913546443d2b03810c884/manifest.json",
+            "outcome": "published",
+            "quarter": "2026Q4"
+          }
+        }
+      ],
+      "exits": [
+        0,
+        0
+      ]
+    },
+    "publication.after_pointer": {
+      "boundary": "publication.after_pointer",
+      "exit": 73,
+      "pid": 38180,
+      "same_frozen_intents": {
+        ".fixture-state/objects/runs/sec/death/publish/publish/command.json": {
+          "bytes": 2195,
+          "sha256": "82294d9a8b5533d875ac15605330f1188751885d13e94a123e1643de0dcc5720"
+        },
+        ".fixture-state/objects/runs/sec/death/transform/transform/command.json": {
+          "bytes": 2199,
+          "sha256": "c9059c0b759324799fd0f2a72659af6dfa10a087a116ff8c05011165267d14ac"
+        }
+      }
+    },
+    "publication.before_pointer": {
+      "boundary": "publication.before_pointer",
+      "exit": 73,
+      "pid": 38177,
+      "same_frozen_intents": {
+        ".fixture-state/objects/runs/sec/death/publish/publish/command.json": {
+          "bytes": 2195,
+          "sha256": "5951aa873c34f99f4822e757b1f68c6e7644ba46317ed0018ce9808606bedfe7"
+        },
+        ".fixture-state/objects/runs/sec/death/transform/transform/command.json": {
+          "bytes": 2199,
+          "sha256": "d80c6c69595486476fc9b23a7c6c11119e2f1981ebead42b6c797e5dc020cfe6"
+        }
+      }
+    },
+    "replace": {
+      "children": [
+        {
+          "cas": [
+            {
+              "base": {
+                "value": {
+                  "generation_id": "9b8d0c273d9b498a80645999aface1c739b11143a40426394ead13f6ef146860",
+                  "manifest_bytes": 2620,
+                  "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=9b8d0c273d9b498a80645999aface1c739b11143a40426394ead13f6ef146860/manifest.json",
+                  "manifest_sha256": "fef427244180755398e53e32090407713e3fafa8a0400c19b3ea408b4c3452a3",
+                  "quarter": "2026Q4",
+                  "source_fingerprint": "c406996b044c405fda19dd44a3028f9ee7a5c14782acf417d152adf679eb2454"
+                },
+                "version": "25c7e68962fa45018dec79a32361ba0b"
+              },
+              "candidate": {
+                "generation_id": "d029640db38fda26f1760cd0c3f17e74c38bd5a4ecaea1be6816957a6c7374a3",
+                "manifest_bytes": 4124,
+                "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=d029640db38fda26f1760cd0c3f17e74c38bd5a4ecaea1be6816957a6c7374a3/manifest.json",
+                "manifest_sha256": "a11d3a67bb0d83b63c451d9b262278b2cdcb6b8b7b46c2b3f43e9dd74dace14b",
+                "quarter": "2026Q4",
+                "source_fingerprint": "0909333812d168fc329ba59eb774a7c1277b51e99414d0a41883dc487ec5e488"
+              },
+              "event": "cas",
+              "version": "81825862fd3f44f1ae1b1167afc16754"
+            }
+          ],
+          "pid": 38161,
+          "rebuilds": 0,
+          "result": {
+            "candidate_ref": null,
+            "conflicts": 0,
+            "generation_id": "d029640db38fda26f1760cd0c3f17e74c38bd5a4ecaea1be6816957a6c7374a3",
+            "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=d029640db38fda26f1760cd0c3f17e74c38bd5a4ecaea1be6816957a6c7374a3/manifest.json",
+            "outcome": "published",
+            "quarter": "2026Q4"
+          }
+        },
+        {
+          "cas": [
+            {
+              "base": {
+                "value": {
+                  "generation_id": "9b8d0c273d9b498a80645999aface1c739b11143a40426394ead13f6ef146860",
+                  "manifest_bytes": 2620,
+                  "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=9b8d0c273d9b498a80645999aface1c739b11143a40426394ead13f6ef146860/manifest.json",
+                  "manifest_sha256": "fef427244180755398e53e32090407713e3fafa8a0400c19b3ea408b4c3452a3",
+                  "quarter": "2026Q4",
+                  "source_fingerprint": "c406996b044c405fda19dd44a3028f9ee7a5c14782acf417d152adf679eb2454"
+                },
+                "version": "25c7e68962fa45018dec79a32361ba0b"
+              },
+              "candidate": {
+                "generation_id": "0abb0401d20cf037abbb09abeca4a05635439de6a57545e7f6a597cfc825afbc",
+                "manifest_bytes": 4124,
+                "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=0abb0401d20cf037abbb09abeca4a05635439de6a57545e7f6a597cfc825afbc/manifest.json",
+                "manifest_sha256": "aa610a15f1ea9f1940982853783d995953d69eef7f5bace49d0ae4df9ae94ea1",
+                "quarter": "2026Q4",
+                "source_fingerprint": "ca5e6e497aa0b6a705dd98ebe7c7da369544cb8425d5a90b8afafbfcb6067f8a"
+              },
+              "event": "cas",
+              "exception": "Conflict"
+            },
+            {
+              "base": {
+                "value": {
+                  "generation_id": "d029640db38fda26f1760cd0c3f17e74c38bd5a4ecaea1be6816957a6c7374a3",
+                  "manifest_bytes": 4124,
+                  "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=d029640db38fda26f1760cd0c3f17e74c38bd5a4ecaea1be6816957a6c7374a3/manifest.json",
+                  "manifest_sha256": "a11d3a67bb0d83b63c451d9b262278b2cdcb6b8b7b46c2b3f43e9dd74dace14b",
+                  "quarter": "2026Q4",
+                  "source_fingerprint": "0909333812d168fc329ba59eb774a7c1277b51e99414d0a41883dc487ec5e488"
+                },
+                "version": "81825862fd3f44f1ae1b1167afc16754"
+              },
+              "candidate": {
+                "generation_id": "fae23aca17fe4a5bbe91417a6afb1035f5edd2fb6d062741ab129bcedbacd485",
+                "manifest_bytes": 5566,
+                "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=fae23aca17fe4a5bbe91417a6afb1035f5edd2fb6d062741ab129bcedbacd485/manifest.json",
+                "manifest_sha256": "770ccc981a644d40316c7d75fea3579a8949b507542bbe08cba1cec907749edf",
+                "quarter": "2026Q4",
+                "source_fingerprint": "cb9b95c546f2292f8b6d47b6dba8ca26198aaf1153c21dbec9c2d2e79bb9cacb"
+              },
+              "event": "cas",
+              "version": "be30501b95c34f81826364c062cc4ff0"
+            }
+          ],
+          "pid": 38162,
+          "rebuilds": 1,
+          "result": {
+            "candidate_ref": null,
+            "conflicts": 1,
+            "generation_id": "fae23aca17fe4a5bbe91417a6afb1035f5edd2fb6d062741ab129bcedbacd485",
+            "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=fae23aca17fe4a5bbe91417a6afb1035f5edd2fb6d062741ab129bcedbacd485/manifest.json",
+            "outcome": "published",
+            "quarter": "2026Q4"
+          }
+        }
+      ],
+      "exits": [
+        0,
+        0
+      ]
+    }
+  },
+  "installed/installed-sequence/processes": {
+    "candidate.after_data": {
+      "boundary": "candidate.after_data",
+      "exit": 73,
+      "pid": 38422,
+      "same_frozen_intents": {
+        ".fixture-state/objects/runs/sec/death/publish/publish/command.json": {
+          "bytes": 2195,
+          "sha256": "843d7d574cdfbc0ea37d0d96dd92cca0f9f1212db06acd96cf1db192c0cbf2d5"
+        },
+        ".fixture-state/objects/runs/sec/death/transform/transform/command.json": {
+          "bytes": 2199,
+          "sha256": "e62a640dc21f6e168d3a5d3d4c599b5c7a8c733e96acae809aadbced88e54f52"
+        }
+      }
+    },
+    "etl_result.after_object": {
+      "boundary": "etl_result.after_object",
+      "exit": 73,
+      "pid": 38446,
+      "same_frozen_intents": {
+        ".fixture-state/objects/runs/sec/death/publish/publish/command.json": {
+          "bytes": 2195,
+          "sha256": "0612b28e2b1cfaa5e8ecc1d670b7c40dbe80252019ffa002134deab8c25e297e"
+        },
+        ".fixture-state/objects/runs/sec/death/transform/transform/command.json": {
+          "bytes": 2199,
+          "sha256": "418070751f5e1bf6fca2de586c5585092cebf041c7d51e715ed4abb2729938d2"
+        }
+      }
+    },
+    "gate": {
+      "children": [
+        {
+          "cas": [
+            {
+              "base": null,
+              "candidate": {
+                "generation_id": "89994b519e1c9e7622b29c186de94fa7aa95b5fd086b2510e18ce96a4b0b1082",
+                "manifest_bytes": 2622,
+                "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=89994b519e1c9e7622b29c186de94fa7aa95b5fd086b2510e18ce96a4b0b1082/manifest.json",
+                "manifest_sha256": "bc7dbb3affcecb7b6c11050e959280d99ca49b97979ed88cdc106bab299b66f9",
+                "quarter": "2026Q4",
+                "source_fingerprint": "28b8b10dbff3eba4e6b00ac790605f8fbf7d5e53e67ff658c340dd242f2dafdf"
+              },
+              "event": "cas",
+              "version": "a91b62500c1e4c3fb1f0668dbd7ff553"
+            }
+          ],
+          "pid": 38416,
+          "rebuilds": 0,
+          "result": {
+            "candidate_ref": null,
+            "conflicts": 0,
+            "generation_id": "89994b519e1c9e7622b29c186de94fa7aa95b5fd086b2510e18ce96a4b0b1082",
+            "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=89994b519e1c9e7622b29c186de94fa7aa95b5fd086b2510e18ce96a4b0b1082/manifest.json",
+            "outcome": "published",
+            "quarter": "2026Q4"
+          }
+        },
+        {
+          "cas": [
+            {
+              "base": null,
+              "candidate": {
+                "generation_id": "12da95cbeec69fc6544656591e55887bc71055d996d72804f5813e2a0ec02d7a",
+                "manifest_bytes": 4047,
+                "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=12da95cbeec69fc6544656591e55887bc71055d996d72804f5813e2a0ec02d7a/manifest.json",
+                "manifest_sha256": "5e743343d210d0b058d54e8ff013afa8d1f38385b7e0669f5c9d6c5cfe228f52",
+                "quarter": "2026Q4",
+                "source_fingerprint": "f3ccb8ea5988aefd3eceab4cad8b2262b3191c736a5f5f5a0b73ef3156fb2188"
+              },
+              "event": "cas",
+              "exception": "AlreadyExists"
+            }
+          ],
+          "pid": 38417,
+          "rebuilds": 1,
+          "result": {
+            "candidate_ref": "worksets/sec/candidates/sha256=43f3fd8cf5557fa1fe296f122a8b04dce948c33e63f0899785d557118c4f400f/candidate.json",
+            "conflicts": 1,
+            "generation_id": null,
+            "manifest_ref": null,
+            "outcome": "awaiting_approval",
+            "quarter": "2026Q4"
+          }
+        }
+      ],
+      "exits": [
+        0,
+        0
+      ]
+    },
+    "insert": {
+      "children": [
+        {
+          "cas": [
+            {
+              "base": null,
+              "candidate": {
+                "generation_id": "2874c2fd49f218d0408768aaead40ce8c7c0d874bbcdd58e256dc0cda68af7ce",
+                "manifest_bytes": 2620,
+                "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=2874c2fd49f218d0408768aaead40ce8c7c0d874bbcdd58e256dc0cda68af7ce/manifest.json",
+                "manifest_sha256": "1ae44e18eed20df649a35c209a066bdf71c2595e63e020b1cdb894cc5f67fabf",
+                "quarter": "2026Q4",
+                "source_fingerprint": "826fced99564ad7b5f1bf02a2387fd45a23b5c1e76f1f8ba8ae0f0d802309737"
+              },
+              "event": "cas",
+              "exception": "AlreadyExists"
+            },
+            {
+              "base": {
+                "value": {
+                  "generation_id": "896fc50c181ae42ac99a97cd5604616e9e4d810039bc9389cfc1f4b8eb874f18",
+                  "manifest_bytes": 2620,
+                  "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=896fc50c181ae42ac99a97cd5604616e9e4d810039bc9389cfc1f4b8eb874f18/manifest.json",
+                  "manifest_sha256": "eb4c329123781354747deb0a72b983d34c090d4620d62ab260d6d64867c00011",
+                  "quarter": "2026Q4",
+                  "source_fingerprint": "799e9bfac341ffb8be22f6c334a850025c8593e37664d4ad5c46ceef2fccd978"
+                },
+                "version": "c32c69294c4a48f490d8095591665ab4"
+              },
+              "candidate": {
+                "generation_id": "694abbabb22403688df8d5e8901ebe2b4d24804f3801419eccab29702c812000",
+                "manifest_bytes": 4124,
+                "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=694abbabb22403688df8d5e8901ebe2b4d24804f3801419eccab29702c812000/manifest.json",
+                "manifest_sha256": "ecd99a32edd981eba6541df94856e9566565417516d89d70d9097fefc200aedc",
+                "quarter": "2026Q4",
+                "source_fingerprint": "936d3f2c0823a42637f118e81819455ced5aa1ad9d173dcc6f8292359dff7b76"
+              },
+              "event": "cas",
+              "version": "f6cd610c8daf44eb80829c8e02b654df"
+            }
+          ],
+          "pid": 38399,
+          "rebuilds": 1,
+          "result": {
+            "candidate_ref": null,
+            "conflicts": 1,
+            "generation_id": "694abbabb22403688df8d5e8901ebe2b4d24804f3801419eccab29702c812000",
+            "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=694abbabb22403688df8d5e8901ebe2b4d24804f3801419eccab29702c812000/manifest.json",
+            "outcome": "published",
+            "quarter": "2026Q4"
+          }
+        },
+        {
+          "cas": [
+            {
+              "base": null,
+              "candidate": {
+                "generation_id": "896fc50c181ae42ac99a97cd5604616e9e4d810039bc9389cfc1f4b8eb874f18",
+                "manifest_bytes": 2620,
+                "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=896fc50c181ae42ac99a97cd5604616e9e4d810039bc9389cfc1f4b8eb874f18/manifest.json",
+                "manifest_sha256": "eb4c329123781354747deb0a72b983d34c090d4620d62ab260d6d64867c00011",
+                "quarter": "2026Q4",
+                "source_fingerprint": "799e9bfac341ffb8be22f6c334a850025c8593e37664d4ad5c46ceef2fccd978"
+              },
+              "event": "cas",
+              "version": "c32c69294c4a48f490d8095591665ab4"
+            }
+          ],
+          "pid": 38400,
+          "rebuilds": 0,
+          "result": {
+            "candidate_ref": null,
+            "conflicts": 0,
+            "generation_id": "896fc50c181ae42ac99a97cd5604616e9e4d810039bc9389cfc1f4b8eb874f18",
+            "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=896fc50c181ae42ac99a97cd5604616e9e4d810039bc9389cfc1f4b8eb874f18/manifest.json",
+            "outcome": "published",
+            "quarter": "2026Q4"
+          }
+        }
+      ],
+      "exits": [
+        0,
+        0
+      ]
+    },
+    "publication.after_pointer": {
+      "boundary": "publication.after_pointer",
+      "exit": 73,
+      "pid": 38443,
+      "same_frozen_intents": {
+        ".fixture-state/objects/runs/sec/death/publish/publish/command.json": {
+          "bytes": 2195,
+          "sha256": "441b1cb2547994758b4d2ce6f816b97f4bbc77725be5e2194179c271e2c0dd26"
+        },
+        ".fixture-state/objects/runs/sec/death/transform/transform/command.json": {
+          "bytes": 2199,
+          "sha256": "c4b4747767fe0cd60df2b6b22088e4e77cc6ede26301acbbca13e6798fb38ac6"
+        }
+      }
+    },
+    "publication.before_pointer": {
+      "boundary": "publication.before_pointer",
+      "exit": 73,
+      "pid": 38435,
+      "same_frozen_intents": {
+        ".fixture-state/objects/runs/sec/death/publish/publish/command.json": {
+          "bytes": 2195,
+          "sha256": "55c64b7d45e7228e35981cd723af98c89b31eadd3be2e8e124a2b34d122c0722"
+        },
+        ".fixture-state/objects/runs/sec/death/transform/transform/command.json": {
+          "bytes": 2199,
+          "sha256": "264e363196ff3c8412297d910391fb0f68dbf6eaacbccaadb403c08ea824794f"
+        }
+      }
+    },
+    "replace": {
+      "children": [
+        {
+          "cas": [
+            {
+              "base": {
+                "value": {
+                  "generation_id": "9b8d0c273d9b498a80645999aface1c739b11143a40426394ead13f6ef146860",
+                  "manifest_bytes": 2620,
+                  "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=9b8d0c273d9b498a80645999aface1c739b11143a40426394ead13f6ef146860/manifest.json",
+                  "manifest_sha256": "fef427244180755398e53e32090407713e3fafa8a0400c19b3ea408b4c3452a3",
+                  "quarter": "2026Q4",
+                  "source_fingerprint": "c406996b044c405fda19dd44a3028f9ee7a5c14782acf417d152adf679eb2454"
+                },
+                "version": "08c3b80ec3b941d58f07b18e6b927851"
+              },
+              "candidate": {
+                "generation_id": "d029640db38fda26f1760cd0c3f17e74c38bd5a4ecaea1be6816957a6c7374a3",
+                "manifest_bytes": 4124,
+                "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=d029640db38fda26f1760cd0c3f17e74c38bd5a4ecaea1be6816957a6c7374a3/manifest.json",
+                "manifest_sha256": "a11d3a67bb0d83b63c451d9b262278b2cdcb6b8b7b46c2b3f43e9dd74dace14b",
+                "quarter": "2026Q4",
+                "source_fingerprint": "0909333812d168fc329ba59eb774a7c1277b51e99414d0a41883dc487ec5e488"
+              },
+              "event": "cas",
+              "exception": "Conflict"
+            },
+            {
+              "base": {
+                "value": {
+                  "generation_id": "0abb0401d20cf037abbb09abeca4a05635439de6a57545e7f6a597cfc825afbc",
+                  "manifest_bytes": 4124,
+                  "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=0abb0401d20cf037abbb09abeca4a05635439de6a57545e7f6a597cfc825afbc/manifest.json",
+                  "manifest_sha256": "aa610a15f1ea9f1940982853783d995953d69eef7f5bace49d0ae4df9ae94ea1",
+                  "quarter": "2026Q4",
+                  "source_fingerprint": "ca5e6e497aa0b6a705dd98ebe7c7da369544cb8425d5a90b8afafbfcb6067f8a"
+                },
+                "version": "84e03ea3fc534965865b858a492b1f88"
+              },
+              "candidate": {
+                "generation_id": "8ac8f809d8f937ea66ed5ce1d80e96aff55627f23964a74cab0f53eee2d84ac8",
+                "manifest_bytes": 5566,
+                "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=8ac8f809d8f937ea66ed5ce1d80e96aff55627f23964a74cab0f53eee2d84ac8/manifest.json",
+                "manifest_sha256": "f8e2d8eeed1d876d0c0f5f6516aca12d6ca4275bda40c118aca7226112fb41dd",
+                "quarter": "2026Q4",
+                "source_fingerprint": "cb9b95c546f2292f8b6d47b6dba8ca26198aaf1153c21dbec9c2d2e79bb9cacb"
+              },
+              "event": "cas",
+              "version": "907b7324f33945babadf117b0b785710"
+            }
+          ],
+          "pid": 38405,
+          "rebuilds": 1,
+          "result": {
+            "candidate_ref": null,
+            "conflicts": 1,
+            "generation_id": "8ac8f809d8f937ea66ed5ce1d80e96aff55627f23964a74cab0f53eee2d84ac8",
+            "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=8ac8f809d8f937ea66ed5ce1d80e96aff55627f23964a74cab0f53eee2d84ac8/manifest.json",
+            "outcome": "published",
+            "quarter": "2026Q4"
+          }
+        },
+        {
+          "cas": [
+            {
+              "base": {
+                "value": {
+                  "generation_id": "9b8d0c273d9b498a80645999aface1c739b11143a40426394ead13f6ef146860",
+                  "manifest_bytes": 2620,
+                  "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=9b8d0c273d9b498a80645999aface1c739b11143a40426394ead13f6ef146860/manifest.json",
+                  "manifest_sha256": "fef427244180755398e53e32090407713e3fafa8a0400c19b3ea408b4c3452a3",
+                  "quarter": "2026Q4",
+                  "source_fingerprint": "c406996b044c405fda19dd44a3028f9ee7a5c14782acf417d152adf679eb2454"
+                },
+                "version": "08c3b80ec3b941d58f07b18e6b927851"
+              },
+              "candidate": {
+                "generation_id": "0abb0401d20cf037abbb09abeca4a05635439de6a57545e7f6a597cfc825afbc",
+                "manifest_bytes": 4124,
+                "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=0abb0401d20cf037abbb09abeca4a05635439de6a57545e7f6a597cfc825afbc/manifest.json",
+                "manifest_sha256": "aa610a15f1ea9f1940982853783d995953d69eef7f5bace49d0ae4df9ae94ea1",
+                "quarter": "2026Q4",
+                "source_fingerprint": "ca5e6e497aa0b6a705dd98ebe7c7da369544cb8425d5a90b8afafbfcb6067f8a"
+              },
+              "event": "cas",
+              "version": "84e03ea3fc534965865b858a492b1f88"
+            }
+          ],
+          "pid": 38406,
+          "rebuilds": 0,
+          "result": {
+            "candidate_ref": null,
+            "conflicts": 0,
+            "generation_id": "0abb0401d20cf037abbb09abeca4a05635439de6a57545e7f6a597cfc825afbc",
+            "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=0abb0401d20cf037abbb09abeca4a05635439de6a57545e7f6a597cfc825afbc/manifest.json",
+            "outcome": "published",
+            "quarter": "2026Q4"
+          }
+        }
+      ],
+      "exits": [
+        0,
+        0
+      ]
+    }
+  },
+  "sequence/processes": {
+    "candidate.after_data": {
+      "boundary": "candidate.after_data",
+      "exit": 73,
+      "pid": 37148,
+      "same_frozen_intents": {
+        ".fixture-state/objects/runs/sec/death/publish/publish/command.json": {
+          "bytes": 2195,
+          "sha256": "b127aecf09811183f47a210ea66505991d3587e57efcae72a919d54a6fb77a9d"
+        },
+        ".fixture-state/objects/runs/sec/death/transform/transform/command.json": {
+          "bytes": 2199,
+          "sha256": "be0c44c23852576576e45cd4aae55027b3aab119a6a4817df3411785e3eb0957"
+        }
+      }
+    },
+    "etl_result.after_object": {
+      "boundary": "etl_result.after_object",
+      "exit": 73,
+      "pid": 37178,
+      "same_frozen_intents": {
+        ".fixture-state/objects/runs/sec/death/publish/publish/command.json": {
+          "bytes": 2195,
+          "sha256": "61412bef6a0e15e5d947c074e007bf8614ca99df902d7410a6786027112cebb6"
+        },
+        ".fixture-state/objects/runs/sec/death/transform/transform/command.json": {
+          "bytes": 2199,
+          "sha256": "f0c65e4e6e0d6f4bd1196f8462f33d07d0d74a3f26eedd5a39c30d46b198391c"
+        }
+      }
+    },
+    "gate": {
+      "children": [
+        {
+          "cas": [
+            {
+              "base": null,
+              "candidate": {
+                "generation_id": "89994b519e1c9e7622b29c186de94fa7aa95b5fd086b2510e18ce96a4b0b1082",
+                "manifest_bytes": 2622,
+                "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=89994b519e1c9e7622b29c186de94fa7aa95b5fd086b2510e18ce96a4b0b1082/manifest.json",
+                "manifest_sha256": "bc7dbb3affcecb7b6c11050e959280d99ca49b97979ed88cdc106bab299b66f9",
+                "quarter": "2026Q4",
+                "source_fingerprint": "28b8b10dbff3eba4e6b00ac790605f8fbf7d5e53e67ff658c340dd242f2dafdf"
+              },
+              "event": "cas",
+              "version": "c4b2c64c162a455082a50098ffe2277f"
+            }
+          ],
+          "pid": 37138,
+          "rebuilds": 0,
+          "result": {
+            "candidate_ref": null,
+            "conflicts": 0,
+            "generation_id": "89994b519e1c9e7622b29c186de94fa7aa95b5fd086b2510e18ce96a4b0b1082",
+            "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=89994b519e1c9e7622b29c186de94fa7aa95b5fd086b2510e18ce96a4b0b1082/manifest.json",
+            "outcome": "published",
+            "quarter": "2026Q4"
+          }
+        },
+        {
+          "cas": [
+            {
+              "base": null,
+              "candidate": {
+                "generation_id": "12da95cbeec69fc6544656591e55887bc71055d996d72804f5813e2a0ec02d7a",
+                "manifest_bytes": 4047,
+                "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=12da95cbeec69fc6544656591e55887bc71055d996d72804f5813e2a0ec02d7a/manifest.json",
+                "manifest_sha256": "5e743343d210d0b058d54e8ff013afa8d1f38385b7e0669f5c9d6c5cfe228f52",
+                "quarter": "2026Q4",
+                "source_fingerprint": "f3ccb8ea5988aefd3eceab4cad8b2262b3191c736a5f5f5a0b73ef3156fb2188"
+              },
+              "event": "cas",
+              "exception": "AlreadyExists"
+            }
+          ],
+          "pid": 37139,
+          "rebuilds": 1,
+          "result": {
+            "candidate_ref": "worksets/sec/candidates/sha256=43f3fd8cf5557fa1fe296f122a8b04dce948c33e63f0899785d557118c4f400f/candidate.json",
+            "conflicts": 1,
+            "generation_id": null,
+            "manifest_ref": null,
+            "outcome": "awaiting_approval",
+            "quarter": "2026Q4"
+          }
+        }
+      ],
+      "exits": [
+        0,
+        0
+      ]
+    },
+    "insert": {
+      "children": [
+        {
+          "cas": [
+            {
+              "base": null,
+              "candidate": {
+                "generation_id": "2874c2fd49f218d0408768aaead40ce8c7c0d874bbcdd58e256dc0cda68af7ce",
+                "manifest_bytes": 2620,
+                "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=2874c2fd49f218d0408768aaead40ce8c7c0d874bbcdd58e256dc0cda68af7ce/manifest.json",
+                "manifest_sha256": "1ae44e18eed20df649a35c209a066bdf71c2595e63e020b1cdb894cc5f67fabf",
+                "quarter": "2026Q4",
+                "source_fingerprint": "826fced99564ad7b5f1bf02a2387fd45a23b5c1e76f1f8ba8ae0f0d802309737"
+              },
+              "event": "cas",
+              "version": "96eade724da649e8a85f7dd9babf10e7"
+            }
+          ],
+          "pid": 37110,
+          "rebuilds": 0,
+          "result": {
+            "candidate_ref": null,
+            "conflicts": 0,
+            "generation_id": "2874c2fd49f218d0408768aaead40ce8c7c0d874bbcdd58e256dc0cda68af7ce",
+            "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=2874c2fd49f218d0408768aaead40ce8c7c0d874bbcdd58e256dc0cda68af7ce/manifest.json",
+            "outcome": "published",
+            "quarter": "2026Q4"
+          }
+        },
+        {
+          "cas": [
+            {
+              "base": null,
+              "candidate": {
+                "generation_id": "896fc50c181ae42ac99a97cd5604616e9e4d810039bc9389cfc1f4b8eb874f18",
+                "manifest_bytes": 2620,
+                "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=896fc50c181ae42ac99a97cd5604616e9e4d810039bc9389cfc1f4b8eb874f18/manifest.json",
+                "manifest_sha256": "eb4c329123781354747deb0a72b983d34c090d4620d62ab260d6d64867c00011",
+                "quarter": "2026Q4",
+                "source_fingerprint": "799e9bfac341ffb8be22f6c334a850025c8593e37664d4ad5c46ceef2fccd978"
+              },
+              "event": "cas",
+              "exception": "AlreadyExists"
+            },
+            {
+              "base": {
+                "value": {
+                  "generation_id": "2874c2fd49f218d0408768aaead40ce8c7c0d874bbcdd58e256dc0cda68af7ce",
+                  "manifest_bytes": 2620,
+                  "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=2874c2fd49f218d0408768aaead40ce8c7c0d874bbcdd58e256dc0cda68af7ce/manifest.json",
+                  "manifest_sha256": "1ae44e18eed20df649a35c209a066bdf71c2595e63e020b1cdb894cc5f67fabf",
+                  "quarter": "2026Q4",
+                  "source_fingerprint": "826fced99564ad7b5f1bf02a2387fd45a23b5c1e76f1f8ba8ae0f0d802309737"
+                },
+                "version": "96eade724da649e8a85f7dd9babf10e7"
+              },
+              "candidate": {
+                "generation_id": "72d5871c64c6095a371aab39725f16abe5a2bf44e89913546443d2b03810c884",
+                "manifest_bytes": 4124,
+                "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=72d5871c64c6095a371aab39725f16abe5a2bf44e89913546443d2b03810c884/manifest.json",
+                "manifest_sha256": "759de2c42cf3c06bbfde169dd69f50058e27fa3730da21f2084e09fcd232cb74",
+                "quarter": "2026Q4",
+                "source_fingerprint": "936d3f2c0823a42637f118e81819455ced5aa1ad9d173dcc6f8292359dff7b76"
+              },
+              "event": "cas",
+              "version": "a28c25acd0da4fcdb87d3b58e872e68b"
+            }
+          ],
+          "pid": 37111,
+          "rebuilds": 1,
+          "result": {
+            "candidate_ref": null,
+            "conflicts": 1,
+            "generation_id": "72d5871c64c6095a371aab39725f16abe5a2bf44e89913546443d2b03810c884",
+            "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=72d5871c64c6095a371aab39725f16abe5a2bf44e89913546443d2b03810c884/manifest.json",
+            "outcome": "published",
+            "quarter": "2026Q4"
+          }
+        }
+      ],
+      "exits": [
+        0,
+        0
+      ]
+    },
+    "publication.after_pointer": {
+      "boundary": "publication.after_pointer",
+      "exit": 73,
+      "pid": 37167,
+      "same_frozen_intents": {
+        ".fixture-state/objects/runs/sec/death/publish/publish/command.json": {
+          "bytes": 2195,
+          "sha256": "b618071608ddcc9525b5f4efb5d72d6dd716417c2ba30e874c492c7192f0b2ca"
+        },
+        ".fixture-state/objects/runs/sec/death/transform/transform/command.json": {
+          "bytes": 2199,
+          "sha256": "f02ad2173d4bd1a538a8e80e8938161de9c9b8089e229771ac0bba983162b400"
+        }
+      }
+    },
+    "publication.before_pointer": {
+      "boundary": "publication.before_pointer",
+      "exit": 73,
+      "pid": 37158,
+      "same_frozen_intents": {
+        ".fixture-state/objects/runs/sec/death/publish/publish/command.json": {
+          "bytes": 2195,
+          "sha256": "cf38ddffe12d5c7d4957ff7b6a7f3d58283e7d78dd9af8e466697a07153acb1f"
+        },
+        ".fixture-state/objects/runs/sec/death/transform/transform/command.json": {
+          "bytes": 2199,
+          "sha256": "e2ea97dfe3cb565d1e9c780c1934d9366d21318075b6d0533d821f88796a2caa"
+        }
+      }
+    },
+    "replace": {
+      "children": [
+        {
+          "cas": [
+            {
+              "base": {
+                "value": {
+                  "generation_id": "9b8d0c273d9b498a80645999aface1c739b11143a40426394ead13f6ef146860",
+                  "manifest_bytes": 2620,
+                  "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=9b8d0c273d9b498a80645999aface1c739b11143a40426394ead13f6ef146860/manifest.json",
+                  "manifest_sha256": "fef427244180755398e53e32090407713e3fafa8a0400c19b3ea408b4c3452a3",
+                  "quarter": "2026Q4",
+                  "source_fingerprint": "c406996b044c405fda19dd44a3028f9ee7a5c14782acf417d152adf679eb2454"
+                },
+                "version": "eb4b236203314535af715d2336ffcfb7"
+              },
+              "candidate": {
+                "generation_id": "d029640db38fda26f1760cd0c3f17e74c38bd5a4ecaea1be6816957a6c7374a3",
+                "manifest_bytes": 4124,
+                "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=d029640db38fda26f1760cd0c3f17e74c38bd5a4ecaea1be6816957a6c7374a3/manifest.json",
+                "manifest_sha256": "a11d3a67bb0d83b63c451d9b262278b2cdcb6b8b7b46c2b3f43e9dd74dace14b",
+                "quarter": "2026Q4",
+                "source_fingerprint": "0909333812d168fc329ba59eb774a7c1277b51e99414d0a41883dc487ec5e488"
+              },
+              "event": "cas",
+              "exception": "Conflict"
+            },
+            {
+              "base": {
+                "value": {
+                  "generation_id": "0abb0401d20cf037abbb09abeca4a05635439de6a57545e7f6a597cfc825afbc",
+                  "manifest_bytes": 4124,
+                  "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=0abb0401d20cf037abbb09abeca4a05635439de6a57545e7f6a597cfc825afbc/manifest.json",
+                  "manifest_sha256": "aa610a15f1ea9f1940982853783d995953d69eef7f5bace49d0ae4df9ae94ea1",
+                  "quarter": "2026Q4",
+                  "source_fingerprint": "ca5e6e497aa0b6a705dd98ebe7c7da369544cb8425d5a90b8afafbfcb6067f8a"
+                },
+                "version": "059a5baf15e94321b779a059b1727e80"
+              },
+              "candidate": {
+                "generation_id": "8ac8f809d8f937ea66ed5ce1d80e96aff55627f23964a74cab0f53eee2d84ac8",
+                "manifest_bytes": 5566,
+                "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=8ac8f809d8f937ea66ed5ce1d80e96aff55627f23964a74cab0f53eee2d84ac8/manifest.json",
+                "manifest_sha256": "f8e2d8eeed1d876d0c0f5f6516aca12d6ca4275bda40c118aca7226112fb41dd",
+                "quarter": "2026Q4",
+                "source_fingerprint": "cb9b95c546f2292f8b6d47b6dba8ca26198aaf1153c21dbec9c2d2e79bb9cacb"
+              },
+              "event": "cas",
+              "version": "b4b26b95e54940bf936537d37d352602"
+            }
+          ],
+          "pid": 37119,
+          "rebuilds": 1,
+          "result": {
+            "candidate_ref": null,
+            "conflicts": 1,
+            "generation_id": "8ac8f809d8f937ea66ed5ce1d80e96aff55627f23964a74cab0f53eee2d84ac8",
+            "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=8ac8f809d8f937ea66ed5ce1d80e96aff55627f23964a74cab0f53eee2d84ac8/manifest.json",
+            "outcome": "published",
+            "quarter": "2026Q4"
+          }
+        },
+        {
+          "cas": [
+            {
+              "base": {
+                "value": {
+                  "generation_id": "9b8d0c273d9b498a80645999aface1c739b11143a40426394ead13f6ef146860",
+                  "manifest_bytes": 2620,
+                  "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=9b8d0c273d9b498a80645999aface1c739b11143a40426394ead13f6ef146860/manifest.json",
+                  "manifest_sha256": "fef427244180755398e53e32090407713e3fafa8a0400c19b3ea408b4c3452a3",
+                  "quarter": "2026Q4",
+                  "source_fingerprint": "c406996b044c405fda19dd44a3028f9ee7a5c14782acf417d152adf679eb2454"
+                },
+                "version": "eb4b236203314535af715d2336ffcfb7"
+              },
+              "candidate": {
+                "generation_id": "0abb0401d20cf037abbb09abeca4a05635439de6a57545e7f6a597cfc825afbc",
+                "manifest_bytes": 4124,
+                "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=0abb0401d20cf037abbb09abeca4a05635439de6a57545e7f6a597cfc825afbc/manifest.json",
+                "manifest_sha256": "aa610a15f1ea9f1940982853783d995953d69eef7f5bace49d0ae4df9ae94ea1",
+                "quarter": "2026Q4",
+                "source_fingerprint": "ca5e6e497aa0b6a705dd98ebe7c7da369544cb8425d5a90b8afafbfcb6067f8a"
+              },
+              "event": "cas",
+              "version": "059a5baf15e94321b779a059b1727e80"
+            }
+          ],
+          "pid": 37120,
+          "rebuilds": 0,
+          "result": {
+            "candidate_ref": null,
+            "conflicts": 0,
+            "generation_id": "0abb0401d20cf037abbb09abeca4a05635439de6a57545e7f6a597cfc825afbc",
+            "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=0abb0401d20cf037abbb09abeca4a05635439de6a57545e7f6a597cfc825afbc/manifest.json",
+            "outcome": "published",
+            "quarter": "2026Q4"
+          }
+        }
+      ],
+      "exits": [
+        0,
+        0
+      ]
+    }
+  }
+}

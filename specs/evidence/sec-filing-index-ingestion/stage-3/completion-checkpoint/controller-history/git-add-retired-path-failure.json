@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "git",
+    "add",
+    "specs/plans/3-sec-filing-index-ingestion-stage-3-spec.md",
+    "specs/plans/completed/3-sec-filing-index-ingestion-stage-3-spec.md",
+    "specs/sec-filing-index-ingestion-stage-3-spec.md",
+    "specs/completed/sec-filing-index-ingestion-stage-3-spec.md",
+    "specs/evidence/sec-filing-index-ingestion/stage-3/completion-checkpoint"
+  ],
+  "cause": "git mv already staged retired source deletion; deleted source no longer matches add pathspec",
+  "exit": 128,
+  "output": "fatal: pathspec 'specs/plans/3-sec-filing-index-ingestion-stage-3-spec.md' did not match any files\n",
+  "primary_mutation": false,
+  "resolution": "add only new retired document paths and owned checkpoint; existing rename staging retained"
+}

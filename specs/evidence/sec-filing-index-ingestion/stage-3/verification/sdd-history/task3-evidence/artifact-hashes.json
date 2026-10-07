@@ -1,0 +1,143 @@
+{
+  "identities": {
+    "raw": {
+      "path": "raw/sec/indexes/kind=daily/period=2026-09-30/sha256=322ce1308160bc5572ea72dc2c53ce17ad3862d0fc04ea9a98bdc288ff8bf543/master.idx",
+      "sha256": "322ce1308160bc5572ea72dc2c53ce17ad3862d0fc04ea9a98bdc288ff8bf543",
+      "bytes": 133
+    },
+    "observation": {
+      "path": "observations/sec/indexes/source=5c53a492fdd84a636310a1319c1217b7d107d8be5f3c2ec7c64efd70baf244ec/sha256=322ce1308160bc5572ea72dc2c53ce17ad3862d0fc04ea9a98bdc288ff8bf543/parser=fixture-index-parser-v1/schema=sec-index-v1/rows.parquet",
+      "sha256": "c0a5c3d0b56a2f438d1dd6068bd3bda3ad368e2da203d76aea35e8765678d5d2",
+      "bytes": 4253
+    },
+    "observation_manifest": {
+      "path": "observations/sec/indexes/source=5c53a492fdd84a636310a1319c1217b7d107d8be5f3c2ec7c64efd70baf244ec/sha256=322ce1308160bc5572ea72dc2c53ce17ad3862d0fc04ea9a98bdc288ff8bf543/parser=fixture-index-parser-v1/schema=sec-index-v1/manifest.json",
+      "sha256": "5beffe2e8c7ef65b08c986b86182f59a78b671cfe40886e4edc45280d89c17b6",
+      "bytes": 1584
+    },
+    "snapshot_workset": {
+      "path": "worksets/sec/snapshot/sha256=1fc26eb80f9c75a3f28f58eacac49638ccca544db52101cd01e5205885bd0ab9/workset.json",
+      "sha256": "223563a5d062a1539c0009b032432919e6b59f3993da89d55da716439eca5e5a",
+      "bytes": 3058
+    },
+    "transformed_workset": {
+      "path": "worksets/sec/transformed/sha256=407b60261b57dc8ab0fcf564f70e34e10d32dcfcb65e8f5ee006294b73bdf25a/workset.json",
+      "sha256": "aaf639bd4bf13712c03060860f6f372c385031fd8ec893fa264aff188a667949",
+      "bytes": 5692
+    }
+  },
+  "transformed_workset_id": "407b60261b57dc8ab0fcf564f70e34e10d32dcfcb65e8f5ee006294b73bdf25a",
+  "manifest_repair_without_reparse": true,
+  "force_same_bytes": true,
+  "accepted_processing_rows": 1,
+  "observation": {
+    "source": {
+      "source_id": "5c53a492fdd84a636310a1319c1217b7d107d8be5f3c2ec7c64efd70baf244ec",
+      "canonical_url": "https://www.sec.gov/Archives/edgar/daily-index/2026/QTR3/master.20260930.idx",
+      "kind": "daily",
+      "period": "2026-09-30",
+      "representation": "idx"
+    },
+    "snapshot": {
+      "source_id": "5c53a492fdd84a636310a1319c1217b7d107d8be5f3c2ec7c64efd70baf244ec",
+      "sha256": "322ce1308160bc5572ea72dc2c53ce17ad3862d0fc04ea9a98bdc288ff8bf543",
+      "raw_path": "raw/sec/indexes/kind=daily/period=2026-09-30/sha256=322ce1308160bc5572ea72dc2c53ce17ad3862d0fc04ea9a98bdc288ff8bf543/master.idx",
+      "byte_count": 133,
+      "received_at": "2026-10-06T00:00:00+00:00",
+      "validators": {},
+      "representation": "idx",
+      "envelope_version": "sec-daily-envelope-v1"
+    },
+    "parser_version": "fixture-index-parser-v1",
+    "schema_version": "sec-index-v1",
+    "rows_ref": "observations/sec/indexes/source=5c53a492fdd84a636310a1319c1217b7d107d8be5f3c2ec7c64efd70baf244ec/sha256=322ce1308160bc5572ea72dc2c53ce17ad3862d0fc04ea9a98bdc288ff8bf543/parser=fixture-index-parser-v1/schema=sec-index-v1/rows.parquet",
+    "manifest_ref": "observations/sec/indexes/source=5c53a492fdd84a636310a1319c1217b7d107d8be5f3c2ec7c64efd70baf244ec/sha256=322ce1308160bc5572ea72dc2c53ce17ad3862d0fc04ea9a98bdc288ff8bf543/parser=fixture-index-parser-v1/schema=sec-index-v1/manifest.json",
+    "rows_sha256": "c0a5c3d0b56a2f438d1dd6068bd3bda3ad368e2da203d76aea35e8765678d5d2",
+    "rows_bytes": 4253,
+    "source_row_count": 1,
+    "distinct_key_count": 1,
+    "quarter_counts": {
+      "2025Q3": 1
+    }
+  },
+  "context": {
+    "run_id": "fixture-run",
+    "execution_id": "fixture-execution",
+    "command": "transform",
+    "attempt_id": "etl1",
+    "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "parser_version": "fixture-index-parser-v1",
+    "schema_version": "sec-index-v1",
+    "config_sha256": "017bc4992404b2849e530e2c59939a0d719bae3db941e285e9c73bd7abe5ec7a",
+    "started_at": "2026-10-07T13:25:53.526257+00:00",
+    "deadline": "2026-10-07T14:25:53.526257+00:00",
+    "priority": "backfill",
+    "effective_config": {
+      "config_version": "sec-acquisition-v1",
+      "backfill": {
+        "start_quarter": "2015Q1",
+        "end_quarter": "open"
+      },
+      "daily": {
+        "start_date": "2026-10-01"
+      },
+      "sec": {
+        "user_agent": "Lowell Mason sec-edgar-ingest mason.lowell@mac.com",
+        "requests_per_second": 3.0,
+        "max_active_collectors": 1
+      },
+      "http": {
+        "max_attempts": 5,
+        "retry_base_seconds": 2.0,
+        "retry_cap_seconds": 120.0,
+        "connect_timeout_seconds": 15.0,
+        "read_timeout_seconds": 60.0,
+        "exchange_deadline_seconds": 90.0,
+        "max_received_bytes": 67108864,
+        "max_expanded_bytes": 536870912
+      },
+      "coordination": {
+        "lease_seconds": 60.0,
+        "renew_every_seconds": 20.0,
+        "namespace": "sec-owner-lowell-mason",
+        "clock_uncertainty_seconds": 2.0
+      },
+      "storage": {
+        "backend": "local-fixture",
+        "source_table": "SourceState",
+        "attempt_table": "Attempts",
+        "blob_api_version": "2026-04-06",
+        "table_api_version": "2020-12-06",
+        "root": ".fixture-state",
+        "account_name": null,
+        "blob_endpoint": null,
+        "table_endpoint": null,
+        "raw_container": "raw",
+        "workset_container": "worksets",
+        "quarantine_container": "quarantine",
+        "lock_container": "locks",
+        "lock_blob": "sec-owner-lowell-mason/sentinel.json",
+        "binding_registry_blob": "sec-owner-lowell-mason/binding.json"
+      },
+      "etl": {
+        "parser_version": "fixture-index-parser-v1",
+        "schema_version": "sec-index-v1"
+      },
+      "worker": {
+        "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "provenance": "synthetic-fixture"
+      },
+      "jobs": {
+        "replica_retry_limit": 0
+      },
+      "orchestration": {
+        "transient_replays": 1
+      },
+      "reconciliation": {
+        "require_withdrawal_approval": true
+      },
+      "fixture": null
+    },
+    "pinned_on": "2026-10-07"
+  }
+}

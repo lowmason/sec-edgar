@@ -90,6 +90,7 @@ class StateStore(Protocol):
 class ObjectStore(Protocol):
     def put_once(self, path: str, body: bytes) -> str: ...
     def read(self, path: str) -> bytes: ...
+    def materialize(self, path: str, target: Path) -> None: ...
     def stage(self, path: str, body: Path) -> str: ...
     def promote(self, temporary_ref: str, raw_path: str, sha256: str, byte_count: int) -> str: ...
     def verify(self, path: str, sha256: str, byte_count: int) -> None: ...
@@ -123,6 +124,8 @@ def identity(kind: str, key: str) -> tuple[str, str]:
 
 
 def table_for(kind: str) -> str:
+    if kind == "QuarterPublication":
+        return "ActivePointers"
     return "Attempts" if kind in ATTEMPT_KINDS else "SourceState"
 
 
@@ -169,3 +172,20 @@ def deployment_binding(settings: Settings | None = None, *, root: Path | None = 
     storage["local_root"] = str(root.resolve()) if root is not None else None
     return {"binding_version": "sec-owner-binding-v1", "account": ACCOUNT_NAME,
             "namespace": COORDINATION_NAMESPACE, "sec": sec, "coordination": coordination, "storage": storage}
+
+
+def blob_address(path: str) -> tuple[str, str]:
+    safe_relative_path(path, 'object path')
+    root, separator, tail = path.partition('/')
+    if not separator:
+        raise ValueError('object path requires a root and object key')
+    if root in {'raw', 'worksets', 'quarantine', 'locks', 'results',
+                'generations', 'manifests', 'approvals'}:
+        return root, tail
+    if root == 'staging':
+        return 'raw', path
+    if root == 'runs':
+        return 'results', path
+    if root in {'observations', 'curated'}:
+        return ('manifests' if path.endswith('/manifest.json') else 'generations'), path
+    raise ValueError('object path has no accepted Blob binding')

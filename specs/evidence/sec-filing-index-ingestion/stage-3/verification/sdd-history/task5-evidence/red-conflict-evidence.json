@@ -1,0 +1,18 @@
+{
+  "argv": [
+    "uv",
+    "run",
+    "--offline",
+    "--frozen",
+    "python",
+    "packages/sec-edgar-ingest/tests/network_guard.py",
+    "test_etl_publication.PublicationIntegrationTests.test_five_conflicts_and_expired_deadline_have_no_commit",
+    "test_etl_publication.PublicationIntegrationTests.test_deadline_after_loss_retains_attempted_manifest_without_commit_claim",
+    "-v"
+  ],
+  "cwd": "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar",
+  "env": {},
+  "stdout": "",
+  "stderr": "test_five_conflicts_and_expired_deadline_have_no_commit (test_etl_publication.PublicationIntegrationTests.test_five_conflicts_and_expired_deadline_have_no_commit) ... FAIL\ntest_deadline_after_loss_retains_attempted_manifest_without_commit_claim (test_etl_publication.PublicationIntegrationTests.test_deadline_after_loss_retains_attempted_manifest_without_commit_claim) ... FAIL\n\n======================================================================\nFAIL: test_five_conflicts_and_expired_deadline_have_no_commit (test_etl_publication.PublicationIntegrationTests.test_five_conflicts_and_expired_deadline_have_no_commit)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/tests/test_etl_publication.py\", line 153, in test_five_conflicts_and_expired_deadline_have_no_commit\n    self.assertIsNotNone(result.manifest_ref)\n    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^\nAssertionError: unexpectedly None\n\n======================================================================\nFAIL: test_deadline_after_loss_retains_attempted_manifest_without_commit_claim (test_etl_publication.PublicationIntegrationTests.test_deadline_after_loss_retains_attempted_manifest_without_commit_claim)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/tests/test_etl_publication.py\", line 442, in test_deadline_after_loss_retains_attempted_manifest_without_commit_claim\n    self.assertEqual(result.manifest_ref, commit.call_args.args[1]['manifest_ref'])\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: None != 'curated/sec/filing_index/year=2026/quart[90 chars]json'\n\n----------------------------------------------------------------------\nRan 2 tests in 0.226s\n\nFAILED (failures=2)\n",
+  "exit": 1
+}

@@ -1,0 +1,10 @@
+macOS-26.6.2-arm64-arm-64bit-Mach-O arm64 3.14.0 (main, Oct 14 2025, 21:10:22) [Clang 20.1.4 ]
+PyArrow 25.0.1
+schema (fields, metadata=None)
+ParquetWriter (where, schema, filesystem=None, flavor=None, version='2.6', use_dictionary=True, compression='snappy', write_statistics=True, use_deprecated_int96_timestamps=None, compression_level=None, use_byte_stream_split=False, column_encoding=None, writer_engine_version=None, data_page_version='1.0', use_compliant_nested_type=True, encryption_properties=None, write_batch_size=None, dictionary_pagesize_limit=None, store_schema=True, write_page_index=False, write_page_checksum=False, sorting_columns=None, store_decimal_as_integer=False, write_time_adjusted_to_utc=False, max_rows_per_page=None, **options)
+ParquetFile.iter_batches (self, batch_size=65536, row_groups=None, columns=None, use_threads=True, use_pandas_metadata=False)
+BlobClient.download_blob (self, offset: int | None = None, length: int | None = None, *, encoding: str | None = None, **kwargs: Any) -> azure.storage.blob._download.StorageStreamDownloader[str] | azure.storage.blob._download.StorageStreamDownloader[bytes]
+StorageStreamDownloader.chunks (self) -> Iterator[bytes]
+BlobClient.upload_blob (self, data: bytes | str | Iterable[~AnyStr] | IO[bytes], blob_type: str | azure.storage.blob._models.BlobType = <BlobType.BLOCKBLOB: 'BlockBlob'>, length: int | None = None, metadata: Dict[str, str] | None = None, **kwargs: Any) -> Dict[str, Any]
+TableClient.create_entity (self, entity: azure.data.tables._entity.TableEntity | Mapping[str, Any], **kwargs) -> Dict[str, Any]
+TableClient.update_entity (self, entity: azure.data.tables._entity.TableEntity | Mapping[str, Any], mode: azure.data.tables._models.UpdateMode = <UpdateMode.MERGE: 'merge'>, *, etag: str | None = None, match_condition: azure.core._match_conditions.MatchConditions | None = None, **kwargs) -> Dict[str, Any]

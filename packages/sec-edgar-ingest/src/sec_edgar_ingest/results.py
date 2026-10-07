@@ -8,11 +8,12 @@ from .state import AcquisitionState, attempt_key
 from .storage.contracts import Conflict, ObjectStore
 
 EXIT_CODES = {
-    'success': 0, 'no_new_sources': 0, 'configuration': 2,
+    'success': 0, 'no_new_sources': 0, 'unchanged': 0, 'configuration': 2,
     'discovery_failed': 3, 'incomplete': 3, 'pending': 4,
     'retry_exhausted': 5, 'deferred': 5, 'throttled': 5,
     'access_blocked': 6, 'quarantined': 7, 'invalid_source': 7,
     'ownership_lost': 8, 'state_conflict': 9, 'internal_error': 9,
+    'publication_conflict': 9, 'awaiting_approval': 10,
 }
 
 
@@ -25,8 +26,8 @@ def result_path(context: RunContext) -> str:
         value = safe_relative_path(getattr(context, name), name)
         if '/' in value:
             raise ValueError(f'{name} must be a single path segment')
-    if context.command not in ('discover', 'collect'):
-        raise ValueError('results require an acquisition command')
+    if context.command not in ('discover', 'collect', 'transform', 'publish'):
+        raise ValueError('results require a supported command')
     return f'runs/sec/{context.run_id}/{context.command}/{context.attempt_id}/result.json'
 
 

@@ -35,6 +35,8 @@ class CliTests(unittest.TestCase):
         self.assertIn("usage: sec-edgar-ingest", output.getvalue())
         self.assertIn("discover", output.getvalue())
         self.assertIn("collect", output.getvalue())
+        self.assertIn("transform", output.getvalue())
+        self.assertIn("publish", output.getvalue())
 
     def test_main_help_and_version_exit_successfully(self):
         from sec_edgar_ingest.cli import main
@@ -49,7 +51,7 @@ class CliTests(unittest.TestCase):
                 self.assertEqual(raised.exception.code, 0)
                 self.assertIn(expected, output.getvalue())
 
-    def test_unimplemented_commands_are_rejected(self):
+    def test_etl_commands_require_explicit_arguments(self):
         from sec_edgar_ingest.cli import main
 
         for command in ("transform", "publish"):
@@ -73,7 +75,7 @@ class CliTests(unittest.TestCase):
         self.assertIs(entry_points[0].load(), main)
         requirements = set(distribution.requires or ())
         self.assertEqual(requirements, {
-            "requests==2.34.2", "azure-identity==1.26.0",
+            "pyarrow==25.0.1", "requests==2.34.2", "azure-identity==1.26.0",
             "azure-storage-blob==12.31.0", "azure-data-tables==12.7.0",
         })
 
@@ -84,7 +86,14 @@ class CliTests(unittest.TestCase):
             for argument, expected in (("--help", "usage: sec-edgar-ingest"),
                                        ("--version", "0.1.0")):
                 with self.subTest(invocation=invocation, argument=argument):
-                    result = subprocess.run([*invocation, argument],
+                    # Install the mandatory child guard before either installed entry point loads.
+                    bootstrap = ("import sys; sys.path.insert(0, " + repr(str(pathlib.Path(__file__).parent)) + "); "
+                                 "from network_guard import install; install(); import runpy; ")
+                    if len(invocation) == 3:
+                        bootstrap += "sys.argv=['sec_edgar_ingest', sys.argv[1]]; runpy.run_module('sec_edgar_ingest', run_name='__main__')"
+                    else:
+                        bootstrap += "sys.argv=[" + repr(str(console)) + ", sys.argv[1]]; runpy.run_path(sys.argv[0], run_name='__main__')"
+                    result = subprocess.run([sys.executable, '-c', bootstrap, argument],
                                             capture_output=True, text=True,
                                             timeout=10)
                     self.assertEqual(result.returncode, 0, result.stderr)

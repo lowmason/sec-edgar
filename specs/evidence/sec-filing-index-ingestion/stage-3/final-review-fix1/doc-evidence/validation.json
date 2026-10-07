@@ -1,0 +1,42 @@
+{
+  "argv": [
+    ".sdd/3-sec-filing-index-ingestion-stage-3-spec/final-fix1-doc-evidence/validate.py"
+  ],
+  "cwd": "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar",
+  "python": "3.14.0 (main, Oct 14 2025, 21:10:22) [Clang 20.1.4 ]",
+  "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+  "guard_installed": true,
+  "exit": 0,
+  "runtime_seconds": 0.004315624944865704,
+  "acquisition_before": {
+    "bytes": 1397,
+    "sha256": "dd50a930e09e840d38109e0953b4b9e0cc1ff3253845d8649d9242fc63192a3a"
+  },
+  "acquisition_after": {
+    "bytes": 1397,
+    "sha256": "dd50a930e09e840d38109e0953b4b9e0cc1ff3253845d8649d9242fc63192a3a"
+  },
+  "etl_file": {
+    "bytes": 1401,
+    "sha256": "b96a00a21fdb58f851d26e82509f7967e70760d7b193d5aebe81ceec22a4f173"
+  },
+  "etl_config_sha256": "017bc4992404b2849e530e2c59939a0d719bae3db941e285e9c73bd7abe5ec7a",
+  "parser": "fixture-index-parser-v1",
+  "only_configuration_change": "etl.parser_version",
+  "same_deployment_binding": true,
+  "actual_parser_refusals": [
+    {
+      "parser": "fixture-envelope-v1",
+      "fixture": true,
+      "reason": "unsupported parser version: fixture-envelope-v1"
+    },
+    {
+      "parser": "fixture-index-parser-v1",
+      "fixture": false,
+      "reason": "unsupported parser version: fixture-index-parser-v1"
+    }
+  ],
+  "production_parser_accepted": true,
+  "documented_transform_publish_execution": "pending code worker green/commit and explicit offline raw fixture seed",
+  "all22_stage7_checks": "reserved"
+}

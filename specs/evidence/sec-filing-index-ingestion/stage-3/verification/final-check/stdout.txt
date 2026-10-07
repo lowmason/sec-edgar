@@ -1,0 +1,28 @@
+retained-workset workset.json aee51809276870393e90d9ede0399baacfe2f96798a6ae9c2ed26c4aba01bb98 68ecdcd9c4f1034b7d81ac989d9edbcfafde46f72397028c8850a8b0e560ee03 4579
+retained-workset workset.json b6388dacb7dd1743eeb58d05c4dff7a4cdef255ac5c24ceefd96542a06efaec5 9e1706ceb0f9148b7674c2a973fdcd82b7def738b501a6ce177b001e20afbe95 3704
+retained-workset workset.json 2d51330ddb11231aa5331f83a835b647913f79b3e902f04620b9493781f2622c 3ebc1529bd24507416f5866825752e7c59778efe25dafd2ace6c4e0c7538a00f 3885
+retained-workset workset.json f9885e59487ca8fc3adb228658c4829f7c4bf39e668b477527e2dd5c7132ea4d f40f6275b5bd04ce86929143abfa392185698fc6c977575e13beea8e7754bf45 3325
+retained-registry 14ea024fdafb0377c529edcdda6431bf5d7332caf321ba669b808efc31161d56 937
+task5-sdk-proof {"conditional_etags": ["W/\"service-2\"", "W/\"service-2\""], "descriptor": {"PartitionKey": "sec-owner-lowell-mason:Candidate", "PartitionKey@odata.type": "Edm.String", "PayloadByteCount": 73739, "PayloadFormat": "sec-state-blob-v1", "PayloadFormat@odata.type": "Edm.String", "PayloadSha256": "748a81b55c5d6f1182f9eac2283e14b52cced0ff12126e86da9cdb248dfaf171", "PayloadSha256@odata.type": "Edm.String", "RowKey": "14da8efe8219b129261d9a52c85f14bbf816ccdcb560d78f8e62c823e1c9dc6b", "RowKey@odata.type": "Edm.String", "StableKey": "14da8efe8219b129261d9a52c85f14bbf816ccdcb560d78f8e62c823e1c9dc6b", "StableKey@odata.type": "Edm.String"}, "pointer": {"value": {"generation_id": "14da8efe8219b129261d9a52c85f14bbf816ccdcb560d78f8e62c823e1c9dc6b", "manifest_bytes": 73278, "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=14da8efe8219b129261d9a52c85f14bbf816ccdcb560d78f8e62c823e1c9dc6b/manifest.json", "manifest_sha256": "4b1b39602b53c3769a6d043564647dab327508e5991eacb9d41a1efa8867a588", "quarter": "2026Q4", "source_fingerprint": "3fc832e93a8a9695ce97f08d1f1f30c65d31602549586137ec886ad3c463d575"}, "version": "W/\"service-3\""}}
+pointer-wire POST https://secedgardevb8617.table.core.windows.net/ActivePointers None
+pointer-wire PUT https://secedgardevb8617.table.core.windows.net/ActivePointers(PartitionKey='sec-owner-lowell-mason%3AQuarterPublication',RowKey='2026Q4') W/"first"
+pointer-wire PUT https://secedgardevb8617.table.core.windows.net/ActivePointers(PartitionKey='sec-owner-lowell-mason%3AQuarterPublication',RowKey='2026Q4') W/"first"
+mapped-wire PUT https://secedgardevb8617.blob.core.windows.net/results/runs/sec/r/result.json *
+mapped-wire GET https://secedgardevb8617.blob.core.windows.net/results/runs/sec/r/result.json None
+mapped-wire PUT https://secedgardevb8617.blob.core.windows.net/manifests/curated/sec/g/manifest.json *
+mapped-wire GET https://secedgardevb8617.blob.core.windows.net/manifests/curated/sec/g/manifest.json None
+mapped-wire PUT https://secedgardevb8617.blob.core.windows.net/generations/observations/sec/s/rows.parquet *
+mapped-wire GET https://secedgardevb8617.blob.core.windows.net/generations/observations/sec/s/rows.parquet None
+mapped-wire PUT https://secedgardevb8617.blob.core.windows.net/raw/staging/sec/temp *
+mapped-wire GET https://secedgardevb8617.blob.core.windows.net/raw/staging/sec/temp None
+large-pointer-descriptor {'PartitionKey': 'sec-owner-lowell-mason:QuarterPublication', 'PartitionKey@odata.type': 'Edm.String', 'RowKey': '2026Q4', 'RowKey@odata.type': 'Edm.String', 'StableKey': '2026Q4', 'StableKey@odata.type': 'Edm.String', 'PayloadFormat': 'sec-state-blob-v1', 'PayloadFormat@odata.type': 'Edm.String', 'PayloadSha256': '141263faac84ba40957edd369756206fb53e92765588f7a6eced09d136ea78ff', 'PayloadSha256@odata.type': 'Edm.String', 'PayloadByteCount': 71822} etag W/"service-1"
+usage: sec-edgar-ingest [-h] [--version]
+                        {discover,collect,transform,publish} ...
+
+positional arguments:
+  {discover,collect,transform,publish}
+
+options:
+  -h, --help            show this help message and exit
+  --version             show program's version number and exit
+0.1.0

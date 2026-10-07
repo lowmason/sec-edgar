@@ -1,0 +1,108 @@
+{
+  "all22_stage7_checks": "reserved",
+  "allowlisted_sources": [
+    {
+      "bytes": 3729148,
+      "conflicts": 21,
+      "first_conflict_line": 6580,
+      "original_source_relative": "specs/evidence/sec-filing-index-ingestion/stage-1/specimens/aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de.zip",
+      "period": "2010Q1",
+      "receipt_id": "SEC-0141",
+      "rows": 300561,
+      "sha256": "aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de"
+    },
+    {
+      "bytes": 3901000,
+      "conflicts": 24,
+      "first_conflict_line": 87808,
+      "original_source_relative": "specs/evidence/sec-filing-index-ingestion/stage-1/specimens/984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728.zip",
+      "period": "2015Q1",
+      "receipt_id": "SEC-0142",
+      "rows": 318647,
+      "sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+    },
+    {
+      "bytes": 3502663,
+      "conflicts": 6,
+      "first_conflict_line": 40292,
+      "original_source_relative": "specs/evidence/sec-filing-index-ingestion/stage-1/specimens/393a535f84b71ed34845f67aa5e5275ecc86afeb1a6558ad5623b0d7d0babe71.zip",
+      "period": "2026Q3",
+      "receipt_id": "SEC-0143",
+      "rows": 302315,
+      "sha256": "393a535f84b71ed34845f67aa5e5275ecc86afeb1a6558ad5623b0d7d0babe71"
+    }
+  ],
+  "authorization_source": "Direct owner instruction relayed by controller in acceptance-amendment-brief.md; no owner-supplied time of day",
+  "base": "3898502d7920d285f72f8f41057b706d8a85a64e",
+  "classification": {
+    "company_name_only": 6,
+    "form_type_only": 45
+  },
+  "conflicting_observations": 51,
+  "deployed_capacity_established": false,
+  "full_scan_rows": 970622,
+  "immutable_manifests": {
+    "delivery-sha256.json": {
+      "bytes": 3014055,
+      "sha256": "a2efc7405ed0050f71f9fb2df06783b8444ab5ab56fb8839155428ea1c1a770b"
+    },
+    "final-review-fix1/sha256.json": {
+      "bytes": 597921,
+      "sha256": "606a2ea013e7695d8fbf6029a00f30016c23dc2829ec882d218a29a11a10be14"
+    },
+    "review-checkpoint/sha256.json": {
+      "bytes": 2104,
+      "sha256": "55180356113b83bbb6aef097371930c558941f037ec67d4a82fa220a47e0114c"
+    },
+    "verification/sha256.json": {
+      "bytes": 2277373,
+      "sha256": "4554adb90acdda3e44bffac01bb878d3391d4ae523e0c4439aa4e1ab2c612b6b"
+    },
+    "verification/specimens/sha256.json": {
+      "bytes": 1632,
+      "sha256": "cf9879c99eafcee8e62d93d704ada310652771e01c25dfc3846afda408ebc3f9"
+    }
+  },
+  "live_access_authorized": false,
+  "offline_cached_dependency_absence": "blocker",
+  "original_specimen_exit": 1,
+  "originals": {
+    "docs/runbooks/sec-edgar-etl-publication.md": {
+      "bytes": 10192,
+      "resolution": "specs/evidence/sec-filing-index-ingestion/stage-3/acceptance-amendment/originals/sec-edgar-etl-publication.md",
+      "sha256": "a36b2b68a80b753009c96cf4ae1c5bd808a5da6287208589ad9f806cb8ceb696"
+    },
+    "specs/evidence/sec-filing-index-ingestion/stage-3/verification.md": {
+      "bytes": 12674,
+      "resolution": "specs/evidence/sec-filing-index-ingestion/stage-3/acceptance-amendment/originals/verification.md",
+      "sha256": "d2d9a3ff709f4cf781b67542997e6ff550f5899ab5bc7a9c78d894c622ca4ee9"
+    },
+    "specs/sec-filing-index-ingestion-stage-3-spec.md": {
+      "bytes": 24794,
+      "resolution": "specs/evidence/sec-filing-index-ingestion/stage-3/acceptance-amendment/originals/sec-filing-index-ingestion-stage-3-spec.md",
+      "sha256": "19c08b4cf042e891cec1f20acad503bac2aa2bf18369fbea1e85b1bef7370461"
+    }
+  },
+  "other_invalid_retained_rows": "blocker",
+  "owner_date": "2026-10-07",
+  "owner_instruction": "explicitly amend Stage 3 acceptance to allow these documented quarantines while retaining strict refusal",
+  "owner_time_of_day": null,
+  "owner_timezone": "America/New_York",
+  "reviewed_implementation": "2343f39f0e21adc2ad401a9346a8c9ffa0509040",
+  "schema": "stage-3-owner-acceptance-amendment-v1",
+  "scope": "documentary Stage 3 acceptance exception for exact listed raw bytes only",
+  "strict_refusal": {
+    "accepted_observation_ref": false,
+    "accepted_processing": false,
+    "conflicting_duplicate": "quarantine whole source",
+    "logical_key": [
+      "cik",
+      "archive_path"
+    ],
+    "normalization": false,
+    "parser_tolerance": false,
+    "pointer_mutation": false,
+    "winner_selection": false
+  },
+  "successful_catalog_range_established": false
+}

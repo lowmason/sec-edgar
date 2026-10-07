@@ -1,0 +1,25 @@
+{
+  "all22_stage7_checks": "reserved",
+  "argv": [
+    "packages/sec-edgar-ingest/tests/etl_proof.py",
+    "installed",
+    "--output",
+    ".sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-2"
+  ],
+  "cwd": "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar",
+  "dependencies": {
+    "azure-data-tables": "12.7.0",
+    "azure-identity": "1.26.0",
+    "azure-storage-blob": "12.31.0",
+    "pyarrow": "25.0.1",
+    "requests": "2.34.2",
+    "sec-edgar-ingest": "0.1.0"
+  },
+  "executable": "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.venv/bin/python",
+  "exit": 1,
+  "network_guard": true,
+  "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+  "python": "3.14.0 (main, Oct 14 2025, 21:10:22) [Clang 20.1.4 ]",
+  "runtime_seconds": 0.06531412480399013,
+  "traceback": "Traceback (most recent call last):\n  File \"/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/tests/etl_proof.py\", line 491, in main\n    report.update({'specimens': specimens, 'sequence': sequence, 'installed': installed}[args.mode](output))\n                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^\n  File \"/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/tests/etl_proof.py\", line 447, in installed\n    run_logged(['uv', 'pip', 'install', '--offline', '--no-index', '--find-links', str(cached_wheels),\n    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n                '--require-hashes', '--python', str(python), '-r', str(requirements)], outside, output, 'install-dependencies', env)\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/tests/etl_proof.py\", line 419, in run_logged\n    assert result.returncode == 0, record\n           ^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: {'argv': ['uv', 'pip', 'install', '--offline', '--no-index', '--find-links', '/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-2/verification/sdd-history/task1-evidence/wheels', '--require-hashes', '--python', '/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-lb0nwjdh/venv/bin/python', '-r', '/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-lb0nwjdh/requirements.txt'], 'cwd': '/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-lb0nwjdh', 'python': '3.14.0 (main, Oct 14 2025, 21:10:22) [Clang 20.1.4 ]', 'platform': 'macOS-26.6.2-arm64-arm-64bit-Mach-O', 'executable': '/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.venv/bin/python', 'dependencies': {'sec-edgar-ingest': '0.1.0', 'pyarrow': '25.0.1', 'requests': '2.34.2', 'azure-identity': '1.26.0', 'azure-storage-blob': '12.31.0', 'azure-data-tables': '12.7.0'}, 'all22_stage7_checks': 'reserved', 'network_guard': True, 'exit': 1, 'stdout': '', 'stderr': 'Using Python 3.14.0 environment at: /var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-lb0nwjdh/venv\\nerror: No solution found when resolving dependencies\\n  cause: Because pyarrow was not found in the provided package locations and you require pyarrow==25.0.1, we can conclude that your requirements are unsatisfiable.\\n', 'runtime_seconds': 0.03799791680648923}\n"
+}

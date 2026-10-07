@@ -1,0 +1,5 @@
+# Final workspace-preservation addendum
+
+Before deleting the exact plan workspace, a content-identity pass matched 6,818 non-diff, non-bytecode files to committed delivery evidence. The one later Task7 handoff report was copied byte-for-byte here; the repeat matched all 6,819 files. No required proof or handoff is lost by workspace cleanup. The 29 redundant diff files retain exact identities here and are reconstructable from Git/review-package recipes. Compiled bytecode is regenerable cache.
+
+The first final inventory and its actual passing read-only command/logs remain here as a historical snapshot. Every payload it names remains unchanged at the original Stage3-relative path. Added closure evidence requires a new current completion-sha256.json; that inventory again covers every current Stage3 payload except itself. The old inventory is retained byte-for-byte as initial-final-inventory.json, rather than silently rewritten. No implementation, acceptance criterion, source bytes, proof, reviewed document, dependency or live authorization changed.

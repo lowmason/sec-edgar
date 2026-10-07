@@ -351,10 +351,13 @@ class AzureContractTests(unittest.TestCase):
             source = tables.get_table_client.return_value
             source.url = TABLE_ENDPOINT
             tables.get_table_client.side_effect = lambda name: self._factory_table(name)
-            self.azure.open_azure_stores(settings)
+            state, objects, leases = self.azure.open_azure_stores(settings)
             credential.assert_called_once_with()
             self.assertEqual(blob_factory.call_args.kwargs["api_version"], "2026-04-06")
             self.assertEqual(table_factory.call_args.kwargs["api_version"], "2020-12-06")
+            self.assertEqual([call.args[0] for call in tables.get_table_client.call_args_list],
+                             ["SourceState", "Attempts", "ActivePointers"])
+            self.assertEqual(state.active_client.table_name, "ActivePointers")
             for factory in (blob_factory, table_factory):
                 self.assertEqual({key: factory.call_args.kwargs[key] for key in RETRY}, RETRY)
         request = transport.requests[0]

@@ -112,6 +112,17 @@ class LocalObjectStore:
         with self._open(path) as stream:
             return stream.read()
 
+    def materialize(self, path: str, target: Path) -> None:
+        target = Path(target)
+        destination = target.open('xb')
+        try:
+            with destination, self._open(path) as source:
+                while chunk := source.read(FILE_CHUNK_BYTES):
+                    destination.write(chunk)
+        except BaseException:
+            target.unlink()
+            raise
+
     def stage(self, path: str, body: Path) -> str:
         with Path(body).open("rb") as stream:
             return self._write_once(path, stream)

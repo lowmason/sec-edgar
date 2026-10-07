@@ -1,0 +1,71 @@
+test_aligned_insert_replace_and_gate_races (test_etl_processes.ProcessProofTests.test_aligned_insert_replace_and_gate_races) ... ok
+test_driver_exposes_real_process_proof (test_etl_processes.ProcessProofTests.test_driver_exposes_real_process_proof) ... ok
+test_each_command_help_and_required_proof_output (test_etl_processes.ProcessProofTests.test_each_command_help_and_required_proof_output) ... ok
+test_first_timeout_reaps_all_real_children_with_kill_fallback (test_etl_processes.ProofTimeoutTests.test_first_timeout_reaps_all_real_children_with_kill_fallback) ... FAIL
+test_partial_race_start_reaps_already_started_child (test_etl_processes.ProofTimeoutTests.test_partial_race_start_reaps_already_started_child) ... ERROR
+test_real_subprocess_timeout_retains_partial_output_bytes (test_etl_processes.ProofTimeoutTests.test_real_subprocess_timeout_retains_partial_output_bytes) ... FAIL
+
+======================================================================
+ERROR: test_partial_race_start_reaps_already_started_child (test_etl_processes.ProofTimeoutTests.test_partial_race_start_reaps_already_started_child)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/tests/test_etl_processes.py", line 134, in test_partial_race_start_reaps_already_started_child
+    etl_proof.prove_race(self.root / 'race')
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/tests/etl_proof.py", line 157, in prove_race
+    child.start()
+    ~~~~~~~~~~~^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/tests/test_etl_processes.py", line 121, in start
+    actual_start()
+    ~~~~~~~~~~~~^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/multiprocessing/process.py", line 121, in start
+    self._popen = self._Popen(self)
+                  ~~~~~~~~~~~^^^^^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/multiprocessing/context.py", line 288, in _Popen
+    return Popen(process_obj)
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/multiprocessing/popen_spawn_posix.py", line 32, in __init__
+    super().__init__(process_obj)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/multiprocessing/popen_fork.py", line 20, in __init__
+    self._launch(process_obj)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/multiprocessing/popen_spawn_posix.py", line 47, in _launch
+    reduction.dump(process_obj, fp)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/multiprocessing/reduction.py", line 60, in dump
+    ForkingPickler(file, protocol).dump(obj)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+_pickle.PicklingError: Can't pickle local object <function ProofTimeoutTests.test_partial_race_start_reaps_already_started_child.<locals>.process.<locals>.start at 0x10c8b0300>
+when serializing dict item 'start'
+when serializing multiprocessing.context.SpawnProcess state
+when serializing multiprocessing.context.SpawnProcess object
+
+======================================================================
+FAIL: test_first_timeout_reaps_all_real_children_with_kill_fallback (test_etl_processes.ProofTimeoutTests.test_first_timeout_reaps_all_real_children_with_kill_fallback)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/tests/test_etl_processes.py", line 100, in test_first_timeout_reaps_all_real_children_with_kill_fallback
+    self.assertEqual([value['alive'] for value in status], [False, False], 'timeout left owned children alive')
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: [True, True] != [False, False]
+
+First differing element 0:
+True
+False
+
+- [True, True]
++ [False, False] : timeout left owned children alive
+
+======================================================================
+FAIL: test_real_subprocess_timeout_retains_partial_output_bytes (test_etl_processes.ProofTimeoutTests.test_real_subprocess_timeout_retains_partial_output_bytes)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/tests/test_etl_processes.py", line 161, in test_real_subprocess_timeout_retains_partial_output_bytes
+    self.assertTrue(record.is_file(), 'timeout lost command record and captured subprocess output')
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : timeout lost command record and captured subprocess output
+
+----------------------------------------------------------------------
+Ran 6 tests in 15.479s
+
+FAILED (failures=2, errors=1)

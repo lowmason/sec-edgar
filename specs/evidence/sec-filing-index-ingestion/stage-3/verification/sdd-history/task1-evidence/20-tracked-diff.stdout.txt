@@ -1,0 +1,261 @@
+diff --git a/packages/sec-edgar-ingest/pyproject.toml b/packages/sec-edgar-ingest/pyproject.toml
+index a421322..4fe6c0b 100644
+--- a/packages/sec-edgar-ingest/pyproject.toml
++++ b/packages/sec-edgar-ingest/pyproject.toml
+@@ -8,6 +8,7 @@ authors = [
+ ]
+ requires-python = ">=3.14"
+ dependencies = [
++    "pyarrow==25.0.1",
+     "requests==2.34.2",
+     "azure-identity==1.26.0",
+     "azure-storage-blob==12.31.0",
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py
+index ee2201d..ff3a3bf 100644
+--- a/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py
+@@ -20,12 +20,11 @@ from ..config import ACCOUNT_NAME, LOCK_BLOB, Settings
+ from ..models import Versioned, parse_json, require_hash, require_number, require_text, require_utc, safe_relative_path
+ from .contracts import (AlreadyExists, BoundaryObserver, ClockUncertain, Conflict, FILE_CHUNK_BYTES,
+                         LeaseHandle, ObjectStore, OwnershipLost, TimeBounds, REGISTRY_PATH, deployment_binding, exact_version,
+-                        identity, observe, payload_bytes, table_for, validate_raw_address)
++                        blob_address, identity, observe, payload_bytes, table_for, validate_raw_address)
+ 
+ RETRY_OPTIONS = dict(retry_total=0, retry_connect=0, retry_read=0, retry_status=0)
+ STORAGE_CONNECTION_TIMEOUT_SECONDS = 5
+ STORAGE_READ_TIMEOUT_SECONDS = 10
+-CONTAINERS = frozenset({"raw", "worksets", "quarantine", "locks"})
+ TABLE_STRING_BYTES = 64 * 1024
+ TABLE_ENTITY_BYTES = 1024 * 1024
+ TABLE_KEY_CHARACTERS = 1024
+@@ -76,7 +75,13 @@ def _etag(version: str | None) -> str:
+ 
+ class AzureStateStore:
+     def __init__(self, source_client: TableClient, attempt_client: TableClient, *,
+-                 objects: ObjectStore | None = None, observer: BoundaryObserver | None = None):
++                 objects: ObjectStore | None = None, observer: BoundaryObserver | None = None,
++                 active_client: TableClient | None = None):
++        if active_client is not None:
++            _check_endpoint(active_client.url, "table")
++            if active_client.table_name != "ActivePointers":
++                raise ValueError("Table client must use the accepted ActivePointers binding")
++        self.active_client = active_client
+         for client, name in ((source_client, "SourceState"), (attempt_client, "Attempts")):
+             _check_endpoint(client.url, "table")
+             if client.table_name != name:
+@@ -89,11 +94,19 @@ class AzureStateStore:
+     def close(self) -> None:
+         self.source_client.close()
+         self.attempt_client.close()
++        if self.active_client is not None:
++            self.active_client.close()
+ 
+     def _client(self, kind: str) -> TableClient:
+-        return self.attempt_client if table_for(kind) == "Attempts" else self.source_client
++        table = table_for(kind)
++        if table == "ActivePointers":
++            if self.active_client is None:
++                raise ValueError("quarter pointer operations require the ActivePointers client")
++            return self.active_client
++        return self.attempt_client if table == "Attempts" else self.source_client
+ 
+     def _write_payload_entity(self, kind: str, key: str, value: dict[str, object]) -> dict[str, object]:
++        self._client(kind)
+         partition, key = identity(kind, key)
+         entity = {"PartitionKey": partition, "RowKey": _row_key(key), "StableKey": key}
+         _check_table_entity(entity)
+@@ -222,10 +235,8 @@ class AzureObjectStore:
+         self.service.close()
+ 
+     def _blob(self, path: str):
+-        segments = safe_relative_path(path, "object path").split("/", 1)
+-        if len(segments) != 2 or segments[0] not in CONTAINERS:
+-            raise ValueError("object path must name an accepted Blob container")
+-        return self.service.get_blob_client(container=segments[0], blob=segments[1])
++        container, key = blob_address(path)
++        return self.service.get_blob_client(container=container, blob=key)
+ 
+     def _upload(self, path: str, stream, sha256: str, byte_count: int) -> str:
+         blob = self._blob(path)
+@@ -252,6 +263,20 @@ class AzureObjectStore:
+                 raise FileNotFoundError(path) from error
+             raise
+ 
++    def materialize(self, path: str, target: Path) -> None:
++        blob = self._blob(path)
++        target = Path(target)
++        destination = target.open('xb')
++        try:
++            with destination:
++                for chunk in blob.download_blob(max_concurrency=1).chunks():
++                    destination.write(chunk)
++        except BaseException as error:
++            target.unlink()
++            if isinstance(error, ResourceNotFoundError) and error.status_code == 404:
++                raise FileNotFoundError(path) from error
++            raise
++
+     def stage(self, path: str, body: Path) -> str:
+         digest, byte_count = hashlib.sha256(), 0
+         with Path(body).open("rb") as stream:
+@@ -491,7 +516,7 @@ def open_azure_stores(settings: Settings, *, observer: BoundaryObserver | None =
+     tables = TableServiceClient(endpoint=storage.table_endpoint, credential=credential,
+                                api_version=storage.table_api_version, **options)
+     state = AzureStateStore(tables.get_table_client(storage.source_table), tables.get_table_client(storage.attempt_table),
+-                            objects=objects, observer=observer)
++                            objects=objects, observer=observer, active_client=tables.get_table_client("ActivePointers"))
+     leases = AzureLeaseStore(blob_service, lease_seconds=int(validated.coordination.lease_seconds),
+                              uncertainty_seconds=validated.coordination.clock_uncertainty_seconds, observer=observer)
+     return state, objects, leases
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/contracts.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/contracts.py
+index 7689de1..3e1110e 100644
+--- a/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/contracts.py
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/contracts.py
+@@ -90,6 +90,7 @@ class StateStore(Protocol):
+ class ObjectStore(Protocol):
+     def put_once(self, path: str, body: bytes) -> str: ...
+     def read(self, path: str) -> bytes: ...
++    def materialize(self, path: str, target: Path) -> None: ...
+     def stage(self, path: str, body: Path) -> str: ...
+     def promote(self, temporary_ref: str, raw_path: str, sha256: str, byte_count: int) -> str: ...
+     def verify(self, path: str, sha256: str, byte_count: int) -> None: ...
+@@ -123,6 +124,8 @@ def identity(kind: str, key: str) -> tuple[str, str]:
+ 
+ 
+ def table_for(kind: str) -> str:
++    if kind == "QuarterPublication":
++        return "ActivePointers"
+     return "Attempts" if kind in ATTEMPT_KINDS else "SourceState"
+ 
+ 
+@@ -169,3 +172,20 @@ def deployment_binding(settings: Settings | None = None, *, root: Path | None =
+     storage["local_root"] = str(root.resolve()) if root is not None else None
+     return {"binding_version": "sec-owner-binding-v1", "account": ACCOUNT_NAME,
+             "namespace": COORDINATION_NAMESPACE, "sec": sec, "coordination": coordination, "storage": storage}
++
++
++def blob_address(path: str) -> tuple[str, str]:
++    safe_relative_path(path, 'object path')
++    root, separator, tail = path.partition('/')
++    if not separator:
++        raise ValueError('object path requires a root and object key')
++    if root in {'raw', 'worksets', 'quarantine', 'locks', 'results',
++                'generations', 'manifests', 'approvals'}:
++        return root, tail
++    if root == 'staging':
++        return 'raw', path
++    if root == 'runs':
++        return 'results', path
++    if root in {'observations', 'curated'}:
++        return ('manifests' if path.endswith('/manifest.json') else 'generations'), path
++    raise ValueError('object path has no accepted Blob binding')
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py
+index dc5b5f2..8e92d03 100644
+--- a/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py
+@@ -112,6 +112,17 @@ class LocalObjectStore:
+         with self._open(path) as stream:
+             return stream.read()
+ 
++    def materialize(self, path: str, target: Path) -> None:
++        target = Path(target)
++        destination = target.open('xb')
++        try:
++            with destination, self._open(path) as source:
++                while chunk := source.read(FILE_CHUNK_BYTES):
++                    destination.write(chunk)
++        except BaseException:
++            target.unlink()
++            raise
++
+     def stage(self, path: str, body: Path) -> str:
+         with Path(body).open("rb") as stream:
+             return self._write_once(path, stream)
+diff --git a/packages/sec-edgar-ingest/tests/test_azure_contracts.py b/packages/sec-edgar-ingest/tests/test_azure_contracts.py
+index ef6a05d..82d37b5 100644
+--- a/packages/sec-edgar-ingest/tests/test_azure_contracts.py
++++ b/packages/sec-edgar-ingest/tests/test_azure_contracts.py
+@@ -351,10 +351,13 @@ class AzureContractTests(unittest.TestCase):
+             source = tables.get_table_client.return_value
+             source.url = TABLE_ENDPOINT
+             tables.get_table_client.side_effect = lambda name: self._factory_table(name)
+-            self.azure.open_azure_stores(settings)
++            state, objects, leases = self.azure.open_azure_stores(settings)
+             credential.assert_called_once_with()
+             self.assertEqual(blob_factory.call_args.kwargs["api_version"], "2026-04-06")
+             self.assertEqual(table_factory.call_args.kwargs["api_version"], "2020-12-06")
++            self.assertEqual([call.args[0] for call in tables.get_table_client.call_args_list],
++                             ["SourceState", "Attempts", "ActivePointers"])
++            self.assertEqual(state.active_client.table_name, "ActivePointers")
+             for factory in (blob_factory, table_factory):
+                 self.assertEqual({key: factory.call_args.kwargs[key] for key in RETRY}, RETRY)
+         request = transport.requests[0]
+diff --git a/pyproject.toml b/pyproject.toml
+index 2550c33..9ebf1a3 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -12,6 +12,7 @@ dependencies = ["sec-edgar-ingest"]
+ [tool.uv]
+ package = false
+ constraint-dependencies = [
++    "pyarrow==25.0.1",
+     "azure-core==1.41.0", "azure-data-tables==12.7.0", "azure-identity==1.26.0",
+     "azure-storage-blob==12.31.0", "certifi==2026.7.22", "cffi==2.1.1",
+     "charset-normalizer==3.5.2", "cryptography==50.0.2", "idna==3.20",
+diff --git a/uv.lock b/uv.lock
+index e51babc..b123922 100644
+--- a/uv.lock
++++ b/uv.lock
+@@ -22,6 +22,7 @@ constraints = [
+     { name = "msal-extensions", specifier = "==1.3.1" },
+     { name = "multidict", specifier = "==7.0.0" },
+     { name = "propcache", specifier = "==0.5.4" },
++    { name = "pyarrow", specifier = "==25.0.1" },
+     { name = "pycparser", specifier = "==3.0" },
+     { name = "pyjwt", specifier = "==2.15.1" },
+     { name = "requests", specifier = "==2.34.2" },
+@@ -530,6 +531,28 @@ wheels = [
+     { url = "https://files.pythonhosted.org/packages/f5/cd/785c64ed382f3f04201870267b02783f63b4678c2acfddc177a3ebcc2727/propcache-0.5.4-py3-none-any.whl", hash = "sha256:62c60aec739ed00124573cce1178138fd690c7676352d67a37328c1cf51d7468", size = 16338, upload-time = "2026-09-16T00:17:13.106Z" },
+ ]
+ 
++[[package]]
++name = "pyarrow"
++version = "25.0.1"
++source = { registry = "https://pypi.org/simple" }
++sdist = { url = "https://files.pythonhosted.org/packages/3d/e3/27f57f80141379d60defe6703eb50a707325706f07fedfd1312c7a751995/pyarrow-25.0.1.tar.gz", hash = "sha256:9150a83248bfed9813ea3c3af74c3856c1984d444aa28e58bf7733b9750ddf6a", size = 1201653, upload-time = "2026-08-10T12:40:53.904Z" }
++wheels = [
++    { url = "https://files.pythonhosted.org/packages/36/4c/b525824ad3094076919273cd97db61fb3d78252dee76fa3b8dc8f76774aa/pyarrow-25.0.1-cp314-cp314-macosx_12_0_arm64.whl", hash = "sha256:bf0b672390cdcb640d7288f96b826d71ff4e9abb254a86c89890baf51a29cee6", size = 35885255, upload-time = "2026-08-10T12:39:32.366Z" },
++    { url = "https://files.pythonhosted.org/packages/08/62/448bb0e940de41aec31d1a956e63ad9c54afdf122a103cc3ab20c2a3ce33/pyarrow-25.0.1-cp314-cp314-macosx_12_0_x86_64.whl", hash = "sha256:38a9a4b4b9613380e200641891495a56c3d5a98a092db4a870af9975e220471d", size = 37644461, upload-time = "2026-08-10T12:39:38.142Z" },
++    { url = "https://files.pythonhosted.org/packages/6e/9a/13587e38bd4806fd218f50fd13b8903fab60588a699ff0c406372e5b4043/pyarrow-25.0.1-cp314-cp314-manylinux_2_28_aarch64.whl", hash = "sha256:0b726ad7e7b669be982b0c71c07fe4b037d654354130da79a7902a669e93a66b", size = 46877146, upload-time = "2026-08-10T12:39:43.722Z" },
++    { url = "https://files.pythonhosted.org/packages/8d/61/1c5d1229fa21da4cff5365e41e57177aaac57c563c727f35419b8513d1c1/pyarrow-25.0.1-cp314-cp314-manylinux_2_28_x86_64.whl", hash = "sha256:9171748cdf796972d85a4b60157c279913e242992e350c90c7450182a9838b2a", size = 50131616, upload-time = "2026-08-10T12:39:49.304Z" },
++    { url = "https://files.pythonhosted.org/packages/43/20/291e1d65cc0b09aa19f03cf25cf51a2f5fa94b5db315178f2d254ed5cad4/pyarrow-25.0.1-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:b7a296aac7a71fa0886c08e155ddb6c636a50013f801f6178daafa0f9e726188", size = 50008879, upload-time = "2026-08-10T12:39:56.891Z" },
++    { url = "https://files.pythonhosted.org/packages/8b/7c/1b7c9ec28e76576337e4f97b31141c9a181b89b6d1d6221e9d8205621a58/pyarrow-25.0.1-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:0fe7c8b6c03969b49c8c66182e4a18e3819ab92d07cfab5d8370c531b9369ef0", size = 53170864, upload-time = "2026-08-10T12:40:04.918Z" },
++    { url = "https://files.pythonhosted.org/packages/b7/75/f3d789dc06011a765d14d86bda799cf72ac1d715b6a6edecaa0d73d95062/pyarrow-25.0.1-cp314-cp314-win_amd64.whl", hash = "sha256:f729cfdbd36fd99d543b67a914d2de044c84ebe45be8b34902b299b608c15c8f", size = 28620729, upload-time = "2026-08-10T12:40:51.41Z" },
++    { url = "https://files.pythonhosted.org/packages/fc/05/647a8ee6f7c2662feb6921315617bc04dcd6034763fb61b1199720bf6162/pyarrow-25.0.1-cp314-cp314t-macosx_12_0_arm64.whl", hash = "sha256:59a2de54c0cbd954da861eee4d1d330f8e909c45b53455baef696380f2c55033", size = 36130288, upload-time = "2026-08-10T12:40:11.014Z" },
++    { url = "https://files.pythonhosted.org/packages/93/f8/c9ee997554d7bea94520667dd1933f109ac1da3ee3556d2b49381e023484/pyarrow-25.0.1-cp314-cp314t-macosx_12_0_x86_64.whl", hash = "sha256:35935cd5de130aa5cf4dea052a63e6bf2e17006c35c3a468194242b9b2bf5956", size = 37762187, upload-time = "2026-08-10T12:40:16.592Z" },
++    { url = "https://files.pythonhosted.org/packages/a2/08/a28c01c7fe9e96e8233ce2d13df1d402f4f999f848f51d2daacd6bb4c036/pyarrow-25.0.1-cp314-cp314t-manylinux_2_28_aarch64.whl", hash = "sha256:f3831aaa25c67a99f99dc8b05873cb9d64560390372e2aa197ce9dd4a3f06a44", size = 46888003, upload-time = "2026-08-10T12:40:23.242Z" },
++    { url = "https://files.pythonhosted.org/packages/1b/b9/58612e977d28dc58c878448866838369ee8da2f1e7cc8ed2c84b952aafee/pyarrow-25.0.1-cp314-cp314t-manylinux_2_28_x86_64.whl", hash = "sha256:6a1fdfc6659b6b19022f2e50627fb5cf7156a66c46bf4299379955cbe742382a", size = 50079036, upload-time = "2026-08-10T12:40:29.169Z" },
++    { url = "https://files.pythonhosted.org/packages/72/13/66e1402dcc860e1dc2760b1e0292c9a569b62b3bccab69def1b3e907d006/pyarrow-25.0.1-cp314-cp314t-musllinux_1_2_aarch64.whl", hash = "sha256:169d3429d5be7c752125890620f75a60776d38b0035eddae939651640822332e", size = 50040226, upload-time = "2026-08-10T12:40:35.186Z" },
++    { url = "https://files.pythonhosted.org/packages/78/10/3f1a5497a7ef732ab0f03ecca3e66d89d9c0f57fdc61b4794c456b781f01/pyarrow-25.0.1-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "sha256:119297a6dc197e45d9c6d4415f7814a67ffa36c180d26f68c154c58067ae782d", size = 53149035, upload-time = "2026-08-10T12:40:41.454Z" },
++    { url = "https://files.pythonhosted.org/packages/93/c0/37d4a7e8e2f7a6076283673d5298018ca26478b934c6ee369e10505ab32c/pyarrow-25.0.1-cp314-cp314t-win_amd64.whl", hash = "sha256:4288f27577352d608ca08553b0865e4a9b3aa14820c5d95b53337218d609835b", size = 28753071, upload-time = "2026-08-10T12:40:46.623Z" },
++]
++
+ [[package]]
+ name = "pycparser"
+ version = "3.0"
+@@ -587,6 +610,7 @@ dependencies = [
+     { name = "azure-data-tables" },
+     { name = "azure-identity" },
+     { name = "azure-storage-blob" },
++    { name = "pyarrow" },
+     { name = "requests" },
+ ]
+ 
+@@ -595,6 +619,7 @@ requires-dist = [
+     { name = "azure-data-tables", specifier = "==12.7.0" },
+     { name = "azure-identity", specifier = "==1.26.0" },
+     { name = "azure-storage-blob", specifier = "==12.31.0" },
++    { name = "pyarrow", specifier = "==25.0.1" },
+     { name = "requests", specifier = "==2.34.2" },
+ ]
+ 

@@ -1,0 +1,15 @@
+{
+  "argv": [
+    "uv",
+    "run",
+    "--offline",
+    "--frozen",
+    "--package",
+    "sec-edgar-ingest",
+    "python",
+    "-c",
+    "import sys; sys.path.insert(0, 'packages/sec-edgar-ingest/tests'); import network_guard; network_guard.main(['test_etl_contracts', 'test_etl_storage', 'test_worksets', 'test_storage', 'test_azure_contracts', 'test_azure_state_payloads', '-v'])"
+  ],
+  "cwd": "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar",
+  "exit": 0
+}

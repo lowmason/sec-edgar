@@ -1,0 +1,15 @@
+{
+  "argv": [
+    "uv",
+    "run",
+    "--offline",
+    "--frozen",
+    "--package",
+    "sec-edgar-ingest",
+    "python",
+    "-c",
+    "import sys; sys.path.insert(0, 'packages/sec-edgar-ingest/tests'); import network_guard; network_guard.main(['test_etl_contracts.EtlRecordTests.test_quarter_counts_include_retained_identical_duplicates', 'test_etl_contracts.EtlRecordTests.test_closed_daily_only_manifest_has_no_withdrawal_authority', '-v'])"
+  ],
+  "cwd": "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar",
+  "exit": 1
+}

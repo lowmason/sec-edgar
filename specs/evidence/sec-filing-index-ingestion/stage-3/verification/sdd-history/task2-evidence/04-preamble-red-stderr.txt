@@ -1,0 +1,22 @@
+test_daily_date_chooses_older_output_quarter (test_etl_parser.EtlParserTests.test_daily_date_chooses_older_output_quarter) ... ok
+test_cik_dates_paths_and_originals (test_etl_parser.StrictParserTests.test_cik_dates_paths_and_originals) ... ok
+test_field_refusal_matrix (test_etl_parser.StrictParserTests.test_field_refusal_matrix) ... ok
+test_final_newline_families_and_duplicates (test_etl_parser.StrictParserTests.test_final_newline_families_and_duplicates) ... ok
+test_independent_goldens_and_manifest (test_etl_parser.StrictParserTests.test_independent_goldens_and_manifest) ... ok
+test_stream_refusal_matrix (test_etl_parser.StrictParserTests.test_stream_refusal_matrix) ... 
+  test_stream_refusal_matrix (test_etl_parser.StrictParserTests.test_stream_refusal_matrix) (body=b'malformed\nCIK|Company Name|Form Type|Date Filed|File Name\n--------\n123456|Example|10-K|20240229|safe/path') ... FAIL
+test_version_registration_and_preopen_refusal (test_etl_parser.StrictParserTests.test_version_registration_and_preopen_refusal) ... ok
+
+======================================================================
+FAIL: test_stream_refusal_matrix (test_etl_parser.StrictParserTests.test_stream_refusal_matrix) (body=b'malformed\nCIK|Company Name|Form Type|Date Filed|File Name\n--------\n123456|Example|10-K|20240229|safe/path')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/tests/test_etl_parser.py", line 135, in test_stream_refusal_matrix
+    with self.assertRaises(ParseError) as raised:
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ParseError not raised
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.078s
+
+FAILED (failures=1)

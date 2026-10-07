@@ -1,0 +1,28 @@
+test_canonical_field_types_and_nullability (test_etl_contracts.EtlContractTests.test_canonical_field_types_and_nullability) ... ok
+test_change_schema_embeds_nullable_full_rows (test_etl_contracts.EtlContractTests.test_change_schema_embeds_nullable_full_rows) ... ok
+test_observation_schema_preserves_original_fields (test_etl_contracts.EtlContractTests.test_observation_schema_preserves_original_fields) ... ok
+test_processing_identity_includes_both_versions (test_etl_contracts.EtlContractTests.test_processing_identity_includes_both_versions) ... ok
+test_retained_stage2_worksets_and_registry_remain_byte_identical (test_etl_contracts.EtlContractTests.test_retained_stage2_worksets_and_registry_remain_byte_identical) ... FAIL
+test_row_mapping_and_strict_validation (test_etl_contracts.EtlContractTests.test_row_mapping_and_strict_validation) ... ok
+test_transformed_codec_is_canonical_and_strict (test_etl_contracts.EtlContractTests.test_transformed_codec_is_canonical_and_strict) ... ok
+test_all_records_are_strict_immutable_and_round_trip (test_etl_contracts.EtlRecordTests.test_all_records_are_strict_immutable_and_round_trip) ... ok
+test_active_pointer_real_sdk_insert_replace_and_conflict (test_etl_storage.EtlStorageTests.test_active_pointer_real_sdk_insert_replace_and_conflict) ... ok
+test_azure_logical_writes_and_streamed_materialization_use_mapped_paths (test_etl_storage.EtlStorageTests.test_azure_logical_writes_and_streamed_materialization_use_mapped_paths) ... ok
+test_local_materialize_is_exclusive_and_cleans_failed_copy (test_etl_storage.EtlStorageTests.test_local_materialize_is_exclusive_and_cleans_failed_copy) ... ok
+test_logical_paths_use_accepted_containers (test_etl_storage.EtlStorageTests.test_logical_paths_use_accepted_containers) ... ok
+test_pointer_commit_uses_actual_revision_and_propagates_conflict (test_etl_storage.EtlStorageTests.test_pointer_commit_uses_actual_revision_and_propagates_conflict) ... ok
+test_transform_acceptance_and_publication_receipts_are_idempotent (test_etl_storage.EtlStorageTests.test_transform_acceptance_and_publication_receipts_are_idempotent) ... ok
+
+======================================================================
+FAIL: test_retained_stage2_worksets_and_registry_remain_byte_identical (test_etl_contracts.EtlContractTests.test_retained_stage2_worksets_and_registry_remain_byte_identical)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/tests/test_etl_contracts.py", line 98, in test_retained_stage2_worksets_and_registry_remain_byte_identical
+    self.assertEqual(len(registries), 1)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+AssertionError: 0 != 1
+
+----------------------------------------------------------------------
+Ran 14 tests in 0.088s
+
+FAILED (failures=1)

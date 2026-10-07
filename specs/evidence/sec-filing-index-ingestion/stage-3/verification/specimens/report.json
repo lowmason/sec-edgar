@@ -1,0 +1,2623 @@
+{
+  "all22_stage7_checks": "reserved",
+  "argv": [
+    "packages/sec-edgar-ingest/tests/etl_proof.py",
+    "specimens",
+    "--output",
+    "specs/evidence/sec-filing-index-ingestion/stage-3/verification/specimens"
+  ],
+  "cwd": "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar",
+  "dependencies": {
+    "azure-data-tables": "12.7.0",
+    "azure-identity": "1.26.0",
+    "azure-storage-blob": "12.31.0",
+    "pyarrow": "25.0.1",
+    "requests": "2.34.2",
+    "sec-edgar-ingest": "0.1.0"
+  },
+  "executable": "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.venv/bin/python",
+  "exit": 1,
+  "network_guard": true,
+  "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+  "python": "3.14.0 (main, Oct 14 2025, 21:10:22) [Clang 20.1.4 ]",
+  "receipts": [
+    {
+      "bytes": 3729148,
+      "conflicts": [
+        {
+          "first_payload": {
+            "accession_number": "0000950123-10-030999",
+            "archive_path": "edgar/data/1015923/0000950123-10-030999.txt",
+            "cik": "0001015923",
+            "company_name": "OPTIMAL GROUP INC",
+            "filing_date": "2010-03-31",
+            "form_type": "SC 13E3",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "37bd3d884d57defd651a1c8456a183c9f53ecb215c847a642de36b260c76d24c",
+            "source_sha256": "aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de"
+          },
+          "original_fields": [
+            "1015923",
+            "OPTIMAL GROUP INC",
+            "SC TO-T",
+            "2010-03-31",
+            "edgar/data/1015923/0000950123-10-030999.txt"
+          ],
+          "physical_line": 6580,
+          "reason": "conflicting duplicate logical key",
+          "row": {
+            "accession_number": "0000950123-10-030999",
+            "archive_path": "edgar/data/1015923/0000950123-10-030999.txt",
+            "cik": "0001015923",
+            "company_name": "OPTIMAL GROUP INC",
+            "filing_date": "2010-03-31",
+            "form_type": "SC TO-T",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "37bd3d884d57defd651a1c8456a183c9f53ecb215c847a642de36b260c76d24c",
+            "source_sha256": "aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de"
+          }
+        },
+        {
+          "first_payload": {
+            "accession_number": "0001193125-10-025579",
+            "archive_path": "edgar/data/1023977/0001193125-10-025579.txt",
+            "cik": "0001023977",
+            "company_name": "OPEN JOINT STOCK CO VIMPEL COMMUNICATIONS",
+            "filing_date": "2010-02-09",
+            "form_type": "SC 13D/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "37bd3d884d57defd651a1c8456a183c9f53ecb215c847a642de36b260c76d24c",
+            "source_sha256": "aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de"
+          },
+          "original_fields": [
+            "1023977",
+            "OPEN JOINT STOCK CO VIMPEL COMMUNICATIONS",
+            "SC TO-T",
+            "2010-02-09",
+            "edgar/data/1023977/0001193125-10-025579.txt"
+          ],
+          "physical_line": 10215,
+          "reason": "conflicting duplicate logical key",
+          "row": {
+            "accession_number": "0001193125-10-025579",
+            "archive_path": "edgar/data/1023977/0001193125-10-025579.txt",
+            "cik": "0001023977",
+            "company_name": "OPEN JOINT STOCK CO VIMPEL COMMUNICATIONS",
+            "filing_date": "2010-02-09",
+            "form_type": "SC TO-T",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "37bd3d884d57defd651a1c8456a183c9f53ecb215c847a642de36b260c76d24c",
+            "source_sha256": "aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de"
+          }
+        },
+        {
+          "first_payload": {
+            "accession_number": "0001144204-10-001684",
+            "archive_path": "edgar/data/1329605/0001144204-10-001684.txt",
+            "cik": "0001329605",
+            "company_name": "PLATINUM ENERGY RESOURCES INC",
+            "filing_date": "2010-01-13",
+            "form_type": "SC 13E3/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "37bd3d884d57defd651a1c8456a183c9f53ecb215c847a642de36b260c76d24c",
+            "source_sha256": "aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de"
+          },
+          "original_fields": [
+            "1329605",
+            "PLATINUM ENERGY RESOURCES INC",
+            "SC TO-T/A",
+            "2010-01-13",
+            "edgar/data/1329605/0001144204-10-001684.txt"
+          ],
+          "physical_line": 124711,
+          "reason": "conflicting duplicate logical key",
+          "row": {
+            "accession_number": "0001144204-10-001684",
+            "archive_path": "edgar/data/1329605/0001144204-10-001684.txt",
+            "cik": "0001329605",
+            "company_name": "PLATINUM ENERGY RESOURCES INC",
+            "filing_date": "2010-01-13",
+            "form_type": "SC TO-T/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "37bd3d884d57defd651a1c8456a183c9f53ecb215c847a642de36b260c76d24c",
+            "source_sha256": "aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de"
+          }
+        },
+        {
+          "first_payload": {
+            "accession_number": "0001144204-10-001809",
+            "archive_path": "edgar/data/1329605/0001144204-10-001809.txt",
+            "cik": "0001329605",
+            "company_name": "PLATINUM ENERGY RESOURCES INC",
+            "filing_date": "2010-01-13",
+            "form_type": "SC 13E3/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "37bd3d884d57defd651a1c8456a183c9f53ecb215c847a642de36b260c76d24c",
+            "source_sha256": "aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de"
+          },
+          "original_fields": [
+            "1329605",
+            "PLATINUM ENERGY RESOURCES INC",
+            "SC TO-T/A",
+            "2010-01-13",
+            "edgar/data/1329605/0001144204-10-001809.txt"
+          ],
+          "physical_line": 124712,
+          "reason": "conflicting duplicate logical key",
+          "row": {
+            "accession_number": "0001144204-10-001809",
+            "archive_path": "edgar/data/1329605/0001144204-10-001809.txt",
+            "cik": "0001329605",
+            "company_name": "PLATINUM ENERGY RESOURCES INC",
+            "filing_date": "2010-01-13",
+            "form_type": "SC TO-T/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "37bd3d884d57defd651a1c8456a183c9f53ecb215c847a642de36b260c76d24c",
+            "source_sha256": "aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de"
+          }
+        },
+        {
+          "first_payload": {
+            "accession_number": "0001144204-10-002710",
+            "archive_path": "edgar/data/1329605/0001144204-10-002710.txt",
+            "cik": "0001329605",
+            "company_name": "PLATINUM ENERGY RESOURCES INC",
+            "filing_date": "2010-01-20",
+            "form_type": "SC 13E3/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "37bd3d884d57defd651a1c8456a183c9f53ecb215c847a642de36b260c76d24c",
+            "source_sha256": "aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de"
+          },
+          "original_fields": [
+            "1329605",
+            "PLATINUM ENERGY RESOURCES INC",
+            "SC TO-T/A",
+            "2010-01-20",
+            "edgar/data/1329605/0001144204-10-002710.txt"
+          ],
+          "physical_line": 124713,
+          "reason": "conflicting duplicate logical key",
+          "row": {
+            "accession_number": "0001144204-10-002710",
+            "archive_path": "edgar/data/1329605/0001144204-10-002710.txt",
+            "cik": "0001329605",
+            "company_name": "PLATINUM ENERGY RESOURCES INC",
+            "filing_date": "2010-01-20",
+            "form_type": "SC TO-T/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "37bd3d884d57defd651a1c8456a183c9f53ecb215c847a642de36b260c76d24c",
+            "source_sha256": "aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de"
+          }
+        },
+        {
+          "first_payload": {
+            "accession_number": "0001047469-10-001751",
+            "archive_path": "edgar/data/1335258/0001047469-10-001751.txt",
+            "cik": "0001335258",
+            "company_name": "Live Nation Entertainment, Inc.",
+            "filing_date": "2010-03-03",
+            "form_type": "SC 13D/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "37bd3d884d57defd651a1c8456a183c9f53ecb215c847a642de36b260c76d24c",
+            "source_sha256": "aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de"
+          },
+          "original_fields": [
+            "1335258",
+            "Live Nation Entertainment, Inc.",
+            "SC TO-T/A",
+            "2010-03-03",
+            "edgar/data/1335258/0001047469-10-001751.txt"
+          ],
+          "physical_line": 127169,
+          "reason": "conflicting duplicate logical key",
+          "row": {
+            "accession_number": "0001047469-10-001751",
+            "archive_path": "edgar/data/1335258/0001047469-10-001751.txt",
+            "cik": "0001335258",
+            "company_name": "Live Nation Entertainment, Inc.",
+            "filing_date": "2010-03-03",
+            "form_type": "SC TO-T/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "37bd3d884d57defd651a1c8456a183c9f53ecb215c847a642de36b260c76d24c",
+            "source_sha256": "aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de"
+          }
+        },
+        {
+          "first_payload": {
+            "accession_number": "0001104659-10-003983",
+            "archive_path": "edgar/data/1337899/0001104659-10-003983.txt",
+            "cik": "0001337899",
+            "company_name": "Fortunet, Inc.",
+            "filing_date": "2010-01-29",
+            "form_type": "SC 13E3/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "37bd3d884d57defd651a1c8456a183c9f53ecb215c847a642de36b260c76d24c",
+            "source_sha256": "aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de"
+          },
+          "original_fields": [
+            "1337899",
+            "Fortunet, Inc.",
+            "SC TO-T/A",
+            "2010-01-29",
+            "edgar/data/1337899/0001104659-10-003983.txt"
+          ],
+          "physical_line": 128129,
+          "reason": "conflicting duplicate logical key",
+          "row": {
+            "accession_number": "0001104659-10-003983",
+            "archive_path": "edgar/data/1337899/0001104659-10-003983.txt",
+            "cik": "0001337899",
+            "company_name": "Fortunet, Inc.",
+            "filing_date": "2010-01-29",
+            "form_type": "SC TO-T/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "37bd3d884d57defd651a1c8456a183c9f53ecb215c847a642de36b260c76d24c",
+            "source_sha256": "aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de"
+          }
+        },
+        {
+          "first_payload": {
+            "accession_number": "0001104659-10-007126",
+            "archive_path": "edgar/data/1337899/0001104659-10-007126.txt",
+            "cik": "0001337899",
+            "company_name": "Fortunet, Inc.",
+            "filing_date": "2010-02-16",
+            "form_type": "SC 13E3/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "37bd3d884d57defd651a1c8456a183c9f53ecb215c847a642de36b260c76d24c",
+            "source_sha256": "aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de"
+          },
+          "original_fields": [
+            "1337899",
+            "Fortunet, Inc.",
+            "SC TO-T/A",
+            "2010-02-16",
+            "edgar/data/1337899/0001104659-10-007126.txt"
+          ],
+          "physical_line": 128130,
+          "reason": "conflicting duplicate logical key",
+          "row": {
+            "accession_number": "0001104659-10-007126",
+            "archive_path": "edgar/data/1337899/0001104659-10-007126.txt",
+            "cik": "0001337899",
+            "company_name": "Fortunet, Inc.",
+            "filing_date": "2010-02-16",
+            "form_type": "SC TO-T/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "37bd3d884d57defd651a1c8456a183c9f53ecb215c847a642de36b260c76d24c",
+            "source_sha256": "aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de"
+          }
+        },
+        {
+          "first_payload": {
+            "accession_number": "0001104659-10-007723",
+            "archive_path": "edgar/data/1337899/0001104659-10-007723.txt",
+            "cik": "0001337899",
+            "company_name": "Fortunet, Inc.",
+            "filing_date": "2010-02-18",
+            "form_type": "SC 13E3/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "37bd3d884d57defd651a1c8456a183c9f53ecb215c847a642de36b260c76d24c",
+            "source_sha256": "aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de"
+          },
+          "original_fields": [
+            "1337899",
+            "Fortunet, Inc.",
+            "SC TO-T/A",
+            "2010-02-18",
+            "edgar/data/1337899/0001104659-10-007723.txt"
+          ],
+          "physical_line": 128131,
+          "reason": "conflicting duplicate logical key",
+          "row": {
+            "accession_number": "0001104659-10-007723",
+            "archive_path": "edgar/data/1337899/0001104659-10-007723.txt",
+            "cik": "0001337899",
+            "company_name": "Fortunet, Inc.",
+            "filing_date": "2010-02-18",
+            "form_type": "SC TO-T/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "37bd3d884d57defd651a1c8456a183c9f53ecb215c847a642de36b260c76d24c",
+            "source_sha256": "aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de"
+          }
+        },
+        {
+          "first_payload": {
+            "accession_number": "0001047469-10-000178",
+            "archive_path": "edgar/data/1337899/0001047469-10-000178.txt",
+            "cik": "0001337899",
+            "company_name": "Fortunet, Inc.",
+            "filing_date": "2010-01-15",
+            "form_type": "SC 13E3",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "37bd3d884d57defd651a1c8456a183c9f53ecb215c847a642de36b260c76d24c",
+            "source_sha256": "aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de"
+          },
+          "original_fields": [
+            "1337899",
+            "Fortunet, Inc.",
+            "SC TO-T",
+            "2010-01-15",
+            "edgar/data/1337899/0001047469-10-000178.txt"
+          ],
+          "physical_line": 128132,
+          "reason": "conflicting duplicate logical key",
+          "row": {
+            "accession_number": "0001047469-10-000178",
+            "archive_path": "edgar/data/1337899/0001047469-10-000178.txt",
+            "cik": "0001337899",
+            "company_name": "Fortunet, Inc.",
+            "filing_date": "2010-01-15",
+            "form_type": "SC TO-T",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "37bd3d884d57defd651a1c8456a183c9f53ecb215c847a642de36b260c76d24c",
+            "source_sha256": "aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de"
+          }
+        },
+        {
+          "first_payload": {
+            "accession_number": "0001193125-10-003167",
+            "archive_path": "edgar/data/1450598/0001193125-10-003167.txt",
+            "cik": "0001450598",
+            "company_name": "Invitel Holdings A/S",
+            "filing_date": "2010-01-08",
+            "form_type": "SC 13E3/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "37bd3d884d57defd651a1c8456a183c9f53ecb215c847a642de36b260c76d24c",
+            "source_sha256": "aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de"
+          },
+          "original_fields": [
+            "1450598",
+            "Invitel Holdings A/S",
+            "SC TO-T/A",
+            "2010-01-08",
+            "edgar/data/1450598/0001193125-10-003167.txt"
+          ],
+          "physical_line": 179921,
+          "reason": "conflicting duplicate logical key",
+          "row": {
+            "accession_number": "0001193125-10-003167",
+            "archive_path": "edgar/data/1450598/0001193125-10-003167.txt",
+            "cik": "0001450598",
+            "company_name": "Invitel Holdings A/S",
+            "filing_date": "2010-01-08",
+            "form_type": "SC TO-T/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "37bd3d884d57defd651a1c8456a183c9f53ecb215c847a642de36b260c76d24c",
+            "source_sha256": "aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de"
+          }
+        },
+        {
+          "first_payload": {
+            "accession_number": "0000947871-10-000050",
+            "archive_path": "edgar/data/1450598/0000947871-10-000050.txt",
+            "cik": "0001450598",
+            "company_name": "Invitel Holdings A/S",
+            "filing_date": "2010-01-15",
+            "form_type": "SC 13E3/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "37bd3d884d57defd651a1c8456a183c9f53ecb215c847a642de36b260c76d24c",
+            "source_sha256": "aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de"
+          },
+          "original_fields": [
+            "1450598",
+            "Invitel Holdings A/S",
+            "SC TO-T/A",
+            "2010-01-15",
+            "edgar/data/1450598/0000947871-10-000050.txt"
+          ],
+          "physical_line": 179922,
+          "reason": "conflicting duplicate logical key",
+          "row": {
+            "accession_number": "0000947871-10-000050",
+            "archive_path": "edgar/data/1450598/0000947871-10-000050.txt",
+            "cik": "0001450598",
+            "company_name": "Invitel Holdings A/S",
+            "filing_date": "2010-01-15",
+            "form_type": "SC TO-T/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "37bd3d884d57defd651a1c8456a183c9f53ecb215c847a642de36b260c76d24c",
+            "source_sha256": "aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de"
+          }
+        },
+        {
+          "first_payload": {
+            "accession_number": "0000947871-10-000062",
+            "archive_path": "edgar/data/1450598/0000947871-10-000062.txt",
+            "cik": "0001450598",
+            "company_name": "Invitel Holdings A/S",
+            "filing_date": "2010-01-25",
+            "form_type": "SC 13E3/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "37bd3d884d57defd651a1c8456a183c9f53ecb215c847a642de36b260c76d24c",
+            "source_sha256": "aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de"
+          },
+          "original_fields": [
+            "1450598",
+            "Invitel Holdings A/S",
+            "SC TO-T/A",
+            "2010-01-25",
+            "edgar/data/1450598/0000947871-10-000062.txt"
+          ],
+          "physical_line": 179923,
+          "reason": "conflicting duplicate logical key",
+          "row": {
+            "accession_number": "0000947871-10-000062",
+            "archive_path": "edgar/data/1450598/0000947871-10-000062.txt",
+            "cik": "0001450598",
+            "company_name": "Invitel Holdings A/S",
+            "filing_date": "2010-01-25",
+            "form_type": "SC TO-T/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "37bd3d884d57defd651a1c8456a183c9f53ecb215c847a642de36b260c76d24c",
+            "source_sha256": "aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de"
+          }
+        },
+        {
+          "first_payload": {
+            "accession_number": "0000000000-10-014744",
+            "archive_path": "edgar/data/21212/0000000000-10-014744.txt",
+            "cik": "0000021212",
+            "company_name": "ALL AMERICAN GROUP INC",
+            "filing_date": "2010-03-17",
+            "form_type": "UPLOAD",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "37bd3d884d57defd651a1c8456a183c9f53ecb215c847a642de36b260c76d24c",
+            "source_sha256": "aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de"
+          },
+          "original_fields": [
+            "21212",
+            "COACHMEN INDUSTRIES INC",
+            "UPLOAD",
+            "2010-03-17",
+            "edgar/data/21212/0000000000-10-014744.txt"
+          ],
+          "physical_line": 205194,
+          "reason": "conflicting duplicate logical key",
+          "row": {
+            "accession_number": "0000000000-10-014744",
+            "archive_path": "edgar/data/21212/0000000000-10-014744.txt",
+            "cik": "0000021212",
+            "company_name": "COACHMEN INDUSTRIES INC",
+            "filing_date": "2010-03-17",
+            "form_type": "UPLOAD",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "37bd3d884d57defd651a1c8456a183c9f53ecb215c847a642de36b260c76d24c",
+            "source_sha256": "aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de"
+          }
+        },
+        {
+          "first_payload": {
+            "accession_number": "0001019056-10-000334",
+            "archive_path": "edgar/data/815098/0001019056-10-000334.txt",
+            "cik": "0000815098",
+            "company_name": "TRUDY CORP",
+            "filing_date": "2010-03-19",
+            "form_type": "SC 13E3",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "37bd3d884d57defd651a1c8456a183c9f53ecb215c847a642de36b260c76d24c",
+            "source_sha256": "aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de"
+          },
+          "original_fields": [
+            "815098",
+            "TRUDY CORP",
+            "SC TO-I",
+            "2010-03-19",
+            "edgar/data/815098/0001019056-10-000334.txt"
+          ],
+          "physical_line": 253274,
+          "reason": "conflicting duplicate logical key",
+          "row": {
+            "accession_number": "0001019056-10-000334",
+            "archive_path": "edgar/data/815098/0001019056-10-000334.txt",
+            "cik": "0000815098",
+            "company_name": "TRUDY CORP",
+            "filing_date": "2010-03-19",
+            "form_type": "SC TO-I",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "37bd3d884d57defd651a1c8456a183c9f53ecb215c847a642de36b260c76d24c",
+            "source_sha256": "aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de"
+          }
+        },
+        {
+          "first_payload": {
+            "accession_number": "0001144204-10-016457",
+            "archive_path": "edgar/data/865754/0001144204-10-016457.txt",
+            "cik": "0000865754",
+            "company_name": "SAUER DANFOSS INC",
+            "filing_date": "2010-03-30",
+            "form_type": "SC 13E3/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "37bd3d884d57defd651a1c8456a183c9f53ecb215c847a642de36b260c76d24c",
+            "source_sha256": "aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de"
+          },
+          "original_fields": [
+            "865754",
+            "SAUER DANFOSS INC",
+            "SC TO-T/A",
+            "2010-03-30",
+            "edgar/data/865754/0001144204-10-016457.txt"
+          ],
+          "physical_line": 265107,
+          "reason": "conflicting duplicate logical key",
+          "row": {
+            "accession_number": "0001144204-10-016457",
+            "archive_path": "edgar/data/865754/0001144204-10-016457.txt",
+            "cik": "0000865754",
+            "company_name": "SAUER DANFOSS INC",
+            "filing_date": "2010-03-30",
+            "form_type": "SC TO-T/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "37bd3d884d57defd651a1c8456a183c9f53ecb215c847a642de36b260c76d24c",
+            "source_sha256": "aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de"
+          }
+        },
+        {
+          "first_payload": {
+            "accession_number": "0001144204-10-017022",
+            "archive_path": "edgar/data/865754/0001144204-10-017022.txt",
+            "cik": "0000865754",
+            "company_name": "SAUER DANFOSS INC",
+            "filing_date": "2010-03-31",
+            "form_type": "SC 13E3/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "37bd3d884d57defd651a1c8456a183c9f53ecb215c847a642de36b260c76d24c",
+            "source_sha256": "aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de"
+          },
+          "original_fields": [
+            "865754",
+            "SAUER DANFOSS INC",
+            "SC TO-T/A",
+            "2010-03-31",
+            "edgar/data/865754/0001144204-10-017022.txt"
+          ],
+          "physical_line": 265108,
+          "reason": "conflicting duplicate logical key",
+          "row": {
+            "accession_number": "0001144204-10-017022",
+            "archive_path": "edgar/data/865754/0001144204-10-017022.txt",
+            "cik": "0000865754",
+            "company_name": "SAUER DANFOSS INC",
+            "filing_date": "2010-03-31",
+            "form_type": "SC TO-T/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "37bd3d884d57defd651a1c8456a183c9f53ecb215c847a642de36b260c76d24c",
+            "source_sha256": "aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de"
+          }
+        },
+        {
+          "first_payload": {
+            "accession_number": "0001144204-10-012351",
+            "archive_path": "edgar/data/865754/0001144204-10-012351.txt",
+            "cik": "0000865754",
+            "company_name": "SAUER DANFOSS INC",
+            "filing_date": "2010-03-10",
+            "form_type": "SC 13E3",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "37bd3d884d57defd651a1c8456a183c9f53ecb215c847a642de36b260c76d24c",
+            "source_sha256": "aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de"
+          },
+          "original_fields": [
+            "865754",
+            "SAUER DANFOSS INC",
+            "SC TO-T",
+            "2010-03-10",
+            "edgar/data/865754/0001144204-10-012351.txt"
+          ],
+          "physical_line": 265109,
+          "reason": "conflicting duplicate logical key",
+          "row": {
+            "accession_number": "0001144204-10-012351",
+            "archive_path": "edgar/data/865754/0001144204-10-012351.txt",
+            "cik": "0000865754",
+            "company_name": "SAUER DANFOSS INC",
+            "filing_date": "2010-03-10",
+            "form_type": "SC TO-T",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "37bd3d884d57defd651a1c8456a183c9f53ecb215c847a642de36b260c76d24c",
+            "source_sha256": "aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de"
+          }
+        },
+        {
+          "first_payload": {
+            "accession_number": "0001193125-10-061491",
+            "archive_path": "edgar/data/929351/0001193125-10-061491.txt",
+            "cik": "0000929351",
+            "company_name": "LIONS GATE ENTERTAINMENT CORP /CN/",
+            "filing_date": "2010-03-19",
+            "form_type": "SC 13D/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "37bd3d884d57defd651a1c8456a183c9f53ecb215c847a642de36b260c76d24c",
+            "source_sha256": "aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de"
+          },
+          "original_fields": [
+            "929351",
+            "LIONS GATE ENTERTAINMENT CORP /CN/",
+            "SC TO-T/A",
+            "2010-03-19",
+            "edgar/data/929351/0001193125-10-061491.txt"
+          ],
+          "physical_line": 292526,
+          "reason": "conflicting duplicate logical key",
+          "row": {
+            "accession_number": "0001193125-10-061491",
+            "archive_path": "edgar/data/929351/0001193125-10-061491.txt",
+            "cik": "0000929351",
+            "company_name": "LIONS GATE ENTERTAINMENT CORP /CN/",
+            "filing_date": "2010-03-19",
+            "form_type": "SC TO-T/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "37bd3d884d57defd651a1c8456a183c9f53ecb215c847a642de36b260c76d24c",
+            "source_sha256": "aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de"
+          }
+        },
+        {
+          "first_payload": {
+            "accession_number": "0001193125-10-065812",
+            "archive_path": "edgar/data/929351/0001193125-10-065812.txt",
+            "cik": "0000929351",
+            "company_name": "LIONS GATE ENTERTAINMENT CORP /CN/",
+            "filing_date": "2010-03-24",
+            "form_type": "SC 13D/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "37bd3d884d57defd651a1c8456a183c9f53ecb215c847a642de36b260c76d24c",
+            "source_sha256": "aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de"
+          },
+          "original_fields": [
+            "929351",
+            "LIONS GATE ENTERTAINMENT CORP /CN/",
+            "SC TO-T/A",
+            "2010-03-24",
+            "edgar/data/929351/0001193125-10-065812.txt"
+          ],
+          "physical_line": 292527,
+          "reason": "conflicting duplicate logical key",
+          "row": {
+            "accession_number": "0001193125-10-065812",
+            "archive_path": "edgar/data/929351/0001193125-10-065812.txt",
+            "cik": "0000929351",
+            "company_name": "LIONS GATE ENTERTAINMENT CORP /CN/",
+            "filing_date": "2010-03-24",
+            "form_type": "SC TO-T/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "37bd3d884d57defd651a1c8456a183c9f53ecb215c847a642de36b260c76d24c",
+            "source_sha256": "aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de"
+          }
+        },
+        {
+          "first_payload": {
+            "accession_number": "0001193125-10-044136",
+            "archive_path": "edgar/data/929351/0001193125-10-044136.txt",
+            "cik": "0000929351",
+            "company_name": "LIONS GATE ENTERTAINMENT CORP /CN/",
+            "filing_date": "2010-03-01",
+            "form_type": "SC 13D/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "37bd3d884d57defd651a1c8456a183c9f53ecb215c847a642de36b260c76d24c",
+            "source_sha256": "aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de"
+          },
+          "original_fields": [
+            "929351",
+            "LIONS GATE ENTERTAINMENT CORP /CN/",
+            "SC TO-T",
+            "2010-03-01",
+            "edgar/data/929351/0001193125-10-044136.txt"
+          ],
+          "physical_line": 292528,
+          "reason": "conflicting duplicate logical key",
+          "row": {
+            "accession_number": "0001193125-10-044136",
+            "archive_path": "edgar/data/929351/0001193125-10-044136.txt",
+            "cik": "0000929351",
+            "company_name": "LIONS GATE ENTERTAINMENT CORP /CN/",
+            "filing_date": "2010-03-01",
+            "form_type": "SC TO-T",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "37bd3d884d57defd651a1c8456a183c9f53ecb215c847a642de36b260c76d24c",
+            "source_sha256": "aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de"
+          }
+        }
+      ],
+      "date_bounds": [
+        "2010-01-02",
+        "2010-03-31"
+      ],
+      "distinct_keys": 300540,
+      "evidence_id": "SEC-0141",
+      "identical_duplicate_keys": 0,
+      "original_path": "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-1/specimens/aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de.zip",
+      "quarter_counts": {
+        "2010Q1": 300561
+      },
+      "root_alias_matching_quarter_context": false,
+      "rows": 300561,
+      "selected_family": "quarterly ISO-date master",
+      "selected_rows": [
+        {
+          "line": 12,
+          "original_fields": [
+            "1000032",
+            "BINCH JAMES G",
+            "4",
+            "2010-03-02",
+            "edgar/data/1000032/0001181431-10-013095.txt"
+          ],
+          "row": {
+            "accession_number": "0001181431-10-013095",
+            "archive_path": "edgar/data/1000032/0001181431-10-013095.txt",
+            "cik": "0001000032",
+            "company_name": "BINCH JAMES G",
+            "filing_date": "2010-03-02",
+            "form_type": "4",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "37bd3d884d57defd651a1c8456a183c9f53ecb215c847a642de36b260c76d24c",
+            "source_sha256": "aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de"
+          }
+        },
+        {
+          "line": 93,
+          "original_fields": [
+            "1000209",
+            "MEDALLION FINANCIAL CORP",
+            "40-APP/A",
+            "2010-03-31",
+            "edgar/data/1000209/0001193125-10-073211.txt"
+          ],
+          "row": {
+            "accession_number": "0001193125-10-073211",
+            "archive_path": "edgar/data/1000209/0001193125-10-073211.txt",
+            "cik": "0001000209",
+            "company_name": "MEDALLION FINANCIAL CORP",
+            "filing_date": "2010-03-31",
+            "form_type": "40-APP/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "37bd3d884d57defd651a1c8456a183c9f53ecb215c847a642de36b260c76d24c",
+            "source_sha256": "aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de"
+          }
+        },
+        {
+          "line": 45538,
+          "original_fields": [
+            "1111247",
+            "RIGHTNOW TECHNOLOGIES INC",
+            "UPLOAD",
+            "2010-01-02",
+            "edgar/data/1111247/0000000000-10-000005.txt"
+          ],
+          "row": {
+            "accession_number": "0000000000-10-000005",
+            "archive_path": "edgar/data/1111247/0000000000-10-000005.txt",
+            "cik": "0001111247",
+            "company_name": "RIGHTNOW TECHNOLOGIES INC",
+            "filing_date": "2010-01-02",
+            "form_type": "UPLOAD",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "37bd3d884d57defd651a1c8456a183c9f53ecb215c847a642de36b260c76d24c",
+            "source_sha256": "aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de"
+          }
+        }
+      ],
+      "sha256": "aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de",
+      "source": {
+        "canonical_url": "https://www.sec.gov/Archives/edgar/full-index/2010/QTR1/master.zip",
+        "kind": "quarterly",
+        "period": "2010Q1",
+        "representation": "zip",
+        "source_id": "37bd3d884d57defd651a1c8456a183c9f53ecb215c847a642de36b260c76d24c"
+      },
+      "source_acceptance": "blocked"
+    },
+    {
+      "bytes": 3901000,
+      "conflicts": [
+        {
+          "first_payload": {
+            "accession_number": "0001193125-15-004077",
+            "archive_path": "edgar/data/1292426/0001193125-15-004077.txt",
+            "cik": "0001292426",
+            "company_name": "GFI Group Inc.",
+            "filing_date": "2015-01-07",
+            "form_type": "SC 13D/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+            "source_sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+          },
+          "original_fields": [
+            "1292426",
+            "GFI Group Inc.",
+            "SC TO-T/A",
+            "2015-01-07",
+            "edgar/data/1292426/0001193125-15-004077.txt"
+          ],
+          "physical_line": 87808,
+          "reason": "conflicting duplicate logical key",
+          "row": {
+            "accession_number": "0001193125-15-004077",
+            "archive_path": "edgar/data/1292426/0001193125-15-004077.txt",
+            "cik": "0001292426",
+            "company_name": "GFI Group Inc.",
+            "filing_date": "2015-01-07",
+            "form_type": "SC TO-T/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+            "source_sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+          }
+        },
+        {
+          "first_payload": {
+            "accession_number": "0001193125-15-006195",
+            "archive_path": "edgar/data/1292426/0001193125-15-006195.txt",
+            "cik": "0001292426",
+            "company_name": "GFI Group Inc.",
+            "filing_date": "2015-01-09",
+            "form_type": "SC 13D/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+            "source_sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+          },
+          "original_fields": [
+            "1292426",
+            "GFI Group Inc.",
+            "SC TO-T/A",
+            "2015-01-09",
+            "edgar/data/1292426/0001193125-15-006195.txt"
+          ],
+          "physical_line": 87809,
+          "reason": "conflicting duplicate logical key",
+          "row": {
+            "accession_number": "0001193125-15-006195",
+            "archive_path": "edgar/data/1292426/0001193125-15-006195.txt",
+            "cik": "0001292426",
+            "company_name": "GFI Group Inc.",
+            "filing_date": "2015-01-09",
+            "form_type": "SC TO-T/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+            "source_sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+          }
+        },
+        {
+          "first_payload": {
+            "accession_number": "0001193125-15-010817",
+            "archive_path": "edgar/data/1292426/0001193125-15-010817.txt",
+            "cik": "0001292426",
+            "company_name": "GFI Group Inc.",
+            "filing_date": "2015-01-14",
+            "form_type": "SC 13D/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+            "source_sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+          },
+          "original_fields": [
+            "1292426",
+            "GFI Group Inc.",
+            "SC TO-T/A",
+            "2015-01-14",
+            "edgar/data/1292426/0001193125-15-010817.txt"
+          ],
+          "physical_line": 87810,
+          "reason": "conflicting duplicate logical key",
+          "row": {
+            "accession_number": "0001193125-15-010817",
+            "archive_path": "edgar/data/1292426/0001193125-15-010817.txt",
+            "cik": "0001292426",
+            "company_name": "GFI Group Inc.",
+            "filing_date": "2015-01-14",
+            "form_type": "SC TO-T/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+            "source_sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+          }
+        },
+        {
+          "first_payload": {
+            "accession_number": "0001193125-15-011930",
+            "archive_path": "edgar/data/1292426/0001193125-15-011930.txt",
+            "cik": "0001292426",
+            "company_name": "GFI Group Inc.",
+            "filing_date": "2015-01-15",
+            "form_type": "SC 13D/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+            "source_sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+          },
+          "original_fields": [
+            "1292426",
+            "GFI Group Inc.",
+            "SC TO-T/A",
+            "2015-01-15",
+            "edgar/data/1292426/0001193125-15-011930.txt"
+          ],
+          "physical_line": 87811,
+          "reason": "conflicting duplicate logical key",
+          "row": {
+            "accession_number": "0001193125-15-011930",
+            "archive_path": "edgar/data/1292426/0001193125-15-011930.txt",
+            "cik": "0001292426",
+            "company_name": "GFI Group Inc.",
+            "filing_date": "2015-01-15",
+            "form_type": "SC TO-T/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+            "source_sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+          }
+        },
+        {
+          "first_payload": {
+            "accession_number": "0001193125-15-014884",
+            "archive_path": "edgar/data/1292426/0001193125-15-014884.txt",
+            "cik": "0001292426",
+            "company_name": "GFI Group Inc.",
+            "filing_date": "2015-01-20",
+            "form_type": "SC 13D/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+            "source_sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+          },
+          "original_fields": [
+            "1292426",
+            "GFI Group Inc.",
+            "SC TO-T/A",
+            "2015-01-20",
+            "edgar/data/1292426/0001193125-15-014884.txt"
+          ],
+          "physical_line": 87812,
+          "reason": "conflicting duplicate logical key",
+          "row": {
+            "accession_number": "0001193125-15-014884",
+            "archive_path": "edgar/data/1292426/0001193125-15-014884.txt",
+            "cik": "0001292426",
+            "company_name": "GFI Group Inc.",
+            "filing_date": "2015-01-20",
+            "form_type": "SC TO-T/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+            "source_sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+          }
+        },
+        {
+          "first_payload": {
+            "accession_number": "0001193125-15-016200",
+            "archive_path": "edgar/data/1292426/0001193125-15-016200.txt",
+            "cik": "0001292426",
+            "company_name": "GFI Group Inc.",
+            "filing_date": "2015-01-21",
+            "form_type": "SC 13D/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+            "source_sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+          },
+          "original_fields": [
+            "1292426",
+            "GFI Group Inc.",
+            "SC TO-T/A",
+            "2015-01-21",
+            "edgar/data/1292426/0001193125-15-016200.txt"
+          ],
+          "physical_line": 87813,
+          "reason": "conflicting duplicate logical key",
+          "row": {
+            "accession_number": "0001193125-15-016200",
+            "archive_path": "edgar/data/1292426/0001193125-15-016200.txt",
+            "cik": "0001292426",
+            "company_name": "GFI Group Inc.",
+            "filing_date": "2015-01-21",
+            "form_type": "SC TO-T/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+            "source_sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+          }
+        },
+        {
+          "first_payload": {
+            "accession_number": "0001193125-15-017688",
+            "archive_path": "edgar/data/1292426/0001193125-15-017688.txt",
+            "cik": "0001292426",
+            "company_name": "GFI Group Inc.",
+            "filing_date": "2015-01-22",
+            "form_type": "SC 13D/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+            "source_sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+          },
+          "original_fields": [
+            "1292426",
+            "GFI Group Inc.",
+            "SC TO-T/A",
+            "2015-01-22",
+            "edgar/data/1292426/0001193125-15-017688.txt"
+          ],
+          "physical_line": 87814,
+          "reason": "conflicting duplicate logical key",
+          "row": {
+            "accession_number": "0001193125-15-017688",
+            "archive_path": "edgar/data/1292426/0001193125-15-017688.txt",
+            "cik": "0001292426",
+            "company_name": "GFI Group Inc.",
+            "filing_date": "2015-01-22",
+            "form_type": "SC TO-T/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+            "source_sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+          }
+        },
+        {
+          "first_payload": {
+            "accession_number": "0001193125-15-024657",
+            "archive_path": "edgar/data/1292426/0001193125-15-024657.txt",
+            "cik": "0001292426",
+            "company_name": "GFI Group Inc.",
+            "filing_date": "2015-01-29",
+            "form_type": "SC 13D/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+            "source_sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+          },
+          "original_fields": [
+            "1292426",
+            "GFI Group Inc.",
+            "SC TO-T/A",
+            "2015-01-29",
+            "edgar/data/1292426/0001193125-15-024657.txt"
+          ],
+          "physical_line": 87815,
+          "reason": "conflicting duplicate logical key",
+          "row": {
+            "accession_number": "0001193125-15-024657",
+            "archive_path": "edgar/data/1292426/0001193125-15-024657.txt",
+            "cik": "0001292426",
+            "company_name": "GFI Group Inc.",
+            "filing_date": "2015-01-29",
+            "form_type": "SC TO-T/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+            "source_sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+          }
+        },
+        {
+          "first_payload": {
+            "accession_number": "0001193125-15-030527",
+            "archive_path": "edgar/data/1292426/0001193125-15-030527.txt",
+            "cik": "0001292426",
+            "company_name": "GFI Group Inc.",
+            "filing_date": "2015-02-03",
+            "form_type": "SC 13D/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+            "source_sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+          },
+          "original_fields": [
+            "1292426",
+            "GFI Group Inc.",
+            "SC TO-T/A",
+            "2015-02-03",
+            "edgar/data/1292426/0001193125-15-030527.txt"
+          ],
+          "physical_line": 87816,
+          "reason": "conflicting duplicate logical key",
+          "row": {
+            "accession_number": "0001193125-15-030527",
+            "archive_path": "edgar/data/1292426/0001193125-15-030527.txt",
+            "cik": "0001292426",
+            "company_name": "GFI Group Inc.",
+            "filing_date": "2015-02-03",
+            "form_type": "SC TO-T/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+            "source_sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+          }
+        },
+        {
+          "first_payload": {
+            "accession_number": "0001193125-15-033588",
+            "archive_path": "edgar/data/1292426/0001193125-15-033588.txt",
+            "cik": "0001292426",
+            "company_name": "GFI Group Inc.",
+            "filing_date": "2015-02-04",
+            "form_type": "SC 13D/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+            "source_sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+          },
+          "original_fields": [
+            "1292426",
+            "GFI Group Inc.",
+            "SC TO-T/A",
+            "2015-02-04",
+            "edgar/data/1292426/0001193125-15-033588.txt"
+          ],
+          "physical_line": 87817,
+          "reason": "conflicting duplicate logical key",
+          "row": {
+            "accession_number": "0001193125-15-033588",
+            "archive_path": "edgar/data/1292426/0001193125-15-033588.txt",
+            "cik": "0001292426",
+            "company_name": "GFI Group Inc.",
+            "filing_date": "2015-02-04",
+            "form_type": "SC TO-T/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+            "source_sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+          }
+        },
+        {
+          "first_payload": {
+            "accession_number": "0001193125-15-041786",
+            "archive_path": "edgar/data/1292426/0001193125-15-041786.txt",
+            "cik": "0001292426",
+            "company_name": "GFI Group Inc.",
+            "filing_date": "2015-02-10",
+            "form_type": "SC 13D/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+            "source_sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+          },
+          "original_fields": [
+            "1292426",
+            "GFI Group Inc.",
+            "SC TO-T/A",
+            "2015-02-10",
+            "edgar/data/1292426/0001193125-15-041786.txt"
+          ],
+          "physical_line": 87818,
+          "reason": "conflicting duplicate logical key",
+          "row": {
+            "accession_number": "0001193125-15-041786",
+            "archive_path": "edgar/data/1292426/0001193125-15-041786.txt",
+            "cik": "0001292426",
+            "company_name": "GFI Group Inc.",
+            "filing_date": "2015-02-10",
+            "form_type": "SC TO-T/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+            "source_sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+          }
+        },
+        {
+          "first_payload": {
+            "accession_number": "0001193125-15-056390",
+            "archive_path": "edgar/data/1292426/0001193125-15-056390.txt",
+            "cik": "0001292426",
+            "company_name": "GFI Group Inc.",
+            "filing_date": "2015-02-20",
+            "form_type": "SC 13D/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+            "source_sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+          },
+          "original_fields": [
+            "1292426",
+            "GFI Group Inc.",
+            "SC TO-T/A",
+            "2015-02-20",
+            "edgar/data/1292426/0001193125-15-056390.txt"
+          ],
+          "physical_line": 87819,
+          "reason": "conflicting duplicate logical key",
+          "row": {
+            "accession_number": "0001193125-15-056390",
+            "archive_path": "edgar/data/1292426/0001193125-15-056390.txt",
+            "cik": "0001292426",
+            "company_name": "GFI Group Inc.",
+            "filing_date": "2015-02-20",
+            "form_type": "SC TO-T/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+            "source_sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+          }
+        },
+        {
+          "first_payload": {
+            "accession_number": "0001193125-15-059955",
+            "archive_path": "edgar/data/1292426/0001193125-15-059955.txt",
+            "cik": "0001292426",
+            "company_name": "GFI Group Inc.",
+            "filing_date": "2015-02-24",
+            "form_type": "SC 13D/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+            "source_sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+          },
+          "original_fields": [
+            "1292426",
+            "GFI Group Inc.",
+            "SC TO-T/A",
+            "2015-02-24",
+            "edgar/data/1292426/0001193125-15-059955.txt"
+          ],
+          "physical_line": 87820,
+          "reason": "conflicting duplicate logical key",
+          "row": {
+            "accession_number": "0001193125-15-059955",
+            "archive_path": "edgar/data/1292426/0001193125-15-059955.txt",
+            "cik": "0001292426",
+            "company_name": "GFI Group Inc.",
+            "filing_date": "2015-02-24",
+            "form_type": "SC TO-T/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+            "source_sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+          }
+        },
+        {
+          "first_payload": {
+            "accession_number": "0001193125-15-070179",
+            "archive_path": "edgar/data/1292426/0001193125-15-070179.txt",
+            "cik": "0001292426",
+            "company_name": "GFI Group Inc.",
+            "filing_date": "2015-02-27",
+            "form_type": "SC 13D/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+            "source_sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+          },
+          "original_fields": [
+            "1292426",
+            "GFI Group Inc.",
+            "SC TO-T/A",
+            "2015-02-27",
+            "edgar/data/1292426/0001193125-15-070179.txt"
+          ],
+          "physical_line": 87821,
+          "reason": "conflicting duplicate logical key",
+          "row": {
+            "accession_number": "0001193125-15-070179",
+            "archive_path": "edgar/data/1292426/0001193125-15-070179.txt",
+            "cik": "0001292426",
+            "company_name": "GFI Group Inc.",
+            "filing_date": "2015-02-27",
+            "form_type": "SC TO-T/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+            "source_sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+          }
+        },
+        {
+          "first_payload": {
+            "accession_number": "0001193125-15-021049",
+            "archive_path": "edgar/data/1340127/0001193125-15-021049.txt",
+            "cik": "0001340127",
+            "company_name": "Carbonite Inc",
+            "filing_date": "2015-01-27",
+            "form_type": "SC 13D/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+            "source_sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+          },
+          "original_fields": [
+            "1340127",
+            "Carbonite Inc",
+            "SC TO-T/A",
+            "2015-01-27",
+            "edgar/data/1340127/0001193125-15-021049.txt"
+          ],
+          "physical_line": 102144,
+          "reason": "conflicting duplicate logical key",
+          "row": {
+            "accession_number": "0001193125-15-021049",
+            "archive_path": "edgar/data/1340127/0001193125-15-021049.txt",
+            "cik": "0001340127",
+            "company_name": "Carbonite Inc",
+            "filing_date": "2015-01-27",
+            "form_type": "SC TO-T/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+            "source_sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+          }
+        },
+        {
+          "first_payload": {
+            "accession_number": "0001193125-15-066935",
+            "archive_path": "edgar/data/1340127/0001193125-15-066935.txt",
+            "cik": "0001340127",
+            "company_name": "Carbonite Inc",
+            "filing_date": "2015-02-27",
+            "form_type": "SC 13D/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+            "source_sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+          },
+          "original_fields": [
+            "1340127",
+            "Carbonite Inc",
+            "SC TO-T/A",
+            "2015-02-27",
+            "edgar/data/1340127/0001193125-15-066935.txt"
+          ],
+          "physical_line": 102145,
+          "reason": "conflicting duplicate logical key",
+          "row": {
+            "accession_number": "0001193125-15-066935",
+            "archive_path": "edgar/data/1340127/0001193125-15-066935.txt",
+            "cik": "0001340127",
+            "company_name": "Carbonite Inc",
+            "filing_date": "2015-02-27",
+            "form_type": "SC TO-T/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+            "source_sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+          }
+        },
+        {
+          "first_payload": {
+            "accession_number": "0001193125-15-071803",
+            "archive_path": "edgar/data/1340127/0001193125-15-071803.txt",
+            "cik": "0001340127",
+            "company_name": "Carbonite Inc",
+            "filing_date": "2015-03-02",
+            "form_type": "SC 13D/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+            "source_sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+          },
+          "original_fields": [
+            "1340127",
+            "Carbonite Inc",
+            "SC TO-T/A",
+            "2015-03-02",
+            "edgar/data/1340127/0001193125-15-071803.txt"
+          ],
+          "physical_line": 102146,
+          "reason": "conflicting duplicate logical key",
+          "row": {
+            "accession_number": "0001193125-15-071803",
+            "archive_path": "edgar/data/1340127/0001193125-15-071803.txt",
+            "cik": "0001340127",
+            "company_name": "Carbonite Inc",
+            "filing_date": "2015-03-02",
+            "form_type": "SC TO-T/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+            "source_sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+          }
+        },
+        {
+          "first_payload": {
+            "accession_number": "0000000000-15-000865",
+            "archive_path": "edgar/data/1362705/0000000000-15-000865.txt",
+            "cik": "0001362705",
+            "company_name": "Sanchez Production Partners LLC",
+            "filing_date": "2015-01-07",
+            "form_type": "UPLOAD",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+            "source_sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+          },
+          "original_fields": [
+            "1362705",
+            "Sanchez Production Partners LP",
+            "UPLOAD",
+            "2015-01-07",
+            "edgar/data/1362705/0000000000-15-000865.txt"
+          ],
+          "physical_line": 109324,
+          "reason": "conflicting duplicate logical key",
+          "row": {
+            "accession_number": "0000000000-15-000865",
+            "archive_path": "edgar/data/1362705/0000000000-15-000865.txt",
+            "cik": "0001362705",
+            "company_name": "Sanchez Production Partners LP",
+            "filing_date": "2015-01-07",
+            "form_type": "UPLOAD",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+            "source_sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+          }
+        },
+        {
+          "first_payload": {
+            "accession_number": "0001193125-15-106428",
+            "archive_path": "edgar/data/1540400/0001193125-15-106428.txt",
+            "cik": "0001540400",
+            "company_name": "E2open Inc",
+            "filing_date": "2015-03-26",
+            "form_type": "SC 13D/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+            "source_sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+          },
+          "original_fields": [
+            "1540400",
+            "E2open Inc",
+            "SC TO-T/A",
+            "2015-03-26",
+            "edgar/data/1540400/0001193125-15-106428.txt"
+          ],
+          "physical_line": 176933,
+          "reason": "conflicting duplicate logical key",
+          "row": {
+            "accession_number": "0001193125-15-106428",
+            "archive_path": "edgar/data/1540400/0001193125-15-106428.txt",
+            "cik": "0001540400",
+            "company_name": "E2open Inc",
+            "filing_date": "2015-03-26",
+            "form_type": "SC TO-T/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+            "source_sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+          }
+        },
+        {
+          "first_payload": {
+            "accession_number": "0000000000-15-002246",
+            "archive_path": "edgar/data/1589526/0000000000-15-002246.txt",
+            "cik": "0001589526",
+            "company_name": "Blue Bird Corp",
+            "filing_date": "2015-01-15",
+            "form_type": "UPLOAD",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+            "source_sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+          },
+          "original_fields": [
+            "1589526",
+            "Hennessy Capital Acquisition Corp.",
+            "UPLOAD",
+            "2015-01-15",
+            "edgar/data/1589526/0000000000-15-002246.txt"
+          ],
+          "physical_line": 201427,
+          "reason": "conflicting duplicate logical key",
+          "row": {
+            "accession_number": "0000000000-15-002246",
+            "archive_path": "edgar/data/1589526/0000000000-15-002246.txt",
+            "cik": "0001589526",
+            "company_name": "Hennessy Capital Acquisition Corp.",
+            "filing_date": "2015-01-15",
+            "form_type": "UPLOAD",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+            "source_sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+          }
+        },
+        {
+          "first_payload": {
+            "accession_number": "0000000000-15-005342",
+            "archive_path": "edgar/data/1589526/0000000000-15-005342.txt",
+            "cik": "0001589526",
+            "company_name": "Blue Bird Corp",
+            "filing_date": "2015-01-29",
+            "form_type": "UPLOAD",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+            "source_sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+          },
+          "original_fields": [
+            "1589526",
+            "Hennessy Capital Acquisition Corp.",
+            "UPLOAD",
+            "2015-01-29",
+            "edgar/data/1589526/0000000000-15-005342.txt"
+          ],
+          "physical_line": 201428,
+          "reason": "conflicting duplicate logical key",
+          "row": {
+            "accession_number": "0000000000-15-005342",
+            "archive_path": "edgar/data/1589526/0000000000-15-005342.txt",
+            "cik": "0001589526",
+            "company_name": "Hennessy Capital Acquisition Corp.",
+            "filing_date": "2015-01-29",
+            "form_type": "UPLOAD",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+            "source_sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+          }
+        },
+        {
+          "first_payload": {
+            "accession_number": "0000000000-15-010752",
+            "archive_path": "edgar/data/1589526/0000000000-15-010752.txt",
+            "cik": "0001589526",
+            "company_name": "Blue Bird Corp",
+            "filing_date": "2015-02-20",
+            "form_type": "UPLOAD",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+            "source_sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+          },
+          "original_fields": [
+            "1589526",
+            "Hennessy Capital Acquisition Corp.",
+            "UPLOAD",
+            "2015-02-20",
+            "edgar/data/1589526/0000000000-15-010752.txt"
+          ],
+          "physical_line": 201429,
+          "reason": "conflicting duplicate logical key",
+          "row": {
+            "accession_number": "0000000000-15-010752",
+            "archive_path": "edgar/data/1589526/0000000000-15-010752.txt",
+            "cik": "0001589526",
+            "company_name": "Hennessy Capital Acquisition Corp.",
+            "filing_date": "2015-02-20",
+            "form_type": "UPLOAD",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+            "source_sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+          }
+        },
+        {
+          "first_payload": {
+            "accession_number": "0000000000-15-011642",
+            "archive_path": "edgar/data/1589526/0000000000-15-011642.txt",
+            "cik": "0001589526",
+            "company_name": "Blue Bird Corp",
+            "filing_date": "2015-02-25",
+            "form_type": "UPLOAD",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+            "source_sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+          },
+          "original_fields": [
+            "1589526",
+            "Hennessy Capital Acquisition Corp.",
+            "UPLOAD",
+            "2015-02-25",
+            "edgar/data/1589526/0000000000-15-011642.txt"
+          ],
+          "physical_line": 201430,
+          "reason": "conflicting duplicate logical key",
+          "row": {
+            "accession_number": "0000000000-15-011642",
+            "archive_path": "edgar/data/1589526/0000000000-15-011642.txt",
+            "cik": "0001589526",
+            "company_name": "Hennessy Capital Acquisition Corp.",
+            "filing_date": "2015-02-25",
+            "form_type": "UPLOAD",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+            "source_sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+          }
+        },
+        {
+          "first_payload": {
+            "accession_number": "0001174947-15-000482",
+            "archive_path": "edgar/data/921768/0001174947-15-000482.txt",
+            "cik": "0000921768",
+            "company_name": "BBX CAPITAL CORP",
+            "filing_date": "2015-03-20",
+            "form_type": "SC 13D/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+            "source_sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+          },
+          "original_fields": [
+            "921768",
+            "BBX CAPITAL CORP",
+            "SC TO-T",
+            "2015-03-20",
+            "edgar/data/921768/0001174947-15-000482.txt"
+          ],
+          "physical_line": 309384,
+          "reason": "conflicting duplicate logical key",
+          "row": {
+            "accession_number": "0001174947-15-000482",
+            "archive_path": "edgar/data/921768/0001174947-15-000482.txt",
+            "cik": "0000921768",
+            "company_name": "BBX CAPITAL CORP",
+            "filing_date": "2015-03-20",
+            "form_type": "SC TO-T",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+            "source_sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+          }
+        }
+      ],
+      "date_bounds": [
+        "2015-01-02",
+        "2015-03-31"
+      ],
+      "distinct_keys": 318623,
+      "evidence_id": "SEC-0142",
+      "identical_duplicate_keys": 0,
+      "original_path": "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-1/specimens/984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728.zip",
+      "quarter_counts": {
+        "2015Q1": 318647
+      },
+      "root_alias_matching_quarter_context": false,
+      "rows": 318647,
+      "selected_family": "quarterly ISO-date master",
+      "selected_rows": [
+        {
+          "line": 12,
+          "original_fields": [
+            "1000032",
+            "BINCH JAMES G",
+            "4",
+            "2015-03-03",
+            "edgar/data/1000032/0001209191-15-021425.txt"
+          ],
+          "row": {
+            "accession_number": "0001209191-15-021425",
+            "archive_path": "edgar/data/1000032/0001209191-15-021425.txt",
+            "cik": "0001000032",
+            "company_name": "BINCH JAMES G",
+            "filing_date": "2015-03-03",
+            "form_type": "4",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+            "source_sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+          }
+        },
+        {
+          "line": 95,
+          "original_fields": [
+            "1000209",
+            "MEDALLION FINANCIAL CORP",
+            "3",
+            "2015-03-31",
+            "edgar/data/1000209/0001209191-15-030465.txt"
+          ],
+          "row": {
+            "accession_number": "0001209191-15-030465",
+            "archive_path": "edgar/data/1000209/0001209191-15-030465.txt",
+            "cik": "0001000209",
+            "company_name": "MEDALLION FINANCIAL CORP",
+            "filing_date": "2015-03-31",
+            "form_type": "3",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+            "source_sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+          }
+        },
+        {
+          "line": 113,
+          "original_fields": [
+            "1000209",
+            "MEDALLION FINANCIAL CORP",
+            "8-K",
+            "2015-01-02",
+            "edgar/data/1000209/0001193125-15-000678.txt"
+          ],
+          "row": {
+            "accession_number": "0001193125-15-000678",
+            "archive_path": "edgar/data/1000209/0001193125-15-000678.txt",
+            "cik": "0001000209",
+            "company_name": "MEDALLION FINANCIAL CORP",
+            "filing_date": "2015-01-02",
+            "form_type": "8-K",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+            "source_sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+          }
+        }
+      ],
+      "sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728",
+      "source": {
+        "canonical_url": "https://www.sec.gov/Archives/edgar/full-index/2015/QTR1/master.zip",
+        "kind": "quarterly",
+        "period": "2015Q1",
+        "representation": "zip",
+        "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998"
+      },
+      "source_acceptance": "blocked"
+    },
+    {
+      "bytes": 3502663,
+      "conflicts": [
+        {
+          "first_payload": {
+            "accession_number": "0001104659-26-081696",
+            "archive_path": "edgar/data/1326200/0001104659-26-081696.txt",
+            "cik": "0001326200",
+            "company_name": "GENCO SHIPPING & TRADING LTD",
+            "filing_date": "2026-07-08",
+            "form_type": "SC 13D/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "5005901a1e8132207ea0cf7a0d4bec1d7b9ca3a6f0371b9e45c9eb2863045086",
+            "source_sha256": "393a535f84b71ed34845f67aa5e5275ecc86afeb1a6558ad5623b0d7d0babe71"
+          },
+          "original_fields": [
+            "1326200",
+            "GENCO SHIPPING & TRADING LTD",
+            "SC TO-T/A",
+            "2026-07-08",
+            "edgar/data/1326200/0001104659-26-081696.txt"
+          ],
+          "physical_line": 40292,
+          "reason": "conflicting duplicate logical key",
+          "row": {
+            "accession_number": "0001104659-26-081696",
+            "archive_path": "edgar/data/1326200/0001104659-26-081696.txt",
+            "cik": "0001326200",
+            "company_name": "GENCO SHIPPING & TRADING LTD",
+            "filing_date": "2026-07-08",
+            "form_type": "SC TO-T/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "5005901a1e8132207ea0cf7a0d4bec1d7b9ca3a6f0371b9e45c9eb2863045086",
+            "source_sha256": "393a535f84b71ed34845f67aa5e5275ecc86afeb1a6558ad5623b0d7d0babe71"
+          }
+        },
+        {
+          "first_payload": {
+            "accession_number": "0001104659-26-081818",
+            "archive_path": "edgar/data/1326200/0001104659-26-081818.txt",
+            "cik": "0001326200",
+            "company_name": "GENCO SHIPPING & TRADING LTD",
+            "filing_date": "2026-07-08",
+            "form_type": "SC 13D/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "5005901a1e8132207ea0cf7a0d4bec1d7b9ca3a6f0371b9e45c9eb2863045086",
+            "source_sha256": "393a535f84b71ed34845f67aa5e5275ecc86afeb1a6558ad5623b0d7d0babe71"
+          },
+          "original_fields": [
+            "1326200",
+            "GENCO SHIPPING & TRADING LTD",
+            "SC TO-T/A",
+            "2026-07-08",
+            "edgar/data/1326200/0001104659-26-081818.txt"
+          ],
+          "physical_line": 40293,
+          "reason": "conflicting duplicate logical key",
+          "row": {
+            "accession_number": "0001104659-26-081818",
+            "archive_path": "edgar/data/1326200/0001104659-26-081818.txt",
+            "cik": "0001326200",
+            "company_name": "GENCO SHIPPING & TRADING LTD",
+            "filing_date": "2026-07-08",
+            "form_type": "SC TO-T/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "5005901a1e8132207ea0cf7a0d4bec1d7b9ca3a6f0371b9e45c9eb2863045086",
+            "source_sha256": "393a535f84b71ed34845f67aa5e5275ecc86afeb1a6558ad5623b0d7d0babe71"
+          }
+        },
+        {
+          "first_payload": {
+            "accession_number": "0001104659-26-082921",
+            "archive_path": "edgar/data/1326200/0001104659-26-082921.txt",
+            "cik": "0001326200",
+            "company_name": "GENCO SHIPPING & TRADING LTD",
+            "filing_date": "2026-07-13",
+            "form_type": "SC 13D/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "5005901a1e8132207ea0cf7a0d4bec1d7b9ca3a6f0371b9e45c9eb2863045086",
+            "source_sha256": "393a535f84b71ed34845f67aa5e5275ecc86afeb1a6558ad5623b0d7d0babe71"
+          },
+          "original_fields": [
+            "1326200",
+            "GENCO SHIPPING & TRADING LTD",
+            "SC TO-T/A",
+            "2026-07-13",
+            "edgar/data/1326200/0001104659-26-082921.txt"
+          ],
+          "physical_line": 40294,
+          "reason": "conflicting duplicate logical key",
+          "row": {
+            "accession_number": "0001104659-26-082921",
+            "archive_path": "edgar/data/1326200/0001104659-26-082921.txt",
+            "cik": "0001326200",
+            "company_name": "GENCO SHIPPING & TRADING LTD",
+            "filing_date": "2026-07-13",
+            "form_type": "SC TO-T/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "5005901a1e8132207ea0cf7a0d4bec1d7b9ca3a6f0371b9e45c9eb2863045086",
+            "source_sha256": "393a535f84b71ed34845f67aa5e5275ecc86afeb1a6558ad5623b0d7d0babe71"
+          }
+        },
+        {
+          "first_payload": {
+            "accession_number": "0001104659-26-086886",
+            "archive_path": "edgar/data/1326200/0001104659-26-086886.txt",
+            "cik": "0001326200",
+            "company_name": "GENCO SHIPPING & TRADING LTD",
+            "filing_date": "2026-07-27",
+            "form_type": "SC 13D/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "5005901a1e8132207ea0cf7a0d4bec1d7b9ca3a6f0371b9e45c9eb2863045086",
+            "source_sha256": "393a535f84b71ed34845f67aa5e5275ecc86afeb1a6558ad5623b0d7d0babe71"
+          },
+          "original_fields": [
+            "1326200",
+            "GENCO SHIPPING & TRADING LTD",
+            "SC TO-T/A",
+            "2026-07-27",
+            "edgar/data/1326200/0001104659-26-086886.txt"
+          ],
+          "physical_line": 40295,
+          "reason": "conflicting duplicate logical key",
+          "row": {
+            "accession_number": "0001104659-26-086886",
+            "archive_path": "edgar/data/1326200/0001104659-26-086886.txt",
+            "cik": "0001326200",
+            "company_name": "GENCO SHIPPING & TRADING LTD",
+            "filing_date": "2026-07-27",
+            "form_type": "SC TO-T/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "5005901a1e8132207ea0cf7a0d4bec1d7b9ca3a6f0371b9e45c9eb2863045086",
+            "source_sha256": "393a535f84b71ed34845f67aa5e5275ecc86afeb1a6558ad5623b0d7d0babe71"
+          }
+        },
+        {
+          "first_payload": {
+            "accession_number": "0001096906-26-001428",
+            "archive_path": "edgar/data/706698/0001096906-26-001428.txt",
+            "cik": "0000706698",
+            "company_name": "UTAH MEDICAL PRODUCTS INC",
+            "filing_date": "2026-09-24",
+            "form_type": "SC 13E3",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "5005901a1e8132207ea0cf7a0d4bec1d7b9ca3a6f0371b9e45c9eb2863045086",
+            "source_sha256": "393a535f84b71ed34845f67aa5e5275ecc86afeb1a6558ad5623b0d7d0babe71"
+          },
+          "original_fields": [
+            "706698",
+            "UTAH MEDICAL PRODUCTS INC",
+            "SC TO-I",
+            "2026-09-24",
+            "edgar/data/706698/0001096906-26-001428.txt"
+          ],
+          "physical_line": 252318,
+          "reason": "conflicting duplicate logical key",
+          "row": {
+            "accession_number": "0001096906-26-001428",
+            "archive_path": "edgar/data/706698/0001096906-26-001428.txt",
+            "cik": "0000706698",
+            "company_name": "UTAH MEDICAL PRODUCTS INC",
+            "filing_date": "2026-09-24",
+            "form_type": "SC TO-I",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "5005901a1e8132207ea0cf7a0d4bec1d7b9ca3a6f0371b9e45c9eb2863045086",
+            "source_sha256": "393a535f84b71ed34845f67aa5e5275ecc86afeb1a6558ad5623b0d7d0babe71"
+          }
+        },
+        {
+          "first_payload": {
+            "accession_number": "0001654954-26-008429",
+            "archive_path": "edgar/data/880406/0001654954-26-008429.txt",
+            "cik": "0000880406",
+            "company_name": "Herzfeld Credit Income Fund, Inc",
+            "filing_date": "2026-09-17",
+            "form_type": "SC 13E3",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "5005901a1e8132207ea0cf7a0d4bec1d7b9ca3a6f0371b9e45c9eb2863045086",
+            "source_sha256": "393a535f84b71ed34845f67aa5e5275ecc86afeb1a6558ad5623b0d7d0babe71"
+          },
+          "original_fields": [
+            "880406",
+            "Herzfeld Credit Income Fund, Inc",
+            "SC TO-I",
+            "2026-09-17",
+            "edgar/data/880406/0001654954-26-008429.txt"
+          ],
+          "physical_line": 277233,
+          "reason": "conflicting duplicate logical key",
+          "row": {
+            "accession_number": "0001654954-26-008429",
+            "archive_path": "edgar/data/880406/0001654954-26-008429.txt",
+            "cik": "0000880406",
+            "company_name": "Herzfeld Credit Income Fund, Inc",
+            "filing_date": "2026-09-17",
+            "form_type": "SC TO-I",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "5005901a1e8132207ea0cf7a0d4bec1d7b9ca3a6f0371b9e45c9eb2863045086",
+            "source_sha256": "393a535f84b71ed34845f67aa5e5275ecc86afeb1a6558ad5623b0d7d0babe71"
+          }
+        }
+      ],
+      "date_bounds": [
+        "2026-07-01",
+        "2026-09-30"
+      ],
+      "distinct_keys": 302309,
+      "evidence_id": "SEC-0143",
+      "identical_duplicate_keys": 0,
+      "original_path": "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-1/specimens/393a535f84b71ed34845f67aa5e5275ecc86afeb1a6558ad5623b0d7d0babe71.zip",
+      "quarter_counts": {
+        "2026Q3": 302315
+      },
+      "root_alias_matching_quarter_context": false,
+      "rows": 302315,
+      "selected_family": "quarterly ISO-date master",
+      "selected_rows": [
+        {
+          "line": 12,
+          "original_fields": [
+            "1000097",
+            "KINGDON CAPITAL MANAGEMENT, L.L.C.",
+            "13F-HR",
+            "2026-08-14",
+            "edgar/data/1000097/0001000097-26-000006.txt"
+          ],
+          "row": {
+            "accession_number": "0001000097-26-000006",
+            "archive_path": "edgar/data/1000097/0001000097-26-000006.txt",
+            "cik": "0001000097",
+            "company_name": "KINGDON CAPITAL MANAGEMENT, L.L.C.",
+            "filing_date": "2026-08-14",
+            "form_type": "13F-HR",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "5005901a1e8132207ea0cf7a0d4bec1d7b9ca3a6f0371b9e45c9eb2863045086",
+            "source_sha256": "393a535f84b71ed34845f67aa5e5275ecc86afeb1a6558ad5623b0d7d0babe71"
+          }
+        },
+        {
+          "line": 32,
+          "original_fields": [
+            "1000209",
+            "MEDALLION FINANCIAL CORP",
+            "EFFECT",
+            "2026-07-01",
+            "edgar/data/1000209/9999999995-26-002181.txt"
+          ],
+          "row": {
+            "accession_number": "9999999995-26-002181",
+            "archive_path": "edgar/data/1000209/9999999995-26-002181.txt",
+            "cik": "0001000209",
+            "company_name": "MEDALLION FINANCIAL CORP",
+            "filing_date": "2026-07-01",
+            "form_type": "EFFECT",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "5005901a1e8132207ea0cf7a0d4bec1d7b9ca3a6f0371b9e45c9eb2863045086",
+            "source_sha256": "393a535f84b71ed34845f67aa5e5275ecc86afeb1a6558ad5623b0d7d0babe71"
+          }
+        },
+        {
+          "line": 989,
+          "original_fields": [
+            "1000275",
+            "ROYAL BANK OF CANADA",
+            "424B2",
+            "2026-09-30",
+            "edgar/data/1000275/0000950103-26-014800.txt"
+          ],
+          "row": {
+            "accession_number": "0000950103-26-014800",
+            "archive_path": "edgar/data/1000275/0000950103-26-014800.txt",
+            "cik": "0001000275",
+            "company_name": "ROYAL BANK OF CANADA",
+            "filing_date": "2026-09-30",
+            "form_type": "424B2",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "5005901a1e8132207ea0cf7a0d4bec1d7b9ca3a6f0371b9e45c9eb2863045086",
+            "source_sha256": "393a535f84b71ed34845f67aa5e5275ecc86afeb1a6558ad5623b0d7d0babe71"
+          }
+        }
+      ],
+      "sha256": "393a535f84b71ed34845f67aa5e5275ecc86afeb1a6558ad5623b0d7d0babe71",
+      "source": {
+        "canonical_url": "https://www.sec.gov/Archives/edgar/full-index/2026/QTR3/master.zip",
+        "kind": "quarterly",
+        "period": "2026Q3",
+        "representation": "zip",
+        "source_id": "5005901a1e8132207ea0cf7a0d4bec1d7b9ca3a6f0371b9e45c9eb2863045086"
+      },
+      "source_acceptance": "blocked"
+    },
+    {
+      "bytes": 178884,
+      "conflicts": [],
+      "date_bounds": [
+        "2026-10-01",
+        "2026-10-02"
+      ],
+      "distinct_keys": 12479,
+      "evidence_id": "SEC-0144",
+      "identical_duplicate_keys": 0,
+      "original_path": "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-1/specimens/ca5f8a7b9ed1689a334f204456a7ecc70a63176506e9d20f9d149cd11d1201b8.zip",
+      "quarter_counts": {
+        "2026Q4": 12479
+      },
+      "root_alias_matching_quarter_context": false,
+      "rows": 12479,
+      "selected_family": "quarterly ISO-date master",
+      "selected_rows": [
+        {
+          "line": 12,
+          "original_fields": [
+            "1000275",
+            "ROYAL BANK OF CANADA",
+            "424B2",
+            "2026-10-01",
+            "edgar/data/1000275/0000950103-26-014887.txt"
+          ],
+          "row": {
+            "accession_number": "0000950103-26-014887",
+            "archive_path": "edgar/data/1000275/0000950103-26-014887.txt",
+            "cik": "0001000275",
+            "company_name": "ROYAL BANK OF CANADA",
+            "filing_date": "2026-10-01",
+            "form_type": "424B2",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "d64895140b037ef3df3e0c867437b555053c3a14c33d8c0c3526c9067354d0c7",
+            "source_sha256": "ca5f8a7b9ed1689a334f204456a7ecc70a63176506e9d20f9d149cd11d1201b8"
+          }
+        },
+        {
+          "line": 35,
+          "original_fields": [
+            "1000275",
+            "ROYAL BANK OF CANADA",
+            "424B2",
+            "2026-10-02",
+            "edgar/data/1000275/0000950103-26-014973.txt"
+          ],
+          "row": {
+            "accession_number": "0000950103-26-014973",
+            "archive_path": "edgar/data/1000275/0000950103-26-014973.txt",
+            "cik": "0001000275",
+            "company_name": "ROYAL BANK OF CANADA",
+            "filing_date": "2026-10-02",
+            "form_type": "424B2",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "d64895140b037ef3df3e0c867437b555053c3a14c33d8c0c3526c9067354d0c7",
+            "source_sha256": "ca5f8a7b9ed1689a334f204456a7ecc70a63176506e9d20f9d149cd11d1201b8"
+          }
+        }
+      ],
+      "sha256": "ca5f8a7b9ed1689a334f204456a7ecc70a63176506e9d20f9d149cd11d1201b8",
+      "source": {
+        "canonical_url": "https://www.sec.gov/Archives/edgar/full-index/2026/QTR4/master.zip",
+        "kind": "quarterly",
+        "period": "2026Q4",
+        "representation": "zip",
+        "source_id": "d64895140b037ef3df3e0c867437b555053c3a14c33d8c0c3526c9067354d0c7"
+      },
+      "source_acceptance": "accepted"
+    },
+    {
+      "bytes": 178884,
+      "conflicts": [],
+      "date_bounds": [
+        "2026-10-01",
+        "2026-10-02"
+      ],
+      "distinct_keys": 12479,
+      "evidence_id": "SEC-0145",
+      "identical_duplicate_keys": 0,
+      "original_path": "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-1/specimens/ca5f8a7b9ed1689a334f204456a7ecc70a63176506e9d20f9d149cd11d1201b8.zip",
+      "quarter_counts": {
+        "2026Q4": 12479
+      },
+      "root_alias_matching_quarter_context": true,
+      "rows": 12479,
+      "selected_family": "quarterly ISO-date master",
+      "selected_rows": [
+        {
+          "line": 12,
+          "original_fields": [
+            "1000275",
+            "ROYAL BANK OF CANADA",
+            "424B2",
+            "2026-10-01",
+            "edgar/data/1000275/0000950103-26-014887.txt"
+          ],
+          "row": {
+            "accession_number": "0000950103-26-014887",
+            "archive_path": "edgar/data/1000275/0000950103-26-014887.txt",
+            "cik": "0001000275",
+            "company_name": "ROYAL BANK OF CANADA",
+            "filing_date": "2026-10-01",
+            "form_type": "424B2",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "d64895140b037ef3df3e0c867437b555053c3a14c33d8c0c3526c9067354d0c7",
+            "source_sha256": "ca5f8a7b9ed1689a334f204456a7ecc70a63176506e9d20f9d149cd11d1201b8"
+          }
+        },
+        {
+          "line": 35,
+          "original_fields": [
+            "1000275",
+            "ROYAL BANK OF CANADA",
+            "424B2",
+            "2026-10-02",
+            "edgar/data/1000275/0000950103-26-014973.txt"
+          ],
+          "row": {
+            "accession_number": "0000950103-26-014973",
+            "archive_path": "edgar/data/1000275/0000950103-26-014973.txt",
+            "cik": "0001000275",
+            "company_name": "ROYAL BANK OF CANADA",
+            "filing_date": "2026-10-02",
+            "form_type": "424B2",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "d64895140b037ef3df3e0c867437b555053c3a14c33d8c0c3526c9067354d0c7",
+            "source_sha256": "ca5f8a7b9ed1689a334f204456a7ecc70a63176506e9d20f9d149cd11d1201b8"
+          }
+        }
+      ],
+      "sha256": "ca5f8a7b9ed1689a334f204456a7ecc70a63176506e9d20f9d149cd11d1201b8",
+      "source": {
+        "canonical_url": "https://www.sec.gov/Archives/edgar/full-index/2026/QTR4/master.zip",
+        "kind": "quarterly",
+        "period": "2026Q4",
+        "representation": "zip",
+        "source_id": "d64895140b037ef3df3e0c867437b555053c3a14c33d8c0c3526c9067354d0c7"
+      },
+      "source_acceptance": "accepted"
+    },
+    {
+      "bytes": 320256,
+      "conflicts": [],
+      "date_bounds": [
+        "2025-08-25",
+        "2026-09-30"
+      ],
+      "distinct_keys": 3543,
+      "evidence_id": "SEC-0146",
+      "identical_duplicate_keys": 51,
+      "original_path": "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-1/specimens/8ec83de06534af79673887618c0125184a76e9a3db79843c95d3558561ddd018.idx",
+      "quarter_counts": {
+        "2025Q3": 1,
+        "2025Q4": 2,
+        "2026Q1": 5,
+        "2026Q2": 8,
+        "2026Q3": 3578
+      },
+      "root_alias_matching_quarter_context": false,
+      "rows": 3594,
+      "selected_family": "daily compact-date master",
+      "selected_rows": [
+        {
+          "line": 8,
+          "original_fields": [
+            "1000275",
+            "ROYAL BANK OF CANADA",
+            "424B2",
+            "20260930",
+            "edgar/data/1000275/0000950103-26-014800.txt"
+          ],
+          "row": {
+            "accession_number": "0000950103-26-014800",
+            "archive_path": "edgar/data/1000275/0000950103-26-014800.txt",
+            "cik": "0001000275",
+            "company_name": "ROYAL BANK OF CANADA",
+            "filing_date": "2026-09-30",
+            "form_type": "424B2",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "5c53a492fdd84a636310a1319c1217b7d107d8be5f3c2ec7c64efd70baf244ec",
+            "source_sha256": "8ec83de06534af79673887618c0125184a76e9a3db79843c95d3558561ddd018"
+          }
+        },
+        {
+          "line": 2355,
+          "original_fields": [
+            "2083101",
+            "Top Leader Universal Holdings Ltd",
+            "DRS",
+            "20250825",
+            "edgar/data/2083101/0001213900-25-080220.txt"
+          ],
+          "row": {
+            "accession_number": "0001213900-25-080220",
+            "archive_path": "edgar/data/2083101/0001213900-25-080220.txt",
+            "cik": "0002083101",
+            "company_name": "Top Leader Universal Holdings Ltd",
+            "filing_date": "2025-08-25",
+            "form_type": "DRS",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "5c53a492fdd84a636310a1319c1217b7d107d8be5f3c2ec7c64efd70baf244ec",
+            "source_sha256": "8ec83de06534af79673887618c0125184a76e9a3db79843c95d3558561ddd018"
+          }
+        }
+      ],
+      "sha256": "8ec83de06534af79673887618c0125184a76e9a3db79843c95d3558561ddd018",
+      "source": {
+        "canonical_url": "https://www.sec.gov/Archives/edgar/daily-index/2026/QTR3/master.20260930.idx",
+        "kind": "daily",
+        "period": "2026-09-30",
+        "representation": "idx",
+        "source_id": "5c53a492fdd84a636310a1319c1217b7d107d8be5f3c2ec7c64efd70baf244ec"
+      },
+      "source_acceptance": "accepted"
+    },
+    {
+      "bytes": 481733,
+      "conflicts": [],
+      "date_bounds": [
+        "2026-08-12",
+        "2026-10-01"
+      ],
+      "distinct_keys": 5435,
+      "evidence_id": "SEC-0147",
+      "identical_duplicate_keys": 92,
+      "original_path": "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-1/specimens/529aabd8111461c373b409da01e106a75662af200ac75f9545106a55b4d8ba17.idx",
+      "quarter_counts": {
+        "2026Q3": 29,
+        "2026Q4": 5498
+      },
+      "root_alias_matching_quarter_context": false,
+      "rows": 5527,
+      "selected_family": "daily compact-date master",
+      "selected_rows": [
+        {
+          "line": 8,
+          "original_fields": [
+            "1000275",
+            "ROYAL BANK OF CANADA",
+            "424B2",
+            "20261001",
+            "edgar/data/1000275/0000950103-26-014887.txt"
+          ],
+          "row": {
+            "accession_number": "0000950103-26-014887",
+            "archive_path": "edgar/data/1000275/0000950103-26-014887.txt",
+            "cik": "0001000275",
+            "company_name": "ROYAL BANK OF CANADA",
+            "filing_date": "2026-10-01",
+            "form_type": "424B2",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "6cf7f339fd98f08d888586fbf41d907cb071d3a54259128e659f51e1f7caaa72",
+            "source_sha256": "529aabd8111461c373b409da01e106a75662af200ac75f9545106a55b4d8ba17"
+          }
+        },
+        {
+          "line": 3591,
+          "original_fields": [
+            "2079013",
+            "Hall Chadwick Acquisition Corp",
+            "DRS",
+            "20260812",
+            "edgar/data/2079013/0001829126-26-008713.txt"
+          ],
+          "row": {
+            "accession_number": "0001829126-26-008713",
+            "archive_path": "edgar/data/2079013/0001829126-26-008713.txt",
+            "cik": "0002079013",
+            "company_name": "Hall Chadwick Acquisition Corp",
+            "filing_date": "2026-08-12",
+            "form_type": "DRS",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "6cf7f339fd98f08d888586fbf41d907cb071d3a54259128e659f51e1f7caaa72",
+            "source_sha256": "529aabd8111461c373b409da01e106a75662af200ac75f9545106a55b4d8ba17"
+          }
+        }
+      ],
+      "sha256": "529aabd8111461c373b409da01e106a75662af200ac75f9545106a55b4d8ba17",
+      "source": {
+        "canonical_url": "https://www.sec.gov/Archives/edgar/daily-index/2026/QTR4/master.20261001.idx",
+        "kind": "daily",
+        "period": "2026-10-01",
+        "representation": "idx",
+        "source_id": "6cf7f339fd98f08d888586fbf41d907cb071d3a54259128e659f51e1f7caaa72"
+      },
+      "source_acceptance": "accepted"
+    },
+    {
+      "bytes": 621000,
+      "conflicts": [],
+      "date_bounds": [
+        "2026-03-31",
+        "2026-10-02"
+      ],
+      "distinct_keys": 7090,
+      "evidence_id": "SEC-0148",
+      "identical_duplicate_keys": 69,
+      "original_path": "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-1/specimens/17f223abb09fc7488947f0ca9e4686167927a09a2f342d8bcefd0d445fdbc3eb.idx",
+      "quarter_counts": {
+        "2026Q1": 1,
+        "2026Q2": 1,
+        "2026Q3": 15,
+        "2026Q4": 7142
+      },
+      "root_alias_matching_quarter_context": false,
+      "rows": 7159,
+      "selected_family": "daily compact-date master",
+      "selected_rows": [
+        {
+          "line": 8,
+          "original_fields": [
+            "1000275",
+            "ROYAL BANK OF CANADA",
+            "424B2",
+            "20261002",
+            "edgar/data/1000275/0000950103-26-014973.txt"
+          ],
+          "row": {
+            "accession_number": "0000950103-26-014973",
+            "archive_path": "edgar/data/1000275/0000950103-26-014973.txt",
+            "cik": "0001000275",
+            "company_name": "ROYAL BANK OF CANADA",
+            "filing_date": "2026-10-02",
+            "form_type": "424B2",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "0a6a3b5899f59720e13ac68455ccce6375e2065fc210d9dda6f00c3be4371bf4",
+            "source_sha256": "17f223abb09fc7488947f0ca9e4686167927a09a2f342d8bcefd0d445fdbc3eb"
+          }
+        },
+        {
+          "line": 6072,
+          "original_fields": [
+            "715837",
+            "LPC LTD",
+            "DRS",
+            "20260331",
+            "edgar/data/715837/0001213900-26-037256.txt"
+          ],
+          "row": {
+            "accession_number": "0001213900-26-037256",
+            "archive_path": "edgar/data/715837/0001213900-26-037256.txt",
+            "cik": "0000715837",
+            "company_name": "LPC LTD",
+            "filing_date": "2026-03-31",
+            "form_type": "DRS",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "0a6a3b5899f59720e13ac68455ccce6375e2065fc210d9dda6f00c3be4371bf4",
+            "source_sha256": "17f223abb09fc7488947f0ca9e4686167927a09a2f342d8bcefd0d445fdbc3eb"
+          }
+        }
+      ],
+      "sha256": "17f223abb09fc7488947f0ca9e4686167927a09a2f342d8bcefd0d445fdbc3eb",
+      "source": {
+        "canonical_url": "https://www.sec.gov/Archives/edgar/daily-index/2026/QTR4/master.20261002.idx",
+        "kind": "daily",
+        "period": "2026-10-02",
+        "representation": "idx",
+        "source_id": "0a6a3b5899f59720e13ac68455ccce6375e2065fc210d9dda6f00c3be4371bf4"
+      },
+      "source_acceptance": "accepted"
+    },
+    {
+      "bytes": 273232,
+      "conflicts": [],
+      "date_bounds": [
+        "2025-05-28",
+        "2025-12-31"
+      ],
+      "distinct_keys": 3016,
+      "evidence_id": "SEC-0149",
+      "identical_duplicate_keys": 68,
+      "original_path": "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-1/specimens/a5f5bd3f0ea83804b13b3a89f57273ddff78c0eefd0cbc302ecc81400408029b.idx",
+      "quarter_counts": {
+        "2025Q2": 1,
+        "2025Q3": 3,
+        "2025Q4": 3080
+      },
+      "root_alias_matching_quarter_context": false,
+      "rows": 3084,
+      "selected_family": "daily compact-date master",
+      "selected_rows": [
+        {
+          "line": 8,
+          "original_fields": [
+            "1000191",
+            "RIVERSOURCE VARIABLE ACCOUNT 10",
+            "497VPI",
+            "20251231",
+            "edgar/data/1000191/0001193125-25-338291.txt"
+          ],
+          "row": {
+            "accession_number": "0001193125-25-338291",
+            "archive_path": "edgar/data/1000191/0001193125-25-338291.txt",
+            "cik": "0001000191",
+            "company_name": "RIVERSOURCE VARIABLE ACCOUNT 10",
+            "filing_date": "2025-12-31",
+            "form_type": "497VPI",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "138a5efea354b3d96fd2001a6d537596ac5187bc9a17200d081e967042d8a5ec",
+            "source_sha256": "a5f5bd3f0ea83804b13b3a89f57273ddff78c0eefd0cbc302ecc81400408029b"
+          }
+        },
+        {
+          "line": 2118,
+          "original_fields": [
+            "2065821",
+            "Little West Holdings Inc.",
+            "DRS",
+            "20250528",
+            "edgar/data/2065821/0001213900-25-048133.txt"
+          ],
+          "row": {
+            "accession_number": "0001213900-25-048133",
+            "archive_path": "edgar/data/2065821/0001213900-25-048133.txt",
+            "cik": "0002065821",
+            "company_name": "Little West Holdings Inc.",
+            "filing_date": "2025-05-28",
+            "form_type": "DRS",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "138a5efea354b3d96fd2001a6d537596ac5187bc9a17200d081e967042d8a5ec",
+            "source_sha256": "a5f5bd3f0ea83804b13b3a89f57273ddff78c0eefd0cbc302ecc81400408029b"
+          }
+        }
+      ],
+      "sha256": "a5f5bd3f0ea83804b13b3a89f57273ddff78c0eefd0cbc302ecc81400408029b",
+      "source": {
+        "canonical_url": "https://www.sec.gov/Archives/edgar/daily-index/2025/QTR4/master.20251231.idx",
+        "kind": "daily",
+        "period": "2025-12-31",
+        "representation": "idx",
+        "source_id": "138a5efea354b3d96fd2001a6d537596ac5187bc9a17200d081e967042d8a5ec"
+      },
+      "source_acceptance": "accepted"
+    },
+    {
+      "bytes": 417467,
+      "conflicts": [],
+      "date_bounds": [
+        "2025-08-27",
+        "2026-01-02"
+      ],
+      "distinct_keys": 4731,
+      "evidence_id": "SEC-0150",
+      "identical_duplicate_keys": 46,
+      "original_path": "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-1/specimens/caaf4ed84be07de97f100a3e04afbb03f4c28d080faf892b35a20e2e96125ba7.idx",
+      "quarter_counts": {
+        "2025Q3": 2,
+        "2025Q4": 34,
+        "2026Q1": 4741
+      },
+      "root_alias_matching_quarter_context": false,
+      "rows": 4777,
+      "selected_family": "daily compact-date master",
+      "selected_rows": [
+        {
+          "line": 8,
+          "original_fields": [
+            "1000045",
+            "OLD MARKET CAPITAL Corp",
+            "15-12G/A",
+            "20260102",
+            "edgar/data/1000045/0001437749-26-000015.txt"
+          ],
+          "row": {
+            "accession_number": "0001437749-26-000015",
+            "archive_path": "edgar/data/1000045/0001437749-26-000015.txt",
+            "cik": "0001000045",
+            "company_name": "OLD MARKET CAPITAL Corp",
+            "filing_date": "2026-01-02",
+            "form_type": "15-12G/A",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "299b14f5717ed7cc6e25f5af3fcb680238b9e74af593eb35a57e4909e7d4c293",
+            "source_sha256": "caaf4ed84be07de97f100a3e04afbb03f4c28d080faf892b35a20e2e96125ba7"
+          }
+        },
+        {
+          "line": 3662,
+          "original_fields": [
+            "2083477",
+            "APS BDC, LLC",
+            "DRS",
+            "20250827",
+            "edgar/data/2083477/0000950123-25-008593.txt"
+          ],
+          "row": {
+            "accession_number": "0000950123-25-008593",
+            "archive_path": "edgar/data/2083477/0000950123-25-008593.txt",
+            "cik": "0002083477",
+            "company_name": "APS BDC, LLC",
+            "filing_date": "2025-08-27",
+            "form_type": "DRS",
+            "parser_version": "sec-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "299b14f5717ed7cc6e25f5af3fcb680238b9e74af593eb35a57e4909e7d4c293",
+            "source_sha256": "caaf4ed84be07de97f100a3e04afbb03f4c28d080faf892b35a20e2e96125ba7"
+          }
+        }
+      ],
+      "sha256": "caaf4ed84be07de97f100a3e04afbb03f4c28d080faf892b35a20e2e96125ba7",
+      "source": {
+        "canonical_url": "https://www.sec.gov/Archives/edgar/daily-index/2026/QTR1/master.20260102.idx",
+        "kind": "daily",
+        "period": "2026-01-02",
+        "representation": "idx",
+        "source_id": "299b14f5717ed7cc6e25f5af3fcb680238b9e74af593eb35a57e4909e7d4c293"
+      },
+      "source_acceptance": "accepted"
+    }
+  ],
+  "runtime_seconds": 125.7240011668764,
+  "scope": "ten complete retained receipts only; synthetic legacy goldens are separate tests"
+}

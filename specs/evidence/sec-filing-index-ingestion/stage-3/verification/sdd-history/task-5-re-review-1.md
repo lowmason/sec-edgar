@@ -1,0 +1,2 @@
+M1 ADDRESSED; New Critical/Important/Minor none. Reviewer task5_review capable gpt-6-astra; 1d14c9c..1ec404a.
+Real manifest validation successful (test_etl_publication.py:456–459); actual data iterator emits real row into spool then late OSError (:461–469); first external next raises, premature yield would fail (:471–475); order/row identity/subsequent unchanged two-row capture readable (:476–479). Production unchanged, no tests rerun in review.

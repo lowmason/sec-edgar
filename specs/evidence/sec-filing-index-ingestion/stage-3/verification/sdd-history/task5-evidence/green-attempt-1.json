@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "uv",
+    "run",
+    "--offline",
+    "--frozen",
+    "python",
+    "packages/sec-edgar-ingest/tests/network_guard.py",
+    "test_etl_publication",
+    "-v"
+  ],
+  "cwd": "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar",
+  "stdout": "",
+  "stderr": "test_publication_and_reader_interfaces_exist (test_etl_publication.EtlPublicationTests.test_publication_and_reader_interfaces_exist) ... ok\ntest_stale_pointer_version_cannot_replace_winner (test_etl_publication.EtlPublicationTests.test_stale_pointer_version_cannot_replace_winner) ... ok\ntest_cas_retry_reevaluates_withdrawal_gate (test_etl_publication.PublicationIntegrationTests.test_cas_retry_reevaluates_withdrawal_gate) ... FAIL\ntest_corruption_or_missing_files_cannot_leak_first_row_or_repair (test_etl_publication.PublicationIntegrationTests.test_corruption_or_missing_files_cannot_leak_first_row_or_repair) ... ok\ntest_deadline_expires_at_commit_boundary (test_etl_publication.PublicationIntegrationTests.test_deadline_expires_at_commit_boundary) ... ok\ntest_five_conflicts_and_expired_deadline_have_no_commit (test_etl_publication.PublicationIntegrationTests.test_five_conflicts_and_expired_deadline_have_no_commit) ... ok\ntest_insert_and_replace_races_rebuild_from_winner_and_original_incoming (test_etl_publication.PublicationIntegrationTests.test_insert_and_replace_races_rebuild_from_winner_and_original_incoming) ... ok\ntest_named_crash_boundaries_preserve_old_or_new_and_repair (test_etl_publication.PublicationIntegrationTests.test_named_crash_boundaries_preserve_old_or_new_and_repair) ... ok\ntest_open_retained_basis_noop_and_version_replay (test_etl_publication.PublicationIntegrationTests.test_open_retained_basis_noop_and_version_replay) ... ok\ntest_publish_noop_force_replay_and_pinned_old_capture (test_etl_publication.PublicationIntegrationTests.test_publish_noop_force_replay_and_pinned_old_capture) ... ok\ntest_repair_interruption_multiquarter_and_monotonic_memberships (test_etl_publication.PublicationIntegrationTests.test_repair_interruption_multiquarter_and_monotonic_memberships) ... ok\ntest_unreferenced_candidate_data_is_never_read (test_etl_publication.PublicationIntegrationTests.test_unreferenced_candidate_data_is_never_read) ... ok\n\n======================================================================\nFAIL: test_cas_retry_reevaluates_withdrawal_gate (test_etl_publication.PublicationIntegrationTests.test_cas_retry_reevaluates_withdrawal_gate)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/tests/test_etl_publication.py\", line 143, in test_cas_retry_reevaluates_withdrawal_gate\n    self.assertEqual(self.state.processing(incoming).value['publications'], {})\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: FrozenMapping(_items=mappingproxy({})) != {}\n\n----------------------------------------------------------------------\nRan 12 tests in 3.784s\n\nFAILED (failures=1)\n",
+  "exit": 1
+}

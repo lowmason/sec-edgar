@@ -1,0 +1,730 @@
+# Review package: e460df72b72f090762f382136cbb9e7689635d21..1d14c9ceee330affd5ab961974932f2f09782f1e
+
+## Commits
+1d14c9c feat: commit quarter pointers with conflict rebuild and crash repair
+
+## Files changed
+ .../src/sec_edgar_ingest/etl/publication.py        | 105 +++++
+ .../src/sec_edgar_ingest/etl/reader.py             |  62 +++
+ .../src/sec_edgar_ingest/etl/state.py              |   6 +-
+ packages/sec-edgar-ingest/tests/support_etl.py     |  25 ++
+ .../sec-edgar-ingest/tests/test_etl_publication.py | 444 +++++++++++++++++++++
+ 5 files changed, 641 insertions(+), 1 deletion(-)
+
+## Diff
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/publication.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/publication.py
+new file mode 100644
+index 0000000..c27ab46
+--- /dev/null
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/publication.py
+@@ -0,0 +1,105 @@
++"""Per-quarter publication by validated candidate and bounded pointer CAS."""
++from __future__ import annotations
++
++from datetime import datetime, timezone
++
++from ..config import Settings
++from ..models import RunContext, quarter_for, quarter_value
++from ..storage.contracts import AlreadyExists, BoundaryObserver, CAS_ATTEMPTS, Conflict, ObjectStore, observe
++from .catalog import build_candidate, select_sources, source_fingerprint
++from .contracts import Candidate, GenerationManifest, ObservationRef, PublicationResult
++from .manifest import validate_candidate
++from .reader import capture_from_pointer, capture_quarter, validated_manifest
++from .state import EtlState
++from .transform import _read_manifest, _validate_context
++
++
++def _now() -> datetime:
++    """Patchable UTC clock; production uses the context's real bounded deadline."""
++    return datetime.now(timezone.utc)
++
++
++def pointer_value(candidate: Candidate) -> dict[str, object]:
++    return {'quarter': candidate.manifest.quarter, 'generation_id': candidate.manifest.generation_id,
++            'manifest_ref': candidate.manifest_ref, 'manifest_sha256': candidate.manifest_sha256,
++            'manifest_bytes': candidate.manifest_bytes, 'source_fingerprint': candidate.manifest.source_fingerprint}
++
++
++def unchanged_inputs(quarter: str, existing: GenerationManifest | None,
++                     incoming: tuple[ObservationRef, ...], context: RunContext) -> bool:
++    if existing is None or (existing.parser_version, existing.schema_version) != (context.parser_version, context.schema_version):
++        return False
++    selected = select_sources(existing.sources, incoming)
++    if any((ref.parser_version, ref.schema_version) != (context.parser_version, context.schema_version) for ref in selected):
++        return False
++    authorities = [ref for ref in selected if ref.source.kind == 'quarterly' and ref.source.period == quarter]
++    if len(authorities) > 1:
++        raise Conflict('multiple quarterly sources claim the same membership period')
++    mode = 'open' if quarter == quarter_for(context.pinned_on) else 'closed'
++    return source_fingerprint(quarter, selected, mode=mode,
++                              membership_source=authorities[0] if authorities else None,
++                              retained_from_generation=existing.retained_from_generation) == existing.source_fingerprint
++
++
++def repair_publication(quarter: str, objects: ObjectStore, state: EtlState) -> None:
++    capture = capture_quarter(quarter, objects, state)
++    if capture is not None:
++        state.record_publication(validated_manifest(capture, objects))
++
++
++def _conflict_result(quarter: str, conflicts: int, candidate: Candidate | None = None) -> PublicationResult:
++    # A conflict manifest names attempted evidence, never committed output.
++    return PublicationResult(quarter, 'publication_conflict', None,
++                             candidate.manifest_ref if candidate else None, None, conflicts)
++
++
++def publish_quarter(quarter: str, incoming: tuple[ObservationRef, ...], context: RunContext,
++                    settings: Settings, objects: ObjectStore, state: EtlState, *,
++                    observer: BoundaryObserver | None = None) -> PublicationResult:
++    quarter_value(quarter)
++    if _now() >= context.deadline:
++        return _conflict_result(quarter, 0)
++    _validate_context(context, settings)
++    if quarter_value(quarter) > quarter_value(quarter_for(context.pinned_on)):
++        raise ValueError('future output quarter is not configured')
++    for ref in incoming:
++        durable, _ = _read_manifest(ref.manifest_ref, objects)
++        if durable != ref:
++            raise Conflict('incoming reference differs from immutable observation manifest')
++    candidate = None
++    for conflicts in range(CAS_ATTEMPTS):
++        if conflicts and _now() >= context.deadline:
++            return _conflict_result(quarter, conflicts, candidate)
++        current = state.pointer(quarter)
++        previous = capture_from_pointer(current) if current is not None else None
++        if previous is not None and previous.quarter != quarter:
++            raise ValueError('pointer belongs to another quarter')
++        existing = validated_manifest(previous, objects) if previous else None
++        if existing and existing.source_fingerprint != current.value['source_fingerprint']:
++            raise Conflict('pointer source fingerprint differs from captured manifest')
++        if unchanged_inputs(quarter, existing, incoming, context):
++            state.record_publication(existing)
++            return PublicationResult(quarter, 'unchanged', previous.generation_id, previous.manifest_ref, None, conflicts)
++        try:
++            candidate = build_candidate(quarter, previous, incoming, context, settings, objects, state, observer=observer)
++        except TimeoutError:
++            if _now() >= context.deadline:
++                return _conflict_result(quarter, conflicts, candidate)
++            raise
++        validate_candidate(candidate, objects)
++        if candidate.manifest.gate == 'awaiting_approval':
++            state.record_candidate(candidate)
++            return PublicationResult(quarter, 'awaiting_approval', None, None, candidate.candidate_ref, conflicts)
++        observe(observer, 'publication.before_pointer')
++        if _now() >= context.deadline:
++            return _conflict_result(quarter, conflicts, candidate)
++        try:
++            state.commit_pointer(quarter, pointer_value(candidate), current)
++        except (AlreadyExists, Conflict):
++            observe(observer, 'publication.cas_lost')
++            continue
++        observe(observer, 'publication.after_pointer')
++        state.record_publication(candidate.manifest)
++        observe(observer, 'publication.after_repair')
++        return PublicationResult(quarter, 'published', candidate.manifest.generation_id, candidate.manifest_ref, None, conflicts)
++    return _conflict_result(quarter, CAS_ATTEMPTS, candidate)
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/reader.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/reader.py
+new file mode 100644
+index 0000000..922a4ec
+--- /dev/null
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/reader.py
+@@ -0,0 +1,62 @@
++"""Hash-bound quarter captures and fully validated, disk-backed readers."""
++from __future__ import annotations
++
++import sqlite3
++from contextlib import closing
++from pathlib import Path
++from tempfile import TemporaryDirectory
++from typing import Iterator
++
++from ..models import Versioned, canonical_json, parse_json, require_hash
++from ..storage.contracts import Conflict, ObjectStore
++from .contracts import Candidate, GenerationCapture, GenerationManifest, IndexRow
++from .manifest import generation_base, iter_file_rows, read_manifest, validate_candidate
++from .state import EtlState, POINTER_FIELDS
++
++
++def capture_from_pointer(row: Versioned) -> GenerationCapture:
++    value = row.to_mapping()['value']
++    if set(value) != POINTER_FIELDS:
++        raise ValueError('pointer must contain the exact quarter publication fields')
++    require_hash(value['source_fingerprint'], 'source_fingerprint')
++    capture = GenerationCapture.from_mapping({key: item for key, item in value.items() if key != 'source_fingerprint'})
++    if capture.manifest_ref != generation_base(capture.quarter, capture.generation_id) + '/manifest.json':
++        raise ValueError('pointer manifest address differs from exact generation')
++    return capture
++
++
++def validated_manifest(capture: GenerationCapture, objects: ObjectStore) -> GenerationManifest:
++    manifest = read_manifest(capture, objects)
++    if manifest.gate != 'clear':
++        raise ValueError('an awaiting-approval generation cannot be current')
++    validate_candidate(Candidate(manifest, capture.manifest_ref, capture.manifest_sha256,
++                                 capture.manifest_bytes, None), objects)
++    return manifest
++
++
++def capture_quarter(quarter: str, objects: ObjectStore, state: EtlState) -> GenerationCapture | None:
++    pointer = state.pointer(quarter)
++    if pointer is None:
++        return None
++    capture = capture_from_pointer(pointer)
++    if capture.quarter != quarter:
++        raise ValueError('pointer belongs to another quarter')
++    manifest = validated_manifest(capture, objects)
++    if manifest.source_fingerprint != pointer.value['source_fingerprint']:
++        raise Conflict('pointer source fingerprint differs from captured manifest')
++    return capture
++
++
++def read_quarter(capture: GenerationCapture, objects: ObjectStore) -> Iterator[IndexRow]:
++    manifest = validated_manifest(capture, objects)
++    # Finish all remote reads before exposing a row, including late count failures.
++    # The disk spool keeps this guarantee independent of quarter size.
++    with TemporaryDirectory(prefix='sec-quarter-read-') as directory, closing(sqlite3.connect(Path(directory) / 'rows.sqlite')) as db:
++        db.execute('CREATE TABLE rows(payload BLOB)')
++        for ref in manifest.files:
++            if ref.role == 'data':
++                with closing(iter_file_rows(ref, objects)) as rows:
++                    for value in rows:
++                        db.execute('INSERT INTO rows VALUES(?)', (canonical_json(IndexRow(**value).to_mapping()),))
++        for (payload,) in db.execute('SELECT payload FROM rows ORDER BY rowid'):
++            yield IndexRow.from_mapping(parse_json(payload))
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/state.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/state.py
+index 718e3e2..63468ce 100644
+--- a/packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/state.py
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/state.py
+@@ -53,37 +53,41 @@ class EtlState:
+         except AlreadyExists:
+             current = self.store.get(kind, key)
+             if current is None or canonical_json(current.to_mapping()['value']) != canonical_json(value):
+                 raise Conflict(f'{kind} has conflicting immutable content')
+ 
+     def record_candidate(self, candidate: Candidate) -> None:
+         self._immutable('Candidate', candidate.manifest.generation_id, candidate.to_mapping())
+ 
+     def record_publication(self, manifest: GenerationManifest) -> None:
+         for ref in manifest.sources:
++            if not ref.quarter_counts.get(manifest.quarter):
++                continue
+             self.accept_transform(ref)
+             key = _processing_key(ref)
+             receipt_key = hashlib.sha256(canonical_json([key, manifest.quarter, manifest.generation_id])).hexdigest()
+             receipt = {'processing_key': key, 'quarter': manifest.quarter,
+                        'generation_id': manifest.generation_id, 'source_fingerprint': manifest.source_fingerprint}
+             self._immutable('PublicationReceipt', receipt_key, receipt)
+             self._record_membership(ref, manifest.quarter, manifest.generation_id, receipt_key)
+ 
+     def _record_membership(self, ref: ObservationRef, quarter: str, generation_id: str, receipt_key: str) -> None:
+         for _ in range(CAS_ATTEMPTS):
+             current = self.processing(ref)
+             if current is None:
+                 raise Conflict('accepted processing index is absent')
+             value = current.to_mapping()['value']
+             publications = value['publications']
+             generations = publications.setdefault(quarter, {})
+             if generation_id in generations:
+                 if generations[generation_id] != receipt_key:
+                     raise Conflict('processing publication membership conflicts')
+-                return
+             generations[generation_id] = receipt_key
++            value['published'] = all(publications.get(output_quarter) for output_quarter in ref.quarter_counts)
++            if value == current.to_mapping()['value']:
++                return
+             try:
+                 self.store.replace('Processing', _processing_key(ref), value, current.version)
+                 return
+             except Conflict:
+                 continue
+         raise Conflict('processing publication membership exhausted conditional races')
+diff --git a/packages/sec-edgar-ingest/tests/support_etl.py b/packages/sec-edgar-ingest/tests/support_etl.py
+index 699c1f2..53d3397 100644
+--- a/packages/sec-edgar-ingest/tests/support_etl.py
++++ b/packages/sec-edgar-ingest/tests/support_etl.py
+@@ -28,10 +28,35 @@ def seed_snapshot(root, source, body):
+     objects.put_once(snapshot.raw_path, body)
+     objects.put_once(f'worksets/sec/source/sha256={source_set.workset_id}/workset.json',
+                      encode_workset(source_set))
+     acquisition = AcquisitionState(store)
+     acquisition.remember_snapshot(snapshot)
+     acquisition.bind_once(Binding(source_set.workset_id, source.source_id, snapshot.sha256))
+     snapshot_set = make_snapshot_workset(source_set, (snapshot,))
+     objects.put_once(f'worksets/sec/snapshot/sha256={snapshot_set.workset_id}/workset.json',
+                      encode_workset(snapshot_set))
+     return store, objects, snapshot_set
++
++
++def seed_observation(objects, state, context, settings, *, period='2026Q4', kind='quarterly', rows=None, seconds=0):
++    """Seed actual retained raw bytes and transform them for golden generations."""
++    import io
++    import re
++    import zipfile
++    from support import fixture_source, fixture_snapshot
++    from sec_edgar_ingest.etl.transform import transform_member
++    source = fixture_source(period, kind)
++    body = b'CIK|Company Name|Form Type|Date Filed|File Name\n-----\n' + (
++        b'123456|Example|10-K|2026-10-01|edgar/data/123456/0000123456-26-000001.txt\n' if rows is None else rows)
++    if kind == 'quarterly':
++        target = io.BytesIO()
++        with zipfile.ZipFile(target, 'w') as archive:
++            info = zipfile.ZipInfo('master.idx', (2026, 1, 1, 0, 0, 0))
++            info.compress_type = zipfile.ZIP_DEFLATED
++            archive.writestr(info, body.replace(b'File Name', b'Filename').replace(b'\n', b'\r\n'))
++        body = target.getvalue()
++    else:
++        body = re.sub(rb'\|(\d{4})-(\d{2})-(\d{2})\|', rb'|\1\2\3|', body)
++    snapshot = fixture_snapshot(source, body)
++    snapshot = replace(snapshot, received_at=snapshot.received_at + timedelta(seconds=seconds))
++    objects.put_once(snapshot.raw_path, body)
++    return transform_member(source, snapshot, context, settings, objects, state)
+diff --git a/packages/sec-edgar-ingest/tests/test_etl_publication.py b/packages/sec-edgar-ingest/tests/test_etl_publication.py
+new file mode 100644
+index 0000000..9780529
+--- /dev/null
++++ b/packages/sec-edgar-ingest/tests/test_etl_publication.py
+@@ -0,0 +1,444 @@
++"""Offline complete-generation publication and crash recovery contracts."""
++import tempfile
++import unittest
++from pathlib import Path
++from dataclasses import replace
++from datetime import date, timedelta
++from unittest.mock import patch
++from support import Faults, fixture_settings
++from support_etl import etl_context, seed_observation
++from sec_edgar_ingest.config import pin_context
++from sec_edgar_ingest.etl.catalog import build_candidate
++from sec_edgar_ingest.etl.manifest import read_manifest
++from sec_edgar_ingest.storage.contracts import CAS_ATTEMPTS
++
++
++from support import store_bundle
++from sec_edgar_ingest.etl.state import EtlState
++from sec_edgar_ingest.storage.contracts import Conflict
++
++
++class EtlPublicationTests(unittest.TestCase):
++    def test_stale_pointer_version_cannot_replace_winner(self):
++        with tempfile.TemporaryDirectory() as directory:
++            store, objects, leases = store_bundle(Path(directory))
++            self.addCleanup(store.close)
++            self.addCleanup(leases.close)
++            state = EtlState(store)
++            first = state.commit_pointer('2026Q4', {
++                'quarter': '2026Q4', 'generation_id': '1'*64,
++                'manifest_ref': 'curated/sec/filing_index/year=2026/quarter=4/generation='+'1'*64+'/manifest.json',
++                'manifest_sha256': 'a'*64, 'manifest_bytes': 10, 'source_fingerprint': 'b'*64}, None)
++            newer = first.to_mapping()['value']
++            newer['generation_id'] = '2'*64
++            newer['manifest_ref'] = 'curated/sec/filing_index/year=2026/quarter=4/generation='+'2'*64+'/manifest.json'
++            state.commit_pointer('2026Q4', newer, first)
++            with self.assertRaises(Conflict):
++                state.commit_pointer('2026Q4', first.to_mapping()['value'], first)
++            self.assertEqual(state.pointer('2026Q4').value['generation_id'], '2'*64)
++
++    def test_publication_and_reader_interfaces_exist(self):
++        import importlib.util
++        for name in ('publication', 'reader'):
++            self.assertIsNotNone(importlib.util.find_spec('sec_edgar_ingest.etl.' + name))
++
++
++def row(name='Example', number=1, day='2026-10-01'):
++    return f'123456|{name}|10-K|{day}|edgar/data/123456/0000123456-26-{number:06}.txt\n'.encode()
++
++
++class PublicationIntegrationTests(unittest.TestCase):
++    def setUp(self):
++        self.temp = tempfile.TemporaryDirectory()
++        self.addCleanup(self.temp.cleanup)
++        self.root = Path(self.temp.name)
++        self.store, self.objects, leases = store_bundle(self.root)
++        leases.close()
++        self.addCleanup(self.store.close)
++        self.state = EtlState(self.store)
++        self.settings, self.context = etl_context(command='publish')
++        self.pin(date(2026, 10, 7))
++
++    def pin(self, day):
++        self.settings = fixture_settings(etl={'parser_version': self.context.parser_version}, fixture={'allow_clock_override': True})
++        self.context = pin_context(self.settings, replace(self.context, config_sha256=self.settings.config_sha256,
++                                  effective_config={}, pinned_on=None), day)[0]
++
++    def observation(self, **kwargs):
++        return seed_observation(self.objects, self.state, self.context, self.settings, **kwargs)
++
++    def publish(self, *refs, quarter='2026Q4', **kwargs):
++        from sec_edgar_ingest.etl.publication import publish_quarter
++        return publish_quarter(quarter, refs, self.context, self.settings, self.objects, self.state, **kwargs)
++
++    def capture(self, quarter='2026Q4'):
++        from sec_edgar_ingest.etl.reader import capture_quarter
++        return capture_quarter(quarter, self.objects, self.state)
++
++    def rows(self, capture=None):
++        from sec_edgar_ingest.etl.reader import read_quarter
++        return list(read_quarter(capture or self.capture(), self.objects))
++
++    def test_publish_noop_force_replay_and_pinned_old_capture(self):
++        first = self.observation()
++        result = self.publish(first)
++        self.assertEqual(result.outcome, 'published')
++        old = self.capture()
++        pointer = self.state.pointer('2026Q4')
++        from sec_edgar_ingest.etl.transform import transform_member
++        forced = transform_member(first.source, first.snapshot, self.context, self.settings, self.objects, self.state, force=True)
++        for _ in range(3):
++            self.assertEqual(self.publish(forced).outcome, 'unchanged')
++            self.assertEqual(self.state.pointer('2026Q4'), pointer)
++        revised = self.observation(rows=row('New'), seconds=1)
++        self.assertEqual(self.publish(revised).outcome, 'published')
++        self.assertEqual(self.rows(old)[0].company_name, 'Example')
++        self.assertEqual(self.rows()[0].company_name, 'New')
++        self.assertEqual(len(list(self.store.scan('PublicationReceipt', {}))), 2)
++
++    def test_open_retained_basis_noop_and_version_replay(self):
++        first = self.observation(rows=row() + row(number=2))
++        self.publish(first)
++        revised = self.observation(rows=row('Revised'), seconds=1)
++        self.publish(revised)
++        pointer = self.state.pointer('2026Q4')
++        self.assertIsNotNone(read_manifest(self.capture(), self.objects).retained_from_generation)
++        self.assertEqual(self.publish(revised).outcome, 'unchanged')
++        self.assertEqual(self.state.pointer('2026Q4'), pointer)
++        self.settings, self.context = etl_context('fixture-index-parser-v2', command='publish')
++        self.pin(date(2026, 10, 7))
++        self.assertEqual(self.publish(revised).outcome, 'published')
++        self.assertEqual(read_manifest(self.capture(), self.objects).parser_version, 'fixture-index-parser-v2')
++
++    def _assert_pointer_race(self, initial):
++        winner = self.observation(period='2026-10-03', kind='daily', rows=row('Winner'))
++        incoming = self.observation(period='2026-10-02', kind='daily', rows=row('Incoming') + row(number=2))
++        if initial:
++            self.publish(self.observation(period='2026-10-01', kind='daily', rows=row('Old')))
++        faults = Faults()
++        faults.at('publication.before_pointer', lambda: self.publish(winner))
++        result = self.publish(incoming, observer=faults)
++        self.assertEqual((result.outcome, result.conflicts), ('published', 1))
++        self.assertEqual([r.company_name for r in self.rows()], ['Winner', 'Example'])
++        manifest = read_manifest(self.capture(), self.objects)
++        self.assertIn(winner, manifest.sources)
++        self.assertIn(incoming, manifest.sources)
++
++    def test_missing_pointer_insert_race_rebuilds_union(self):
++        self._assert_pointer_race(False)
++
++    def test_stale_replace_race_rebuilds_union_and_updated_winner_fields(self):
++        self._assert_pointer_race(True)
++
++    def test_cas_retry_reevaluates_withdrawal_gate(self):
++        incoming = self.observation(rows=row())
++        winner = self.observation(period='2026-10-02', kind='daily', rows=row() + row(number=2))
++        self.pin(date(2027, 1, 1))
++        faults = Faults()
++        faults.at('publication.before_pointer', lambda: self.publish(winner))
++        result = self.publish(incoming, observer=faults)
++        self.assertEqual((result.outcome, result.conflicts), ('awaiting_approval', 1))
++        self.assertIsNotNone(result.candidate_ref)
++        self.assertEqual(len(self.rows()), 2)
++        self.assertEqual(self.state.processing(incoming).to_mapping()['value']['publications'], {})
++
++    def test_five_conflicts_and_expired_deadline_have_no_commit(self):
++        from sec_edgar_ingest.etl import publication
++        ref = self.observation()
++        with patch.object(self.state, 'commit_pointer', side_effect=Conflict('race')) as commit:
++            result = self.publish(ref)
++        self.assertEqual((result.outcome, result.conflicts, commit.call_count), ('publication_conflict', CAS_ATTEMPTS, CAS_ATTEMPTS))
++        self.assertIsNone(self.capture())
++        self.assertIsNotNone(result.manifest_ref)
++        self.assertIsNone(result.generation_id)
++        self.assertIsNone(result.candidate_ref)
++        self.assertTrue(self.objects.read(result.manifest_ref))
++        with patch.object(publication, '_now', return_value=self.context.deadline):
++            self.assertEqual(self.publish(ref).outcome, 'publication_conflict')
++        self.assertEqual(list(self.store.scan('PublicationReceipt', {})), [])
++        self.assertEqual(list(self.store.scan('Source', {})), [])
++
++    def test_deadline_expires_at_commit_boundary(self):
++        from sec_edgar_ingest.etl import publication
++        ref = self.observation()
++        with patch.object(publication, '_now', side_effect=[self.context.started_at, self.context.deadline]):
++            result = self.publish(ref)
++        self.assertEqual(result.outcome, 'publication_conflict')
++        self.assertIsNone(self.capture())
++
++    def test_named_crash_boundaries_preserve_old_or_new_and_repair(self):
++        from sec_edgar_ingest.etl.publication import repair_publication
++        first = self.observation()
++        self.publish(first)
++        for index, boundary in enumerate(('candidate.after_data', 'candidate.after_changes', 'candidate.after_manifest',
++                                         'candidate.after_validation', 'publication.before_pointer',
++                                         'publication.after_pointer', 'publication.after_repair')):
++            previous = self.capture()
++            revised = self.observation(rows=row(boundary), seconds=index+1)
++            faults = Faults()
++            def crash():
++                raise RuntimeError('boundary crash')
++            faults.at(boundary, crash)
++            with self.subTest(boundary=boundary), self.assertRaisesRegex(RuntimeError, 'boundary crash'):
++                self.publish(revised, observer=faults)
++            capture = self.capture()
++            committed = boundary in ('publication.after_pointer', 'publication.after_repair')
++            self.assertEqual(capture != previous, committed)
++            self.assertEqual(self.rows()[0].company_name, boundary if committed else self.rows(previous)[0].company_name)
++            repair_publication('2026Q4', self.objects, self.state)
++            self.assertEqual(self.state.pointer('2026Q4').value['generation_id'], capture.generation_id)
++            outcome = self.publish(revised).outcome
++            self.assertEqual(outcome, 'unchanged' if committed else 'published')
++
++    def test_repair_interruption_multiquarter_and_monotonic_memberships(self):
++        from sec_edgar_ingest.etl.publication import repair_publication
++        ref = self.observation(period='2026-10-02', kind='daily', rows=row() + row(number=2, day='2026-09-30'))
++        with patch.object(self.state, '_record_membership', side_effect=RuntimeError('repair crash')):
++            with self.assertRaisesRegex(RuntimeError, 'repair crash'):
++                self.publish(ref)
++        pointer = self.state.pointer('2026Q4')
++        repair_publication('2026Q4', self.objects, self.state)
++        self.assertEqual(self.state.pointer('2026Q4'), pointer)
++        self.assertFalse(self.state.processing(ref).value['published'])
++        self.publish(ref, quarter='2026Q3')
++        self.assertTrue(self.state.processing(ref).value['published'])
++        old_manifest = read_manifest(self.capture(), self.objects)
++        self.publish(self.observation(period='2026-10-03', kind='daily', rows=row('Later')))
++        before = self.state.processing(ref)
++        self.state.record_publication(old_manifest)
++        self.assertEqual(self.state.processing(ref), before)
++        self.assertEqual(before.to_mapping()['value']['observation'], ref.to_mapping())
++        self.assertEqual(len(before.value['publications']['2026Q4']), 2)
++
++    def test_corruption_or_missing_files_cannot_leak_first_row_or_repair(self):
++        from sec_edgar_ingest.etl.reader import read_quarter
++        from sec_edgar_ingest.etl.publication import repair_publication
++        self.publish(self.observation(rows=row() + row(number=2)))
++        capture = self.capture()
++        manifest = read_manifest(capture, self.objects)
++        for name in (capture.manifest_ref, *(ref.path for ref in manifest.files)):
++            path = self.root / 'objects' / name
++            body = path.read_bytes()
++            for replacement in (None, body[:-1]):
++                if replacement is None:
++                    path.unlink()
++                else:
++                    path.write_bytes(replacement)
++                with self.subTest(name=name, missing=replacement is None):
++                    with self.assertRaises((ValueError, Conflict, FileNotFoundError)):
++                        next(read_quarter(capture, self.objects))
++                    with self.assertRaises((ValueError, Conflict, FileNotFoundError)):
++                        repair_publication('2026Q4', self.objects, self.state)
++                path.write_bytes(body)
++        self.assertEqual(len(self.rows(capture)), 2)
++
++    def test_unreferenced_candidate_data_is_never_read(self):
++        ref = self.observation()
++        self.publish(ref)
++        before = self.capture()
++        loser = self.observation(rows=row('Losing'), seconds=1)
++        candidate = build_candidate('2026Q4', before, (loser,), self.context, self.settings, self.objects, self.state)
++        (self.root / 'objects' / candidate.manifest.files[0].path).write_bytes(b'corrupt orphan')
++        self.assertEqual(self.rows()[0].company_name, 'Example')
++        self.assertEqual(self.capture(), before)
++
++    def test_pointer_shape_address_hash_and_fingerprint_are_checked(self):
++        from sec_edgar_ingest.etl.reader import capture_from_pointer
++        self.publish(self.observation())
++        pointer = self.state.pointer('2026Q4')
++        value = pointer.to_mapping()['value']
++        for changed in ({**value, 'extra': True}, {**value, 'manifest_sha256': 'bad'},
++                        {**value, 'manifest_ref': 'curated/sec/wrong/manifest.json'}):
++            with self.subTest(changed=changed), self.assertRaises(ValueError):
++                capture_from_pointer(replace(pointer, value=changed))
++        self.store.replace('QuarterPublication', '2026Q4', {**value, 'source_fingerprint': 'f'*64}, pointer.version)
++        with self.assertRaisesRegex(Conflict, 'fingerprint'):
++            self.capture()
++        with self.assertRaisesRegex(Conflict, 'fingerprint'):
++            self.publish(self.observation())
++
++    def test_noop_still_refuses_forged_incoming_observation_reference(self):
++        ref = self.observation()
++        self.publish(ref)
++        with self.assertRaises((ValueError, Conflict)):
++            self.publish(replace(ref, rows_bytes=ref.rows_bytes+1))
++
++    def test_no_receipt_for_source_without_rows_in_committed_quarter(self):
++        incoming = self.observation(period='2026-10-02', kind='daily', rows=row(day='2026-09-30'))
++        self.publish(incoming, self.observation())
++        self.assertEqual(self.state.processing(incoming).to_mapping()['value']['publications'], {})
++        self.assertEqual(len(list(self.store.scan('PublicationReceipt', {}))), 1)
++
++    def test_reader_checks_semantics_and_late_counts_before_first_row(self):
++        import hashlib
++        import pyarrow as pa
++        import pyarrow.parquet as pq
++        from sec_edgar_ingest.models import canonical_json
++        from sec_edgar_ingest.etl.contracts import canonical_schema
++        from sec_edgar_ingest.etl.manifest import iter_file_rows
++        from sec_edgar_ingest.etl.reader import read_quarter
++        self.publish(self.observation(rows=row() + row(number=2)))
++        capture = self.capture()
++        manifest = read_manifest(capture, self.objects)
++        data = next(ref for ref in manifest.files if ref.role == 'data')
++        values = list(iter_file_rows(data, self.objects))
++        path = self.root / 'objects' / data.path
++        original = path.read_bytes()
++        manifest_path = self.root / 'objects' / capture.manifest_ref
++        manifest_bytes = manifest_path.read_bytes()
++        wrong_quarter = [values[0], {**values[1], 'filing_date': date(2026, 9, 30)}]
++        for bad_rows, schema, count in ((values, canonical_schema(), 3),
++                                        ([values[0], values[0]], canonical_schema(), 2),
++                                        (wrong_quarter, canonical_schema(), 2),
++                                        (values, canonical_schema().with_metadata({b'unexpected': b'schema'}), 2)):
++            pq.write_table(pa.Table.from_pylist(bad_rows, schema=schema), path)
++            body = path.read_bytes()
++            corrupted = replace(data, row_count=count, byte_count=len(body), sha256=hashlib.sha256(body).hexdigest())
++            bad_manifest = replace(manifest, files=tuple(corrupted if ref.role == 'data' else ref for ref in manifest.files))
++            encoded = canonical_json(bad_manifest.to_mapping())
++            manifest_path.write_bytes(encoded)
++            forged = replace(capture, manifest_sha256=hashlib.sha256(encoded).hexdigest(), manifest_bytes=len(encoded))
++            with self.subTest(count=count, schema=schema), self.assertRaises((ValueError, Conflict)):
++                next(read_quarter(forged, self.objects))
++        path.write_bytes(original)
++        manifest_path.write_bytes(manifest_bytes)
++
++    def test_mocked_sdk_actual_etags_412_and_large_candidate_descriptor(self):
++        import json
++        from azure.core.credentials import AzureSasCredential
++        from azure.data.tables import TableServiceClient
++        from azure.storage.blob import BlobServiceClient
++        from sec_edgar_ingest.etl.publication import pointer_value
++        from sec_edgar_ingest.models import canonical_json
++        from sec_edgar_ingest.storage.azure import AzureStateStore, AzureObjectStore
++        from sec_edgar_ingest.storage.contracts import AlreadyExists
++        from test_azure_contracts import TABLE_ENDPOINT, BLOB_ENDPOINT, RETRY
++        from test_azure_state_payloads import LimitedStorageTransport
++        refs = tuple(self.observation(period=(date(2026, 8, 1) + timedelta(days=i)).isoformat(), kind='daily') for i in range(50))
++        candidate = build_candidate('2026Q4', None, refs, self.context, self.settings, self.objects, self.state)
++        self.assertGreater(len(canonical_json(candidate.to_mapping())), 64*1024)
++        transport = LimitedStorageTransport()
++        blobs = BlobServiceClient(BLOB_ENDPOINT, api_version='2026-04-06', transport=transport, **RETRY)
++        tables = TableServiceClient(TABLE_ENDPOINT, credential=AzureSasCredential('sv=offline&sig=synthetic'),
++                                    api_version='2020-12-06', transport=transport, **RETRY)
++        self.addCleanup(blobs.close)
++        self.addCleanup(tables.close)
++        objects = AzureObjectStore(blobs)
++        store = AzureStateStore(tables.get_table_client('SourceState'), tables.get_table_client('Attempts'),
++                                active_client=tables.get_table_client('ActivePointers'), objects=objects)
++        state = EtlState(store)
++        state.record_candidate(candidate)
++        self.assertEqual(store.get('Candidate', candidate.manifest.generation_id).to_mapping()['value'], candidate.to_mapping())
++        first = state.commit_pointer('2026Q4', pointer_value(candidate), None)
++        with self.assertRaises(AlreadyExists):
++            state.commit_pointer('2026Q4', pointer_value(candidate), None)
++        winner = state.commit_pointer('2026Q4', pointer_value(candidate), first)
++        with self.assertRaises(Conflict):
++            state.commit_pointer('2026Q4', pointer_value(candidate), first)
++        self.assertEqual(state.pointer('2026Q4'), winner)
++        writes = [request for request in transport.requests if request.method == 'PUT' and '/ActivePointers' in request.url]
++        self.assertEqual([r.headers['If-Match'] for r in writes], [first.version, first.version])
++        descriptor = next(json.loads(r.body) for r in transport.requests if r.method == 'POST' and '/SourceState' in r.url)
++        self.assertEqual(descriptor['PayloadFormat'], 'sec-state-blob-v1')
++        self.assertGreater(descriptor['PayloadByteCount'], 64*1024)
++        print('task5-sdk-proof', json.dumps({'descriptor': descriptor, 'pointer': winner.to_mapping(),
++              'conditional_etags': [r.headers['If-Match'] for r in writes]}, sort_keys=True))
++
++    def test_deadline_expiry_inside_candidate_build_returns_conflict(self):
++        from sec_edgar_ingest.etl import publication
++        ref = self.observation()
++        with patch.object(publication, 'build_candidate', side_effect=TimeoutError('transform deadline exceeded')):
++            with patch.object(publication, '_now', side_effect=[self.context.started_at, self.context.deadline]):
++                result = self.publish(ref)
++        self.assertEqual((result.outcome, result.conflicts), ('publication_conflict', 0))
++        self.assertIsNone(self.state.pointer('2026Q4'))
++
++    def test_repair_membership_cas_preserves_competing_quarter_receipt(self):
++        ref = self.observation(period='2026-10-02', kind='daily', rows=row() + row(number=2, day='2026-09-30'))
++        original_replace = self.store.replace
++        raced = False
++        def race(kind, key, value, version):
++            nonlocal raced
++            if kind == 'Processing' and not raced:
++                raced = True
++                self.publish(ref, quarter='2026Q3')
++            return original_replace(kind, key, value, version)
++        with patch.object(self.store, 'replace', side_effect=race):
++            self.publish(ref)
++        value = self.state.processing(ref).value
++        self.assertTrue(value['published'])
++        self.assertEqual(set(value['publications']), {'2026Q3', '2026Q4'})
++        self.assertEqual(self.state.processing(ref).to_mapping()['value']['observation'], ref.to_mapping())
++
++    def test_awaiting_approval_pointer_is_refused_by_capture_and_repair(self):
++        from sec_edgar_ingest.etl.publication import pointer_value, repair_publication
++        initial = self.observation(rows=row() + row(number=2))
++        self.publish(initial)
++        before = self.capture()
++        revised = self.observation(rows=row(), seconds=1)
++        self.pin(date(2027, 1, 1))
++        gated = build_candidate('2026Q4', before, (revised,), self.context, self.settings, self.objects, self.state)
++        self.assertEqual(gated.manifest.gate, 'awaiting_approval')
++        self.state.commit_pointer('2026Q4', pointer_value(gated), self.state.pointer('2026Q4'))
++        with self.assertRaisesRegex(ValueError, 'awaiting-approval'):
++            self.capture()
++        with self.assertRaisesRegex(ValueError, 'awaiting-approval'):
++            repair_publication('2026Q4', self.objects, self.state)
++
++    def test_retained_publication_proof(self):
++        import json
++        import os
++        import shutil
++        from sec_edgar_ingest.etl.publication import repair_publication
++        first = self.observation(rows=row() + row(number=2))
++        self.publish(first)
++        old = self.capture()
++        ref = self.observation(period='2026-10-02', kind='daily', rows=row(number=3) + row(number=4, day='2026-09-30'))
++        faults = Faults()
++        def crash():
++            raise RuntimeError('proof crash after commit')
++        faults.at('publication.after_pointer', crash)
++        with self.assertRaisesRegex(RuntimeError, 'proof crash'):
++            self.publish(ref, observer=faults)
++        committed_pointer = self.state.pointer('2026Q4')
++        before = self.state.processing(ref).to_mapping()
++        repair_publication('2026Q4', self.objects, self.state)
++        partial = self.state.processing(ref).to_mapping()
++        self.assertFalse(partial['value']['published'])
++        self.assertEqual(self.state.pointer('2026Q4'), committed_pointer)
++        self.publish(ref, quarter='2026Q3')
++        self.assertTrue(self.state.processing(ref).value['published'])
++        revised = self.observation(rows=row(), seconds=1)
++        self.pin(date(2027, 1, 1))
++        gated = self.publish(revised)
++        self.assertEqual(gated.outcome, 'awaiting_approval')
++        captures = [old, self.capture(), self.capture('2026Q3')]
++        destination = os.environ.get('SEC_EDGAR_TASK5_PROOF_DIR')
++        if destination:
++            path = Path(destination)
++            path.mkdir(parents=True, exist_ok=False)
++            proof = {'old_and_current': [{'capture': capture.to_mapping(),
++                     'manifest': read_manifest(capture, self.objects).to_mapping(),
++                     'rows': [item.to_mapping() for item in self.rows(capture)]} for capture in captures],
++                     'committed_pointer': committed_pointer.to_mapping(),
++                     'before_repair': before, 'one_quarter_repaired': partial,
++                     'fully_published': self.state.processing(ref).to_mapping(),
++                     'gated_result': gated.to_mapping(),
++                     'indexes': {kind: [item.to_mapping() for item in self.store.scan(kind, {})]
++                         for kind in ('QuarterPublication', 'Candidate', 'Processing', 'PublicationReceipt', 'Source')}}
++            (path / 'proof.json').write_text(json.dumps(proof, indent=2, sort_keys=True) + '\n')
++            shutil.copytree(self.root / 'objects', path / 'objects')
++            print('retained-publication-proof', str(path / 'proof.json'))
++
++    def test_deadline_after_loss_retains_attempted_manifest_without_commit_claim(self):
++        from sec_edgar_ingest.etl import publication
++        ref = self.observation()
++        now = self.context.started_at
++        with patch.object(self.state, 'commit_pointer', side_effect=Conflict('lost race')) as commit:
++            with patch.object(publication, '_now', side_effect=[now, now, self.context.deadline]):
++                result = self.publish(ref)
++        self.assertEqual((result.outcome, result.conflicts, commit.call_count), ('publication_conflict', 1, 1))
++        self.assertEqual(result.manifest_ref, commit.call_args.args[1]['manifest_ref'])
++        self.assertIsNone(result.generation_id)
++        self.assertIsNone(result.candidate_ref)
++        self.assertIsNone(self.state.pointer('2026Q4'))

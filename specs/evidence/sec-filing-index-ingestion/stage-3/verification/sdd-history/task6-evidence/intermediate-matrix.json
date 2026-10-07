@@ -1,0 +1,22 @@
+{
+  "argv": [
+    "uv",
+    "run",
+    "--offline",
+    "--frozen",
+    "python",
+    "packages/sec-edgar-ingest/tests/network_guard.py",
+    "test_etl_cli",
+    "-v"
+  ],
+  "cwd": "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar",
+  "env": {
+    "PATH": "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.venv/bin:/Users/lowell/.local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/pkg/env/global/bin:/Library/Apple/usr/bin:/opt/homebrew/bin:/Applications/quarto/bin:/Users/lowell/.local/bin:/Applications/ChatGPT.app/Contents/Resources/codex-cli/codex-path:/Users/lowell/.codex/tmp/arg0/codex-arg0P1pLwg:/Users/lowell/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/override:/opt/homebrew/sbin:/Users/lowell/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/fallback:/Applications/ChatGPT.app/Contents/Resources:/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS",
+    "PYTHONPATH": null,
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "SEC_EDGAR_TASK6_PROOF_DIR": "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task6-evidence/intermediate-matrix-proof"
+  },
+  "stdout": "",
+  "stderr": "test_begun_intent_resumes_original_start_and_pin (test_etl_cli.EtlCliTests.test_begun_intent_resumes_original_start_and_pin) ... ok\ntest_changed_filing_date_visits_prior_receipt_quarter (test_etl_cli.EtlCliTests.test_changed_filing_date_visits_prior_receipt_quarter) ... ok\ntest_completed_replay_is_exact_and_flag_changes_refuse (test_etl_cli.EtlCliTests.test_completed_replay_is_exact_and_flag_changes_refuse) ... ok\ntest_empty_complete_transform_and_publish_are_unchanged (test_etl_cli.EtlCliTests.test_empty_complete_transform_and_publish_are_unchanged) ... ok\ntest_expired_completed_replay_but_new_expired_refusal (test_etl_cli.EtlCliTests.test_expired_completed_replay_but_new_expired_refusal) ... ok\ntest_help_lists_all_four_commands (test_etl_cli.EtlCliTests.test_help_lists_all_four_commands) ... ok\ntest_invalid_source_is_exit_seven (test_etl_cli.EtlCliTests.test_invalid_source_is_exit_seven) ... ok\ntest_multiple_quarters_gate_continues_other_quarter_and_complete_receipts (test_etl_cli.EtlCliTests.test_multiple_quarters_gate_continues_other_quarter_and_complete_receipts) ... ok\ntest_new_attempt_replays_parser_with_original_acquisition_context (test_etl_cli.EtlCliTests.test_new_attempt_replays_parser_with_original_acquisition_context) ... ok\ntest_partial_transform_retains_success_and_publish_changes_no_pointer (test_etl_cli.EtlCliTests.test_partial_transform_retains_success_and_publish_changes_no_pointer) ... ok\ntest_persistent_conflict_retains_attempted_manifest_and_exit_nine (test_etl_cli.EtlCliTests.test_persistent_conflict_retains_attempted_manifest_and_exit_nine) ... ok\ntest_pointer_crash_resumes_without_another_advance_and_repairs_receipts (test_etl_cli.EtlCliTests.test_pointer_crash_resumes_without_another_advance_and_repairs_receipts) ... ok\ntest_publish_noop_and_result_crash_do_not_advance_twice (test_etl_cli.EtlCliTests.test_publish_noop_and_result_crash_do_not_advance_twice) ... ok\ntest_real_transform_and_publish_without_acquisition_construction (test_etl_cli.EtlCliTests.test_real_transform_and_publish_without_acquisition_construction) ... ok\ntest_result_object_crash_repairs_attempt_exactly (test_etl_cli.EtlCliTests.test_result_object_crash_repairs_attempt_exactly) ... ok\ntest_strict_separate_result_codec (test_etl_cli.EtlCliTests.test_strict_separate_result_codec) ... ok\ntest_validation_happens_before_open_stores (test_etl_cli.EtlCliTests.test_validation_happens_before_open_stores) ... ok\n\n----------------------------------------------------------------------\nRan 17 tests in 1.954s\n\nOK\n",
+  "exit": 0
+}

@@ -1,0 +1,32 @@
+Existing dependency pins unchanged: {"azure-core": "1.41.0", "azure-data-tables": "12.7.0", "azure-identity": "1.26.0", "azure-storage-blob": "12.31.0", "certifi": "2026.7.22", "cffi": "2.1.1", "charset-normalizer": "3.5.2", "cryptography": "50.0.2", "idna": "3.20", "isodate": "0.7.2", "msal": "1.39.0", "msal-extensions": "1.3.1", "multidict": "7.0.0", "propcache": "0.5.4", "pycparser": "3.0", "pyjwt": "2.15.1", "requests": "2.34.2", "sec-edgar": "0.1.0", "sec-edgar-ingest": "0.1.0", "typing-extensions": "4.16.0", "urllib3": "2.8.0", "yarl": "1.25.1"}
+canonical_schema () -> 'pa.Schema'
+observation_schema () -> 'pa.Schema'
+change_schema () -> 'pa.Schema'
+processing_key (source_id: 'str', snapshot_sha256: 'str', parser_version: 'str', schema_version: 'str') -> 'str'
+observation_base (source_id: 'str', snapshot_sha256: 'str', parser_version: 'str', schema_version: 'str') -> 'str'
+encode_transformed (workset: 'TransformedWorkset') -> 'bytes'
+decode_transformed (body: 'bytes') -> 'TransformedWorkset'
+transformed_ref (workset: 'TransformedWorkset') -> 'str'
+IndexRow (cik: 'str', company_name: 'str', form_type: 'str', archive_path: 'str', filing_date: 'date', accession_number: 'str | None', source_id: 'str', source_sha256: 'str', parser_version: 'str', schema_version: 'str') -> None
+Observation (row: 'IndexRow', original_fields: 'tuple[str, str, str, str, str]', line_number: 'int') -> None
+ObservationRef (source: 'Source', snapshot: 'Snapshot', parser_version: 'str', schema_version: 'str', rows_ref: 'str', manifest_ref: 'str', rows_sha256: 'str', rows_bytes: 'int', source_row_count: 'int', distinct_key_count: 'int', quarter_counts: 'Mapping[str, int]') -> None
+TransformedWorkset (workset_id: 'str', snapshot_workset_ref: 'str', origin_context: 'RunContext', context: 'RunContext', observations: 'tuple[ObservationRef, ...]', failures: 'tuple[Error, ...]', complete: 'bool') -> None
+FileRef (path: 'str', sha256: 'str', byte_count: 'int', row_count: 'int', role: "Literal['data', 'changes']") -> None
+GenerationManifest (quarter: 'str', generation_id: 'str', base_generation_id: 'str | None', source_fingerprint: 'str', parser_version: 'str', schema_version: 'str', image_digest: 'str', sources: 'tuple[ObservationRef, ...]', files: 'tuple[FileRef, ...]', row_count: 'int', added: 'int', updated: 'int', withdrawn: 'int', unresolved_absence: 'int', provenance_refreshed: 'int', quarter_mode: "Literal['open', 'closed']", membership_source: 'ObservationRef | None', retained_from_generation: 'str | None', gate: "Literal['clear', 'awaiting_approval']", format_version: 'str' = 'sec-generation-v1') -> None
+Candidate (manifest: 'GenerationManifest', manifest_ref: 'str', manifest_sha256: 'str', manifest_bytes: 'int', candidate_ref: 'str | None') -> None
+PublicationResult (quarter: 'str', outcome: 'str', generation_id: 'str | None', manifest_ref: 'str | None', candidate_ref: 'str | None', conflicts: 'int') -> None
+GenerationCapture (quarter: 'str', generation_id: 'str', manifest_ref: 'str', manifest_sha256: 'str', manifest_bytes: 'int') -> None
+EtlResult (context: 'RunContext', outcome: 'str', input_ref: 'str', transformed_workset_ref: 'str | None', transformed: 'int', published: 'int', unchanged: 'int', quarantined: 'int', awaiting_approval: 'int', failed: 'int', quarters: 'tuple[PublicationResult, ...]', gaps: 'tuple[Error, ...]', started_at: 'datetime', ended_at: 'datetime', format_version: 'str' = 'sec-etl-result-v1') -> None
+blob_address (path: 'str') -> 'tuple[str, str]'
+ObjectStore.materialize (self, path: 'str', target: 'Path') -> 'None'
+LocalObjectStore.materialize (self, path: 'str', target: 'Path') -> 'None'
+AzureObjectStore.materialize (self, path: 'str', target: 'Path') -> 'None'
+AzureStateStore (source_client: 'TableClient', attempt_client: 'TableClient', *, objects: 'ObjectStore | None' = None, observer: 'BoundaryObserver | None' = None, active_client: 'TableClient | None' = None)
+open_azure_stores (settings: 'Settings', *, observer: 'BoundaryObserver | None' = None)
+EtlState (store: 'StateStore')
+EtlState.processing (self, ref: 'ObservationRef') -> 'Versioned | None'
+EtlState.accept_transform (self, ref: 'ObservationRef') -> 'None'
+EtlState.pointer (self, quarter: 'str') -> 'Versioned | None'
+EtlState.commit_pointer (self, quarter: 'str', value: 'dict[str, object]', previous: 'Versioned | None') -> 'Versioned'
+EtlState.record_candidate (self, candidate: 'Candidate') -> 'None'
+EtlState.record_publication (self, manifest: 'GenerationManifest') -> 'None'

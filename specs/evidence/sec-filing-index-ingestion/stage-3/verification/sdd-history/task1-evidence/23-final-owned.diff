@@ -1,0 +1,1161 @@
+diff --git a/packages/sec-edgar-ingest/pyproject.toml b/packages/sec-edgar-ingest/pyproject.toml
+index a421322..4fe6c0b 100644
+--- a/packages/sec-edgar-ingest/pyproject.toml
++++ b/packages/sec-edgar-ingest/pyproject.toml
+@@ -8,6 +8,7 @@ authors = [
+ ]
+ requires-python = ">=3.14"
+ dependencies = [
++    "pyarrow==25.0.1",
+     "requests==2.34.2",
+     "azure-identity==1.26.0",
+     "azure-storage-blob==12.31.0",
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/__init__.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/__init__.py
+new file mode 100644
+index 0000000..eac42ce
+--- /dev/null
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/__init__.py
+@@ -0,0 +1 @@
++"""Versioned transformations and quarter publication over retained source bytes."""
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/contracts.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/contracts.py
+new file mode 100644
+index 0000000..addec67
+--- /dev/null
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/contracts.py
+@@ -0,0 +1,339 @@
++"""Immutable ETL records, explicit Arrow schemas, and canonical workset codecs."""
++from __future__ import annotations
++
++import hashlib
++import re
++from collections.abc import Mapping
++from dataclasses import dataclass
++from datetime import date, datetime
++from typing import Literal
++
++import pyarrow as pa
++
++from ..models import (Error, IMAGE_PATTERN, Record, RunContext, SCHEMA_VERSION, Snapshot, Source,
++                      canonical_json, parse_json, quarter_value, require_hash, require_number,
++                      require_text, require_utc, safe_relative_path, validate_record_fields)
++
++TRANSFORMED_FORMAT = 'sec-transformed-workset-v1'
++GENERATION_FORMAT = 'sec-generation-v1'
++RESULT_FORMAT = 'sec-etl-result-v1'
++ORIGINAL_FIELD_COUNT = 5
++
++
++def _versions(parser_version: str, schema_version: str) -> None:
++    for label, version in (('parser_version', parser_version), ('schema_version', schema_version)):
++        safe_relative_path(version, label)
++        if '/' in version:
++            raise ValueError(f'{label} must be a single path segment')
++
++
++def _record(record: Record) -> None:
++    validate_record_fields(record)
++    for name, value in record.to_mapping().items():
++        if name.endswith(('_sha256', '_fingerprint')) or name in ('generation_id', 'base_generation_id', 'retained_from_generation', 'workset_id'):
++            if value is not None:
++                require_hash(value, name)
++        if name.endswith('_ref') and value is not None:
++            safe_relative_path(value, name)
++        if name in ('quarter',):
++            quarter_value(value)
++    if hasattr(record, 'parser_version'):
++        _versions(record.parser_version, record.schema_version)
++        if record.schema_version != SCHEMA_VERSION:
++            raise ValueError('unsupported schema_version')
++
++
++def _counts(record: Record, *names: str) -> None:
++    for name in names:
++        require_number(getattr(record, name), name, integer=True)
++
++
++@dataclass(frozen=True, slots=True)
++class IndexRow(Record):
++    cik: str
++    company_name: str
++    form_type: str
++    archive_path: str
++    filing_date: date
++    accession_number: str | None
++    source_id: str
++    source_sha256: str
++    parser_version: str
++    schema_version: str
++
++    def __post_init__(self):
++        _record(self)
++        if re.fullmatch(r'[0-9]{10}', self.cik) is None:
++            raise ValueError('cik must be a zero-padded ten-digit identifier')
++        require_text(self.company_name, 'company_name')
++        require_text(self.form_type, 'form_type')
++        safe_relative_path(self.archive_path, 'archive_path')
++        segments = self.archive_path.split('/')
++        if (len(segments) >= 4 and segments[:2] == ['edgar', 'data']
++                and re.fullmatch(r'[0-9]{1,10}', segments[2])
++                and segments[2].zfill(10) != self.cik):
++            raise ValueError('archive path CIK disagrees with the row CIK')
++        require_hash(self.source_id, 'source_id')
++        if self.accession_number is not None and re.fullmatch(r'[0-9]{10}-[0-9]{2}-[0-9]{6}', self.accession_number) is None:
++            raise ValueError('invalid accession_number')
++
++
++@dataclass(frozen=True, slots=True)
++class Observation(Record):
++    row: IndexRow
++    original_fields: tuple[str, str, str, str, str]
++    line_number: int
++
++    def __post_init__(self):
++        _record(self)
++        if len(self.original_fields) != ORIGINAL_FIELD_COUNT:
++            raise ValueError('original_fields must retain exactly five fields')
++        require_number(self.line_number, 'line_number', positive=True, integer=True)
++
++
++@dataclass(frozen=True, slots=True)
++class ObservationRef(Record):
++    source: Source
++    snapshot: Snapshot
++    parser_version: str
++    schema_version: str
++    rows_ref: str
++    manifest_ref: str
++    rows_sha256: str
++    rows_bytes: int
++    source_row_count: int
++    distinct_key_count: int
++    quarter_counts: Mapping[str, int]
++
++    def __post_init__(self):
++        _record(self)
++        _counts(self, 'rows_bytes', 'source_row_count', 'distinct_key_count')
++        if self.source.source_id != self.snapshot.source_id or self.source.representation != self.snapshot.representation:
++            raise ValueError('observation source and snapshot disagree')
++        if self.distinct_key_count > self.source_row_count:
++            raise ValueError('distinct keys exceed source rows')
++        for quarter, count in self.quarter_counts.items():
++            quarter_value(quarter)
++            require_number(count, 'quarter count', integer=True, positive=True)
++        if sum(self.quarter_counts.values()) != self.source_row_count:
++            raise ValueError('quarter counts must account for every retained observation')
++        base = observation_base(self.source.source_id, self.snapshot.sha256, self.parser_version, self.schema_version)
++        if self.rows_ref != base + '/rows.parquet' or self.manifest_ref != base + '/manifest.json':
++            raise ValueError('observation references must match processing identity')
++
++
++@dataclass(frozen=True, slots=True)
++class TransformedWorkset(Record):
++    workset_id: str
++    snapshot_workset_ref: str
++    origin_context: RunContext
++    context: RunContext
++    observations: tuple[ObservationRef, ...]
++    failures: tuple[Error, ...]
++    complete: bool
++
++    def __post_init__(self):
++        _record(self)
++        if re.fullmatch(r'worksets/sec/snapshot/sha256=[0-9a-f]{64}/workset.json', self.snapshot_workset_ref) is None:
++            raise ValueError('exact snapshot workset reference required')
++        identities = [ref.source.source_id for ref in self.observations]
++        if len(set(identities)) != len(identities):
++            raise ValueError('duplicate transformed source')
++        if self.complete and self.failures:
++            raise ValueError('complete workset cannot contain failures')
++        for ref in self.observations:
++            if (ref.parser_version, ref.schema_version) != (self.context.parser_version, self.context.schema_version):
++                raise ValueError('observation versions disagree with transform context')
++
++
++@dataclass(frozen=True, slots=True)
++class FileRef(Record):
++    path: str
++    sha256: str
++    byte_count: int
++    row_count: int
++    role: Literal['data', 'changes']
++
++    def __post_init__(self):
++        _record(self)
++        safe_relative_path(self.path, 'path')
++        require_hash(self.sha256, 'sha256')
++        _counts(self, 'byte_count', 'row_count')
++
++
++@dataclass(frozen=True, slots=True)
++class GenerationManifest(Record):
++    quarter: str
++    generation_id: str
++    base_generation_id: str | None
++    source_fingerprint: str
++    parser_version: str
++    schema_version: str
++    image_digest: str
++    sources: tuple[ObservationRef, ...]
++    files: tuple[FileRef, ...]
++    row_count: int
++    added: int
++    updated: int
++    withdrawn: int
++    unresolved_absence: int
++    provenance_refreshed: int
++    quarter_mode: Literal['open', 'closed']
++    membership_source: ObservationRef | None
++    retained_from_generation: str | None
++    gate: Literal['clear', 'awaiting_approval']
++    format_version: str = GENERATION_FORMAT
++
++    def __post_init__(self):
++        _record(self)
++        if self.format_version != GENERATION_FORMAT:
++            raise ValueError('unsupported generation format')
++        if IMAGE_PATTERN.fullmatch(self.image_digest) is None:
++            raise ValueError('immutable producing image digest required')
++        _counts(self, 'row_count', 'added', 'updated', 'withdrawn', 'unresolved_absence', 'provenance_refreshed')
++        if len({ref.source.source_id for ref in self.sources}) != len(self.sources):
++            raise ValueError('duplicate generation source')
++        if len({ref.path for ref in self.files}) != len(self.files):
++            raise ValueError('duplicate generation file')
++        for ref in self.sources:
++            if (ref.parser_version, ref.schema_version) != (self.parser_version, self.schema_version):
++                raise ValueError('generation sources must use one parser/schema')
++        if self.membership_source is not None:
++            if self.membership_source not in self.sources or self.membership_source.source.kind != 'quarterly' or self.membership_source.source.period != self.quarter:
++                raise ValueError('membership source must be the selected quarterly source for this quarter')
++        if self.membership_source is None and (self.withdrawn or self.gate == 'awaiting_approval'):
++            raise ValueError('withdrawals and withdrawal gates require quarterly membership authority')
++
++
++@dataclass(frozen=True, slots=True)
++class Candidate(Record):
++    manifest: GenerationManifest
++    manifest_ref: str
++    manifest_sha256: str
++    manifest_bytes: int
++    candidate_ref: str | None
++
++    def __post_init__(self):
++        _record(self)
++        _counts(self, 'manifest_bytes')
++
++
++@dataclass(frozen=True, slots=True)
++class PublicationResult(Record):
++    quarter: str
++    outcome: str
++    generation_id: str | None
++    manifest_ref: str | None
++    candidate_ref: str | None
++    conflicts: int
++
++    def __post_init__(self):
++        _record(self)
++        require_text(self.outcome, 'outcome')
++        _counts(self, 'conflicts')
++
++
++@dataclass(frozen=True, slots=True)
++class GenerationCapture(Record):
++    quarter: str
++    generation_id: str
++    manifest_ref: str
++    manifest_sha256: str
++    manifest_bytes: int
++
++    def __post_init__(self):
++        _record(self)
++        _counts(self, 'manifest_bytes')
++
++
++@dataclass(frozen=True, slots=True)
++class EtlResult(Record):
++    context: RunContext
++    outcome: str
++    input_ref: str
++    transformed_workset_ref: str | None
++    transformed: int
++    published: int
++    unchanged: int
++    quarantined: int
++    awaiting_approval: int
++    failed: int
++    quarters: tuple[PublicationResult, ...]
++    gaps: tuple[Error, ...]
++    started_at: datetime
++    ended_at: datetime
++    format_version: str = RESULT_FORMAT
++
++    def __post_init__(self):
++        _record(self)
++        if self.format_version != RESULT_FORMAT:
++            raise ValueError('unsupported ETL result format')
++        require_text(self.outcome, 'outcome')
++        _counts(self, 'transformed', 'published', 'unchanged', 'quarantined', 'awaiting_approval', 'failed')
++        require_utc(self.started_at, 'started_at')
++        require_utc(self.ended_at, 'ended_at')
++        if self.ended_at < self.started_at:
++            raise ValueError('ETL result ends before it starts')
++        if len({result.quarter for result in self.quarters}) != len(self.quarters):
++            raise ValueError('duplicate quarter result')
++
++
++def canonical_schema() -> pa.Schema:
++    names = ('cik', 'company_name', 'form_type', 'archive_path', 'filing_date',
++             'accession_number', 'source_id', 'source_sha256', 'parser_version', 'schema_version')
++    return pa.schema([pa.field(name, pa.date32() if name == 'filing_date' else pa.string(),
++                               nullable=name == 'accession_number') for name in names])
++
++
++def observation_schema() -> pa.Schema:
++    return pa.schema([*canonical_schema(),
++                      pa.field('original_fields', pa.list_(pa.field('item', pa.string(), nullable=False), ORIGINAL_FIELD_COUNT), nullable=False),
++                      pa.field('line_number', pa.int64(), nullable=False)])
++
++
++def change_schema() -> pa.Schema:
++    return pa.schema([pa.field('change_type', pa.string(), nullable=False),
++                      pa.field('cik', pa.string(), nullable=False),
++                      pa.field('archive_path', pa.string(), nullable=False),
++                      pa.field('before', pa.struct(canonical_schema()), nullable=True),
++                      pa.field('after', pa.struct(canonical_schema()), nullable=True),
++                      pa.field('reason', pa.string(), nullable=True)])
++
++
++def processing_key(source_id: str, snapshot_sha256: str, parser_version: str, schema_version: str) -> str:
++    require_hash(source_id, 'source_id')
++    require_hash(snapshot_sha256, 'snapshot_sha256')
++    _versions(parser_version, schema_version)
++    return hashlib.sha256(canonical_json([source_id, snapshot_sha256, parser_version, schema_version])).hexdigest()
++
++
++def observation_base(source_id: str, snapshot_sha256: str, parser_version: str, schema_version: str) -> str:
++    processing_key(source_id, snapshot_sha256, parser_version, schema_version)
++    return f'observations/sec/indexes/source={source_id}/sha256={snapshot_sha256}/parser={parser_version}/schema={schema_version}'
++
++
++def encode_transformed(workset: TransformedWorkset) -> bytes:
++    if type(workset) is not TransformedWorkset:
++        raise ValueError('expected transformed workset')
++    payload = {'format_version': TRANSFORMED_FORMAT, **workset.to_mapping()}
++    identity_payload = {name: value for name, value in payload.items() if name != 'workset_id'}
++    if hashlib.sha256(canonical_json(identity_payload)).hexdigest() != workset.workset_id:
++        raise ValueError('transformed workset identity differs from canonical payload')
++    return canonical_json(payload)
++
++
++def decode_transformed(body: bytes) -> TransformedWorkset:
++    if type(body) is not bytes:
++        raise ValueError('transformed workset must be bytes')
++    payload = parse_json(body)
++    if not isinstance(payload, dict) or payload.get('format_version') != TRANSFORMED_FORMAT:
++        raise ValueError('unsupported transformed workset format')
++    workset = TransformedWorkset.from_mapping({name: value for name, value in payload.items() if name != 'format_version'})
++    if encode_transformed(workset) != body:
++        raise ValueError('transformed workset must use canonical JSON bytes')
++    return workset
++
++
++def transformed_ref(workset: TransformedWorkset) -> str:
++    encode_transformed(workset)
++    return f'worksets/sec/transformed/sha256={workset.workset_id}/workset.json'
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/state.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/state.py
+new file mode 100644
+index 0000000..718e3e2
+--- /dev/null
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/state.py
+@@ -0,0 +1,89 @@
++"""ETL indexes and the per-quarter conditional publication boundary."""
++from __future__ import annotations
++
++import hashlib
++
++from ..models import Versioned, canonical_json, quarter_value, require_hash
++from ..storage.contracts import AlreadyExists, CAS_ATTEMPTS, Conflict, StateStore
++from .contracts import Candidate, GenerationCapture, GenerationManifest, ObservationRef, processing_key
++
++POINTER_FIELDS = frozenset({'quarter', 'generation_id', 'manifest_ref', 'manifest_sha256', 'manifest_bytes', 'source_fingerprint'})
++
++
++def _processing_key(ref: ObservationRef) -> str:
++    return processing_key(ref.source.source_id, ref.snapshot.sha256, ref.parser_version, ref.schema_version)
++
++
++class EtlState:
++    def __init__(self, store: StateStore):
++        self.store = store
++
++    def processing(self, ref: ObservationRef) -> Versioned | None:
++        return self.store.get('Processing', _processing_key(ref))
++
++    def accept_transform(self, ref: ObservationRef) -> None:
++        key = _processing_key(ref)
++        value = {'processing_key': key, 'observation': ref.to_mapping(), 'publications': {}}
++        try:
++            self.store.insert('Processing', key, value)
++        except AlreadyExists:
++            current = self.processing(ref)
++            if current is None or canonical_json(current.to_mapping()['value']['observation']) != canonical_json(ref.to_mapping()):
++                raise Conflict('accepted transform differs for the immutable processing identity')
++
++    def pointer(self, quarter: str) -> Versioned | None:
++        quarter_value(quarter)
++        return self.store.get('QuarterPublication', quarter)
++
++    def commit_pointer(self, quarter: str, value: dict[str, object], previous: Versioned | None) -> Versioned:
++        quarter_value(quarter)
++        if set(value) != POINTER_FIELDS or value['quarter'] != quarter:
++            raise ValueError('pointer must contain the exact quarter publication fields')
++        require_hash(value['source_fingerprint'], 'source_fingerprint')
++        GenerationCapture.from_mapping({name: item for name, item in value.items() if name != 'source_fingerprint'})
++        if previous is None:
++            return self.store.insert('QuarterPublication', quarter, value)
++        if previous.value.get('quarter') != quarter:
++            raise ValueError('previous pointer belongs to another quarter')
++        return self.store.replace('QuarterPublication', quarter, value, previous.version)
++
++    def _immutable(self, kind: str, key: str, value: dict[str, object]) -> None:
++        try:
++            self.store.insert(kind, key, value)
++        except AlreadyExists:
++            current = self.store.get(kind, key)
++            if current is None or canonical_json(current.to_mapping()['value']) != canonical_json(value):
++                raise Conflict(f'{kind} has conflicting immutable content')
++
++    def record_candidate(self, candidate: Candidate) -> None:
++        self._immutable('Candidate', candidate.manifest.generation_id, candidate.to_mapping())
++
++    def record_publication(self, manifest: GenerationManifest) -> None:
++        for ref in manifest.sources:
++            self.accept_transform(ref)
++            key = _processing_key(ref)
++            receipt_key = hashlib.sha256(canonical_json([key, manifest.quarter, manifest.generation_id])).hexdigest()
++            receipt = {'processing_key': key, 'quarter': manifest.quarter,
++                       'generation_id': manifest.generation_id, 'source_fingerprint': manifest.source_fingerprint}
++            self._immutable('PublicationReceipt', receipt_key, receipt)
++            self._record_membership(ref, manifest.quarter, manifest.generation_id, receipt_key)
++
++    def _record_membership(self, ref: ObservationRef, quarter: str, generation_id: str, receipt_key: str) -> None:
++        for _ in range(CAS_ATTEMPTS):
++            current = self.processing(ref)
++            if current is None:
++                raise Conflict('accepted processing index is absent')
++            value = current.to_mapping()['value']
++            publications = value['publications']
++            generations = publications.setdefault(quarter, {})
++            if generation_id in generations:
++                if generations[generation_id] != receipt_key:
++                    raise Conflict('processing publication membership conflicts')
++                return
++            generations[generation_id] = receipt_key
++            try:
++                self.store.replace('Processing', _processing_key(ref), value, current.version)
++                return
++            except Conflict:
++                continue
++        raise Conflict('processing publication membership exhausted conditional races')
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py
+index ee2201d..ff3a3bf 100644
+--- a/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py
+@@ -20,12 +20,11 @@ from ..config import ACCOUNT_NAME, LOCK_BLOB, Settings
+ from ..models import Versioned, parse_json, require_hash, require_number, require_text, require_utc, safe_relative_path
+ from .contracts import (AlreadyExists, BoundaryObserver, ClockUncertain, Conflict, FILE_CHUNK_BYTES,
+                         LeaseHandle, ObjectStore, OwnershipLost, TimeBounds, REGISTRY_PATH, deployment_binding, exact_version,
+-                        identity, observe, payload_bytes, table_for, validate_raw_address)
++                        blob_address, identity, observe, payload_bytes, table_for, validate_raw_address)
+ 
+ RETRY_OPTIONS = dict(retry_total=0, retry_connect=0, retry_read=0, retry_status=0)
+ STORAGE_CONNECTION_TIMEOUT_SECONDS = 5
+ STORAGE_READ_TIMEOUT_SECONDS = 10
+-CONTAINERS = frozenset({"raw", "worksets", "quarantine", "locks"})
+ TABLE_STRING_BYTES = 64 * 1024
+ TABLE_ENTITY_BYTES = 1024 * 1024
+ TABLE_KEY_CHARACTERS = 1024
+@@ -76,7 +75,13 @@ def _etag(version: str | None) -> str:
+ 
+ class AzureStateStore:
+     def __init__(self, source_client: TableClient, attempt_client: TableClient, *,
+-                 objects: ObjectStore | None = None, observer: BoundaryObserver | None = None):
++                 objects: ObjectStore | None = None, observer: BoundaryObserver | None = None,
++                 active_client: TableClient | None = None):
++        if active_client is not None:
++            _check_endpoint(active_client.url, "table")
++            if active_client.table_name != "ActivePointers":
++                raise ValueError("Table client must use the accepted ActivePointers binding")
++        self.active_client = active_client
+         for client, name in ((source_client, "SourceState"), (attempt_client, "Attempts")):
+             _check_endpoint(client.url, "table")
+             if client.table_name != name:
+@@ -89,11 +94,19 @@ class AzureStateStore:
+     def close(self) -> None:
+         self.source_client.close()
+         self.attempt_client.close()
++        if self.active_client is not None:
++            self.active_client.close()
+ 
+     def _client(self, kind: str) -> TableClient:
+-        return self.attempt_client if table_for(kind) == "Attempts" else self.source_client
++        table = table_for(kind)
++        if table == "ActivePointers":
++            if self.active_client is None:
++                raise ValueError("quarter pointer operations require the ActivePointers client")
++            return self.active_client
++        return self.attempt_client if table == "Attempts" else self.source_client
+ 
+     def _write_payload_entity(self, kind: str, key: str, value: dict[str, object]) -> dict[str, object]:
++        self._client(kind)
+         partition, key = identity(kind, key)
+         entity = {"PartitionKey": partition, "RowKey": _row_key(key), "StableKey": key}
+         _check_table_entity(entity)
+@@ -222,10 +235,8 @@ class AzureObjectStore:
+         self.service.close()
+ 
+     def _blob(self, path: str):
+-        segments = safe_relative_path(path, "object path").split("/", 1)
+-        if len(segments) != 2 or segments[0] not in CONTAINERS:
+-            raise ValueError("object path must name an accepted Blob container")
+-        return self.service.get_blob_client(container=segments[0], blob=segments[1])
++        container, key = blob_address(path)
++        return self.service.get_blob_client(container=container, blob=key)
+ 
+     def _upload(self, path: str, stream, sha256: str, byte_count: int) -> str:
+         blob = self._blob(path)
+@@ -252,6 +263,20 @@ class AzureObjectStore:
+                 raise FileNotFoundError(path) from error
+             raise
+ 
++    def materialize(self, path: str, target: Path) -> None:
++        blob = self._blob(path)
++        target = Path(target)
++        destination = target.open('xb')
++        try:
++            with destination:
++                for chunk in blob.download_blob(max_concurrency=1).chunks():
++                    destination.write(chunk)
++        except BaseException as error:
++            target.unlink()
++            if isinstance(error, ResourceNotFoundError) and error.status_code == 404:
++                raise FileNotFoundError(path) from error
++            raise
++
+     def stage(self, path: str, body: Path) -> str:
+         digest, byte_count = hashlib.sha256(), 0
+         with Path(body).open("rb") as stream:
+@@ -491,7 +516,7 @@ def open_azure_stores(settings: Settings, *, observer: BoundaryObserver | None =
+     tables = TableServiceClient(endpoint=storage.table_endpoint, credential=credential,
+                                api_version=storage.table_api_version, **options)
+     state = AzureStateStore(tables.get_table_client(storage.source_table), tables.get_table_client(storage.attempt_table),
+-                            objects=objects, observer=observer)
++                            objects=objects, observer=observer, active_client=tables.get_table_client("ActivePointers"))
+     leases = AzureLeaseStore(blob_service, lease_seconds=int(validated.coordination.lease_seconds),
+                              uncertainty_seconds=validated.coordination.clock_uncertainty_seconds, observer=observer)
+     return state, objects, leases
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/contracts.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/contracts.py
+index 7689de1..3e1110e 100644
+--- a/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/contracts.py
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/contracts.py
+@@ -90,6 +90,7 @@ class StateStore(Protocol):
+ class ObjectStore(Protocol):
+     def put_once(self, path: str, body: bytes) -> str: ...
+     def read(self, path: str) -> bytes: ...
++    def materialize(self, path: str, target: Path) -> None: ...
+     def stage(self, path: str, body: Path) -> str: ...
+     def promote(self, temporary_ref: str, raw_path: str, sha256: str, byte_count: int) -> str: ...
+     def verify(self, path: str, sha256: str, byte_count: int) -> None: ...
+@@ -123,6 +124,8 @@ def identity(kind: str, key: str) -> tuple[str, str]:
+ 
+ 
+ def table_for(kind: str) -> str:
++    if kind == "QuarterPublication":
++        return "ActivePointers"
+     return "Attempts" if kind in ATTEMPT_KINDS else "SourceState"
+ 
+ 
+@@ -169,3 +172,20 @@ def deployment_binding(settings: Settings | None = None, *, root: Path | None =
+     storage["local_root"] = str(root.resolve()) if root is not None else None
+     return {"binding_version": "sec-owner-binding-v1", "account": ACCOUNT_NAME,
+             "namespace": COORDINATION_NAMESPACE, "sec": sec, "coordination": coordination, "storage": storage}
++
++
++def blob_address(path: str) -> tuple[str, str]:
++    safe_relative_path(path, 'object path')
++    root, separator, tail = path.partition('/')
++    if not separator:
++        raise ValueError('object path requires a root and object key')
++    if root in {'raw', 'worksets', 'quarantine', 'locks', 'results',
++                'generations', 'manifests', 'approvals'}:
++        return root, tail
++    if root == 'staging':
++        return 'raw', path
++    if root == 'runs':
++        return 'results', path
++    if root in {'observations', 'curated'}:
++        return ('manifests' if path.endswith('/manifest.json') else 'generations'), path
++    raise ValueError('object path has no accepted Blob binding')
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py
+index dc5b5f2..8e92d03 100644
+--- a/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py
+@@ -112,6 +112,17 @@ class LocalObjectStore:
+         with self._open(path) as stream:
+             return stream.read()
+ 
++    def materialize(self, path: str, target: Path) -> None:
++        target = Path(target)
++        destination = target.open('xb')
++        try:
++            with destination, self._open(path) as source:
++                while chunk := source.read(FILE_CHUNK_BYTES):
++                    destination.write(chunk)
++        except BaseException:
++            target.unlink()
++            raise
++
+     def stage(self, path: str, body: Path) -> str:
+         with Path(body).open("rb") as stream:
+             return self._write_once(path, stream)
+diff --git a/packages/sec-edgar-ingest/tests/test_azure_contracts.py b/packages/sec-edgar-ingest/tests/test_azure_contracts.py
+index ef6a05d..82d37b5 100644
+--- a/packages/sec-edgar-ingest/tests/test_azure_contracts.py
++++ b/packages/sec-edgar-ingest/tests/test_azure_contracts.py
+@@ -351,10 +351,13 @@ class AzureContractTests(unittest.TestCase):
+             source = tables.get_table_client.return_value
+             source.url = TABLE_ENDPOINT
+             tables.get_table_client.side_effect = lambda name: self._factory_table(name)
+-            self.azure.open_azure_stores(settings)
++            state, objects, leases = self.azure.open_azure_stores(settings)
+             credential.assert_called_once_with()
+             self.assertEqual(blob_factory.call_args.kwargs["api_version"], "2026-04-06")
+             self.assertEqual(table_factory.call_args.kwargs["api_version"], "2020-12-06")
++            self.assertEqual([call.args[0] for call in tables.get_table_client.call_args_list],
++                             ["SourceState", "Attempts", "ActivePointers"])
++            self.assertEqual(state.active_client.table_name, "ActivePointers")
+             for factory in (blob_factory, table_factory):
+                 self.assertEqual({key: factory.call_args.kwargs[key] for key in RETRY}, RETRY)
+         request = transport.requests[0]
+diff --git a/packages/sec-edgar-ingest/tests/test_etl_contracts.py b/packages/sec-edgar-ingest/tests/test_etl_contracts.py
+new file mode 100644
+index 0000000..122871c
+--- /dev/null
++++ b/packages/sec-edgar-ingest/tests/test_etl_contracts.py
+@@ -0,0 +1,168 @@
++"""Strict ETL schema and processing-identity contracts."""
++import unittest
++from hashlib import sha256
++from sec_edgar_ingest.models import canonical_json
++from sec_edgar_ingest.etl.contracts import canonical_schema, change_schema, processing_key
++
++
++class EtlContractTests(unittest.TestCase):
++    def test_canonical_field_types_and_nullability(self):
++        schema = canonical_schema()
++        expected = [
++            ('cik', 'string', False), ('company_name', 'string', False),
++            ('form_type', 'string', False), ('archive_path', 'string', False),
++            ('filing_date', 'date32[day]', False), ('accession_number', 'string', True),
++            ('source_id', 'string', False), ('source_sha256', 'string', False),
++            ('parser_version', 'string', False), ('schema_version', 'string', False),
++        ]
++        self.assertEqual([(f.name, str(f.type), f.nullable) for f in schema], expected)
++
++    def test_change_schema_embeds_nullable_full_rows(self):
++        schema = change_schema()
++        self.assertEqual(schema.names, ['change_type', 'cik', 'archive_path', 'before', 'after', 'reason'])
++        self.assertEqual([f.nullable for f in schema], [False, False, False, True, True, True])
++        for name in ('before', 'after'):
++            self.assertEqual(list(schema.field(name).type), list(canonical_schema()))
++
++    def test_processing_identity_includes_both_versions(self):
++        args = ['a' * 64, 'b' * 64, 'parser-v1', 'sec-index-v1']
++        expected = sha256(canonical_json(args)).hexdigest()
++        self.assertEqual(processing_key(*args), expected)
++        self.assertNotEqual(processing_key(*args), processing_key(*args[:2], 'parser-v2', args[3]))
++        self.assertNotEqual(processing_key(*args), processing_key(*args[:3], 'sec-index-v2'))
++
++    def test_observation_schema_preserves_original_fields(self):
++        import pyarrow as pa
++        from sec_edgar_ingest.etl.contracts import observation_schema
++        schema = observation_schema()
++        self.assertEqual(list(schema)[:-2], list(canonical_schema()))
++        self.assertEqual(schema.field('original_fields'), pa.field('original_fields', pa.list_(pa.field('item', pa.string(), nullable=False), 5), nullable=False))
++        self.assertEqual(schema.field('line_number'), pa.field('line_number', pa.int64(), nullable=False))
++
++    def test_row_mapping_and_strict_validation(self):
++        from dataclasses import replace
++        from datetime import date
++        from sec_edgar_ingest.etl.contracts import IndexRow, Observation
++        row = IndexRow('0000000123', 'Company', '10-K', 'edgar/data/123/legacy.txt', date(2026, 1, 2), None, 'a'*64, 'b'*64, 'parser-v1', 'sec-index-v1')
++        self.assertEqual(row.to_mapping()['filing_date'], '2026-01-02')
++        self.assertEqual(IndexRow.from_mapping(row.to_mapping()), row)
++        for changes in ({'source_sha256': 'bad'}, {'archive_path': '../raw'}, {'cik': 123}, {'cik': '00123'}, {'company_name': ''}, {'schema_version': 'unsupported'}, {'filing_date': '2026-01-02'}):
++            with self.subTest(changes=changes), self.assertRaises(ValueError):
++                replace(row, **changes)
++        with self.assertRaises(ValueError):
++            IndexRow.from_mapping({**row.to_mapping(), 'extra': 1})
++        for original, line in [(('a',)*4, 1), (('a',)*6, 1), (('a',)*5, 0), (('a',)*5, True)]:
++            with self.assertRaises(ValueError):
++                Observation(row, original, line)
++
++    def test_transformed_codec_is_canonical_and_strict(self):
++        from dataclasses import replace
++        from sec_edgar_ingest.etl.contracts import TransformedWorkset, encode_transformed, decode_transformed, transformed_ref
++        from support import fixture_context
++        context = fixture_context()
++        workset = TransformedWorkset('0'*64, 'worksets/sec/snapshot/sha256='+'a'*64+'/workset.json', context, context, (), (), True)
++        payload = {'format_version': 'sec-transformed-workset-v1', **workset.to_mapping()}
++        payload.pop('workset_id')
++        workset = replace(workset, workset_id=sha256(canonical_json(payload)).hexdigest())
++        body = encode_transformed(workset)
++        self.assertEqual(encode_transformed(decode_transformed(body)), body)
++        self.assertEqual(transformed_ref(workset), 'worksets/sec/transformed/sha256='+workset.workset_id+'/workset.json')
++        for malformed in (b' '+body, body.replace(b'"complete":true', b'"complete":true,"complete":true'), body.replace(b'"complete":true', b'"unknown":1,"complete":true'), body.replace(b'sec-transformed-workset-v1', b'sec-transformed-workset-v9')):
++            with self.subTest(body=malformed[:70]), self.assertRaises(ValueError):
++                decode_transformed(malformed)
++        with self.assertRaises(ValueError):
++            encode_transformed(replace(workset, workset_id='b'*64))
++
++    def test_retained_stage2_worksets_and_registry_remain_byte_identical(self):
++        import json
++        from pathlib import Path
++        from sec_edgar_ingest.config import Settings
++        from sec_edgar_ingest.storage.contracts import deployment_binding
++        from sec_edgar_ingest.worksets import decode_source_workset, decode_snapshot_workset, encode_workset
++        root = Path(__file__).resolve().parents[3]
++        bundle = root/'specs/evidence/sec-filing-index-ingestion/stage-2/verification/sec-edgar-stage-2-46bhxh8j'
++        objects = bundle/'state/.fixture-state/objects'
++        paths = sorted((objects/'worksets/sec').glob('*/sha256=*/workset.json'))
++        self.assertEqual(len(paths), 4)
++        for path in paths:
++            body = path.read_bytes()
++            decoder = decode_source_workset if '/source/' in str(path) else decode_snapshot_workset
++            workset = decoder(body)
++            self.assertEqual(encode_workset(workset), body)
++            config = workset.context.to_mapping()['effective_config']
++            settings = Settings.from_mapping(config)
++            self.assertEqual(settings.to_mapping(), config)
++            self.assertEqual(settings.config_sha256, workset.context.config_sha256)
++            print('retained-workset', path.name, workset.workset_id, sha256(body).hexdigest(), len(body))
++        registries = list((objects/'locks').glob('**/binding.json'))
++        self.assertEqual(len(registries), 1)
++        body = registries[0].read_bytes()
++        saved = json.loads(body)
++        binding = deployment_binding(settings, root=Path(saved['storage']['local_root']))
++        self.assertEqual(canonical_json(binding), body)
++        print('retained-registry', sha256(body).hexdigest(), len(body))
++
++
++def observation_ref():
++    from support import fixture_source, fixture_snapshot
++    from sec_edgar_ingest.etl.contracts import ObservationRef, observation_base
++    source = fixture_source()
++    snapshot = fixture_snapshot(source, b'raw')
++    base = observation_base(source.source_id, snapshot.sha256, 'parser-v1', 'sec-index-v1')
++    return ObservationRef(source, snapshot, 'parser-v1', 'sec-index-v1', base+'/rows.parquet', base+'/manifest.json', 'c'*64, 10, 1, 1, {'2015Q1': 1})
++
++
++def generation_manifest():
++    from sec_edgar_ingest.etl.contracts import GenerationManifest, FileRef
++    return GenerationManifest(quarter='2015Q1', generation_id='d'*64, base_generation_id=None, source_fingerprint='e'*64, parser_version='parser-v1', schema_version='sec-index-v1', image_digest='sha256:'+'f'*64, sources=(observation_ref(),), files=(FileRef('curated/sec/g/data.parquet', 'a'*64, 10, 1, 'data'),), row_count=1, added=1, updated=0, withdrawn=0, unresolved_absence=0, provenance_refreshed=0, quarter_mode='open', membership_source=None, retained_from_generation=None, gate='clear')
++
++
++class EtlRecordTests(unittest.TestCase):
++    def test_all_records_are_strict_immutable_and_round_trip(self):
++        from dataclasses import FrozenInstanceError, replace
++        from sec_edgar_ingest.etl.contracts import Candidate, GenerationCapture, PublicationResult, EtlResult
++        from support import fixture_context
++        ref = observation_ref()
++        manifest = generation_manifest()
++        context = fixture_context()
++        result = PublicationResult('2015Q1', 'published', 'd'*64, 'curated/sec/g/manifest.json', None, 0)
++        records = (ref, *manifest.files, manifest, Candidate(manifest, 'curated/sec/g/manifest.json', 'a'*64, 10, None), result, GenerationCapture('2015Q1', 'd'*64, 'curated/sec/g/manifest.json', 'a'*64, 10), EtlResult(context=context, outcome='success', input_ref='worksets/sec/input.json', transformed_workset_ref=None, transformed=1, published=1, unchanged=0, quarantined=0, awaiting_approval=0, failed=0, quarters=(result,), gaps=(), started_at=context.started_at, ended_at=context.started_at))
++        for record in records:
++            with self.subTest(record=type(record).__name__):
++                self.assertEqual(type(record).from_mapping(record.to_mapping()), record)
++                with self.assertRaises(ValueError):
++                    type(record).from_mapping({**record.to_mapping(), 'unknown': True})
++                with self.assertRaises(FrozenInstanceError):
++                    setattr(record, next(iter(record.to_mapping())), None)
++        with self.assertRaises(TypeError):
++            ref.quarter_counts['2015Q1'] = 2
++        for record, changes in [(ref, {'rows_sha256':'bad'}), (ref, {'distinct_key_count':2}), (ref, {'rows_ref':'../bad'}), (ref, {'quarter_counts':{'bad':1}}), (manifest, {'format_version':'unknown'}), (manifest, {'row_count':-1}), (manifest, {'gate':'approved'}), (records[-1], {'format_version':'unknown'})]:
++            with self.subTest(changes=changes), self.assertRaises(ValueError):
++                replace(record, **changes)
++
++    def test_quarter_counts_include_retained_identical_duplicates(self):
++        from dataclasses import replace
++        ref = replace(observation_ref(), source_row_count=2, distinct_key_count=1, quarter_counts={'2015Q1': 2})
++        self.assertEqual(sum(ref.quarter_counts.values()), ref.source_row_count)
++        with self.assertRaises(ValueError):
++            replace(ref, quarter_counts={'2015Q1': 1})
++
++    def test_closed_daily_only_manifest_has_no_withdrawal_authority(self):
++        from dataclasses import replace
++        manifest = replace(generation_manifest(), quarter_mode='closed', membership_source=None)
++        self.assertEqual(manifest.quarter_mode, 'closed')
++        for changes in ({'withdrawn': 1}, {'gate': 'awaiting_approval'}):
++            with self.assertRaises(ValueError):
++                replace(manifest, **changes)
++
++    def test_rows_follow_parser_padded_cik_and_safe_legacy_path_contract(self):
++        from datetime import date
++        from dataclasses import replace
++        from sec_edgar_ingest.etl.contracts import IndexRow
++        row = IndexRow('0000000123', 'Company', '10-K', 'edgar/data/123/legacy.txt', date(2026, 1, 2), None, 'a'*64, 'b'*64, 'parser-v1', 'sec-index-v1')
++        for path in ('legacy/nested/Annual.TXT', 'edgar/data/unknown/legacy.txt'):
++            self.assertEqual(replace(row, archive_path=path).archive_path, path)
++        self.assertEqual(replace(row, cik='0000000000', archive_path='legacy/zero.txt').cik, '0000000000')
++        for cik, path in [('123', row.archive_path), ('0000000123', 'edgar/data/456/annual.txt')]:
++            with self.assertRaises(ValueError):
++                replace(row, cik=cik, archive_path=path)
+diff --git a/packages/sec-edgar-ingest/tests/test_etl_storage.py b/packages/sec-edgar-ingest/tests/test_etl_storage.py
+new file mode 100644
+index 0000000..8c9e312
+--- /dev/null
++++ b/packages/sec-edgar-ingest/tests/test_etl_storage.py
+@@ -0,0 +1,273 @@
++"""Offline ETL logical object routing contracts."""
++import unittest
++from sec_edgar_ingest.storage.contracts import blob_address
++
++
++class EtlStorageTests(unittest.TestCase):
++    def test_logical_paths_use_accepted_containers(self):
++        self.assertEqual(blob_address('runs/sec/r/transform/a/result.json'),
++                         ('results', 'runs/sec/r/transform/a/result.json'))
++        path = 'curated/sec/filing_index/year=2026/quarter=4/generation=g/manifest.json'
++        self.assertEqual(blob_address(path), ('manifests', path))
++        path = 'observations/sec/indexes/source=s/sha256=h/parser=p/schema=v/rows.parquet'
++        self.assertEqual(blob_address(path), ('generations', path))
++        self.assertEqual(blob_address('raw/sec/a'), ('raw', 'sec/a'))
++        with self.assertRaises(ValueError):
++            blob_address('curated/../raw/a')
++
++    def test_local_materialize_is_exclusive_and_cleans_failed_copy(self):
++        import tempfile
++        from pathlib import Path
++        from sec_edgar_ingest.storage.local import LocalObjectStore
++        with tempfile.TemporaryDirectory() as directory:
++            root = Path(directory)
++            objects = LocalObjectStore(root/'store')
++            body = b'rows' * (1024 * 300)
++            objects.put_once('observations/sec/rows.parquet', body)
++            target = root/'rows.parquet'
++            objects.materialize('observations/sec/rows.parquet', target)
++            self.assertEqual(target.read_bytes(), body)
++            with self.assertRaises(FileExistsError):
++                objects.materialize('observations/sec/rows.parquet', target)
++            self.assertEqual(target.read_bytes(), body)
++            missing = root/'missing.parquet'
++            with self.assertRaises(FileNotFoundError):
++                objects.materialize('observations/sec/missing.parquet', missing)
++            self.assertFalse(missing.exists())
++
++    def test_pointer_commit_uses_actual_revision_and_propagates_conflict(self):
++        import tempfile
++        from pathlib import Path
++        from sec_edgar_ingest.etl.state import EtlState
++        from sec_edgar_ingest.storage.local import LocalStateStore
++        from sec_edgar_ingest.storage.contracts import Conflict, AlreadyExists
++        with tempfile.TemporaryDirectory() as directory:
++            store = LocalStateStore(Path(directory))
++            self.addCleanup(store.close)
++            state = EtlState(store)
++            value = dict(quarter='2026Q4', generation_id='a'*64, manifest_ref='curated/sec/generation=a/manifest.json', manifest_sha256='b'*64, manifest_bytes=10, source_fingerprint='c'*64)
++            self.assertIsNone(state.pointer('2026Q4'))
++            first = state.commit_pointer('2026Q4', value, None)
++            with self.assertRaises((AlreadyExists, Conflict)):
++                state.commit_pointer('2026Q4', value, None)
++            next_value = {**value, 'generation_id': 'd'*64}
++            second = state.commit_pointer('2026Q4', next_value, first)
++            self.assertNotEqual(first.version, second.version)
++            with self.assertRaises(Conflict):
++                state.commit_pointer('2026Q4', value, first)
++            self.assertEqual(state.pointer('2026Q4'), second)
++            for bad in ({**value, 'quarter': '2026Q3'}, {**value, 'extra': True}, {**value, 'manifest_sha256': '*'}):
++                with self.assertRaises(ValueError):
++                    state.commit_pointer('2026Q4', bad, second)
++
++    def test_azure_logical_writes_and_streamed_materialization_use_mapped_paths(self):
++        import tempfile
++        from pathlib import Path
++        from azure.storage.blob import BlobServiceClient
++        from sec_edgar_ingest.storage.azure import AzureObjectStore
++        from test_azure_contracts import ScriptedTransport, response, BLOB_ENDPOINT, RETRY
++        for path, container in [('runs/sec/r/result.json', 'results'), ('curated/sec/g/manifest.json', 'manifests'), ('observations/sec/s/rows.parquet', 'generations'), ('staging/sec/temp', 'raw')]:
++            transport = ScriptedTransport([response(201), response(body=b'rows')])
++            service = BlobServiceClient(BLOB_ENDPOINT, api_version='2026-04-06', transport=transport, **RETRY)
++            self.addCleanup(service.close)
++            objects = AzureObjectStore(service)
++            objects.put_once(path, b'rows')
++            with tempfile.TemporaryDirectory() as directory:
++                target = Path(directory)/'materialized'
++                objects.materialize(path, target)
++                self.assertEqual(target.read_bytes(), b'rows')
++            for request in transport.requests:
++                self.assertEqual(request.url.split('?')[0], BLOB_ENDPOINT+'/'+container+'/'+path)
++                print('mapped-wire', request.method, request.url.split('?')[0], request.headers.get('If-None-Match'))
++            self.assertEqual(transport.requests[0].headers['If-None-Match'], '*')
++
++    def test_active_pointer_real_sdk_insert_replace_and_conflict(self):
++        from azure.core.credentials import AzureSasCredential
++        from azure.data.tables import TableServiceClient
++        from sec_edgar_ingest.storage.azure import AzureStateStore
++        from sec_edgar_ingest.storage.contracts import Conflict
++        from test_azure_contracts import ScriptedTransport, table_response, table_error, TABLE_ENDPOINT, RETRY
++        transport = ScriptedTransport([table_response(201, etag='W/"first"'), table_response(204, etag='W/"second"'), table_error(412, 'UpdateConditionNotSatisfied')])
++        service = TableServiceClient(TABLE_ENDPOINT, credential=AzureSasCredential('sv=offline&sig=synthetic'), api_version='2020-12-06', transport=transport, **RETRY)
++        self.addCleanup(service.close)
++        store = AzureStateStore(service.get_table_client('SourceState'), service.get_table_client('Attempts'), active_client=service.get_table_client('ActivePointers'))
++        first = store.insert('QuarterPublication', '2026Q4', {'generation': 'a'})
++        second = store.replace('QuarterPublication', '2026Q4', {'generation': 'b'}, first.version)
++        self.assertEqual(second.version, 'W/"second"')
++        with self.assertRaises(Conflict):
++            store.replace('QuarterPublication', '2026Q4', {'generation': 'c'}, first.version)
++        for request in transport.requests:
++            self.assertIn('/ActivePointers', request.url)
++            print('pointer-wire', request.method, request.url.split('?')[0], request.headers.get('If-Match'))
++        self.assertEqual(transport.requests[1].headers['If-Match'], first.version)
++        old = AzureStateStore(service.get_table_client('SourceState'), service.get_table_client('Attempts'))
++        with self.assertRaises(ValueError):
++            old.get('QuarterPublication', '2026Q4')
++        with self.assertRaises(ValueError):
++            AzureStateStore(service.get_table_client('SourceState'), service.get_table_client('Attempts'), active_client=service.get_table_client('Approvals'))
++
++    def test_transform_acceptance_and_publication_receipts_are_idempotent(self):
++        import tempfile
++        from dataclasses import replace
++        from pathlib import Path
++        from sec_edgar_ingest.etl.state import EtlState
++        from sec_edgar_ingest.etl.contracts import Candidate
++        from sec_edgar_ingest.storage.local import LocalStateStore
++        from sec_edgar_ingest.storage.contracts import Conflict
++        from test_etl_contracts import observation_ref, generation_manifest
++        with tempfile.TemporaryDirectory() as directory:
++            store = LocalStateStore(Path(directory))
++            self.addCleanup(store.close)
++            state = EtlState(store)
++            ref = observation_ref()
++            self.assertIsNone(state.processing(ref))
++            state.accept_transform(ref)
++            accepted = state.processing(ref)
++            state.accept_transform(ref)
++            self.assertEqual(state.processing(ref), accepted)
++            with self.assertRaises(Conflict):
++                state.accept_transform(replace(ref, rows_sha256='f'*64))
++            manifest = generation_manifest()
++            state.record_publication(manifest)
++            state.record_publication(manifest)
++            self.assertEqual(len(list(store.scan('PublicationReceipt', {}))), 1)
++            self.assertEqual(len(list(store.scan('Source', {}))), 0)
++            candidate = Candidate(manifest, 'curated/sec/g/manifest.json', 'a'*64, 10, None)
++            state.record_candidate(candidate)
++            state.record_candidate(candidate)
++            self.assertEqual(len(list(store.scan('Candidate', {}))), 1)
++
++    def test_large_active_pointer_record_uses_verified_content_first_descriptor(self):
++        import json
++        from azure.core.credentials import AzureSasCredential
++        from azure.data.tables import TableServiceClient
++        from azure.storage.blob import BlobServiceClient
++        from sec_edgar_ingest.storage.azure import AzureStateStore, AzureObjectStore
++        from test_azure_contracts import BLOB_ENDPOINT, TABLE_ENDPOINT, RETRY
++        from test_azure_state_payloads import LimitedStorageTransport
++        transport = LimitedStorageTransport()
++        blobs = BlobServiceClient(BLOB_ENDPOINT, api_version='2026-04-06', transport=transport, **RETRY)
++        tables = TableServiceClient(TABLE_ENDPOINT, credential=AzureSasCredential('sv=offline&sig=synthetic'), api_version='2020-12-06', transport=transport, **RETRY)
++        self.addCleanup(blobs.close)
++        self.addCleanup(tables.close)
++        objects = AzureObjectStore(blobs)
++        store = AzureStateStore(tables.get_table_client('SourceState'), tables.get_table_client('Attempts'), active_client=tables.get_table_client('ActivePointers'), objects=objects)
++        value = {'retained_evidence': 'x' * (70 * 1024)}
++        first = store.insert('QuarterPublication', '2026Q4', value)
++        saved = store.get('QuarterPublication', '2026Q4')
++        self.assertEqual(saved.to_mapping()['value'], value)
++        self.assertEqual(saved.version, first.version)
++        writes = [request for request in transport.requests if request.method in ('PUT', 'POST')]
++        self.assertIn('/worksets/state/sha256%3D', writes[0].url)
++        self.assertIn('/ActivePointers', writes[1].url)
++        descriptor = json.loads(writes[1].body)
++        self.assertNotIn('Payload', descriptor)
++        self.assertEqual(descriptor['PayloadFormat'], 'sec-state-blob-v1')
++        self.assertGreater(descriptor['PayloadByteCount'], 64*1024)
++        self.assertEqual(transport.requests[1].method, 'GET')
++        print('large-pointer-descriptor', descriptor, 'etag', saved.version)
++
++    def test_stream_failure_deletes_only_created_scratch(self):
++        import tempfile
++        from pathlib import Path
++        from unittest.mock import patch
++        from sec_edgar_ingest.storage.azure import AzureObjectStore
++        from azure.storage.blob import BlobServiceClient
++        from test_azure_contracts import BLOB_ENDPOINT, ScriptedTransport, RETRY
++        service = BlobServiceClient(BLOB_ENDPOINT, api_version='2026-04-06', transport=ScriptedTransport([]), **RETRY)
++        self.addCleanup(service.close)
++        objects = AzureObjectStore(service)
++        def broken_chunks():
++            yield b'prefix'
++            raise OSError('truncated stream')
++        with tempfile.TemporaryDirectory() as directory, patch.object(objects, '_blob') as blob:
++            blob.return_value.download_blob.return_value.chunks.side_effect = broken_chunks
++            target = Path(directory)/'scratch'
++            with self.assertRaises(OSError):
++                objects.materialize('observations/sec/s/rows.parquet', target)
++            self.assertFalse(target.exists())
++            target.write_bytes(b'existing')
++            with self.assertRaises(FileExistsError):
++                objects.materialize('observations/sec/s/rows.parquet', target)
++            self.assertEqual(target.read_bytes(), b'existing')
++
++    def test_missing_active_client_refuses_large_write_before_content_upload(self):
++        from unittest.mock import Mock
++        from sec_edgar_ingest.storage.azure import AzureStateStore
++        from test_azure_contracts import TABLE_ENDPOINT
++        objects = Mock()
++        store = AzureStateStore(Mock(url=TABLE_ENDPOINT, table_name='SourceState'), Mock(url=TABLE_ENDPOINT, table_name='Attempts'), objects=objects)
++        with self.assertRaises(ValueError):
++            store.insert('QuarterPublication', '2026Q4', {'large': 'x' * 70000})
++        objects.put_once.assert_not_called()
++
++    def test_materialize_close_failure_removes_its_created_scratch(self):
++        import tempfile
++        from pathlib import Path
++        from unittest.mock import patch
++        from sec_edgar_ingest.storage.local import LocalObjectStore
++        with tempfile.TemporaryDirectory() as directory:
++            root = Path(directory)
++            objects = LocalObjectStore(root/'store')
++            objects.put_once('raw/sec/source', b'raw')
++            target = root/'scratch'
++            original_open = Path.open
++            class FailingClose:
++                def __init__(self, stream):
++                    self.stream = stream
++                def __enter__(self):
++                    return self.stream
++                def __exit__(self, *args):
++                    self.stream.close()
++                    raise OSError('scratch flush failed')
++            def open_file(path, *args, **kwargs):
++                stream = original_open(path, *args, **kwargs)
++                return FailingClose(stream) if path == target else stream
++            with patch.object(Path, 'open', open_file), self.assertRaises(OSError):
++                objects.materialize('raw/sec/source', target)
++            self.assertFalse(target.exists())
++
++    def test_conflicting_transform_cannot_leave_a_publication_receipt(self):
++        import tempfile
++        from dataclasses import replace
++        from pathlib import Path
++        from sec_edgar_ingest.etl.state import EtlState
++        from sec_edgar_ingest.storage.local import LocalStateStore
++        from sec_edgar_ingest.storage.contracts import Conflict
++        from test_etl_contracts import observation_ref, generation_manifest
++        with tempfile.TemporaryDirectory() as directory:
++            store = LocalStateStore(Path(directory))
++            self.addCleanup(store.close)
++            state = EtlState(store)
++            state.accept_transform(observation_ref())
++            manifest = replace(generation_manifest(), sources=(replace(observation_ref(), rows_sha256='f'*64),))
++            with self.assertRaises(Conflict):
++                state.record_publication(manifest)
++            self.assertEqual(list(store.scan('PublicationReceipt', {})), [])
++
++    def test_publication_membership_is_monotonic_and_cas_is_bounded(self):
++        import tempfile
++        from dataclasses import replace
++        from pathlib import Path
++        from unittest.mock import patch
++        from sec_edgar_ingest.etl.state import EtlState
++        from sec_edgar_ingest.storage.local import LocalStateStore
++        from sec_edgar_ingest.storage.contracts import Conflict, CAS_ATTEMPTS
++        from test_etl_contracts import observation_ref, generation_manifest
++        with tempfile.TemporaryDirectory() as directory:
++            store = LocalStateStore(Path(directory))
++            self.addCleanup(store.close)
++            state = EtlState(store)
++            state.accept_transform(observation_ref())
++            manifest = generation_manifest()
++            with patch.object(store, 'replace', side_effect=Conflict('race')) as replace_row:
++                with self.assertRaises(Conflict):
++                    state.record_publication(manifest)
++                self.assertEqual(replace_row.call_count, CAS_ATTEMPTS)
++            state.record_publication(manifest)
++            newer = replace(manifest, generation_id='9'*64)
++            state.record_publication(newer)
++            state.record_publication(manifest)
++            memberships = state.processing(observation_ref()).value['publications']['2015Q1']
++            self.assertEqual(set(memberships), {manifest.generation_id, newer.generation_id})
++            self.assertEqual(len(list(store.scan('PublicationReceipt', {}))), 2)
+diff --git a/pyproject.toml b/pyproject.toml
+index 2550c33..9ebf1a3 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -12,6 +12,7 @@ dependencies = ["sec-edgar-ingest"]
+ [tool.uv]
+ package = false
+ constraint-dependencies = [
++    "pyarrow==25.0.1",
+     "azure-core==1.41.0", "azure-data-tables==12.7.0", "azure-identity==1.26.0",
+     "azure-storage-blob==12.31.0", "certifi==2026.7.22", "cffi==2.1.1",
+     "charset-normalizer==3.5.2", "cryptography==50.0.2", "idna==3.20",
+diff --git a/uv.lock b/uv.lock
+index e51babc..b123922 100644
+--- a/uv.lock
++++ b/uv.lock
+@@ -22,6 +22,7 @@ constraints = [
+     { name = "msal-extensions", specifier = "==1.3.1" },
+     { name = "multidict", specifier = "==7.0.0" },
+     { name = "propcache", specifier = "==0.5.4" },
++    { name = "pyarrow", specifier = "==25.0.1" },
+     { name = "pycparser", specifier = "==3.0" },
+     { name = "pyjwt", specifier = "==2.15.1" },
+     { name = "requests", specifier = "==2.34.2" },
+@@ -530,6 +531,28 @@ wheels = [
+     { url = "https://files.pythonhosted.org/packages/f5/cd/785c64ed382f3f04201870267b02783f63b4678c2acfddc177a3ebcc2727/propcache-0.5.4-py3-none-any.whl", hash = "sha256:62c60aec739ed00124573cce1178138fd690c7676352d67a37328c1cf51d7468", size = 16338, upload-time = "2026-09-16T00:17:13.106Z" },
+ ]
+ 
++[[package]]
++name = "pyarrow"
++version = "25.0.1"
++source = { registry = "https://pypi.org/simple" }
++sdist = { url = "https://files.pythonhosted.org/packages/3d/e3/27f57f80141379d60defe6703eb50a707325706f07fedfd1312c7a751995/pyarrow-25.0.1.tar.gz", hash = "sha256:9150a83248bfed9813ea3c3af74c3856c1984d444aa28e58bf7733b9750ddf6a", size = 1201653, upload-time = "2026-08-10T12:40:53.904Z" }
++wheels = [
++    { url = "https://files.pythonhosted.org/packages/36/4c/b525824ad3094076919273cd97db61fb3d78252dee76fa3b8dc8f76774aa/pyarrow-25.0.1-cp314-cp314-macosx_12_0_arm64.whl", hash = "sha256:bf0b672390cdcb640d7288f96b826d71ff4e9abb254a86c89890baf51a29cee6", size = 35885255, upload-time = "2026-08-10T12:39:32.366Z" },
++    { url = "https://files.pythonhosted.org/packages/08/62/448bb0e940de41aec31d1a956e63ad9c54afdf122a103cc3ab20c2a3ce33/pyarrow-25.0.1-cp314-cp314-macosx_12_0_x86_64.whl", hash = "sha256:38a9a4b4b9613380e200641891495a56c3d5a98a092db4a870af9975e220471d", size = 37644461, upload-time = "2026-08-10T12:39:38.142Z" },
++    { url = "https://files.pythonhosted.org/packages/6e/9a/13587e38bd4806fd218f50fd13b8903fab60588a699ff0c406372e5b4043/pyarrow-25.0.1-cp314-cp314-manylinux_2_28_aarch64.whl", hash = "sha256:0b726ad7e7b669be982b0c71c07fe4b037d654354130da79a7902a669e93a66b", size = 46877146, upload-time = "2026-08-10T12:39:43.722Z" },
++    { url = "https://files.pythonhosted.org/packages/8d/61/1c5d1229fa21da4cff5365e41e57177aaac57c563c727f35419b8513d1c1/pyarrow-25.0.1-cp314-cp314-manylinux_2_28_x86_64.whl", hash = "sha256:9171748cdf796972d85a4b60157c279913e242992e350c90c7450182a9838b2a", size = 50131616, upload-time = "2026-08-10T12:39:49.304Z" },
++    { url = "https://files.pythonhosted.org/packages/43/20/291e1d65cc0b09aa19f03cf25cf51a2f5fa94b5db315178f2d254ed5cad4/pyarrow-25.0.1-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:b7a296aac7a71fa0886c08e155ddb6c636a50013f801f6178daafa0f9e726188", size = 50008879, upload-time = "2026-08-10T12:39:56.891Z" },
++    { url = "https://files.pythonhosted.org/packages/8b/7c/1b7c9ec28e76576337e4f97b31141c9a181b89b6d1d6221e9d8205621a58/pyarrow-25.0.1-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:0fe7c8b6c03969b49c8c66182e4a18e3819ab92d07cfab5d8370c531b9369ef0", size = 53170864, upload-time = "2026-08-10T12:40:04.918Z" },
++    { url = "https://files.pythonhosted.org/packages/b7/75/f3d789dc06011a765d14d86bda799cf72ac1d715b6a6edecaa0d73d95062/pyarrow-25.0.1-cp314-cp314-win_amd64.whl", hash = "sha256:f729cfdbd36fd99d543b67a914d2de044c84ebe45be8b34902b299b608c15c8f", size = 28620729, upload-time = "2026-08-10T12:40:51.41Z" },
++    { url = "https://files.pythonhosted.org/packages/fc/05/647a8ee6f7c2662feb6921315617bc04dcd6034763fb61b1199720bf6162/pyarrow-25.0.1-cp314-cp314t-macosx_12_0_arm64.whl", hash = "sha256:59a2de54c0cbd954da861eee4d1d330f8e909c45b53455baef696380f2c55033", size = 36130288, upload-time = "2026-08-10T12:40:11.014Z" },
++    { url = "https://files.pythonhosted.org/packages/93/f8/c9ee997554d7bea94520667dd1933f109ac1da3ee3556d2b49381e023484/pyarrow-25.0.1-cp314-cp314t-macosx_12_0_x86_64.whl", hash = "sha256:35935cd5de130aa5cf4dea052a63e6bf2e17006c35c3a468194242b9b2bf5956", size = 37762187, upload-time = "2026-08-10T12:40:16.592Z" },
++    { url = "https://files.pythonhosted.org/packages/a2/08/a28c01c7fe9e96e8233ce2d13df1d402f4f999f848f51d2daacd6bb4c036/pyarrow-25.0.1-cp314-cp314t-manylinux_2_28_aarch64.whl", hash = "sha256:f3831aaa25c67a99f99dc8b05873cb9d64560390372e2aa197ce9dd4a3f06a44", size = 46888003, upload-time = "2026-08-10T12:40:23.242Z" },
++    { url = "https://files.pythonhosted.org/packages/1b/b9/58612e977d28dc58c878448866838369ee8da2f1e7cc8ed2c84b952aafee/pyarrow-25.0.1-cp314-cp314t-manylinux_2_28_x86_64.whl", hash = "sha256:6a1fdfc6659b6b19022f2e50627fb5cf7156a66c46bf4299379955cbe742382a", size = 50079036, upload-time = "2026-08-10T12:40:29.169Z" },
++    { url = "https://files.pythonhosted.org/packages/72/13/66e1402dcc860e1dc2760b1e0292c9a569b62b3bccab69def1b3e907d006/pyarrow-25.0.1-cp314-cp314t-musllinux_1_2_aarch64.whl", hash = "sha256:169d3429d5be7c752125890620f75a60776d38b0035eddae939651640822332e", size = 50040226, upload-time = "2026-08-10T12:40:35.186Z" },
++    { url = "https://files.pythonhosted.org/packages/78/10/3f1a5497a7ef732ab0f03ecca3e66d89d9c0f57fdc61b4794c456b781f01/pyarrow-25.0.1-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "sha256:119297a6dc197e45d9c6d4415f7814a67ffa36c180d26f68c154c58067ae782d", size = 53149035, upload-time = "2026-08-10T12:40:41.454Z" },
++    { url = "https://files.pythonhosted.org/packages/93/c0/37d4a7e8e2f7a6076283673d5298018ca26478b934c6ee369e10505ab32c/pyarrow-25.0.1-cp314-cp314t-win_amd64.whl", hash = "sha256:4288f27577352d608ca08553b0865e4a9b3aa14820c5d95b53337218d609835b", size = 28753071, upload-time = "2026-08-10T12:40:46.623Z" },
++]
++
+ [[package]]
+ name = "pycparser"
+ version = "3.0"
+@@ -587,6 +610,7 @@ dependencies = [
+     { name = "azure-data-tables" },
+     { name = "azure-identity" },
+     { name = "azure-storage-blob" },
++    { name = "pyarrow" },
+     { name = "requests" },
+ ]
+ 
+@@ -595,6 +619,7 @@ requires-dist = [
+     { name = "azure-data-tables", specifier = "==12.7.0" },
+     { name = "azure-identity", specifier = "==1.26.0" },
+     { name = "azure-storage-blob", specifier = "==12.31.0" },
++    { name = "pyarrow", specifier = "==25.0.1" },
+     { name = "requests", specifier = "==2.34.2" },
+ ]
+ 

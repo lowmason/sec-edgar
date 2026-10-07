@@ -1,0 +1,43 @@
+test_etl_contracts (unittest.loader._FailedTest.test_etl_contracts) ... ERROR
+test_etl_storage (unittest.loader._FailedTest.test_etl_storage) ... ERROR
+
+======================================================================
+ERROR: test_etl_contracts (unittest.loader._FailedTest.test_etl_contracts)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_etl_contracts
+Traceback (most recent call last):
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/unittest/loader.py", line 426, in _find_test_path
+    module = self._get_module_from_name(name)
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/unittest/loader.py", line 367, in _get_module_from_name
+    __import__(name)
+    ~~~~~~~~~~^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/tests/network_guard.py", line 48, in _guarded_import
+    module = _IMPORT(name, *args, **kwargs)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/tests/test_etl_contracts.py", line 5, in <module>
+    from sec_edgar_ingest.etl.contracts import canonical_schema, change_schema, processing_key
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/tests/network_guard.py", line 48, in _guarded_import
+    module = _IMPORT(name, *args, **kwargs)
+ModuleNotFoundError: No module named 'sec_edgar_ingest.etl'
+
+
+======================================================================
+ERROR: test_etl_storage (unittest.loader._FailedTest.test_etl_storage)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_etl_storage
+Traceback (most recent call last):
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/unittest/loader.py", line 426, in _find_test_path
+    module = self._get_module_from_name(name)
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/unittest/loader.py", line 367, in _get_module_from_name
+    __import__(name)
+    ~~~~~~~~~~^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/tests/network_guard.py", line 48, in _guarded_import
+    module = _IMPORT(name, *args, **kwargs)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/tests/test_etl_storage.py", line 3, in <module>
+    from sec_edgar_ingest.storage.contracts import blob_address
+ImportError: cannot import name 'blob_address' from 'sec_edgar_ingest.storage.contracts' (/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/contracts.py)
+
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.000s
+
+FAILED (errors=2)

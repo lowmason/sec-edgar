@@ -1,0 +1,144 @@
+{
+  "all22_stage7_checks": "reserved",
+  "argv": [
+    "packages/sec-edgar-ingest/tests/etl_proof.py",
+    "installed",
+    "--output",
+    "specs/evidence/sec-filing-index-ingestion/stage-3/final-review-fix1/installed"
+  ],
+  "cwd": "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar",
+  "dependencies": {
+    "azure-data-tables": "12.7.0",
+    "azure-identity": "1.26.0",
+    "azure-storage-blob": "12.31.0",
+    "pyarrow": "25.0.1",
+    "requests": "2.34.2",
+    "sec-edgar-ingest": "0.1.0"
+  },
+  "executable": "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.venv/bin/python",
+  "exit": 0,
+  "network_guard": true,
+  "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+  "python": "3.14.0 (main, Oct 14 2025, 21:10:22) [Clang 20.1.4 ]",
+  "runtime_seconds": 9.6578220827505,
+  "scope": "native isolated installed wheel; Linux worker capacity remains reserved",
+  "source_equality": {
+    "sec_edgar_ingest/__init__.py": {
+      "bytes": 22,
+      "sha256": "91447944015cec709e8aa7655f7e9d64e1e4508e7023a57fe3746911c0fc6fed"
+    },
+    "sec_edgar_ingest/__main__.py": {
+      "bytes": 79,
+      "sha256": "307299fda7b77d22c64cb51430ec75e5f59d78e9c948786afb3b2544fe45e4b7"
+    },
+    "sec_edgar_ingest/cli.py": {
+      "bytes": 19435,
+      "sha256": "669c7ee2f2b8e9a776c8ae43cd0e8a09045c0108a3324041643df63c9ee87c9b"
+    },
+    "sec_edgar_ingest/collection.py": {
+      "bytes": 22873,
+      "sha256": "68b655a18d1e5eca7f5d1c5de860f0644a3ccc34ad9ea6edb579ae5a9738f3c9"
+    },
+    "sec_edgar_ingest/config.py": {
+      "bytes": 13948,
+      "sha256": "23f302368bf3e9a04204d89679cb087cc6f5f985f134cd48f32086c45339a264"
+    },
+    "sec_edgar_ingest/coordination.py": {
+      "bytes": 29853,
+      "sha256": "ee768738ddfa81116c12e7491ed7d1c48cafeccf5de23a2947624329731ffb96"
+    },
+    "sec_edgar_ingest/discovery.py": {
+      "bytes": 21217,
+      "sha256": "187a0cfb0c5f44709696dc12feed5cf3698ce7084f701cf7460be042568016b5"
+    },
+    "sec_edgar_ingest/download.py": {
+      "bytes": 42134,
+      "sha256": "467068de88ec939c5b60e7d37852c722170a4c218ed0ba1c004ff74c2b627473"
+    },
+    "sec_edgar_ingest/etl/__init__.py": {
+      "bytes": 84,
+      "sha256": "2898a2d0bf5c0fe87688f264b30b475142a0f234248003c98992d7ad1589356d"
+    },
+    "sec_edgar_ingest/etl/catalog.py": {
+      "bytes": 14971,
+      "sha256": "07c205fd40cd735faff0be58535614fa2f4b2b2dfaf69a02e2a9cd522fbefdce"
+    },
+    "sec_edgar_ingest/etl/commands.py": {
+      "bytes": 16580,
+      "sha256": "84b05b02d926085bf1da931375c45063d075b72e79f0287ec0d1049fc0faedb9"
+    },
+    "sec_edgar_ingest/etl/contracts.py": {
+      "bytes": 13740,
+      "sha256": "f7343b58138c5d26badf2d60067caad8d20b8d4441bbdefe1f03ea332198994d"
+    },
+    "sec_edgar_ingest/etl/manifest.py": {
+      "bytes": 21636,
+      "sha256": "4847f02a05435e4b0dbc1b4cfb835e96f07b5ba38c2ece37dee11aa8d5999bf0"
+    },
+    "sec_edgar_ingest/etl/parser.py": {
+      "bytes": 6600,
+      "sha256": "5c1f973d542e3142e866fada60f1a969af68b8abf37313517965db3f58db2ea3"
+    },
+    "sec_edgar_ingest/etl/publication.py": {
+      "bytes": 6572,
+      "sha256": "8f39d88cb598d716d11ee865cbd0aca261449c6b0f944f2574a7b8ee0516adb7"
+    },
+    "sec_edgar_ingest/etl/reader.py": {
+      "bytes": 3136,
+      "sha256": "0ae4e0e53e3dff958594c24b5764f59ff073fe3033ba075a56870d8fbe0237b8"
+    },
+    "sec_edgar_ingest/etl/state.py": {
+      "bytes": 4912,
+      "sha256": "6fea53a9afbc5497dd2c1fcef63fe51d1a2546f43f54e34e5e09643120abd4a4"
+    },
+    "sec_edgar_ingest/etl/transform.py": {
+      "bytes": 16216,
+      "sha256": "ccab031917a071a2d64e249c56d9f88c65c3050b1f94d203a1806c330d229d2f"
+    },
+    "sec_edgar_ingest/models.py": {
+      "bytes": 24775,
+      "sha256": "6442fd063727d5eae7958d12e24e4668ec1dddbd184ee4f235c4208632af03c4"
+    },
+    "sec_edgar_ingest/results.py": {
+      "bytes": 2559,
+      "sha256": "d0366377dbec4329dd31b5b5f8ef1b9f9205a56809c5a6350735ad3284761a55"
+    },
+    "sec_edgar_ingest/state.py": {
+      "bytes": 31374,
+      "sha256": "1462bfe35789866c0158d294207205a25c37c4582097a958e6f4ed3b0bcb09b5"
+    },
+    "sec_edgar_ingest/storage/__init__.py": {
+      "bytes": 1205,
+      "sha256": "a12bd5c1b2590957895bc75bddbc88e99d08e9df380435e5add8ee3a6a6b9d00"
+    },
+    "sec_edgar_ingest/storage/azure.py": {
+      "bytes": 26823,
+      "sha256": "10c91b703aca313863b1e387aa232a1f4d44d8f75f59b243f1fe715c6cdf0330"
+    },
+    "sec_edgar_ingest/storage/contracts.py": {
+      "bytes": 8328,
+      "sha256": "1b27dbc0e5c07c43209c1c93502b0ed24d8e24e99c3afd9dfc9a7c47d27abb2f"
+    },
+    "sec_edgar_ingest/storage/local.py": {
+      "bytes": 20306,
+      "sha256": "57a4ec09900550ef199fb168c22011bf3bb484ce5e69333d4cafa9662f67d5e6"
+    },
+    "sec_edgar_ingest/urls.py": {
+      "bytes": 4532,
+      "sha256": "7e1f20fc5c951c23efbbfec9a66e60ae4ecd4fda683fd1f95e20d59e28057d77"
+    },
+    "sec_edgar_ingest/validation.py": {
+      "bytes": 11350,
+      "sha256": "1885960d908838ee4fa4e733bc91fdcfc1f773cdad2d807844e8e3405f4800b3"
+    },
+    "sec_edgar_ingest/worksets.py": {
+      "bytes": 10293,
+      "sha256": "bc74aefcb04eb3fd0b11cc503b604f100664484cf49996a46b52f14ea0020cfd"
+    }
+  },
+  "wheel": {
+    "bytes": 111195,
+    "sha256": "eb8bb3b318b3b1a4fe1983291efb92161e22fac998f86230b5f2b7f3cf15c3ab"
+  },
+  "wheel_name": "sec_edgar_ingest-0.1.0-py3-none-any.whl"
+}

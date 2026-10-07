@@ -1,0 +1,39 @@
+test_quarter_counts_include_retained_identical_duplicates (test_etl_contracts.EtlRecordTests.test_quarter_counts_include_retained_identical_duplicates) ... ERROR
+test_closed_daily_only_manifest_has_no_withdrawal_authority (test_etl_contracts.EtlRecordTests.test_closed_daily_only_manifest_has_no_withdrawal_authority) ... ERROR
+
+======================================================================
+ERROR: test_quarter_counts_include_retained_identical_duplicates (test_etl_contracts.EtlRecordTests.test_quarter_counts_include_retained_identical_duplicates)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/tests/test_etl_contracts.py", line 145, in test_quarter_counts_include_retained_identical_duplicates
+    ref = replace(observation_ref(), source_row_count=2, distinct_key_count=1, quarter_counts={'2015Q1': 2})
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/dataclasses.py", line 1698, in replace
+    return _replace(obj, **changes)
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/dataclasses.py", line 1732, in _replace
+    return self.__class__(**changes)
+           ~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "<string>", line 14, in __init__
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/contracts.py", line 117, in __post_init__
+    raise ValueError('quarter counts must account for every distinct key')
+ValueError: quarter counts must account for every distinct key
+
+======================================================================
+ERROR: test_closed_daily_only_manifest_has_no_withdrawal_authority (test_etl_contracts.EtlRecordTests.test_closed_daily_only_manifest_has_no_withdrawal_authority)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/tests/test_etl_contracts.py", line 152, in test_closed_daily_only_manifest_has_no_withdrawal_authority
+    manifest = replace(generation_manifest(), quarter_mode='closed', membership_source=None)
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/dataclasses.py", line 1698, in replace
+    return _replace(obj, **changes)
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/dataclasses.py", line 1732, in _replace
+    return self.__class__(**changes)
+           ~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "<string>", line 23, in __init__
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/contracts.py", line 203, in __post_init__
+    raise ValueError('closed quarter requires a membership source')
+ValueError: closed quarter requires a membership source
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.008s
+
+FAILED (errors=2)

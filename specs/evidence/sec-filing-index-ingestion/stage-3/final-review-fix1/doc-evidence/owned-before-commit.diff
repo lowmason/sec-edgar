@@ -1,0 +1,105 @@
+diff --git a/README.md b/README.md
+index 21eb55ba..728c471a 100644
+--- a/README.md
++++ b/README.md
+@@ -35,9 +35,11 @@ Only explicitly selected bounded loopback fixture origins are allowed, including
+ in their spawned transport children. Production CLI/SDK behavior is outside this
+ test-only guard.
+ 
+-Configuration in `conf/sec-edgar-ingest.yaml` uses JSON syntax, a YAML 1.2 subset.
+-Its `local-fixture` acquisition backend requires an explicit validated
+-`--fixture-pack`; retained-byte ETL reads stored inputs without a fixture pack.
++Acquisition uses `conf/sec-edgar-ingest.yaml`; retained-byte ETL uses the separate
++`conf/sec-edgar-etl-fixture.yaml` with supported row parser `fixture-index-parser-v1`.
++Both use JSON syntax, a YAML 1.2 subset, and share the local storage binding.
++The `local-fixture` acquisition backend requires an explicit validated
++`--fixture-pack`; ETL reads an existing snapshot workset without a fixture pack.
+ There is no live fallback. See the [acquisition runbook](docs/runbooks/sec-edgar-ingest-acquisition.md)
+ for commands, shared issuer requirements, failure meanings, and safe recovery.
+ The [Stage 2 verification record](specs/evidence/sec-filing-index-ingestion/stage-2/verification.md)
+diff --git a/docs/runbooks/sec-edgar-etl-publication.md b/docs/runbooks/sec-edgar-etl-publication.md
+index 41931bbb..b921065f 100644
+--- a/docs/runbooks/sec-edgar-etl-publication.md
++++ b/docs/runbooks/sec-edgar-etl-publication.md
+@@ -15,20 +15,32 @@ No history-wide range or deployed capacity is established.
+ 
+ For an already populated local fixture store, use its acquisition snapshot
+ reference. `--state-dir` is the base under which `storage.root` is resolved.
+-ETL does not require `--fixture-pack`. These examples use the selected native
+-Python and cached frozen workspace; the same arguments apply to the installed
++The separate, committed [ETL fixture configuration](../../conf/sec-edgar-etl-fixture.yaml)
++selects the supported row parser `fixture-index-parser-v1`. It keeps the same
++local storage binding and accepted settings as `conf/sec-edgar-ingest.yaml`;
++only `etl.parser_version` differs. Keep the acquisition configuration unchanged:
++its `fixture-envelope-v1` value remains acquisition provenance and is rejected
++at the ETL boundary. Both configuration files use JSON syntax, a YAML 1.2 subset.
++
++The raw snapshot workset must already exist, with its original bytes and pins,
++from acquisition or an explicit offline fixture seed. Start with the exact
++snapshot reference returned by that preparation, then transform it and publish
++the returned transformed reference. See the [acquisition runbook](sec-edgar-ingest-acquisition.md)
++for the preceding fixture acquisition lifecycle. ETL does not require
++`--fixture-pack` and does not collect missing inputs. These examples use the
++selected native Python and cached frozen workspace; the same arguments apply to the installed
+ `sec-edgar-ingest` console. Set the deadline to an explicit future aware UTC time
+ within the configuration's bounds.
+ 
+ ```sh
+ uv run --offline --frozen --package sec-edgar-ingest sec-edgar-ingest transform \
+-  --config conf/sec-edgar-ingest.yaml --state-dir /absolute/existing-fixture-base \
++  --config conf/sec-edgar-etl-fixture.yaml --state-dir /absolute/existing-fixture-base \
+   --run-id replay-001 --execution-id local-001 --attempt-id transform-v1 \
+   --deadline '<future-UTC-ISO-timestamp>' \
+   --workset 'worksets/sec/snapshot/sha256=<exact-snapshot-workset-id>/workset.json'
+ 
+ uv run --offline --frozen --package sec-edgar-ingest sec-edgar-ingest publish \
+-  --config conf/sec-edgar-ingest.yaml --state-dir /absolute/existing-fixture-base \
++  --config conf/sec-edgar-etl-fixture.yaml --state-dir /absolute/existing-fixture-base \
+   --run-id replay-001 --execution-id local-001 --attempt-id publish-v1 \
+   --deadline '<same-future-UTC-ISO-timestamp>' \
+   --workset 'worksets/sec/transformed/sha256=<returned-transformed-id>/workset.json'
+@@ -45,11 +57,13 @@ Candidate descriptors use `worksets/sec/candidates/sha256=<id>/candidate.json`.
+ 
+ The snapshot workset retains its acquisition `origin_context`. A separate ETL
+ configuration freezes the current parser/schema, image and effective context.
+-For local fixture parser replay, copy the configuration to a new file, change
+-`etl.parser_version` from `fixture-index-parser-v1` to the supported
++For local fixture parser replay, copy `conf/sec-edgar-etl-fixture.yaml` to a
++separate replay configuration file, then change `etl.parser_version` from its
++provided `fixture-index-parser-v1` to the supported
+ `fixture-index-parser-v2`, use a new attempt ID and the **same** snapshot workset,
+ and add `--force` to transform. Publish its returned workset with that same new
+-configuration. Production parser `sec-index-parser-v1` accepts the selected
++configuration via `--config` for both commands. Production parser
++`sec-index-parser-v1` accepts the selected
+ quarterly ISO-date ZIP family and daily compact-date IDX family; synthetic
+ fixture aliases and overrides are refused by Azure configuration.
+ 
+@@ -73,7 +87,7 @@ from sec_edgar_ingest.etl.reader import capture_quarter, read_quarter
+ from sec_edgar_ingest.etl.state import EtlState
+ import json
+ 
+-settings = Settings.from_mapping(json.loads(Path('conf/sec-edgar-ingest.yaml').read_text()))
++settings = Settings.from_mapping(json.loads(Path('conf/sec-edgar-etl-fixture.yaml').read_text()))
+ store, objects, leases = open_stores(settings, base_path=Path('/absolute/existing-fixture-base'))
+ try:
+     capture = capture_quarter('2026Q4', objects, EtlState(store))
+diff --git a/packages/sec-edgar-ingest/README.md b/packages/sec-edgar-ingest/README.md
+index 432ab9d0..72515865 100644
+--- a/packages/sec-edgar-ingest/README.md
++++ b/packages/sec-edgar-ingest/README.md
+@@ -126,6 +126,14 @@ quarantine/pending work, result repair, stopped ownership, and the conservative
+ Azure clean-release guard.
+ 
+ 
++For local ETL, pass `--config conf/sec-edgar-etl-fixture.yaml` from the repository
++root. This separate [configuration](../../conf/sec-edgar-etl-fixture.yaml) selects
++`fixture-index-parser-v1` and preserves the acquisition store binding. Leave
++`conf/sec-edgar-ingest.yaml` unchanged: its `fixture-envelope-v1` value records
++acquisition provenance and is not an accepted ETL row parser. First populate the
++store with a raw snapshot workset through acquisition or explicit offline fixture
++seeding, then use its exact reference below.
++
+ `transform --workset worksets/sec/snapshot/sha256=<id>/workset.json` freezes
+ observation outputs and returns an exact transformed workset. `publish --workset
+ worksets/sec/transformed/sha256=<id>/workset.json` builds and validates candidates,

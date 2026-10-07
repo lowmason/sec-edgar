@@ -1,0 +1,27 @@
+test_conflicting_transform_cannot_leave_a_publication_receipt (test_etl_storage.EtlStorageTests.test_conflicting_transform_cannot_leave_a_publication_receipt) ... FAIL
+test_publication_membership_is_monotonic_and_cas_is_bounded (test_etl_storage.EtlStorageTests.test_publication_membership_is_monotonic_and_cas_is_bounded) ... ok
+
+======================================================================
+FAIL: test_conflicting_transform_cannot_leave_a_publication_receipt (test_etl_storage.EtlStorageTests.test_conflicting_transform_cannot_leave_a_publication_receipt)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/tests/test_etl_storage.py", line 246, in test_conflicting_transform_cannot_leave_a_publication_receipt
+    self.assertEqual(list(store.scan('PublicationReceipt', {})), [])
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: [Versioned(value=FrozenMapping(_items=mapp[334 chars]4e')] != []
+
+First list contains 1 additional elements.
+First extra element 0:
+Versioned(value=FrozenMapping(_items=mappingproxy({'generation_id': 'dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd', 'processing_key': 'a775af2b8608f26db34c0740631584535116845367493fc02c1ffa3cb5a6325b', 'quarter': '2015Q1', 'source_fingerprint': 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'})), version='4ed111c466364bdfba4a001ecd02134e')
+
++ []
+- [Versioned(value=FrozenMapping(_items=mappingproxy({'generation_id': 'dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd',
+-                                                     'processing_key': 'a775af2b8608f26db34c0740631584535116845367493fc02c1ffa3cb5a6325b',
+-                                                     'quarter': '2015Q1',
+-                                                     'source_fingerprint': 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'})),
+-            version='4ed111c466364bdfba4a001ecd02134e')]
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.061s
+
+FAILED (failures=1)

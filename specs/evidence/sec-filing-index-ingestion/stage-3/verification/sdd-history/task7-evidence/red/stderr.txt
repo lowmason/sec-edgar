@@ -1,0 +1,26 @@
+test_aligned_insert_replace_and_gate_races (test_etl_processes.ProcessProofTests.test_aligned_insert_replace_and_gate_races) ... ERROR
+test_driver_exposes_real_process_proof (test_etl_processes.ProcessProofTests.test_driver_exposes_real_process_proof) ... FAIL
+
+======================================================================
+ERROR: test_aligned_insert_replace_and_gate_races (test_etl_processes.ProcessProofTests.test_aligned_insert_replace_and_gate_races)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/tests/test_etl_processes.py", line 15, in test_aligned_insert_replace_and_gate_races
+    from etl_proof import process_proof
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/tests/network_guard.py", line 48, in _guarded_import
+    module = _IMPORT(name, *args, **kwargs)
+ModuleNotFoundError: No module named 'etl_proof'
+
+======================================================================
+FAIL: test_driver_exposes_real_process_proof (test_etl_processes.ProcessProofTests.test_driver_exposes_real_process_proof)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/tests/test_etl_processes.py", line 12, in test_driver_exposes_real_process_proof
+    self.assertIsNotNone(importlib.util.find_spec('etl_proof'), 'Task 7 process proof driver is missing')
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Task 7 process proof driver is missing
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.001s
+
+FAILED (failures=1, errors=1)

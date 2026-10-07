@@ -1,0 +1,222 @@
+{
+  "schema_version": "sec-stage3-planning-reconciliation-v1",
+  "planning_date": "2026-10-07",
+  "timezone": "America/New_York",
+  "local_head": "5f90a2116eab21525e88a02d0988567e71d95967",
+  "local_origin_main": "5f90a2116eab21525e88a02d0988567e71d95967",
+  "remote_fetch": false,
+  "live_access": false,
+  "implementation_started": false,
+  "authoritative_stamps": [
+    {
+      "stage": 1,
+      "status": "COMPLETE",
+      "date": "2026-10-06",
+      "plan": 1,
+      "spec": "specs/completed/sec-filing-index-ingestion-stage-1-spec.md"
+    },
+    {
+      "stage": 2,
+      "status": "COMPLETE",
+      "date": "2026-10-06",
+      "plan": 2,
+      "spec": "specs/completed/sec-filing-index-ingestion-stage-2-spec.md"
+    }
+  ],
+  "fresh_offline_evidence_checks": [
+    {
+      "manifest": "specs/evidence/sec-filing-index-ingestion/stage-1/final-candidate/evidence-manifest.json",
+      "sha256": "124e96041548daba8216aa495fc69021751555b0f0e4c890ac85e934f512a131",
+      "records": 1584,
+      "direct": 1583,
+      "declared_alias": 1,
+      "failures": []
+    },
+    {
+      "manifest": "specs/evidence/sec-filing-index-ingestion/stage-2/verification/sec-edgar-wheel-n0zc5qlc/sha256-manifest.json",
+      "sha256": "126a1c3c666e1e41f63d37f68ec95ec145f55a28ec6a1ea97676fa9941caff47",
+      "records": 78,
+      "failures": []
+    },
+    {
+      "manifest": "specs/evidence/sec-filing-index-ingestion/stage-2/verification/sec-edgar-stage-2-46bhxh8j/sha256-manifest.json",
+      "sha256": "beee194e1a67f1870c2b1d948c9ea29044f6ba0b6d9da0008443ccb13a8d4ab7",
+      "records": 96,
+      "failures": []
+    },
+    {
+      "tested_reviewed_files": 88,
+      "failures": []
+    }
+  ],
+  "roadmap": {
+    "path": "specs/sec-filing-index-ingestion-roadmap.md",
+    "sha256": "25cc4f40a9ddb34679fc5f226f4cc32a7be6739f75ea463e4dfde499d72aceab",
+    "bytes": 15853,
+    "stages_1_2_ticked": true,
+    "stage_3_unticked": true,
+    "byte_preserved": true,
+    "ignored_local": true
+  },
+  "original_deletions_preserved": [
+    "packages/sec-edgar-index-ingest/README.md",
+    "packages/sec-edgar-index-ingest/pyproject.toml",
+    "packages/sec-edgar-index-ingest/src/sec_edgar_index_ingest/__init__.py",
+    "packages/sec-edgar-index-ingest/src/sec_edgar_index_ingest/py.typed"
+  ],
+  "preservation": {
+    "tracked_plus_local_roadmap_records": 19082,
+    "drift": [],
+    "baseline_inventory_sha256": "c9092ebe67f5dfafb26dcd75e4a1e5769ec6297fd34062a874b9d4b4eedd0968",
+    "no_stage_stash_reset_restore_commit": true,
+    "subsequent_edits_policy": "Capture current edits at execution; preserve drift rather than overwrite from this snapshot."
+  },
+  "code_inventory": [
+    {
+      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/contracts.py",
+      "line": 83,
+      "fact": "StateStore get/insert/replace/scan; exact opaque versions"
+    },
+    {
+      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/contracts.py",
+      "line": 90,
+      "fact": "Immutable object interfaces; promote raw-only; stage available"
+    },
+    {
+      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/__init__.py",
+      "line": 9,
+      "fact": "open_stores returns state/objects/leases"
+    },
+    {
+      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py",
+      "line": 224,
+      "fact": "Current path first segment directly selects acquisition container; Stage3 proposes accepted mapping"
+    },
+    {
+      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/worksets.py",
+      "line": 143,
+      "fact": "Strict snapshot validation preserves origin config and source period/address"
+    },
+    {
+      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/validation.py",
+      "line": 213,
+      "fact": "validate_envelope validates retained acquisition family; no row ETL"
+    },
+    {
+      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/config.py",
+      "line": 207,
+      "fact": "Settings serialization drives config hash; preserve v1 bytes"
+    },
+    {
+      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/results.py",
+      "line": 28,
+      "fact": "Existing results accept discover/collect only"
+    },
+    {
+      "path": "scripts/check-sec-edgar-ingest.sh",
+      "line": 3,
+      "fact": "Prescribed offline guarded suite/build/help/module/compile/whitespace check"
+    }
+  ],
+  "planning_validation": {
+    "local_links": "PASS",
+    "python_snippet_syntax": [
+      {
+        "file": "specs/plans/3-sec-filing-index-ingestion-stage-3-spec.md",
+        "block": 2,
+        "syntax": "PASS"
+      },
+      {
+        "file": "specs/plans/3-sec-filing-index-ingestion-stage-3-spec.md",
+        "block": 3,
+        "syntax": "PASS"
+      },
+      {
+        "file": "specs/plans/3-sec-filing-index-ingestion-stage-3-spec.md",
+        "block": 4,
+        "syntax": "PASS"
+      },
+      {
+        "file": "specs/plans/3-sec-filing-index-ingestion-stage-3-spec.md",
+        "block": 5,
+        "syntax": "PASS"
+      },
+      {
+        "file": "specs/plans/3-sec-filing-index-ingestion-stage-3-spec.md",
+        "block": 6,
+        "syntax": "PASS"
+      },
+      {
+        "file": "specs/plans/3-sec-filing-index-ingestion-stage-3-spec.md",
+        "block": 7,
+        "syntax": "PASS"
+      },
+      {
+        "file": "specs/plans/3-sec-filing-index-ingestion-stage-3-spec.md",
+        "block": 8,
+        "syntax": "PASS"
+      },
+      {
+        "file": "specs/plans/3-sec-filing-index-ingestion-stage-3-spec.md",
+        "block": 9,
+        "syntax": "PASS"
+      },
+      {
+        "file": "specs/plans/3-sec-filing-index-ingestion-stage-3-spec.md",
+        "block": 10,
+        "syntax": "PASS"
+      },
+      {
+        "file": "specs/plans/3-sec-filing-index-ingestion-stage-3-spec.md",
+        "block": 11,
+        "syntax": "PASS"
+      },
+      {
+        "file": "specs/plans/3-sec-filing-index-ingestion-stage-3-spec.md",
+        "block": 12,
+        "syntax": "PASS"
+      },
+      {
+        "file": "specs/plans/3-sec-filing-index-ingestion-stage-3-spec.md",
+        "block": 13,
+        "syntax": "PASS"
+      },
+      {
+        "file": "specs/plans/3-sec-filing-index-ingestion-stage-3-spec.md",
+        "block": 14,
+        "syntax": "PASS"
+      },
+      {
+        "file": "specs/plans/3-sec-filing-index-ingestion-stage-3-spec.md",
+        "block": 15,
+        "syntax": "PASS"
+      },
+      {
+        "file": "specs/plans/3-sec-filing-index-ingestion-stage-3-spec.md",
+        "block": 16,
+        "syntax": "PASS"
+      }
+    ],
+    "tasks": 7,
+    "all_tasks_unexecuted": true,
+    "global_constraints_verbatim": 17,
+    "whitespace": "PASS",
+    "no_deferred_backlog": true,
+    "future_tests_not_run": true
+  },
+  "documents": [
+    {
+      "path": "specs/sec-filing-index-ingestion-stage-3-spec.md",
+      "bytes": 23945,
+      "sha256": "da258ff7afd846d9871eab17bddfc63126989b92194a74bd9b4876a2fb02a38b"
+    },
+    {
+      "path": "specs/plans/3-sec-filing-index-ingestion-stage-3-spec.md",
+      "bytes": 80708,
+      "sha256": "40ce2760e9d83de8a148548a2f1a1483e0de1fa0b7360f268940d1d9bfc45826"
+    }
+  ],
+  "routing": "writing-plans, Stage 3 only",
+  "later_stages": "4-8 remain unticked/unplanned",
+  "approval": "pending; stop after presentation"
+}

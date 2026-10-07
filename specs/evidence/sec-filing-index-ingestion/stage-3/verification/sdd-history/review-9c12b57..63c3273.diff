@@ -1,0 +1,119 @@
+# Review package: 9c12b5738f8969380a0a5aad4f33295356abf239..63c327390f76d466e04fb8285f7c95f39e4f4937
+
+## Commits
+63c3273 fix: require canonical snapshot bytes before transform
+
+## Files changed
+ .../src/sec_edgar_ingest/etl/commands.py           |  6 ++++
+ packages/sec-edgar-ingest/tests/test_etl_cli.py    | 41 ++++++++++++++++++++++
+ 2 files changed, 47 insertions(+)
+
+## Diff
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/commands.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/commands.py
+index 83e8637..3885750 100644
+--- a/packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/commands.py
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/commands.py
+@@ -2,20 +2,21 @@
+ from __future__ import annotations
+ 
+ import re
+ from collections import Counter
+ from datetime import datetime, timezone
+ 
+ from ..config import Settings, pin_context
+ from ..models import Error, RunContext, canonical_json, parse_json, safe_relative_path
+ from ..results import log_event, result_path
+ from ..state import AcquisitionState, attempt_key
++from ..worksets import decode_snapshot_workset, encode_workset
+ from ..storage.contracts import BoundaryObserver, CAS_ATTEMPTS, Conflict, ObjectStore, StateStore, observe
+ from .contracts import (EtlResult, ObservationRef, PublicationResult, decode_transformed,
+                         processing_key, transformed_ref)
+ from .publication import publish_quarter
+ from .parser import supported_parser, SCHEMA_VERSION
+ from .state import EtlState
+ from .transform import transform_workset
+ 
+ WORKSET_REFS = {kind: re.compile(r'worksets/sec/' + kind + r'/sha256=[0-9a-f]{64}/workset\.json\Z')
+                 for kind in ('snapshot', 'transformed')}
+@@ -150,20 +151,25 @@ def write_etl_result(result: EtlResult, objects: ObjectStore, acquisition: Acqui
+     acquisition.finish_attempt(result)
+     observe(observer, 'etl_result.after_attempt')
+     return path
+ 
+ 
+ def run_transform(snapshot_ref: str, context: RunContext, settings: Settings, objects: ObjectStore,
+                   store: StateStore, *, force: bool = False, observer: BoundaryObserver | None = None) -> EtlResult:
+     if context.command != 'transform':
+         raise ValueError('transform requires a transform command context')
+     validate_workset_ref(snapshot_ref, 'snapshot')
++    snapshot_body = objects.read(snapshot_ref)
++    snapshots = decode_snapshot_workset(snapshot_body)
++    if (snapshot_ref != f'worksets/sec/snapshot/sha256={snapshots.workset_id}/workset.json'
++            or encode_workset(snapshots) != snapshot_body):
++        raise Conflict('snapshot workset bytes or path differ from canonical identity')
+     accepted = {row.value['processing_key'] for row in store.scan('Processing', {})}
+     workset = transform_workset(snapshot_ref, context, settings, objects, EtlState(store),
+                                 AcquisitionState(store), force=force, observer=observer)
+     unchanged = sum(not force and processing_key(ref.source.source_id, ref.snapshot.sha256,
+                     ref.parser_version, ref.schema_version) in accepted for ref in workset.observations)
+     transformed = len(workset.observations) - unchanged
+     outcome = ('state_conflict' if any(gap.code == 'state_conflict' for gap in workset.failures)
+                else 'incomplete' if workset.failures and workset.observations
+                else 'invalid_source' if workset.failures else 'success' if transformed else 'unchanged')
+     for ref in workset.observations:
+diff --git a/packages/sec-edgar-ingest/tests/test_etl_cli.py b/packages/sec-edgar-ingest/tests/test_etl_cli.py
+index 808e192..005f7d7 100644
+--- a/packages/sec-edgar-ingest/tests/test_etl_cli.py
++++ b/packages/sec-edgar-ingest/tests/test_etl_cli.py
+@@ -506,10 +506,51 @@ class EtlCliTests(unittest.TestCase):
+     def test_invalid_source_logs_source_and_raw_correlation(self):
+         source = fixture_source('2026-10-02', 'daily')
+         body = self.body.replace(b'123456|Example', b'invalid|Example')
+         ref = self.seed_members(((source, body),))
+         self.assertEqual(self.invoke(self.argv(ref=ref))[0], 7)
+         events = [json.loads(line) for line in self.calls[-1]['stderr'].splitlines()]
+         failures = [event for event in events if event['event'] == 'source_transform_failed']
+         self.assertEqual(len(failures), 1)
+         self.assertEqual(failures[0]['fields']['source_id'], source.source_id)
+         self.assertEqual(failures[0]['fields']['raw_sha256'], hashlib.sha256(body).hexdigest())
++
++    def assert_noncanonical_snapshot_refused(self, spelling):
++        from sec_edgar_ingest.worksets import decode_snapshot_workset, encode_workset
++        original = self.objects.read(self.snapshot_ref)
++        snapshot = decode_snapshot_workset(original)
++        value = json.loads(original)
++        noncanonical = (json.dumps(value, indent=2).encode() if spelling == 'whitespace' else
++                        json.dumps(dict(reversed(tuple(value.items()))), separators=(',', ':')).encode())
++        self.assertNotEqual(noncanonical, original)
++        self.assertEqual(json.loads(noncanonical), value)
++        # Acquisition decoding keeps its existing normalized-identity contract.
++        self.assertEqual(decode_snapshot_workset(noncanonical), snapshot)
++        self.assertEqual(encode_workset(snapshot), original)
++        object_root = self.root / '.fixture-state/objects'
++        (object_root / self.snapshot_ref).write_bytes(noncanonical)
++        before = {path.relative_to(object_root).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
++                  for path in object_root.rglob('*') if path.is_file()}
++        self.checkpoint(spelling + '-before-command')
++        code, output = self.invoke(self.argv())
++        self.checkpoint(spelling + '-after-command')
++        after = {path.relative_to(object_root).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
++                 for path in object_root.rglob('*') if path.is_file()
++                 and not path.relative_to(object_root).as_posix().startswith('runs/')}
++        proof = {'snapshot_ref': self.snapshot_ref, 'canonical_sha256': hashlib.sha256(original).hexdigest(),
++                 'noncanonical_sha256': hashlib.sha256(noncanonical).hexdigest(),
++                 'canonical_bytes_hex': original.hex(), 'noncanonical_bytes_hex': noncanonical.hex(),
++                 'exit': code, 'output': output, 'before_objects': before, 'after_objects': after,
++                 'processing': [row.to_mapping() for row in self.store.scan('Processing', {})],
++                 'pointers': [row.to_mapping() for row in self.store.scan('QuarterPublication', {})]}
++        (self.root / 'canonical-refusal-proof.json').write_bytes(canonical_json(proof))
++        self.assertEqual(code, 9, self.calls[-1])
++        self.assertEqual(after, before)
++        self.assertEqual(proof['processing'], [])
++        self.assertEqual(proof['pointers'], [])
++        self.assertIsNone(output['result_ref'])
++
++    def test_noncanonical_snapshot_whitespace_refuses_before_transform_outputs(self):
++        self.assert_noncanonical_snapshot_refused('whitespace')
++
++    def test_noncanonical_snapshot_property_order_refuses_before_transform_outputs(self):
++        self.assert_noncanonical_snapshot_refused('property-order')
