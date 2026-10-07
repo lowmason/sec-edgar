@@ -60,6 +60,8 @@ class EtlState:
 
     def record_publication(self, manifest: GenerationManifest) -> None:
         for ref in manifest.sources:
+            if not ref.quarter_counts.get(manifest.quarter):
+                continue
             self.accept_transform(ref)
             key = _processing_key(ref)
             receipt_key = hashlib.sha256(canonical_json([key, manifest.quarter, manifest.generation_id])).hexdigest()
@@ -79,8 +81,10 @@ class EtlState:
             if generation_id in generations:
                 if generations[generation_id] != receipt_key:
                     raise Conflict('processing publication membership conflicts')
-                return
             generations[generation_id] = receipt_key
+            value['published'] = all(publications.get(output_quarter) for output_quarter in ref.quarter_counts)
+            if value == current.to_mapping()['value']:
+                return
             try:
                 self.store.replace('Processing', _processing_key(ref), value, current.version)
                 return
