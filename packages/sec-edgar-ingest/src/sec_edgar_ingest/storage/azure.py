@@ -19,13 +19,38 @@ from azure.storage.blob import BlobLeaseClient, BlobServiceClient
 from ..config import ACCOUNT_NAME, LOCK_BLOB, Settings
 from ..models import Versioned, parse_json, require_hash, require_number, require_text, require_utc, safe_relative_path
 from .contracts import (AlreadyExists, BoundaryObserver, ClockUncertain, Conflict, FILE_CHUNK_BYTES,
-                        LeaseHandle, OwnershipLost, TimeBounds, REGISTRY_PATH, deployment_binding, exact_version,
+                        LeaseHandle, ObjectStore, OwnershipLost, TimeBounds, REGISTRY_PATH, deployment_binding, exact_version,
                         identity, observe, payload_bytes, table_for, validate_raw_address)
 
 RETRY_OPTIONS = dict(retry_total=0, retry_connect=0, retry_read=0, retry_status=0)
 STORAGE_CONNECTION_TIMEOUT_SECONDS = 5
 STORAGE_READ_TIMEOUT_SECONDS = 10
 CONTAINERS = frozenset({"raw", "worksets", "quarantine", "locks"})
+TABLE_STRING_BYTES = 64 * 1024
+TABLE_ENTITY_BYTES = 1024 * 1024
+TABLE_KEY_CHARACTERS = 1024
+TABLE_MAX_PROPERTIES = 255
+TABLE_SYSTEM_OVERHEAD_BYTES = 1024
+STATE_BLOB_FORMAT = "sec-state-blob-v1"
+STATE_BLOB_FIELDS = frozenset({"PayloadFormat", "PayloadSha256", "PayloadByteCount"})
+
+
+def _check_table_entity(entity: dict[str, object]) -> None:
+    strings = {name: value for name, value in entity.items() if isinstance(value, str)}
+    if any(len(entity[name]) > TABLE_KEY_CHARACTERS for name in ("PartitionKey", "RowKey")):
+        raise ValueError("Table state identity exceeds the service key limit")
+    if any(len(value.encode("utf-16-le")) > TABLE_STRING_BYTES for value in strings.values()):
+        raise ValueError("Table string property exceeds the service size limit")
+    data_bytes = sum(len(name.encode("utf-16-le")) +
+                     (len(value.encode("utf-16-le")) if isinstance(value, str) else 8)
+                     for name, value in entity.items())
+    if len(entity) + 1 > TABLE_MAX_PROPERTIES or data_bytes + TABLE_SYSTEM_OVERHEAD_BYTES > TABLE_ENTITY_BYTES:
+        raise ValueError("Table state entity exceeds the service size limit")
+
+
+def _state_blob_path(sha256: str) -> str:
+    require_hash(sha256, "state payload sha256")
+    return f"worksets/state/sha256={sha256}.json"
 
 
 def _check_endpoint(url: str, kind: str) -> None:
@@ -49,13 +74,15 @@ def _etag(version: str | None) -> str:
 
 
 class AzureStateStore:
-    def __init__(self, source_client: TableClient, attempt_client: TableClient, *, observer: BoundaryObserver | None = None):
+    def __init__(self, source_client: TableClient, attempt_client: TableClient, *,
+                 objects: ObjectStore | None = None, observer: BoundaryObserver | None = None):
         for client, name in ((source_client, "SourceState"), (attempt_client, "Attempts")):
             _check_endpoint(client.url, "table")
             if client.table_name != name:
                 raise ValueError("Table client must use the accepted table binding")
         self.source_client = source_client
         self.attempt_client = attempt_client
+        self.objects = objects
         self.observer = observer
 
     def close(self) -> None:
@@ -65,18 +92,57 @@ class AzureStateStore:
     def _client(self, kind: str) -> TableClient:
         return self.attempt_client if table_for(kind) == "Attempts" else self.source_client
 
-    def _entity(self, kind: str, key: str, value: dict[str, object]) -> dict[str, str]:
+    def _entity(self, kind: str, key: str, value: dict[str, object]) -> dict[str, object]:
         partition, key = identity(kind, key)
-        return {"PartitionKey": partition, "RowKey": _row_key(key), "StableKey": key,
-                "Payload": payload_bytes(value).decode("utf-8")}
+        entity = {"PartitionKey": partition, "RowKey": _row_key(key), "StableKey": key}
+        _check_table_entity(entity)
+        body = payload_bytes(value)
+        if len(body.decode("utf-8").encode("utf-16-le")) <= TABLE_STRING_BYTES:
+            entity["Payload"] = body.decode("utf-8")
+        else:
+            if self.objects is None:
+                raise ValueError("large Table state requires the shared immutable object store")
+            body = payload_bytes({"format_version": STATE_BLOB_FORMAT, "partition": partition,
+                                  "key": key, "value": parse_json(body)})
+            sha256 = hashlib.sha256(body).hexdigest()
+            entity.update(PayloadFormat=STATE_BLOB_FORMAT, PayloadSha256=sha256, PayloadByteCount=len(body))
+            _check_table_entity(entity)
+            path = _state_blob_path(sha256)
+            self.objects.put_once(path, body)
+            # Publish only verified complete content; a losing candidate remains immutable.
+            self.objects.verify(path, sha256, len(body))
+        _check_table_entity(entity)
+        return entity
 
     def _value(self, entity, partition: str, key: str, version: str) -> Versioned:
         if entity.get("PartitionKey") != partition or entity.get("RowKey") != _row_key(key) or entity.get("StableKey") != key:
             raise Conflict("Table entity disagrees with its stable identity")
-        value = parse_json(entity.get("Payload"))
+        version = _etag(version)
+        try:
+            if "Payload" in entity:
+                if STATE_BLOB_FIELDS.intersection(entity):
+                    raise Conflict("Table payload has conflicting inline and content encodings")
+                value = parse_json(entity["Payload"])
+            else:
+                if (self.objects is None or not STATE_BLOB_FIELDS.issubset(entity)
+                        or entity["PayloadFormat"] != STATE_BLOB_FORMAT):
+                    raise Conflict("Table payload has no supported immutable content encoding")
+                sha256, byte_count = entity["PayloadSha256"], entity["PayloadByteCount"]
+                require_number(byte_count, "state payload byte count", integer=True)
+                body = self.objects.read(_state_blob_path(sha256))
+                if len(body) != byte_count or hashlib.sha256(body).hexdigest() != sha256:
+                    raise Conflict("immutable state content differs from its expected hash or length")
+                envelope = parse_json(body)
+                if (not isinstance(envelope, dict) or set(envelope) != {"format_version", "partition", "key", "value"}
+                        or envelope["format_version"] != STATE_BLOB_FORMAT or envelope["partition"] != partition
+                        or envelope["key"] != key or payload_bytes(envelope) != body):
+                    raise Conflict("immutable state content disagrees with its canonical format or identity")
+                value = envelope["value"]
+        except (ValueError, FileNotFoundError) as error:
+            raise Conflict("Table payload is invalid or its immutable content is missing") from error
         if not isinstance(value, dict):
             raise Conflict("Table payload must be a JSON object")
-        return Versioned(value, _etag(version))
+        return Versioned(value, version)
 
     def get(self, kind: str, key: str) -> Versioned | None:
         partition, key = identity(kind, key)
@@ -102,7 +168,7 @@ class AzureStateStore:
             if error.status_code == 409:
                 raise AlreadyExists("Table state identity already exists") from error
             raise
-        result = Versioned(parse_json(entity["Payload"]), _etag(observed.get("etag")))
+        result = self._value(entity, entity["PartitionKey"], key, observed.get("etag"))
         observe(self.observer, "state.after_insert")
         return result
 
@@ -119,7 +185,7 @@ class AzureStateStore:
             if error.status_code in (404, 412):
                 raise Conflict("Table row absent or ETag changed") from error
             raise
-        result = Versioned(parse_json(entity["Payload"]), _etag(observed.get("etag")))
+        result = self._value(entity, entity["PartitionKey"], key, observed.get("etag"))
         observe(self.observer, "state.after_replace")
         return result
 
@@ -424,7 +490,7 @@ def open_azure_stores(settings: Settings, *, observer: BoundaryObserver | None =
     tables = TableServiceClient(endpoint=storage.table_endpoint, credential=credential,
                                api_version=storage.table_api_version, **options)
     state = AzureStateStore(tables.get_table_client(storage.source_table), tables.get_table_client(storage.attempt_table),
-                            observer=observer)
+                            objects=objects, observer=observer)
     leases = AzureLeaseStore(blob_service, lease_seconds=int(validated.coordination.lease_seconds),
                              uncertainty_seconds=validated.coordination.clock_uncertainty_seconds, observer=observer)
     return state, objects, leases

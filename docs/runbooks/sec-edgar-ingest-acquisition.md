@@ -112,9 +112,13 @@ and a delayed source scripted as 404 then valid IDX. The response cursor is stor
 under an explicitly fixture-only record keyed by manifest hash and URL. Changing
 a manifest changes that script identity. This cursor is not production acquisition
 state or live permission. A daily command needs a valid current-quarter endpoint;
-closed `2015Q1` cannot contain October 2026 sources. The approved Step 4 text's
-one-config collision remains an owner decision; the retained proposed two-config
-sequence is reviewable and must not be represented as a passed gate until approved.
+closed `2015Q1` cannot contain October 2026 sources. The approved fixture workflow
+uses separate quarterly `start_quarter = end_quarter = 2015Q1` and daily
+`end_quarter = open` configs. The [owner Yes receipt](../../specs/evidence/sec-filing-index-ingestion/stage-2/verification/task-8-i1-checkpoint/sdd/task-8-daily-endpoint-owner-answer.json)
+and [retained combined sequence](../../specs/evidence/sec-filing-index-ingestion/stage-2/verification/sec-edgar-stage-2-k8g11etz/sequence-summary.json)
+record approval and execution of archived-quarter acquisition/replay, handoff daily,
+delayed 404 recovery and final pin reuse. Both configs use the same durable state
+root, owner namespace and request budget.
 
 Every result contains counters and structured gaps. The stdout result reference is
 `runs/sec/<run-id>/<command>/<attempt-id>/result.json`; stderr logs carry the full

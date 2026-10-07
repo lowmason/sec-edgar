@@ -6,8 +6,9 @@ from typing import Literal
 
 from .config import Settings, pin_context
 from .models import (FORMAT_VERSION, DAILY_ENVELOPE_VERSION, QUARTERLY_ENVELOPE_VERSION, DirectoryOutcome, RunContext, Snapshot, SnapshotWorkset,
-                     Source, SourceWorkset, canonical_json, parse_json, quarter_for, quarter_value,
+                     RAW_SNAPSHOT_PATH, Source, SourceWorkset, canonical_json, parse_json, quarter_for, quarter_value,
                      require_hash, require_text)
+from .urls import child_url
 
 
 def workset_digest(payload: dict[str, object]) -> str:
@@ -93,6 +94,26 @@ def _validate_common(workset: SourceWorkset | SnapshotWorkset) -> dict[str, Dire
     return by_source
 
 
+def _validate_source_directory(source: Source, directory: DirectoryOutcome, end_quarter: str) -> None:
+    if directory.url != source.canonical_url.rsplit("/", 1)[0] + "/index.json":
+        raise ValueError("source member must originate from its validated immediate listing child")
+    source_quarter = quarter_for(date.fromisoformat(source.period)) if source.kind == "daily" else source.period
+    directory_quarter = (quarter_for(date.fromisoformat(directory.period))
+                         if source.kind == "daily" and "-" in directory.period else directory.period)
+    if directory_quarter != source_quarter:
+        raise ValueError("directory period differs from its exact source member quarter")
+    if quarter_value(source_quarter) > quarter_value(end_quarter):
+        raise ValueError("source member is after the pinned endpoint")
+
+
+def _validate_snapshot_member(snapshot: Snapshot, member: Source) -> None:
+    expected_path = f"raw/sec/indexes/kind={member.kind}/period={member.period}/sha256={snapshot.sha256}/master.{member.representation}"
+    expected_envelope = QUARTERLY_ENVELOPE_VERSION if member.kind == "quarterly" else DAILY_ENVELOPE_VERSION
+    if (snapshot.source_id, snapshot.raw_path, snapshot.representation, snapshot.envelope_version) != (
+            member.source_id, expected_path, member.representation, expected_envelope):
+        raise ValueError("snapshot address/period/envelope differs from its exact source member")
+
+
 def _validate_source(workset: SourceWorkset, *, check_identity: bool = True) -> None:
     by_source = _validate_common(workset)
     require_text(workset.discovery_id, "discovery_id")
@@ -104,11 +125,7 @@ def _validate_source(workset: SourceWorkset, *, check_identity: bool = True) -> 
     if set(identities) != set(by_source):
         raise ValueError("directory outcomes must name every source member exactly once")
     for source in workset.members:
-        if by_source[source.source_id].url != source.canonical_url.rsplit("/", 1)[0] + "/index.json":
-            raise ValueError("source member must originate from its validated immediate listing child")
-        source_period = quarter_for(date.fromisoformat(source.period)) if source.kind == "daily" else source.period
-        if quarter_value(source_period) > quarter_value(workset.pinned_end_quarter):
-            raise ValueError("source member is after the pinned endpoint")
+        _validate_source_directory(source, by_source[source.source_id], workset.pinned_end_quarter)
     complete = bool(workset.directories) and all(directory.outcome != "discovery_failed" for directory in workset.directories)
     if type(workset.discovery_complete) is not bool or workset.discovery_complete != complete:
         raise ValueError("discovery completeness must match successful directory evidence")
@@ -129,9 +146,14 @@ def _validate_snapshot(workset: SnapshotWorkset, *, check_identity: bool = True)
     if set(identities) != set(by_source):
         raise ValueError("snapshot workset must name every source member exactly once")
     for snapshot in workset.snapshots:
-        expected = "zip" if "/full-index/" in by_source[snapshot.source_id].url else "idx"
-        if snapshot.representation != expected:
-            raise ValueError("snapshot representation differs from its source member")
+        directory = by_source[snapshot.source_id]
+        address = RAW_SNAPSHOT_PATH.fullmatch(snapshot.raw_path)
+        kind, period = address[1], address[2]
+        name = "master.zip" if kind == "quarterly" else f"master.{date.fromisoformat(period):%Y%m%d}.idx"
+        url = child_url(directory.url, name, name, False)
+        member = Source(snapshot.source_id, url, kind, period, snapshot.representation)
+        _validate_source_directory(member, directory, workset.pinned_end_quarter)
+        _validate_snapshot_member(snapshot, member)
     if check_identity and workset.workset_id != _identity(workset):
         raise ValueError("workset identity does not match its content")
 
@@ -158,11 +180,7 @@ def make_snapshot_workset(source: SourceWorkset, snapshots: tuple[Snapshot, ...]
         member = members.get(snapshot.source_id)
         if member is None:
             raise ValueError("snapshot must belong to an exact source member")
-        expected_path = f"raw/sec/indexes/kind={member.kind}/period={member.period}/sha256={snapshot.sha256}/master.{member.representation}"
-        expected_envelope = QUARTERLY_ENVELOPE_VERSION if member.kind == "quarterly" else DAILY_ENVELOPE_VERSION
-        if (snapshot.raw_path, snapshot.representation, snapshot.envelope_version) != (
-                expected_path, member.representation, expected_envelope):
-            raise ValueError("snapshot address/period/envelope differs from its exact source member")
+        _validate_snapshot_member(snapshot, member)
     workset = SnapshotWorkset("0" * 64, source.workset_id, source.context,
                              tuple(sorted(snapshots, key=lambda snapshot: snapshot.source_id)),
                              source.pinned_end_quarter, source.directories, source.overlap_from,

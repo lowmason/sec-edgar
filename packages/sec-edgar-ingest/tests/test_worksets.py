@@ -149,6 +149,57 @@ class WorksetTests(unittest.TestCase):
         self.tamper(snapshot, lambda value: value["snapshots"].pop(), self.worksets.decode_snapshot_workset)
         self.tamper(snapshot, lambda value: value["snapshots"][0].update(raw_path="raw/latest"), self.worksets.decode_snapshot_workset)
 
+    def test_snapshot_decoder_rejects_rehashed_wrong_source_period(self):
+        cases = [(fixture_source("2015Q1"), "2015Q1", "2015Q2"),
+                 (fixture_source("2026-10-01", "daily"), "2026-10-01", "2026-10-02"),
+                 (fixture_source("2026-10-01", "daily"), "2026-10-01", "2026-09-30")]
+        for source, original, wrong in cases:
+            with self.subTest(kind=source.kind, wrong_period=wrong):
+                workset = self.worksets.make_snapshot_workset(fixture_workset((source,)), (self.snapshot(source),))
+                self.tamper(workset, lambda value: value["snapshots"][0].update(
+                    raw_path=value["snapshots"][0]["raw_path"].replace("period=" + original, "period=" + wrong)),
+                    self.worksets.decode_snapshot_workset)
+
+    def test_snapshot_decoder_rejects_rehashed_wrong_directory_or_source_identity(self):
+        source = fixture_source("2015Q1")
+        other = fixture_source("2015Q2")
+        workset = self.worksets.make_snapshot_workset(fixture_workset((source,)), (self.snapshot(source),))
+        def wrong_identity(value):
+            value["snapshots"][0]["source_id"] = other.source_id
+            value["directories"][0]["source_ids"] = [other.source_id]
+        cases = [("source identity", wrong_identity),
+                 ("directory period", lambda value: value["directories"][0].update(period="2015Q2")),
+                 ("directory address", lambda value: value["directories"][0].update(
+                     url=value["directories"][0]["url"].replace("QTR1", "QTR2")))]
+        for name, edit in cases:
+            with self.subTest(name=name):
+                self.tamper(workset, edit, self.worksets.decode_snapshot_workset)
+
+    def test_snapshot_decoder_rejects_rehashed_kind_and_envelope_mismatch(self):
+        source = fixture_source("2015Q1")
+        workset = self.worksets.make_snapshot_workset(fixture_workset((source,)), (self.snapshot(source),))
+        cases = [("kind", lambda value: value["snapshots"][0].update(
+                    raw_path=value["snapshots"][0]["raw_path"].replace("kind=quarterly", "kind=daily")
+                        .replace("period=2015Q1", "period=2015-01-01").replace("master.zip", "master.idx"),
+                    representation="idx", envelope_version="sec-daily-envelope-v1")),
+                 ("envelope", lambda value: value["snapshots"][0].update(envelope_version="sec-daily-envelope-v1"))]
+        for name, edit in cases:
+            with self.subTest(name=name):
+                self.tamper(workset, edit, self.worksets.decode_snapshot_workset)
+
+    def test_daily_directory_day_label_round_trips_multiple_exact_sources(self):
+        sources = (fixture_source("2026-10-01", "daily"), fixture_source("2026-10-02", "daily"))
+        try:
+            source_workset = fixture_workset(sources)
+        except ValueError as error:
+            self.fail(f"retained daily directory day label must remain compatible: {error}")
+        self.assertEqual(source_workset.directories[0].period, "2026-10-01")
+        snapshots = self.worksets.make_snapshot_workset(source_workset, tuple(self.snapshot(source) for source in sources))
+        body = self.worksets.encode_workset(snapshots)
+        decoded = self.worksets.decode_snapshot_workset(body)
+        self.assertEqual(decoded, snapshots)
+        self.assertEqual(self.worksets.encode_workset(decoded), body)
+
     def test_common_records_have_complete_detached_mapping_round_trips(self):
         context = fixture_context()
         source = fixture_source()
