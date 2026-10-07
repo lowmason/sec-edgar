@@ -14,6 +14,22 @@ from sec_edgar_ingest.worksets import encode_workset
 
 
 class AcquisitionProcessTests(unittest.TestCase):
+    def test_real_clock_context_pins_actual_day_after_frozen_fixture_date(self):
+        from datetime import datetime, timezone
+        from types import SimpleNamespace
+        from support import fixture_settings, real_context
+        from sec_edgar_ingest.config import pin_context
+        now = datetime(2026, 10, 7, tzinfo=timezone.utc)
+        settings = fixture_settings()
+        context = real_context(SimpleNamespace(now=lambda: now), settings)
+        try:
+            pinned, _ = pin_context(settings, context, context.pinned_on)
+        except ValueError as error:
+            self.fail(f'real-clock acquisition fixture must pass the actual-date guard: {error}')
+        self.assertEqual(pinned, context)
+        self.assertEqual(context.pinned_on, now.date())
+        self.assertTrue(settings.fixture is None or not settings.fixture.allow_clock_override)
+
     def test_three_independent_collectors_barrier_request_and_actual_binding_race(self):
         import support
         self.assertTrue(hasattr(support, 'acquisition_race_entry'), 'Task 8 needs three independent collecting processes and request/binding barriers')

@@ -763,7 +763,7 @@ def real_context(clock, settings):
     from dataclasses import replace
     now = clock.now()
     return replace(fixture_context(), started_at=now, deadline=now+timedelta(seconds=10),
-                   config_sha256=settings.config_sha256, effective_config=settings.to_mapping())
+                   pinned_on=now.date(), config_sha256=settings.config_sha256, effective_config=settings.to_mapping())
 
 
 def timer_failure_child(transport, cancellation, channel):
