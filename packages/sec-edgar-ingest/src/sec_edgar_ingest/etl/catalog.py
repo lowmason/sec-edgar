@@ -255,7 +255,7 @@ def build_candidate(quarter: str, previous: GenerationCapture | None, incoming: 
                                       mode, membership, retained,
                                       'awaiting_approval' if mode == 'closed' and counts['withdrawn'] else 'clear')
         validate_files(manifest, objects)
-        if retained:
+        if previous:
             objects.put_once(base + '/retained-base.json', canonical_json(previous.to_mapping()))
         body = canonical_json(manifest.to_mapping())
         candidate = _candidate(manifest, body)

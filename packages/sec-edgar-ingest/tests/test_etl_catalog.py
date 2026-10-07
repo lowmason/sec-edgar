@@ -424,3 +424,80 @@ class EtlCatalogTests(unittest.TestCase):
         forged = replace(candidate, manifest=manifest, manifest_sha256=hashlib.sha256(body).hexdigest(), manifest_bytes=len(body))
         with self.assertRaisesRegex(ValueError, 'missing selected'):
             validate_candidate(forged, self.objects)
+
+    def rewrite_changes(self, candidate, changes, **counts):
+        """Tamper real immutable fixture bytes and consistently update references."""
+        import hashlib
+        import pyarrow as pa
+        import pyarrow.parquet as pq
+        from sec_edgar_ingest.etl.contracts import change_schema
+        from sec_edgar_ingest.models import canonical_json
+        change_ref = next(ref for ref in candidate.manifest.files if ref.role == 'changes')
+        path = self.root / 'objects' / change_ref.path
+        pq.write_table(pa.Table.from_pylist(changes, schema=change_schema()), path,
+                       version='2.6', compression='snappy', use_dictionary=False)
+        body = path.read_bytes()
+        change_ref = replace(change_ref, sha256=hashlib.sha256(body).hexdigest(), byte_count=len(body), row_count=len(changes))
+        files = tuple(change_ref if ref.role == 'changes' else ref for ref in candidate.manifest.files)
+        manifest = replace(candidate.manifest, files=files, **counts)
+        body = canonical_json(manifest.to_mapping())
+        (self.root / 'objects' / candidate.manifest_ref).write_bytes(body)
+        return replace(candidate, manifest=manifest, manifest_sha256=hashlib.sha256(body).hexdigest(),
+                       manifest_bytes=len(body), candidate_ref=None if manifest.gate == 'clear' else candidate.candidate_ref)
+
+    def test_suppressed_withdrawal_with_consistent_hashes_cannot_clear_gate(self):
+        old = self.build([self.observation(rows=row() + row(number=2))])
+        revised = self.observation(rows=row(), seconds=1)
+        self.pin(date(2027, 1, 1))
+        candidate = self.build([revised], old)
+        forged = self.rewrite_changes(candidate, [], withdrawn=0, gate='clear')
+        with self.assertRaisesRegex(ValueError, 'delta'):
+            validate_candidate(forged, self.objects)
+        with self.assertRaisesRegex(ValueError, 'delta'):
+            self.build([revised], old)
+
+    def test_omitted_update_with_consistent_counts_is_refused(self):
+        old = self.build([self.observation('2026-10-01', 'daily')])
+        revised = self.observation('2026-10-02', 'daily', row('Changed'))
+        candidate = self.build([revised], old)
+        forged = self.rewrite_changes(candidate, [], updated=0)
+        with self.assertRaisesRegex(ValueError, 'delta'):
+            validate_candidate(forged, self.objects)
+
+    def test_forged_update_before_value_is_refused(self):
+        old = self.build([self.observation('2026-10-01', 'daily')])
+        revised = self.observation('2026-10-02', 'daily', row('Changed'))
+        candidate = self.build([revised], old)
+        changes = self.rows(candidate, 'changes')
+        changes[0]['before']['company_name'] = 'Invented before'
+        forged = self.rewrite_changes(candidate, changes)
+        with self.assertRaisesRegex(ValueError, 'delta'):
+            validate_candidate(forged, self.objects)
+
+    def test_forged_provenance_refresh_count_is_refused(self):
+        old = self.build([self.observation('2026-10-01', 'daily')])
+        candidate = self.build([self.observation('2026-10-02', 'daily')], old)
+        forged = self.rewrite_changes(candidate, [], provenance_refreshed=0)
+        with self.assertRaisesRegex(ValueError, 'delta'):
+            validate_candidate(forged, self.objects)
+
+    def test_nonretaining_candidate_requires_exact_base_capture(self):
+        from sec_edgar_ingest.models import canonical_json
+        old = self.build([self.observation('2026-10-01', 'daily')])
+        revised = self.observation('2026-10-02', 'daily', row('Changed'))
+        candidate = self.build([revised], old)
+        self.assertIsNone(candidate.manifest.retained_from_generation)
+        dependency = self.root / 'objects' / candidate.manifest_ref.replace('manifest.json', 'retained-base.json')
+        original = dependency.read_bytes()
+        self.assertEqual(original, canonical_json(self.capture(old).to_mapping()))
+        dependency.unlink()
+        with self.assertRaises(FileNotFoundError):
+            validate_candidate(candidate, self.objects)
+        dependency.write_bytes(original + b'\n')
+        with self.assertRaises(ValueError):
+            validate_candidate(candidate, self.objects)
+        dependency.write_bytes(canonical_json(self.capture(candidate).to_mapping()))
+        with self.assertRaises(ValueError):
+            validate_candidate(candidate, self.objects)
+        dependency.write_bytes(original)
+        self.assertEqual(self.build([revised], old), candidate)

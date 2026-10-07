@@ -168,8 +168,8 @@ def validate_files(manifest: GenerationManifest, objects: ObjectStore) -> None:
         raise ValueError('generation aggregate counts differ')
 
 
-def _retained_manifest(manifest, objects):
-    if not manifest.retained_from_generation:
+def _base_manifest(manifest, objects):
+    if not manifest.base_generation_id:
         if manifest.unresolved_absence:
             raise ValueError('unresolved absence requires an exact retained dependency')
         return None
@@ -177,26 +177,27 @@ def _retained_manifest(manifest, objects):
     body = objects.read(path)
     retained = GenerationCapture.from_mapping(parse_json(body))
     if canonical_json(retained.to_mapping()) != body or (retained.quarter, retained.generation_id) != (
-            manifest.quarter, manifest.retained_from_generation):
-        raise ValueError('retained dependency differs')
+            manifest.quarter, manifest.base_generation_id):
+        raise ValueError('exact base dependency differs')
     if retained.generation_id == manifest.generation_id:
-        raise ValueError('self-referential retained dependency')
+        raise ValueError('self-referential base dependency')
     previous = read_manifest(retained, objects)
     validate_files(previous, objects)
     return previous
 
 
 def _validate_row_origins(manifest, objects):
-    retained = _retained_manifest(manifest, objects)
+    base_manifest = _base_manifest(manifest, objects)
     with TemporaryDirectory(prefix='sec-candidate-verify-') as directory, closing(sqlite3.connect(Path(directory) / 'verify.sqlite')) as db:
         db.execute('PRAGMA temp_store=FILE')
         db.execute('CREATE TABLE allowed(payload BLOB PRIMARY KEY)')
         db.execute('CREATE TABLE ranked(cik TEXT, path TEXT, payload BLOB, preference INTEGER, period TEXT, receipt TEXT, source TEXT)')
         db.execute('CREATE TABLE winners(cik TEXT, path TEXT, payload BLOB, PRIMARY KEY(cik,path))')
         db.execute('CREATE TABLE membership(cik TEXT, path TEXT, PRIMARY KEY(cik,path))')
-        db.execute('CREATE TABLE retained(cik TEXT, path TEXT, payload BLOB, PRIMARY KEY(cik,path))')
+        db.execute('CREATE TABLE base_rows(cik TEXT, path TEXT, payload BLOB, PRIMARY KEY(cik,path))')
         db.execute('CREATE TABLE output(cik TEXT, path TEXT, payload BLOB, PRIMARY KEY(cik,path))')
         db.execute('CREATE TABLE unresolved(cik TEXT, path TEXT, PRIMARY KEY(cik,path))')
+        db.execute('CREATE TABLE actual_changes(cik TEXT, path TEXT, payload BLOB, PRIMARY KEY(cik,path))')
         for ref in manifest.sources:
             durable, _ = _read_manifest(ref.manifest_ref, objects)
             if durable != ref:
@@ -212,13 +213,13 @@ def _validate_row_origins(manifest, objects):
                         if ref == manifest.membership_source:
                             db.execute('INSERT OR IGNORE INTO membership VALUES(?,?)', (obs.row.cik, obs.row.archive_path))
         db.execute('INSERT OR IGNORE INTO winners SELECT cik,path,payload FROM ranked ORDER BY cik,path,preference DESC,period DESC,receipt DESC,source ASC')
-        if retained:
-            for ref in retained.files:
+        if base_manifest:
+            for ref in base_manifest.files:
                 if ref.role == 'data':
                     with closing(iter_file_rows(ref, objects)) as rows:
                         for value in rows:
                             row = _row(value, manifest.quarter)
-                            db.execute('INSERT INTO retained VALUES(?,?,?)', (row.cik, row.archive_path, canonical_json(row.to_mapping())))
+                            db.execute('INSERT INTO base_rows VALUES(?,?,?)', (row.cik, row.archive_path, canonical_json(row.to_mapping())))
         for ref in manifest.files:
             if ref.role == 'data':
                 with closing(iter_file_rows(ref, objects)) as rows:
@@ -227,7 +228,7 @@ def _validate_row_origins(manifest, objects):
                         payload = canonical_json(row.to_mapping())
                         key = row.cik, row.archive_path
                         allowed = db.execute('SELECT 1 FROM allowed WHERE payload=?', (payload,)).fetchone()
-                        old = db.execute('SELECT payload FROM retained WHERE cik=? AND path=?', key).fetchone()
+                        old = db.execute('SELECT payload FROM base_rows WHERE cik=? AND path=?', key).fetchone()
                         if not allowed and (old is None or old[0] != payload):
                             raise ValueError('canonical row is not a selected observation or exact retained row')
                         db.execute('INSERT INTO output VALUES(?,?,?)', (*key, payload))
@@ -236,6 +237,13 @@ def _validate_row_origins(manifest, objects):
                 with closing(iter_file_rows(ref, objects)) as rows:
                     for value in rows:
                         key = value['cik'], value['archive_path']
+                        normalized = dict(value)
+                        for field in ('before', 'after'):
+                            if normalized[field] is not None:
+                                normalized[field] = _row(normalized[field], manifest.quarter).to_mapping()
+                        if db.execute('SELECT 1 FROM actual_changes WHERE cik=? AND path=?', key).fetchone():
+                            raise ValueError('delta has multiple changes for one logical key')
+                        db.execute('INSERT INTO actual_changes VALUES(?,?,?)', (*key, canonical_json(normalized)))
                         after = value['after']
                         output = db.execute('SELECT payload FROM output WHERE cik=? AND path=?', key).fetchone()
                         if after is not None:
@@ -244,7 +252,7 @@ def _validate_row_origins(manifest, objects):
                         elif output is not None:
                             raise ValueError('withdrawn key remains in canonical output')
                         if value['change_type'] == 'unresolved_absence':
-                            old = db.execute('SELECT payload FROM retained WHERE cik=? AND path=?', key).fetchone()
+                            old = db.execute('SELECT payload FROM base_rows WHERE cik=? AND path=?', key).fetchone()
                             if old is None or old[0] != output[0]:
                                 raise ValueError('unresolved row differs from exact retained base')
                             db.execute('INSERT INTO unresolved VALUES(?,?)', key)
@@ -266,8 +274,55 @@ def _validate_row_origins(manifest, objects):
                 raise ValueError('canonical output is missing selected observation keys')
         if manifest.base_generation_id is None and (manifest.added != manifest.row_count or manifest.updated or manifest.withdrawn or manifest.unresolved_absence or manifest.provenance_refreshed):
             raise ValueError('first-generation changes differ from canonical rows')
+        _validate_deltas(db, manifest)
         if bool(manifest.retained_from_generation) != bool(manifest.unresolved_absence):
             raise ValueError('retained basis and unresolved count disagree')
+
+
+def _validate_deltas(db, manifest):
+    """Recompute every change from the captured base, never trust supplied counts."""
+    counts = Counter()
+    keys = db.execute('SELECT cik,path FROM base_rows UNION SELECT cik,path FROM output ORDER BY cik,path')
+    for key in keys:
+        before_record = db.execute('SELECT payload FROM base_rows WHERE cik=? AND path=?', key).fetchone()
+        after_record = db.execute('SELECT payload FROM output WHERE cik=? AND path=?', key).fetchone()
+        before = parse_json(before_record[0]) if before_record else None
+        after = parse_json(after_record[0]) if after_record else None
+        kind, reason = None, None
+        if before is None:
+            kind = 'added'
+        elif after is None:
+            if manifest.quarter_mode != 'closed' or manifest.membership_source is None:
+                raise ValueError('delta removes a base key without closed membership authority')
+            kind, reason = 'withdrawn', 'absent from closed quarterly membership'
+        else:
+            winner = db.execute('SELECT 1 FROM winners WHERE cik=? AND path=?', key).fetchone()
+            member = db.execute('SELECT 1 FROM membership WHERE cik=? AND path=?', key).fetchone()
+            unresolved = winner is None or (manifest.quarter_mode == 'open' and manifest.membership_source is not None and member is None)
+            if unresolved:
+                if before != after:
+                    raise ValueError('delta unresolved absence must preserve the exact base row')
+                kind, reason = 'unresolved_absence', 'absence is not authoritative withdrawal evidence'
+            elif any(before[field] != after[field] for field in ('company_name', 'form_type', 'filing_date', 'accession_number')):
+                kind = 'updated'
+            elif before != after:
+                counts['provenance_refreshed'] += 1
+        actual = db.execute('SELECT payload FROM actual_changes WHERE cik=? AND path=?', key).fetchone()
+        if kind is None:
+            if actual is not None:
+                raise ValueError('delta contains a change absent from exact base/output comparison')
+            continue
+        expected = canonical_json({'change_type': kind, 'cik': key[0], 'archive_path': key[1],
+                                   'before': before, 'after': after, 'reason': reason})
+        if actual is None or actual[0] != expected:
+            raise ValueError('delta differs from exact base/output before and after rows')
+        counts[kind] += 1
+    change_count = sum(counts[name] for name in ('added', 'updated', 'withdrawn', 'unresolved_absence'))
+    if db.execute('SELECT COUNT(*) FROM actual_changes').fetchone()[0] != change_count:
+        raise ValueError('delta includes keys outside exact base/output membership')
+    for name in ('added', 'updated', 'withdrawn', 'unresolved_absence', 'provenance_refreshed'):
+        if getattr(manifest, name) != counts[name]:
+            raise ValueError('delta count differs from exact base/output comparison: ' + name)
 
 
 def validate_candidate_content(candidate: Candidate, objects: ObjectStore) -> None:
