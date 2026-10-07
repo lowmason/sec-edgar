@@ -30,6 +30,15 @@ installed proof rerun. The prior passing installed proof remains under
 [installed-before-readme-correction](verification/installed-before-readme-correction/report.json).
 There was no implementation change or unneeded repeated full suite.
 
+The complete check passed before historical evidence was staged. The final
+staged historical diff contains preserved whitespace and its exact postcommit
+recheck exited **2**. The committed Task 7 implementation/documentation-only
+whitespace check exited **0**. See the [staging addendum](verification/task-7-report-addendum.md),
+[full failure output](verification/committed-history-whitespace/stdout.txt) and
+[exact affected paths](verification/committed-history-whitespace/affected-paths.json).
+Historical bytes were not normalized; there is no claim that the full final
+evidence diff is whitespace-clean.
+
 ## Ten retained complete specimens
 
 Each scan resolves the inspection's original path relative to the Stage 1 root,
