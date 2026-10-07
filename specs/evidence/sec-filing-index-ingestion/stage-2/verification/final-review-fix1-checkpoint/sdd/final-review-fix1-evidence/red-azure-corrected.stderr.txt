@@ -1,0 +1,54 @@
+test_intended_history_registration_round_trips_and_replaces_with_whole_record_cas (test_azure_state_payloads.AzureStatePayloadTests.test_intended_history_registration_round_trips_and_replaces_with_whole_record_cas) ... FAIL
+
+======================================================================
+FAIL: test_intended_history_registration_round_trips_and_replaces_with_whole_record_cas (test_azure_state_payloads.AzureStatePayloadTests.test_intended_history_registration_round_trips_and_replaces_with_whole_record_cas)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_azure_state_payloads.py", line 143, in test_intended_history_registration_round_trips_and_replaces_with_whole_record_cas
+    state = self.register_intended_history(store)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_azure_state_payloads.py", line 137, in register_intended_history
+    state.begin_discovery("intended-history", frozen, context, "quarterly", "reuse_accepted")
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/state.py", line 103, in begin_discovery
+    self._change_boundary(register)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/state.py", line 123, in _change_boundary
+    return self.store.insert("DiscoveryBoundary", "daily", value)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py", line 100, in insert
+    self._client(kind).create_entity(entity=entity, raw_response_hook=capture)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/core/tracing/decorator.py", line 119, in wrapper_use_tracer
+    return func(*args, **kwargs)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/data/tables/_table_client.py", line 410, in create_entity
+    raise error
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/data/tables/_table_client.py", line 398, in create_entity
+    self._client.table.insert_entity(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        table=self.table_name,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        **kwargs,
+        ^^^^^^^^^
+    ),
+    ^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/core/tracing/decorator.py", line 119, in wrapper_use_tracer
+    return func(*args, **kwargs)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/data/tables/_generated/operations/_operations.py", line 1705, in insert_entity
+    raise HttpResponseError(response=response, model=error)
+azure.core.exceptions.HttpResponseError: Operation returned an invalid status 'scripted offline response'
+Content: {"odata.error": {"code": "PropertyValueTooLarge", "message": {"lang": "en-US", "value": "offline failure"}}}
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_azure_state_payloads.py", line 145, in test_intended_history_registration_round_trips_and_replaces_with_whole_record_cas
+    self.fail(f"accepted intended-history registration exceeds the offline Table limit: {error}")
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: accepted intended-history registration exceeds the offline Table limit: Operation returned an invalid status 'scripted offline response'
+Content: {"odata.error": {"code": "PropertyValueTooLarge", "message": {"lang": "en-US", "value": "offline failure"}}}
+
+----------------------------------------------------------------------
+Ran 1 test in 0.043s
+
+FAILED (failures=1)

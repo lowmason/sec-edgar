@@ -1,0 +1,97 @@
+{
+  "actual_correction_script": {
+    "bytes": 9023,
+    "path": "specs/evidence/sec-filing-index-ingestion/stage-2/verification/final-review-fix1-checkpoint/repair-final-fix-whitespace.py",
+    "sha256": "91e93ad170e05788d2911641269bf20c7c868dcac9008d51df8e220f5e3d9a2a"
+  },
+  "all12150_prior_records_and_six_control_sets_unchanged": true,
+  "all_source_sdd_unchanged": true,
+  "corrected_copy_script_bytes": {
+    "bytes": 16910,
+    "path": "specs/evidence/sec-filing-index-ingestion/stage-2/verification/final-review-fix1-checkpoint/retain-final-fix-proof.py",
+    "sha256": "5873da3f5af59c776cff4a51efe044fae0ec9a11a8a1c5e8f771f4ead47f6871"
+  },
+  "corrected_staged_check": {
+    "argv": [
+      "git",
+      "-c",
+      "core.whitespace=cr-at-eol",
+      "diff",
+      "--cached",
+      "--check"
+    ],
+    "cwd": "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar",
+    "exit_code": 0,
+    "started_at": "2026-10-07T00:48:36.604045+00:00",
+    "stderr": "",
+    "stdout": ""
+  },
+  "every5013_current_source_and_retained_or_decompressed_pair_verified": true,
+  "exact_original_bytes_preserved": true,
+  "first_failure": {
+    "bytes": 551,
+    "path": "specs/evidence/sec-filing-index-ingestion/stage-2/verification/final-review-fix1-checkpoint/staged-whitespace-first-failure.json",
+    "sha256": "150b7999791c49178e6b27b7d4568475307aa4cea987548a06d17e1dfc31b857"
+  },
+  "historical_controls_retained": [
+    {
+      "expected_output_bytes": 3320831,
+      "expected_output_sha256": "6a739adbed68263e4af2d0c1edc58aea3305174b4403e7a75efde310694f5488",
+      "historical_retained": {
+        "bytes": 158326,
+        "path": "specs/evidence/sec-filing-index-ingestion/stage-2/verification/final-review-fix1-checkpoint/pre-format-correction/retention-map.json.gz",
+        "sha256": "117e8e7314ce07fd3010796ff5e9176fe003dd083b956674070f3778a206b55a"
+      },
+      "original_control": {
+        "bytes": 3320831,
+        "path": "specs/evidence/sec-filing-index-ingestion/stage-2/verification/final-review-fix1-checkpoint/retention-map.json",
+        "sha256": "6a739adbed68263e4af2d0c1edc58aea3305174b4403e7a75efde310694f5488"
+      },
+      "retrieval": "gzip decompression of historical_retained.path"
+    },
+    {
+      "expected_output_bytes": 1943502,
+      "expected_output_sha256": "d39df406d22cc911d918defcad96563b9de2c1aba3fd0d97ea2b18dc30437e6b",
+      "historical_retained": {
+        "bytes": 118004,
+        "path": "specs/evidence/sec-filing-index-ingestion/stage-2/verification/final-review-fix1-checkpoint/pre-format-correction/sha256-manifest.json.gz",
+        "sha256": "b3c31d2d0ed56418b150abadd91c4d3c1cc646e0236af982142a8375c837949a"
+      },
+      "original_control": {
+        "bytes": 1943502,
+        "path": "specs/evidence/sec-filing-index-ingestion/stage-2/verification/final-review-fix1-checkpoint/sha256-manifest.json",
+        "sha256": "d39df406d22cc911d918defcad96563b9de2c1aba3fd0d97ea2b18dc30437e6b"
+      },
+      "retrieval": "gzip decompression of historical_retained.path"
+    },
+    {
+      "expected_output_bytes": 4452,
+      "expected_output_sha256": "c461ff9f4589d0d366b69c2cc758c20033d3b5e2b17c5338f1a45caf5aa14978",
+      "historical_retained": {
+        "bytes": 1355,
+        "path": "specs/evidence/sec-filing-index-ingestion/stage-2/verification/final-review-fix1-checkpoint/pre-format-correction/evidence-inventory.json.gz",
+        "sha256": "a276073d1e18fc4e7b148e921bef3ffbffafbfdc21f2fe1b71bdaa291f44e324"
+      },
+      "original_control": {
+        "bytes": 4452,
+        "path": "specs/evidence/sec-filing-index-ingestion/stage-2/verification/final-review-fix1-checkpoint/evidence-inventory.json",
+        "sha256": "c461ff9f4589d0d366b69c2cc758c20033d3b5e2b17c5338f1a45caf5aa14978"
+      },
+      "retrieval": "gzip decompression of historical_retained.path"
+    }
+  ],
+  "new_retained_path": "sdd/whole-branch-review-brief.md.gz",
+  "old_retained_path": "sdd/whole-branch-review-brief.md",
+  "prior_copy_script_bytes": {
+    "bytes": 16871,
+    "path": "specs/evidence/sec-filing-index-ingestion/stage-2/verification/final-review-fix1-checkpoint/retain-final-fix-proof-first.py",
+    "sha256": "f17b69dddc7ee09d6d1476dfd7a72cb94e0bc89b0dc59f152537a427658bad8e"
+  },
+  "recorded_at": "2026-10-07T00:48:36.732538+00:00",
+  "stage_argv": [
+    "git",
+    "add",
+    "--",
+    "specs/evidence/sec-filing-index-ingestion/stage-2/verification/final-review-fix1-checkpoint"
+  ]
+}

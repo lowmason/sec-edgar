@@ -1,0 +1,33 @@
+test_daily_directory_day_label_round_trips_multiple_exact_sources (test_worksets.WorksetTests.test_daily_directory_day_label_round_trips_multiple_exact_sources) ... FAIL
+
+======================================================================
+FAIL: test_daily_directory_day_label_round_trips_multiple_exact_sources (test_worksets.WorksetTests.test_daily_directory_day_label_round_trips_multiple_exact_sources)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_worksets.py", line 193, in test_daily_directory_day_label_round_trips_multiple_exact_sources
+    source_workset = fixture_workset(sources)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/support.py", line 84, in fixture_workset
+    return make_source_workset(fixture_context(), "2026Q4", "fixture-discovery",
+                               tuple(members), directories, date(2026, 10, 1))
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/worksets.py", line 168, in make_source_workset
+    _validate_source(workset, check_identity=False)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/worksets.py", line 126, in _validate_source
+    _validate_source_directory(source, by_source[source.source_id], workset.pinned_end_quarter)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/worksets.py", line 102, in _validate_source_directory
+    raise ValueError("directory period differs from its exact source member")
+ValueError: directory period differs from its exact source member
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_worksets.py", line 195, in test_daily_directory_day_label_round_trips_multiple_exact_sources
+    self.fail(f"retained daily directory day label must remain compatible: {error}")
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: retained daily directory day label must remain compatible: directory period differs from its exact source member
+
+----------------------------------------------------------------------
+Ran 1 test in 0.011s
+
+FAILED (failures=1)

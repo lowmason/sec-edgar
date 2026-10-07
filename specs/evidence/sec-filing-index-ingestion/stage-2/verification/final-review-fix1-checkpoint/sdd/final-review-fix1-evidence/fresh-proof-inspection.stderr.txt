@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.sdd/2-sec-filing-index-ingestion-stage-2-spec/final-review-fix1-evidence/helpers/sec-edgar-final-fix-inspect.py", line 264, in <module>
+    main()
+    ~~~~^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.sdd/2-sec-filing-index-ingestion-stage-2-spec/final-review-fix1-evidence/helpers/sec-edgar-final-fix-inspect.py", line 247, in main
+    'check': inspect_check(), 'installed': inspect_installed(installed),
+                                           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.sdd/2-sec-filing-index-ingestion-stage-2-spec/final-review-fix1-evidence/helpers/sec-edgar-final-fix-inspect.py", line 176, in inspect_installed
+    assert archive.extractfile('sec_edgar_ingest-0.1.0/' + name).read() == (ROOT / 'packages/sec-edgar-ingest' / name).read_bytes()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

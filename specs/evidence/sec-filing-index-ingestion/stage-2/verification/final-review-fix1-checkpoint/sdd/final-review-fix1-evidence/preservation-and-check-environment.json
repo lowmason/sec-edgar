@@ -1,0 +1,83 @@
+{
+  "base": "9098fe9b664d9f44a663fdd8357e34030c37e932",
+  "check_trace_environment": {
+    "SEC_EDGAR_FIX1_TRACE": ".sdd/2-sec-filing-index-ingestion-stage-2-spec/final-review-fix1-evidence/latest-complete-traces/state-race.json",
+    "SEC_EDGAR_TASK4_TRACE_DIR": ".sdd/2-sec-filing-index-ingestion-stage-2-spec/final-review-fix1-evidence/latest-complete-traces/coordination",
+    "SEC_EDGAR_TASK5_TRACE_DIR": ".sdd/2-sec-filing-index-ingestion-stage-2-spec/final-review-fix1-evidence/latest-complete-traces/download",
+    "SEC_EDGAR_TASK7_TRACE_DIR": ".sdd/2-sec-filing-index-ingestion-stage-2-spec/final-review-fix1-evidence/latest-complete-traces/collection",
+    "SEC_EDGAR_TASK8_GUARD_TRACE_DIR": ".sdd/2-sec-filing-index-ingestion-stage-2-spec/final-review-fix1-evidence/latest-complete-traces/guard",
+    "SEC_EDGAR_TASK8_TRACE_DIR": ".sdd/2-sec-filing-index-ingestion-stage-2-spec/final-review-fix1-evidence/latest-complete-traces/acquisition"
+  },
+  "old_verification_prefix_bytes": 31626,
+  "old_verification_prefix_sha256": "d06ea16fd4a78c719f830a342832d467438d77a20f3ff04b62fd2784c78c9cb2",
+  "recorded_after_verification_append": true,
+  "unchanged_inputs": [
+    {
+      "bytes": 1397,
+      "equals_base": true,
+      "path": "conf/sec-edgar-ingest.yaml",
+      "sha256": "dd50a930e09e840d38109e0953b4b9e0cc1ff3253845d8649d9242fc63192a3a"
+    },
+    {
+      "bytes": 149846,
+      "equals_base": true,
+      "path": "uv.lock",
+      "sha256": "7a1b45b2944241e9b8fda35b5e87977c6ec189a3c72f4ca1f3f861661220f42c"
+    },
+    {
+      "bytes": 891,
+      "equals_base": true,
+      "path": "pyproject.toml",
+      "sha256": "c63a8426c3fa738eccd30429b0efeade8a7c65fff9ce33cd3d68999d3dfda194"
+    },
+    {
+      "bytes": 537,
+      "equals_base": true,
+      "path": "packages/sec-edgar-ingest/pyproject.toml",
+      "sha256": "081f99aaff410e67a72efb71df82093f2c8b6f92ee77e608b1fb3ca100d434a1"
+    },
+    {
+      "bytes": 7551,
+      "equals_base": true,
+      "path": "packages/sec-edgar-ingest/README.md",
+      "sha256": "1554795e1e4904c3cd499288f20beb0a8388ade7082afdf3dab448d8b98e6e88"
+    },
+    {
+      "bytes": 6561,
+      "equals_base": true,
+      "path": "packages/sec-edgar-ingest/tests/network_guard.py",
+      "sha256": "b4868ac5c7329147051be51ff0293d781ec3a256ec84292cab210674112d3abf"
+    },
+    {
+      "bytes": 9933,
+      "equals_base": true,
+      "path": "packages/sec-edgar-ingest/tests/test_network_guard.py",
+      "sha256": "6d0a9cdd898350fb3f33185c6f3cca501ad118713026f67bff0407242d38c455"
+    },
+    {
+      "bytes": 4953,
+      "equals_base": true,
+      "path": "packages/sec-edgar-ingest/tests/fixtures/acquisition/manifest.json",
+      "sha256": "c96e76610f6a218eb27f647abafe538991330bffa0f471c11e890ce3eeac5a97"
+    },
+    {
+      "bytes": 638,
+      "equals_base": true,
+      "path": "scripts/check-sec-edgar-ingest.sh",
+      "sha256": "ea2985bfd76bbcbadeef75d81d45a90720c8dc520b0b56398fdc080927a5071b"
+    },
+    {
+      "bytes": 10235,
+      "equals_base": true,
+      "path": "specs/evidence/sec-filing-index-ingestion/stage-2/verification/fixture-sequence.py",
+      "sha256": "98e951b8079bf4acffada442a452fdda639be2a117f44aa2cfb651dca5ac5934"
+    },
+    {
+      "bytes": 10813,
+      "equals_base": true,
+      "path": "specs/evidence/sec-filing-index-ingestion/stage-2/verification/installed-wheel-proof.py",
+      "sha256": "238dddd8b2e314b577be67dd2b67f303d65f262fc123a8a4951b29035c3fd79e"
+    }
+  ],
+  "verification_append_only": true
+}

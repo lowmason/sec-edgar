@@ -1,0 +1,19 @@
+test_held_socket_parent_death_zero_successor_unsafe_interval_and_daily_next (test_acquisition_processes.AcquisitionProcessTests.test_held_socket_parent_death_zero_successor_unsafe_interval_and_daily_next) ... ok
+test_independent_child_deadline_records_actual_fatal_exit_and_prefix (test_acquisition_processes.AcquisitionProcessTests.test_independent_child_deadline_records_actual_fatal_exit_and_prefix) ... ok
+test_real_clock_context_pins_actual_day_after_frozen_fixture_date (test_acquisition_processes.AcquisitionProcessTests.test_real_clock_context_pins_actual_day_after_frozen_fixture_date) ... ERROR
+test_stale_sender_awakened_after_allowed_start_sends_zero (test_acquisition_processes.AcquisitionProcessTests.test_stale_sender_awakened_after_allowed_start_sends_zero) ... ok
+test_three_independent_collectors_barrier_request_and_actual_binding_race (test_acquisition_processes.AcquisitionProcessTests.test_three_independent_collectors_barrier_request_and_actual_binding_race) ... ok
+
+======================================================================
+ERROR: test_real_clock_context_pins_actual_day_after_frozen_fixture_date (test_acquisition_processes.AcquisitionProcessTests.test_real_clock_context_pins_actual_day_after_frozen_fixture_date)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_acquisition_processes.py", line 31, in test_real_clock_context_pins_actual_day_after_frozen_fixture_date
+    self.assertFalse(settings.fixture.allow_clock_override)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'allow_clock_override'
+
+----------------------------------------------------------------------
+Ran 5 tests in 12.981s
+
+FAILED (errors=1)
