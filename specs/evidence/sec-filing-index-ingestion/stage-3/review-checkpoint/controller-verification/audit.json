@@ -1,0 +1,53 @@
+{
+  "all22_stage7_checks": "reserved",
+  "argv": [
+    "/private/tmp/sec-edgar-plan3-controller-audit.py",
+    ".sdd/3-sec-filing-index-ingestion-stage-3-spec/controller-verification/audit.json"
+  ],
+  "cwd": "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar",
+  "dependencies": {
+    "azure-data-tables": "12.7.0",
+    "azure-identity": "1.26.0",
+    "azure-storage-blob": "12.31.0",
+    "pyarrow": "25.0.1",
+    "requests": "2.34.2",
+    "sec-edgar-ingest": "0.1.0"
+  },
+  "evidence": {
+    "bytes": 62590747,
+    "coverage_complete": true,
+    "inventory": {
+      "bytes": 2026156,
+      "sha256": "63c50aba74a46f72f2f9d5f8e9e2b77563a388744a778debcbb2a4323563e418"
+    },
+    "records": 6634
+  },
+  "executable": "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.venv/bin/python",
+  "exit": 0,
+  "failures": [],
+  "live_access_authorizations": "closed",
+  "merge_base_main": "5f90a2116eab21525e88a02d0988567e71d95967",
+  "network_guard": true,
+  "package_python_sources": 28,
+  "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+  "primary": {
+    "existing_bytes": 294399711,
+    "head_equal_preflight": true,
+    "protected_absences": [
+      "packages/sec-edgar-index-ingest/README.md",
+      "packages/sec-edgar-index-ingest/pyproject.toml",
+      "packages/sec-edgar-index-ingest/src/sec_edgar_index_ingest/__init__.py",
+      "packages/sec-edgar-index-ingest/src/sec_edgar_index_ingest/py.typed"
+    ],
+    "records": 19088,
+    "status_equal_preflight": true
+  },
+  "python": "3.14.0 (main, Oct 14 2025, 21:10:22) [Clang 20.1.4 ]",
+  "reviewed_delivery_head": "4b6e54c18b886e02ff75643d6f5b399e0ededf3b",
+  "runtime_seconds": 1.955072999931872,
+  "stage_3_acceptance": "blocked by retained-source conflicting observations",
+  "wheel": {
+    "bytes": 110438,
+    "sha256": "7d370cbe94d82254ae2095e8bcb8993ebef939651fc788181fc6b90906d1cfdc"
+  }
+}
