@@ -513,3 +513,44 @@ class EtlCliTests(unittest.TestCase):
         self.assertEqual(len(failures), 1)
         self.assertEqual(failures[0]['fields']['source_id'], source.source_id)
         self.assertEqual(failures[0]['fields']['raw_sha256'], hashlib.sha256(body).hexdigest())
+
+    def assert_noncanonical_snapshot_refused(self, spelling):
+        from sec_edgar_ingest.worksets import decode_snapshot_workset, encode_workset
+        original = self.objects.read(self.snapshot_ref)
+        snapshot = decode_snapshot_workset(original)
+        value = json.loads(original)
+        noncanonical = (json.dumps(value, indent=2).encode() if spelling == 'whitespace' else
+                        json.dumps(dict(reversed(tuple(value.items()))), separators=(',', ':')).encode())
+        self.assertNotEqual(noncanonical, original)
+        self.assertEqual(json.loads(noncanonical), value)
+        # Acquisition decoding keeps its existing normalized-identity contract.
+        self.assertEqual(decode_snapshot_workset(noncanonical), snapshot)
+        self.assertEqual(encode_workset(snapshot), original)
+        object_root = self.root / '.fixture-state/objects'
+        (object_root / self.snapshot_ref).write_bytes(noncanonical)
+        before = {path.relative_to(object_root).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
+                  for path in object_root.rglob('*') if path.is_file()}
+        self.checkpoint(spelling + '-before-command')
+        code, output = self.invoke(self.argv())
+        self.checkpoint(spelling + '-after-command')
+        after = {path.relative_to(object_root).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
+                 for path in object_root.rglob('*') if path.is_file()
+                 and not path.relative_to(object_root).as_posix().startswith('runs/')}
+        proof = {'snapshot_ref': self.snapshot_ref, 'canonical_sha256': hashlib.sha256(original).hexdigest(),
+                 'noncanonical_sha256': hashlib.sha256(noncanonical).hexdigest(),
+                 'canonical_bytes_hex': original.hex(), 'noncanonical_bytes_hex': noncanonical.hex(),
+                 'exit': code, 'output': output, 'before_objects': before, 'after_objects': after,
+                 'processing': [row.to_mapping() for row in self.store.scan('Processing', {})],
+                 'pointers': [row.to_mapping() for row in self.store.scan('QuarterPublication', {})]}
+        (self.root / 'canonical-refusal-proof.json').write_bytes(canonical_json(proof))
+        self.assertEqual(code, 9, self.calls[-1])
+        self.assertEqual(after, before)
+        self.assertEqual(proof['processing'], [])
+        self.assertEqual(proof['pointers'], [])
+        self.assertIsNone(output['result_ref'])
+
+    def test_noncanonical_snapshot_whitespace_refuses_before_transform_outputs(self):
+        self.assert_noncanonical_snapshot_refused('whitespace')
+
+    def test_noncanonical_snapshot_property_order_refuses_before_transform_outputs(self):
+        self.assert_noncanonical_snapshot_refused('property-order')

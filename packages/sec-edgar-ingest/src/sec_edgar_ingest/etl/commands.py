@@ -9,6 +9,7 @@ from ..config import Settings, pin_context
 from ..models import Error, RunContext, canonical_json, parse_json, safe_relative_path
 from ..results import log_event, result_path
 from ..state import AcquisitionState, attempt_key
+from ..worksets import decode_snapshot_workset, encode_workset
 from ..storage.contracts import BoundaryObserver, CAS_ATTEMPTS, Conflict, ObjectStore, StateStore, observe
 from .contracts import (EtlResult, ObservationRef, PublicationResult, decode_transformed,
                         processing_key, transformed_ref)
@@ -157,6 +158,11 @@ def run_transform(snapshot_ref: str, context: RunContext, settings: Settings, ob
     if context.command != 'transform':
         raise ValueError('transform requires a transform command context')
     validate_workset_ref(snapshot_ref, 'snapshot')
+    snapshot_body = objects.read(snapshot_ref)
+    snapshots = decode_snapshot_workset(snapshot_body)
+    if (snapshot_ref != f'worksets/sec/snapshot/sha256={snapshots.workset_id}/workset.json'
+            or encode_workset(snapshots) != snapshot_body):
+        raise Conflict('snapshot workset bytes or path differ from canonical identity')
     accepted = {row.value['processing_key'] for row in store.scan('Processing', {})}
     workset = transform_workset(snapshot_ref, context, settings, objects, EtlState(store),
                                 AcquisitionState(store), force=force, observer=observer)
