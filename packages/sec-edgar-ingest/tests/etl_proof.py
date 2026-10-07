@@ -35,6 +35,7 @@ from sec_edgar_ingest.etl.manifest import read_manifest
 
 ROOT = Path(__file__).resolve().parents[3]
 JOIN_SECONDS = 60
+TERMINATE_SECONDS = 10
 
 
 def save(path, value):
@@ -125,13 +126,32 @@ def race_child(root, label, ref, settings, context, barrier, winner_done, gate):
             raise
 
 
-def join_children(children):
+def join_children(children, *, timeout=None):
+    """Reap every supplied owned child before reporting any deadline failure."""
+    timeout = JOIN_SECONDS if timeout is None else timeout
+    failures = []
     for child in children:
-        child.join(JOIN_SECONDS)
+        try:
+            child.join(timeout)
+        except Exception as error:
+            failures.append(f'child {child.pid} join failed: {error}')
         if child.is_alive():
-            child.terminate()
-            child.join(10)
-            raise AssertionError(f'own proof child {child.pid} exceeded finite deadline')
+            failures.append(f'own proof child {child.pid} exceeded finite deadline')
+            try:
+                child.terminate()
+                child.join(TERMINATE_SECONDS)
+            except Exception as error:
+                failures.append(f'child {child.pid} terminate failed: {error}')
+            if child.is_alive():
+                try:
+                    child.kill()
+                    child.join(TERMINATE_SECONDS)
+                except Exception as error:
+                    failures.append(f'child {child.pid} kill failed: {error}')
+            if child.is_alive():
+                failures.append(f'child {child.pid} remains alive after bounded kill')
+    if failures:
+        raise AssertionError('; '.join(failures))
     return [child.exitcode for child in children]
 
 
@@ -153,8 +173,15 @@ def prove_race(root, initial=False, gate=False):
     barrier, done = spawn.Barrier(2), spawn.Event()
     children = [spawn.Process(target=race_child, args=(str(root), label, ref.to_mapping(), settings.to_mapping(),
                  context.to_mapping(), barrier, done, gate)) for label, ref in zip(('winner', 'loser'), refs)]
-    for child in children:
-        child.start()
+    try:
+        for child in children:
+            child.start()
+    except BaseException as error:
+        try:
+            join_children([child for child in children if child.pid is not None], timeout=0)
+        except AssertionError as cleanup_error:
+            error.add_note(str(cleanup_error))
+        raise
     exits = join_children(children)
     assert exits == [0, 0], exits
     reports = [json.loads((root / f'{label}.json').read_text()) for label in ('winner', 'loser')]
@@ -413,11 +440,30 @@ def sequence(output):
             'processes': process_proof(output / 'processes')}
 
 
-def run_logged(argv, cwd, output, label, env=None):
+def run_logged(argv, cwd, output, label, env=None, *, timeout=300):
     started = time.monotonic()
-    result = subprocess.run(argv, cwd=cwd, env=env, capture_output=True, text=True, timeout=300)
-    record = {**metadata(), 'argv': [str(v) for v in argv], 'cwd': str(cwd), 'exit': result.returncode,
-              'stdout': result.stdout, 'stderr': result.stderr, 'runtime_seconds': time.monotonic() - started}
+    environment = os.environ if env is None else env
+    record = {**metadata(), 'argv': [str(v) for v in argv], 'cwd': str(cwd),
+              'timeout_seconds': timeout, 'environment': {
+                  'pythonpath_present': 'PYTHONPATH' in environment,
+                  'uv_python_downloads': environment.get('UV_PYTHON_DOWNLOADS')}}
+    try:
+        result = subprocess.run(argv, cwd=cwd, env=env, capture_output=True, text=True, timeout=timeout)
+    except subprocess.TimeoutExpired as error:
+        record.update(outcome='timeout', exit=None, runtime_seconds=time.monotonic() - started)
+        for stream, captured in (('stdout', error.stdout), ('stderr', error.stderr)):
+            if isinstance(captured, bytes):
+                path = output / f'{label}.{stream}.bin'
+                path.write_bytes(captured)
+                record[stream + '_raw_file'] = path.name
+                record[stream + '_raw'] = digest(path)
+                record[stream] = captured.decode('utf-8', errors='backslashreplace')
+            else:
+                record[stream] = captured or ''
+        save(output / (label + '.json'), record)
+        raise
+    record.update(outcome='completed', exit=result.returncode, stdout=result.stdout, stderr=result.stderr,
+                  runtime_seconds=time.monotonic() - started)
     save(output / (label + '.json'), record)
     assert result.returncode == 0, record
     return record

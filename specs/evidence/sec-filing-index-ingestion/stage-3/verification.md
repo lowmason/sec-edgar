@@ -6,7 +6,35 @@ SEC-0141, SEC-0142 and SEC-0143. Their refusal follows the approved CIK/archive-
 logical key. No duplicate winner was selected and no original was edited. This
 record does not stamp completion or retirement. `all22_stage7_checks: reserved`.
 
-## Commands and actual results
+## Review repair round 1
+
+The owned proof helpers now reap every child before raising, use bounded kill
+fallback, clean up a partially started race, and retain actual partial bytes and
+`exit: null` for subprocess timeouts. Guarded real-process regressions reproduced
+all three failure paths before fixes. The [repair report](verification/fix1/report.md)
+and [scoped diff](verification/fix1/owned-code.diff) describe both reviewed items.
+
+The repair [staged implementation/prose check](verification/fix1/staged-owned-whitespace/command.json)
+exited 0. Its [full staged evidence check](verification/fix1/staged-history-whitespace/command.json)
+exited 2 solely for preserved context-line whitespace in `fix1/owned-code.diff`;
+exact output and affected-path receipts are retained.
+
+The refreshed [complete check](verification/final-check/command.json) passed
+**442 tests in 160.172s**, with builds/help/version/compile/whitespace checks.
+[Sequence](verification/sequence-command/command.json) and
+[isolated installed proof](verification/installed-command/command.json) both exited
+0. [Actual timeout regressions](verification/final-check/timeouts/) show all owned
+children reaped and lossless subprocess output retained. The unchanged specimen
+acceptance gate remains exit1; that125-second scan was not repeated.
+
+All original6634 payloads and root inventory bytes remain preserved under an
+[explicit prior-path map](verification/prior-task7-before-fix1/relocation.json).
+The [repair audit](verification/fix1/audit.json) verifies prior payloads, new proofs,
+wheel/source equality and unchanged specimen/reader receipt bindings. The
+sections below describe the **original Task7 run**, with links redirected to its
+preserved prior directories where refreshed proofs supersede it.
+
+## Original commands and actual results
 
 All commands ran in the isolated `codex/sec-edgar-stage-3` managed worktree with
 cached frozen dependencies and the selected Python 3.14.0/macOS arm64 runtime.
@@ -16,10 +44,10 @@ linked below; no Linux worker capacity is inferred.
 
 | Proof | Actual result | Evidence |
 | --- | --- | --- |
-| `scripts/check-sec-edgar-ingest.sh` | Exit 0; 439 tests in 160.832s; wheel/sdist, four-command help, module version, compileall and whitespace pass | [command](verification/final-check/command.json), [full stderr](verification/final-check/stderr.txt), [full stdout](verification/final-check/stdout.txt), [real children](verification/final-check/processes/) |
+| `scripts/check-sec-edgar-ingest.sh` | Exit 0; 439 tests in 160.832s; wheel/sdist, four-command help, module version, compileall and whitespace pass | [command](verification/prior-task7-before-fix1/final-check/command.json), [full stderr](verification/prior-task7-before-fix1/final-check/stderr.txt), [full stdout](verification/prior-task7-before-fix1/final-check/stdout.txt), [real children](verification/prior-task7-before-fix1/final-check/processes/) |
 | `etl_proof.py specimens --output …/verification/specimens` | Exit 1; all 970,622 rows scanned; three source acceptance failures | [report](verification/specimens/report.json), [hashes](verification/specimens/sha256.json) |
-| `etl_proof.py sequence --output …/verification/sequence` | Exit 0; actual raw-only commands, replay/no-op, cross-quarter source, gates and process recovery | [command](verification/sequence-command/command.json), [report](verification/sequence/report.json), [hashes](verification/sequence/sha256.json) |
-| `etl_proof.py installed --output …/verification/installed` | Exit 0; exact wheel and lock pins; isolated site-packages imports and source-byte equality; full raw/process sequence | [command](verification/installed-command/command.json), [report](verification/installed/report.json), [installed report](verification/installed/installed-sequence/report.json), [hashes](verification/installed/sha256.json) |
+| `etl_proof.py sequence --output …/verification/sequence` | Exit 0; actual raw-only commands, replay/no-op, cross-quarter source, gates and process recovery | [command](verification/prior-task7-before-fix1/sequence-command/command.json), [report](verification/prior-task7-before-fix1/sequence/report.json), [hashes](verification/prior-task7-before-fix1/sequence/sha256.json) |
+| `etl_proof.py installed --output …/verification/installed` | Exit 0; exact wheel and lock pins; isolated site-packages imports and source-byte equality; full raw/process sequence | [command](verification/prior-task7-before-fix1/installed-command/command.json), [report](verification/prior-task7-before-fix1/installed/report.json), [installed report](verification/prior-task7-before-fix1/installed/installed-sequence/report.json), [hashes](verification/prior-task7-before-fix1/installed/sha256.json) |
 | Saved-capture reader and repair example | Exit 0; complete read and unchanged committed pointer | [command](verification/runbook-command/command.json), [proof](verification/runbook-proof.json) |
 | Primary preservation | 19,088 records verified; four absences and exact roadmap bytes preserved | [receipt](verification/primary-preservation.json) |
 
@@ -73,7 +101,7 @@ establish history-wide range acceptance.
 
 ## Real process evidence
 
-[Sequence process traces](verification/sequence/processes/) and the independent
+[Sequence process traces](verification/prior-task7-before-fix1/sequence/processes/) and the independent
 full-suite children retain separate stdout/stderr, PIDs, candidate/manifest hashes,
 exact bases and actual local CAS exceptions. The insert race used PIDs 20087 and
 20088 on the same absent pointer; PID 20087 encountered `AlreadyExists` and rebuilt.

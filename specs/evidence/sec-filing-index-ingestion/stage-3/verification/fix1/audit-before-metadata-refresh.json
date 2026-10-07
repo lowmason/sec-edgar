@@ -1,0 +1,225 @@
+{
+  "all22_stage7_checks": "reserved",
+  "argv": [
+    ".sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-fix1-evidence/audit.py"
+  ],
+  "commands": {
+    "final-check": {
+      "all22_stage7_checks": "reserved",
+      "argv": [
+        "scripts/check-sec-edgar-ingest.sh"
+      ],
+      "cwd": "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar",
+      "dependencies": {
+        "azure-data-tables": "12.7.0",
+        "azure-identity": "1.26.0",
+        "azure-storage-blob": "12.31.0",
+        "pyarrow": "25.0.1",
+        "requests": "2.34.2",
+        "sec-edgar-ingest": "0.1.0"
+      },
+      "executable": "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.venv/bin/python",
+      "exit": 0,
+      "network_guard": true,
+      "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+      "python": "3.14.0 (main, Oct 14 2025, 21:10:22) [Clang 20.1.4 ]",
+      "runtime_seconds": 160.85067750001326
+    },
+    "installed-command": {
+      "all22_stage7_checks": "reserved",
+      "argv": [
+        "uv",
+        "run",
+        "--offline",
+        "--frozen",
+        "--package",
+        "sec-edgar-ingest",
+        "python",
+        "packages/sec-edgar-ingest/tests/etl_proof.py",
+        "installed",
+        "--output",
+        "specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed"
+      ],
+      "cwd": "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar",
+      "dependencies": {
+        "azure-data-tables": "12.7.0",
+        "azure-identity": "1.26.0",
+        "azure-storage-blob": "12.31.0",
+        "pyarrow": "25.0.1",
+        "requests": "2.34.2",
+        "sec-edgar-ingest": "0.1.0"
+      },
+      "executable": "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.venv/bin/python",
+      "exit": 0,
+      "network_guard": true,
+      "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+      "python": "3.14.0 (main, Oct 14 2025, 21:10:22) [Clang 20.1.4 ]",
+      "runtime_seconds": 9.546294999774545
+    },
+    "sequence-command": {
+      "all22_stage7_checks": "reserved",
+      "argv": [
+        "uv",
+        "run",
+        "--offline",
+        "--frozen",
+        "--package",
+        "sec-edgar-ingest",
+        "python",
+        "packages/sec-edgar-ingest/tests/etl_proof.py",
+        "sequence",
+        "--output",
+        "specs/evidence/sec-filing-index-ingestion/stage-3/verification/sequence"
+      ],
+      "cwd": "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar",
+      "dependencies": {
+        "azure-data-tables": "12.7.0",
+        "azure-identity": "1.26.0",
+        "azure-storage-blob": "12.31.0",
+        "pyarrow": "25.0.1",
+        "requests": "2.34.2",
+        "sec-edgar-ingest": "0.1.0"
+      },
+      "executable": "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.venv/bin/python",
+      "exit": 0,
+      "network_guard": true,
+      "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+      "python": "3.14.0 (main, Oct 14 2025, 21:10:22) [Clang 20.1.4 ]",
+      "runtime_seconds": 5.818909999914467
+    }
+  },
+  "cwd": "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar",
+  "dependencies": {
+    "azure-data-tables": "12.7.0",
+    "azure-identity": "1.26.0",
+    "azure-storage-blob": "12.31.0",
+    "pyarrow": "25.0.1",
+    "requests": "2.34.2",
+    "sec-edgar-ingest": "0.1.0"
+  },
+  "executable": "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.venv/bin/python",
+  "exit": 0,
+  "inventories_verified": [
+    {
+      "inventory": {
+        "bytes": 1632,
+        "sha256": "cf9879c99eafcee8e62d93d704ada310652771e01c25dfc3846afda408ebc3f9"
+      },
+      "path": "specimens",
+      "records": 13
+    },
+    {
+      "inventory": {
+        "bytes": 69832,
+        "sha256": "8c053eaa924aaaee65e28601e5b09f2ab6d5ca11456bcd8fd21e48e838487791"
+      },
+      "path": "sequence",
+      "records": 279
+    },
+    {
+      "inventory": {
+        "bytes": 76812,
+        "sha256": "855bee68d1f9dcb8bcd2dc693077b254fd4c21e9f87c8d2e6d146011e6fd7d65"
+      },
+      "path": "installed",
+      "records": 292
+    },
+    {
+      "inventory": {
+        "bytes": 69596,
+        "sha256": "97a3828ceeb0d5ecff6461436f91fc2a05a9bf4634f0342d7f86445e44c49ad9"
+      },
+      "path": "installed/installed-sequence",
+      "records": 277
+    },
+    {
+      "inventory": {
+        "bytes": 209871,
+        "sha256": "35cf453121d76c0638b277314b942bd3b6d5532318e0d4e4bd56516d21f8c8bf"
+      },
+      "path": "prior-task7-before-fix1",
+      "records": 796
+    }
+  ],
+  "network_guard": true,
+  "original_records_verified": 6634,
+  "partial_start": {
+    "children": [
+      {
+        "alive": false,
+        "exit": -15,
+        "pid": 27528
+      },
+      {
+        "alive": false,
+        "exit": null,
+        "pid": null
+      }
+    ]
+  },
+  "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+  "python": "3.14.0 (main, Oct 14 2025, 21:10:22) [Clang 20.1.4 ]",
+  "source_files_equal": 28,
+  "specimen_scan_repeated": false,
+  "status": "DONE_WITH_CONCERNS",
+  "timeout_children": {
+    "children": [
+      {
+        "alive": false,
+        "exit": -9,
+        "pid": 27520
+      },
+      {
+        "alive": false,
+        "exit": -15,
+        "pid": 27521
+      }
+    ],
+    "runtime_seconds": 0.34224766679108143
+  },
+  "timeout_record": {
+    "all22_stage7_checks": "reserved",
+    "argv": [
+      "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.venv/bin/python",
+      "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/tmpvqqriihx/timeout.py"
+    ],
+    "cwd": "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/tmpvqqriihx",
+    "dependencies": {
+      "azure-data-tables": "12.7.0",
+      "azure-identity": "1.26.0",
+      "azure-storage-blob": "12.31.0",
+      "pyarrow": "25.0.1",
+      "requests": "2.34.2",
+      "sec-edgar-ingest": "0.1.0"
+    },
+    "environment": {
+      "pythonpath_present": false,
+      "uv_python_downloads": "never"
+    },
+    "executable": "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.venv/bin/python",
+    "exit": null,
+    "network_guard": true,
+    "outcome": "timeout",
+    "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+    "python": "3.14.0 (main, Oct 14 2025, 21:10:22) [Clang 20.1.4 ]",
+    "runtime_seconds": 1.0064515001140535,
+    "stderr": "stderr-before-timeout\\xfe\n",
+    "stderr_raw": {
+      "bytes": 23,
+      "sha256": "5d64ffd774a95ef8629131a26c12f7cda6908946871c090a306eacfc567422c5"
+    },
+    "stderr_raw_file": "timeout.stderr.bin",
+    "stdout": "stdout-before-timeout\\xff\n",
+    "stdout_raw": {
+      "bytes": 23,
+      "sha256": "ccc40a1819606591ee2ad8cacb91d4f756ec3f68e5074179ad1dc2644cb060a6"
+    },
+    "stdout_raw_file": "timeout.stdout.bin",
+    "timeout_seconds": 1
+  },
+  "wheel": {
+    "bytes": 110438,
+    "sha256": "7d370cbe94d82254ae2095e8bcb8993ebef939651fc788181fc6b90906d1cfdc"
+  },
+  "wheel_readme_equal": true
+}
