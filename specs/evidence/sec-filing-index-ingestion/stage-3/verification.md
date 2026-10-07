@@ -6,6 +6,30 @@ SEC-0141, SEC-0142 and SEC-0143. Their refusal follows the approved CIK/archive-
 logical key. No duplicate winner was selected and no original was edited. This
 record does not stamp completion or retirement. `all22_stage7_checks: reserved`.
 
+## Whole-branch repair round 1: current proof
+
+Current code HEAD `2343f39f0e21adc2ad401a9346a8c9ffa0509040` passes the
+[combined proof](final-review-fix1/report.md):452 tests in163.537s (164.112s wall),
+wheel/sdist/help/version/compile, fresh sequence, and isolated installed sequence.
+The [documented sample](final-review-fix1/runbook/report.json) uses the separate
+ETL fixture config with an explicitly seeded raw snapshot, preserves original
+acquisition provenance, and publishes/reads the expected filing. Both CLI commands exit0.
+[Current audit](final-review-fix1/audit.json) verifies all28 Python source files and
+package README against the111195-byte wheel SHA
+`eb8bb3b318b3b1a4fe1983291efb92161e22fac998f86230b5f2b7f3cf15c3ab`.
+Exact command logs, real process/timeout receipts and copied review red/green
+artifacts live in the new sibling tree. Its [inventory](final-review-fix1/sha256.json)
+excludes only itself. Scoped and historical evidence whitespace results are
+separately retained:scoped exit0; full staged exit2 for preserved context whitespace
+in code-evidence/owned.diff and doc-evidence/owned-before-commit.diff.
+
+The existing `verification/` tree remains byte-for-byte frozen:7525 records and
+inventory SHA `4554adb90acdda3e44bffac01bb878d3391d4ae523e0c4439aa4e1ab2c612b6b`.
+The442-test/full-wheel evidence described below is historical HEAD `3c868351`,
+not the current implementation. The original specimen acceptance exit1 and51
+conflicts remain independent, unchanged and unsuperseded; no specimen rescan,
+completion stamp or reserved Stage7 capacity check occurred.
+
 ## Review repair round 1
 
 The owned proof helpers now reap every child before raising, use bounded kill

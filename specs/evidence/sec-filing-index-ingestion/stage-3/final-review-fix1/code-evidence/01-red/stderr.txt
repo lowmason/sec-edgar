@@ -1,0 +1,72 @@
+test_unreceipted_daily_revision_reconciles_old_and_new_quarters (test_etl_cli.EtlCliTests.test_unreceipted_daily_revision_reconciles_old_and_new_quarters) ... FAIL
+test_unreceipted_quarterly_revision_refuses_empty_own_membership (test_etl_cli.EtlCliTests.test_unreceipted_quarterly_revision_refuses_empty_own_membership) ... FAIL
+test_receipt_exception_after_commit_remains_resumable (test_etl_cli.EtlCliTests.test_receipt_exception_after_commit_remains_resumable) ... FAIL
+test_membership_exception_after_commit_remains_resumable (test_etl_cli.EtlCliTests.test_membership_exception_after_commit_remains_resumable) ... FAIL
+test_unchanged_capture_repair_exception_remains_resumable (test_etl_cli.EtlCliTests.test_unchanged_capture_repair_exception_remains_resumable) ... FAIL
+
+======================================================================
+FAIL: test_unreceipted_daily_revision_reconciles_old_and_new_quarters (test_etl_cli.EtlCliTests.test_unreceipted_daily_revision_reconciles_old_and_new_quarters)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/tests/test_etl_cli.py", line 407, in test_unreceipted_daily_revision_reconciles_old_and_new_quarters
+    self._assert_unreceipted_revision_visits_both_quarters('daily')
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/tests/test_etl_cli.py", line 390, in _assert_unreceipted_revision_visits_both_quarters
+    self.assertEqual({quarter.quarter for quarter in result.quarters}, {'2026Q3', '2026Q4'})
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Items in the second set but not the first:
+'2026Q3'
+
+======================================================================
+FAIL: test_unreceipted_quarterly_revision_refuses_empty_own_membership (test_etl_cli.EtlCliTests.test_unreceipted_quarterly_revision_refuses_empty_own_membership)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/tests/test_etl_cli.py", line 410, in test_unreceipted_quarterly_revision_refuses_empty_own_membership
+    self._assert_unreceipted_revision_visits_both_quarters('quarterly')
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/tests/test_etl_cli.py", line 390, in _assert_unreceipted_revision_visits_both_quarters
+    self.assertEqual({quarter.quarter for quarter in result.quarters}, {'2026Q3', '2026Q4'})
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Items in the second set but not the first:
+'2026Q3'
+
+======================================================================
+FAIL: test_receipt_exception_after_commit_remains_resumable (test_etl_cli.EtlCliTests.test_receipt_exception_after_commit_remains_resumable)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/tests/test_etl_cli.py", line 463, in test_receipt_exception_after_commit_remains_resumable
+    self._assert_repair_exception_resumes_exact_command('_immutable')
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/tests/test_etl_cli.py", line 444, in _assert_repair_exception_resumes_exact_command
+    self.assertIsNone(output['result_ref'])
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'runs/sec/etl-cli/publish/repair-exception/result.json' is not None
+
+======================================================================
+FAIL: test_membership_exception_after_commit_remains_resumable (test_etl_cli.EtlCliTests.test_membership_exception_after_commit_remains_resumable)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/tests/test_etl_cli.py", line 466, in test_membership_exception_after_commit_remains_resumable
+    self._assert_repair_exception_resumes_exact_command('_record_membership')
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/tests/test_etl_cli.py", line 444, in _assert_repair_exception_resumes_exact_command
+    self.assertIsNone(output['result_ref'])
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'runs/sec/etl-cli/publish/repair-exception/result.json' is not None
+
+======================================================================
+FAIL: test_unchanged_capture_repair_exception_remains_resumable (test_etl_cli.EtlCliTests.test_unchanged_capture_repair_exception_remains_resumable)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/tests/test_etl_cli.py", line 469, in test_unchanged_capture_repair_exception_remains_resumable
+    self._assert_repair_exception_resumes_exact_command('_record_membership', unchanged=True)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/tests/test_etl_cli.py", line 444, in _assert_repair_exception_resumes_exact_command
+    self.assertIsNone(output['result_ref'])
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'runs/sec/etl-cli/publish/repair-exception/result.json' is not None
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.922s
+
+FAILED (failures=5)
