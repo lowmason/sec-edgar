@@ -126,6 +126,14 @@ quarantine/pending work, result repair, stopped ownership, and the conservative
 Azure clean-release guard.
 
 
+For local ETL, pass `--config conf/sec-edgar-etl-fixture.yaml` from the repository
+root. This separate [configuration](../../conf/sec-edgar-etl-fixture.yaml) selects
+`fixture-index-parser-v1` and preserves the acquisition store binding. Leave
+`conf/sec-edgar-ingest.yaml` unchanged: its `fixture-envelope-v1` value records
+acquisition provenance and is not an accepted ETL row parser. First populate the
+store with a raw snapshot workset through acquisition or explicit offline fixture
+seeding, then use its exact reference below.
+
 `transform --workset worksets/sec/snapshot/sha256=<id>/workset.json` freezes
 observation outputs and returns an exact transformed workset. `publish --workset
 worksets/sec/transformed/sha256=<id>/workset.json` builds and validates candidates,

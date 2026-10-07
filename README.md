@@ -35,9 +35,11 @@ Only explicitly selected bounded loopback fixture origins are allowed, including
 in their spawned transport children. Production CLI/SDK behavior is outside this
 test-only guard.
 
-Configuration in `conf/sec-edgar-ingest.yaml` uses JSON syntax, a YAML 1.2 subset.
-Its `local-fixture` acquisition backend requires an explicit validated
-`--fixture-pack`; retained-byte ETL reads stored inputs without a fixture pack.
+Acquisition uses `conf/sec-edgar-ingest.yaml`; retained-byte ETL uses the separate
+`conf/sec-edgar-etl-fixture.yaml` with supported row parser `fixture-index-parser-v1`.
+Both use JSON syntax, a YAML 1.2 subset, and share the local storage binding.
+The `local-fixture` acquisition backend requires an explicit validated
+`--fixture-pack`; ETL reads an existing snapshot workset without a fixture pack.
 There is no live fallback. See the [acquisition runbook](docs/runbooks/sec-edgar-ingest-acquisition.md)
 for commands, shared issuer requirements, failure meanings, and safe recovery.
 The [Stage 2 verification record](specs/evidence/sec-filing-index-ingestion/stage-2/verification.md)
