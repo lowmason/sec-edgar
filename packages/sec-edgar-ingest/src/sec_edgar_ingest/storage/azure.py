@@ -31,6 +31,7 @@ TABLE_ENTITY_BYTES = 1024 * 1024
 TABLE_KEY_CHARACTERS = 1024
 TABLE_MAX_PROPERTIES = 255
 TABLE_SYSTEM_OVERHEAD_BYTES = 1024
+TABLE_SCALAR_BYTES = 8
 STATE_BLOB_FORMAT = "sec-state-blob-v1"
 STATE_BLOB_FIELDS = frozenset({"PayloadFormat", "PayloadSha256", "PayloadByteCount"})
 
@@ -42,7 +43,7 @@ def _check_table_entity(entity: dict[str, object]) -> None:
     if any(len(value.encode("utf-16-le")) > TABLE_STRING_BYTES for value in strings.values()):
         raise ValueError("Table string property exceeds the service size limit")
     data_bytes = sum(len(name.encode("utf-16-le")) +
-                     (len(value.encode("utf-16-le")) if isinstance(value, str) else 8)
+                     (len(value.encode("utf-16-le")) if isinstance(value, str) else TABLE_SCALAR_BYTES)
                      for name, value in entity.items())
     if len(entity) + 1 > TABLE_MAX_PROPERTIES or data_bytes + TABLE_SYSTEM_OVERHEAD_BYTES > TABLE_ENTITY_BYTES:
         raise ValueError("Table state entity exceeds the service size limit")
@@ -92,7 +93,7 @@ class AzureStateStore:
     def _client(self, kind: str) -> TableClient:
         return self.attempt_client if table_for(kind) == "Attempts" else self.source_client
 
-    def _entity(self, kind: str, key: str, value: dict[str, object]) -> dict[str, object]:
+    def _write_payload_entity(self, kind: str, key: str, value: dict[str, object]) -> dict[str, object]:
         partition, key = identity(kind, key)
         entity = {"PartitionKey": partition, "RowKey": _row_key(key), "StableKey": key}
         _check_table_entity(entity)
@@ -114,7 +115,7 @@ class AzureStateStore:
         _check_table_entity(entity)
         return entity
 
-    def _value(self, entity, partition: str, key: str, version: str) -> Versioned:
+    def _read_value(self, entity, partition: str, key: str, version: str) -> Versioned:
         if entity.get("PartitionKey") != partition or entity.get("RowKey") != _row_key(key) or entity.get("StableKey") != key:
             raise Conflict("Table entity disagrees with its stable identity")
         version = _etag(version)
@@ -155,10 +156,10 @@ class AzureStateStore:
             if error.status_code == 404:
                 return None
             raise
-        return self._value(entity, partition, key, observed.get("etag"))
+        return self._read_value(entity, partition, key, observed.get("etag"))
 
     def insert(self, kind: str, key: str, value: dict[str, object]) -> Versioned:
-        entity = self._entity(kind, key, value)
+        entity = self._write_payload_entity(kind, key, value)
         observed = {}
         def capture(response):
             observed["etag"] = response.http_response.headers.get("ETag")
@@ -168,13 +169,13 @@ class AzureStateStore:
             if error.status_code == 409:
                 raise AlreadyExists("Table state identity already exists") from error
             raise
-        result = self._value(entity, entity["PartitionKey"], key, observed.get("etag"))
+        result = self._read_value(entity, entity["PartitionKey"], key, observed.get("etag"))
         observe(self.observer, "state.after_insert")
         return result
 
     def replace(self, kind: str, key: str, value: dict[str, object], version: str) -> Versioned:
         exact_version(version)
-        entity = self._entity(kind, key, value)
+        entity = self._write_payload_entity(kind, key, value)
         observed = {}
         def capture(response):
             observed["etag"] = response.http_response.headers.get("ETag")
@@ -185,7 +186,7 @@ class AzureStateStore:
             if error.status_code in (404, 412):
                 raise Conflict("Table row absent or ETag changed") from error
             raise
-        result = self._value(entity, entity["PartitionKey"], key, observed.get("etag"))
+        result = self._read_value(entity, entity["PartitionKey"], key, observed.get("etag"))
         observe(self.observer, "state.after_replace")
         return result
 
@@ -205,7 +206,7 @@ class AzureStateStore:
             for entity in page:
                 key = entity.get("StableKey")
                 version = versions.get(entity.get("RowKey"))
-                row = self._value(entity, partition, key, version)
+                row = self._read_value(entity, partition, key, version)
                 value = row.to_mapping()["value"]
                 if all(name in value and value[name] == expected for name, expected in detached_filters.items()):
                     yield row
