@@ -1,0 +1,96 @@
+test_canonical_field_types_and_nullability (test_etl_contracts.EtlContractTests.test_canonical_field_types_and_nullability) ... ok
+test_change_schema_embeds_nullable_full_rows (test_etl_contracts.EtlContractTests.test_change_schema_embeds_nullable_full_rows) ... ok
+test_observation_schema_preserves_original_fields (test_etl_contracts.EtlContractTests.test_observation_schema_preserves_original_fields) ... ok
+test_processing_identity_includes_both_versions (test_etl_contracts.EtlContractTests.test_processing_identity_includes_both_versions) ... ok
+test_retained_stage2_worksets_and_registry_remain_byte_identical (test_etl_contracts.EtlContractTests.test_retained_stage2_worksets_and_registry_remain_byte_identical) ... ok
+test_row_mapping_and_strict_validation (test_etl_contracts.EtlContractTests.test_row_mapping_and_strict_validation) ... ok
+test_transformed_codec_is_canonical_and_strict (test_etl_contracts.EtlContractTests.test_transformed_codec_is_canonical_and_strict) ... ok
+test_all_records_are_strict_immutable_and_round_trip (test_etl_contracts.EtlRecordTests.test_all_records_are_strict_immutable_and_round_trip) ... ok
+test_active_pointer_real_sdk_insert_replace_and_conflict (test_etl_storage.EtlStorageTests.test_active_pointer_real_sdk_insert_replace_and_conflict) ... ok
+test_azure_logical_writes_and_streamed_materialization_use_mapped_paths (test_etl_storage.EtlStorageTests.test_azure_logical_writes_and_streamed_materialization_use_mapped_paths) ... ok
+test_large_active_pointer_record_uses_verified_content_first_descriptor (test_etl_storage.EtlStorageTests.test_large_active_pointer_record_uses_verified_content_first_descriptor) ... FAIL
+test_local_materialize_is_exclusive_and_cleans_failed_copy (test_etl_storage.EtlStorageTests.test_local_materialize_is_exclusive_and_cleans_failed_copy) ... ok
+test_logical_paths_use_accepted_containers (test_etl_storage.EtlStorageTests.test_logical_paths_use_accepted_containers) ... ok
+test_pointer_commit_uses_actual_revision_and_propagates_conflict (test_etl_storage.EtlStorageTests.test_pointer_commit_uses_actual_revision_and_propagates_conflict) ... ok
+test_stream_failure_deletes_only_created_scratch (test_etl_storage.EtlStorageTests.test_stream_failure_deletes_only_created_scratch) ... ok
+test_transform_acceptance_and_publication_receipts_are_idempotent (test_etl_storage.EtlStorageTests.test_transform_acceptance_and_publication_receipts_are_idempotent) ... ok
+test_approved_raw_layout_rejects_unsafe_or_mismatched_content_addresses (test_worksets.WorksetTests.test_approved_raw_layout_rejects_unsafe_or_mismatched_content_addresses) ... ok
+test_approved_raw_layout_round_trips_both_representations (test_worksets.WorksetTests.test_approved_raw_layout_round_trips_both_representations) ... ok
+test_body_receipt_and_snapshot_envelopes_are_explicit (test_worksets.WorksetTests.test_body_receipt_and_snapshot_envelopes_are_explicit) ... ok
+test_changed_context_or_content_changes_identity (test_worksets.WorksetTests.test_changed_context_or_content_changes_identity) ... ok
+test_common_records_have_complete_detached_mapping_round_trips (test_worksets.WorksetTests.test_common_records_have_complete_detached_mapping_round_trips) ... ok
+test_common_records_reject_mutable_wrong_typed_fields (test_worksets.WorksetTests.test_common_records_reject_mutable_wrong_typed_fields) ... ok
+test_daily_directory_day_label_round_trips_multiple_exact_sources (test_worksets.WorksetTests.test_daily_directory_day_label_round_trips_multiple_exact_sources) ... ok
+test_decoder_rejects_versions_unknown_fields_timestamps_and_hashes (test_worksets.WorksetTests.test_decoder_rejects_versions_unknown_fields_timestamps_and_hashes) ... ok
+test_detached_serializers_and_deep_immutability (test_worksets.WorksetTests.test_detached_serializers_and_deep_immutability) ... ok
+test_discover_freezes_explicit_mode_without_rewriting_command (test_worksets.WorksetTests.test_discover_freezes_explicit_mode_without_rewriting_command) ... ok
+test_duplicate_sources_and_directory_identity_are_refused (test_worksets.WorksetTests.test_duplicate_sources_and_directory_identity_are_refused) ... ok
+test_empty_complete_requires_successful_directory_evidence (test_worksets.WorksetTests.test_empty_complete_requires_successful_directory_evidence) ... ok
+test_fixture_clock_override_keeps_exact_auditable_endpoint (test_worksets.WorksetTests.test_fixture_clock_override_keeps_exact_auditable_endpoint) ... ok
+test_member_order_does_not_change_workset_identity (test_worksets.WorksetTests.test_member_order_does_not_change_workset_identity) ... ok
+test_open_endpoint_matches_exact_resolution_in_constructor_and_decoders (test_worksets.WorksetTests.test_open_endpoint_matches_exact_resolution_in_constructor_and_decoders) ... ok
+test_snapshot_decoder_rejects_rehashed_kind_and_envelope_mismatch (test_worksets.WorksetTests.test_snapshot_decoder_rejects_rehashed_kind_and_envelope_mismatch) ... ok
+test_snapshot_decoder_rejects_rehashed_wrong_directory_or_source_identity (test_worksets.WorksetTests.test_snapshot_decoder_rejects_rehashed_wrong_directory_or_source_identity) ... ok
+test_snapshot_decoder_rejects_rehashed_wrong_source_period (test_worksets.WorksetTests.test_snapshot_decoder_rejects_rehashed_wrong_source_period) ... ok
+test_snapshot_requires_exact_members_and_immutable_raw_reference (test_worksets.WorksetTests.test_snapshot_requires_exact_members_and_immutable_raw_reference) ... ok
+test_version_and_directory_content_are_part_of_identity (test_worksets.WorksetTests.test_version_and_directory_content_are_part_of_identity) ... ok
+test_committed_insert_survives_observer_exception (test_storage.StorageTests.test_committed_insert_survives_observer_exception) ... ok
+test_create_conflict_preserves_first_value_and_reopens (test_storage.StorageTests.test_create_conflict_preserves_first_value_and_reopens) ... ok
+test_fixed_registry_is_conditional_and_factory_shares_root_and_budget (test_storage.StorageTests.test_fixed_registry_is_conditional_and_factory_shares_root_and_budget) ... ok
+test_object_fault_before_and_after_link_is_restart_safe (test_storage.StorageTests.test_object_fault_before_and_after_link_is_restart_safe) ... ok
+test_reopening_lease_client_preserves_existing_sentinel_journal (test_storage.StorageTests.test_reopening_lease_client_preserves_existing_sentinel_journal) ... ok
+test_scan_reads_all_pages_and_filters_detached_values (test_storage.StorageTests.test_scan_reads_all_pages_and_filters_detached_values) ... ok
+test_shared_finite_lease_expiry_renewal_and_stale_handles (test_storage.StorageTests.test_shared_finite_lease_expiry_renewal_and_stale_handles) ... ok
+test_stage_promote_verified_bytes_before_raw_reference (test_storage.StorageTests.test_stage_promote_verified_bytes_before_raw_reference) ... ok
+test_stale_cas_and_missing_rows_cannot_replace (test_storage.StorageTests.test_stale_cas_and_missing_rows_cannot_replace) ... ok
+test_symlink_object_collision_cannot_follow_a_leaf_link (test_storage.StorageTests.test_symlink_object_collision_cannot_follow_a_leaf_link) ... ok
+test_unsafe_paths_and_symlinks_cannot_escape_object_root (test_storage.StorageTests.test_unsafe_paths_and_symlinks_cannot_escape_object_root) ... ok
+test_write_once_same_bytes_are_idempotent_different_bytes_are_corruption (test_storage.StorageTests.test_write_once_same_bytes_are_idempotent_different_bytes_are_corruption) ... ok
+test_attempt_rows_use_only_attempts_table (test_azure_contracts.AzureContractTests.test_attempt_rows_use_only_attempts_table) ... ok
+test_blob_collision_verifies_equal_content_and_preserves_different_content (test_azure_contracts.AzureContractTests.test_blob_collision_verifies_equal_content_and_preserves_different_content) ... ok
+test_blob_create_is_explicit_version_and_if_none_match (test_azure_contracts.AzureContractTests.test_blob_create_is_explicit_version_and_if_none_match) ... ok
+test_blob_errors_do_not_retry_or_become_immutable_success (test_azure_contracts.AzureContractTests.test_blob_errors_do_not_retry_or_become_immutable_success) ... ok
+test_blob_stage_promote_uses_blob_create_without_dfs_rename (test_azure_contracts.AzureContractTests.test_blob_stage_promote_uses_blob_create_without_dfs_rename) ... ok
+test_factory_conditions_fixed_registry_before_authority_clients (test_azure_contracts.AzureContractTests.test_factory_conditions_fixed_registry_before_authority_clients) ... ERROR
+test_installed_pins_are_exact (test_azure_contracts.AzureContractTests.test_installed_pins_are_exact) ... ok
+test_lease_acquire_renew_and_release_use_service_id_and_pinned_version (test_azure_contracts.AzureContractTests.test_lease_acquire_renew_and_release_use_service_id_and_pinned_version) ... ok
+test_lease_conflict_loss_expiry_and_unbounded_clock_fail_closed (test_azure_contracts.AzureContractTests.test_lease_conflict_loss_expiry_and_unbounded_clock_fail_closed) ... ok
+test_lease_observation_rejects_clock_jump_nonfinite_and_excess_latency (test_azure_contracts.AzureContractTests.test_lease_observation_rejects_clock_jump_nonfinite_and_excess_latency) ... ok
+test_lease_owned_check_rewrites_same_journal_with_exact_etag_and_actual_id (test_azure_contracts.AzureContractTests.test_lease_owned_check_rewrites_same_journal_with_exact_etag_and_actual_id) ... ok
+test_table_create_conflict_stale_replace_and_not_found_map_exactly (test_azure_contracts.AzureContractTests.test_table_create_conflict_stale_replace_and_not_found_map_exactly) ... ok
+test_table_get_uses_raw_header_never_timestamp_fabricated_etag (test_azure_contracts.AzureContractTests.test_table_get_uses_raw_header_never_timestamp_fabricated_etag) ... ok
+test_table_insert_is_atomic_create_and_returns_actual_write_etag (test_azure_contracts.AzureContractTests.test_table_insert_is_atomic_create_and_returns_actual_write_etag) ... ok
+test_table_query_exhausts_continuations_including_empty_page (test_azure_contracts.AzureContractTests.test_table_query_exhausts_continuations_including_empty_page) ... ok
+test_table_query_missing_service_etag_and_unknown_errors_fail_closed (test_azure_contracts.AzureContractTests.test_table_query_missing_service_etag_and_unknown_errors_fail_closed) ... ok
+test_table_replace_uses_put_and_exact_opaque_if_match (test_azure_contracts.AzureContractTests.test_table_replace_uses_put_and_exact_opaque_if_match) ... ok
+test_content_descriptor_rejects_invalid_format_digest_length_and_noncanonical_envelope (test_azure_state_payloads.AzureStatePayloadTests.test_content_descriptor_rejects_invalid_format_digest_length_and_noncanonical_envelope) ... ok
+test_inline_rows_keep_original_payload_and_replace_both_formats (test_azure_state_payloads.AzureStatePayloadTests.test_inline_rows_keep_original_payload_and_replace_both_formats) ... ok
+test_intended_history_registration_round_trips_and_replaces_with_whole_record_cas (test_azure_state_payloads.AzureStatePayloadTests.test_intended_history_registration_round_trips_and_replaces_with_whole_record_cas) ... ok
+test_large_values_above_entity_limit_round_trip_without_splitting_table_updates (test_azure_state_payloads.AzureStatePayloadTests.test_large_values_above_entity_limit_round_trip_without_splitting_table_updates) ... ok
+test_missing_corrupt_and_wrong_identity_large_content_is_refused (test_azure_state_payloads.AzureStatePayloadTests.test_missing_corrupt_and_wrong_identity_large_content_is_refused) ... ok
+test_oversized_stable_identity_is_refused_before_any_storage_write (test_azure_state_payloads.AzureStatePayloadTests.test_oversized_stable_identity_is_refused_before_any_storage_write) ... ok
+test_partial_blob_never_publishes_table_and_failed_table_candidate_retries (test_azure_state_payloads.AzureStatePayloadTests.test_partial_blob_never_publishes_table_and_failed_table_candidate_retries) ... ok
+test_utf16_threshold_keeps_safe_inline_and_overflows_one_more_character (test_azure_state_payloads.AzureStatePayloadTests.test_utf16_threshold_keeps_safe_inline_and_overflows_one_more_character) ... ok
+
+======================================================================
+ERROR: test_factory_conditions_fixed_registry_before_authority_clients (test_azure_contracts.AzureContractTests.test_factory_conditions_fixed_registry_before_authority_clients)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/tests/test_azure_contracts.py", line 360, in test_factory_conditions_fixed_registry_before_authority_clients
+    self.assertEqual(state.active_client.table_name, "ActivePointers")
+                     ^^^^^
+NameError: name 'state' is not defined
+
+======================================================================
+FAIL: test_large_active_pointer_record_uses_verified_content_first_descriptor (test_etl_storage.EtlStorageTests.test_large_active_pointer_record_uses_verified_content_first_descriptor)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/tests/test_etl_storage.py", line 161, in test_large_active_pointer_record_uses_verified_content_first_descriptor
+    self.assertIn('/worksets/state/sha256=', writes[0].url)
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: '/worksets/state/sha256=' not found in 'https://secedgardevb8617.blob.core.windows.net/worksets/state/sha256%3D141263faac84ba40957edd369756206fb53e92765588f7a6eced09d136ea78ff.json'
+
+----------------------------------------------------------------------
+Ran 73 tests in 0.484s
+
+FAILED (failures=1, errors=1)

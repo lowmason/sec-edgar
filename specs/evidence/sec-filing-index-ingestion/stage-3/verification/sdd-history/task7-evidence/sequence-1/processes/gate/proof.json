@@ -1,0 +1,636 @@
+{
+  "candidates": [
+    {
+      "value": {
+        "candidate_ref": "worksets/sec/candidates/sha256=43f3fd8cf5557fa1fe296f122a8b04dce948c33e63f0899785d557118c4f400f/candidate.json",
+        "manifest": {
+          "added": 0,
+          "base_generation_id": "89994b519e1c9e7622b29c186de94fa7aa95b5fd086b2510e18ce96a4b0b1082",
+          "files": [
+            {
+              "byte_count": 3437,
+              "path": "curated/sec/filing_index/year=2026/quarter=4/generation=43f3fd8cf5557fa1fe296f122a8b04dce948c33e63f0899785d557118c4f400f/part-00000.parquet",
+              "role": "data",
+              "row_count": 1,
+              "sha256": "62c6ae9d1740f583b01659b995c007a7e18763c85b6373b4c0952236c278fee4"
+            },
+            {
+              "byte_count": 6844,
+              "path": "curated/sec/filing_index/year=2026/quarter=4/generation=43f3fd8cf5557fa1fe296f122a8b04dce948c33e63f0899785d557118c4f400f/changes.parquet",
+              "role": "changes",
+              "row_count": 1,
+              "sha256": "09dad7635a20e18b3f123ab3ded5ab626e890d49fe7fbad94a59ec484d906ae0"
+            }
+          ],
+          "format_version": "sec-generation-v1",
+          "gate": "awaiting_approval",
+          "generation_id": "43f3fd8cf5557fa1fe296f122a8b04dce948c33e63f0899785d557118c4f400f",
+          "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "membership_source": {
+            "distinct_key_count": 1,
+            "manifest_ref": "observations/sec/indexes/source=d64895140b037ef3df3e0c867437b555053c3a14c33d8c0c3526c9067354d0c7/sha256=6e9236b0ee13513e2a030e734572bcc350ec2fb442684c273765e323afea4b50/parser=fixture-index-parser-v1/schema=sec-index-v1/manifest.json",
+            "parser_version": "fixture-index-parser-v1",
+            "quarter_counts": {
+              "2026Q4": 1
+            },
+            "rows_bytes": 4211,
+            "rows_ref": "observations/sec/indexes/source=d64895140b037ef3df3e0c867437b555053c3a14c33d8c0c3526c9067354d0c7/sha256=6e9236b0ee13513e2a030e734572bcc350ec2fb442684c273765e323afea4b50/parser=fixture-index-parser-v1/schema=sec-index-v1/rows.parquet",
+            "rows_sha256": "f006017d688d5f6c0594e9f8a19ce5acb192c7b44edb7f5c928e13357a6bab90",
+            "schema_version": "sec-index-v1",
+            "snapshot": {
+              "byte_count": 228,
+              "envelope_version": "sec-quarterly-envelope-v1",
+              "raw_path": "raw/sec/indexes/kind=quarterly/period=2026Q4/sha256=6e9236b0ee13513e2a030e734572bcc350ec2fb442684c273765e323afea4b50/master.zip",
+              "received_at": "2026-10-06T00:00:00+00:00",
+              "representation": "zip",
+              "sha256": "6e9236b0ee13513e2a030e734572bcc350ec2fb442684c273765e323afea4b50",
+              "source_id": "d64895140b037ef3df3e0c867437b555053c3a14c33d8c0c3526c9067354d0c7",
+              "validators": {}
+            },
+            "source": {
+              "canonical_url": "https://www.sec.gov/Archives/edgar/full-index/2026/QTR4/master.zip",
+              "kind": "quarterly",
+              "period": "2026Q4",
+              "representation": "zip",
+              "source_id": "d64895140b037ef3df3e0c867437b555053c3a14c33d8c0c3526c9067354d0c7"
+            },
+            "source_row_count": 1
+          },
+          "parser_version": "fixture-index-parser-v1",
+          "provenance_refreshed": 1,
+          "quarter": "2026Q4",
+          "quarter_mode": "closed",
+          "retained_from_generation": null,
+          "row_count": 1,
+          "schema_version": "sec-index-v1",
+          "source_fingerprint": "afbdc35043d57b1bb79a83475dc6d63f8af7e707a1930d3e0d9c0fbc580d939d",
+          "sources": [
+            {
+              "distinct_key_count": 2,
+              "manifest_ref": "observations/sec/indexes/source=0a6a3b5899f59720e13ac68455ccce6375e2065fc210d9dda6f00c3be4371bf4/sha256=4daa79456be312191239fde7735242808a5439e916c779ec71f1e42274b09999/parser=fixture-index-parser-v1/schema=sec-index-v1/manifest.json",
+              "parser_version": "fixture-index-parser-v1",
+              "quarter_counts": {
+                "2026Q4": 2
+              },
+              "rows_bytes": 4304,
+              "rows_ref": "observations/sec/indexes/source=0a6a3b5899f59720e13ac68455ccce6375e2065fc210d9dda6f00c3be4371bf4/sha256=4daa79456be312191239fde7735242808a5439e916c779ec71f1e42274b09999/parser=fixture-index-parser-v1/schema=sec-index-v1/rows.parquet",
+              "rows_sha256": "7912f9e2e177802202efb9ed13b68ffc96167c7ce3b2a0684b664d2a3d5bf8d1",
+              "schema_version": "sec-index-v1",
+              "snapshot": {
+                "byte_count": 198,
+                "envelope_version": "sec-daily-envelope-v1",
+                "raw_path": "raw/sec/indexes/kind=daily/period=2026-10-02/sha256=4daa79456be312191239fde7735242808a5439e916c779ec71f1e42274b09999/master.idx",
+                "received_at": "2026-10-06T00:00:00+00:00",
+                "representation": "idx",
+                "sha256": "4daa79456be312191239fde7735242808a5439e916c779ec71f1e42274b09999",
+                "source_id": "0a6a3b5899f59720e13ac68455ccce6375e2065fc210d9dda6f00c3be4371bf4",
+                "validators": {}
+              },
+              "source": {
+                "canonical_url": "https://www.sec.gov/Archives/edgar/daily-index/2026/QTR4/master.20261002.idx",
+                "kind": "daily",
+                "period": "2026-10-02",
+                "representation": "idx",
+                "source_id": "0a6a3b5899f59720e13ac68455ccce6375e2065fc210d9dda6f00c3be4371bf4"
+              },
+              "source_row_count": 2
+            },
+            {
+              "distinct_key_count": 1,
+              "manifest_ref": "observations/sec/indexes/source=d64895140b037ef3df3e0c867437b555053c3a14c33d8c0c3526c9067354d0c7/sha256=6e9236b0ee13513e2a030e734572bcc350ec2fb442684c273765e323afea4b50/parser=fixture-index-parser-v1/schema=sec-index-v1/manifest.json",
+              "parser_version": "fixture-index-parser-v1",
+              "quarter_counts": {
+                "2026Q4": 1
+              },
+              "rows_bytes": 4211,
+              "rows_ref": "observations/sec/indexes/source=d64895140b037ef3df3e0c867437b555053c3a14c33d8c0c3526c9067354d0c7/sha256=6e9236b0ee13513e2a030e734572bcc350ec2fb442684c273765e323afea4b50/parser=fixture-index-parser-v1/schema=sec-index-v1/rows.parquet",
+              "rows_sha256": "f006017d688d5f6c0594e9f8a19ce5acb192c7b44edb7f5c928e13357a6bab90",
+              "schema_version": "sec-index-v1",
+              "snapshot": {
+                "byte_count": 228,
+                "envelope_version": "sec-quarterly-envelope-v1",
+                "raw_path": "raw/sec/indexes/kind=quarterly/period=2026Q4/sha256=6e9236b0ee13513e2a030e734572bcc350ec2fb442684c273765e323afea4b50/master.zip",
+                "received_at": "2026-10-06T00:00:00+00:00",
+                "representation": "zip",
+                "sha256": "6e9236b0ee13513e2a030e734572bcc350ec2fb442684c273765e323afea4b50",
+                "source_id": "d64895140b037ef3df3e0c867437b555053c3a14c33d8c0c3526c9067354d0c7",
+                "validators": {}
+              },
+              "source": {
+                "canonical_url": "https://www.sec.gov/Archives/edgar/full-index/2026/QTR4/master.zip",
+                "kind": "quarterly",
+                "period": "2026Q4",
+                "representation": "zip",
+                "source_id": "d64895140b037ef3df3e0c867437b555053c3a14c33d8c0c3526c9067354d0c7"
+              },
+              "source_row_count": 1
+            }
+          ],
+          "unresolved_absence": 0,
+          "updated": 0,
+          "withdrawn": 1
+        },
+        "manifest_bytes": 5563,
+        "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=43f3fd8cf5557fa1fe296f122a8b04dce948c33e63f0899785d557118c4f400f/manifest.json",
+        "manifest_sha256": "7b79da5d7ad172d3910981d60ef9f82ad398aad8ccee3bf4ae0ad217761adc72"
+      },
+      "version": "3b466558e66044a09fcddc0b92187118"
+    }
+  ],
+  "children": [
+    {
+      "events": [
+        {
+          "event": "candidate.after_data"
+        },
+        {
+          "event": "candidate.after_changes"
+        },
+        {
+          "event": "candidate.after_manifest"
+        },
+        {
+          "event": "candidate.after_validation"
+        },
+        {
+          "event": "publication.before_pointer"
+        },
+        {
+          "base": null,
+          "candidate": {
+            "generation_id": "89994b519e1c9e7622b29c186de94fa7aa95b5fd086b2510e18ce96a4b0b1082",
+            "manifest_bytes": 2622,
+            "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=89994b519e1c9e7622b29c186de94fa7aa95b5fd086b2510e18ce96a4b0b1082/manifest.json",
+            "manifest_sha256": "bc7dbb3affcecb7b6c11050e959280d99ca49b97979ed88cdc106bab299b66f9",
+            "quarter": "2026Q4",
+            "source_fingerprint": "28b8b10dbff3eba4e6b00ac790605f8fbf7d5e53e67ff658c340dd242f2dafdf"
+          },
+          "event": "cas",
+          "version": "2b8d783d87ab4d679fcfe7fee6c58ace"
+        },
+        {
+          "event": "publication.after_pointer"
+        },
+        {
+          "event": "publication.after_repair"
+        }
+      ],
+      "final": {
+        "capture": {
+          "generation_id": "89994b519e1c9e7622b29c186de94fa7aa95b5fd086b2510e18ce96a4b0b1082",
+          "manifest_bytes": 2622,
+          "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=89994b519e1c9e7622b29c186de94fa7aa95b5fd086b2510e18ce96a4b0b1082/manifest.json",
+          "manifest_sha256": "bc7dbb3affcecb7b6c11050e959280d99ca49b97979ed88cdc106bab299b66f9",
+          "quarter": "2026Q4"
+        },
+        "manifest": {
+          "added": 2,
+          "base_generation_id": null,
+          "files": [
+            {
+              "byte_count": 3509,
+              "path": "curated/sec/filing_index/year=2026/quarter=4/generation=89994b519e1c9e7622b29c186de94fa7aa95b5fd086b2510e18ce96a4b0b1082/part-00000.parquet",
+              "role": "data",
+              "row_count": 2,
+              "sha256": "8bdb5dafe3717e646557a60789a93812a8e621e2bd2740535d7b12b5d03e99e6"
+            },
+            {
+              "byte_count": 6716,
+              "path": "curated/sec/filing_index/year=2026/quarter=4/generation=89994b519e1c9e7622b29c186de94fa7aa95b5fd086b2510e18ce96a4b0b1082/changes.parquet",
+              "role": "changes",
+              "row_count": 2,
+              "sha256": "ea9dceb87a43558e2ab1837369d9a9be76445fac53a4274c3ddcc2e36a0ae20b"
+            }
+          ],
+          "format_version": "sec-generation-v1",
+          "gate": "clear",
+          "generation_id": "89994b519e1c9e7622b29c186de94fa7aa95b5fd086b2510e18ce96a4b0b1082",
+          "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "membership_source": null,
+          "parser_version": "fixture-index-parser-v1",
+          "provenance_refreshed": 0,
+          "quarter": "2026Q4",
+          "quarter_mode": "closed",
+          "retained_from_generation": null,
+          "row_count": 2,
+          "schema_version": "sec-index-v1",
+          "source_fingerprint": "28b8b10dbff3eba4e6b00ac790605f8fbf7d5e53e67ff658c340dd242f2dafdf",
+          "sources": [
+            {
+              "distinct_key_count": 2,
+              "manifest_ref": "observations/sec/indexes/source=0a6a3b5899f59720e13ac68455ccce6375e2065fc210d9dda6f00c3be4371bf4/sha256=4daa79456be312191239fde7735242808a5439e916c779ec71f1e42274b09999/parser=fixture-index-parser-v1/schema=sec-index-v1/manifest.json",
+              "parser_version": "fixture-index-parser-v1",
+              "quarter_counts": {
+                "2026Q4": 2
+              },
+              "rows_bytes": 4304,
+              "rows_ref": "observations/sec/indexes/source=0a6a3b5899f59720e13ac68455ccce6375e2065fc210d9dda6f00c3be4371bf4/sha256=4daa79456be312191239fde7735242808a5439e916c779ec71f1e42274b09999/parser=fixture-index-parser-v1/schema=sec-index-v1/rows.parquet",
+              "rows_sha256": "7912f9e2e177802202efb9ed13b68ffc96167c7ce3b2a0684b664d2a3d5bf8d1",
+              "schema_version": "sec-index-v1",
+              "snapshot": {
+                "byte_count": 198,
+                "envelope_version": "sec-daily-envelope-v1",
+                "raw_path": "raw/sec/indexes/kind=daily/period=2026-10-02/sha256=4daa79456be312191239fde7735242808a5439e916c779ec71f1e42274b09999/master.idx",
+                "received_at": "2026-10-06T00:00:00+00:00",
+                "representation": "idx",
+                "sha256": "4daa79456be312191239fde7735242808a5439e916c779ec71f1e42274b09999",
+                "source_id": "0a6a3b5899f59720e13ac68455ccce6375e2065fc210d9dda6f00c3be4371bf4",
+                "validators": {}
+              },
+              "source": {
+                "canonical_url": "https://www.sec.gov/Archives/edgar/daily-index/2026/QTR4/master.20261002.idx",
+                "kind": "daily",
+                "period": "2026-10-02",
+                "representation": "idx",
+                "source_id": "0a6a3b5899f59720e13ac68455ccce6375e2065fc210d9dda6f00c3be4371bf4"
+              },
+              "source_row_count": 2
+            }
+          ],
+          "unresolved_absence": 0,
+          "updated": 0,
+          "withdrawn": 0
+        },
+        "rows": [
+          {
+            "accession_number": "0000123456-26-000001",
+            "archive_path": "edgar/data/123456/0000123456-26-000001.txt",
+            "cik": "0000123456",
+            "company_name": "Example",
+            "filing_date": "2026-10-01",
+            "form_type": "10-K",
+            "parser_version": "fixture-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "0a6a3b5899f59720e13ac68455ccce6375e2065fc210d9dda6f00c3be4371bf4",
+            "source_sha256": "4daa79456be312191239fde7735242808a5439e916c779ec71f1e42274b09999"
+          },
+          {
+            "accession_number": "0000123456-26-000002",
+            "archive_path": "edgar/data/123456/0000123456-26-000002.txt",
+            "cik": "0000123456",
+            "company_name": "Example",
+            "filing_date": "2026-10-01",
+            "form_type": "10-K",
+            "parser_version": "fixture-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "0a6a3b5899f59720e13ac68455ccce6375e2065fc210d9dda6f00c3be4371bf4",
+            "source_sha256": "4daa79456be312191239fde7735242808a5439e916c779ec71f1e42274b09999"
+          }
+        ]
+      },
+      "pid": 17421,
+      "result": {
+        "candidate_ref": null,
+        "conflicts": 0,
+        "generation_id": "89994b519e1c9e7622b29c186de94fa7aa95b5fd086b2510e18ce96a4b0b1082",
+        "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=89994b519e1c9e7622b29c186de94fa7aa95b5fd086b2510e18ce96a4b0b1082/manifest.json",
+        "outcome": "published",
+        "quarter": "2026Q4"
+      }
+    },
+    {
+      "events": [
+        {
+          "event": "candidate.after_data"
+        },
+        {
+          "event": "candidate.after_changes"
+        },
+        {
+          "event": "candidate.after_manifest"
+        },
+        {
+          "event": "candidate.after_validation"
+        },
+        {
+          "event": "publication.before_pointer"
+        },
+        {
+          "base": null,
+          "candidate": {
+            "generation_id": "12da95cbeec69fc6544656591e55887bc71055d996d72804f5813e2a0ec02d7a",
+            "manifest_bytes": 4047,
+            "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=12da95cbeec69fc6544656591e55887bc71055d996d72804f5813e2a0ec02d7a/manifest.json",
+            "manifest_sha256": "5e743343d210d0b058d54e8ff013afa8d1f38385b7e0669f5c9d6c5cfe228f52",
+            "quarter": "2026Q4",
+            "source_fingerprint": "f3ccb8ea5988aefd3eceab4cad8b2262b3191c736a5f5f5a0b73ef3156fb2188"
+          },
+          "event": "cas",
+          "exception": "AlreadyExists"
+        },
+        {
+          "event": "publication.cas_lost"
+        },
+        {
+          "event": "candidate.after_data"
+        },
+        {
+          "event": "candidate.after_changes"
+        },
+        {
+          "event": "candidate.after_manifest"
+        },
+        {
+          "event": "candidate.after_validation"
+        }
+      ],
+      "final": {
+        "capture": {
+          "generation_id": "89994b519e1c9e7622b29c186de94fa7aa95b5fd086b2510e18ce96a4b0b1082",
+          "manifest_bytes": 2622,
+          "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=89994b519e1c9e7622b29c186de94fa7aa95b5fd086b2510e18ce96a4b0b1082/manifest.json",
+          "manifest_sha256": "bc7dbb3affcecb7b6c11050e959280d99ca49b97979ed88cdc106bab299b66f9",
+          "quarter": "2026Q4"
+        },
+        "manifest": {
+          "added": 2,
+          "base_generation_id": null,
+          "files": [
+            {
+              "byte_count": 3509,
+              "path": "curated/sec/filing_index/year=2026/quarter=4/generation=89994b519e1c9e7622b29c186de94fa7aa95b5fd086b2510e18ce96a4b0b1082/part-00000.parquet",
+              "role": "data",
+              "row_count": 2,
+              "sha256": "8bdb5dafe3717e646557a60789a93812a8e621e2bd2740535d7b12b5d03e99e6"
+            },
+            {
+              "byte_count": 6716,
+              "path": "curated/sec/filing_index/year=2026/quarter=4/generation=89994b519e1c9e7622b29c186de94fa7aa95b5fd086b2510e18ce96a4b0b1082/changes.parquet",
+              "role": "changes",
+              "row_count": 2,
+              "sha256": "ea9dceb87a43558e2ab1837369d9a9be76445fac53a4274c3ddcc2e36a0ae20b"
+            }
+          ],
+          "format_version": "sec-generation-v1",
+          "gate": "clear",
+          "generation_id": "89994b519e1c9e7622b29c186de94fa7aa95b5fd086b2510e18ce96a4b0b1082",
+          "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "membership_source": null,
+          "parser_version": "fixture-index-parser-v1",
+          "provenance_refreshed": 0,
+          "quarter": "2026Q4",
+          "quarter_mode": "closed",
+          "retained_from_generation": null,
+          "row_count": 2,
+          "schema_version": "sec-index-v1",
+          "source_fingerprint": "28b8b10dbff3eba4e6b00ac790605f8fbf7d5e53e67ff658c340dd242f2dafdf",
+          "sources": [
+            {
+              "distinct_key_count": 2,
+              "manifest_ref": "observations/sec/indexes/source=0a6a3b5899f59720e13ac68455ccce6375e2065fc210d9dda6f00c3be4371bf4/sha256=4daa79456be312191239fde7735242808a5439e916c779ec71f1e42274b09999/parser=fixture-index-parser-v1/schema=sec-index-v1/manifest.json",
+              "parser_version": "fixture-index-parser-v1",
+              "quarter_counts": {
+                "2026Q4": 2
+              },
+              "rows_bytes": 4304,
+              "rows_ref": "observations/sec/indexes/source=0a6a3b5899f59720e13ac68455ccce6375e2065fc210d9dda6f00c3be4371bf4/sha256=4daa79456be312191239fde7735242808a5439e916c779ec71f1e42274b09999/parser=fixture-index-parser-v1/schema=sec-index-v1/rows.parquet",
+              "rows_sha256": "7912f9e2e177802202efb9ed13b68ffc96167c7ce3b2a0684b664d2a3d5bf8d1",
+              "schema_version": "sec-index-v1",
+              "snapshot": {
+                "byte_count": 198,
+                "envelope_version": "sec-daily-envelope-v1",
+                "raw_path": "raw/sec/indexes/kind=daily/period=2026-10-02/sha256=4daa79456be312191239fde7735242808a5439e916c779ec71f1e42274b09999/master.idx",
+                "received_at": "2026-10-06T00:00:00+00:00",
+                "representation": "idx",
+                "sha256": "4daa79456be312191239fde7735242808a5439e916c779ec71f1e42274b09999",
+                "source_id": "0a6a3b5899f59720e13ac68455ccce6375e2065fc210d9dda6f00c3be4371bf4",
+                "validators": {}
+              },
+              "source": {
+                "canonical_url": "https://www.sec.gov/Archives/edgar/daily-index/2026/QTR4/master.20261002.idx",
+                "kind": "daily",
+                "period": "2026-10-02",
+                "representation": "idx",
+                "source_id": "0a6a3b5899f59720e13ac68455ccce6375e2065fc210d9dda6f00c3be4371bf4"
+              },
+              "source_row_count": 2
+            }
+          ],
+          "unresolved_absence": 0,
+          "updated": 0,
+          "withdrawn": 0
+        },
+        "rows": [
+          {
+            "accession_number": "0000123456-26-000001",
+            "archive_path": "edgar/data/123456/0000123456-26-000001.txt",
+            "cik": "0000123456",
+            "company_name": "Example",
+            "filing_date": "2026-10-01",
+            "form_type": "10-K",
+            "parser_version": "fixture-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "0a6a3b5899f59720e13ac68455ccce6375e2065fc210d9dda6f00c3be4371bf4",
+            "source_sha256": "4daa79456be312191239fde7735242808a5439e916c779ec71f1e42274b09999"
+          },
+          {
+            "accession_number": "0000123456-26-000002",
+            "archive_path": "edgar/data/123456/0000123456-26-000002.txt",
+            "cik": "0000123456",
+            "company_name": "Example",
+            "filing_date": "2026-10-01",
+            "form_type": "10-K",
+            "parser_version": "fixture-index-parser-v1",
+            "schema_version": "sec-index-v1",
+            "source_id": "0a6a3b5899f59720e13ac68455ccce6375e2065fc210d9dda6f00c3be4371bf4",
+            "source_sha256": "4daa79456be312191239fde7735242808a5439e916c779ec71f1e42274b09999"
+          }
+        ]
+      },
+      "pid": 17422,
+      "result": {
+        "candidate_ref": "worksets/sec/candidates/sha256=43f3fd8cf5557fa1fe296f122a8b04dce948c33e63f0899785d557118c4f400f/candidate.json",
+        "conflicts": 1,
+        "generation_id": null,
+        "manifest_ref": null,
+        "outcome": "awaiting_approval",
+        "quarter": "2026Q4"
+      }
+    }
+  ],
+  "exits": [
+    0,
+    0
+  ],
+  "final": {
+    "capture": {
+      "generation_id": "89994b519e1c9e7622b29c186de94fa7aa95b5fd086b2510e18ce96a4b0b1082",
+      "manifest_bytes": 2622,
+      "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=89994b519e1c9e7622b29c186de94fa7aa95b5fd086b2510e18ce96a4b0b1082/manifest.json",
+      "manifest_sha256": "bc7dbb3affcecb7b6c11050e959280d99ca49b97979ed88cdc106bab299b66f9",
+      "quarter": "2026Q4"
+    },
+    "manifest": {
+      "added": 2,
+      "base_generation_id": null,
+      "files": [
+        {
+          "byte_count": 3509,
+          "path": "curated/sec/filing_index/year=2026/quarter=4/generation=89994b519e1c9e7622b29c186de94fa7aa95b5fd086b2510e18ce96a4b0b1082/part-00000.parquet",
+          "role": "data",
+          "row_count": 2,
+          "sha256": "8bdb5dafe3717e646557a60789a93812a8e621e2bd2740535d7b12b5d03e99e6"
+        },
+        {
+          "byte_count": 6716,
+          "path": "curated/sec/filing_index/year=2026/quarter=4/generation=89994b519e1c9e7622b29c186de94fa7aa95b5fd086b2510e18ce96a4b0b1082/changes.parquet",
+          "role": "changes",
+          "row_count": 2,
+          "sha256": "ea9dceb87a43558e2ab1837369d9a9be76445fac53a4274c3ddcc2e36a0ae20b"
+        }
+      ],
+      "format_version": "sec-generation-v1",
+      "gate": "clear",
+      "generation_id": "89994b519e1c9e7622b29c186de94fa7aa95b5fd086b2510e18ce96a4b0b1082",
+      "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "membership_source": null,
+      "parser_version": "fixture-index-parser-v1",
+      "provenance_refreshed": 0,
+      "quarter": "2026Q4",
+      "quarter_mode": "closed",
+      "retained_from_generation": null,
+      "row_count": 2,
+      "schema_version": "sec-index-v1",
+      "source_fingerprint": "28b8b10dbff3eba4e6b00ac790605f8fbf7d5e53e67ff658c340dd242f2dafdf",
+      "sources": [
+        {
+          "distinct_key_count": 2,
+          "manifest_ref": "observations/sec/indexes/source=0a6a3b5899f59720e13ac68455ccce6375e2065fc210d9dda6f00c3be4371bf4/sha256=4daa79456be312191239fde7735242808a5439e916c779ec71f1e42274b09999/parser=fixture-index-parser-v1/schema=sec-index-v1/manifest.json",
+          "parser_version": "fixture-index-parser-v1",
+          "quarter_counts": {
+            "2026Q4": 2
+          },
+          "rows_bytes": 4304,
+          "rows_ref": "observations/sec/indexes/source=0a6a3b5899f59720e13ac68455ccce6375e2065fc210d9dda6f00c3be4371bf4/sha256=4daa79456be312191239fde7735242808a5439e916c779ec71f1e42274b09999/parser=fixture-index-parser-v1/schema=sec-index-v1/rows.parquet",
+          "rows_sha256": "7912f9e2e177802202efb9ed13b68ffc96167c7ce3b2a0684b664d2a3d5bf8d1",
+          "schema_version": "sec-index-v1",
+          "snapshot": {
+            "byte_count": 198,
+            "envelope_version": "sec-daily-envelope-v1",
+            "raw_path": "raw/sec/indexes/kind=daily/period=2026-10-02/sha256=4daa79456be312191239fde7735242808a5439e916c779ec71f1e42274b09999/master.idx",
+            "received_at": "2026-10-06T00:00:00+00:00",
+            "representation": "idx",
+            "sha256": "4daa79456be312191239fde7735242808a5439e916c779ec71f1e42274b09999",
+            "source_id": "0a6a3b5899f59720e13ac68455ccce6375e2065fc210d9dda6f00c3be4371bf4",
+            "validators": {}
+          },
+          "source": {
+            "canonical_url": "https://www.sec.gov/Archives/edgar/daily-index/2026/QTR4/master.20261002.idx",
+            "kind": "daily",
+            "period": "2026-10-02",
+            "representation": "idx",
+            "source_id": "0a6a3b5899f59720e13ac68455ccce6375e2065fc210d9dda6f00c3be4371bf4"
+          },
+          "source_row_count": 2
+        }
+      ],
+      "unresolved_absence": 0,
+      "updated": 0,
+      "withdrawn": 0
+    },
+    "rows": [
+      {
+        "accession_number": "0000123456-26-000001",
+        "archive_path": "edgar/data/123456/0000123456-26-000001.txt",
+        "cik": "0000123456",
+        "company_name": "Example",
+        "filing_date": "2026-10-01",
+        "form_type": "10-K",
+        "parser_version": "fixture-index-parser-v1",
+        "schema_version": "sec-index-v1",
+        "source_id": "0a6a3b5899f59720e13ac68455ccce6375e2065fc210d9dda6f00c3be4371bf4",
+        "source_sha256": "4daa79456be312191239fde7735242808a5439e916c779ec71f1e42274b09999"
+      },
+      {
+        "accession_number": "0000123456-26-000002",
+        "archive_path": "edgar/data/123456/0000123456-26-000002.txt",
+        "cik": "0000123456",
+        "company_name": "Example",
+        "filing_date": "2026-10-01",
+        "form_type": "10-K",
+        "parser_version": "fixture-index-parser-v1",
+        "schema_version": "sec-index-v1",
+        "source_id": "0a6a3b5899f59720e13ac68455ccce6375e2065fc210d9dda6f00c3be4371bf4",
+        "source_sha256": "4daa79456be312191239fde7735242808a5439e916c779ec71f1e42274b09999"
+      }
+    ]
+  },
+  "retained_files": {
+    "curated/sec/filing_index/year=2026/quarter=4/generation=12da95cbeec69fc6544656591e55887bc71055d996d72804f5813e2a0ec02d7a/changes.parquet": {
+      "bytes": 6610,
+      "sha256": "67be77819f137e3916487b98aef2a303f6ffe9af6a6ecabc95eac194bf772432"
+    },
+    "curated/sec/filing_index/year=2026/quarter=4/generation=12da95cbeec69fc6544656591e55887bc71055d996d72804f5813e2a0ec02d7a/manifest.json": {
+      "bytes": 4047,
+      "sha256": "5e743343d210d0b058d54e8ff013afa8d1f38385b7e0669f5c9d6c5cfe228f52"
+    },
+    "curated/sec/filing_index/year=2026/quarter=4/generation=12da95cbeec69fc6544656591e55887bc71055d996d72804f5813e2a0ec02d7a/part-00000.parquet": {
+      "bytes": 3437,
+      "sha256": "62c6ae9d1740f583b01659b995c007a7e18763c85b6373b4c0952236c278fee4"
+    },
+    "curated/sec/filing_index/year=2026/quarter=4/generation=43f3fd8cf5557fa1fe296f122a8b04dce948c33e63f0899785d557118c4f400f/changes.parquet": {
+      "bytes": 6844,
+      "sha256": "09dad7635a20e18b3f123ab3ded5ab626e890d49fe7fbad94a59ec484d906ae0"
+    },
+    "curated/sec/filing_index/year=2026/quarter=4/generation=43f3fd8cf5557fa1fe296f122a8b04dce948c33e63f0899785d557118c4f400f/manifest.json": {
+      "bytes": 5563,
+      "sha256": "7b79da5d7ad172d3910981d60ef9f82ad398aad8ccee3bf4ae0ad217761adc72"
+    },
+    "curated/sec/filing_index/year=2026/quarter=4/generation=43f3fd8cf5557fa1fe296f122a8b04dce948c33e63f0899785d557118c4f400f/part-00000.parquet": {
+      "bytes": 3437,
+      "sha256": "62c6ae9d1740f583b01659b995c007a7e18763c85b6373b4c0952236c278fee4"
+    },
+    "curated/sec/filing_index/year=2026/quarter=4/generation=43f3fd8cf5557fa1fe296f122a8b04dce948c33e63f0899785d557118c4f400f/retained-base.json": {
+      "bytes": 362,
+      "sha256": "3dd4757ac8b7cf043fe17acfb83f6b3918d11ea05a58361b002d129377cc74ac"
+    },
+    "curated/sec/filing_index/year=2026/quarter=4/generation=89994b519e1c9e7622b29c186de94fa7aa95b5fd086b2510e18ce96a4b0b1082/changes.parquet": {
+      "bytes": 6716,
+      "sha256": "ea9dceb87a43558e2ab1837369d9a9be76445fac53a4274c3ddcc2e36a0ae20b"
+    },
+    "curated/sec/filing_index/year=2026/quarter=4/generation=89994b519e1c9e7622b29c186de94fa7aa95b5fd086b2510e18ce96a4b0b1082/manifest.json": {
+      "bytes": 2622,
+      "sha256": "bc7dbb3affcecb7b6c11050e959280d99ca49b97979ed88cdc106bab299b66f9"
+    },
+    "curated/sec/filing_index/year=2026/quarter=4/generation=89994b519e1c9e7622b29c186de94fa7aa95b5fd086b2510e18ce96a4b0b1082/part-00000.parquet": {
+      "bytes": 3509,
+      "sha256": "8bdb5dafe3717e646557a60789a93812a8e621e2bd2740535d7b12b5d03e99e6"
+    },
+    "locks/sec-owner-lowell-mason/binding.json": {
+      "bytes": 985,
+      "sha256": "ab615f9b1bdeb181f023fc53adfd9f6f95651b34b00a26b63ed2ab1d5483fc43"
+    },
+    "locks/sec-owner-lowell-mason/sentinel.json": {
+      "bytes": 2,
+      "sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+    },
+    "observations/sec/indexes/source=0a6a3b5899f59720e13ac68455ccce6375e2065fc210d9dda6f00c3be4371bf4/sha256=4daa79456be312191239fde7735242808a5439e916c779ec71f1e42274b09999/parser=fixture-index-parser-v1/schema=sec-index-v1/manifest.json": {
+      "bytes": 1584,
+      "sha256": "e2ed83348a1228bfaa65c6bd7893c4a355d6b3f4a3afd0440aa7c5520b23a430"
+    },
+    "observations/sec/indexes/source=0a6a3b5899f59720e13ac68455ccce6375e2065fc210d9dda6f00c3be4371bf4/sha256=4daa79456be312191239fde7735242808a5439e916c779ec71f1e42274b09999/parser=fixture-index-parser-v1/schema=sec-index-v1/rows.parquet": {
+      "bytes": 4304,
+      "sha256": "7912f9e2e177802202efb9ed13b68ffc96167c7ce3b2a0684b664d2a3d5bf8d1"
+    },
+    "observations/sec/indexes/source=d64895140b037ef3df3e0c867437b555053c3a14c33d8c0c3526c9067354d0c7/sha256=6e9236b0ee13513e2a030e734572bcc350ec2fb442684c273765e323afea4b50/parser=fixture-index-parser-v1/schema=sec-index-v1/manifest.json": {
+      "bytes": 1578,
+      "sha256": "727ef7a9f1db891514d4638ac7bab1fd8ec155d740a3d6f35d8d118988e05f31"
+    },
+    "observations/sec/indexes/source=d64895140b037ef3df3e0c867437b555053c3a14c33d8c0c3526c9067354d0c7/sha256=6e9236b0ee13513e2a030e734572bcc350ec2fb442684c273765e323afea4b50/parser=fixture-index-parser-v1/schema=sec-index-v1/rows.parquet": {
+      "bytes": 4211,
+      "sha256": "f006017d688d5f6c0594e9f8a19ce5acb192c7b44edb7f5c928e13357a6bab90"
+    },
+    "raw/sec/indexes/kind=daily/period=2026-10-02/sha256=4daa79456be312191239fde7735242808a5439e916c779ec71f1e42274b09999/master.idx": {
+      "bytes": 198,
+      "sha256": "4daa79456be312191239fde7735242808a5439e916c779ec71f1e42274b09999"
+    },
+    "raw/sec/indexes/kind=quarterly/period=2026Q4/sha256=6e9236b0ee13513e2a030e734572bcc350ec2fb442684c273765e323afea4b50/master.zip": {
+      "bytes": 228,
+      "sha256": "6e9236b0ee13513e2a030e734572bcc350ec2fb442684c273765e323afea4b50"
+    },
+    "worksets/sec/candidates/sha256=43f3fd8cf5557fa1fe296f122a8b04dce948c33e63f0899785d557118c4f400f/candidate.json": {
+      "bytes": 694,
+      "sha256": "b152a856abb2338c72b14fe483b40393a7b07d4377d59d6f380baf42614739b8"
+    }
+  }
+}

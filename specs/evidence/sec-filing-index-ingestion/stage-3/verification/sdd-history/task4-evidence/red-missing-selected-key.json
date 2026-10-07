@@ -1,0 +1,21 @@
+{
+  "argv": [
+    "uv",
+    "run",
+    "--offline",
+    "python",
+    "packages/sec-edgar-ingest/tests/network_guard.py",
+    "discover",
+    "-s",
+    "packages/sec-edgar-ingest/tests",
+    "-p",
+    "test_etl_catalog.py",
+    "-k",
+    "consistent_hashes",
+    "-v"
+  ],
+  "cwd": "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar",
+  "exit": 1,
+  "stdout": "",
+  "stderr": "test_consistent_hashes_and_counts_cannot_hide_a_missing_selected_key (test_etl_catalog.EtlCatalogTests.test_consistent_hashes_and_counts_cannot_hide_a_missing_selected_key) ... FAIL\n\n======================================================================\nFAIL: test_consistent_hashes_and_counts_cannot_hide_a_missing_selected_key (test_etl_catalog.EtlCatalogTests.test_consistent_hashes_and_counts_cannot_hide_a_missing_selected_key)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/tests/test_etl_catalog.py\", line 425, in test_consistent_hashes_and_counts_cannot_hide_a_missing_selected_key\n    with self.assertRaisesRegex(ValueError, 'missing selected'):\n         ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: ValueError not raised\n\n----------------------------------------------------------------------\nRan 1 test in 0.077s\n\nFAILED (failures=1)\n"
+}

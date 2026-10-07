@@ -1,0 +1,106 @@
+test_binding_mismatch_and_source_workset_mismatch_reject_input (test_etl_transform.EtlTransformTests.test_binding_mismatch_and_source_workset_mismatch_reject_input) ... ok
+test_conflicting_last_duplicate_after_full_batch_quarantines_source (test_etl_transform.EtlTransformTests.test_conflicting_last_duplicate_after_full_batch_quarantines_source) ... ok
+test_corrupt_raw_and_accepted_data_fail_closed (test_etl_transform.EtlTransformTests.test_corrupt_raw_and_accepted_data_fail_closed) ... FAIL
+test_duplicates_and_cross_quarter_counts_are_retained (test_etl_transform.EtlTransformTests.test_duplicates_and_cross_quarter_counts_are_retained) ... FAIL
+test_force_reparses_and_verifies_immutable_output (test_etl_transform.EtlTransformTests.test_force_reparses_and_verifies_immutable_output) ... FAIL
+test_interrupt_each_durability_boundary_and_repair (test_etl_transform.EtlTransformTests.test_interrupt_each_durability_boundary_and_repair) ... 
+  test_interrupt_each_durability_boundary_and_repair (test_etl_transform.EtlTransformTests.test_interrupt_each_durability_boundary_and_repair) (point='transform.after_rows') ... FAIL
+  test_interrupt_each_durability_boundary_and_repair (test_etl_transform.EtlTransformTests.test_interrupt_each_durability_boundary_and_repair) (point='transform.after_manifest') ... FAIL
+  test_interrupt_each_durability_boundary_and_repair (test_etl_transform.EtlTransformTests.test_interrupt_each_durability_boundary_and_repair) (point='transform.after_processing') ... FAIL
+  test_interrupt_each_durability_boundary_and_repair (test_etl_transform.EtlTransformTests.test_interrupt_each_durability_boundary_and_repair) (point='transform.after_workset') ... FAIL
+test_malformed_and_invalid_envelope_sources_never_accept (test_etl_transform.EtlTransformTests.test_malformed_and_invalid_envelope_sources_never_accept) ... ok
+test_no_transport_constructors (test_etl_transform.EtlTransformTests.test_no_transport_constructors) ... FAIL
+test_parser_replay_keeps_raw_origin_and_changes_processing_identity (test_etl_transform.EtlTransformTests.test_parser_replay_keeps_raw_origin_and_changes_processing_identity) ... FAIL
+test_daily_date_chooses_older_output_quarter (test_etl_parser.EtlParserTests.test_daily_date_chooses_older_output_quarter) ... ok
+test_cik_dates_paths_and_originals (test_etl_parser.StrictParserTests.test_cik_dates_paths_and_originals) ... ok
+test_field_refusal_matrix (test_etl_parser.StrictParserTests.test_field_refusal_matrix) ... ok
+test_final_newline_families_and_duplicates (test_etl_parser.StrictParserTests.test_final_newline_families_and_duplicates) ... ok
+test_independent_goldens_and_manifest (test_etl_parser.StrictParserTests.test_independent_goldens_and_manifest) ... ok
+test_stream_refusal_matrix (test_etl_parser.StrictParserTests.test_stream_refusal_matrix) ... ok
+test_version_registration_and_preopen_refusal (test_etl_parser.StrictParserTests.test_version_registration_and_preopen_refusal) ... ok
+
+======================================================================
+FAIL: test_corrupt_raw_and_accepted_data_fail_closed (test_etl_transform.EtlTransformTests.test_corrupt_raw_and_accepted_data_fail_closed)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/tests/test_etl_transform.py", line 74, in test_corrupt_raw_and_accepted_data_fail_closed
+    self.assertTrue(first.complete)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+AssertionError: False is not true
+
+======================================================================
+FAIL: test_duplicates_and_cross_quarter_counts_are_retained (test_etl_transform.EtlTransformTests.test_duplicates_and_cross_quarter_counts_are_retained)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/tests/test_etl_transform.py", line 54, in test_duplicates_and_cross_quarter_counts_are_retained
+    self.assertTrue(result.complete, result.failures)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : (Error(code='transform_failed', message='observation Parquet schema differs', retryable=False, source_id='5c53a492fdd84a636310a1319c1217b7d107d8be5f3c2ec7c64efd70baf244ec', details=FrozenMapping(_items=mappingproxy({'line_number': None, 'reason': 'observation Parquet schema differs', 'raw_sha256': 'bff640a6a79b4163514d8f9dbcb1ca42ba8e4d1e42740ee0caf85c6fbefb3873', 'parser_version': 'fixture-index-parser-v1', 'schema_version': 'sec-index-v1'}))),)
+
+======================================================================
+FAIL: test_force_reparses_and_verifies_immutable_output (test_etl_transform.EtlTransformTests.test_force_reparses_and_verifies_immutable_output)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/tests/test_etl_transform.py", line 94, in test_force_reparses_and_verifies_immutable_output
+    self.assertTrue(forced.complete, forced.failures)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : (Error(code='transform_failed', message='observation Parquet schema differs', retryable=False, source_id='5c53a492fdd84a636310a1319c1217b7d107d8be5f3c2ec7c64efd70baf244ec', details=FrozenMapping(_items=mappingproxy({'line_number': None, 'reason': 'observation Parquet schema differs', 'raw_sha256': '322ce1308160bc5572ea72dc2c53ce17ad3862d0fc04ea9a98bdc288ff8bf543', 'parser_version': 'fixture-index-parser-v1', 'schema_version': 'sec-index-v1'}))),)
+
+======================================================================
+FAIL: test_interrupt_each_durability_boundary_and_repair (test_etl_transform.EtlTransformTests.test_interrupt_each_durability_boundary_and_repair) (point='transform.after_rows')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/tests/test_etl_transform.py", line 107, in test_interrupt_each_durability_boundary_and_repair
+    with self.assertRaises(Crash):
+         ~~~~~~~~~~~~~~~~~^^^^^^^
+AssertionError: Crash not raised
+
+======================================================================
+FAIL: test_interrupt_each_durability_boundary_and_repair (test_etl_transform.EtlTransformTests.test_interrupt_each_durability_boundary_and_repair) (point='transform.after_manifest')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/tests/test_etl_transform.py", line 107, in test_interrupt_each_durability_boundary_and_repair
+    with self.assertRaises(Crash):
+         ~~~~~~~~~~~~~~~~~^^^^^^^
+AssertionError: Crash not raised
+
+======================================================================
+FAIL: test_interrupt_each_durability_boundary_and_repair (test_etl_transform.EtlTransformTests.test_interrupt_each_durability_boundary_and_repair) (point='transform.after_processing')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/tests/test_etl_transform.py", line 107, in test_interrupt_each_durability_boundary_and_repair
+    with self.assertRaises(Crash):
+         ~~~~~~~~~~~~~~~~~^^^^^^^
+AssertionError: Crash not raised
+
+======================================================================
+FAIL: test_interrupt_each_durability_boundary_and_repair (test_etl_transform.EtlTransformTests.test_interrupt_each_durability_boundary_and_repair) (point='transform.after_workset')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/tests/test_etl_transform.py", line 110, in test_interrupt_each_durability_boundary_and_repair
+    self.assertTrue(result.complete, result.failures)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : (Error(code='transform_failed', message='observation Parquet schema differs', retryable=False, source_id='5c53a492fdd84a636310a1319c1217b7d107d8be5f3c2ec7c64efd70baf244ec', details=FrozenMapping(_items=mappingproxy({'line_number': None, 'reason': 'observation Parquet schema differs', 'raw_sha256': '322ce1308160bc5572ea72dc2c53ce17ad3862d0fc04ea9a98bdc288ff8bf543', 'parser_version': 'fixture-index-parser-v1', 'schema_version': 'sec-index-v1'}))),)
+
+======================================================================
+FAIL: test_no_transport_constructors (test_etl_transform.EtlTransformTests.test_no_transport_constructors)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/tests/test_etl_transform.py", line 118, in test_no_transport_constructors
+    self.assertTrue(self.transform().complete)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true
+
+======================================================================
+FAIL: test_parser_replay_keeps_raw_origin_and_changes_processing_identity (test_etl_transform.EtlTransformTests.test_parser_replay_keeps_raw_origin_and_changes_processing_identity)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/tests/test_etl_transform.py", line 43, in test_parser_replay_keeps_raw_origin_and_changes_processing_identity
+    self.assertTrue(first.complete and second.complete)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true
+
+----------------------------------------------------------------------
+Ran 16 tests in 1.466s
+
+FAILED (failures=9)

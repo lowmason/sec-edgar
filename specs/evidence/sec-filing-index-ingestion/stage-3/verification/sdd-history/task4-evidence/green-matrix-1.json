@@ -1,0 +1,19 @@
+{
+  "argv": [
+    "uv",
+    "run",
+    "--offline",
+    "python",
+    "packages/sec-edgar-ingest/tests/network_guard.py",
+    "discover",
+    "-s",
+    "packages/sec-edgar-ingest/tests",
+    "-p",
+    "test_etl_catalog.py",
+    "-v"
+  ],
+  "cwd": "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar",
+  "exit": 0,
+  "stdout": "",
+  "stderr": "test_all_four_boundaries_recover_without_early_candidate_index (test_etl_catalog.EtlCatalogTests.test_all_four_boundaries_recover_without_early_candidate_index) ... ok\ntest_closed_daily_only_revised_absence_never_withdraws (test_etl_catalog.EtlCatalogTests.test_closed_daily_only_revised_absence_never_withdraws) ... ok\ntest_closed_membership_withholds_daily_only_keys (test_etl_catalog.EtlCatalogTests.test_closed_membership_withholds_daily_only_keys) ... ok\ntest_corrupt_manifest_and_data_are_refused (test_etl_catalog.EtlCatalogTests.test_corrupt_manifest_and_data_are_refused) ... ok\ntest_duplicate_overlap_amendment_and_null_accession (test_etl_catalog.EtlCatalogTests.test_duplicate_overlap_amendment_and_null_accession) ... ok\ntest_empty_or_invalid_input_never_builds_candidate (test_etl_catalog.EtlCatalogTests.test_empty_or_invalid_input_never_builds_candidate) ... ok\ntest_equal_receipt_distinct_hash_conflicts_and_newer_revision_wins (test_etl_catalog.EtlCatalogTests.test_equal_receipt_distinct_hash_conflicts_and_newer_revision_wins) ... ok\ntest_existing_generation_preserves_producing_image (test_etl_catalog.EtlCatalogTests.test_existing_generation_preserves_producing_image) ... ok\ntest_filing_quarter_distributes_daily_and_off_period_quarterly_has_no_authority (test_etl_catalog.EtlCatalogTests.test_filing_quarter_distributes_daily_and_off_period_quarterly_has_no_authority) ... ok\ntest_fingerprint_noop_and_base_bound_generation (test_etl_catalog.EtlCatalogTests.test_fingerprint_noop_and_base_bound_generation) ... ok\ntest_future_and_unpinned_context_refused (test_etl_catalog.EtlCatalogTests.test_future_and_unpinned_context_refused) ... ok\ntest_gate_record_is_exact_and_corruption_is_refused (test_etl_catalog.EtlCatalogTests.test_gate_record_is_exact_and_corruption_is_refused) ... ok\ntest_latest_daily_wins_and_prior_sources_survive (test_etl_catalog.EtlCatalogTests.test_latest_daily_wins_and_prior_sources_survive) ... ok\ntest_open_absence_retains_then_closed_withdrawal_is_gated (test_etl_catalog.EtlCatalogTests.test_open_absence_retains_then_closed_withdrawal_is_gated) ... ok\ntest_previous_raw_contributors_replay_together_under_new_parser (test_etl_catalog.EtlCatalogTests.test_previous_raw_contributors_replay_together_under_new_parser) ... ok\ntest_provenance_only_refresh_has_no_business_update (test_etl_catalog.EtlCatalogTests.test_provenance_only_refresh_has_no_business_update) ... ok\ntest_quarterly_fields_beat_latest_daily_and_order_is_deterministic (test_etl_catalog.EtlCatalogTests.test_quarterly_fields_beat_latest_daily_and_order_is_deterministic) ... ok\ntest_retained_dependency_missing_corrupt_and_mismatched_refused (test_etl_catalog.EtlCatalogTests.test_retained_dependency_missing_corrupt_and_mismatched_refused) ... ok\ntest_stale_snapshot_cannot_replace_newer_source_revision (test_etl_catalog.EtlCatalogTests.test_stale_snapshot_cannot_replace_newer_source_revision) ... ok\ntest_valid_hash_but_invented_canonical_row_is_refused (test_etl_catalog.EtlCatalogTests.test_valid_hash_but_invented_canonical_row_is_refused) ... ok\n\n----------------------------------------------------------------------\nRan 20 tests in 2.314s\n\nOK\n"
+}

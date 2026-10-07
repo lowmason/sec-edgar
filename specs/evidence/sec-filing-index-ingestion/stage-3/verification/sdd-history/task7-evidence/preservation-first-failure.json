@@ -1,0 +1,20 @@
+{
+  "argv": [
+    "uv",
+    "run",
+    "--offline",
+    "--frozen",
+    "--package",
+    "sec-edgar-ingest",
+    "python",
+    ".sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/retain.py"
+  ],
+  "exit": 1,
+  "reason": "Archival verifier incorrectly treated four explicit absent:true inventory entries as required files. The actual four protected paths remained absent; all actual file bytes and roadmap matched. Original verifier preserved as retain-first-failed.py.",
+  "observed_absences": [
+    "packages/sec-edgar-index-ingest/README.md",
+    "packages/sec-edgar-index-ingest/pyproject.toml",
+    "packages/sec-edgar-index-ingest/src/sec_edgar_index_ingest/__init__.py",
+    "packages/sec-edgar-index-ingest/src/sec_edgar_index_ingest/py.typed"
+  ]
+}

@@ -1,0 +1,1073 @@
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/cli.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/cli.py
+index 84d9700..1611f85 100644
+--- a/packages/sec-edgar-ingest/src/sec_edgar_ingest/cli.py
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/cli.py
+@@ -14,8 +14,12 @@ from .collection import collect
+ from .config import Settings, load_config, pin_context
+ from .coordination import Clock, Coordinator
+ from .discovery import discover
++from .etl.commands import read_etl_result, run_transform, run_publish, write_etl_result, validate_workset_ref
++from .etl.parser import supported_parser, SCHEMA_VERSION
++from .etl.publication import repair_publication
++from .etl.state import EtlState
+ from .download import BoundedSender, FixturePack, RequestClient
+-from .models import CommandResult, Error, RunContext, canonical_json, quarter_for, safe_relative_path
++from .models import CommandResult, Error, RunContext, canonical_json, parse_json, quarter_for, safe_relative_path
+ from .results import exit_code, log_event, read_result, result_path, write_result
+ from .state import AcquisitionState, attempt_key
+ from .storage import open_stores
+@@ -57,18 +61,22 @@ def _parser() -> argparse.ArgumentParser:
+     parser = argparse.ArgumentParser(prog='sec-edgar-ingest')
+     parser.add_argument('--version', action='version', version=__version__)
+     commands = parser.add_subparsers(dest='command')
+-    for command in ('discover', 'collect'):
++    for command in ('discover', 'collect', 'transform', 'publish'):
+         sub = commands.add_parser(command)
+         for name in ('config', 'run-id', 'execution-id', 'attempt-id', 'deadline'):
+             sub.add_argument('--' + name, required=True)
+-        for name in ('fixture-pack', 'state-dir', 'today'):
++        for name in ('state-dir', 'today'):
+             sub.add_argument('--' + name)
++        if command in ('discover', 'collect'):
++            sub.add_argument('--fixture-pack')
+         if command == 'discover':
+             sub.add_argument('--mode', required=True, choices=('quarterly', 'daily'))
+             sub.add_argument('--discovery-id', required=True)
+             sub.add_argument('--refresh', action='store_true')
+         else:
+             sub.add_argument('--workset', required=True)
++        if command == 'transform':
++            sub.add_argument('--force', action='store_true')
+     return parser
+ 
+ 
+@@ -82,9 +90,16 @@ def _validate(args) -> tuple[Settings, date | None, datetime, FixturePack | None
+         _segment(getattr(args, name), name)
+     if args.command == 'discover':
+         _segment(args.discovery_id, 'discovery_id')
++    elif args.command in ('transform', 'publish'):
++        validate_workset_ref(args.workset, 'snapshot' if args.command == 'transform' else 'transformed')
+     elif SOURCE_REF.fullmatch(args.workset) is None:
+         raise ValueError('workset must name the exact immutable source-workset object path')
+     settings = load_config(Path(args.config))
++    etl = args.command in ('transform', 'publish')
++    if etl:
++        supported_parser(settings.etl.parser_version, fixture=settings.storage.backend == 'local-fixture')
++        if settings.etl.schema_version != SCHEMA_VERSION:
++            raise ValueError('unsupported ETL schema version')
+     if not settings.coordination.lease_seconds.is_integer():
+         raise ValueError('coordination requires whole finite lease seconds')
+     deadline = datetime.fromisoformat(args.deadline.replace('Z', '+00:00'))
+@@ -94,16 +109,16 @@ def _validate(args) -> tuple[Settings, date | None, datetime, FixturePack | None
+     if args.today and today.isoformat() != args.today:
+         raise ValueError('today must be a canonical ISO date')
+     if settings.storage.backend == 'azure':
+-        if args.fixture_pack or args.state_dir or args.today:
++        if getattr(args, 'fixture_pack', None) or args.state_dir or args.today:
+             raise ValueError('fixture pack, state directory and date override are fixture-only')
+         pack = None
+     else:
+-        if not args.fixture_pack:
++        if not etl and not args.fixture_pack:
+             raise ValueError('local-fixture commands require an explicit fixture pack')
+         if not settings.fixture or (args.today and not settings.fixture.allow_clock_override):
+             if args.today:
+                 raise ValueError('today requires the explicit fixture clock override marker')
+-        pack = FixturePack.load(Path(args.fixture_pack))
++        pack = None if etl else FixturePack.load(Path(args.fixture_pack))
+     # A completed result may outlive its deadline; only its saved context can authorize replay.
+     now = Clock().now()
+     if deadline > now:
+@@ -124,6 +139,9 @@ def _new_context(args, settings, deadline, today, started) -> RunContext:
+ 
+ 
+ def _intent(args, pack) -> dict[str, object]:
++    if args.command in ('transform', 'publish'):
++        return {'command': args.command, 'today': args.today, 'workset': args.workset,
++                'force': args.force if args.command == 'transform' else None}
+     return {'command': args.command, 'today': args.today,
+             'fixture_sha256': pack.manifest_sha256 if pack is not None else None,
+             'mode': args.mode if args.command == 'discover' else None,
+@@ -167,6 +185,51 @@ def _existing_context(current, state, objects, intent, explicit_today):
+     return context, None
+ 
+ 
++def _existing_etl_context(current, state, objects, intent, explicit_today):
++    path = result_path(current)
++    intent_path = path.rsplit('/', 1)[0] + '/command.json'
++    try:
++        saved = read_etl_result(path, objects)
++    except FileNotFoundError:
++        saved = None
++    try:
++        frozen_body = objects.read(intent_path)
++    except FileNotFoundError:
++        frozen_body = None
++    if frozen_body is not None:
++        frozen = parse_json(frozen_body)
++        if (not isinstance(frozen, dict) or set(frozen) != {'context', 'intent'}
++                or canonical_json(frozen) != frozen_body or frozen['intent'] != intent):
++            raise Conflict('ETL command differs from its frozen invocation')
++        prior = RunContext.from_mapping(frozen['context'])
++    else:
++        if saved is not None:
++            raise Conflict('completed ETL result has no command intent')
++        # Attempt keys include image/execution, while immutable command paths do not.
++        # Find an interrupted begin even if the caller now supplies a different key.
++        matching = [RunContext.from_mapping(row.to_mapping()['value']['context'])
++                    for row in state.store.scan('Attempt', {})
++                    if all(row.value['context'][name] == getattr(current, name)
++                           for name in ('run_id', 'command', 'attempt_id'))]
++        if len(matching) > 1:
++            raise Conflict('multiple attempts claim the same command path')
++        prior = matching[0] if matching else current
++    context = _matching_context(prior, current, explicit_today=explicit_today)
++    if saved is not None and saved.context != context:
++        raise Conflict('ETL result differs from its frozen command context')
++    frozen = canonical_json({'context': context.to_mapping(), 'intent': intent})
++    if frozen_body is not None and frozen != frozen_body:
++        raise Conflict('ETL intent context differs from its exact canonical context')
++    state.begin_attempt(context)
++    objects.put_once(intent_path, frozen)
++    if saved is not None:
++        for quarter in saved.quarters:
++            if quarter.outcome in ('published', 'unchanged'):
++                repair_publication(quarter.quarter, objects, EtlState(state.store))
++        state.finish_attempt(saved)
++    return context, saved
++
++
+ def _discover_result(workset, context, clock):
+     gaps = tuple(directory.error for directory in workset.directories if directory.error is not None)
+     outcome = 'discovery_failed' if not workset.discovery_complete else ('success' if workset.members else 'no_new_sources')
+@@ -206,6 +269,10 @@ def _retain_error(state, context, outcome, error):
+ 
+ 
+ def _stdout(result, reference):
++    if result.context.command in ('transform', 'publish'):
++        sys.stdout.write(canonical_json({'outcome': result.outcome, 'result_ref': reference,
++            'input_ref': result.input_ref, 'transformed_workset_ref': result.transformed_workset_ref}).decode() + '\n')
++        return exit_code(result.outcome)
+     sys.stdout.write(canonical_json({'outcome': result.outcome, 'result_ref': reference,
+         'source_workset_ref': result.source_workset_ref, 'snapshot_workset_ref': result.snapshot_workset_ref}).decode() + '\n')
+     return exit_code(result.outcome)
+@@ -231,7 +298,7 @@ def main(argv: Sequence[str] | None = None) -> int:
+         state = AcquisitionState(store, clock=clock)
+         path = f'runs/sec/{args.run_id}/{args.command}/{args.attempt_id}/result.json'
+         try:
+-            prior = read_result(path, objects)
++            prior = (read_etl_result if args.command in ('transform', 'publish') else read_result)(path, objects)
+         except FileNotFoundError:
+             prior = None
+         if prior is None and deadline <= clock.now():
+@@ -249,10 +316,22 @@ def main(argv: Sequence[str] | None = None) -> int:
+             if args.workset != f'worksets/sec/source/sha256={workset.workset_id}/workset.json':
+                 raise Conflict('workset object path differs from its content identity')
+             context = replace(context, priority=workset.context.priority)
+-        context, saved = _existing_context(context, state, objects, _intent(args, pack), bool(args.today))
++        if args.command in ('transform', 'publish'):
++            context, saved = _existing_etl_context(context, state, objects, _intent(args, pack), bool(args.today))
++        else:
++            context, saved = _existing_context(context, state, objects, _intent(args, pack), bool(args.today))
+         if saved is not None:
+             log_event(context, 'result_replayed', {'result_ref': result_path(context)})
+             return _stdout(saved, result_path(context))
++        if args.command in ('transform', 'publish'):
++            log_event(context, 'command_started', {'command': args.command, 'input_ref': args.workset})
++            result = (run_transform(args.workset, context, settings, objects, store, force=args.force)
++                      if args.command == 'transform' else run_publish(args.workset, context, settings, objects, store))
++            reference = write_etl_result(result, objects, state)
++            log_event(context, 'command_finished', {'outcome': result.outcome, 'result_ref': reference,
++                      'counters': {name: getattr(result, name) for name in
++                          ('transformed', 'published', 'unchanged', 'quarantined', 'awaiting_approval', 'failed')}})
++            return _stdout(result, reference)
+         coordinator = Coordinator(settings, store, leases, clock)
+         sender = _CheckedSender(pack.sender(store) if pack is not None else BoundedSender(settings, clock))
+         client = RequestClient(settings, coordinator, sender, state, clock)
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/commands.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/commands.py
+new file mode 100644
+index 0000000..83e8637
+--- /dev/null
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/commands.py
+@@ -0,0 +1,235 @@
++"""Storage-only ETL commands and separate, immutable ETL result commits."""
++from __future__ import annotations
++
++import re
++from collections import Counter
++from datetime import datetime, timezone
++
++from ..config import Settings, pin_context
++from ..models import Error, RunContext, canonical_json, parse_json, safe_relative_path
++from ..results import log_event, result_path
++from ..state import AcquisitionState, attempt_key
++from ..storage.contracts import BoundaryObserver, CAS_ATTEMPTS, Conflict, ObjectStore, StateStore, observe
++from .contracts import (EtlResult, ObservationRef, PublicationResult, decode_transformed,
++                        processing_key, transformed_ref)
++from .publication import publish_quarter
++from .parser import supported_parser, SCHEMA_VERSION
++from .state import EtlState
++from .transform import transform_workset
++
++WORKSET_REFS = {kind: re.compile(r'worksets/sec/' + kind + r'/sha256=[0-9a-f]{64}/workset\.json\Z')
++                for kind in ('snapshot', 'transformed')}
++FAILURE_PRIORITY = ('internal_error', 'state_conflict', 'publication_conflict', 'invalid_source',
++                    'quarantined', 'incomplete', 'awaiting_approval')
++ETL_OUTCOMES = frozenset(('success', 'unchanged', 'no_new_sources', *FAILURE_PRIORITY))
++QUARTER_OUTCOMES = frozenset(('published', 'unchanged', 'awaiting_approval', 'publication_conflict',
++                              'state_conflict', 'internal_error', 'invalid_source', 'incomplete'))
++
++
++def validate_workset_ref(path: str, kind: str) -> None:
++    if WORKSET_REFS[kind].fullmatch(path) is None:
++        raise ValueError(f'workset must name the exact immutable {kind}-workset object path')
++
++
++def _aggregate(outcomes, *, changed: bool) -> str:
++    for outcome in FAILURE_PRIORITY:
++        if outcome in outcomes:
++            return outcome
++    return 'success' if changed else 'unchanged'
++
++
++def _validate_result(result: EtlResult) -> None:
++    context = result.context
++    if context.command not in ('transform', 'publish') or result.outcome not in ETL_OUTCOMES:
++        raise ValueError('invalid ETL result command or outcome')
++    for name in ('run_id', 'execution_id', 'attempt_id'):
++        if '/' in safe_relative_path(getattr(context, name), name):
++            raise ValueError('ETL correlation IDs must be single path segments')
++    settings = Settings.from_mapping(context.to_mapping()['effective_config'])
++    if context.pinned_on is None or pin_context(settings, context, context.pinned_on)[0] != context:
++        raise ValueError('ETL result requires its exact pinned effective configuration')
++    supported_parser(context.parser_version, fixture=settings.storage.backend == 'local-fixture')
++    if result.started_at != context.started_at:
++        raise ValueError('ETL result must preserve its exact context start')
++    validate_workset_ref(result.input_ref, 'snapshot' if context.command == 'transform' else 'transformed')
++    if result.transformed_workset_ref is not None:
++        validate_workset_ref(result.transformed_workset_ref, 'transformed')
++    if context.command == 'transform':
++        _validate_transform_result(result)
++    else:
++        _validate_publication_result(result)
++
++
++def _validate_transform_result(result: EtlResult) -> None:
++    if result.quarters or result.published or result.awaiting_approval or result.transformed_workset_ref is None:
++        raise ValueError('transform result cannot claim publication')
++    if any(gap.code not in ('transform_failed', 'state_conflict') or gap.source_id is None for gap in result.gaps):
++        raise ValueError('invalid transform source failure')
++    if result.failed != len(result.gaps) or result.quarantined != sum(gap.code == 'transform_failed' for gap in result.gaps):
++        raise ValueError('transform failure counters disagree')
++    expected = ('state_conflict' if any(gap.code == 'state_conflict' for gap in result.gaps)
++                else 'incomplete' if result.gaps and result.transformed + result.unchanged
++                else 'invalid_source' if result.gaps else 'success' if result.transformed else 'unchanged')
++    if result.outcome != expected:
++        raise ValueError('transform aggregate outcome disagrees')
++
++
++def _validate_quarter(quarter: PublicationResult, gaps: tuple[Error, ...]) -> None:
++    if quarter.conflicts > CAS_ATTEMPTS or quarter.outcome not in QUARTER_OUTCOMES:
++        raise ValueError('unsupported publication outcome or conflict count')
++    base = f'curated/sec/filing_index/year={quarter.quarter[:4]}/quarter={quarter.quarter[-1]}/generation='
++    if quarter.outcome in ('published', 'unchanged'):
++        if (quarter.generation_id is None or quarter.manifest_ref != base + quarter.generation_id + '/manifest.json'
++                or quarter.candidate_ref is not None):
++            raise ValueError('committed result requires its exact manifest capture')
++    elif quarter.outcome == 'awaiting_approval':
++        if (quarter.generation_id is not None or quarter.manifest_ref is not None or quarter.candidate_ref is None
++                or re.fullmatch(r'worksets/sec/candidates/sha256=[0-9a-f]{64}/candidate\.json', quarter.candidate_ref) is None):
++            raise ValueError('gate result requires only its candidate reference')
++    else:
++        matching = [gap for gap in gaps if gap.code == quarter.outcome and gap.details.get('quarter') == quarter.quarter]
++        if len(matching) != 1:
++            raise ValueError('failed quarter requires one matching error gap')
++        if quarter.generation_id is not None or quarter.candidate_ref is not None:
++            raise ValueError('failed publication cannot claim a capture or gate')
++        if quarter.manifest_ref is not None and (quarter.outcome != 'publication_conflict'
++                or re.fullmatch(re.escape(base) + r'[0-9a-f]{64}/manifest\.json', quarter.manifest_ref) is None):
++            raise ValueError('only publication conflicts may retain attempted manifest evidence')
++        if quarter.outcome == 'publication_conflict' and (
++                matching[0].details.get('attempted_manifest_ref') != quarter.manifest_ref
++                or matching[0].details.get('conflicts') != quarter.conflicts):
++            raise ValueError('conflict evidence differs from its quarter result')
++
++
++def _validate_publication_result(result: EtlResult) -> None:
++    if result.transformed_workset_ref != result.input_ref or result.transformed or result.quarantined:
++        raise ValueError('publish result counters or transformed reference disagree')
++    for quarter in result.quarters:
++        _validate_quarter(quarter, result.gaps)
++    counts = Counter(quarter.outcome for quarter in result.quarters)
++    if (result.published, result.unchanged, result.awaiting_approval) != (
++            counts['published'], counts['unchanged'], counts['awaiting_approval']):
++        raise ValueError('publication counters disagree with quarter outcomes')
++    failed_quarters = len(result.quarters) - result.published - result.unchanged - result.awaiting_approval
++    if result.quarters:
++        if len(result.gaps) != failed_quarters:
++            raise ValueError('publication gaps must match failed quarters exactly')
++    elif result.gaps and not (len(result.gaps) == 1 and result.gaps[0].code == 'incomplete'
++                             and result.gaps[0].details.get('workset_ref') == result.input_ref):
++        raise ValueError('only a partial-workset refusal may have an unassigned publication gap')
++    if result.failed != len(result.gaps):
++        raise ValueError('publication failed counter disagrees with gaps')
++    expected = _aggregate([quarter.outcome for quarter in result.quarters] + [gap.code for gap in result.gaps],
++                          changed=bool(result.published))
++    if result.outcome != expected:
++        raise ValueError('publication aggregate outcome disagrees')
++
++
++def read_etl_result(path: str, objects: ObjectStore) -> EtlResult:
++    safe_relative_path(path, 'ETL result path')
++    body = objects.read(path)
++    result = EtlResult.from_mapping(parse_json(body))
++    _validate_result(result)
++    if result_path(result.context) != path or canonical_json(result.to_mapping()) != body:
++        raise Conflict('ETL result bytes or path differ from canonical command identity')
++    return result
++
++
++def write_etl_result(result: EtlResult, objects: ObjectStore, acquisition: AcquisitionState, *,
++                     observer: BoundaryObserver | None = None) -> str:
++    _validate_result(result)
++    row = acquisition.store.get('Attempt', attempt_key(result.context))
++    if row is None or row.to_mapping()['value']['context'] != result.context.to_mapping():
++        raise Conflict('ETL result requires exact begun Attempt')
++    saved = row.to_mapping()['value']['result']
++    if saved is not None and saved != result.to_mapping():
++        raise Conflict('ETL result differs from completed Attempt')
++    path = result_path(result.context)
++    objects.put_once(path, canonical_json(result.to_mapping()))
++    observe(observer, 'etl_result.after_object')
++    acquisition.finish_attempt(result)
++    observe(observer, 'etl_result.after_attempt')
++    return path
++
++
++def run_transform(snapshot_ref: str, context: RunContext, settings: Settings, objects: ObjectStore,
++                  store: StateStore, *, force: bool = False, observer: BoundaryObserver | None = None) -> EtlResult:
++    if context.command != 'transform':
++        raise ValueError('transform requires a transform command context')
++    validate_workset_ref(snapshot_ref, 'snapshot')
++    accepted = {row.value['processing_key'] for row in store.scan('Processing', {})}
++    workset = transform_workset(snapshot_ref, context, settings, objects, EtlState(store),
++                                AcquisitionState(store), force=force, observer=observer)
++    unchanged = sum(not force and processing_key(ref.source.source_id, ref.snapshot.sha256,
++                    ref.parser_version, ref.schema_version) in accepted for ref in workset.observations)
++    transformed = len(workset.observations) - unchanged
++    outcome = ('state_conflict' if any(gap.code == 'state_conflict' for gap in workset.failures)
++               else 'incomplete' if workset.failures and workset.observations
++               else 'invalid_source' if workset.failures else 'success' if transformed else 'unchanged')
++    for ref in workset.observations:
++        log_event(context, 'source_transformed', {'source_id': ref.source.source_id, 'raw_sha256': ref.snapshot.sha256,
++                  'observation_ref': ref.manifest_ref, 'transformed_workset_ref': transformed_ref(workset)})
++    for failure in workset.failures:
++        log_event(context, 'source_transform_failed', {'source_id': failure.source_id,
++                  'raw_sha256': failure.details.get('raw_sha256'), 'input_ref': snapshot_ref,
++                  'transformed_workset_ref': transformed_ref(workset), 'error': failure.to_mapping()})
++    return EtlResult(context, outcome, snapshot_ref, transformed_ref(workset), transformed, 0, unchanged,
++                     sum(gap.code != 'state_conflict' for gap in workset.failures), 0, len(workset.failures), (),
++                     workset.failures, context.started_at, max(context.started_at, datetime.now(timezone.utc)))
++
++
++def _affected_quarters(observations, store):
++    quarters = {quarter for ref in observations for quarter in ref.quarter_counts}
++    sources = {ref.source.source_id for ref in observations}
++    prior_keys = set()
++    for row in store.scan('Processing', {}):
++        ref = ObservationRef.from_mapping(row.to_mapping()['value']['observation'])
++        if ref.source.source_id in sources:
++            prior_keys.add(row.value['processing_key'])
++    for receipt in store.scan('PublicationReceipt', {}):
++        if receipt.value['processing_key'] in prior_keys:
++            quarters.add(receipt.value['quarter'])
++    return sorted(quarters)
++
++
++def run_publish(transformed_workset_ref: str, context: RunContext, settings: Settings,
++                objects: ObjectStore, store: StateStore, *, observer: BoundaryObserver | None = None) -> EtlResult:
++    if context.command != 'publish' or context.pinned_on is None or pin_context(settings, context, context.pinned_on)[0] != context:
++        raise ValueError('publish requires its exact pinned effective configuration')
++    supported_parser(context.parser_version, fixture=settings.storage.backend == 'local-fixture')
++    if context.schema_version != SCHEMA_VERSION:
++        raise ValueError('unsupported ETL schema version')
++    if datetime.now(timezone.utc) >= context.deadline:
++        raise TimeoutError('publication command deadline exceeded')
++    validate_workset_ref(transformed_workset_ref, 'transformed')
++    workset = decode_transformed(objects.read(transformed_workset_ref))
++    if transformed_ref(workset) != transformed_workset_ref:
++        raise Conflict('transformed workset path differs from payload identity')
++    if (workset.context.parser_version, workset.context.schema_version) != (context.parser_version, context.schema_version):
++        raise Conflict('publish versions differ from the immutable transformed workset')
++    quarters, gaps = [], []
++    if not workset.complete:
++        gaps.append(Error('incomplete', 'partial transformed workset is not publishable', False, None,
++                          {'workset_ref': transformed_workset_ref, 'failures': [gap.to_mapping() for gap in workset.failures]}))
++    else:
++        state = EtlState(store)
++        for quarter in _affected_quarters(workset.observations, store):
++            try:
++                result = publish_quarter(quarter, workset.observations, context, settings, objects, state, observer=observer)
++            except Exception as error:
++                outcome = ('state_conflict' if isinstance(error, (Conflict, OSError)) else
++                           'invalid_source' if isinstance(error, ValueError) else 'internal_error')
++                result = PublicationResult(quarter, outcome, None, None, None, 0)
++                gaps.append(Error(outcome, str(error), False, None, {'quarter': quarter, 'type': type(error).__name__}))
++            else:
++                if result.outcome == 'publication_conflict':
++                    gaps.append(Error('publication_conflict', 'bounded quarter publication did not commit', True, None,
++                                      {'quarter': quarter, 'conflicts': result.conflicts,
++                                       'attempted_manifest_ref': result.manifest_ref}))
++            quarters.append(result)
++            log_event(context, 'quarter_publication', result.to_mapping())
++    counts = Counter(result.outcome for result in quarters)
++    outcome = _aggregate([result.outcome for result in quarters] + [gap.code for gap in gaps], changed=bool(counts['published']))
++    return EtlResult(context, outcome, transformed_workset_ref, transformed_workset_ref, 0,
++                     counts['published'], counts['unchanged'], 0, counts['awaiting_approval'], len(gaps), tuple(quarters),
++                     tuple(gaps), context.started_at, max(context.started_at, datetime.now(timezone.utc)))
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/results.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/results.py
+index 871b525..c07d797 100644
+--- a/packages/sec-edgar-ingest/src/sec_edgar_ingest/results.py
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/results.py
+@@ -8,11 +8,12 @@ from .state import AcquisitionState, attempt_key
+ from .storage.contracts import Conflict, ObjectStore
+ 
+ EXIT_CODES = {
+-    'success': 0, 'no_new_sources': 0, 'configuration': 2,
++    'success': 0, 'no_new_sources': 0, 'unchanged': 0, 'configuration': 2,
+     'discovery_failed': 3, 'incomplete': 3, 'pending': 4,
+     'retry_exhausted': 5, 'deferred': 5, 'throttled': 5,
+     'access_blocked': 6, 'quarantined': 7, 'invalid_source': 7,
+     'ownership_lost': 8, 'state_conflict': 9, 'internal_error': 9,
++    'publication_conflict': 9, 'awaiting_approval': 10,
+ }
+ 
+ 
+@@ -25,8 +26,8 @@ def result_path(context: RunContext) -> str:
+         value = safe_relative_path(getattr(context, name), name)
+         if '/' in value:
+             raise ValueError(f'{name} must be a single path segment')
+-    if context.command not in ('discover', 'collect'):
+-        raise ValueError('results require an acquisition command')
++    if context.command not in ('discover', 'collect', 'transform', 'publish'):
++        raise ValueError('results require a supported command')
+     return f'runs/sec/{context.run_id}/{context.command}/{context.attempt_id}/result.json'
+ 
+ 
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/state.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/state.py
+index 3e52f14..212d0e8 100644
+--- a/packages/sec-edgar-ingest/src/sec_edgar_ingest/state.py
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/state.py
+@@ -1,6 +1,11 @@
+ """Durable source observations, accepted receipts, first pins and attempt audit."""
+ from __future__ import annotations
+ 
++from typing import TYPE_CHECKING
++
++if TYPE_CHECKING:
++    from .etl.contracts import EtlResult
++
+ import hashlib
+ import uuid
+ from collections.abc import Callable
+@@ -382,7 +387,7 @@ class AcquisitionState:
+             raise Conflict("attempt identity has conflicting provenance")
+         self.active_context = context
+ 
+-    def finish_attempt(self, result: CommandResult) -> None:
++    def finish_attempt(self, result: CommandResult | EtlResult) -> None:
+         key = attempt_key(result.context)
+         for _ in range(CAS_ATTEMPTS):
+             existing = self.store.get("Attempt", key)
+diff --git a/packages/sec-edgar-ingest/tests/test_cli.py b/packages/sec-edgar-ingest/tests/test_cli.py
+index 7844be1..dd6ee51 100644
+--- a/packages/sec-edgar-ingest/tests/test_cli.py
++++ b/packages/sec-edgar-ingest/tests/test_cli.py
+@@ -129,7 +129,7 @@ class CliTests(unittest.TestCase):
+         self.assertEqual(h.invoke('discover', ['--mode', 'quarterly', '--discovery-id', 'd', '--execution-id', 'e', '--attempt-id', 'a'], common=common).returncode, 2)
+         self.assertEqual(h.external_client_constructions, 0)
+ 
+-    def test_valid_empty_and_help_do_not_offer_unimplemented_stages(self):
++    def test_valid_empty_and_help_offer_all_four_commands(self):
+         h = self.harness('valid-empty')
+         done = h.discover()
+         self.assertEqual(done.returncode, 0, done.stderr)
+@@ -139,8 +139,8 @@ class CliTests(unittest.TestCase):
+             self.assertEqual(main([]), 0)
+         self.assertIn('discover', output.getvalue())
+         self.assertIn('collect', output.getvalue())
+-        self.assertNotIn('transform', output.getvalue())
+-        self.assertNotIn('publish', output.getvalue())
++        self.assertIn('transform', output.getvalue())
++        self.assertIn('publish', output.getvalue())
+ 
+     def test_collection_outcomes_are_named_and_non_success(self):
+         expected = {'pending': (4, 'pending'), 'retry-exhausted': (5, 'retry_exhausted'),
+diff --git a/packages/sec-edgar-ingest/tests/test_etl_cli.py b/packages/sec-edgar-ingest/tests/test_etl_cli.py
+new file mode 100644
+index 0000000..808e192
+--- /dev/null
++++ b/packages/sec-edgar-ingest/tests/test_etl_cli.py
+@@ -0,0 +1,515 @@
++"""Raw-only command boundaries exercised with real retained fixture objects."""
++from network_guard import install
++install()
++
++import contextlib
++import hashlib
++import io
++import json
++import os
++import shutil
++import tempfile
++import unittest
++from datetime import datetime, timezone
++from pathlib import Path
++from unittest.mock import patch
++
++from support import fixture_source
++from support_etl import etl_context, seed_snapshot
++from sec_edgar_ingest.cli import main
++from sec_edgar_ingest.models import canonical_json
++
++
++class EtlCliTests(unittest.TestCase):
++    def setUp(self):
++        self.temporary = tempfile.TemporaryDirectory()
++        self.addCleanup(self.temporary.cleanup)
++        self.root = Path(self.temporary.name)
++        self.settings, self.context = etl_context()
++        self.config = self.root / 'config.json'
++        self.config.write_bytes(canonical_json(self.settings.to_mapping()))
++        self.source = fixture_source('2026-10-01', 'daily')
++        self.body = (b'CIK|Company Name|Form Type|Date Filed|File Name\n-----\n'
++                     b'123456|Example|10-K|20261001|edgar/data/123456/0000123456-26-000001.txt\n')
++        self.store, self.objects, snapshot = seed_snapshot(self.root / '.fixture-state', self.source, self.body)
++        self.addCleanup(self.store.close)
++        self.snapshot_ref = f'worksets/sec/snapshot/sha256={snapshot.workset_id}/workset.json'
++        self.calls = []
++        self.addCleanup(self.retain)
++
++    def retain(self):
++        destination = os.environ.get('SEC_EDGAR_TASK6_PROOF_DIR')
++        if destination:
++            target = Path(destination) / self.id().rsplit('.', 1)[-1]
++            target.mkdir(parents=True, exist_ok=True)
++            (target / 'calls.json').write_bytes(canonical_json(self.calls))
++            records = {kind: [row.to_mapping() for row in self.store.scan(kind, {})]
++                       for kind in ('Attempt', 'Processing', 'PublicationReceipt', 'QuarterPublication', 'Candidate')}
++            (target / 'state-records.json').write_bytes(canonical_json(records))
++            self.store.close()
++            shutil.copytree(self.root, target / 'files', dirs_exist_ok=True)
++            hashes = {p.relative_to(target).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
++                      for p in target.rglob('*') if p.is_file()}
++            (target / 'hashes.json').write_bytes(canonical_json(hashes))
++
++    def argv(self, command='transform', ref=None, attempt=None):
++        return [command, '--config', str(self.config), '--run-id', 'etl-cli', '--execution-id', 'execution',
++                '--attempt-id', attempt or command, '--deadline', self.context.deadline.isoformat(),
++                '--state-dir', str(self.root), '--workset', ref or self.snapshot_ref]
++
++    def invoke(self, argv):
++        stdout, stderr = io.StringIO(), io.StringIO()
++        code = None
++        try:
++            with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr), \
++                 patch('sec_edgar_ingest.cli.Coordinator', side_effect=AssertionError('ETL constructed SEC coordinator')), \
++                 patch('sec_edgar_ingest.cli.BoundedSender', side_effect=AssertionError('ETL constructed SEC sender')), \
++                 patch('sec_edgar_ingest.cli.RequestClient', side_effect=AssertionError('ETL constructed SEC request client')):
++                try:
++                    code = main(argv)
++                except SystemExit as error:
++                    code = error.code
++        finally:
++            self.calls.append({'argv': argv, 'cwd': str(Path.cwd()), 'exit': code, 'interrupted': code is None,
++                               'stdout': stdout.getvalue(), 'stderr': stderr.getvalue()})
++        return code, json.loads(stdout.getvalue()) if stdout.getvalue().startswith('{') else None
++
++    def checkpoint(self, name):
++        records = {kind: [row.to_mapping() for row in self.store.scan(kind, {})]
++                   for kind in ('Attempt', 'Processing', 'PublicationReceipt', 'QuarterPublication', 'Candidate')}
++        root = self.root / '.fixture-state/objects'
++        objects = {path.relative_to(root).as_posix(): {'sha256': hashlib.sha256(path.read_bytes()).hexdigest(),
++                   'bytes_hex': path.read_bytes().hex()} for path in root.rglob('*.json')}
++        target = self.root / 'checkpoints'
++        target.mkdir(exist_ok=True)
++        (target / (name + '.json')).write_bytes(canonical_json({'state': records, 'objects': objects}))
++
++    def test_help_lists_all_four_commands(self):
++        output = io.StringIO()
++        with contextlib.redirect_stdout(output):
++            self.assertEqual(main([]), 0)
++        for command in ('discover', 'collect', 'transform', 'publish'):
++            self.assertIn(command, output.getvalue())
++
++    def test_real_transform_and_publish_without_acquisition_construction(self):
++        code, transformed = self.invoke(self.argv())
++        self.assertEqual(code, 0, self.calls[-1])
++        code, published = self.invoke(self.argv('publish', transformed['transformed_workset_ref']))
++        self.assertEqual(code, 0, self.calls[-1])
++        self.assertEqual(published['outcome'], 'success')
++        self.assertEqual(len(list(self.store.scan('QuarterPublication', {}))), 1)
++        self.assertEqual(len(list(self.store.scan('TransportAttempt', {}))), 0)
++
++    def test_validation_happens_before_open_stores(self):
++        for flag in ('--config', '--run-id', '--execution-id', '--attempt-id', '--deadline', '--workset'):
++            argv = self.argv()
++            index = argv.index(flag)
++            del argv[index:index + 2]
++            with self.subTest(missing=flag), patch('sec_edgar_ingest.cli.open_stores', side_effect=AssertionError('opened stores')):
++                self.assertEqual(self.invoke(argv)[0], 2)
++        for invalid in ('../escape', 'latest', 'worksets/sec/source/sha256=' + 'a' * 64 + '/workset.json'):
++            with self.subTest(ref=invalid), patch('sec_edgar_ingest.cli.open_stores', side_effect=AssertionError('opened stores')):
++                self.assertEqual(self.invoke(self.argv(ref=invalid))[0], 2)
++        for extra in (['--fixture-pack', 'unused.json'], ['--today', 'not-a-date']):
++            with patch('sec_edgar_ingest.cli.open_stores', side_effect=AssertionError('opened stores')):
++                self.assertEqual(self.invoke(self.argv() + extra)[0], 2)
++        for field, value in (('parser_version', 'unknown'), ('schema_version', 'unknown')):
++            config = self.settings.to_mapping()
++            config['etl'][field] = value
++            self.config.write_bytes(canonical_json(config))
++            with patch('sec_edgar_ingest.cli.open_stores', side_effect=AssertionError('opened stores')):
++                self.assertEqual(self.invoke(self.argv())[0], 2)
++
++    def transform(self, attempt='transform'):
++        code, result = self.invoke(self.argv(attempt=attempt))
++        self.assertEqual(code, 0, self.calls[-1])
++        return result
++
++    def test_completed_replay_is_exact_and_flag_changes_refuse(self):
++        first = self.transform()
++        path = self.root / '.fixture-state/objects' / first['result_ref']
++        before = path.read_bytes()
++        attempts = [row.to_mapping() for row in self.store.scan('Attempt', {})]
++        self.assertEqual(self.invoke(self.argv()), (0, first))
++        self.assertEqual(path.read_bytes(), before)
++        self.assertEqual([row.to_mapping() for row in self.store.scan('Attempt', {})], attempts)
++        for change in ('force', 'workset', 'execution', 'deadline', 'image', 'parser', 'config'):
++            argv = self.argv()
++            config = self.settings.to_mapping()
++            if change == 'force': argv.append('--force')
++            elif change == 'workset': argv[-1] = 'worksets/sec/snapshot/sha256=' + 'f' * 64 + '/workset.json'
++            elif change == 'execution': argv[argv.index('--execution-id') + 1] = 'other'
++            elif change == 'deadline': argv[argv.index('--deadline') + 1] = self.context.deadline.replace(microsecond=0).isoformat()
++            elif change == 'image': config['worker']['image_digest'] = 'sha256:' + 'f' * 64
++            elif change == 'parser': config['etl']['parser_version'] = 'fixture-index-parser-v2'
++            else: config['sec']['requests_per_second'] = 2
++            self.config.write_bytes(canonical_json(config))
++            with self.subTest(change=change): self.assertEqual(self.invoke(argv)[0], 9, self.calls[-1])
++        self.assertEqual(path.read_bytes(), before)
++
++    def test_new_attempt_replays_parser_with_original_acquisition_context(self):
++        first = self.transform()
++        config = self.settings.to_mapping()
++        config['etl']['parser_version'] = 'fixture-index-parser-v2'
++        self.config.write_bytes(canonical_json(config))
++        second = self.transform('v2')
++        from sec_edgar_ingest.etl.contracts import decode_transformed
++        old = decode_transformed(self.objects.read(first['transformed_workset_ref']))
++        new = decode_transformed(self.objects.read(second['transformed_workset_ref']))
++        self.assertEqual(old.origin_context, new.origin_context)
++        self.assertNotEqual(old.context.parser_version, new.context.parser_version)
++
++    def test_expired_completed_replay_but_new_expired_refusal(self):
++        first = self.transform()
++        with patch('sec_edgar_ingest.cli.Clock.now', return_value=datetime(2100, 1, 1, tzinfo=timezone.utc)):
++            self.assertEqual(self.invoke(self.argv()), (0, first))
++            self.assertEqual(self.invoke(self.argv(attempt='new'))[0], 2)
++
++    def test_begun_intent_resumes_original_start_and_pin(self):
++        from sec_edgar_ingest.state import attempt_key
++        with patch('sec_edgar_ingest.cli.run_transform', side_effect=RuntimeError('interrupted command')):
++            self.assertEqual(self.invoke(self.argv())[0], 9)
++        before = next(self.store.scan('Attempt', {})).to_mapping()['value']['context']
++        result = self.transform()
++        from sec_edgar_ingest.etl.commands import read_etl_result
++        saved = read_etl_result(result['result_ref'], self.objects)
++        self.assertEqual(saved.context.to_mapping(), before)
++        self.assertEqual(self.store.get('Attempt', attempt_key(saved.context)).value['outcome'], 'success')
++
++    def test_result_object_crash_repairs_attempt_exactly(self):
++        from sec_edgar_ingest.etl.commands import write_etl_result, read_etl_result
++        from sec_edgar_ingest.state import attempt_key
++        from support import Faults, CollectionCrash
++        for point in ('etl_result.after_object', 'etl_result.after_attempt'):
++            faults = Faults()
++            def crash(): raise CollectionCrash()
++            faults.at(point, crash)
++            argv = self.argv(attempt=point.replace('.', '-'))
++            def writer(result, objects, acquisition):
++                return write_etl_result(result, objects, acquisition, observer=faults)
++            with patch('sec_edgar_ingest.cli.write_etl_result', side_effect=writer), self.assertRaises(CollectionCrash):
++                self.invoke(argv)
++            path = f'runs/sec/etl-cli/transform/{argv[argv.index("--attempt-id") + 1]}/result.json'
++            frozen = self.objects.read(path)
++            self.checkpoint(point.replace('.', '-') + '-before-replay')
++            self.assertEqual(self.invoke(argv)[0], 0, self.calls[-1])
++            self.assertEqual(self.objects.read(path), frozen)
++            self.checkpoint(point.replace('.', '-') + '-after-replay')
++            result = read_etl_result(path, self.objects)
++            self.assertEqual(self.store.get('Attempt', attempt_key(result.context)).to_mapping()['value']['result'], result.to_mapping())
++
++    def test_publish_noop_and_result_crash_do_not_advance_twice(self):
++        from sec_edgar_ingest.etl.commands import write_etl_result
++        from support import Faults, CollectionCrash
++        ref = self.transform()['transformed_workset_ref']
++        faults = Faults()
++        def crash(): raise CollectionCrash()
++        faults.at('etl_result.after_object', crash)
++        def writer(result, objects, acquisition): return write_etl_result(result, objects, acquisition, observer=faults)
++        with patch('sec_edgar_ingest.cli.write_etl_result', side_effect=writer), self.assertRaises(CollectionCrash):
++            self.invoke(self.argv('publish', ref))
++        pointer = [row.to_mapping() for row in self.store.scan('QuarterPublication', {})]
++        self.checkpoint('publish-result-before-replay')
++        self.assertEqual(self.invoke(self.argv('publish', ref))[0], 0)
++        self.assertEqual(self.invoke(self.argv('publish', ref, attempt='noop'))[1]['outcome'], 'unchanged')
++        self.assertEqual([row.to_mapping() for row in self.store.scan('QuarterPublication', {})], pointer)
++        self.checkpoint('publish-result-after-replay')
++
++    def test_strict_separate_result_codec(self):
++        from sec_edgar_ingest.etl.commands import read_etl_result
++        from sec_edgar_ingest.results import read_result
++        from sec_edgar_ingest.storage.contracts import Conflict
++        first = self.transform()
++        path = first['result_ref']
++        original = self.objects.read(path)
++        result = read_etl_result(path, self.objects)
++        self.assertEqual(result.format_version, 'sec-etl-result-v1')
++        with self.assertRaises(ValueError): read_result(path, self.objects)
++        for mutation in ('format', 'counter', 'unknown', 'outcome', 'input', 'start', 'canonical', 'missing'):
++            invalid = json.loads(original)
++            if mutation == 'format': invalid['format_version'] = 'future'
++            elif mutation == 'counter': invalid['published'] = 1
++            elif mutation == 'unknown': invalid['surprise'] = 1
++            elif mutation == 'outcome': invalid['outcome'] = 'published'
++            elif mutation == 'input': invalid['input_ref'] = 'latest'
++            elif mutation == 'start': invalid['started_at'] = '2026-10-01T00:00:00+00:00'
++            elif mutation == 'missing': del invalid['format_version']
++            body = json.dumps(invalid).encode() if mutation == 'canonical' else canonical_json(invalid)
++            with self.subTest(mutation=mutation), patch.object(self.objects, 'read', return_value=body):
++                with self.assertRaises((ValueError, Conflict)):
++                    read_etl_result(path, self.objects)
++
++    def seed_members(self, members):
++        from support import fixture_snapshot, fixture_workset
++        from sec_edgar_ingest.models import Binding
++        from sec_edgar_ingest.state import AcquisitionState
++        from sec_edgar_ingest.worksets import make_snapshot_workset, encode_workset
++        sources = fixture_workset(tuple(source for source, body in members))
++        self.objects.put_once(f'worksets/sec/source/sha256={sources.workset_id}/workset.json', encode_workset(sources))
++        snapshots = []
++        acquisition = AcquisitionState(self.store)
++        for source, body in members:
++            snapshot = fixture_snapshot(source, body)
++            snapshots.append(snapshot)
++            self.objects.put_once(snapshot.raw_path, body)
++            acquisition.remember_snapshot(snapshot)
++            acquisition.bind_once(Binding(sources.workset_id, source.source_id, snapshot.sha256))
++        workset = make_snapshot_workset(sources, tuple(snapshots))
++        ref = f'worksets/sec/snapshot/sha256={workset.workset_id}/workset.json'
++        self.objects.put_once(ref, encode_workset(workset))
++        return ref
++
++    def transformed_members(self, members, attempt):
++        ref = self.seed_members(members)
++        code, output = self.invoke(self.argv(ref=ref, attempt=attempt))
++        self.assertEqual(code, 0, self.calls[-1])
++        return output['transformed_workset_ref']
++
++    def observation_workset(self, refs, attempt):
++        # Each ref was produced by the real transform; build only its strict envelope.
++        from dataclasses import replace
++        from sec_edgar_ingest.etl.contracts import TransformedWorkset, TRANSFORMED_FORMAT, encode_transformed, transformed_ref
++        context = replace(self.context, attempt_id=attempt)
++        workset = TransformedWorkset('0' * 64, self.snapshot_ref, self.context, context, tuple(refs), (), True)
++        value = {'format_version': TRANSFORMED_FORMAT, **workset.to_mapping()}
++        del value['workset_id']
++        workset = replace(workset, workset_id=hashlib.sha256(canonical_json(value)).hexdigest())
++        ref = transformed_ref(workset)
++        self.objects.put_once(ref, encode_transformed(workset))
++        return ref
++
++    def read_output(self, output):
++        from sec_edgar_ingest.etl.commands import read_etl_result
++        return read_etl_result(output['result_ref'], self.objects)
++
++    def test_partial_transform_retains_success_and_publish_changes_no_pointer(self):
++        bad_source = fixture_source('2026-10-02', 'daily')
++        bad = self.body.replace(b'123456|Example', b'invalid|Example')
++        ref = self.seed_members(((self.source, self.body), (bad_source, bad)))
++        code, output = self.invoke(self.argv(ref=ref, attempt='partial'))
++        self.assertEqual(code, 3, self.calls[-1])
++        result = self.read_output(output)
++        self.assertEqual((result.transformed, result.failed, result.quarantined), (1, 1, 1))
++        self.assertEqual(result.gaps[0].details['line_number'], 3)
++        with patch('sec_edgar_ingest.etl.commands.publish_quarter', side_effect=AssertionError('partial published')):
++            code, output = self.invoke(self.argv('publish', result.transformed_workset_ref))
++        self.assertEqual(code, 3, self.calls[-1])
++        self.assertFalse(list(self.store.scan('QuarterPublication', {})))
++
++    def test_invalid_source_is_exit_seven(self):
++        ref = self.seed_members(((fixture_source('2026-10-02', 'daily'), self.body.replace(b'123456|Example', b'invalid|Example')),))
++        code, output = self.invoke(self.argv(ref=ref))
++        self.assertEqual(code, 7, self.calls[-1])
++        self.assertEqual(self.read_output(output).outcome, 'invalid_source')
++
++    def test_empty_complete_transform_and_publish_are_unchanged(self):
++        ref = self.transformed_members((), 'empty')
++        code, output = self.invoke(self.argv('publish', ref))
++        self.assertEqual(code, 0, self.calls[-1])
++        result = self.read_output(output)
++        self.assertEqual((result.outcome, result.published, result.quarters), ('unchanged', 0, ()))
++
++    def test_multiple_quarters_gate_continues_other_quarter_and_complete_receipts(self):
++        from support_etl import seed_observation
++        from sec_edgar_ingest.etl.state import EtlState
++        state = EtlState(self.store)
++        rows = (b'123456|A|10-K|2026-07-01|edgar/data/123456/a.txt\n'
++                b'123456|B|10-K|2026-07-02|edgar/data/123456/b.txt\n'
++                b'123456|C|10-K|2026-10-01|edgar/data/123456/c.txt\n')
++        old = seed_observation(self.objects, state, self.context, self.settings, period='2026Q3', rows=rows)
++        code, output = self.invoke(self.argv('publish', self.observation_workset((old,), 'old'), 'old'))
++        self.assertEqual(code, 0, self.calls[-1])
++        self.assertTrue(state.processing(old).value['published'])
++        pointer = state.pointer('2026Q3')
++        new = seed_observation(self.objects, state, self.context, self.settings, period='2026Q3', rows=rows.split(b'\n', 1)[1], seconds=1)
++        ref = self.observation_workset((new,), 'new')
++        code, output = self.invoke(self.argv('publish', ref, 'gate'))
++        self.assertEqual(code, 10, self.calls[-1])
++        result = self.read_output(output)
++        self.assertEqual((result.awaiting_approval, result.published), (1, 1))
++        self.assertEqual(state.pointer('2026Q3'), pointer)
++        self.assertFalse(state.processing(new).value.get('published', False))
++        self.assertEqual(set(state.processing(new).value['publications']), {'2026Q4'})
++
++    def test_persistent_conflict_retains_attempted_manifest_and_exit_nine(self):
++        from sec_edgar_ingest.etl.state import EtlState
++        from sec_edgar_ingest.storage.contracts import Conflict, CAS_ATTEMPTS
++        ref = self.transform()['transformed_workset_ref']
++        with patch.object(EtlState, 'commit_pointer', side_effect=Conflict('forced real candidate CAS loss')) as commits:
++            code, output = self.invoke(self.argv('publish', ref))
++        self.assertEqual(code, 9, self.calls[-1])
++        self.assertEqual(commits.call_count, CAS_ATTEMPTS)
++        result = self.read_output(output)
++        self.assertEqual(result.quarters[0].outcome, 'publication_conflict')
++        self.assertIsNone(result.quarters[0].generation_id)
++        self.assertEqual(result.gaps[0].details['attempted_manifest_ref'], result.quarters[0].manifest_ref)
++        self.assertFalse(list(self.store.scan('QuarterPublication', {})))
++
++    def test_changed_filing_date_visits_prior_receipt_quarter(self):
++        from support_etl import seed_observation
++        from sec_edgar_ingest.etl.state import EtlState
++        state = EtlState(self.store)
++        rows = b'123456|A|10-K|2026-07-01|edgar/data/123456/a.txt\n'
++        old = seed_observation(self.objects, state, self.context, self.settings, period='2026-10-02', kind='daily', rows=rows)
++        code, _ = self.invoke(self.argv('publish', self.observation_workset((old,), 'old-date'), 'old-date'))
++        self.assertEqual(code, 0, self.calls[-1])
++        new = seed_observation(self.objects, state, self.context, self.settings, period='2026-10-02', kind='daily',
++                               rows=rows.replace(b'2026-07-01', b'2026-10-01'), seconds=1)
++        code, output = self.invoke(self.argv('publish', self.observation_workset((new,), 'new-date'), 'new-date'))
++        self.assertEqual(code, 0, self.calls[-1])
++        self.assertEqual({quarter.quarter for quarter in self.read_output(output).quarters}, {'2026Q3', '2026Q4'})
++
++    def test_pointer_crash_resumes_without_another_advance_and_repairs_receipts(self):
++        from sec_edgar_ingest.etl.commands import run_publish
++        from support import Faults, CollectionCrash
++        ref = self.transform()['transformed_workset_ref']
++        faults = Faults()
++        def crash(): raise CollectionCrash()
++        faults.at('publication.after_pointer', crash)
++        def publisher(*args): return run_publish(*args, observer=faults)
++        with patch('sec_edgar_ingest.cli.run_publish', side_effect=publisher), self.assertRaises(CollectionCrash):
++            self.invoke(self.argv('publish', ref))
++        before = [row.to_mapping() for row in self.store.scan('QuarterPublication', {})]
++        self.assertFalse(list(self.store.scan('PublicationReceipt', {})))
++        self.checkpoint('pointer-before-replay')
++        code, _ = self.invoke(self.argv('publish', ref))
++        self.assertEqual(code, 0, self.calls[-1])
++        self.assertEqual([row.to_mapping() for row in self.store.scan('QuarterPublication', {})], before)
++        self.assertEqual(len(list(self.store.scan('PublicationReceipt', {}))), 1)
++        self.checkpoint('pointer-after-replay')
++
++    def test_begun_intent_refuses_changed_image_execution_and_config(self):
++        with patch('sec_edgar_ingest.cli.run_transform', side_effect=RuntimeError('interrupt before work')):
++            self.assertEqual(self.invoke(self.argv())[0], 9)
++        before = [row.to_mapping() for row in self.store.scan('Attempt', {})]
++        for change in ('image', 'execution', 'parser', 'force', 'workset'):
++            config = self.settings.to_mapping()
++            argv = self.argv()
++            if change == 'image': config['worker']['image_digest'] = 'sha256:' + 'f' * 64
++            elif change == 'execution': argv[argv.index('--execution-id') + 1] = 'different'
++            elif change == 'parser': config['etl']['parser_version'] = 'fixture-index-parser-v2'
++            elif change == 'force': argv.append('--force')
++            else: argv[-1] = 'worksets/sec/snapshot/sha256=' + 'f' * 64 + '/workset.json'
++            self.config.write_bytes(canonical_json(config))
++            with self.subTest(change=change):
++                self.assertEqual(self.invoke(argv)[0], 9, self.calls[-1])
++        # Refused invocations cannot create independent attempts for the same intent path.
++        self.assertEqual(len(list(self.store.scan('Attempt', {}))), len(before))
++
++    def test_publish_empty_rejects_context_version_mismatch(self):
++        ref = self.transformed_members((), 'empty-version')
++        config = self.settings.to_mapping()
++        config['etl']['parser_version'] = 'fixture-index-parser-v2'
++        self.config.write_bytes(canonical_json(config))
++        self.assertEqual(self.invoke(self.argv('publish', ref))[0], 9, self.calls[-1])
++
++    def test_failure_quarter_requires_matching_gap_and_valid_counters(self):
++        from sec_edgar_ingest.etl.commands import read_etl_result
++        from sec_edgar_ingest.etl.state import EtlState
++        from sec_edgar_ingest.storage.contracts import Conflict
++        ref = self.transform()['transformed_workset_ref']
++        with patch.object(EtlState, 'commit_pointer', side_effect=Conflict('CAS loss')):
++            code, output = self.invoke(self.argv('publish', ref))
++        self.assertEqual(code, 9)
++        path = output['result_ref']
++        original = json.loads(self.objects.read(path))
++        for mutation in ('missing-gap', 'unknown-gap', 'excess-conflicts'):
++            value = json.loads(canonical_json(original))
++            if mutation == 'missing-gap':
++                value['quarters'][0]['manifest_ref'] = None
++                value['gaps'] = []
++                value['failed'] = 0
++            elif mutation == 'unknown-gap': value['gaps'][0]['code'] = 'invented'
++            else: value['quarters'][0]['conflicts'] = 6
++            with self.subTest(mutation=mutation), patch.object(self.objects, 'read', return_value=canonical_json(value)):
++                with self.assertRaises((ValueError, Conflict)): read_etl_result(path, self.objects)
++
++    def test_harder_failure_dominates_gate_but_preserves_both_quarters(self):
++        from support_etl import seed_observation
++        from sec_edgar_ingest.etl.state import EtlState
++        from sec_edgar_ingest.storage.contracts import Conflict
++        state = EtlState(self.store)
++        rows = (b'123456|A|10-K|2026-07-01|edgar/data/123456/a.txt\n'
++                b'123456|B|10-K|2026-07-02|edgar/data/123456/b.txt\n'
++                b'123456|C|10-K|2026-10-01|edgar/data/123456/c.txt\n')
++        old = seed_observation(self.objects, state, self.context, self.settings, period='2026Q3', rows=rows)
++        self.assertEqual(self.invoke(self.argv('publish', self.observation_workset((old,), 'base-hard'), 'base-hard'))[0], 0)
++        new = seed_observation(self.objects, state, self.context, self.settings, period='2026Q3', rows=rows.split(b'\n', 1)[1], seconds=1)
++        with patch.object(EtlState, 'commit_pointer', side_effect=Conflict('Q4 blocked')):
++            code, output = self.invoke(self.argv('publish', self.observation_workset((new,), 'hard-gate'), 'hard-gate'))
++        self.assertEqual(code, 9, self.calls[-1])
++        result = self.read_output(output)
++        self.assertEqual((result.outcome, result.awaiting_approval, result.failed), ('publication_conflict', 1, 1))
++        self.assertEqual([q.outcome for q in result.quarters], ['awaiting_approval', 'publication_conflict'])
++
++    def test_forced_transform_rebuild_preserves_logical_publication(self):
++        first = self.transform()
++        ref = first['transformed_workset_ref']
++        self.assertEqual(self.invoke(self.argv('publish', ref))[0], 0)
++        before = [row.to_mapping() for row in self.store.scan('QuarterPublication', {})]
++        code, forced = self.invoke(self.argv(attempt='forced') + ['--force'])
++        self.assertEqual(code, 0, self.calls[-1])
++        self.assertEqual(self.read_output(forced).transformed, 1)
++        code, output = self.invoke(self.argv('publish', forced['transformed_workset_ref'], 'forced-publish'))
++        self.assertEqual(code, 0, self.calls[-1])
++        self.assertEqual(self.read_output(output).outcome, 'unchanged')
++        self.assertEqual([row.to_mapping() for row in self.store.scan('QuarterPublication', {})], before)
++
++    def test_wrong_payload_path_refuses(self):
++        first = self.transform()
++        for kind, path in (('snapshot', self.snapshot_ref), ('transformed', first['transformed_workset_ref'])):
++            body = self.objects.read(path)
++            wrong = f'worksets/sec/{kind}/sha256=' + 'a' * 64 + '/workset.json'
++            self.objects.put_once(wrong, body)
++            command = 'transform' if kind == 'snapshot' else 'publish'
++            self.assertEqual(self.invoke(self.argv(command, wrong, 'wrong-' + kind))[0], 9, self.calls[-1])
++        self.assertFalse(list(self.store.scan('QuarterPublication', {})))
++
++    def test_result_write_requires_exact_begun_attempt_and_rejects_changed_result(self):
++        from dataclasses import replace
++        from sec_edgar_ingest.etl.commands import run_transform, write_etl_result
++        from sec_edgar_ingest.state import AcquisitionState
++        from sec_edgar_ingest.storage.contracts import Conflict
++        context = self.context
++        with contextlib.redirect_stderr(io.StringIO()):
++            result = run_transform(self.snapshot_ref, context, self.settings, self.objects, self.store)
++        acquisition = AcquisitionState(self.store)
++        with self.assertRaises(Conflict): write_etl_result(result, self.objects, acquisition)
++        acquisition.begin_attempt(context)
++        write_etl_result(result, self.objects, acquisition)
++        with self.assertRaises(Conflict):
++            write_etl_result(replace(result, transformed=result.transformed + 1), self.objects, acquisition)
++
++    def test_result_codec_refuses_forged_context_and_orphan_error(self):
++        from sec_edgar_ingest.etl.commands import read_etl_result
++        from sec_edgar_ingest.storage.contracts import Conflict
++        output = self.transform()
++        path = output['result_ref']
++        body = self.objects.read(path)
++        for mutation in ('hash', 'config', 'pin', 'execution'):
++            value = json.loads(body)
++            if mutation == 'hash': value['context']['config_sha256'] = 'f' * 64
++            elif mutation == 'config': value['context']['effective_config'] = {}
++            elif mutation == 'pin': value['context']['pinned_on'] = None
++            else: value['context']['execution_id'] = '../unsafe'
++            with self.subTest(mutation=mutation), patch.object(self.objects, 'read', return_value=canonical_json(value)):
++                with self.assertRaises((ValueError, Conflict)): read_etl_result(path, self.objects)
++        _, output = self.invoke(self.argv('publish', output['transformed_workset_ref']))
++        path = output['result_ref']
++        value = json.loads(self.objects.read(path))
++        value['gaps'] = [{'code': 'internal_error', 'message': 'orphan', 'retryable': False, 'source_id': None, 'details': {}}]
++        value['failed'] = 1
++        value['outcome'] = 'internal_error'
++        with patch.object(self.objects, 'read', return_value=canonical_json(value)):
++            with self.assertRaises((ValueError, Conflict)): read_etl_result(path, self.objects)
++
++    def test_invalid_source_logs_source_and_raw_correlation(self):
++        source = fixture_source('2026-10-02', 'daily')
++        body = self.body.replace(b'123456|Example', b'invalid|Example')
++        ref = self.seed_members(((source, body),))
++        self.assertEqual(self.invoke(self.argv(ref=ref))[0], 7)
++        events = [json.loads(line) for line in self.calls[-1]['stderr'].splitlines()]
++        failures = [event for event in events if event['event'] == 'source_transform_failed']
++        self.assertEqual(len(failures), 1)
++        self.assertEqual(failures[0]['fields']['source_id'], source.source_id)
++        self.assertEqual(failures[0]['fields']['raw_sha256'], hashlib.sha256(body).hexdigest())
+diff --git a/packages/sec-edgar-ingest/tests/test_workspace.py b/packages/sec-edgar-ingest/tests/test_workspace.py
+index f2ec6c8..39ff119 100644
+--- a/packages/sec-edgar-ingest/tests/test_workspace.py
++++ b/packages/sec-edgar-ingest/tests/test_workspace.py
+@@ -35,6 +35,8 @@ class CliTests(unittest.TestCase):
+         self.assertIn("usage: sec-edgar-ingest", output.getvalue())
+         self.assertIn("discover", output.getvalue())
+         self.assertIn("collect", output.getvalue())
++        self.assertIn("transform", output.getvalue())
++        self.assertIn("publish", output.getvalue())
+ 
+     def test_main_help_and_version_exit_successfully(self):
+         from sec_edgar_ingest.cli import main
+@@ -49,7 +51,7 @@ class CliTests(unittest.TestCase):
+                 self.assertEqual(raised.exception.code, 0)
+                 self.assertIn(expected, output.getvalue())
+ 
+-    def test_unimplemented_commands_are_rejected(self):
++    def test_etl_commands_require_explicit_arguments(self):
+         from sec_edgar_ingest.cli import main
+ 
+         for command in ("transform", "publish"):
+@@ -73,7 +75,7 @@ class CliTests(unittest.TestCase):
+         self.assertIs(entry_points[0].load(), main)
+         requirements = set(distribution.requires or ())
+         self.assertEqual(requirements, {
+-            "requests==2.34.2", "azure-identity==1.26.0",
++            "pyarrow==25.0.1", "requests==2.34.2", "azure-identity==1.26.0",
+             "azure-storage-blob==12.31.0", "azure-data-tables==12.7.0",
+         })
+ 
+@@ -84,7 +86,14 @@ class CliTests(unittest.TestCase):
+             for argument, expected in (("--help", "usage: sec-edgar-ingest"),
+                                        ("--version", "0.1.0")):
+                 with self.subTest(invocation=invocation, argument=argument):
+-                    result = subprocess.run([*invocation, argument],
++                    # Install the mandatory child guard before either installed entry point loads.
++                    bootstrap = ("import sys; sys.path.insert(0, " + repr(str(pathlib.Path(__file__).parent)) + "); "
++                                 "from network_guard import install; install(); import runpy; ")
++                    if len(invocation) == 3:
++                        bootstrap += "sys.argv=['sec_edgar_ingest', sys.argv[1]]; runpy.run_module('sec_edgar_ingest', run_name='__main__')"
++                    else:
++                        bootstrap += "sys.argv=[" + repr(str(console)) + ", sys.argv[1]]; runpy.run_path(sys.argv[0], run_name='__main__')"
++                    result = subprocess.run([sys.executable, '-c', bootstrap, argument],
+                                             capture_output=True, text=True,
+                                             timeout=10)
+                     self.assertEqual(result.returncode, 0, result.stderr)

@@ -1,0 +1,325 @@
+# Review package: 9f47166ca318b0a9f8e8cf6bb428e49bfb8e4486..e460df72b72f090762f382136cbb9e7689635d21
+
+## Commits
+e460df7 fix: verify candidate deltas against every exact base generation
+
+## Files changed
+ .../src/sec_edgar_ingest/etl/catalog.py            |  2 +-
+ .../src/sec_edgar_ingest/etl/manifest.py           | 79 ++++++++++++++++++----
+ .../sec-edgar-ingest/tests/test_etl_catalog.py     | 77 +++++++++++++++++++++
+ 3 files changed, 145 insertions(+), 13 deletions(-)
+
+## Diff
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/catalog.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/catalog.py
+index 3bb66cb..dedb4d2 100644
+--- a/packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/catalog.py
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/catalog.py
+@@ -248,21 +248,21 @@ def build_candidate(quarter: str, previous: GenerationCapture | None, incoming:
+                 objects.verify(ref.path, ref.sha256, ref.byte_count)
+                 files.append(ref)
+                 observe(observer, 'candidate.after_' + role)
+         manifest = GenerationManifest(quarter, generation_id, previous.generation_id if previous else None,
+                                       fingerprint, context.parser_version, context.schema_version, context.image_digest,
+                                       selected, tuple(files), counts['data'], counts['added'], counts['updated'],
+                                       counts['withdrawn'], counts['unresolved_absence'], counts['provenance_refreshed'],
+                                       mode, membership, retained,
+                                       'awaiting_approval' if mode == 'closed' and counts['withdrawn'] else 'clear')
+         validate_files(manifest, objects)
+-        if retained:
++        if previous:
+             objects.put_once(base + '/retained-base.json', canonical_json(previous.to_mapping()))
+         body = canonical_json(manifest.to_mapping())
+         candidate = _candidate(manifest, body)
+         try:
+             objects.put_once(candidate.manifest_ref, body)
+         except Conflict:
+             candidate = _existing(quarter, generation_id, objects)
+             if candidate is None:
+                 raise Conflict('concurrent candidate vanished')
+         observe(observer, 'candidate.after_manifest')
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/manifest.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/manifest.py
+index 157938e..7144b18 100644
+--- a/packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/manifest.py
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/manifest.py
+@@ -161,97 +161,105 @@ def validate_files(manifest: GenerationManifest, objects: ObjectStore) -> None:
+                             raise ValueError('change logical key differs')
+                 if kind == 'unresolved_absence' and (before != after or not value['reason']):
+                     raise ValueError('unresolved absence must retain original row and reason')
+                 counts[kind] += 1
+     expected = {'data': manifest.row_count, 'added': manifest.added, 'updated': manifest.updated,
+                 'withdrawn': manifest.withdrawn, 'unresolved_absence': manifest.unresolved_absence}
+     if any(counts[key] != value for key, value in expected.items()):
+         raise ValueError('generation aggregate counts differ')
+ 
+ 
+-def _retained_manifest(manifest, objects):
+-    if not manifest.retained_from_generation:
++def _base_manifest(manifest, objects):
++    if not manifest.base_generation_id:
+         if manifest.unresolved_absence:
+             raise ValueError('unresolved absence requires an exact retained dependency')
+         return None
+     path = generation_base(manifest.quarter, manifest.generation_id) + '/retained-base.json'
+     body = objects.read(path)
+     retained = GenerationCapture.from_mapping(parse_json(body))
+     if canonical_json(retained.to_mapping()) != body or (retained.quarter, retained.generation_id) != (
+-            manifest.quarter, manifest.retained_from_generation):
+-        raise ValueError('retained dependency differs')
++            manifest.quarter, manifest.base_generation_id):
++        raise ValueError('exact base dependency differs')
+     if retained.generation_id == manifest.generation_id:
+-        raise ValueError('self-referential retained dependency')
++        raise ValueError('self-referential base dependency')
+     previous = read_manifest(retained, objects)
+     validate_files(previous, objects)
+     return previous
+ 
+ 
+ def _validate_row_origins(manifest, objects):
+-    retained = _retained_manifest(manifest, objects)
++    base_manifest = _base_manifest(manifest, objects)
+     with TemporaryDirectory(prefix='sec-candidate-verify-') as directory, closing(sqlite3.connect(Path(directory) / 'verify.sqlite')) as db:
+         db.execute('PRAGMA temp_store=FILE')
+         db.execute('CREATE TABLE allowed(payload BLOB PRIMARY KEY)')
+         db.execute('CREATE TABLE ranked(cik TEXT, path TEXT, payload BLOB, preference INTEGER, period TEXT, receipt TEXT, source TEXT)')
+         db.execute('CREATE TABLE winners(cik TEXT, path TEXT, payload BLOB, PRIMARY KEY(cik,path))')
+         db.execute('CREATE TABLE membership(cik TEXT, path TEXT, PRIMARY KEY(cik,path))')
+-        db.execute('CREATE TABLE retained(cik TEXT, path TEXT, payload BLOB, PRIMARY KEY(cik,path))')
++        db.execute('CREATE TABLE base_rows(cik TEXT, path TEXT, payload BLOB, PRIMARY KEY(cik,path))')
+         db.execute('CREATE TABLE output(cik TEXT, path TEXT, payload BLOB, PRIMARY KEY(cik,path))')
+         db.execute('CREATE TABLE unresolved(cik TEXT, path TEXT, PRIMARY KEY(cik,path))')
++        db.execute('CREATE TABLE actual_changes(cik TEXT, path TEXT, payload BLOB, PRIMARY KEY(cik,path))')
+         for ref in manifest.sources:
+             durable, _ = _read_manifest(ref.manifest_ref, objects)
+             if durable != ref:
+                 raise ValueError('selected source differs from immutable observation manifest')
+             with closing(read_observations(ref, objects)) as rows:
+                 for obs in rows:
+                     if quarter_for(obs.row.filing_date) == manifest.quarter:
+                         payload = canonical_json(obs.row.to_mapping())
+                         db.execute('INSERT OR IGNORE INTO allowed VALUES(?)', (payload,))
+                         db.execute('INSERT INTO ranked VALUES(?,?,?,?,?,?,?)',
+                                    (obs.row.cik, obs.row.archive_path, payload, int(ref.source.kind == 'quarterly'),
+                                     ref.source.period, ref.snapshot.received_at.isoformat(), ref.source.source_id))
+                         if ref == manifest.membership_source:
+                             db.execute('INSERT OR IGNORE INTO membership VALUES(?,?)', (obs.row.cik, obs.row.archive_path))
+         db.execute('INSERT OR IGNORE INTO winners SELECT cik,path,payload FROM ranked ORDER BY cik,path,preference DESC,period DESC,receipt DESC,source ASC')
+-        if retained:
+-            for ref in retained.files:
++        if base_manifest:
++            for ref in base_manifest.files:
+                 if ref.role == 'data':
+                     with closing(iter_file_rows(ref, objects)) as rows:
+                         for value in rows:
+                             row = _row(value, manifest.quarter)
+-                            db.execute('INSERT INTO retained VALUES(?,?,?)', (row.cik, row.archive_path, canonical_json(row.to_mapping())))
++                            db.execute('INSERT INTO base_rows VALUES(?,?,?)', (row.cik, row.archive_path, canonical_json(row.to_mapping())))
+         for ref in manifest.files:
+             if ref.role == 'data':
+                 with closing(iter_file_rows(ref, objects)) as rows:
+                     for value in rows:
+                         row = _row(value, manifest.quarter)
+                         payload = canonical_json(row.to_mapping())
+                         key = row.cik, row.archive_path
+                         allowed = db.execute('SELECT 1 FROM allowed WHERE payload=?', (payload,)).fetchone()
+-                        old = db.execute('SELECT payload FROM retained WHERE cik=? AND path=?', key).fetchone()
++                        old = db.execute('SELECT payload FROM base_rows WHERE cik=? AND path=?', key).fetchone()
+                         if not allowed and (old is None or old[0] != payload):
+                             raise ValueError('canonical row is not a selected observation or exact retained row')
+                         db.execute('INSERT INTO output VALUES(?,?,?)', (*key, payload))
+         for ref in manifest.files:
+             if ref.role == 'changes':
+                 with closing(iter_file_rows(ref, objects)) as rows:
+                     for value in rows:
+                         key = value['cik'], value['archive_path']
++                        normalized = dict(value)
++                        for field in ('before', 'after'):
++                            if normalized[field] is not None:
++                                normalized[field] = _row(normalized[field], manifest.quarter).to_mapping()
++                        if db.execute('SELECT 1 FROM actual_changes WHERE cik=? AND path=?', key).fetchone():
++                            raise ValueError('delta has multiple changes for one logical key')
++                        db.execute('INSERT INTO actual_changes VALUES(?,?,?)', (*key, canonical_json(normalized)))
+                         after = value['after']
+                         output = db.execute('SELECT payload FROM output WHERE cik=? AND path=?', key).fetchone()
+                         if after is not None:
+                             if output is None or output[0] != canonical_json(_row(after, manifest.quarter).to_mapping()):
+                                 raise ValueError('change after row differs from canonical output')
+                         elif output is not None:
+                             raise ValueError('withdrawn key remains in canonical output')
+                         if value['change_type'] == 'unresolved_absence':
+-                            old = db.execute('SELECT payload FROM retained WHERE cik=? AND path=?', key).fetchone()
++                            old = db.execute('SELECT payload FROM base_rows WHERE cik=? AND path=?', key).fetchone()
+                             if old is None or old[0] != output[0]:
+                                 raise ValueError('unresolved row differs from exact retained base')
+                             db.execute('INSERT INTO unresolved VALUES(?,?)', key)
+                         if value['change_type'] == 'updated':
+                             fields = ('company_name', 'form_type', 'filing_date', 'accession_number')
+                             if all(value['before'][field] == after[field] for field in fields):
+                                 raise ValueError('provenance-only difference is not a business update')
+         wrong_rank = db.execute('SELECT 1 FROM output o LEFT JOIN winners w ON o.cik=w.cik AND o.path=w.path LEFT JOIN unresolved u ON o.cik=u.cik AND o.path=u.path WHERE u.cik IS NULL AND (w.payload IS NULL OR w.payload != o.payload) LIMIT 1').fetchone()
+         if wrong_rank:
+             raise ValueError('canonical row violates selected source ranking precedence')
+@@ -259,24 +267,71 @@ def _validate_row_origins(manifest, objects):
+             missing = db.execute('SELECT cik,path FROM membership EXCEPT SELECT cik,path FROM output').fetchone()
+             extra = db.execute('SELECT cik,path FROM output EXCEPT SELECT cik,path FROM membership').fetchone()
+             if missing or extra:
+                 raise ValueError('closed canonical keys differ from authoritative membership')
+         else:
+             missing = db.execute('SELECT cik,path FROM winners EXCEPT SELECT cik,path FROM output').fetchone()
+             if missing:
+                 raise ValueError('canonical output is missing selected observation keys')
+         if manifest.base_generation_id is None and (manifest.added != manifest.row_count or manifest.updated or manifest.withdrawn or manifest.unresolved_absence or manifest.provenance_refreshed):
+             raise ValueError('first-generation changes differ from canonical rows')
++        _validate_deltas(db, manifest)
+         if bool(manifest.retained_from_generation) != bool(manifest.unresolved_absence):
+             raise ValueError('retained basis and unresolved count disagree')
+ 
+ 
++def _validate_deltas(db, manifest):
++    """Recompute every change from the captured base, never trust supplied counts."""
++    counts = Counter()
++    keys = db.execute('SELECT cik,path FROM base_rows UNION SELECT cik,path FROM output ORDER BY cik,path')
++    for key in keys:
++        before_record = db.execute('SELECT payload FROM base_rows WHERE cik=? AND path=?', key).fetchone()
++        after_record = db.execute('SELECT payload FROM output WHERE cik=? AND path=?', key).fetchone()
++        before = parse_json(before_record[0]) if before_record else None
++        after = parse_json(after_record[0]) if after_record else None
++        kind, reason = None, None
++        if before is None:
++            kind = 'added'
++        elif after is None:
++            if manifest.quarter_mode != 'closed' or manifest.membership_source is None:
++                raise ValueError('delta removes a base key without closed membership authority')
++            kind, reason = 'withdrawn', 'absent from closed quarterly membership'
++        else:
++            winner = db.execute('SELECT 1 FROM winners WHERE cik=? AND path=?', key).fetchone()
++            member = db.execute('SELECT 1 FROM membership WHERE cik=? AND path=?', key).fetchone()
++            unresolved = winner is None or (manifest.quarter_mode == 'open' and manifest.membership_source is not None and member is None)
++            if unresolved:
++                if before != after:
++                    raise ValueError('delta unresolved absence must preserve the exact base row')
++                kind, reason = 'unresolved_absence', 'absence is not authoritative withdrawal evidence'
++            elif any(before[field] != after[field] for field in ('company_name', 'form_type', 'filing_date', 'accession_number')):
++                kind = 'updated'
++            elif before != after:
++                counts['provenance_refreshed'] += 1
++        actual = db.execute('SELECT payload FROM actual_changes WHERE cik=? AND path=?', key).fetchone()
++        if kind is None:
++            if actual is not None:
++                raise ValueError('delta contains a change absent from exact base/output comparison')
++            continue
++        expected = canonical_json({'change_type': kind, 'cik': key[0], 'archive_path': key[1],
++                                   'before': before, 'after': after, 'reason': reason})
++        if actual is None or actual[0] != expected:
++            raise ValueError('delta differs from exact base/output before and after rows')
++        counts[kind] += 1
++    change_count = sum(counts[name] for name in ('added', 'updated', 'withdrawn', 'unresolved_absence'))
++    if db.execute('SELECT COUNT(*) FROM actual_changes').fetchone()[0] != change_count:
++        raise ValueError('delta includes keys outside exact base/output membership')
++    for name in ('added', 'updated', 'withdrawn', 'unresolved_absence', 'provenance_refreshed'):
++        if getattr(manifest, name) != counts[name]:
++            raise ValueError('delta count differs from exact base/output comparison: ' + name)
++
++
+ def validate_candidate_content(candidate: Candidate, objects: ObjectStore) -> None:
+     """Validate complete immutable output before the gate record/index can exist."""
+     capture = GenerationCapture(candidate.manifest.quarter, candidate.manifest.generation_id,
+                                 candidate.manifest_ref, candidate.manifest_sha256, candidate.manifest_bytes)
+     manifest = read_manifest(capture, objects)
+     if manifest != candidate.manifest or candidate.candidate_ref != gate_ref(manifest):
+         raise ValueError('candidate differs from exact manifest/gate identity')
+     validate_files(manifest, objects)
+     _validate_row_origins(manifest, objects)
+ 
+diff --git a/packages/sec-edgar-ingest/tests/test_etl_catalog.py b/packages/sec-edgar-ingest/tests/test_etl_catalog.py
+index c9ef83d..8bd3f76 100644
+--- a/packages/sec-edgar-ingest/tests/test_etl_catalog.py
++++ b/packages/sec-edgar-ingest/tests/test_etl_catalog.py
+@@ -417,10 +417,87 @@ class EtlCatalogTests(unittest.TestCase):
+             pq.write_table(pa.Table.from_pylist(values, schema=schema), path,
+                            version='2.6', compression='snappy', use_dictionary=False)
+             body = path.read_bytes()
+             files.append(replace(ref, sha256=hashlib.sha256(body).hexdigest(), byte_count=len(body), row_count=1))
+         manifest = replace(candidate.manifest, files=tuple(files), row_count=1, added=1)
+         body = canonical_json(manifest.to_mapping())
+         (self.root / 'objects' / candidate.manifest_ref).write_bytes(body)
+         forged = replace(candidate, manifest=manifest, manifest_sha256=hashlib.sha256(body).hexdigest(), manifest_bytes=len(body))
+         with self.assertRaisesRegex(ValueError, 'missing selected'):
+             validate_candidate(forged, self.objects)
++
++    def rewrite_changes(self, candidate, changes, **counts):
++        """Tamper real immutable fixture bytes and consistently update references."""
++        import hashlib
++        import pyarrow as pa
++        import pyarrow.parquet as pq
++        from sec_edgar_ingest.etl.contracts import change_schema
++        from sec_edgar_ingest.models import canonical_json
++        change_ref = next(ref for ref in candidate.manifest.files if ref.role == 'changes')
++        path = self.root / 'objects' / change_ref.path
++        pq.write_table(pa.Table.from_pylist(changes, schema=change_schema()), path,
++                       version='2.6', compression='snappy', use_dictionary=False)
++        body = path.read_bytes()
++        change_ref = replace(change_ref, sha256=hashlib.sha256(body).hexdigest(), byte_count=len(body), row_count=len(changes))
++        files = tuple(change_ref if ref.role == 'changes' else ref for ref in candidate.manifest.files)
++        manifest = replace(candidate.manifest, files=files, **counts)
++        body = canonical_json(manifest.to_mapping())
++        (self.root / 'objects' / candidate.manifest_ref).write_bytes(body)
++        return replace(candidate, manifest=manifest, manifest_sha256=hashlib.sha256(body).hexdigest(),
++                       manifest_bytes=len(body), candidate_ref=None if manifest.gate == 'clear' else candidate.candidate_ref)
++
++    def test_suppressed_withdrawal_with_consistent_hashes_cannot_clear_gate(self):
++        old = self.build([self.observation(rows=row() + row(number=2))])
++        revised = self.observation(rows=row(), seconds=1)
++        self.pin(date(2027, 1, 1))
++        candidate = self.build([revised], old)
++        forged = self.rewrite_changes(candidate, [], withdrawn=0, gate='clear')
++        with self.assertRaisesRegex(ValueError, 'delta'):
++            validate_candidate(forged, self.objects)
++        with self.assertRaisesRegex(ValueError, 'delta'):
++            self.build([revised], old)
++
++    def test_omitted_update_with_consistent_counts_is_refused(self):
++        old = self.build([self.observation('2026-10-01', 'daily')])
++        revised = self.observation('2026-10-02', 'daily', row('Changed'))
++        candidate = self.build([revised], old)
++        forged = self.rewrite_changes(candidate, [], updated=0)
++        with self.assertRaisesRegex(ValueError, 'delta'):
++            validate_candidate(forged, self.objects)
++
++    def test_forged_update_before_value_is_refused(self):
++        old = self.build([self.observation('2026-10-01', 'daily')])
++        revised = self.observation('2026-10-02', 'daily', row('Changed'))
++        candidate = self.build([revised], old)
++        changes = self.rows(candidate, 'changes')
++        changes[0]['before']['company_name'] = 'Invented before'
++        forged = self.rewrite_changes(candidate, changes)
++        with self.assertRaisesRegex(ValueError, 'delta'):
++            validate_candidate(forged, self.objects)
++
++    def test_forged_provenance_refresh_count_is_refused(self):
++        old = self.build([self.observation('2026-10-01', 'daily')])
++        candidate = self.build([self.observation('2026-10-02', 'daily')], old)
++        forged = self.rewrite_changes(candidate, [], provenance_refreshed=0)
++        with self.assertRaisesRegex(ValueError, 'delta'):
++            validate_candidate(forged, self.objects)
++
++    def test_nonretaining_candidate_requires_exact_base_capture(self):
++        from sec_edgar_ingest.models import canonical_json
++        old = self.build([self.observation('2026-10-01', 'daily')])
++        revised = self.observation('2026-10-02', 'daily', row('Changed'))
++        candidate = self.build([revised], old)
++        self.assertIsNone(candidate.manifest.retained_from_generation)
++        dependency = self.root / 'objects' / candidate.manifest_ref.replace('manifest.json', 'retained-base.json')
++        original = dependency.read_bytes()
++        self.assertEqual(original, canonical_json(self.capture(old).to_mapping()))
++        dependency.unlink()
++        with self.assertRaises(FileNotFoundError):
++            validate_candidate(candidate, self.objects)
++        dependency.write_bytes(original + b'\n')
++        with self.assertRaises(ValueError):
++            validate_candidate(candidate, self.objects)
++        dependency.write_bytes(canonical_json(self.capture(candidate).to_mapping()))
++        with self.assertRaises(ValueError):
++            validate_candidate(candidate, self.objects)
++        dependency.write_bytes(original)
++        self.assertEqual(self.build([revised], old), candidate)

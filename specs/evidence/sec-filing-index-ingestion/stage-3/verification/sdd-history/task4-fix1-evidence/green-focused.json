@@ -1,0 +1,25 @@
+{
+  "command": "uv run --offline --frozen python packages/sec-edgar-ingest/tests/network_guard.py discover -s packages/sec-edgar-ingest/tests -p test_etl_catalog.py -k consistent -k forged -v",
+  "argv": [
+    "uv",
+    "run",
+    "--offline",
+    "--frozen",
+    "python",
+    "packages/sec-edgar-ingest/tests/network_guard.py",
+    "discover",
+    "-s",
+    "packages/sec-edgar-ingest/tests",
+    "-p",
+    "test_etl_catalog.py",
+    "-k",
+    "consistent",
+    "-k",
+    "forged",
+    "-v"
+  ],
+  "cwd": "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar",
+  "exit": 0,
+  "stdout": "",
+  "stderr": "test_consistent_hashes_and_counts_cannot_hide_a_missing_selected_key (test_etl_catalog.EtlCatalogTests.test_consistent_hashes_and_counts_cannot_hide_a_missing_selected_key) ... ok\ntest_forged_provenance_refresh_count_is_refused (test_etl_catalog.EtlCatalogTests.test_forged_provenance_refresh_count_is_refused) ... ok\ntest_forged_update_before_value_is_refused (test_etl_catalog.EtlCatalogTests.test_forged_update_before_value_is_refused) ... ok\ntest_omitted_update_with_consistent_counts_is_refused (test_etl_catalog.EtlCatalogTests.test_omitted_update_with_consistent_counts_is_refused) ... ok\ntest_suppressed_withdrawal_with_consistent_hashes_cannot_clear_gate (test_etl_catalog.EtlCatalogTests.test_suppressed_withdrawal_with_consistent_hashes_cannot_clear_gate) ... ok\n\n----------------------------------------------------------------------\nRan 5 tests in 0.675s\n\nOK\n"
+}

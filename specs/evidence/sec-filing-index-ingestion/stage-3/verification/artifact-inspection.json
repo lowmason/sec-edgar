@@ -1,0 +1,3496 @@
+{
+  "all22_stage7_checks": "reserved",
+  "argv": [
+    ".sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/inspect-final.py"
+  ],
+  "commands_and_results": [
+    {
+      "argv": [
+        "uv",
+        "run",
+        "--offline",
+        "--frozen",
+        "--package",
+        "sec-edgar-ingest",
+        "python",
+        ".sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/retain.py"
+      ],
+      "exit": 1,
+      "has_full_inline_logs": false,
+      "has_full_separate_logs": false,
+      "path": "sdd-history/task7-evidence/preservation-first-failure.json"
+    },
+    {
+      "argv": [
+        "uv",
+        "pip",
+        "install",
+        "--offline",
+        "--no-index",
+        "--no-deps",
+        "--python",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-59bbihch/venv/bin/python",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/dist/sec_edgar_ingest-0.1.0-py3-none-any.whl"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": true,
+      "path": "sdd-history/task7-evidence/installed-5/install-wheel.json"
+    },
+    {
+      "argv": [
+        "uv",
+        "export",
+        "--offline",
+        "--frozen",
+        "--package",
+        "sec-edgar-ingest",
+        "--no-emit-workspace",
+        "--format",
+        "requirements-txt"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": true,
+      "path": "sdd-history/task7-evidence/installed-5/lock.json"
+    },
+    {
+      "argv": [
+        "packages/sec-edgar-ingest/tests/etl_proof.py",
+        "installed",
+        "--output",
+        ".sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-5"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": false,
+      "has_full_separate_logs": true,
+      "path": "sdd-history/task7-evidence/installed-5/report.json"
+    },
+    {
+      "argv": [
+        "uv",
+        "pip",
+        "install",
+        "--offline",
+        "--no-deps",
+        "--require-hashes",
+        "--python",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-59bbihch/venv/bin/python",
+        "-r",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-59bbihch/arrow.txt"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": true,
+      "path": "sdd-history/task7-evidence/installed-5/install-arrow.json"
+    },
+    {
+      "argv": [
+        "uv",
+        "pip",
+        "install",
+        "--offline",
+        "--no-index",
+        "--find-links",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-2/verification/sdd-history/task1-evidence/wheels",
+        "--require-hashes",
+        "--python",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-59bbihch/venv/bin/python",
+        "-r",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-59bbihch/others.txt"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": true,
+      "path": "sdd-history/task7-evidence/installed-5/install-dependencies.json"
+    },
+    {
+      "argv": [
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-59bbihch/venv/bin/python",
+        "-c",
+        "import sys; sys.path.insert(0, '/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-59bbihch/harness'); import network_guard; network_guard.install(); from sec_edgar_ingest.cli import main; raise SystemExit(main([\"--help\"]))"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": true,
+      "path": "sdd-history/task7-evidence/installed-5/help.json"
+    },
+    {
+      "argv": [
+        "uv",
+        "venv",
+        "--offline",
+        "--python",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.venv/bin/python",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-59bbihch/venv"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": true,
+      "path": "sdd-history/task7-evidence/installed-5/venv.json"
+    },
+    {
+      "argv": [
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-59bbihch/venv/bin/python",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-59bbihch/harness/installed_runner.py",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-5/installed-sequence"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": true,
+      "path": "sdd-history/task7-evidence/installed-5/proof.json"
+    },
+    {
+      "argv": [
+        "uv",
+        "export",
+        "--offline",
+        "--frozen",
+        "--package",
+        "sec-edgar-ingest",
+        "--no-emit-workspace",
+        "--format",
+        "requirements-txt"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": true,
+      "path": "sdd-history/task7-evidence/installed-2/lock.json"
+    },
+    {
+      "argv": [
+        "packages/sec-edgar-ingest/tests/etl_proof.py",
+        "installed",
+        "--output",
+        ".sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-2"
+      ],
+      "exit": 1,
+      "has_full_inline_logs": false,
+      "has_full_separate_logs": true,
+      "path": "sdd-history/task7-evidence/installed-2/report.json"
+    },
+    {
+      "argv": [
+        "uv",
+        "pip",
+        "install",
+        "--offline",
+        "--no-index",
+        "--find-links",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-2/verification/sdd-history/task1-evidence/wheels",
+        "--require-hashes",
+        "--python",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-lb0nwjdh/venv/bin/python",
+        "-r",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-lb0nwjdh/requirements.txt"
+      ],
+      "exit": 1,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": true,
+      "path": "sdd-history/task7-evidence/installed-2/install-dependencies.json"
+    },
+    {
+      "argv": [
+        "uv",
+        "venv",
+        "--offline",
+        "--python",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.venv/bin/python",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-lb0nwjdh/venv"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": true,
+      "path": "sdd-history/task7-evidence/installed-2/venv.json"
+    },
+    {
+      "argv": [
+        "uv",
+        "export",
+        "--offline",
+        "--frozen",
+        "--package",
+        "sec-edgar-ingest",
+        "--no-emit-workspace",
+        "--format",
+        "requirements-txt"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": true,
+      "path": "sdd-history/task7-evidence/installed-3/lock.json"
+    },
+    {
+      "argv": [
+        "packages/sec-edgar-ingest/tests/etl_proof.py",
+        "installed",
+        "--output",
+        ".sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-3"
+      ],
+      "exit": 1,
+      "has_full_inline_logs": false,
+      "has_full_separate_logs": true,
+      "path": "sdd-history/task7-evidence/installed-3/report.json"
+    },
+    {
+      "argv": [
+        "uv",
+        "pip",
+        "install",
+        "--offline",
+        "--find-links",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-2/verification/sdd-history/task1-evidence/wheels",
+        "--require-hashes",
+        "--python",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-5op8p2wq/venv/bin/python",
+        "-r",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-5op8p2wq/requirements.txt"
+      ],
+      "exit": 1,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": true,
+      "path": "sdd-history/task7-evidence/installed-3/install-dependencies.json"
+    },
+    {
+      "argv": [
+        "uv",
+        "venv",
+        "--offline",
+        "--python",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.venv/bin/python",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-5op8p2wq/venv"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": true,
+      "path": "sdd-history/task7-evidence/installed-3/venv.json"
+    },
+    {
+      "argv": [
+        "uv",
+        "pip",
+        "install",
+        "--offline",
+        "--no-index",
+        "--no-deps",
+        "--python",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-04v9w07p/venv/bin/python",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/dist/sec_edgar_ingest-0.1.0-py3-none-any.whl"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": true,
+      "path": "sdd-history/task7-evidence/installed-4/install-wheel.json"
+    },
+    {
+      "argv": [
+        "uv",
+        "export",
+        "--offline",
+        "--frozen",
+        "--package",
+        "sec-edgar-ingest",
+        "--no-emit-workspace",
+        "--format",
+        "requirements-txt"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": true,
+      "path": "sdd-history/task7-evidence/installed-4/lock.json"
+    },
+    {
+      "argv": [
+        "packages/sec-edgar-ingest/tests/etl_proof.py",
+        "installed",
+        "--output",
+        ".sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-4"
+      ],
+      "exit": 1,
+      "has_full_inline_logs": false,
+      "has_full_separate_logs": true,
+      "path": "sdd-history/task7-evidence/installed-4/report.json"
+    },
+    {
+      "argv": [
+        "uv",
+        "pip",
+        "install",
+        "--offline",
+        "--no-deps",
+        "--require-hashes",
+        "--python",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-04v9w07p/venv/bin/python",
+        "-r",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-04v9w07p/arrow.txt"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": true,
+      "path": "sdd-history/task7-evidence/installed-4/install-arrow.json"
+    },
+    {
+      "argv": [
+        "uv",
+        "pip",
+        "install",
+        "--offline",
+        "--no-index",
+        "--find-links",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-2/verification/sdd-history/task1-evidence/wheels",
+        "--require-hashes",
+        "--python",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-04v9w07p/venv/bin/python",
+        "-r",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-04v9w07p/others.txt"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": true,
+      "path": "sdd-history/task7-evidence/installed-4/install-dependencies.json"
+    },
+    {
+      "argv": [
+        "uv",
+        "venv",
+        "--offline",
+        "--python",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.venv/bin/python",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-04v9w07p/venv"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": true,
+      "path": "sdd-history/task7-evidence/installed-4/venv.json"
+    },
+    {
+      "argv": [
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-04v9w07p/venv/bin/python",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-04v9w07p/harness/installed_runner.py",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-4/installed-sequence"
+      ],
+      "exit": 1,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": true,
+      "path": "sdd-history/task7-evidence/installed-4/proof.json"
+    },
+    {
+      "argv": [
+        "uv",
+        "export",
+        "--offline",
+        "--frozen",
+        "--package",
+        "sec-edgar-ingest",
+        "--no-emit-workspace",
+        "--format",
+        "requirements-txt"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": true,
+      "path": "sdd-history/task7-evidence/installed-1/lock.json"
+    },
+    {
+      "argv": [
+        "packages/sec-edgar-ingest/tests/etl_proof.py",
+        "installed",
+        "--output",
+        ".sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-1"
+      ],
+      "exit": 1,
+      "has_full_inline_logs": false,
+      "has_full_separate_logs": true,
+      "path": "sdd-history/task7-evidence/installed-1/report.json"
+    },
+    {
+      "argv": [
+        "uv",
+        "venv",
+        "--offline",
+        "--python",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.venv/bin/python",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-6crszsen/venv"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": true,
+      "path": "sdd-history/task7-evidence/installed-1/venv.json"
+    },
+    {
+      "argv": [
+        "uv",
+        "pip",
+        "install",
+        "--offline",
+        "--python",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-6crszsen/venv/bin/python",
+        "-r",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-6crszsen/requirements.txt",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/dist/sec_edgar_ingest-0.1.0-py3-none-any.whl"
+      ],
+      "exit": 1,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": true,
+      "path": "sdd-history/task7-evidence/installed-1/install.json"
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "--offline",
+        "--frozen",
+        "--package",
+        "sec-edgar-ingest",
+        "python",
+        "packages/sec-edgar-ingest/tests/network_guard.py",
+        "discover",
+        "-s",
+        "packages/sec-edgar-ingest/tests",
+        "-p",
+        "test_etl_processes.py",
+        "-v"
+      ],
+      "exit": 1,
+      "has_full_inline_logs": false,
+      "has_full_separate_logs": true,
+      "path": "sdd-history/task7-evidence/red/command.json"
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "--offline",
+        "--frozen",
+        "--package",
+        "sec-edgar-ingest",
+        "python",
+        "packages/sec-edgar-ingest/tests/network_guard.py",
+        "discover",
+        "-s",
+        "packages/sec-edgar-ingest/tests",
+        "-p",
+        "test_etl_processes.py",
+        "-v"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": false,
+      "has_full_separate_logs": true,
+      "path": "sdd-history/task7-evidence/process-1/command.json"
+    },
+    {
+      "argv": [
+        "packages/sec-edgar-ingest/tests/etl_proof.py",
+        "sequence",
+        "--output",
+        ".sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/sequence-1"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": false,
+      "has_full_separate_logs": true,
+      "path": "sdd-history/task7-evidence/sequence-1/report.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/sequence-1/raw-sequence/config.json",
+        "--run-id",
+        "sequence",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish-v1",
+        "--deadline",
+        "2026-10-07T16:04:25.312437+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/sequence-1/raw-sequence",
+        "--workset",
+        "worksets/sec/transformed/sha256=036856747ac49fd97fd34ed1e7a1e30f9ef3fe4b5b5991bf91bd35c63c9a8f55/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sdd-history/task7-evidence/sequence-1/raw-sequence/publish-v1.json"
+    },
+    {
+      "argv": [
+        "transform",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/sequence-1/raw-sequence/config.json",
+        "--run-id",
+        "sequence",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "transform-v1",
+        "--deadline",
+        "2026-10-07T16:04:25.312437+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/sequence-1/raw-sequence",
+        "--workset",
+        "worksets/sec/snapshot/sha256=278fed060f534160307c6994f6f8e43b3f8984a3b89190af391ccf22a43199d4/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sdd-history/task7-evidence/sequence-1/raw-sequence/transform-v1.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/sequence-1/raw-sequence/config.json",
+        "--run-id",
+        "sequence",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "noop-v1",
+        "--deadline",
+        "2026-10-07T16:04:25.312437+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/sequence-1/raw-sequence",
+        "--workset",
+        "worksets/sec/transformed/sha256=036856747ac49fd97fd34ed1e7a1e30f9ef3fe4b5b5991bf91bd35c63c9a8f55/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sdd-history/task7-evidence/sequence-1/raw-sequence/noop-v1.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/sequence-1/raw-sequence/config.json",
+        "--run-id",
+        "sequence",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish-v1",
+        "--deadline",
+        "2026-10-07T16:04:25.312437+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/sequence-1/raw-sequence",
+        "--workset",
+        "worksets/sec/transformed/sha256=036856747ac49fd97fd34ed1e7a1e30f9ef3fe4b5b5991bf91bd35c63c9a8f55/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sdd-history/task7-evidence/sequence-1/raw-sequence/repeat-v1.json"
+    },
+    {
+      "argv": [
+        "transform",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/sequence-1/raw-sequence/config.json",
+        "--run-id",
+        "sequence",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "transform-v2",
+        "--deadline",
+        "2026-10-07T16:04:25.312437+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/sequence-1/raw-sequence",
+        "--workset",
+        "worksets/sec/snapshot/sha256=278fed060f534160307c6994f6f8e43b3f8984a3b89190af391ccf22a43199d4/workset.json",
+        "--force"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sdd-history/task7-evidence/sequence-1/raw-sequence/transform-v2.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/sequence-1/raw-sequence/config.json",
+        "--run-id",
+        "sequence",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish-v2",
+        "--deadline",
+        "2026-10-07T16:04:25.312437+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/sequence-1/raw-sequence",
+        "--workset",
+        "worksets/sec/transformed/sha256=aa4c809b1e6e0155e5268ec3be17bec11c8a1025e98bd3f8ec82e9439dc02861/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sdd-history/task7-evidence/sequence-1/raw-sequence/publish-v2.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/sequence-1/processes/publication.after_pointer/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish",
+        "--deadline",
+        "2026-10-07T16:04:29.328912+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/sequence-1/processes/publication.after_pointer",
+        "--workset",
+        "worksets/sec/transformed/sha256=228df1d4fbaa46786e813b64bdef8ba63a4574c9980fd68a06d83ccee45c80ce/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sdd-history/task7-evidence/sequence-1/processes/publication.after_pointer/repeat.json"
+    },
+    {
+      "argv": [
+        "transform",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/sequence-1/processes/publication.after_pointer/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "transform",
+        "--deadline",
+        "2026-10-07T16:04:29.328912+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/sequence-1/processes/publication.after_pointer",
+        "--workset",
+        "worksets/sec/snapshot/sha256=08780a6caf246af132264df568a4b304db8aecb8d3bca5f08204b88c3e4a448b/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sdd-history/task7-evidence/sequence-1/processes/publication.after_pointer/transform.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/sequence-1/processes/publication.after_pointer/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish",
+        "--deadline",
+        "2026-10-07T16:04:29.328912+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/sequence-1/processes/publication.after_pointer",
+        "--workset",
+        "worksets/sec/transformed/sha256=228df1d4fbaa46786e813b64bdef8ba63a4574c9980fd68a06d83ccee45c80ce/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sdd-history/task7-evidence/sequence-1/processes/publication.after_pointer/resumed.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/sequence-1/processes/publication.before_pointer/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish",
+        "--deadline",
+        "2026-10-07T16:04:28.629723+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/sequence-1/processes/publication.before_pointer",
+        "--workset",
+        "worksets/sec/transformed/sha256=53044a68635484b19717f879508c6380953bba06f75119b8ddae52557c0f1e07/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sdd-history/task7-evidence/sequence-1/processes/publication.before_pointer/repeat.json"
+    },
+    {
+      "argv": [
+        "transform",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/sequence-1/processes/publication.before_pointer/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "transform",
+        "--deadline",
+        "2026-10-07T16:04:28.629723+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/sequence-1/processes/publication.before_pointer",
+        "--workset",
+        "worksets/sec/snapshot/sha256=08780a6caf246af132264df568a4b304db8aecb8d3bca5f08204b88c3e4a448b/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sdd-history/task7-evidence/sequence-1/processes/publication.before_pointer/transform.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/sequence-1/processes/publication.before_pointer/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish",
+        "--deadline",
+        "2026-10-07T16:04:28.629723+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/sequence-1/processes/publication.before_pointer",
+        "--workset",
+        "worksets/sec/transformed/sha256=53044a68635484b19717f879508c6380953bba06f75119b8ddae52557c0f1e07/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sdd-history/task7-evidence/sequence-1/processes/publication.before_pointer/resumed.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/sequence-1/processes/etl_result.after_object/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish",
+        "--deadline",
+        "2026-10-07T16:04:29.973822+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/sequence-1/processes/etl_result.after_object",
+        "--workset",
+        "worksets/sec/transformed/sha256=827c3f2fb9679307176bcf247dc185093375f01e824faeb528c5561d7a836bd5/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sdd-history/task7-evidence/sequence-1/processes/etl_result.after_object/repeat.json"
+    },
+    {
+      "argv": [
+        "transform",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/sequence-1/processes/etl_result.after_object/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "transform",
+        "--deadline",
+        "2026-10-07T16:04:29.973822+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/sequence-1/processes/etl_result.after_object",
+        "--workset",
+        "worksets/sec/snapshot/sha256=08780a6caf246af132264df568a4b304db8aecb8d3bca5f08204b88c3e4a448b/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sdd-history/task7-evidence/sequence-1/processes/etl_result.after_object/transform.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/sequence-1/processes/etl_result.after_object/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish",
+        "--deadline",
+        "2026-10-07T16:04:29.973822+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/sequence-1/processes/etl_result.after_object",
+        "--workset",
+        "worksets/sec/transformed/sha256=827c3f2fb9679307176bcf247dc185093375f01e824faeb528c5561d7a836bd5/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sdd-history/task7-evidence/sequence-1/processes/etl_result.after_object/resumed.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/sequence-1/processes/candidate.after_data/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish",
+        "--deadline",
+        "2026-10-07T16:04:27.985263+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/sequence-1/processes/candidate.after_data",
+        "--workset",
+        "worksets/sec/transformed/sha256=f976ce5a78e9693c19eb125781915ae4502242ba45be2993b4c5365b7d711521/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sdd-history/task7-evidence/sequence-1/processes/candidate.after_data/repeat.json"
+    },
+    {
+      "argv": [
+        "transform",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/sequence-1/processes/candidate.after_data/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "transform",
+        "--deadline",
+        "2026-10-07T16:04:27.985263+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/sequence-1/processes/candidate.after_data",
+        "--workset",
+        "worksets/sec/snapshot/sha256=08780a6caf246af132264df568a4b304db8aecb8d3bca5f08204b88c3e4a448b/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sdd-history/task7-evidence/sequence-1/processes/candidate.after_data/transform.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/sequence-1/processes/candidate.after_data/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish",
+        "--deadline",
+        "2026-10-07T16:04:27.985263+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/sequence-1/processes/candidate.after_data",
+        "--workset",
+        "worksets/sec/transformed/sha256=f976ce5a78e9693c19eb125781915ae4502242ba45be2993b4c5365b7d711521/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sdd-history/task7-evidence/sequence-1/processes/candidate.after_data/resumed.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-4/installed-sequence/raw-sequence/config.json",
+        "--run-id",
+        "sequence",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish-v1",
+        "--deadline",
+        "2026-10-07T16:07:05.073375+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-4/installed-sequence/raw-sequence",
+        "--workset",
+        "worksets/sec/transformed/sha256=e544bf797d90a374f696bbb72b6fe3505a9e9fb7075fdf23ee3234672729000a/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sdd-history/task7-evidence/installed-4/installed-sequence/raw-sequence/publish-v1.json"
+    },
+    {
+      "argv": [
+        "transform",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-4/installed-sequence/raw-sequence/config.json",
+        "--run-id",
+        "sequence",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "transform-v1",
+        "--deadline",
+        "2026-10-07T16:07:05.073375+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-4/installed-sequence/raw-sequence",
+        "--workset",
+        "worksets/sec/snapshot/sha256=278fed060f534160307c6994f6f8e43b3f8984a3b89190af391ccf22a43199d4/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sdd-history/task7-evidence/installed-4/installed-sequence/raw-sequence/transform-v1.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-4/installed-sequence/raw-sequence/config.json",
+        "--run-id",
+        "sequence",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "noop-v1",
+        "--deadline",
+        "2026-10-07T16:07:05.073375+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-4/installed-sequence/raw-sequence",
+        "--workset",
+        "worksets/sec/transformed/sha256=e544bf797d90a374f696bbb72b6fe3505a9e9fb7075fdf23ee3234672729000a/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sdd-history/task7-evidence/installed-4/installed-sequence/raw-sequence/noop-v1.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-4/installed-sequence/raw-sequence/config.json",
+        "--run-id",
+        "sequence",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish-v1",
+        "--deadline",
+        "2026-10-07T16:07:05.073375+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-4/installed-sequence/raw-sequence",
+        "--workset",
+        "worksets/sec/transformed/sha256=e544bf797d90a374f696bbb72b6fe3505a9e9fb7075fdf23ee3234672729000a/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sdd-history/task7-evidence/installed-4/installed-sequence/raw-sequence/repeat-v1.json"
+    },
+    {
+      "argv": [
+        "transform",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-4/installed-sequence/raw-sequence/config.json",
+        "--run-id",
+        "sequence",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "transform-v2",
+        "--deadline",
+        "2026-10-07T16:07:05.073375+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-4/installed-sequence/raw-sequence",
+        "--workset",
+        "worksets/sec/snapshot/sha256=278fed060f534160307c6994f6f8e43b3f8984a3b89190af391ccf22a43199d4/workset.json",
+        "--force"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sdd-history/task7-evidence/installed-4/installed-sequence/raw-sequence/transform-v2.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-4/installed-sequence/raw-sequence/config.json",
+        "--run-id",
+        "sequence",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish-v2",
+        "--deadline",
+        "2026-10-07T16:07:05.073375+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-4/installed-sequence/raw-sequence",
+        "--workset",
+        "worksets/sec/transformed/sha256=75456734a1436d4e6883ea030f229630293c681b9616491048aecefa399cfeba/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sdd-history/task7-evidence/installed-4/installed-sequence/raw-sequence/publish-v2.json"
+    },
+    {
+      "argv": [
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-59bbihch/harness/installed_runner.py",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-5/installed-sequence"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": false,
+      "has_full_separate_logs": false,
+      "path": "sdd-history/task7-evidence/installed-5/installed-sequence/report.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-5/installed-sequence/raw-sequence/config.json",
+        "--run-id",
+        "sequence",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish-v1",
+        "--deadline",
+        "2026-10-07T16:07:48.105981+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-5/installed-sequence/raw-sequence",
+        "--workset",
+        "worksets/sec/transformed/sha256=9785d313c502fd60f2975ac8b842a61b790d89503839d7f0690117fd881a05b0/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sdd-history/task7-evidence/installed-5/installed-sequence/raw-sequence/publish-v1.json"
+    },
+    {
+      "argv": [
+        "transform",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-5/installed-sequence/raw-sequence/config.json",
+        "--run-id",
+        "sequence",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "transform-v1",
+        "--deadline",
+        "2026-10-07T16:07:48.105981+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-5/installed-sequence/raw-sequence",
+        "--workset",
+        "worksets/sec/snapshot/sha256=278fed060f534160307c6994f6f8e43b3f8984a3b89190af391ccf22a43199d4/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sdd-history/task7-evidence/installed-5/installed-sequence/raw-sequence/transform-v1.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-5/installed-sequence/raw-sequence/config.json",
+        "--run-id",
+        "sequence",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "noop-v1",
+        "--deadline",
+        "2026-10-07T16:07:48.105981+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-5/installed-sequence/raw-sequence",
+        "--workset",
+        "worksets/sec/transformed/sha256=9785d313c502fd60f2975ac8b842a61b790d89503839d7f0690117fd881a05b0/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sdd-history/task7-evidence/installed-5/installed-sequence/raw-sequence/noop-v1.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-5/installed-sequence/raw-sequence/config.json",
+        "--run-id",
+        "sequence",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish-v1",
+        "--deadline",
+        "2026-10-07T16:07:48.105981+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-5/installed-sequence/raw-sequence",
+        "--workset",
+        "worksets/sec/transformed/sha256=9785d313c502fd60f2975ac8b842a61b790d89503839d7f0690117fd881a05b0/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sdd-history/task7-evidence/installed-5/installed-sequence/raw-sequence/repeat-v1.json"
+    },
+    {
+      "argv": [
+        "transform",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-5/installed-sequence/raw-sequence/config.json",
+        "--run-id",
+        "sequence",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "transform-v2",
+        "--deadline",
+        "2026-10-07T16:07:48.105981+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-5/installed-sequence/raw-sequence",
+        "--workset",
+        "worksets/sec/snapshot/sha256=278fed060f534160307c6994f6f8e43b3f8984a3b89190af391ccf22a43199d4/workset.json",
+        "--force"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sdd-history/task7-evidence/installed-5/installed-sequence/raw-sequence/transform-v2.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-5/installed-sequence/raw-sequence/config.json",
+        "--run-id",
+        "sequence",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish-v2",
+        "--deadline",
+        "2026-10-07T16:07:48.105981+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-5/installed-sequence/raw-sequence",
+        "--workset",
+        "worksets/sec/transformed/sha256=4e43e05f80b9351fe396a3b3a7565d91863fa533f9f2d7c8ab5f46d8f880c92f/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sdd-history/task7-evidence/installed-5/installed-sequence/raw-sequence/publish-v2.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-5/installed-sequence/processes/publication.after_pointer/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish",
+        "--deadline",
+        "2026-10-07T16:07:52.185798+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-5/installed-sequence/processes/publication.after_pointer",
+        "--workset",
+        "worksets/sec/transformed/sha256=1acaf5a9af509c9cbdd27a9f91d5dad8bebe0d1a9055090f019ada5085ced4f4/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sdd-history/task7-evidence/installed-5/installed-sequence/processes/publication.after_pointer/repeat.json"
+    },
+    {
+      "argv": [
+        "transform",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-5/installed-sequence/processes/publication.after_pointer/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "transform",
+        "--deadline",
+        "2026-10-07T16:07:52.185798+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-5/installed-sequence/processes/publication.after_pointer",
+        "--workset",
+        "worksets/sec/snapshot/sha256=08780a6caf246af132264df568a4b304db8aecb8d3bca5f08204b88c3e4a448b/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sdd-history/task7-evidence/installed-5/installed-sequence/processes/publication.after_pointer/transform.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-5/installed-sequence/processes/publication.after_pointer/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish",
+        "--deadline",
+        "2026-10-07T16:07:52.185798+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-5/installed-sequence/processes/publication.after_pointer",
+        "--workset",
+        "worksets/sec/transformed/sha256=1acaf5a9af509c9cbdd27a9f91d5dad8bebe0d1a9055090f019ada5085ced4f4/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sdd-history/task7-evidence/installed-5/installed-sequence/processes/publication.after_pointer/resumed.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-5/installed-sequence/processes/publication.before_pointer/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish",
+        "--deadline",
+        "2026-10-07T16:07:51.472380+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-5/installed-sequence/processes/publication.before_pointer",
+        "--workset",
+        "worksets/sec/transformed/sha256=0944083e16714935ae5db31330f9bb66db5ecffffa36fb239fec97de713729d3/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sdd-history/task7-evidence/installed-5/installed-sequence/processes/publication.before_pointer/repeat.json"
+    },
+    {
+      "argv": [
+        "transform",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-5/installed-sequence/processes/publication.before_pointer/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "transform",
+        "--deadline",
+        "2026-10-07T16:07:51.472380+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-5/installed-sequence/processes/publication.before_pointer",
+        "--workset",
+        "worksets/sec/snapshot/sha256=08780a6caf246af132264df568a4b304db8aecb8d3bca5f08204b88c3e4a448b/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sdd-history/task7-evidence/installed-5/installed-sequence/processes/publication.before_pointer/transform.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-5/installed-sequence/processes/publication.before_pointer/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish",
+        "--deadline",
+        "2026-10-07T16:07:51.472380+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-5/installed-sequence/processes/publication.before_pointer",
+        "--workset",
+        "worksets/sec/transformed/sha256=0944083e16714935ae5db31330f9bb66db5ecffffa36fb239fec97de713729d3/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sdd-history/task7-evidence/installed-5/installed-sequence/processes/publication.before_pointer/resumed.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-5/installed-sequence/processes/etl_result.after_object/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish",
+        "--deadline",
+        "2026-10-07T16:07:52.845486+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-5/installed-sequence/processes/etl_result.after_object",
+        "--workset",
+        "worksets/sec/transformed/sha256=83da645951ad671dce0a1359511b5203611e993e03709d403b59eb44ddbb8441/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sdd-history/task7-evidence/installed-5/installed-sequence/processes/etl_result.after_object/repeat.json"
+    },
+    {
+      "argv": [
+        "transform",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-5/installed-sequence/processes/etl_result.after_object/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "transform",
+        "--deadline",
+        "2026-10-07T16:07:52.845486+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-5/installed-sequence/processes/etl_result.after_object",
+        "--workset",
+        "worksets/sec/snapshot/sha256=08780a6caf246af132264df568a4b304db8aecb8d3bca5f08204b88c3e4a448b/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sdd-history/task7-evidence/installed-5/installed-sequence/processes/etl_result.after_object/transform.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-5/installed-sequence/processes/etl_result.after_object/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish",
+        "--deadline",
+        "2026-10-07T16:07:52.845486+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-5/installed-sequence/processes/etl_result.after_object",
+        "--workset",
+        "worksets/sec/transformed/sha256=83da645951ad671dce0a1359511b5203611e993e03709d403b59eb44ddbb8441/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sdd-history/task7-evidence/installed-5/installed-sequence/processes/etl_result.after_object/resumed.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-5/installed-sequence/processes/candidate.after_data/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish",
+        "--deadline",
+        "2026-10-07T16:07:50.812942+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-5/installed-sequence/processes/candidate.after_data",
+        "--workset",
+        "worksets/sec/transformed/sha256=689df71547a84cdfe3be9a483374e5d6d37d8ada58ae4104edc1c56c55e033ec/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sdd-history/task7-evidence/installed-5/installed-sequence/processes/candidate.after_data/repeat.json"
+    },
+    {
+      "argv": [
+        "transform",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-5/installed-sequence/processes/candidate.after_data/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "transform",
+        "--deadline",
+        "2026-10-07T16:07:50.812942+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-5/installed-sequence/processes/candidate.after_data",
+        "--workset",
+        "worksets/sec/snapshot/sha256=08780a6caf246af132264df568a4b304db8aecb8d3bca5f08204b88c3e4a448b/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sdd-history/task7-evidence/installed-5/installed-sequence/processes/candidate.after_data/transform.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-5/installed-sequence/processes/candidate.after_data/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish",
+        "--deadline",
+        "2026-10-07T16:07:50.812942+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/installed-5/installed-sequence/processes/candidate.after_data",
+        "--workset",
+        "worksets/sec/transformed/sha256=689df71547a84cdfe3be9a483374e5d6d37d8ada58ae4104edc1c56c55e033ec/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sdd-history/task7-evidence/installed-5/installed-sequence/processes/candidate.after_data/resumed.json"
+    },
+    {
+      "argv": [
+        ".sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/runbook-example.py"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": false,
+      "has_full_separate_logs": false,
+      "path": "runbook-proof.json"
+    },
+    {
+      "argv": [
+        ".sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/retain.py"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": false,
+      "has_full_separate_logs": false,
+      "path": "primary-preservation.json"
+    },
+    {
+      "argv": [
+        "packages/sec-edgar-ingest/tests/etl_proof.py",
+        "specimens",
+        "--output",
+        "specs/evidence/sec-filing-index-ingestion/stage-3/verification/specimens"
+      ],
+      "exit": 1,
+      "has_full_inline_logs": false,
+      "has_full_separate_logs": true,
+      "path": "specimens/report.json"
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "--offline",
+        "--frozen",
+        "--package",
+        "sec-edgar-ingest",
+        "python",
+        ".sdd/3-sec-filing-index-ingestion-stage-3-spec/task7-evidence/runbook-example.py"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": false,
+      "has_full_separate_logs": true,
+      "path": "runbook-command/command.json"
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "--offline",
+        "--frozen",
+        "--package",
+        "sec-edgar-ingest",
+        "python",
+        "packages/sec-edgar-ingest/tests/etl_proof.py",
+        "installed",
+        "--output",
+        "specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": false,
+      "has_full_separate_logs": true,
+      "path": "installed-command/command.json"
+    },
+    {
+      "argv": [
+        "git",
+        "-c",
+        "core.whitespace=cr-at-eol",
+        "diff",
+        "--check"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": false,
+      "has_full_separate_logs": true,
+      "path": "final-whitespace/command.json"
+    },
+    {
+      "argv": [
+        "uv",
+        "pip",
+        "install",
+        "--offline",
+        "--no-index",
+        "--no-deps",
+        "--python",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-q5sz65qt/venv/bin/python",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/dist/sec_edgar_ingest-0.1.0-py3-none-any.whl"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": true,
+      "path": "installed/install-wheel.json"
+    },
+    {
+      "argv": [
+        "uv",
+        "export",
+        "--offline",
+        "--frozen",
+        "--package",
+        "sec-edgar-ingest",
+        "--no-emit-workspace",
+        "--format",
+        "requirements-txt"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": true,
+      "path": "installed/lock.json"
+    },
+    {
+      "argv": [
+        "packages/sec-edgar-ingest/tests/etl_proof.py",
+        "installed",
+        "--output",
+        "specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": false,
+      "has_full_separate_logs": true,
+      "path": "installed/report.json"
+    },
+    {
+      "argv": [
+        "uv",
+        "pip",
+        "install",
+        "--offline",
+        "--no-deps",
+        "--require-hashes",
+        "--python",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-q5sz65qt/venv/bin/python",
+        "-r",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-q5sz65qt/arrow.txt"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": true,
+      "path": "installed/install-arrow.json"
+    },
+    {
+      "argv": [
+        "uv",
+        "pip",
+        "install",
+        "--offline",
+        "--no-index",
+        "--find-links",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-2/verification/sdd-history/task1-evidence/wheels",
+        "--require-hashes",
+        "--python",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-q5sz65qt/venv/bin/python",
+        "-r",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-q5sz65qt/others.txt"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": true,
+      "path": "installed/install-dependencies.json"
+    },
+    {
+      "argv": [
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-q5sz65qt/venv/bin/python",
+        "-c",
+        "import sys; sys.path.insert(0, '/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-q5sz65qt/harness'); import network_guard; network_guard.install(); from sec_edgar_ingest.cli import main; raise SystemExit(main([\"--help\"]))"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": true,
+      "path": "installed/help.json"
+    },
+    {
+      "argv": [
+        "uv",
+        "venv",
+        "--offline",
+        "--python",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.venv/bin/python",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-q5sz65qt/venv"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": true,
+      "path": "installed/venv.json"
+    },
+    {
+      "argv": [
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-q5sz65qt/venv/bin/python",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-q5sz65qt/harness/installed_runner.py",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": true,
+      "path": "installed/proof.json"
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "--offline",
+        "--frozen",
+        "--package",
+        "sec-edgar-ingest",
+        "python",
+        "packages/sec-edgar-ingest/tests/etl_proof.py",
+        "installed",
+        "--output",
+        "specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": false,
+      "has_full_separate_logs": true,
+      "path": "installed-command-before-readme-correction/command.json"
+    },
+    {
+      "argv": [
+        "uv",
+        "pip",
+        "install",
+        "--offline",
+        "--no-index",
+        "--no-deps",
+        "--python",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-n5iix3dl/venv/bin/python",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/dist/sec_edgar_ingest-0.1.0-py3-none-any.whl"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": true,
+      "path": "installed-before-readme-correction/install-wheel.json"
+    },
+    {
+      "argv": [
+        "uv",
+        "export",
+        "--offline",
+        "--frozen",
+        "--package",
+        "sec-edgar-ingest",
+        "--no-emit-workspace",
+        "--format",
+        "requirements-txt"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": true,
+      "path": "installed-before-readme-correction/lock.json"
+    },
+    {
+      "argv": [
+        "packages/sec-edgar-ingest/tests/etl_proof.py",
+        "installed",
+        "--output",
+        "specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": false,
+      "has_full_separate_logs": true,
+      "path": "installed-before-readme-correction/report.json"
+    },
+    {
+      "argv": [
+        "uv",
+        "pip",
+        "install",
+        "--offline",
+        "--no-deps",
+        "--require-hashes",
+        "--python",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-n5iix3dl/venv/bin/python",
+        "-r",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-n5iix3dl/arrow.txt"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": true,
+      "path": "installed-before-readme-correction/install-arrow.json"
+    },
+    {
+      "argv": [
+        "uv",
+        "pip",
+        "install",
+        "--offline",
+        "--no-index",
+        "--find-links",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-2/verification/sdd-history/task1-evidence/wheels",
+        "--require-hashes",
+        "--python",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-n5iix3dl/venv/bin/python",
+        "-r",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-n5iix3dl/others.txt"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": true,
+      "path": "installed-before-readme-correction/install-dependencies.json"
+    },
+    {
+      "argv": [
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-n5iix3dl/venv/bin/python",
+        "-c",
+        "import sys; sys.path.insert(0, '/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-n5iix3dl/harness'); import network_guard; network_guard.install(); from sec_edgar_ingest.cli import main; raise SystemExit(main([\"--help\"]))"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": true,
+      "path": "installed-before-readme-correction/help.json"
+    },
+    {
+      "argv": [
+        "uv",
+        "venv",
+        "--offline",
+        "--python",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.venv/bin/python",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-n5iix3dl/venv"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": true,
+      "path": "installed-before-readme-correction/venv.json"
+    },
+    {
+      "argv": [
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-n5iix3dl/venv/bin/python",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-n5iix3dl/harness/installed_runner.py",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": true,
+      "path": "installed-before-readme-correction/proof.json"
+    },
+    {
+      "argv": [
+        "packages/sec-edgar-ingest/tests/etl_proof.py",
+        "sequence",
+        "--output",
+        "specs/evidence/sec-filing-index-ingestion/stage-3/verification/sequence"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": false,
+      "has_full_separate_logs": true,
+      "path": "sequence/report.json"
+    },
+    {
+      "argv": [
+        "scripts/check-sec-edgar-ingest.sh"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": false,
+      "has_full_separate_logs": true,
+      "path": "final-check/command.json"
+    },
+    {
+      "argv": [
+        "uv",
+        "build",
+        "--offline",
+        "--all-packages"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": false,
+      "has_full_separate_logs": true,
+      "path": "readme-wheel-build/command.json"
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "--offline",
+        "--frozen",
+        "--package",
+        "sec-edgar-ingest",
+        "python",
+        "packages/sec-edgar-ingest/tests/etl_proof.py",
+        "sequence",
+        "--output",
+        "specs/evidence/sec-filing-index-ingestion/stage-3/verification/sequence"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": false,
+      "has_full_separate_logs": true,
+      "path": "sequence-command/command.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/tmp_h2oitw_/publication.after_pointer/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish",
+        "--deadline",
+        "2026-10-07T16:14:18.326534+00:00",
+        "--state-dir",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/tmp_h2oitw_/publication.after_pointer",
+        "--workset",
+        "worksets/sec/transformed/sha256=b297b8260a40021f96654bf11ff61f38819890c4dddded3c5eee1fc8b66cfcd0/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "final-check/processes/publication.after_pointer/repeat.json"
+    },
+    {
+      "argv": [
+        "transform",
+        "--config",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/tmp_h2oitw_/publication.after_pointer/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "transform",
+        "--deadline",
+        "2026-10-07T16:14:18.326534+00:00",
+        "--state-dir",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/tmp_h2oitw_/publication.after_pointer",
+        "--workset",
+        "worksets/sec/snapshot/sha256=08780a6caf246af132264df568a4b304db8aecb8d3bca5f08204b88c3e4a448b/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "final-check/processes/publication.after_pointer/transform.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/tmp_h2oitw_/publication.after_pointer/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish",
+        "--deadline",
+        "2026-10-07T16:14:18.326534+00:00",
+        "--state-dir",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/tmp_h2oitw_/publication.after_pointer",
+        "--workset",
+        "worksets/sec/transformed/sha256=b297b8260a40021f96654bf11ff61f38819890c4dddded3c5eee1fc8b66cfcd0/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "final-check/processes/publication.after_pointer/resumed.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/tmp_h2oitw_/publication.before_pointer/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish",
+        "--deadline",
+        "2026-10-07T16:14:17.662055+00:00",
+        "--state-dir",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/tmp_h2oitw_/publication.before_pointer",
+        "--workset",
+        "worksets/sec/transformed/sha256=2dd7f2074deebe24f8a9cc255fda867e3a50c56a73f69cdac07fcb1399a56df8/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "final-check/processes/publication.before_pointer/repeat.json"
+    },
+    {
+      "argv": [
+        "transform",
+        "--config",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/tmp_h2oitw_/publication.before_pointer/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "transform",
+        "--deadline",
+        "2026-10-07T16:14:17.662055+00:00",
+        "--state-dir",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/tmp_h2oitw_/publication.before_pointer",
+        "--workset",
+        "worksets/sec/snapshot/sha256=08780a6caf246af132264df568a4b304db8aecb8d3bca5f08204b88c3e4a448b/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "final-check/processes/publication.before_pointer/transform.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/tmp_h2oitw_/publication.before_pointer/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish",
+        "--deadline",
+        "2026-10-07T16:14:17.662055+00:00",
+        "--state-dir",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/tmp_h2oitw_/publication.before_pointer",
+        "--workset",
+        "worksets/sec/transformed/sha256=2dd7f2074deebe24f8a9cc255fda867e3a50c56a73f69cdac07fcb1399a56df8/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "final-check/processes/publication.before_pointer/resumed.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/tmp_h2oitw_/etl_result.after_object/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish",
+        "--deadline",
+        "2026-10-07T16:14:18.955122+00:00",
+        "--state-dir",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/tmp_h2oitw_/etl_result.after_object",
+        "--workset",
+        "worksets/sec/transformed/sha256=e573b7f7074c0ad327bc8df2fcd4a88c08d8741e009dad148620a8e2878378d3/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "final-check/processes/etl_result.after_object/repeat.json"
+    },
+    {
+      "argv": [
+        "transform",
+        "--config",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/tmp_h2oitw_/etl_result.after_object/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "transform",
+        "--deadline",
+        "2026-10-07T16:14:18.955122+00:00",
+        "--state-dir",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/tmp_h2oitw_/etl_result.after_object",
+        "--workset",
+        "worksets/sec/snapshot/sha256=08780a6caf246af132264df568a4b304db8aecb8d3bca5f08204b88c3e4a448b/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "final-check/processes/etl_result.after_object/transform.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/tmp_h2oitw_/etl_result.after_object/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish",
+        "--deadline",
+        "2026-10-07T16:14:18.955122+00:00",
+        "--state-dir",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/tmp_h2oitw_/etl_result.after_object",
+        "--workset",
+        "worksets/sec/transformed/sha256=e573b7f7074c0ad327bc8df2fcd4a88c08d8741e009dad148620a8e2878378d3/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "final-check/processes/etl_result.after_object/resumed.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/tmp_h2oitw_/candidate.after_data/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish",
+        "--deadline",
+        "2026-10-07T16:14:17.041197+00:00",
+        "--state-dir",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/tmp_h2oitw_/candidate.after_data",
+        "--workset",
+        "worksets/sec/transformed/sha256=e1e77454a93478699d1ef853c5191a7583803e1125ab753f261f009dc8d2531e/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "final-check/processes/candidate.after_data/repeat.json"
+    },
+    {
+      "argv": [
+        "transform",
+        "--config",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/tmp_h2oitw_/candidate.after_data/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "transform",
+        "--deadline",
+        "2026-10-07T16:14:17.041197+00:00",
+        "--state-dir",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/tmp_h2oitw_/candidate.after_data",
+        "--workset",
+        "worksets/sec/snapshot/sha256=08780a6caf246af132264df568a4b304db8aecb8d3bca5f08204b88c3e4a448b/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "final-check/processes/candidate.after_data/transform.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/tmp_h2oitw_/candidate.after_data/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish",
+        "--deadline",
+        "2026-10-07T16:14:17.041197+00:00",
+        "--state-dir",
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/tmp_h2oitw_/candidate.after_data",
+        "--workset",
+        "worksets/sec/transformed/sha256=e1e77454a93478699d1ef853c5191a7583803e1125ab753f261f009dc8d2531e/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "final-check/processes/candidate.after_data/resumed.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/sequence/raw-sequence/config.json",
+        "--run-id",
+        "sequence",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish-v1",
+        "--deadline",
+        "2026-10-07T16:12:14.940552+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/sequence/raw-sequence",
+        "--workset",
+        "worksets/sec/transformed/sha256=57bd7d7f6f909110369d178cedd1d5a14ac64d7481f851bfc1ddbd527eab7318/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sequence/raw-sequence/publish-v1.json"
+    },
+    {
+      "argv": [
+        "transform",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/sequence/raw-sequence/config.json",
+        "--run-id",
+        "sequence",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "transform-v1",
+        "--deadline",
+        "2026-10-07T16:12:14.940552+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/sequence/raw-sequence",
+        "--workset",
+        "worksets/sec/snapshot/sha256=278fed060f534160307c6994f6f8e43b3f8984a3b89190af391ccf22a43199d4/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sequence/raw-sequence/transform-v1.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/sequence/raw-sequence/config.json",
+        "--run-id",
+        "sequence",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "noop-v1",
+        "--deadline",
+        "2026-10-07T16:12:14.940552+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/sequence/raw-sequence",
+        "--workset",
+        "worksets/sec/transformed/sha256=57bd7d7f6f909110369d178cedd1d5a14ac64d7481f851bfc1ddbd527eab7318/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sequence/raw-sequence/noop-v1.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/sequence/raw-sequence/config.json",
+        "--run-id",
+        "sequence",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish-v1",
+        "--deadline",
+        "2026-10-07T16:12:14.940552+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/sequence/raw-sequence",
+        "--workset",
+        "worksets/sec/transformed/sha256=57bd7d7f6f909110369d178cedd1d5a14ac64d7481f851bfc1ddbd527eab7318/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sequence/raw-sequence/repeat-v1.json"
+    },
+    {
+      "argv": [
+        "transform",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/sequence/raw-sequence/config.json",
+        "--run-id",
+        "sequence",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "transform-v2",
+        "--deadline",
+        "2026-10-07T16:12:14.940552+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/sequence/raw-sequence",
+        "--workset",
+        "worksets/sec/snapshot/sha256=278fed060f534160307c6994f6f8e43b3f8984a3b89190af391ccf22a43199d4/workset.json",
+        "--force"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sequence/raw-sequence/transform-v2.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/sequence/raw-sequence/config.json",
+        "--run-id",
+        "sequence",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish-v2",
+        "--deadline",
+        "2026-10-07T16:12:14.940552+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/sequence/raw-sequence",
+        "--workset",
+        "worksets/sec/transformed/sha256=9487eb1965e490ff23c73a41c6e8e3eb1cc093504f45ec0bafdfb92ea073378c/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sequence/raw-sequence/publish-v2.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/sequence/processes/publication.after_pointer/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish",
+        "--deadline",
+        "2026-10-07T16:12:18.783474+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/sequence/processes/publication.after_pointer",
+        "--workset",
+        "worksets/sec/transformed/sha256=66a1ccd5d2e49c578a8b4c8cbeb20bbc48d06120878ea529b33da8e2dcaa9223/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sequence/processes/publication.after_pointer/repeat.json"
+    },
+    {
+      "argv": [
+        "transform",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/sequence/processes/publication.after_pointer/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "transform",
+        "--deadline",
+        "2026-10-07T16:12:18.783474+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/sequence/processes/publication.after_pointer",
+        "--workset",
+        "worksets/sec/snapshot/sha256=08780a6caf246af132264df568a4b304db8aecb8d3bca5f08204b88c3e4a448b/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sequence/processes/publication.after_pointer/transform.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/sequence/processes/publication.after_pointer/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish",
+        "--deadline",
+        "2026-10-07T16:12:18.783474+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/sequence/processes/publication.after_pointer",
+        "--workset",
+        "worksets/sec/transformed/sha256=66a1ccd5d2e49c578a8b4c8cbeb20bbc48d06120878ea529b33da8e2dcaa9223/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sequence/processes/publication.after_pointer/resumed.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/sequence/processes/publication.before_pointer/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish",
+        "--deadline",
+        "2026-10-07T16:12:18.129432+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/sequence/processes/publication.before_pointer",
+        "--workset",
+        "worksets/sec/transformed/sha256=43a9b8c81b60a84da78a6d99993b8f4df1bf2b813be985baa130e1f145e2fe34/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sequence/processes/publication.before_pointer/repeat.json"
+    },
+    {
+      "argv": [
+        "transform",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/sequence/processes/publication.before_pointer/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "transform",
+        "--deadline",
+        "2026-10-07T16:12:18.129432+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/sequence/processes/publication.before_pointer",
+        "--workset",
+        "worksets/sec/snapshot/sha256=08780a6caf246af132264df568a4b304db8aecb8d3bca5f08204b88c3e4a448b/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sequence/processes/publication.before_pointer/transform.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/sequence/processes/publication.before_pointer/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish",
+        "--deadline",
+        "2026-10-07T16:12:18.129432+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/sequence/processes/publication.before_pointer",
+        "--workset",
+        "worksets/sec/transformed/sha256=43a9b8c81b60a84da78a6d99993b8f4df1bf2b813be985baa130e1f145e2fe34/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sequence/processes/publication.before_pointer/resumed.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/sequence/processes/etl_result.after_object/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish",
+        "--deadline",
+        "2026-10-07T16:12:19.389577+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/sequence/processes/etl_result.after_object",
+        "--workset",
+        "worksets/sec/transformed/sha256=a17408ecfac7da58423a8df01accb6897dfdd2a40599d66eefa22f1e22801bc0/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sequence/processes/etl_result.after_object/repeat.json"
+    },
+    {
+      "argv": [
+        "transform",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/sequence/processes/etl_result.after_object/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "transform",
+        "--deadline",
+        "2026-10-07T16:12:19.389577+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/sequence/processes/etl_result.after_object",
+        "--workset",
+        "worksets/sec/snapshot/sha256=08780a6caf246af132264df568a4b304db8aecb8d3bca5f08204b88c3e4a448b/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sequence/processes/etl_result.after_object/transform.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/sequence/processes/etl_result.after_object/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish",
+        "--deadline",
+        "2026-10-07T16:12:19.389577+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/sequence/processes/etl_result.after_object",
+        "--workset",
+        "worksets/sec/transformed/sha256=a17408ecfac7da58423a8df01accb6897dfdd2a40599d66eefa22f1e22801bc0/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sequence/processes/etl_result.after_object/resumed.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/sequence/processes/candidate.after_data/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish",
+        "--deadline",
+        "2026-10-07T16:12:17.524365+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/sequence/processes/candidate.after_data",
+        "--workset",
+        "worksets/sec/transformed/sha256=fb0d0c14afae29101fbbfa409e42f1c56f5b123cfcf21d2f7d98fab44150b202/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sequence/processes/candidate.after_data/repeat.json"
+    },
+    {
+      "argv": [
+        "transform",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/sequence/processes/candidate.after_data/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "transform",
+        "--deadline",
+        "2026-10-07T16:12:17.524365+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/sequence/processes/candidate.after_data",
+        "--workset",
+        "worksets/sec/snapshot/sha256=08780a6caf246af132264df568a4b304db8aecb8d3bca5f08204b88c3e4a448b/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sequence/processes/candidate.after_data/transform.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/sequence/processes/candidate.after_data/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish",
+        "--deadline",
+        "2026-10-07T16:12:17.524365+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/sequence/processes/candidate.after_data",
+        "--workset",
+        "worksets/sec/transformed/sha256=fb0d0c14afae29101fbbfa409e42f1c56f5b123cfcf21d2f7d98fab44150b202/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "sequence/processes/candidate.after_data/resumed.json"
+    },
+    {
+      "argv": [
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-n5iix3dl/harness/installed_runner.py",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": false,
+      "has_full_separate_logs": false,
+      "path": "installed-before-readme-correction/installed-sequence/report.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/raw-sequence/config.json",
+        "--run-id",
+        "sequence",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish-v1",
+        "--deadline",
+        "2026-10-07T16:15:40.469458+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/raw-sequence",
+        "--workset",
+        "worksets/sec/transformed/sha256=4c00476dca42436e2ebc6cfea649d327452170dd778681afe7848de748dc3bb3/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "installed-before-readme-correction/installed-sequence/raw-sequence/publish-v1.json"
+    },
+    {
+      "argv": [
+        "transform",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/raw-sequence/config.json",
+        "--run-id",
+        "sequence",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "transform-v1",
+        "--deadline",
+        "2026-10-07T16:15:40.469458+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/raw-sequence",
+        "--workset",
+        "worksets/sec/snapshot/sha256=278fed060f534160307c6994f6f8e43b3f8984a3b89190af391ccf22a43199d4/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "installed-before-readme-correction/installed-sequence/raw-sequence/transform-v1.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/raw-sequence/config.json",
+        "--run-id",
+        "sequence",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "noop-v1",
+        "--deadline",
+        "2026-10-07T16:15:40.469458+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/raw-sequence",
+        "--workset",
+        "worksets/sec/transformed/sha256=4c00476dca42436e2ebc6cfea649d327452170dd778681afe7848de748dc3bb3/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "installed-before-readme-correction/installed-sequence/raw-sequence/noop-v1.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/raw-sequence/config.json",
+        "--run-id",
+        "sequence",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish-v1",
+        "--deadline",
+        "2026-10-07T16:15:40.469458+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/raw-sequence",
+        "--workset",
+        "worksets/sec/transformed/sha256=4c00476dca42436e2ebc6cfea649d327452170dd778681afe7848de748dc3bb3/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "installed-before-readme-correction/installed-sequence/raw-sequence/repeat-v1.json"
+    },
+    {
+      "argv": [
+        "transform",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/raw-sequence/config.json",
+        "--run-id",
+        "sequence",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "transform-v2",
+        "--deadline",
+        "2026-10-07T16:15:40.469458+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/raw-sequence",
+        "--workset",
+        "worksets/sec/snapshot/sha256=278fed060f534160307c6994f6f8e43b3f8984a3b89190af391ccf22a43199d4/workset.json",
+        "--force"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "installed-before-readme-correction/installed-sequence/raw-sequence/transform-v2.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/raw-sequence/config.json",
+        "--run-id",
+        "sequence",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish-v2",
+        "--deadline",
+        "2026-10-07T16:15:40.469458+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/raw-sequence",
+        "--workset",
+        "worksets/sec/transformed/sha256=a09c97a9b420d7496a66d97f7929c6e578d9ad381e9758dfcc661d86d53c14c9/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "installed-before-readme-correction/installed-sequence/raw-sequence/publish-v2.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/processes/publication.after_pointer/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish",
+        "--deadline",
+        "2026-10-07T16:15:44.307550+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/processes/publication.after_pointer",
+        "--workset",
+        "worksets/sec/transformed/sha256=d6837bafdac65fcb78957f7c3f6caf677120bda59b807e07f520ec05bb91634b/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "installed-before-readme-correction/installed-sequence/processes/publication.after_pointer/repeat.json"
+    },
+    {
+      "argv": [
+        "transform",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/processes/publication.after_pointer/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "transform",
+        "--deadline",
+        "2026-10-07T16:15:44.307550+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/processes/publication.after_pointer",
+        "--workset",
+        "worksets/sec/snapshot/sha256=08780a6caf246af132264df568a4b304db8aecb8d3bca5f08204b88c3e4a448b/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "installed-before-readme-correction/installed-sequence/processes/publication.after_pointer/transform.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/processes/publication.after_pointer/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish",
+        "--deadline",
+        "2026-10-07T16:15:44.307550+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/processes/publication.after_pointer",
+        "--workset",
+        "worksets/sec/transformed/sha256=d6837bafdac65fcb78957f7c3f6caf677120bda59b807e07f520ec05bb91634b/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "installed-before-readme-correction/installed-sequence/processes/publication.after_pointer/resumed.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/processes/publication.before_pointer/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish",
+        "--deadline",
+        "2026-10-07T16:15:43.663732+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/processes/publication.before_pointer",
+        "--workset",
+        "worksets/sec/transformed/sha256=206cad431ee51c119ad2f0173af8bf95f61c2c8809863af7cba46ad8554be46b/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "installed-before-readme-correction/installed-sequence/processes/publication.before_pointer/repeat.json"
+    },
+    {
+      "argv": [
+        "transform",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/processes/publication.before_pointer/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "transform",
+        "--deadline",
+        "2026-10-07T16:15:43.663732+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/processes/publication.before_pointer",
+        "--workset",
+        "worksets/sec/snapshot/sha256=08780a6caf246af132264df568a4b304db8aecb8d3bca5f08204b88c3e4a448b/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "installed-before-readme-correction/installed-sequence/processes/publication.before_pointer/transform.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/processes/publication.before_pointer/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish",
+        "--deadline",
+        "2026-10-07T16:15:43.663732+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/processes/publication.before_pointer",
+        "--workset",
+        "worksets/sec/transformed/sha256=206cad431ee51c119ad2f0173af8bf95f61c2c8809863af7cba46ad8554be46b/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "installed-before-readme-correction/installed-sequence/processes/publication.before_pointer/resumed.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/processes/etl_result.after_object/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish",
+        "--deadline",
+        "2026-10-07T16:15:44.907880+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/processes/etl_result.after_object",
+        "--workset",
+        "worksets/sec/transformed/sha256=f0f2d1feeee2326df6a484114dcb8282a9df1d4368963bed7a1a46d4461f7642/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "installed-before-readme-correction/installed-sequence/processes/etl_result.after_object/repeat.json"
+    },
+    {
+      "argv": [
+        "transform",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/processes/etl_result.after_object/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "transform",
+        "--deadline",
+        "2026-10-07T16:15:44.907880+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/processes/etl_result.after_object",
+        "--workset",
+        "worksets/sec/snapshot/sha256=08780a6caf246af132264df568a4b304db8aecb8d3bca5f08204b88c3e4a448b/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "installed-before-readme-correction/installed-sequence/processes/etl_result.after_object/transform.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/processes/etl_result.after_object/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish",
+        "--deadline",
+        "2026-10-07T16:15:44.907880+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/processes/etl_result.after_object",
+        "--workset",
+        "worksets/sec/transformed/sha256=f0f2d1feeee2326df6a484114dcb8282a9df1d4368963bed7a1a46d4461f7642/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "installed-before-readme-correction/installed-sequence/processes/etl_result.after_object/resumed.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/processes/candidate.after_data/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish",
+        "--deadline",
+        "2026-10-07T16:15:43.056218+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/processes/candidate.after_data",
+        "--workset",
+        "worksets/sec/transformed/sha256=f8454b875e599a937ec78bc4f7182930bff2765fb99168663124a22620f3d716/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "installed-before-readme-correction/installed-sequence/processes/candidate.after_data/repeat.json"
+    },
+    {
+      "argv": [
+        "transform",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/processes/candidate.after_data/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "transform",
+        "--deadline",
+        "2026-10-07T16:15:43.056218+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/processes/candidate.after_data",
+        "--workset",
+        "worksets/sec/snapshot/sha256=08780a6caf246af132264df568a4b304db8aecb8d3bca5f08204b88c3e4a448b/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "installed-before-readme-correction/installed-sequence/processes/candidate.after_data/transform.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/processes/candidate.after_data/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish",
+        "--deadline",
+        "2026-10-07T16:15:43.056218+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/processes/candidate.after_data",
+        "--workset",
+        "worksets/sec/transformed/sha256=f8454b875e599a937ec78bc4f7182930bff2765fb99168663124a22620f3d716/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "installed-before-readme-correction/installed-sequence/processes/candidate.after_data/resumed.json"
+    },
+    {
+      "argv": [
+        "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-installed-q5sz65qt/harness/installed_runner.py",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": false,
+      "has_full_separate_logs": false,
+      "path": "installed/installed-sequence/report.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/raw-sequence/config.json",
+        "--run-id",
+        "sequence",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish-v1",
+        "--deadline",
+        "2026-10-07T16:17:08.075500+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/raw-sequence",
+        "--workset",
+        "worksets/sec/transformed/sha256=37b3e7ae167a94eca64cbb8aece3747dc20bb3bea4c5bb79bcd237479ba21f58/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "installed/installed-sequence/raw-sequence/publish-v1.json"
+    },
+    {
+      "argv": [
+        "transform",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/raw-sequence/config.json",
+        "--run-id",
+        "sequence",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "transform-v1",
+        "--deadline",
+        "2026-10-07T16:17:08.075500+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/raw-sequence",
+        "--workset",
+        "worksets/sec/snapshot/sha256=278fed060f534160307c6994f6f8e43b3f8984a3b89190af391ccf22a43199d4/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "installed/installed-sequence/raw-sequence/transform-v1.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/raw-sequence/config.json",
+        "--run-id",
+        "sequence",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "noop-v1",
+        "--deadline",
+        "2026-10-07T16:17:08.075500+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/raw-sequence",
+        "--workset",
+        "worksets/sec/transformed/sha256=37b3e7ae167a94eca64cbb8aece3747dc20bb3bea4c5bb79bcd237479ba21f58/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "installed/installed-sequence/raw-sequence/noop-v1.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/raw-sequence/config.json",
+        "--run-id",
+        "sequence",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish-v1",
+        "--deadline",
+        "2026-10-07T16:17:08.075500+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/raw-sequence",
+        "--workset",
+        "worksets/sec/transformed/sha256=37b3e7ae167a94eca64cbb8aece3747dc20bb3bea4c5bb79bcd237479ba21f58/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "installed/installed-sequence/raw-sequence/repeat-v1.json"
+    },
+    {
+      "argv": [
+        "transform",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/raw-sequence/config.json",
+        "--run-id",
+        "sequence",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "transform-v2",
+        "--deadline",
+        "2026-10-07T16:17:08.075500+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/raw-sequence",
+        "--workset",
+        "worksets/sec/snapshot/sha256=278fed060f534160307c6994f6f8e43b3f8984a3b89190af391ccf22a43199d4/workset.json",
+        "--force"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "installed/installed-sequence/raw-sequence/transform-v2.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/raw-sequence/config.json",
+        "--run-id",
+        "sequence",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish-v2",
+        "--deadline",
+        "2026-10-07T16:17:08.075500+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/raw-sequence",
+        "--workset",
+        "worksets/sec/transformed/sha256=87b3d51bd59a25db6e06ee483664dbc07992f075d0f04503eef14d33a7dbe6bf/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "installed/installed-sequence/raw-sequence/publish-v2.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/processes/publication.after_pointer/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish",
+        "--deadline",
+        "2026-10-07T16:17:12.114003+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/processes/publication.after_pointer",
+        "--workset",
+        "worksets/sec/transformed/sha256=55b112032836f55c1ddf72e8ebb7ebbf01379a16c84157d4e4766e20f832e799/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "installed/installed-sequence/processes/publication.after_pointer/repeat.json"
+    },
+    {
+      "argv": [
+        "transform",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/processes/publication.after_pointer/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "transform",
+        "--deadline",
+        "2026-10-07T16:17:12.114003+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/processes/publication.after_pointer",
+        "--workset",
+        "worksets/sec/snapshot/sha256=08780a6caf246af132264df568a4b304db8aecb8d3bca5f08204b88c3e4a448b/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "installed/installed-sequence/processes/publication.after_pointer/transform.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/processes/publication.after_pointer/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish",
+        "--deadline",
+        "2026-10-07T16:17:12.114003+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/processes/publication.after_pointer",
+        "--workset",
+        "worksets/sec/transformed/sha256=55b112032836f55c1ddf72e8ebb7ebbf01379a16c84157d4e4766e20f832e799/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "installed/installed-sequence/processes/publication.after_pointer/resumed.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/processes/publication.before_pointer/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish",
+        "--deadline",
+        "2026-10-07T16:17:11.441894+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/processes/publication.before_pointer",
+        "--workset",
+        "worksets/sec/transformed/sha256=9d164a2b8f6982505c1b2117590fadd50c0d2d74f3fdbf21893ca0a322f75de0/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "installed/installed-sequence/processes/publication.before_pointer/repeat.json"
+    },
+    {
+      "argv": [
+        "transform",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/processes/publication.before_pointer/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "transform",
+        "--deadline",
+        "2026-10-07T16:17:11.441894+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/processes/publication.before_pointer",
+        "--workset",
+        "worksets/sec/snapshot/sha256=08780a6caf246af132264df568a4b304db8aecb8d3bca5f08204b88c3e4a448b/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "installed/installed-sequence/processes/publication.before_pointer/transform.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/processes/publication.before_pointer/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish",
+        "--deadline",
+        "2026-10-07T16:17:11.441894+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/processes/publication.before_pointer",
+        "--workset",
+        "worksets/sec/transformed/sha256=9d164a2b8f6982505c1b2117590fadd50c0d2d74f3fdbf21893ca0a322f75de0/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "installed/installed-sequence/processes/publication.before_pointer/resumed.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/processes/etl_result.after_object/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish",
+        "--deadline",
+        "2026-10-07T16:17:12.724625+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/processes/etl_result.after_object",
+        "--workset",
+        "worksets/sec/transformed/sha256=c22900014f240abd4cbc64d5d8995c52211d1e06e8b01333d540f0fbdf82cdbd/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "installed/installed-sequence/processes/etl_result.after_object/repeat.json"
+    },
+    {
+      "argv": [
+        "transform",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/processes/etl_result.after_object/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "transform",
+        "--deadline",
+        "2026-10-07T16:17:12.724625+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/processes/etl_result.after_object",
+        "--workset",
+        "worksets/sec/snapshot/sha256=08780a6caf246af132264df568a4b304db8aecb8d3bca5f08204b88c3e4a448b/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "installed/installed-sequence/processes/etl_result.after_object/transform.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/processes/etl_result.after_object/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish",
+        "--deadline",
+        "2026-10-07T16:17:12.724625+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/processes/etl_result.after_object",
+        "--workset",
+        "worksets/sec/transformed/sha256=c22900014f240abd4cbc64d5d8995c52211d1e06e8b01333d540f0fbdf82cdbd/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "installed/installed-sequence/processes/etl_result.after_object/resumed.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/processes/candidate.after_data/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish",
+        "--deadline",
+        "2026-10-07T16:17:10.797962+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/processes/candidate.after_data",
+        "--workset",
+        "worksets/sec/transformed/sha256=109845ee6c7055d81947c6e96369ec2165c55cc4f568b28090221a28c702db13/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "installed/installed-sequence/processes/candidate.after_data/repeat.json"
+    },
+    {
+      "argv": [
+        "transform",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/processes/candidate.after_data/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "transform",
+        "--deadline",
+        "2026-10-07T16:17:10.797962+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/processes/candidate.after_data",
+        "--workset",
+        "worksets/sec/snapshot/sha256=08780a6caf246af132264df568a4b304db8aecb8d3bca5f08204b88c3e4a448b/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "installed/installed-sequence/processes/candidate.after_data/transform.json"
+    },
+    {
+      "argv": [
+        "publish",
+        "--config",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/processes/candidate.after_data/config.json",
+        "--run-id",
+        "death",
+        "--execution-id",
+        "fixed",
+        "--attempt-id",
+        "publish",
+        "--deadline",
+        "2026-10-07T16:17:10.797962+00:00",
+        "--state-dir",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/verification/installed/installed-sequence/processes/candidate.after_data",
+        "--workset",
+        "worksets/sec/transformed/sha256=109845ee6c7055d81947c6e96369ec2165c55cc4f568b28090221a28c702db13/workset.json"
+      ],
+      "exit": 0,
+      "has_full_inline_logs": true,
+      "has_full_separate_logs": false,
+      "path": "installed/installed-sequence/processes/candidate.after_data/resumed.json"
+    }
+  ],
+  "cwd": "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar",
+  "dependencies": {
+    "azure-data-tables": "12.7.0",
+    "azure-identity": "1.26.0",
+    "azure-storage-blob": "12.31.0",
+    "pyarrow": "25.0.1",
+    "requests": "2.34.2",
+    "sec-edgar-ingest": "0.1.0"
+  },
+  "executable": "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.venv/bin/python",
+  "exit": 0,
+  "network_guard": true,
+  "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+  "python": "3.14.0 (main, Oct 14 2025, 21:10:22) [Clang 20.1.4 ]",
+  "source_files_equal": 28,
+  "status": "DONE_WITH_CONCERNS: retained specimen source acceptance remains blocked",
+  "verified_inventories": [
+    {
+      "bytes": 211927,
+      "manifest": "specimens/sha256.json",
+      "records": 13
+    },
+    {
+      "bytes": 1859287,
+      "manifest": "sequence/sha256.json",
+      "records": 279
+    },
+    {
+      "bytes": 2185239,
+      "manifest": "installed/sha256.json",
+      "records": 292
+    },
+    {
+      "bytes": 2185316,
+      "manifest": "installed-before-readme-correction/sha256.json",
+      "records": 292
+    },
+    {
+      "bytes": 49160694,
+      "manifest": "sdd-history/sha256.json",
+      "records": 5496
+    },
+    {
+      "bytes": 2096185,
+      "manifest": "sdd-history/task7-evidence/installed-5/sha256.json",
+      "records": 291
+    },
+    {
+      "bytes": 198980,
+      "manifest": "sdd-history/task7-evidence/installed-2/sha256.json",
+      "records": 8
+    },
+    {
+      "bytes": 199260,
+      "manifest": "sdd-history/task7-evidence/installed-3/sha256.json",
+      "records": 8
+    },
+    {
+      "bytes": 648705,
+      "manifest": "sdd-history/task7-evidence/installed-4/sha256.json",
+      "records": 87
+    },
+    {
+      "bytes": 198928,
+      "manifest": "sdd-history/task7-evidence/installed-1/sha256.json",
+      "records": 8
+    },
+    {
+      "bytes": 1843169,
+      "manifest": "sdd-history/task7-evidence/sequence-1/sha256.json",
+      "records": 279
+    },
+    {
+      "bytes": 1849396,
+      "manifest": "sdd-history/task7-evidence/installed-5/installed-sequence/sha256.json",
+      "records": 277
+    },
+    {
+      "bytes": 1868100,
+      "manifest": "installed/installed-sequence/sha256.json",
+      "records": 277
+    },
+    {
+      "bytes": 1868100,
+      "manifest": "installed-before-readme-correction/installed-sequence/sha256.json",
+      "records": 277
+    }
+  ],
+  "wheel": {
+    "bytes": 110438,
+    "sha256": "7d370cbe94d82254ae2095e8bcb8993ebef939651fc788181fc6b90906d1cfdc"
+  },
+  "wheel_readme_equals_tree": true
+}

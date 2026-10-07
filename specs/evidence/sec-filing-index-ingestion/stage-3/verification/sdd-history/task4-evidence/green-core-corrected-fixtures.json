@@ -1,0 +1,19 @@
+{
+  "argv": [
+    "uv",
+    "run",
+    "--offline",
+    "python",
+    "packages/sec-edgar-ingest/tests/network_guard.py",
+    "discover",
+    "-s",
+    "packages/sec-edgar-ingest/tests",
+    "-p",
+    "test_etl_catalog.py",
+    "-v"
+  ],
+  "cwd": "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar",
+  "exit": 0,
+  "stdout": "",
+  "stderr": "test_closed_membership_withholds_daily_only_keys (test_etl_catalog.EtlCatalogTests.test_closed_membership_withholds_daily_only_keys) ... ok\ntest_empty_or_invalid_input_never_builds_candidate (test_etl_catalog.EtlCatalogTests.test_empty_or_invalid_input_never_builds_candidate) ... ok\ntest_latest_daily_wins_and_prior_sources_survive (test_etl_catalog.EtlCatalogTests.test_latest_daily_wins_and_prior_sources_survive) ... ok\ntest_open_absence_retains_then_closed_withdrawal_is_gated (test_etl_catalog.EtlCatalogTests.test_open_absence_retains_then_closed_withdrawal_is_gated) ... ok\ntest_quarterly_fields_beat_latest_daily_and_order_is_deterministic (test_etl_catalog.EtlCatalogTests.test_quarterly_fields_beat_latest_daily_and_order_is_deterministic) ... ok\ntest_stale_snapshot_cannot_replace_newer_source_revision (test_etl_catalog.EtlCatalogTests.test_stale_snapshot_cannot_replace_newer_source_revision) ... ok\n\n----------------------------------------------------------------------\nRan 6 tests in 0.504s\n\nOK\n"
+}

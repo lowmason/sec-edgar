@@ -1,6 +1,7 @@
 # sec-edgar-ingest
 
-`sec-edgar-ingest` acquires immutable SEC filing-index originals on Python 3.14+.
+`sec-edgar-ingest` acquires immutable SEC filing-index originals and transforms retained bytes
+into per-quarter published Parquet generations on Python 3.14+.
 It exposes the `sec_edgar_ingest` import package, `sec-edgar-ingest` console entry
 point, and `python -m sec_edgar_ingest`. Invoking it without arguments prints help.
 `discover` freezes a source workset; `collect` resolves that workset's members to
@@ -16,7 +17,7 @@ scripts/check-sec-edgar-ingest.sh
 ```
 
 Build/dependency requirements were cached during the accepted setup. Installation
-uses the lock's exact 20 runtime versions and the four direct pins in this package.
+uses the lock's exact 20 runtime versions plus the accepted PyArrow 25.0.1 ETL pin.
 Offline checks refuse a missing cache. This local macOS build does not establish
 Linux container compatibility or worker capacity.
 
@@ -33,42 +34,36 @@ requirement must already be available from the authorized dependency setup.
 A missing cache is a prerequisite failure; obtain that separately authorized
 setup rather than fetching dependencies or changing pins during a fixture run.
 
-To install the built wheel in a fresh environment, run from the repository root:
+The offline installed-wheel driver creates a fresh temporary native Python 3.14+
+environment, exports the frozen lock with hashes, installs PyArrow from the
+existing uv registry cache, and installs the remaining exact pins from the
+retained Stage 2 wheel cache. It then installs the exact built wheel, removes
+PYTHONPATH, changes cwd outside the checkout and verifies site-packages source
+bytes before running the raw-only sequence and real-process proof. The temporary
+environment is removed after its complete logs and evidence are retained.
 
 ```sh
-python3 -m venv --without-pip /tmp/sec-edgar-installed
-uv export --offline --frozen --no-dev --no-emit-workspace \
-  --output-file /tmp/sec-edgar-pinned-requirements.txt
-uv pip install --offline --no-index \
-  --find-links specs/evidence/sec-filing-index-ingestion/stage-2/verification/sdd-history/task1-evidence/wheels \
-  --python /tmp/sec-edgar-installed/bin/python --require-hashes \
-  -r /tmp/sec-edgar-pinned-requirements.txt
-uv pip install --offline --no-index --no-deps \
-  --python /tmp/sec-edgar-installed/bin/python \
-  dist/sec_edgar_ingest-0.1.0-py3-none-any.whl
-/tmp/sec-edgar-installed/bin/sec-edgar-ingest --help
-/tmp/sec-edgar-installed/bin/python -m sec_edgar_ingest --version
+uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/etl_proof.py installed --output /absolute/new/installed-proof
 ```
 
-Use a fresh unused environment path. `python3` must be the available Python 3.14+
-interpreter (the workspace `.venv/bin/python` also works). The retained wheel
-cache contains the accepted 20 runtime versions for this local macOS platform;
-other platforms require their separately authorized matching cached artifacts.
-The hash-bearing export preserves exact lock pins. Wheel installation uses
-`--no-deps` only after that explicit dependency installation. These uv pip/build
-commands have no `--frozen` option; the lock export, exact hashes, offline and
-no-index flags enforce the selected installation. Run fixture commands with
-`/tmp/sec-edgar-installed/bin/sec-edgar-ingest` and the same explicit config,
-pack and state-dir arguments below. The console works outside the source checkout;
-no editable import or PYTHONPATH is needed.
+Use a fresh output path. This proof requires the already selected Python 3.14+
+and cached artifacts; no interpreter or dependency download fallback is allowed.
+The retained Stage 2 wheels alone are insufficient for the new PyArrow pin.
+The driver's retained `requirements.txt`, split hash-bearing requirement files,
+venv/install command logs and wheel SHA identify the exact installation. For a
+persistent installation, use those same logged commands with a retained venv
+path. Other platforms require their separately authorized matching cached
+artifacts. Neither editable imports nor PYTHONPATH is needed by the installed
+package.
 
 The configuration filename is YAML, but its supported syntax is strict **JSON**,
 a subset of YAML 1.2. Duplicate keys, nonfinite values, unsupported fields, missing
 identity/version pins, invalid storage bindings, and unsafe paths are refused.
 Loading/validating configuration constructs no external clients. The checked-in
 file selects `local-fixture`, relative `.fixture-state`, synthetic parser/image
-provenance and the accepted SEC User-Agent. Every fixture invocation must supply
-`--fixture-pack PATH`. Fixture manifests bind canonical SEC URLs to explicit
+provenance and the accepted SEC User-Agent. Every acquisition fixture invocation must supply
+`--fixture-pack PATH`; `transform` and `publish` use exact stored references
+and bypass collector construction. Fixture manifests bind canonical SEC URLs to explicit
 original body files and SHA-256 values; missing/exhausted responses never fetch
 the URL. Fixture-only durable response cursors let a new process advance a
 scripted 404 to its later valid response.
@@ -118,7 +113,8 @@ The selected acquisition envelopes are one DEFLATE `master.idx` in a quarterly
 ZIP and plain daily IDX. Original archives remain raw ZIP bytes. Worksets use
 `sec-acquisition-v1`; schema is `sec-index-v1`; envelope identifiers are
 `sec-quarterly-envelope-v1` and `sec-daily-envelope-v1`. Parser version is pinned
-provenance. No row parser is implemented.
+provenance. `sec-index-parser-v1` parses the selected quarterly and daily families
+into `sec-index-v1`; local fixture aliases support deterministic replay proof.
 
 Stdout is one JSON object with outcome, result reference, and source/snapshot
 workset references. Stderr is structured command logging. Durable results live at
@@ -128,3 +124,33 @@ incomplete work using the existing frozen workset. See the
 [runbook](../../docs/runbooks/sec-edgar-ingest-acquisition.md) for exit codes,
 quarantine/pending work, result repair, stopped ownership, and the conservative
 Azure clean-release guard.
+
+
+`transform --workset worksets/sec/snapshot/sha256=<id>/workset.json` freezes
+observation outputs and returns an exact transformed workset. `publish --workset
+worksets/sec/transformed/sha256=<id>/workset.json` builds and validates candidates,
+then commits each quarter independently by conditional pointer update. Readers
+capture the exact manifest and validate files before exposing rows. Repeated
+unchanged input is a no-op; raw replay under a supported parser version retains
+original acquisition provenance and filing identity. A closed withdrawal gate
+returns `awaiting_approval` (exit 10), with no current-pointer change.
+
+See the [ETL runbook](../../docs/runbooks/sec-edgar-etl-publication.md) for exact
+commands, immutable reference shapes, captured Python reads and interruption
+recovery. The [Stage 3 evidence](../../specs/evidence/sec-filing-index-ingestion/stage-3/verification.md)
+includes actual spawn CAS races, forced exits, raw-only replay and an isolated
+installed-wheel proof on native Python 3.14.0/macOS arm64. Complete retained
+specimens SEC-0141–0143 contain 51 conflicting observations and are correctly
+refused: Stage 3 source acceptance and completion remain blocked. All 22 later
+integrated checks, Linux worker capacity and live Azure/authentication remain
+reserved.
+
+The installed ETL proof extends the Stage 2 installation above: export the exact
+updated lock, install its hash-bearing PyArrow entry from the existing offline
+uv cache, and install the other hash-bearing entries from the retained Stage 2
+wheel directory. The executable driver automates this separation, installs the
+exact built wheel and checks site-packages source equality outside the checkout:
+
+```sh
+uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/etl_proof.py installed --output /absolute/new/installed-proof
+```

@@ -1,0 +1,3 @@
+I1 ADDRESSED. Scoped fix verdict Approved. New Critical/Important/Minor: none.
+Reviewer task4_review capable gpt-6-astra; diff 9f47166..e460df7.
+Every noninitial exact base captured before manifest (catalog.py:257); canonical capture/quarter/base/hash/length/files verified (manifest.py:171). SQLite independently recomputes complete base/output key-union changes/full before/after/types/reasons/missing-extra/all five counters (manifest.py:189,277,282). Regression suppressed withdrawals direct/adoption, omitted updates/invented before/forged provenance/invalid nonretaining base captures (test_etl_catalog.py:448). Full green-covering.json 31 tests exit0/no warnings, no rerun. Public records unchanged/no pointers introduced.

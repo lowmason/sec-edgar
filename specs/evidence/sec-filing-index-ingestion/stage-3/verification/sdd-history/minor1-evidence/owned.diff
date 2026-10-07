@@ -1,0 +1,43 @@
+diff --git a/packages/sec-edgar-ingest/tests/test_etl_publication.py b/packages/sec-edgar-ingest/tests/test_etl_publication.py
+index 9780529..87069b8 100644
+--- a/packages/sec-edgar-ingest/tests/test_etl_publication.py
++++ b/packages/sec-edgar-ingest/tests/test_etl_publication.py
+@@ -442,3 +442,38 @@ class PublicationIntegrationTests(unittest.TestCase):
+         self.assertIsNone(result.generation_id)
+         self.assertIsNone(result.candidate_ref)
+         self.assertIsNone(self.state.pointer('2026Q4'))
++
++    def test_late_spool_failure_exposes_no_row_after_successful_validation(self):
++        from contextlib import closing
++        from sec_edgar_ingest.etl import reader
++        self.publish(self.observation(rows=row() + row(number=2)))
++        capture = self.capture()
++        actual_validate = reader.validated_manifest
++        actual_rows = reader.iter_file_rows
++        events = []
++        emitted = []
++
++        def validate(*args):
++            manifest = actual_validate(*args)
++            events.append('validated')
++            return manifest
++
++        def fail_after_real_row(ref, objects):
++            self.assertEqual(events, ['validated'])
++            with closing(actual_rows(ref, objects)) as rows:
++                value = next(rows)
++                emitted.append(value)
++                events.append('spooled_row')
++                yield value
++                events.append('late_failure')
++                raise OSError('injected late spool read failure')
++
++        with patch.object(reader, 'validated_manifest', side_effect=validate):
++            with patch.object(reader, 'iter_file_rows', side_effect=fail_after_real_row):
++                with closing(reader.read_quarter(capture, self.objects)) as rows:
++                    with self.assertRaisesRegex(OSError, 'injected late spool read failure'):
++                        next(rows)
++        self.assertEqual(events, ['validated', 'spooled_row', 'late_failure'])
++        self.assertEqual(len(emitted), 1)
++        self.assertEqual(emitted[0]['archive_path'], 'edgar/data/123456/0000123456-26-000001.txt')
++        self.assertEqual(len(self.rows(capture)), 2)

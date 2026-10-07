@@ -1,0 +1,22 @@
+{
+  "argv": [
+    "uv",
+    "run",
+    "--offline",
+    "--frozen",
+    "python",
+    "packages/sec-edgar-ingest/tests/network_guard.py",
+    "test_etl_cli",
+    "-v"
+  ],
+  "cwd": "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar",
+  "env": {
+    "PATH": "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.venv/bin:/Users/lowell/.local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/pkg/env/global/bin:/Library/Apple/usr/bin:/opt/homebrew/bin:/Applications/quarto/bin:/Users/lowell/.local/bin:/Applications/ChatGPT.app/Contents/Resources/codex-cli/codex-path:/Users/lowell/.codex/tmp/arg0/codex-arg0P1pLwg:/Users/lowell/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/override:/opt/homebrew/sbin:/Users/lowell/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/fallback:/Applications/ChatGPT.app/Contents/Resources:/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS",
+    "PYTHONPATH": null,
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "SEC_EDGAR_TASK6_PROOF_DIR": "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.sdd/3-sec-filing-index-ingestion-stage-3-spec/task6-evidence/red-boundary-proof"
+  },
+  "stdout": "",
+  "stderr": "test_help_lists_all_four_commands (test_etl_cli.EtlCliTests.test_help_lists_all_four_commands) ... FAIL\ntest_real_transform_and_publish_without_acquisition_construction (test_etl_cli.EtlCliTests.test_real_transform_and_publish_without_acquisition_construction) ... FAIL\ntest_validation_happens_before_open_stores (test_etl_cli.EtlCliTests.test_validation_happens_before_open_stores) ... ok\n\n======================================================================\nFAIL: test_help_lists_all_four_commands (test_etl_cli.EtlCliTests.test_help_lists_all_four_commands)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/tests/test_etl_cli.py\", line 76, in test_help_lists_all_four_commands\n    self.assertIn(command, output.getvalue())\n    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: 'transform' not found in \"usage: sec-edgar-ingest [-h] [--version] {discover,collect} ...\\n\\npositional arguments:\\n  {discover,collect}\\n\\noptions:\\n  -h, --help          show this help message and exit\\n  --version           show program's version number and exit\\n\"\n\n======================================================================\nFAIL: test_real_transform_and_publish_without_acquisition_construction (test_etl_cli.EtlCliTests.test_real_transform_and_publish_without_acquisition_construction)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/tests/test_etl_cli.py\", line 80, in test_real_transform_and_publish_without_acquisition_construction\n    self.assertEqual(code, 0, self.calls[-1])\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: 2 != 0 : {'argv': ['transform', '--config', '/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/tmp28fhwz98/config.json', '--run-id', 'etl-cli', '--execution-id', 'execution', '--attempt-id', 'transform', '--deadline', '2026-10-07T15:30:48.865227+00:00', '--state-dir', '/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/tmp28fhwz98', '--workset', 'worksets/sec/snapshot/sha256=4e059646c4a441d804d74d7056127cdda28691385dbe5a67886f5ad805290303/workset.json'], 'cwd': '/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar', 'exit': 2, 'stdout': '', 'stderr': \"usage: sec-edgar-ingest [-h] [--version] {discover,collect} ...\\nsec-edgar-ingest: error: argument command: invalid choice: 'transform' (choose from discover, collect)\\n\"}\n\n----------------------------------------------------------------------\nRan 3 tests in 0.070s\n\nFAILED (failures=2)\n",
+  "exit": 1
+}

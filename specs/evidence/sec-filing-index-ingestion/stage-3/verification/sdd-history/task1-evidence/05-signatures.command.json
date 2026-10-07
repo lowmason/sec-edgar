@@ -1,0 +1,15 @@
+{
+  "argv": [
+    "uv",
+    "run",
+    "--offline",
+    "--frozen",
+    "--package",
+    "sec-edgar-ingest",
+    "python",
+    "-c",
+    "import inspect, platform, sys, pyarrow, pyarrow.parquet as pq\nfrom azure.storage.blob import BlobClient, StorageStreamDownloader\nfrom azure.data.tables import TableClient\nprint(platform.platform(), platform.machine(), sys.version)\nprint(\"PyArrow\",pyarrow.__version__)\nfor call in [pyarrow.schema,pq.ParquetWriter,pq.ParquetFile.iter_batches,BlobClient.download_blob,StorageStreamDownloader.chunks,BlobClient.upload_blob,TableClient.create_entity,TableClient.update_entity]:\n print(call.__qualname__,inspect.signature(call))\n"
+  ],
+  "cwd": "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar",
+  "exit": 0
+}

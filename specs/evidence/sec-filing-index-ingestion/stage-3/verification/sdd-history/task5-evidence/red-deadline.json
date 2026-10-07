@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "uv",
+    "run",
+    "--offline",
+    "--frozen",
+    "python",
+    "packages/sec-edgar-ingest/tests/network_guard.py",
+    "test_etl_publication.PublicationIntegrationTests.test_deadline_expiry_inside_candidate_build_returns_conflict",
+    "-v"
+  ],
+  "cwd": "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar",
+  "stdout": "",
+  "stderr": "test_deadline_expiry_inside_candidate_build_returns_conflict (test_etl_publication.PublicationIntegrationTests.test_deadline_expiry_inside_candidate_build_returns_conflict) ... ERROR\n\n======================================================================\nERROR: test_deadline_expiry_inside_candidate_build_returns_conflict (test_etl_publication.PublicationIntegrationTests.test_deadline_expiry_inside_candidate_build_returns_conflict)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/tests/test_etl_publication.py\", line 349, in test_deadline_expiry_inside_candidate_build_returns_conflict\n    result = self.publish(ref)\n  File \"/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/tests/test_etl_publication.py\", line 73, in publish\n    return publish_quarter(quarter, refs, self.context, self.settings, self.objects, self.state, **kwargs)\n  File \"/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/publication.py\", line 76, in publish_quarter\n    candidate = build_candidate(quarter, previous, incoming, context, settings, objects, state, observer=observer)\n  File \"/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/unittest/mock.py\", line 1175, in __call__\n    return self._mock_call(*args, **kwargs)\n           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/unittest/mock.py\", line 1179, in _mock_call\n    return self._execute_mock_call(*args, **kwargs)\n           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/unittest/mock.py\", line 1234, in _execute_mock_call\n    raise effect\nTimeoutError: transform deadline exceeded\n\n----------------------------------------------------------------------\nRan 1 test in 0.025s\n\nFAILED (errors=1)\n",
+  "exit": 1
+}

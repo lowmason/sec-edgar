@@ -1,0 +1,15 @@
+{
+  "argv": [
+    "uv",
+    "run",
+    "--offline",
+    "--frozen",
+    "--package",
+    "sec-edgar-ingest",
+    "python",
+    "-c",
+    "import sys; sys.path.insert(0, 'packages/sec-edgar-ingest/tests'); import network_guard; network_guard.main(['test_etl_storage.EtlStorageTests.test_conflicting_transform_cannot_leave_a_publication_receipt', 'test_etl_storage.EtlStorageTests.test_publication_membership_is_monotonic_and_cas_is_bounded', '-v'])"
+  ],
+  "cwd": "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar",
+  "exit": 1
+}
