@@ -1,0 +1,103 @@
+command=[".venv/bin/python", "-m", "unittest", "-v", "test_collection.CollectionTests.test_retry_prefix_quarantine_precedes_every_success_crash_boundary", "test_collection.CollectionTests.test_recovery_verifies_original_quarantine_without_failed_spool"]
+environment=PYTHONPATH=packages/sec-edgar-ingest/tests PYTHONDONTWRITEBYTECODE=1 SEC_EDGAR_TASK7_TRACE_DIR=/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.sdd/2-sec-filing-index-ingestion-stage-2-spec/task-7-fix1-red-traces
+stdout:
+
+stderr:
+test_retry_prefix_quarantine_precedes_every_success_crash_boundary (test_collection.CollectionTests.test_retry_prefix_quarantine_precedes_every_success_crash_boundary) ... 
+  test_retry_prefix_quarantine_precedes_every_success_crash_boundary (test_collection.CollectionTests.test_retry_prefix_quarantine_precedes_every_success_crash_boundary) (point='after_receipt_checkpoint') ... FAIL
+  test_retry_prefix_quarantine_precedes_every_success_crash_boundary (test_collection.CollectionTests.test_retry_prefix_quarantine_precedes_every_success_crash_boundary) (point='after_raw_promotion') ... FAIL
+  test_retry_prefix_quarantine_precedes_every_success_crash_boundary (test_collection.CollectionTests.test_retry_prefix_quarantine_precedes_every_success_crash_boundary) (point='after_promotion_receipt') ... FAIL
+  test_retry_prefix_quarantine_precedes_every_success_crash_boundary (test_collection.CollectionTests.test_retry_prefix_quarantine_precedes_every_success_crash_boundary) (point='after_snapshot_record') ... FAIL
+  test_retry_prefix_quarantine_precedes_every_success_crash_boundary (test_collection.CollectionTests.test_retry_prefix_quarantine_precedes_every_success_crash_boundary) (point='after_binding') ... FAIL
+test_recovery_verifies_original_quarantine_without_failed_spool (test_collection.CollectionTests.test_recovery_verifies_original_quarantine_without_failed_spool) ... 
+  test_recovery_verifies_original_quarantine_without_failed_spool (test_collection.CollectionTests.test_recovery_verifies_original_quarantine_without_failed_spool) (corruption='body') ... FAIL
+  test_recovery_verifies_original_quarantine_without_failed_spool (test_collection.CollectionTests.test_recovery_verifies_original_quarantine_without_failed_spool) (corruption='sidecar') ... FAIL
+  test_recovery_verifies_original_quarantine_without_failed_spool (test_collection.CollectionTests.test_recovery_verifies_original_quarantine_without_failed_spool) (corruption='missing') ... FAIL
+
+======================================================================
+FAIL: test_retry_prefix_quarantine_precedes_every_success_crash_boundary (test_collection.CollectionTests.test_retry_prefix_quarantine_precedes_every_success_crash_boundary) (point='after_receipt_checkpoint')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 532, in test_retry_prefix_quarantine_precedes_every_success_crash_boundary
+    self.assertTrue(before['verified'], 'failed retry prefix must be durable before '+point)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : failed retry prefix must be durable before after_receipt_checkpoint
+
+======================================================================
+FAIL: test_retry_prefix_quarantine_precedes_every_success_crash_boundary (test_collection.CollectionTests.test_retry_prefix_quarantine_precedes_every_success_crash_boundary) (point='after_raw_promotion')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 532, in test_retry_prefix_quarantine_precedes_every_success_crash_boundary
+    self.assertTrue(before['verified'], 'failed retry prefix must be durable before '+point)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : failed retry prefix must be durable before after_raw_promotion
+
+======================================================================
+FAIL: test_retry_prefix_quarantine_precedes_every_success_crash_boundary (test_collection.CollectionTests.test_retry_prefix_quarantine_precedes_every_success_crash_boundary) (point='after_promotion_receipt')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 532, in test_retry_prefix_quarantine_precedes_every_success_crash_boundary
+    self.assertTrue(before['verified'], 'failed retry prefix must be durable before '+point)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : failed retry prefix must be durable before after_promotion_receipt
+
+======================================================================
+FAIL: test_retry_prefix_quarantine_precedes_every_success_crash_boundary (test_collection.CollectionTests.test_retry_prefix_quarantine_precedes_every_success_crash_boundary) (point='after_snapshot_record')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 532, in test_retry_prefix_quarantine_precedes_every_success_crash_boundary
+    self.assertTrue(before['verified'], 'failed retry prefix must be durable before '+point)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : failed retry prefix must be durable before after_snapshot_record
+
+======================================================================
+FAIL: test_retry_prefix_quarantine_precedes_every_success_crash_boundary (test_collection.CollectionTests.test_retry_prefix_quarantine_precedes_every_success_crash_boundary) (point='after_binding')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 532, in test_retry_prefix_quarantine_precedes_every_success_crash_boundary
+    self.assertTrue(before['verified'], 'failed retry prefix must be durable before '+point)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : failed retry prefix must be durable before after_binding
+
+======================================================================
+FAIL: test_recovery_verifies_original_quarantine_without_failed_spool (test_collection.CollectionTests.test_recovery_verifies_original_quarantine_without_failed_spool) (corruption='body')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 595, in test_recovery_verifies_original_quarantine_without_failed_spool
+    self.assertEqual(result.outcome, 'state_conflict')
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'success' != 'state_conflict'
+- success
++ state_conflict
+
+
+======================================================================
+FAIL: test_recovery_verifies_original_quarantine_without_failed_spool (test_collection.CollectionTests.test_recovery_verifies_original_quarantine_without_failed_spool) (corruption='sidecar')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 595, in test_recovery_verifies_original_quarantine_without_failed_spool
+    self.assertEqual(result.outcome, 'state_conflict')
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'success' != 'state_conflict'
+- success
++ state_conflict
+
+
+======================================================================
+FAIL: test_recovery_verifies_original_quarantine_without_failed_spool (test_collection.CollectionTests.test_recovery_verifies_original_quarantine_without_failed_spool) (corruption='missing')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 595, in test_recovery_verifies_original_quarantine_without_failed_spool
+    self.assertEqual(result.outcome, 'state_conflict')
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'success' != 'state_conflict'
+- success
++ state_conflict
+
+
+----------------------------------------------------------------------
+Ran 2 tests in 2.494s
+
+FAILED (failures=8)
+
+exit_code=1

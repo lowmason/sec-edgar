@@ -1,0 +1,18 @@
+{
+  "argv": [
+    "git",
+    "-c",
+    "core.whitespace=cr-at-eol",
+    "diff",
+    "--cached",
+    "--check"
+  ],
+  "cause": "Exact retained Git diff has a blank context line containing a space. It is evidence, not a new source edit.",
+  "correction": "Losslessly gzip this copied diff with original/compressed hashes and retrieval mapping; keep original SDD and prior proofs unchanged.",
+  "cwd": "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar",
+  "exit_code": 2,
+  "historical_execution_time": "not separately recorded",
+  "recorded_at": "2026-10-06T23:41:30.981056+00:00",
+  "stderr": "",
+  "stdout": "specs/evidence/sec-filing-index-ingestion/stage-2/verification/task-8-controller-acceptance-checkpoint/sdd/task-8-i1-authored-review.diff:7: trailing whitespace.\n+ \n"
+}

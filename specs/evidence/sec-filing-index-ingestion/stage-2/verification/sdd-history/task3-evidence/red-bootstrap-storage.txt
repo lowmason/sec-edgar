@@ -1,0 +1,127 @@
+COMMAND: uv run --offline --frozen --package sec-edgar-ingest python -m unittest discover -s packages/sec-edgar-ingest/tests -p test_storage.py -v
+EXIT: 1
+test_committed_insert_survives_observer_exception (test_storage.StorageTests.test_committed_insert_survives_observer_exception) ... FAIL
+test_create_conflict_preserves_first_value_and_reopens (test_storage.StorageTests.test_create_conflict_preserves_first_value_and_reopens) ... FAIL
+test_fixed_registry_is_conditional_and_factory_shares_root_and_budget (test_storage.StorageTests.test_fixed_registry_is_conditional_and_factory_shares_root_and_budget) ... FAIL
+test_object_fault_before_and_after_link_is_restart_safe (test_storage.StorageTests.test_object_fault_before_and_after_link_is_restart_safe) ... FAIL
+test_scan_reads_all_pages_and_filters_detached_values (test_storage.StorageTests.test_scan_reads_all_pages_and_filters_detached_values) ... FAIL
+test_shared_finite_lease_expiry_renewal_and_stale_handles (test_storage.StorageTests.test_shared_finite_lease_expiry_renewal_and_stale_handles) ... FAIL
+test_stage_promote_verified_bytes_before_raw_reference (test_storage.StorageTests.test_stage_promote_verified_bytes_before_raw_reference) ... FAIL
+test_stale_cas_and_missing_rows_cannot_replace (test_storage.StorageTests.test_stale_cas_and_missing_rows_cannot_replace) ... FAIL
+test_unsafe_paths_and_symlinks_cannot_escape_object_root (test_storage.StorageTests.test_unsafe_paths_and_symlinks_cannot_escape_object_root) ... FAIL
+test_write_once_same_bytes_are_idempotent_different_bytes_are_corruption (test_storage.StorageTests.test_write_once_same_bytes_are_idempotent_different_bytes_are_corruption) ... FAIL
+
+======================================================================
+FAIL: test_committed_insert_survives_observer_exception (test_storage.StorageTests.test_committed_insert_survives_observer_exception)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_storage.py", line 14, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.storage"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Durable conditional stores must preserve restart and race semantics")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Durable conditional stores must preserve restart and race semantics
+
+======================================================================
+FAIL: test_create_conflict_preserves_first_value_and_reopens (test_storage.StorageTests.test_create_conflict_preserves_first_value_and_reopens)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_storage.py", line 14, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.storage"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Durable conditional stores must preserve restart and race semantics")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Durable conditional stores must preserve restart and race semantics
+
+======================================================================
+FAIL: test_fixed_registry_is_conditional_and_factory_shares_root_and_budget (test_storage.StorageTests.test_fixed_registry_is_conditional_and_factory_shares_root_and_budget)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_storage.py", line 14, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.storage"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Durable conditional stores must preserve restart and race semantics")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Durable conditional stores must preserve restart and race semantics
+
+======================================================================
+FAIL: test_object_fault_before_and_after_link_is_restart_safe (test_storage.StorageTests.test_object_fault_before_and_after_link_is_restart_safe)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_storage.py", line 14, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.storage"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Durable conditional stores must preserve restart and race semantics")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Durable conditional stores must preserve restart and race semantics
+
+======================================================================
+FAIL: test_scan_reads_all_pages_and_filters_detached_values (test_storage.StorageTests.test_scan_reads_all_pages_and_filters_detached_values)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_storage.py", line 14, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.storage"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Durable conditional stores must preserve restart and race semantics")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Durable conditional stores must preserve restart and race semantics
+
+======================================================================
+FAIL: test_shared_finite_lease_expiry_renewal_and_stale_handles (test_storage.StorageTests.test_shared_finite_lease_expiry_renewal_and_stale_handles)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_storage.py", line 14, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.storage"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Durable conditional stores must preserve restart and race semantics")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Durable conditional stores must preserve restart and race semantics
+
+======================================================================
+FAIL: test_stage_promote_verified_bytes_before_raw_reference (test_storage.StorageTests.test_stage_promote_verified_bytes_before_raw_reference)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_storage.py", line 14, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.storage"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Durable conditional stores must preserve restart and race semantics")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Durable conditional stores must preserve restart and race semantics
+
+======================================================================
+FAIL: test_stale_cas_and_missing_rows_cannot_replace (test_storage.StorageTests.test_stale_cas_and_missing_rows_cannot_replace)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_storage.py", line 14, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.storage"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Durable conditional stores must preserve restart and race semantics")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Durable conditional stores must preserve restart and race semantics
+
+======================================================================
+FAIL: test_unsafe_paths_and_symlinks_cannot_escape_object_root (test_storage.StorageTests.test_unsafe_paths_and_symlinks_cannot_escape_object_root)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_storage.py", line 14, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.storage"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Durable conditional stores must preserve restart and race semantics")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Durable conditional stores must preserve restart and race semantics
+
+======================================================================
+FAIL: test_write_once_same_bytes_are_idempotent_different_bytes_are_corruption (test_storage.StorageTests.test_write_once_same_bytes_are_idempotent_different_bytes_are_corruption)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_storage.py", line 14, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.storage"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Durable conditional stores must preserve restart and race semantics")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Durable conditional stores must preserve restart and race semantics
+
+----------------------------------------------------------------------
+Ran 10 tests in 0.001s
+
+FAILED (failures=10)

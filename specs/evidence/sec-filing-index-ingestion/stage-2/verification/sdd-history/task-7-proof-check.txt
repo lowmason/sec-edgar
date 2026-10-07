@@ -1,0 +1,167 @@
+command=[".venv/bin/python", ".sdd/2-sec-filing-index-ingestion-stage-2-spec/task-7-proof-check.py"]
+environment=PYTHONPATH=packages/sec-edgar-ingest/tests PYTHONDONTWRITEBYTECODE=1
+stdout:
+{
+  "crashes": [
+    {
+      "existing_workset_bytes_equal": false,
+      "exit_codes": [
+        73,
+        0,
+        0
+      ],
+      "fetches": 1,
+      "pids": [
+        47124,
+        47126,
+        47127
+      ],
+      "point": "after_receipt_checkpoint",
+      "raw_present_before_exit": false,
+      "snapshot_sha256": "1b4118c7b3720065bd11eb565fa97647ea142ed0318f7205c31aee463bd309b7"
+    },
+    {
+      "existing_workset_bytes_equal": false,
+      "exit_codes": [
+        73,
+        0,
+        0
+      ],
+      "fetches": 1,
+      "pids": [
+        47128,
+        47130,
+        47131
+      ],
+      "point": "after_raw_promotion",
+      "raw_present_before_exit": true,
+      "snapshot_sha256": "1b4118c7b3720065bd11eb565fa97647ea142ed0318f7205c31aee463bd309b7"
+    },
+    {
+      "existing_workset_bytes_equal": false,
+      "exit_codes": [
+        73,
+        0,
+        0
+      ],
+      "fetches": 1,
+      "pids": [
+        47132,
+        47134,
+        47135
+      ],
+      "point": "after_promotion_receipt",
+      "raw_present_before_exit": true,
+      "snapshot_sha256": "1b4118c7b3720065bd11eb565fa97647ea142ed0318f7205c31aee463bd309b7"
+    },
+    {
+      "existing_workset_bytes_equal": false,
+      "exit_codes": [
+        73,
+        0,
+        0
+      ],
+      "fetches": 1,
+      "pids": [
+        47136,
+        47138,
+        47139
+      ],
+      "point": "after_snapshot_record",
+      "raw_present_before_exit": true,
+      "snapshot_sha256": "1b4118c7b3720065bd11eb565fa97647ea142ed0318f7205c31aee463bd309b7"
+    },
+    {
+      "existing_workset_bytes_equal": false,
+      "exit_codes": [
+        73,
+        0,
+        0
+      ],
+      "fetches": 1,
+      "pids": [
+        47140,
+        47142,
+        47143
+      ],
+      "point": "after_binding",
+      "raw_present_before_exit": true,
+      "snapshot_sha256": "1b4118c7b3720065bd11eb565fa97647ea142ed0318f7205c31aee463bd309b7"
+    },
+    {
+      "existing_workset_bytes_equal": true,
+      "exit_codes": [
+        73,
+        0,
+        0
+      ],
+      "fetches": 1,
+      "pids": [
+        47144,
+        47146,
+        47147
+      ],
+      "point": "after_snapshot_workset_write",
+      "raw_present_before_exit": true,
+      "snapshot_sha256": "1b4118c7b3720065bd11eb565fa97647ea142ed0318f7205c31aee463bd309b7"
+    },
+    {
+      "existing_workset_bytes_equal": true,
+      "exit_codes": [
+        73,
+        0,
+        0
+      ],
+      "fetches": 1,
+      "pids": [
+        47148,
+        47150,
+        47151
+      ],
+      "point": "before_result_write",
+      "raw_present_before_exit": true,
+      "snapshot_sha256": "1b4118c7b3720065bd11eb565fa97647ea142ed0318f7205c31aee463bd309b7"
+    }
+  ],
+  "full_suite": {
+    "exit_code": 0,
+    "tests": 250,
+    "unexpected_output": []
+  },
+  "race": {
+    "actual_insert_attempts": 2,
+    "actual_insert_conflicts": 1,
+    "adopted_sha256": "203964cb70ac1bfae0210db0776984db66030e5b302c3086c285595a03bc12a3",
+    "candidate_sha256": [
+      "203964cb70ac1bfae0210db0776984db66030e5b302c3086c285595a03bc12a3",
+      "37e8d9f8431be0de04c50359c4dab6e3787681e23670cbb357df9c79c3ffcd74"
+    ],
+    "exit_codes": [
+      0,
+      0
+    ],
+    "pids": [
+      47161,
+      47162
+    ],
+    "two_absent_reads_before_inserts": true
+  },
+  "two_source_restart": {
+    "distinct_fetch_urls": [
+      "https://www.sec.gov/Archives/edgar/daily-index/2026/QTR4/master.20261002.idx",
+      "https://www.sec.gov/Archives/edgar/daily-index/2026/QTR4/master.20261001.idx"
+    ],
+    "downloaded": 1,
+    "exit_codes": [
+      73,
+      0,
+      0
+    ],
+    "pending": 0,
+    "unchanged": 1
+  }
+}
+
+stderr:
+
+exit_code=0

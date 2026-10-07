@@ -1,0 +1,180 @@
+Command: uv run --offline --frozen --package sec-edgar-ingest python -m unittest discover -s packages/sec-edgar-ingest/tests -p test_coordination.py -v
+Exit: 1
+test_clock_uncertainty_stops_before_sender (test_coordination.CoordinationTests.test_clock_uncertainty_stops_before_sender) ... FAIL
+test_delayed_dispatch_cannot_compress_actual_socket_starts (test_coordination.CoordinationTests.test_delayed_dispatch_cannot_compress_actual_socket_starts) ... FAIL
+test_discovery_download_and_retry_all_use_finite_exchange_turns (test_coordination.CoordinationTests.test_discovery_download_and_retry_all_use_finite_exchange_turns) ... FAIL
+test_expired_lease_does_not_allow_overlap_with_old_request (test_coordination.CoordinationTests.test_expired_lease_does_not_allow_overlap_with_old_request) ... FAIL
+test_expired_queue_ticket_is_cas_retired_without_erasing_another (test_coordination.CoordinationTests.test_expired_queue_ticket_is_cas_retired_without_erasing_another) ... FAIL
+test_guard_calculations_preserve_future_and_prior_uncertainty (test_coordination.CoordinationTests.test_guard_calculations_preserve_future_and_prior_uncertainty) ... FAIL
+test_one_permit_per_turn_and_no_reuse_after_complete (test_coordination.CoordinationTests.test_one_permit_per_turn_and_no_reuse_after_complete) ... FAIL
+test_renewal_loss_during_body_returns_retained_partial_and_shared_cancellation (test_coordination.CoordinationTests.test_renewal_loss_during_body_returns_retained_partial_and_shared_cancellation) ... FAIL
+test_reservation_outage_stops_dispatch_and_keeps_durable_guard (test_coordination.CoordinationTests.test_reservation_outage_stops_dispatch_and_keeps_durable_guard) ... FAIL
+test_restart_retains_global_cooldown (test_coordination.CoordinationTests.test_restart_retains_global_cooldown) ... FAIL
+test_stale_epoch_and_dispatch_deadline_are_refused (test_coordination.CoordinationTests.test_stale_epoch_and_dispatch_deadline_are_refused) ... FAIL
+test_takeover_guard_remains_fixed_while_successor_renews (test_coordination.CoordinationTests.test_takeover_guard_remains_fixed_while_successor_renews) ... FAIL
+test_unbounded_sender_exception_retains_future_guard (test_coordination.CoordinationTests.test_unbounded_sender_exception_retains_future_guard) ... FAIL
+test_unknown_renewal_outcome_waits_full_exchange_after_confirmed_acquisition (test_coordination.CoordinationTests.test_unknown_renewal_outcome_waits_full_exchange_after_confirmed_acquisition) ... FAIL
+test_azure_journal_fences_read_and_write_with_lease_and_actual_etag (test_coordination.JournalContractTests.test_azure_journal_fences_read_and_write_with_lease_and_actual_etag) ... ok
+test_date_precision_plus_rtt_must_fit_two_second_bound (test_coordination.JournalContractTests.test_date_precision_plus_rtt_must_fit_two_second_bound) ... ok
+test_journal_is_durable_and_fenced_by_actual_lease_and_version (test_coordination.JournalContractTests.test_journal_is_durable_and_fenced_by_actual_lease_and_version) ... ok
+test_permit_exposes_detached_validated_persisted_next_allowed_time (test_coordination.JournalContractTests.test_permit_exposes_detached_validated_persisted_next_allowed_time) ... ok
+test_upper_bounds_include_server_date_precision_and_rtt (test_coordination.JournalContractTests.test_upper_bounds_include_server_date_precision_and_rtt) ... ok
+
+======================================================================
+FAIL: test_clock_uncertainty_stops_before_sender (test_coordination.CoordinationTests.test_clock_uncertainty_stops_before_sender)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_coordination.py", line 119, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.coordination"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Every SEC request needs finite leased-journal coordination")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Every SEC request needs finite leased-journal coordination
+
+======================================================================
+FAIL: test_delayed_dispatch_cannot_compress_actual_socket_starts (test_coordination.CoordinationTests.test_delayed_dispatch_cannot_compress_actual_socket_starts)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_coordination.py", line 119, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.coordination"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Every SEC request needs finite leased-journal coordination")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Every SEC request needs finite leased-journal coordination
+
+======================================================================
+FAIL: test_discovery_download_and_retry_all_use_finite_exchange_turns (test_coordination.CoordinationTests.test_discovery_download_and_retry_all_use_finite_exchange_turns)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_coordination.py", line 119, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.coordination"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Every SEC request needs finite leased-journal coordination")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Every SEC request needs finite leased-journal coordination
+
+======================================================================
+FAIL: test_expired_lease_does_not_allow_overlap_with_old_request (test_coordination.CoordinationTests.test_expired_lease_does_not_allow_overlap_with_old_request)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_coordination.py", line 119, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.coordination"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Every SEC request needs finite leased-journal coordination")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Every SEC request needs finite leased-journal coordination
+
+======================================================================
+FAIL: test_expired_queue_ticket_is_cas_retired_without_erasing_another (test_coordination.CoordinationTests.test_expired_queue_ticket_is_cas_retired_without_erasing_another)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_coordination.py", line 119, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.coordination"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Every SEC request needs finite leased-journal coordination")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Every SEC request needs finite leased-journal coordination
+
+======================================================================
+FAIL: test_guard_calculations_preserve_future_and_prior_uncertainty (test_coordination.CoordinationTests.test_guard_calculations_preserve_future_and_prior_uncertainty)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_coordination.py", line 119, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.coordination"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Every SEC request needs finite leased-journal coordination")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Every SEC request needs finite leased-journal coordination
+
+======================================================================
+FAIL: test_one_permit_per_turn_and_no_reuse_after_complete (test_coordination.CoordinationTests.test_one_permit_per_turn_and_no_reuse_after_complete)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_coordination.py", line 119, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.coordination"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Every SEC request needs finite leased-journal coordination")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Every SEC request needs finite leased-journal coordination
+
+======================================================================
+FAIL: test_renewal_loss_during_body_returns_retained_partial_and_shared_cancellation (test_coordination.CoordinationTests.test_renewal_loss_during_body_returns_retained_partial_and_shared_cancellation)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_coordination.py", line 119, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.coordination"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Every SEC request needs finite leased-journal coordination")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Every SEC request needs finite leased-journal coordination
+
+======================================================================
+FAIL: test_reservation_outage_stops_dispatch_and_keeps_durable_guard (test_coordination.CoordinationTests.test_reservation_outage_stops_dispatch_and_keeps_durable_guard)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_coordination.py", line 119, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.coordination"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Every SEC request needs finite leased-journal coordination")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Every SEC request needs finite leased-journal coordination
+
+======================================================================
+FAIL: test_restart_retains_global_cooldown (test_coordination.CoordinationTests.test_restart_retains_global_cooldown)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_coordination.py", line 119, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.coordination"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Every SEC request needs finite leased-journal coordination")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Every SEC request needs finite leased-journal coordination
+
+======================================================================
+FAIL: test_stale_epoch_and_dispatch_deadline_are_refused (test_coordination.CoordinationTests.test_stale_epoch_and_dispatch_deadline_are_refused)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_coordination.py", line 119, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.coordination"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Every SEC request needs finite leased-journal coordination")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Every SEC request needs finite leased-journal coordination
+
+======================================================================
+FAIL: test_takeover_guard_remains_fixed_while_successor_renews (test_coordination.CoordinationTests.test_takeover_guard_remains_fixed_while_successor_renews)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_coordination.py", line 119, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.coordination"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Every SEC request needs finite leased-journal coordination")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Every SEC request needs finite leased-journal coordination
+
+======================================================================
+FAIL: test_unbounded_sender_exception_retains_future_guard (test_coordination.CoordinationTests.test_unbounded_sender_exception_retains_future_guard)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_coordination.py", line 119, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.coordination"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Every SEC request needs finite leased-journal coordination")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Every SEC request needs finite leased-journal coordination
+
+======================================================================
+FAIL: test_unknown_renewal_outcome_waits_full_exchange_after_confirmed_acquisition (test_coordination.CoordinationTests.test_unknown_renewal_outcome_waits_full_exchange_after_confirmed_acquisition)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_coordination.py", line 119, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.coordination"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Every SEC request needs finite leased-journal coordination")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Every SEC request needs finite leased-journal coordination
+
+----------------------------------------------------------------------
+Ran 19 tests in 0.108s
+
+FAILED (failures=14)

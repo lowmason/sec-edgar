@@ -1,0 +1,12 @@
+{
+  "kind": "inspection helper import failure before retained payload validation",
+  "recorded_at": "2026-10-06T23:08:47.606207+00:00",
+  "historical_execution_time": "not separately recorded",
+  "argv": [
+    ".venv/bin/python",
+    ".sdd/2-sec-filing-index-ingestion-stage-2-spec/controller-task8-i1-inspection.py"
+  ],
+  "stdout": "",
+  "stderr": "Traceback (most recent call last):\n  File \"/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.sdd/2-sec-filing-index-ingestion-stage-2-spec/controller-task8-i1-inspection.py\", line 3, in <module>\n    from sec_edgar_ingest.models import decode_snapshot_workset,encode_workset\nImportError: cannot import name 'decode_snapshot_workset' from 'sec_edgar_ingest.models' (/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py)\n",
+  "exit_code": 1
+}

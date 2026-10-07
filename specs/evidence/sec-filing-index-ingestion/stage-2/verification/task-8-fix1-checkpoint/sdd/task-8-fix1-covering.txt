@@ -1,0 +1,102 @@
+argv=['.venv/bin/python', 'packages/sec-edgar-ingest/tests/network_guard.py', '-v', 'test_network_guard', 'test_cli', 'test_acquisition_processes', 'test_workspace']
+cwd=/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar
+test_explicit_helper_denies_connect_ex_resolution_and_unselected_loopback (test_network_guard.NetworkGuardTests.test_explicit_helper_denies_connect_ex_resolution_and_unselected_loopback) ... ok
+test_only_selected_fixture_origin_is_allowed_and_scope_closes (test_network_guard.NetworkGuardTests.test_only_selected_fixture_origin_is_allowed_and_scope_closes) ... ERROR
+test_ordinary_support_import_installs_connection_resolution_and_auth_denial (test_network_guard.NetworkGuardTests.test_ordinary_support_import_installs_connection_resolution_and_auth_denial) ... ok
+test_provider_construction_and_existing_instance_token_work_never_reach_stubs (test_network_guard.NetworkGuardTests.test_provider_construction_and_existing_instance_token_work_never_reach_stubs) ... ok
+test_spawned_process_has_selected_origin_and_denies_network_and_auth (test_network_guard.NetworkGuardTests.test_spawned_process_has_selected_origin_and_denies_network_and_auth) ... Process SpawnProcess-1:
+Traceback (most recent call last):
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/multiprocessing/process.py", line 320, in _bootstrap
+    self.run()
+    ~~~~~~~~^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_network_guard.py", line 46, in guarded_spawn_probe
+    if not import_available():
+           ~~~~~~~~~~~~~~~~^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_network_guard.py", line 58, in import_available
+    return importlib.util.find_spec('network_guard') is not None
+           ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "<frozen importlib.util>", line 110, in find_spec
+ValueError: network_guard.__spec__ is None
+ERROR
+test_suite_runner_installs_guard_before_unittest_executes (test_network_guard.NetworkGuardTests.test_suite_runner_installs_guard_before_unittest_executes) ... ERROR
+test_collection_outcomes_are_named_and_non_success (test_cli.CliTests.test_collection_outcomes_are_named_and_non_success) ... ok
+test_completed_attempt_cannot_change_config_deadline_mode_refresh_or_workset (test_cli.CliTests.test_completed_attempt_cannot_change_config_deadline_mode_refresh_or_workset) ... ok
+test_failed_discovery_is_not_empty_success (test_cli.CliTests.test_failed_discovery_is_not_empty_success) ... ok
+test_fixture_pack_required_and_overrides_rejected_in_azure_before_clients (test_cli.CliTests.test_fixture_pack_required_and_overrides_rejected_in_azure_before_clients) ... ok
+test_missing_identity_creates_no_external_clients (test_cli.CliTests.test_missing_identity_creates_no_external_clients) ... ok
+test_success_result_current_context_hash_and_replay_no_requests (test_cli.CliTests.test_success_result_current_context_hash_and_replay_no_requests) ... ok
+test_unknown_and_missing_workset_refuse_without_false_completion (test_cli.CliTests.test_unknown_and_missing_workset_refuse_without_false_completion) ... ok
+test_unsafe_identifiers_refuse_before_backend_construction (test_cli.CliTests.test_unsafe_identifiers_refuse_before_backend_construction) ... ok
+test_valid_empty_and_help_do_not_offer_unimplemented_stages (test_cli.CliTests.test_valid_empty_and_help_do_not_offer_unimplemented_stages) ... ok
+test_completed_attempt_replays_after_deadline_without_fabricating_start (test_cli.CompletedDeadlineTests.test_completed_attempt_replays_after_deadline_without_fabricating_start) ... ok
+test_fixture_mapping_exhaustion_and_missing_url_never_network (test_cli.DailyCliTests.test_fixture_mapping_exhaustion_and_missing_url_never_network) ... ok
+test_open_daily_fixture_persists_delayed_cursor_and_old_pin_no_http (test_cli.DailyCliTests.test_open_daily_fixture_persists_delayed_cursor_and_old_pin_no_http) ... ok
+test_missing_fixture_sender_mapping_retains_error_and_returns_nine (test_cli.ErrorIntegrityTests.test_missing_fixture_sender_mapping_retains_error_and_returns_nine) ... ok
+test_result_writer_refuses_prior_different_attempt_result_before_object_write (test_cli.ErrorIntegrityTests.test_result_writer_refuses_prior_different_attempt_result_before_object_write) ... ok
+test_unexpected_real_request_sender_error_is_nine_without_durable_result (test_cli.ErrorIntegrityTests.test_unexpected_real_request_sender_error_is_nine_without_durable_result) ... ok
+test_pack_validates_hash_provenance_url_path_and_never_falls_back (test_cli.FixturePackTests.test_pack_validates_hash_provenance_url_path_and_never_falls_back) ... ok
+test_actual_result_and_attempt_crashes_repair_same_context_without_http (test_cli.ResultProcessTests.test_actual_result_and_attempt_crashes_repair_same_context_without_http) ... ok
+test_unexpected_error_is_nine_and_retains_attempt_without_result (test_cli.ResultProcessTests.test_unexpected_error_is_nine_and_retains_attempt_without_result) ... ok
+test_canonical_result_codec_is_strict_and_roundtrips (test_cli.ResultTests.test_canonical_result_codec_is_strict_and_roundtrips) ... ok
+test_exact_exit_mapping_and_structured_event (test_cli.ResultTests.test_exact_exit_mapping_and_structured_event) ... ok
+test_result_precedes_attempt_and_conflicting_bytes_refuse (test_cli.ResultTests.test_result_precedes_attempt_and_conflicting_bytes_refuse) ... ok
+test_result_reader_refuses_wrong_path_correlation (test_cli.ResultTests.test_result_reader_refuses_wrong_path_correlation) ... ok
+test_azure_fixture_arguments_and_distant_deadline_refuse_before_clients (test_cli.ValidationBoundaryTests.test_azure_fixture_arguments_and_distant_deadline_refuse_before_clients) ... ok
+test_fractional_lease_and_closed_daily_endpoint_refuse_before_clients (test_cli.ValidationBoundaryTests.test_fractional_lease_and_closed_daily_endpoint_refuse_before_clients) ... ok
+test_missing_valid_workset_retains_failed_attempt (test_cli.ValidationBoundaryTests.test_missing_valid_workset_retains_failed_attempt) ... ok
+test_held_socket_parent_death_zero_successor_unsafe_interval_and_daily_next (test_acquisition_processes.AcquisitionProcessTests.test_held_socket_parent_death_zero_successor_unsafe_interval_and_daily_next) ... ok
+test_independent_child_deadline_records_actual_fatal_exit_and_prefix (test_acquisition_processes.AcquisitionProcessTests.test_independent_child_deadline_records_actual_fatal_exit_and_prefix) ... ok
+test_stale_sender_awakened_after_allowed_start_sends_zero (test_acquisition_processes.AcquisitionProcessTests.test_stale_sender_awakened_after_allowed_start_sends_zero) ... ok
+test_three_independent_collectors_barrier_request_and_actual_binding_race (test_acquisition_processes.AcquisitionProcessTests.test_three_independent_collectors_barrier_request_and_actual_binding_race) ... ok
+test_installed_distribution_exposes_the_cli (test_workspace.CliTests.test_installed_distribution_exposes_the_cli) ... ok
+test_main_help_and_version_exit_successfully (test_workspace.CliTests.test_main_help_and_version_exit_successfully) ... ok
+test_main_without_arguments_prints_help (test_workspace.CliTests.test_main_without_arguments_prints_help) ... ok
+test_module_and_console_invocations (test_workspace.CliTests.test_module_and_console_invocations) ... ok
+test_unimplemented_commands_are_rejected (test_workspace.CliTests.test_unimplemented_commands_are_rejected) ... ok
+test_only_ingest_is_a_workspace_member (test_workspace.WorkspaceTests.test_only_ingest_is_a_workspace_member) ... ok
+
+======================================================================
+ERROR: test_only_selected_fixture_origin_is_allowed_and_scope_closes (test_network_guard.NetworkGuardTests.test_only_selected_fixture_origin_is_allowed_and_scope_closes)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_network_guard.py", line 112, in test_only_selected_fixture_origin_is_allowed_and_scope_closes
+    self.assertTrue(import_available(), 'a separate test-only selected-origin guard is required')
+                    ~~~~~~~~~~~~~~~~^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_network_guard.py", line 58, in import_available
+    return importlib.util.find_spec('network_guard') is not None
+           ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "<frozen importlib.util>", line 110, in find_spec
+ValueError: network_guard.__spec__ is None
+
+======================================================================
+ERROR: test_spawned_process_has_selected_origin_and_denies_network_and_auth (test_network_guard.NetworkGuardTests.test_spawned_process_has_selected_origin_and_denies_network_and_auth)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_network_guard.py", line 164, in test_spawned_process_has_selected_origin_and_denies_network_and_auth
+    proof = output.get(timeout=15)
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/multiprocessing/queues.py", line 112, in get
+    raise Empty
+_queue.Empty
+
+======================================================================
+ERROR: test_suite_runner_installs_guard_before_unittest_executes (test_network_guard.NetworkGuardTests.test_suite_runner_installs_guard_before_unittest_executes)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_network_guard.py", line 143, in test_suite_runner_installs_guard_before_unittest_executes
+    self.assertTrue(import_available(), 'the test runner must install denial before discovery')
+                    ~~~~~~~~~~~~~~~~^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_network_guard.py", line 58, in import_available
+    return importlib.util.find_spec('network_guard') is not None
+           ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "<frozen importlib.util>", line 110, in find_spec
+ValueError: network_guard.__spec__ is None
+
+----------------------------------------------------------------------
+Ran 41 tests in 87.825s
+
+FAILED (errors=3)
+
+exit_code=1

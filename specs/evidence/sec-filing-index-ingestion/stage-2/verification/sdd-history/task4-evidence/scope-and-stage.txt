@@ -1,0 +1,2011 @@
+Command: git rev-parse HEAD
+Exit: 0
+129ca3a16dafdb82013a8fd28d3d653b58831112
+
+Command: git diff --cached --name-only
+Exit: 0
+
+Command: git diff --check
+Exit: 0
+
+Command: git add -- packages/sec-edgar-ingest/src/sec_edgar_ingest/coordination.py packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/contracts.py packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py packages/sec-edgar-ingest/tests/test_coordination.py packages/sec-edgar-ingest/tests/support.py
+Exit: 0
+
+Command: git diff --cached --name-only
+Exit: 0
+packages/sec-edgar-ingest/src/sec_edgar_ingest/coordination.py
+packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py
+packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py
+packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/contracts.py
+packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py
+packages/sec-edgar-ingest/tests/support.py
+packages/sec-edgar-ingest/tests/test_coordination.py
+
+Command: git diff --cached --check
+Exit: 0
+
+Command: git diff --cached -- packages/sec-edgar-ingest/src/sec_edgar_ingest/coordination.py packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/contracts.py packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py packages/sec-edgar-ingest/tests/test_coordination.py packages/sec-edgar-ingest/tests/support.py
+Exit: 0
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/coordination.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/coordination.py
+new file mode 100644
+index 0000000..7263bf4
+--- /dev/null
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/coordination.py
+@@ -0,0 +1,516 @@
++"""One leased sentinel authorizes bounded exchanges and durable owner-wide pacing."""
++from __future__ import annotations
++
++import math
++import multiprocessing
++import threading
++import time
++import uuid
++from contextlib import contextmanager
++from dataclasses import replace
++from datetime import datetime, timedelta, timezone
++from typing import Protocol
++
++from .config import Settings
++from .models import BodyReceipt, Error, Permit, QueueTicket, RunContext, Versioned, require_number, require_text, require_utc
++from .storage.contracts import ClockUncertain, Conflict, LeaseHandle, LeaseStore, OwnershipLost, StateStore, TimeBounds
++
++JOURNAL_VERSION = "sec-lease-journal-v1"
++QUEUE_POLL_SECONDS = 0.25
++STORAGE_CALL_BOUND_SECONDS = 15
++RENEWAL_PREPARATION_CALLS = 5
++MANUAL_WATCH_STEP_SECONDS = 1
++SPAWN = multiprocessing.get_context("spawn")
++
++
++class Clock:
++    precision_seconds = 0.000001
++
++    def now(self) -> datetime:
++        return datetime.now(timezone.utc)
++
++    def monotonic(self) -> float:
++        return time.monotonic()
++
++    def sleep(self, seconds: float) -> None:
++        require_number(seconds, "sleep seconds")
++        time.sleep(seconds)
++
++
++class ManualClock(Clock):
++    """A deterministic fixture clock; advancing it also runs registered renewal checks."""
++    precision_seconds = 0
++    def __init__(self, instant: datetime):
++        require_utc(instant, "manual instant")
++        self._instant, self._elapsed = instant, 0.0
++        self._lock = threading.RLock()
++        self._watchers = []
++
++    def now(self) -> datetime:
++        with self._lock:
++            return self._instant
++
++    def monotonic(self) -> float:
++        with self._lock:
++            return self._elapsed
++
++    def advance(self, seconds: float) -> None:
++        require_number(seconds, "advance seconds")
++        remaining = seconds
++        while remaining > 0:
++            with self._lock:
++                step = min(remaining, MANUAL_WATCH_STEP_SECONDS) if self._watchers else remaining
++                self._instant += timedelta(seconds=step)
++                self._elapsed += step
++                watchers = tuple(self._watchers)
++            for watcher in watchers:
++                watcher()
++            remaining -= step
++
++    def sleep(self, seconds: float) -> None:
++        self.advance(seconds)
++
++    def subscribe(self, callback):
++        with self._lock:
++            self._watchers.append(callback)
++        def unsubscribe():
++            with self._lock:
++                if callback in self._watchers:
++                    self._watchers.remove(callback)
++        return unsubscribe
++
++
++class Sender(Protocol):
++    """A returned receipt proves positive transport drain, including partial failure receipts."""
++    def send(self, url: str, context: RunContext, permit: Permit, *, cancellation) -> BodyReceipt: ...
++
++
++def utc_value(value: object) -> datetime:
++    if not isinstance(value, str):
++        raise ValueError("journal time must be a UTC ISO string")
++    instant = datetime.fromisoformat(value)
++    require_utc(instant, "journal time")
++    return instant
++
++
++def takeover_time(previous_unsafe: datetime, acquired_upper: datetime,
++                  exchange_seconds: float, uncertainty_seconds: float, clean_release: bool) -> datetime:
++    if clean_release:
++        return previous_unsafe
++    return max(previous_unsafe, acquired_upper + timedelta(seconds=exchange_seconds + uncertainty_seconds))
++
++
++def reservation_guard(ownership_until: datetime, exchange_seconds: float, uncertainty_seconds: float) -> datetime:
++    return ownership_until + timedelta(seconds=exchange_seconds + uncertainty_seconds)
++
++
++def next_start(last_start: datetime | None, not_before: datetime, earliest_safe: datetime, rate: float) -> datetime:
++    if last_start is None:
++        return max(not_before, earliest_safe)
++    # datetime has microsecond precision; round upward so 3/s never becomes 333333 microseconds.
++    interval = timedelta(microseconds=math.ceil(1_000_000 / rate))
++    return max(not_before, earliest_safe, last_start + interval)
++
++
++def _journal(value, bounds: TimeBounds) -> dict[str, object]:
++    if not value:
++        return {"journal_version": JOURNAL_VERSION, "owner_id": "unowned", "epoch": 0,
++                "ownership_until": bounds.upper.isoformat(), "unsafe_until": bounds.upper.isoformat(),
++                "last_start": None, "not_before": bounds.upper.isoformat(), "request_id": None,
++                "clean_release": True}
++    result = dict(value)
++    if result.get("journal_version") != JOURNAL_VERSION:
++        raise Conflict("unknown sentinel journal version")
++    require_text(result.get("owner_id"), "journal owner")
++    require_number(result.get("epoch"), "journal epoch", integer=True)
++    for name in ("ownership_until", "unsafe_until", "not_before"):
++        utc_value(result.get(name))
++    if result.get("last_start") is not None:
++        utc_value(result["last_start"])
++    if result.get("request_id") is not None:
++        require_text(result["request_id"], "journal request")
++    if type(result.get("clean_release")) is not bool:
++        raise Conflict("journal clean_release must be boolean")
++    return result
++
++
++class Coordinator:
++    def __init__(self, settings: Settings, store: StateStore, leases: LeaseStore, clock: Clock):
++        self.settings = Settings.from_mapping(settings.to_mapping())
++        if not self.settings.coordination.lease_seconds.is_integer():
++            raise ValueError("coordination requires whole finite lease seconds")
++        self.store, self.leases, self.clock = store, leases, clock
++        self.observer = None
++        self._active = None
++        self._wall_origin, self._mono_origin = clock.now(), clock.monotonic()
++
++    def _trace(self, event: str, **details) -> None:
++        if self.observer is not None:
++            self.observer({"event": event, "at": self.clock.now().isoformat(),
++                           "mono": self.clock.monotonic(), **details})
++
++    def _time(self, handle: LeaseHandle | None = None) -> TimeBounds:
++        mono = self.clock.monotonic()
++        require_number(mono, "clock.monotonic")
++        wall_elapsed = (self.clock.now() - self._wall_origin).total_seconds()
++        if abs(wall_elapsed - (mono - self._mono_origin)) > self.settings.coordination.clock_uncertainty_seconds:
++            raise ClockUncertain("process wall time diverged from its monotonic clock")
++        bounds = self.leases.observe_time(handle)
++        if not isinstance(bounds, TimeBounds) or (bounds.upper - bounds.lower).total_seconds() > self.settings.coordination.clock_uncertainty_seconds:
++            raise ClockUncertain("server observation exceeds configured uncertainty")
++        return bounds.at(self.clock.monotonic())
++
++    def _ticket_status(self, row: Versioned, status: str) -> Versioned:
++        value = row.to_mapping()["value"]
++        value["status"] = status
++        return self.store.replace("QueueTicket", value["ticket_id"], value, row.version)
++
++    def _select(self, bounds: TimeBounds) -> str | None:
++        valid = []
++        for row in self.store.scan("QueueTicket", {"status": "waiting"}):
++            value = row.value
++            ticket = QueueTicket.from_mapping({name: value[name] for name in QueueTicket.__dataclass_fields__})
++            if ticket.expires_at <= bounds.upper:
++                try:
++                    self._ticket_status(row, "expired")
++                    self._trace("queue-expired", owner=ticket.owner_id, ticket_id=ticket.ticket_id)
++                except Conflict:
++                    continue
++            else:
++                valid.append(ticket)
++        if not valid:
++            return None
++        chosen = min(valid, key=lambda ticket: (ticket.priority != "daily", ticket.enqueued_at, ticket.ticket_id))
++        self._trace("queue-choice", owner=chosen.owner_id, priority=chosen.priority, ticket_id=chosen.ticket_id)
++        return chosen.ticket_id
++
++    @contextmanager
++    def turn(self, owner_id: str, priority: str, deadline: datetime):
++        require_text(owner_id, "owner_id")
++        require_utc(deadline, "deadline")
++        if self._active is not None:
++            raise ValueError("a coordinator can have one active turn")
++        remaining = (deadline - self.clock.now()).total_seconds()
++        if remaining <= 0:
++            raise TimeoutError("turn deadline has expired")
++        deadline_mono = self.clock.monotonic() + remaining
++        bounds = self._time()
++        ticket = QueueTicket(uuid.uuid4().hex, owner_id, priority, bounds.upper,
++                             bounds.lower + timedelta(seconds=remaining))
++        self.store.insert("QueueTicket", ticket.ticket_id, {**ticket.to_mapping(), "status": "waiting"})
++        self._trace("enqueue", owner=owner_id, priority=priority, ticket_id=ticket.ticket_id)
++        current = None
++        try:
++            while current is None:
++                if self.clock.monotonic() >= deadline_mono:
++                    raise TimeoutError("queue wait exhausted turn deadline")
++                bounds = self._time()
++                if self._select(bounds) == ticket.ticket_id:
++                    try:
++                        handle = self.leases.acquire(owner_id, int(self.settings.coordination.lease_seconds))
++                    except Conflict:
++                        handle = None
++                    if handle is not None:
++                        try:
++                            # The lease serializes this second queue choice with every admission.
++                            if self._select(self._time(handle)) != ticket.ticket_id:
++                                self.leases.release(handle)
++                            else:
++                                current = Turn(self, handle, ticket, deadline_mono)
++                        except BaseException:
++                            # A finite acquired lease with an uncertain journal outcome is allowed to expire.
++                            self._trace("loss", owner=owner_id, reason="turn initialization failed")
++                            raise
++                if current is None:
++                    self.clock.sleep(min(QUEUE_POLL_SECONDS, max(0, deadline_mono-self.clock.monotonic())))
++            self._active = current
++            current._start_monitor()
++            try:
++                yield current
++            except BaseException:
++                current._lose("turn exited with an unconfirmed exchange outcome")
++                raise
++            finally:
++                current._finish()
++                self._active = None
++        finally:
++            try:
++                latest = self.store.get("QueueTicket", ticket.ticket_id)
++                if latest is not None and latest.value["status"] == "waiting":
++                    self._ticket_status(latest, "finished")
++            except Exception as error:
++                if current is not None:
++                    current._lose("queue cleanup outcome unknown: " + str(error))
++                else:
++                    self._trace("loss", owner=owner_id, reason="queue cleanup outcome unknown: " + str(error))
++
++    def defer_until(self, instant: datetime) -> None:
++        require_utc(instant, "not_before")
++        if self._active is not None:
++            self._active._defer(instant)
++        else:
++            deadline = self.clock.now() + timedelta(seconds=self.settings.http.exchange_deadline_seconds + 2*self.settings.coordination.lease_seconds)
++            with self.turn("cooldown-"+uuid.uuid4().hex, "daily", deadline) as turn:
++                turn._defer(instant)
++
++    def exchange(self, context: RunContext, url: str, sender: Sender) -> BodyReceipt:
++        owner = context.execution_id + ":" + context.attempt_id + ":" + uuid.uuid4().hex
++        with self.turn(owner, context.priority, context.deadline) as turn:
++            permit = turn.reserve(uuid.uuid4().hex)
++            turn.assert_current(permit)
++            self._trace("request-start", owner=owner, epoch=permit.epoch, request_id=permit.request_id)
++            receipt = sender.send(url, context, permit, cancellation=turn.cancelled)
++            if not isinstance(receipt, BodyReceipt):
++                raise ValueError("Sender must return a drained BodyReceipt")
++            self._trace("request-end", owner=owner, epoch=permit.epoch, request_id=permit.request_id)
++            try:
++                turn.complete(permit, drained=True)
++            except OwnershipLost:
++                pass
++        # Release/journal failures happen on context exit and must also retain the returned partial.
++        if turn.loss_reason is not None:
++            error = Error("ownership_lost", turn.loss_reason, True, None,
++                          {"request_id": permit.request_id, "epoch": permit.epoch,
++                           "next_allowed_at": turn.next_allowed_at.isoformat()})
++            return replace(receipt, complete=False, error=error)
++        return receipt
++
++
++class Turn:
++    def __init__(self, coordinator: Coordinator, handle: LeaseHandle, ticket: QueueTicket, deadline_mono: float):
++        self.coordinator, self.handle, self.ticket, self.deadline_mono = coordinator, handle, ticket, deadline_mono
++        self.cancelled, self._stop = SPAWN.Event(), threading.Event()
++        self._lock = threading.RLock()
++        self._unsubscribe = None
++        self._monitor = None
++        self._permit = None
++        self._dispatched = self._completed = self._closed = False
++        self._drained = True
++        self.loss_reason = None
++        settings = coordinator.settings
++        self.exchange_seconds = settings.http.exchange_deadline_seconds
++        self.uncertainty = settings.coordination.clock_uncertainty_seconds
++        if handle.acquired_upper is None or handle.ownership_until_upper is None or handle.observation is None:
++            raise ClockUncertain("coordinator requires confirmed server upper acquisition/expiry bounds")
++        bounds = coordinator._time(handle)
++        self._row = coordinator.leases.read_journal(handle)
++        previous = _journal(self._row.value, bounds)
++        self.epoch = previous["epoch"] + 1
++        self.earliest_safe = takeover_time(utc_value(previous["unsafe_until"]), handle.acquired_upper,
++                                           self.exchange_seconds, self.uncertainty, previous["clean_release"])
++        self._value = {**previous, "owner_id": handle.owner_id, "epoch": self.epoch,
++                       "ownership_until": handle.ownership_until_upper.isoformat(),
++                       "unsafe_until": max(utc_value(previous["unsafe_until"]), self._future_guard()).isoformat(),
++                       "clean_release": False, "request_id": None}
++        self._row = coordinator.leases.write_journal(handle, self._value, self._row.version)
++        self._renew_at = coordinator.clock.monotonic() + settings.coordination.renew_every_seconds
++        self._valid_until_mono = self._validity_mono(handle)
++        coordinator._trace("acquire", owner=handle.owner_id, epoch=self.epoch, lease_id=handle.lease_id,
++                           ownership_until=handle.ownership_until_upper.isoformat())
++        coordinator._trace("takeover", owner=handle.owner_id, epoch=self.epoch, earliest_safe=self.earliest_safe.isoformat())
++
++    @property
++    def next_allowed_at(self) -> datetime:
++        last = utc_value(self._value["last_start"]) if self._value["last_start"] is not None else None
++        return next_start(last, utc_value(self._value["not_before"]), self.earliest_safe,
++                          self.coordinator.settings.sec.requests_per_second)
++
++    def _future_guard(self) -> datetime:
++        return reservation_guard(self.handle.ownership_until_upper, self.exchange_seconds, self.uncertainty)
++
++    def _validity_mono(self, handle: LeaseHandle) -> float:
++        bounds = handle.observation.at(self.coordinator.clock.monotonic())
++        return self.coordinator.clock.monotonic() + (handle.observed_until-bounds.upper).total_seconds()
++
++    def _lose(self, reason: str) -> None:
++        with self._lock:
++            if self.loss_reason is None:
++                self.loss_reason = reason
++                self.coordinator._trace("loss", owner=self.handle.owner_id, epoch=self.epoch, reason=reason)
++            self.cancelled.set()
++            self._stop.set()
++
++    def _require_live(self) -> None:
++        if self._closed or self.cancelled.is_set():
++            raise OwnershipLost(self.loss_reason or "turn is closed")
++        mono = self.coordinator.clock.monotonic()
++        require_number(mono, "clock.monotonic")
++        request_deadline = self._permit.deadline_mono if self._permit is not None else self.deadline_mono
++        if mono >= min(self.deadline_mono, request_deadline, self._valid_until_mono):
++            raise OwnershipLost("turn/lease/exchange monotonic window expired")
++
++    def _refresh(self) -> TimeBounds:
++        self._require_live()
++        bounds = self.coordinator._time(self.handle)
++        self._row = self.coordinator.leases.read_journal(self.handle)
++        value = _journal(self._row.value, bounds)
++        if value["owner_id"] != self.handle.owner_id or value["epoch"] != self.epoch:
++            raise OwnershipLost("sentinel epoch belongs to another turn")
++        self._value = value
++        self._require_live()
++        return bounds.at(self.coordinator.clock.monotonic())
++
++    def _write(self) -> None:
++        self._row = self.coordinator.leases.write_journal(self.handle, self._value, self._row.version)
++        self._require_live()
++
++    def _tick(self) -> None:
++        with self._lock:
++            if self._closed or self.cancelled.is_set():
++                return
++            try:
++                self._require_live()
++                if self.coordinator.clock.monotonic() >= self._renew_at:
++                    bounds = self._refresh()
++                    possible_expiry = bounds.upper + timedelta(seconds=self.coordinator.settings.coordination.lease_seconds + RENEWAL_PREPARATION_CALLS*STORAGE_CALL_BOUND_SECONDS)
++                    self._value["unsafe_until"] = max(utc_value(self._value["unsafe_until"]),
++                        reservation_guard(possible_expiry, self.exchange_seconds, self.uncertainty)).isoformat()
++                    self._write()
++                    renewed = self.coordinator.leases.renew(self.handle)
++                    if renewed.lease_id != self.handle.lease_id or renewed.ownership_until_upper is None or renewed.observation is None:
++                        raise OwnershipLost("renewal did not confirm same lease and server upper bound")
++                    self.handle = renewed
++                    self._valid_until_mono = self._validity_mono(renewed)
++                    self._value["ownership_until"] = renewed.ownership_until_upper.isoformat()
++                    self._value["unsafe_until"] = max(utc_value(self._value["unsafe_until"]), self._future_guard()).isoformat()
++                    self._write()
++                    self._renew_at = self.coordinator.clock.monotonic() + self.coordinator.settings.coordination.renew_every_seconds
++                    self.coordinator._trace("renew", owner=self.handle.owner_id, epoch=self.epoch,
++                                           ownership_until=self.handle.ownership_until_upper.isoformat())
++            except Exception as error:
++                self._lose(str(error))
++
++    def _start_monitor(self) -> None:
++        clock = self.coordinator.clock
++        if hasattr(clock, "subscribe"):
++            self._unsubscribe = clock.subscribe(self._tick)
++            return
++        def monitor():
++            while not self._stop.is_set():
++                deadline = self._permit.deadline_mono if self._permit is not None else self.deadline_mono
++                wait = max(0, min(self._renew_at, deadline, self._valid_until_mono)-clock.monotonic())
++                if self._stop.wait(wait):
++                    return
++                self._tick()
++        self._monitor = threading.Thread(target=monitor, name="sec-lease-renewal", daemon=True)
++        self._monitor.start()
++
++    def reserve(self, request_id: str) -> Permit:
++        require_text(request_id, "request_id")
++        with self._lock:
++            try:
++                if self._permit is not None:
++                    raise OwnershipLost("each finite turn reserves one exchange")
++                while True:
++                    self._tick()
++                    bounds = self._refresh()
++                    target = self.next_allowed_at
++                    delay = (target-bounds.lower).total_seconds()
++                    if delay <= 0:
++                        break
++                    remaining = min(self.deadline_mono-self.coordinator.clock.monotonic(),
++                                    self._renew_at-self.coordinator.clock.monotonic())
++                    if remaining <= 0:
++                        self._require_live()
++                        continue
++                    self.coordinator.clock.sleep(min(delay, remaining))
++                mono = self.coordinator.clock.monotonic()
++                # Charge the latest admissible dispatch, not just the reservation instant.
++                dispatch_seconds = 1 / self.coordinator.settings.sec.requests_per_second
++                deadline_mono = min(self.deadline_mono, mono+self.exchange_seconds)
++                start_before_mono = min(mono+dispatch_seconds, deadline_mono)
++                dispatch_upper = bounds.upper + timedelta(microseconds=math.ceil((start_before_mono-mono)*1_000_000))
++                if start_before_mono <= mono:
++                    raise OwnershipLost("no positive dispatch window remains")
++                end_upper = min(bounds.upper+timedelta(seconds=deadline_mono-mono), dispatch_upper+timedelta(seconds=self.exchange_seconds))
++                self._value.update(last_start=dispatch_upper.isoformat(), request_id=request_id, clean_release=False,
++                                   unsafe_until=max(utc_value(self._value["unsafe_until"]), self._future_guard(), end_upper+timedelta(seconds=self.uncertainty)).isoformat())
++                self._drained = False
++                self._write()
++                permit = Permit(self.handle.owner_id, self.epoch, request_id, dispatch_upper, end_upper,
++                                utc_value(self._value["unsafe_until"]), start_before_mono, deadline_mono,
++                                self.next_allowed_at)
++                self._permit = permit
++                self._require_live()
++                self.coordinator._trace("reserve", owner=permit.owner_id, epoch=permit.epoch, request_id=request_id,
++                                       next_allowed_at=permit.next_allowed_at.isoformat(),
++                                       start_before_mono=permit.start_before_mono)
++                return permit
++            except Exception as error:
++                self._lose(str(error))
++                raise OwnershipLost(str(error)) from error
++
++    def assert_current(self, permit: Permit) -> None:
++        with self._lock:
++            try:
++                self._tick()
++                self._refresh()
++                if permit != self._permit or self._completed or self._dispatched:
++                    raise OwnershipLost("permit is stale, consumed, or from another epoch")
++                if self.coordinator.clock.monotonic() >= permit.start_before_mono:
++                    raise OwnershipLost("permit dispatch window expired")
++                self._dispatched = True
++            except Exception as error:
++                self._lose(str(error))
++                raise OwnershipLost(str(error)) from error
++
++    def complete(self, permit: Permit, drained: bool) -> None:
++        if type(drained) is not bool:
++            raise ValueError("drained must be boolean")
++        with self._lock:
++            if permit != self._permit or self._completed:
++                self._lose("completion does not match the active permit")
++                raise OwnershipLost(self.loss_reason)
++            self._drained, self._completed = drained, True
++            try:
++                self._refresh()
++                if not drained:
++                    raise OwnershipLost("sender drain was not positively confirmed")
++            except Exception as error:
++                self._lose(str(error))
++                raise OwnershipLost(str(error)) from error
++
++    def _defer(self, instant: datetime) -> None:
++        with self._lock:
++            try:
++                self._tick()
++                self._refresh()
++                self._value["not_before"] = max(utc_value(self._value["not_before"]), instant).isoformat()
++                self._write()
++                self.coordinator._trace("cooldown", owner=self.handle.owner_id, epoch=self.epoch, not_before=self._value["not_before"])
++            except Exception as error:
++                self._lose(str(error))
++                raise OwnershipLost(str(error)) from error
++
++    def _finish(self) -> None:
++        with self._lock:
++            if self._closed:
++                return
++            try:
++                if self._drained and not self.cancelled.is_set():
++                    bounds = self._refresh()
++                    # Stop the turn irrevocably before any release operation, including an uncertain one.
++                    self._closed = True
++                    self._stop.set()
++                    self.cancelled.set()
++                    finalize = getattr(self.coordinator.leases, "release_clean", None)
++                    if callable(finalize):
++                        clean = {**self._value, "clean_release": True, "unsafe_until": bounds.upper.isoformat()}
++                        self._row = finalize(self.handle, clean, self._row.version)
++                        self._value = clean
++                    else:
++                        # Azure cannot atomically update this journal and acknowledge lease release.
++                        self.coordinator.leases.release(self.handle)
++                    self.coordinator._trace("release", owner=self.handle.owner_id, epoch=self.epoch,
++                                            unsafe_until=self._value["unsafe_until"], drained=True,
++                                            clean_release=self._value["clean_release"])
++            except Exception as error:
++                self._lose(str(error))
++            finally:
++                self._closed = True
++                self._stop.set()
++                if self._unsubscribe is not None:
++                    self._unsubscribe()
++                self.cancelled.set()
++        if self._monitor is not None and self._monitor is not threading.current_thread():
++            self._monitor.join(STORAGE_CALL_BOUND_SECONDS)
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py
+index 4c57da4..5d4d3f0 100644
+--- a/packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py
+@@ -546,6 +546,7 @@ class Permit(Record):
+     takeover_after: datetime
+     start_before_mono: float
+     deadline_mono: float
++    next_allowed_at: datetime | None = None
+ 
+     def __post_init__(self):
+         validate_record_fields(self)
+@@ -556,6 +557,8 @@ class Permit(Record):
+             require_utc(getattr(self, label), label)
+         if not self.must_start_before <= self.must_end_by <= self.takeover_after:
+             raise ValueError("permit ownership windows are reversed")
++        if self.next_allowed_at is not None:
++            require_utc(self.next_allowed_at, "next_allowed_at")
+         require_number(self.start_before_mono, "start_before_mono")
+         require_number(self.deadline_mono, "deadline_mono")
+         if self.deadline_mono < self.start_before_mono:
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py
+index 4137f01..a482a2e 100644
+--- a/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py
+@@ -19,7 +19,7 @@ from azure.storage.blob import BlobLeaseClient, BlobServiceClient
+ from ..config import ACCOUNT_NAME, LOCK_BLOB, Settings
+ from ..models import Versioned, parse_json, require_hash, require_number, require_text, require_utc, safe_relative_path
+ from .contracts import (AlreadyExists, BoundaryObserver, ClockUncertain, Conflict, FILE_CHUNK_BYTES,
+-                        LeaseHandle, OwnershipLost, REGISTRY_PATH, deployment_binding, exact_version,
++                        LeaseHandle, OwnershipLost, TimeBounds, REGISTRY_PATH, deployment_binding, exact_version,
+                         identity, observe, payload_bytes, table_for, validate_raw_address)
+ 
+ RETRY_OPTIONS = dict(retry_total=0, retry_connect=0, retry_read=0, retry_status=0)
+@@ -249,6 +249,7 @@ class AzureLeaseStore:
+     def _capture(self, observed):
+         def capture(response):
+             observed["date"] = response.http_response.headers.get("Date")
++            observed["etag"] = response.http_response.headers.get("ETag")
+             if response.http_response.status_code < 400:
+                 try:
+                     server_date = parsedate_to_datetime(observed["date"] or "")
+@@ -258,7 +259,7 @@ class AzureLeaseStore:
+                 observed["server_date"] = server_date
+         return capture
+ 
+-    def _bounded_until(self, before: datetime, mono: float, observed: dict) -> datetime:
++    def _observation(self, before: datetime, mono: float, observed: dict) -> TimeBounds:
+         after = self.clock.now()
+         require_utc(after, "clock.now")
+         elapsed = self.clock.monotonic() - mono
+@@ -272,7 +273,14 @@ class AzureLeaseStore:
+                 or abs((after - before).total_seconds() - elapsed) > self.uncertainty_seconds
+                 or server_date > after + uncertainty or server_date + timedelta(seconds=1) < before - uncertainty):
+             raise ClockUncertain("Storage server observation exceeds the accepted uncertainty")
+-        return min(before, server_date) + timedelta(seconds=self.lease_seconds) - uncertainty
++        # Date is rounded to whole seconds. The entire measured operation RTT bounds response transit.
++        if 1 + elapsed > self.uncertainty_seconds:
++            raise ClockUncertain("Storage Date precision plus RTT exceeds the accepted uncertainty")
++        return TimeBounds(server_date, server_date + timedelta(seconds=1 + elapsed), self.clock.monotonic())
++
++    def _bounded_until(self, before: datetime, mono: float, observed: dict) -> datetime:
++        bounds = self._observation(before, mono, observed)
++        return min(before, bounds.lower) + timedelta(seconds=self.lease_seconds - self.uncertainty_seconds)
+ 
+     def _current(self, handle: LeaseHandle) -> None:
+         require_utc(self.clock.now(), "clock.now")
+@@ -302,9 +310,11 @@ class AzureLeaseStore:
+             raise
+         if not lease.id:
+             raise OwnershipLost("Storage did not return an actual acquired lease ID")
+-        until = self._bounded_until(before, mono, observed)
++        bounds = self._observation(before, mono, observed)
++        until = min(before, bounds.lower) + timedelta(seconds=self.lease_seconds - self.uncertainty_seconds)
+         observe(self.observer, "lease.after_acquire")
+-        return LeaseHandle(owner, lease.id, until)
++        return LeaseHandle(owner, lease.id, until, bounds.upper,
++                           bounds.upper + timedelta(seconds=self.lease_seconds), bounds)
+ 
+     def renew(self, handle: LeaseHandle) -> LeaseHandle:
+         self._current(handle)
+@@ -318,9 +328,11 @@ class AzureLeaseStore:
+             raise
+         if lease.id != handle.lease_id:
+             raise OwnershipLost("Storage renewal did not confirm the actual lease ID")
+-        until = self._bounded_until(before, mono, observed)
++        bounds = self._observation(before, mono, observed)
++        until = min(before, bounds.lower) + timedelta(seconds=self.lease_seconds - self.uncertainty_seconds)
+         observe(self.observer, "lease.after_renew")
+-        return LeaseHandle(handle.owner_id, lease.id, until)
++        return LeaseHandle(handle.owner_id, lease.id, until, handle.acquired_upper,
++                           bounds.upper + timedelta(seconds=self.lease_seconds), bounds)
+ 
+     def release(self, handle: LeaseHandle) -> None:
+         self._current(handle)
+@@ -332,7 +344,25 @@ class AzureLeaseStore:
+             raise
+         observe(self.observer, "lease.after_release")
+ 
++    def observe_time(self, handle: LeaseHandle | None = None) -> TimeBounds:
++        if handle is None:
++            self._ensure_sentinel()
++        else:
++            self._current(handle)
++        before, mono, observed = self._start()
++        try:
++            self.blob.get_blob_properties(lease=handle.lease_id if handle is not None else None,
++                                          raw_response_hook=self._capture(observed))
++        except HttpResponseError as error:
++            if error.status_code in (404, 409, 412):
++                raise OwnershipLost("sentinel clock observation failed ownership") from error
++            raise
++        return self._observation(before, mono, observed)
++
+     def assert_owned(self, handle: LeaseHandle) -> None:
++        self.read_journal(handle)
++
++    def read_journal(self, handle: LeaseHandle) -> Versioned:
+         self._current(handle)
+         before, mono, observed = self._start()
+         hook = self._capture(observed)
+@@ -341,14 +371,39 @@ class AzureLeaseStore:
+             version = _etag(properties.etag)
+             body = self.blob.download_blob(lease=handle.lease_id, etag=version, match_condition=MatchConditions.IfNotModified,
+                                            max_concurrency=1, raw_response_hook=hook).readall()
++            # Reads alone do not prove Blob lease ownership. This exact rewrite fences the read.
+             self.blob.upload_blob(body, overwrite=True, lease=handle.lease_id, etag=version,
+                                   match_condition=MatchConditions.IfNotModified, raw_response_hook=hook)
+         except HttpResponseError as error:
+             if error.status_code in (404, 409, 412):
+-                raise OwnershipLost("fixed sentinel no longer recognizes the actual lease") from error
++                raise OwnershipLost("fixed sentinel no longer recognizes the actual lease/version") from error
++            raise
++        self._observation(before, mono, observed)
++        self._current(handle)
++        value = parse_json(body)
++        if not isinstance(value, dict):
++            raise Conflict("sentinel journal must be a JSON object")
++        observe(self.observer, "journal.after_read")
++        return Versioned(value, _etag(observed.get("etag")))
++
++    def write_journal(self, handle: LeaseHandle, value: dict[str, object], version: str) -> Versioned:
++        exact_version(version)
++        self._current(handle)
++        body = payload_bytes(value)
++        before, mono, observed = self._start()
++        observe(self.observer, "journal.before_write")
++        try:
++            self.blob.upload_blob(body, overwrite=True, lease=handle.lease_id, etag=version,
++                                  match_condition=MatchConditions.IfNotModified,
++                                  raw_response_hook=self._capture(observed))
++        except HttpResponseError as error:
++            if error.status_code in (404, 409, 412):
++                raise OwnershipLost("sentinel write lost the actual lease or exact version") from error
+             raise
+-        self._bounded_until(before, mono, observed)
++        self._observation(before, mono, observed)
+         self._current(handle)
++        observe(self.observer, "journal.after_write")
++        return Versioned(parse_json(body), _etag(observed.get("etag")))
+ 
+ 
+ def open_azure_stores(settings: Settings, *, observer: BoundaryObserver | None = None):
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/contracts.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/contracts.py
+index fb142d6..7689de1 100644
+--- a/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/contracts.py
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/contracts.py
+@@ -3,7 +3,7 @@ from __future__ import annotations
+ 
+ from collections.abc import Callable, Iterator, Mapping
+ from dataclasses import dataclass
+-from datetime import date, datetime
++from datetime import date, datetime, timedelta
+ from pathlib import Path
+ from typing import Protocol
+ 
+@@ -34,16 +34,50 @@ class ClockUncertain(Exception):
+     """Storage server time could not be bounded by the configured uncertainty."""
+ 
+ 
++@dataclass(frozen=True, slots=True)
++class TimeBounds:
++    """Server UTC at one monotonic observation; Date precision and RTT are included."""
++    lower: datetime
++    upper: datetime
++    monotonic_at: float
++
++    def __post_init__(self):
++        require_utc(self.lower, "server lower")
++        require_utc(self.upper, "server upper")
++        require_number(self.monotonic_at, "observation monotonic")
++        if self.upper < self.lower:
++            raise ClockUncertain("server interval is reversed")
++
++    def at(self, monotonic_now: float) -> "TimeBounds":
++        require_number(monotonic_now, "monotonic_now")
++        elapsed = monotonic_now - self.monotonic_at
++        if elapsed < 0:
++            raise ClockUncertain("monotonic clock moved backwards")
++        delta = timedelta(seconds=elapsed)
++        return TimeBounds(self.lower + delta, self.upper + delta, monotonic_now)
++
++
+ @dataclass(frozen=True, slots=True)
+ class LeaseHandle:
+     owner_id: str
+     lease_id: str
+     observed_until: datetime
++    acquired_upper: datetime | None = None
++    ownership_until_upper: datetime | None = None
++    observation: TimeBounds | None = None
+ 
+     def __post_init__(self):
+         require_text(self.owner_id, "owner_id")
+         require_text(self.lease_id, "lease_id")
+         require_utc(self.observed_until, "observed_until")
++        for label in ("acquired_upper", "ownership_until_upper"):
++            value = getattr(self, label)
++            if value is not None:
++                require_utc(value, label)
++        if self.ownership_until_upper is not None and self.ownership_until_upper < self.observed_until:
++            raise ClockUncertain("upper expiry cannot precede lower validity")
++        if self.observation is not None and not isinstance(self.observation, TimeBounds):
++            raise ValueError("lease observation must be TimeBounds")
+ 
+ 
+ class StateStore(Protocol):
+@@ -66,6 +100,9 @@ class LeaseStore(Protocol):
+     def renew(self, handle: LeaseHandle) -> LeaseHandle: ...
+     def release(self, handle: LeaseHandle) -> None: ...
+     def assert_owned(self, handle: LeaseHandle) -> None: ...
++    def observe_time(self, handle: LeaseHandle | None = None) -> TimeBounds: ...
++    def read_journal(self, handle: LeaseHandle) -> Versioned: ...
++    def write_journal(self, handle: LeaseHandle, value: dict[str, object], version: str) -> Versioned: ...
+ 
+ 
+ def observe(observer: BoundaryObserver | None, point: str) -> None:
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py
+index 580b3ea..9e145a4 100644
+--- a/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py
+@@ -4,9 +4,11 @@ from __future__ import annotations
+ import errno
+ import hashlib
+ import io
++import math
+ import os
+ import sqlite3
+ import stat
++import time
+ import uuid
+ from collections.abc import Iterator
+ from contextlib import contextmanager
+@@ -15,8 +17,8 @@ from pathlib import Path
+ 
+ from ..config import LOCK_BLOB
+ from ..models import Versioned, parse_json, require_hash, require_number, require_text, require_utc, safe_relative_path
+-from .contracts import (AlreadyExists, BoundaryObserver, CAS_ATTEMPTS, Conflict, FILE_CHUNK_BYTES,
+-                        LeaseHandle, OwnershipLost, REGISTRY_PATH, SENTINEL_PATH, deployment_binding,
++from .contracts import (AlreadyExists, BoundaryObserver, CAS_ATTEMPTS, ClockUncertain, Conflict, FILE_CHUNK_BYTES,
++                        LeaseHandle, OwnershipLost, TimeBounds, REGISTRY_PATH, SENTINEL_PATH, deployment_binding,
+                         exact_version, identity, observe, payload_bytes, table_for, validate_raw_address)
+ 
+ DIRECTORY_FLAGS = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
+@@ -215,9 +217,14 @@ class LocalStateStore:
+ 
+ 
+ class _WallClock:
++    precision_seconds = 0.000001
++
+     def now(self) -> datetime:
+         return datetime.now(timezone.utc)
+ 
++    def monotonic(self) -> float:
++        return time.monotonic()
++
+ 
+ class LocalLeaseStore:
+     def __init__(self, root: Path, *, clock=None, observer: BoundaryObserver | None = None, binding=None):
+@@ -231,6 +238,13 @@ class LocalLeaseStore:
+             except Conflict:
+                 self.objects.read(SENTINEL_PATH)
+         self.clock = clock or _WallClock()
++        self.observer = observer
++        # A private sentinel table shares the lease transaction, never a Table/StateStore pacing row.
++        with self.store._connection() as connection:
++            connection.execute("CREATE TABLE IF NOT EXISTS sentinel_journal (identity TEXT PRIMARY KEY, value TEXT NOT NULL, version TEXT NOT NULL)")
++            connection.execute("INSERT OR IGNORE INTO sentinel_journal VALUES (?, ?, ?)",
++                               (LOCK_BLOB, "{}", uuid.uuid4().hex))
++            connection.commit()
+ 
+     def close(self) -> None:
+         self.store.close()
+@@ -252,7 +266,9 @@ class LocalLeaseStore:
+                     self.store.insert("_Lease", LOCK_BLOB, value)
+                 else:
+                     self.store.replace("_Lease", LOCK_BLOB, value, current.version)
+-                return LeaseHandle(owner, lease_id, until)
++                observation = self.observe_time()
++                observe(self.observer, "lease.after_acquire")
++                return LeaseHandle(owner, lease_id, until, observation.upper, until, observation)
+             except (AlreadyExists, Conflict):
+                 continue
+         raise Conflict("lease acquisition exhausted conditional races")
+@@ -278,7 +294,9 @@ class LocalLeaseStore:
+             self.store.replace("_Lease", LOCK_BLOB, value, row.version)
+         except Conflict as error:
+             raise OwnershipLost("lease changed during renewal") from error
+-        return LeaseHandle(handle.owner_id, handle.lease_id, until)
++        observation = self.observe_time()
++        observe(self.observer, "lease.after_renew")
++        return LeaseHandle(handle.owner_id, handle.lease_id, until, handle.acquired_upper, until, observation)
+ 
+     def release(self, handle: LeaseHandle) -> None:
+         row = self._owned(handle)
+@@ -288,3 +306,81 @@ class LocalLeaseStore:
+             self.store.replace("_Lease", LOCK_BLOB, value, row.version)
+         except Conflict as error:
+             raise OwnershipLost("lease changed during release") from error
++
++        observe(self.observer, "lease.after_release")
++
++    def observe_time(self, handle: LeaseHandle | None = None) -> TimeBounds:
++        if handle is not None:
++            self._owned(handle)
++        monotonic = self.clock.monotonic if hasattr(self.clock, "monotonic") else time.monotonic
++        before = monotonic()
++        now = self.clock.now()
++        after = monotonic()
++        require_utc(now, "fixture server clock")
++        elapsed = after - before
++        if not math.isfinite(elapsed) or elapsed < 0:
++            raise ClockUncertain("local server paired sampling has invalid monotonic elapsed")
++        precision = getattr(self.clock, "precision_seconds", 0)
++        require_number(precision, "clock sample precision")
++        upper = now + timedelta(microseconds=math.ceil((elapsed + precision)*1_000_000))
++        return TimeBounds(now, upper, after)
++
++    @contextmanager
++    def _sentinel_transaction(self, handle: LeaseHandle):
++        with self.store._connection() as connection:
++            connection.execute("BEGIN IMMEDIATE")
++            partition, key = identity("_Lease", LOCK_BLOB)
++            row = connection.execute("SELECT value FROM records WHERE table_name=? AND partition=? AND key=?",
++                                     (table_for("_Lease"), partition, key)).fetchone()
++            lease = parse_json(row[0]) if row is not None else None
++            now = self.clock.now()
++            require_utc(now, "fixture server clock")
++            if (lease is None or lease["lease_id"] != handle.lease_id or lease["owner_id"] != handle.owner_id
++                    or datetime.fromisoformat(lease["expires_at"]) <= now):
++                connection.rollback()
++                raise OwnershipLost("sentinel transaction has lost the actual lease")
++            yield connection
++            connection.commit()
++
++    def read_journal(self, handle: LeaseHandle) -> Versioned:
++        with self._sentinel_transaction(handle) as connection:
++            body, version = connection.execute("SELECT value, version FROM sentinel_journal WHERE identity=?", (LOCK_BLOB,)).fetchone()
++        observe(self.observer, "journal.after_read")
++        return Versioned(parse_json(body), version)
++
++    def write_journal(self, handle: LeaseHandle, value: dict[str, object], version: str) -> Versioned:
++        exact_version(version)
++        body, next_version = payload_bytes(value).decode(), uuid.uuid4().hex
++        observe(self.observer, "journal.before_write")
++        with self._sentinel_transaction(handle) as connection:
++            changed = connection.execute("UPDATE sentinel_journal SET value=?, version=? WHERE identity=? AND version=?",
++                                         (body, next_version, LOCK_BLOB, version)).rowcount
++            if changed != 1:
++                connection.rollback()
++                raise Conflict("sentinel journal version changed")
++        observe(self.observer, "journal.after_write")
++        return Versioned(parse_json(body), next_version)
++
++
++    def release_clean(self, handle: LeaseHandle, value: dict[str, object], version: str) -> Versioned:
++        """Finalize a positively drained journal and finite lease in one durable sentinel transaction."""
++        exact_version(version)
++        if value.get("clean_release") is not True or value.get("owner_id") != handle.owner_id:
++            raise ValueError("atomic clean release requires the positively drained owner journal")
++        body, next_version = payload_bytes(value).decode(), uuid.uuid4().hex
++        observe(self.observer, "lease.before_clean_release")
++        with self._sentinel_transaction(handle) as connection:
++            observe(self.observer, "journal.before_clean_release")
++            changed = connection.execute("UPDATE sentinel_journal SET value=?, version=? WHERE identity=? AND version=?",
++                                         (body, next_version, LOCK_BLOB, version)).rowcount
++            if changed != 1:
++                connection.rollback()
++                raise Conflict("atomic release journal version changed")
++            partition, key = identity("_Lease", LOCK_BLOB)
++            lease_body = connection.execute("SELECT value FROM records WHERE table_name=? AND partition=? AND key=?",
++                                            (table_for("_Lease"), partition, key)).fetchone()[0]
++            lease = parse_json(lease_body)
++            lease["expires_at"] = self.clock.now().isoformat()
++            connection.execute("UPDATE records SET value=?, version=? WHERE table_name=? AND partition=? AND key=?",
++                               (payload_bytes(lease).decode(), uuid.uuid4().hex, table_for("_Lease"), partition, key))
++        return Versioned(parse_json(body), next_version)
+diff --git a/packages/sec-edgar-ingest/tests/support.py b/packages/sec-edgar-ingest/tests/support.py
+index 08935ce..3e3fdd7 100644
+--- a/packages/sec-edgar-ingest/tests/support.py
++++ b/packages/sec-edgar-ingest/tests/support.py
+@@ -124,3 +124,337 @@ def store_bundle(root: Path, *, observer: "BoundaryObserver | None" = None, cloc
+     from sec_edgar_ingest.storage.local import LocalStateStore, LocalObjectStore, LocalLeaseStore
+     return (LocalStateStore(root, observer=observer), LocalObjectStore(root, observer=observer),
+             LocalLeaseStore(root, observer=observer, clock=clock))
++
++
++# Task 4 controls drive real coordinators/stores; they own no alternate scheduling state.
++def fixture_clock():
++    from sec_edgar_ingest.coordination import ManualClock
++    return ManualClock(datetime(2026, 10, 6, tzinfo=timezone.utc))
++
++
++class ControlledSender:
++    """Record actual controlled transport starts; returning a receipt proves this send drained."""
++    def __init__(self, root, clock, *, on_send=None, status=200):
++        self.root, self.clock, self.on_send, self.status = Path(root), clock, on_send, status
++        self.starts, self.ends, self.events = [], [], []
++        self.active = self.maximum_active = 0
++        self.cancellations = []
++
++    def send(self, url, context, permit, *, cancellation):
++        import hashlib
++        import uuid
++        from sec_edgar_ingest.models import BodyReceipt, Error
++        from sec_edgar_ingest.storage.contracts import OwnershipLost
++        if cancellation.is_set() or self.clock.monotonic() >= permit.start_before_mono:
++            raise OwnershipLost("controlled socket refuses cancelled/late dispatch")
++        instant = self.clock.now()
++        self.starts.append((permit.owner_id, instant))
++        self.events.append({"event": "request-start", "at": instant.isoformat(), "epoch": permit.epoch,
++                            "owner": permit.owner_id, "request_id": permit.request_id})
++        self.cancellations.append(cancellation)
++        self.active += 1
++        self.maximum_active = max(self.maximum_active, self.active)
++        try:
++            if self.on_send is not None:
++                self.on_send(cancellation, permit)
++        finally:
++            self.active -= 1
++            end = self.clock.now()
++            self.ends.append((permit.owner_id, end))
++            self.events.append({"event": "request-end", "at": end.isoformat(), "epoch": permit.epoch,
++                                "owner": permit.owner_id, "request_id": permit.request_id})
++        path = self.root / ("receipt-"+uuid.uuid4().hex)
++        body = b"bounded offline partial" if cancellation.is_set() else b"bounded offline response"
++        path.write_bytes(body)
++        error = Error("cancelled", "controlled exchange drained after cancellation", True, None, {}) if cancellation.is_set() else None
++        return BodyReceipt(url, self.status, {}, path, self.clock.now(), len(body), hashlib.sha256(body).hexdigest(),
++                           error is None, error)
++
++
++class CoordinationHarness:
++    def __init__(self, root, clock):
++        self.root, self.clock = Path(root), clock
++        self.coordinators, self.turns, self.contexts, self.leases, self.faults, self.permits = {}, {}, {}, {}, {}, {}
++        self.starts, self.events, self.active = [], [], set()
++        self.maximum_active = 0
++
++    def start(self, owner, priority):
++        from sec_edgar_ingest.coordination import Coordinator
++        faults = Faults()
++        state, _, leases = store_bundle(self.root, clock=self.clock, observer=faults)
++        self.faults[owner], self.leases[owner] = faults, leases
++        coordinator = Coordinator(fixture_settings(), state, leases, self.clock)
++        coordinator.observer = self.events.append
++        self.coordinators[owner] = coordinator
++        context = coordinator.turn(owner, priority, self.clock.now()+timedelta(seconds=3600))
++        self.contexts[owner] = context
++        self.turns[owner] = context.__enter__()
++
++    def reserve(self, owner):
++        permit = self.turns[owner].reserve(owner+"-request")
++        self.permits[owner] = permit
++        self.dispatch(owner, permit)
++        return permit
++
++    def hold_request(self, owner):
++        return self.reserve(owner)
++
++    def dispatch(self, owner, permit):
++        self.turns[owner].assert_current(permit)
++        if self.clock.monotonic() >= permit.start_before_mono:
++            raise AssertionError("harness socket would dispatch late")
++        self.permits[owner] = permit
++        self.starts.append((owner, self.clock.now()))
++        self.events.append({"event": "request-start", "owner": owner, "epoch": permit.epoch,
++                            "at": self.clock.now().isoformat()})
++        self.active.add(owner)
++        self.maximum_active = max(self.maximum_active, len(self.active))
++
++    def expire_owner(self, owner):
++        until = self.turns[owner].handle.ownership_until_upper
++        context = self.contexts.pop(owner)
++        context.__exit__(RuntimeError, RuntimeError("fixture parent abandoned the bounded sender"), None)
++        self.clock.advance(max(0, (until-self.clock.now()).total_seconds()))
++        if not self.turns[owner].cancelled.is_set():
++            raise AssertionError("expired ownership did not cancel the real turn")
++
++    def finish_request(self, owner):
++        from sec_edgar_ingest.storage.contracts import OwnershipLost
++        self.active.discard(owner)
++        self.events.append({"event": "request-end", "owner": owner, "epoch": self.permits[owner].epoch,
++                            "at": self.clock.now().isoformat()})
++        try:
++            self.turns[owner].complete(self.permits[owner], drained=True)
++        except OwnershipLost:
++            pass
++        context = self.contexts.pop(owner, None)
++        if context is not None:
++            context.__exit__(None, None, None)
++
++    def acquire_successor(self, owner):
++        self.start(owner, "daily")
++
++    def close(self):
++        if hasattr(self, "trace_name"):
++            retain_coordination_trace(self.trace_name, self.events)
++        for context in tuple(self.contexts.values()):
++            context.__exit__(RuntimeError, RuntimeError("fixture cleanup retains guard"), None)
++        self.contexts.clear()
++        for coordinator in self.coordinators.values():
++            coordinator.store.close()
++        for leases in self.leases.values():
++            leases.close()
++
++
++def coordination_harness(root: Path, *, clock):
++    return CoordinationHarness(root, clock)
++
++
++def retain_coordination_trace(name, events):
++    import os
++    destination = os.environ.get("SEC_EDGAR_TASK4_TRACE_DIR")
++    if destination:
++        root = Path(destination)
++        root.mkdir(parents=True, exist_ok=True)
++        (root / name).write_text(json.dumps(events, indent=2, sort_keys=True)+"\n")
++
++
++class ProcessClock:
++    """Shared logical time moves only when every exchange process is parked at a barrier."""
++    def __init__(self, value, condition, recorder=None):
++        self.value, self.condition, self.recorder = value, condition, recorder
++
++    def now(self):
++        return datetime(2026, 10, 6, tzinfo=timezone.utc)+timedelta(seconds=self.monotonic())
++
++    def monotonic(self):
++        with self.condition:
++            return self.value.value
++
++    def sleep(self, seconds):
++        target = self.monotonic()+seconds
++        self.recorder.emit("clock-wait", target=target)
++        with self.condition:
++            if not self.condition.wait_for(lambda: self.value.value >= target, timeout=10):
++                raise TimeoutError("parent did not advance shared logical clock")
++        self.recorder.emit("clock-awake")
++
++    def subscribe(self, callback):
++        import threading
++        stopped = threading.Event()
++        def monitor():
++            observed = self.monotonic()
++            while not stopped.is_set():
++                with self.condition:
++                    changed = self.condition.wait_for(lambda: stopped.is_set() or self.value.value != observed, timeout=10)
++                    observed = self.value.value
++                if changed and not stopped.is_set():
++                    callback()
++        thread = threading.Thread(target=monitor, name="fixture-logical-renewal", daemon=True)
++        thread.start()
++        def unsubscribe():
++            stopped.set()
++            with self.condition:
++                self.condition.notify_all()
++            thread.join(2)
++        return unsubscribe
++
++
++class ProcessRecorder:
++    def __init__(self, worker, clock, queue, lock, sequence):
++        self.worker, self.clock, self.queue, self.lock, self.sequence = worker, clock, queue, lock, sequence
++
++    def emit(self, event, **details):
++        import os
++        import time
++        with self.lock:
++            self.sequence.value += 1
++            self.queue.put({"sequence": self.sequence.value, "event": event, "worker": self.worker,
++                            "pid": os.getpid(), "logical_at": self.clock.now().isoformat(),
++                            "logical_mono": self.clock.monotonic(), "real_monotonic_ns": time.monotonic_ns(), **details})
++
++    def observe(self, event):
++        details = dict(event)
++        kind = details.pop("event")
++        self.emit(kind, **details)
++
++
++class ProcessSender:
++    def __init__(self, root, clock, coordinator, recorder, status):
++        self.root, self.clock, self.coordinator, self.recorder, self.status = root, clock, coordinator, recorder, status
++
++    def send(self, url, context, permit, *, cancellation):
++        import hashlib
++        from sec_edgar_ingest.models import BodyReceipt
++        from sec_edgar_ingest.storage.contracts import OwnershipLost
++        if cancellation.is_set() or self.clock.monotonic() >= permit.start_before_mono:
++            raise OwnershipLost("process controlled socket refuses stale permit")
++        turn = self.coordinator._active
++        row = self.coordinator.leases.read_journal(turn.handle)
++        if row.value["owner_id"] != permit.owner_id or row.value["epoch"] != permit.epoch:
++            raise OwnershipLost("process transport observes a replaced sentinel epoch")
++        self.recorder.emit("socket-start", owner=permit.owner_id, epoch=permit.epoch, request_id=permit.request_id,
++                           journal_epoch=row.value["epoch"], journal_owner=row.value["owner_id"],
++                           lease_id=turn.handle.lease_id, start_before_mono=permit.start_before_mono,
++                           deadline_mono=permit.deadline_mono, cancelled=cancellation.is_set(), status=self.status)
++        if self.status == 503:
++            self.coordinator.defer_until(self.clock.now()+timedelta(seconds=2))
++        self.clock.sleep(0.1)
++        self.recorder.emit("socket-end", owner=permit.owner_id, epoch=permit.epoch, request_id=permit.request_id)
++        if cancellation.is_set():
++            raise OwnershipLost("process controlled exchange unexpectedly lost ownership")
++        body = b"bounded independent process response"
++        path = self.root / ("process-receipt-"+permit.request_id)
++        path.write_bytes(body)
++        return BodyReceipt(url, self.status, {"Retry-After": "2"} if self.status == 503 else {}, path,
++                           self.clock.now(), len(body), hashlib.sha256(body).hexdigest(), True, None)
++
++
++def _exchange_process(root, worker, value, condition, queue, lock, sequence, begin):
++    from dataclasses import replace
++    import traceback
++    from sec_edgar_ingest.coordination import Coordinator
++    root = Path(root)
++    clock = ProcessClock(value, condition)
++    recorder = ProcessRecorder(worker, clock, queue, lock, sequence)
++    clock.recorder = recorder
++    state = leases = None
++    try:
++        state, _, leases = store_bundle(root, clock=clock)
++        coordinator = Coordinator(fixture_settings(), state, leases, clock)
++        coordinator.observer = recorder.observe
++        recorder.emit("ready")
++        if not begin.wait(10):
++            raise TimeoutError("parent did not release process launch barrier")
++        exchanges = 2 if worker == "backfill" else 1
++        for ordinal in range(exchanges):
++            context = replace(fixture_context(priority=worker), execution_id=worker, attempt_id=f"{worker}-{ordinal}")
++            sender = ProcessSender(root, clock, coordinator, recorder, 503 if worker == "backfill" and ordinal == 0 else 200)
++            receipt = coordinator.exchange(context, "https://www.sec.gov/Archives/edgar/full-index/2015/QTR1/index.json", sender)
++            if not receipt.complete:
++                raise AssertionError(receipt.error)
++            recorder.emit("exchange-return", attempt=ordinal, status=receipt.status)
++    except BaseException:
++        recorder.emit("process-error", traceback=traceback.format_exc())
++    finally:
++        if state is not None:
++            state.close()
++        if leases is not None:
++            leases.close()
++        recorder.emit("done")
++
++
++def exchange_process_trace(root):
++    import multiprocessing
++    context = multiprocessing.get_context("spawn")
++    condition, value = context.Condition(), context.Value("d", 0)
++    queue, lock, sequence = context.Queue(), context.Lock(), context.Value("i", 0)
++    names = ("backfill", "daily", "reconciliation")
++    begins = {name: context.Event() for name in names}
++    processes = [context.Process(target=_exchange_process, args=(str(root), name, value, condition, queue, lock, sequence, begins[name])) for name in names]
++    records, ready, done, waiting = [], set(), set(), {}
++    states = {name: "not-started" for name in names}
++    contenders_started = False
++    try:
++        for process in processes:
++            process.start()
++        while len(ready) < 3:
++            event = queue.get(timeout=10)
++            records.append(event)
++            if event["event"] == "process-error":
++                raise AssertionError(event["traceback"])
++            if event["event"] == "ready":
++                ready.add(event["worker"])
++        begins["backfill"].set()
++        states["backfill"] = "running"
++        steps = 0
++        while len(done) < 3:
++            event = queue.get(timeout=10)
++            records.append(event)
++            worker, kind = event["worker"], event["event"]
++            if kind == "process-error":
++                raise AssertionError(event["traceback"])
++            if kind == "socket-start" and worker == "backfill" and not contenders_started:
++                for contender in ("daily", "reconciliation"):
++                    states[contender] = "running"
++                    begins[contender].set()
++                contenders_started = True
++            if kind == "clock-wait":
++                waiting[worker], states[worker] = event["target"], "waiting"
++            elif kind == "clock-awake":
++                waiting.pop(worker, None)
++                states[worker] = "running"
++            elif kind == "done":
++                done.add(worker)
++                waiting.pop(worker, None)
++                states[worker] = "done"
++            if contenders_started and waiting and all(state in ("waiting", "done") for state in states.values()):
++                target = min(waiting.values())
++                for name, instant in tuple(waiting.items()):
++                    if instant <= target:
++                        states[name] = "waking"
++                with condition:
++                    value.value = max(value.value, target)
++                    condition.notify_all()
++                steps += 1
++                if steps > 1000:
++                    raise AssertionError("logical process barriers did not make bounded progress")
++        for process in processes:
++            process.join(10)
++            if process.exitcode != 0:
++                raise AssertionError(f"independent exchange process exited {process.exitcode}")
++        return sorted(records, key=lambda event: event["sequence"])
++    finally:
++        for process in processes:
++            if process.is_alive():
++                process.terminate()
++                process.join(10)
++        queue.close()
++        queue.join_thread()
++
++
++
++def cancellation_child(cancellation, ready, returned):
++    import os
++    ready.set()
++    returned.put({"pid": os.getpid(), "cancelled": cancellation.wait(5)})
+diff --git a/packages/sec-edgar-ingest/tests/test_coordination.py b/packages/sec-edgar-ingest/tests/test_coordination.py
+new file mode 100644
+index 0000000..77396b1
+--- /dev/null
++++ b/packages/sec-edgar-ingest/tests/test_coordination.py
+@@ -0,0 +1,705 @@
++"""Distributed issuance invariants against durable offline lease/journal stores."""
++import importlib
++import importlib.util
++import json
++import tempfile
++import unittest
++from dataclasses import replace
++from datetime import timedelta
++from pathlib import Path
++
++from support import FixtureClock, fixture_context, fixture_settings, store_bundle
++from sec_edgar_ingest.models import Permit
++from sec_edgar_ingest.storage.contracts import Conflict, OwnershipLost
++
++
++class JournalContractTests(unittest.TestCase):
++    def test_journal_is_durable_and_fenced_by_actual_lease_and_version(self):
++        with tempfile.TemporaryDirectory() as directory:
++            root, clock = Path(directory), FixtureClock()
++            _, _, leases = store_bundle(root, clock=clock)
++            self.addCleanup(leases.close)
++            handle = leases.acquire("old", 60)
++            self.assertTrue(hasattr(leases, "read_journal"), "The leased sentinel must expose a durable fenced journal")
++            row = leases.read_journal(handle)
++            value = {"epoch": 1, "last_start": clock.now().isoformat(), "nested": {"x": [1]}}
++            written = leases.write_journal(handle, value, row.version)
++            value["nested"]["x"].append(2)
++            self.assertEqual(written.value["nested"]["x"], (1,))
++            with self.assertRaises(Conflict):
++                leases.write_journal(handle, {"epoch": 9}, row.version)
++            leases.close()
++            _, _, reopened = store_bundle(root, clock=clock)
++            self.addCleanup(reopened.close)
++            self.assertEqual(reopened.read_journal(handle).value["epoch"], 1)
++            clock.advance(60)
++            successor = reopened.acquire("new", 60)
++            for operation in (lambda: reopened.read_journal(handle),
++                              lambda: reopened.write_journal(handle, {"epoch": 9}, written.version)):
++                with self.assertRaises(OwnershipLost):
++                    operation()
++            self.assertEqual(reopened.read_journal(successor).value["epoch"], 1)
++
++    def test_permit_exposes_detached_validated_persisted_next_allowed_time(self):
++        clock = FixtureClock()
++        permit = Permit("owner", 1, "request", clock.now()+timedelta(seconds=1),
++                        clock.now()+timedelta(seconds=90), clock.now()+timedelta(seconds=152), 1, 90)
++        self.assertIn("next_allowed_at", permit.to_mapping(), "The transport row needs the journal's durable next-start/cooldown")
++        future = clock.now()+timedelta(seconds=12)
++        permit = replace(permit, next_allowed_at=future)
++        mapping = permit.to_mapping()
++        mapping["next_allowed_at"] = None
++        self.assertEqual(permit.next_allowed_at, future)
++        self.assertEqual(Permit.from_mapping(permit.to_mapping()), permit)
++        for invalid in ("later", future.replace(tzinfo=None), True):
++            with self.subTest(invalid=invalid), self.assertRaises(ValueError):
++                replace(permit, next_allowed_at=invalid)
++
++    def azure_leases(self, responses, clock=None):
++        from azure.storage.blob import BlobServiceClient
++        from sec_edgar_ingest.storage.azure import AzureLeaseStore
++        from test_azure_contracts import BLOB_ENDPOINT, RETRY, ScriptedTransport
++        transport = ScriptedTransport(responses)
++        service = BlobServiceClient(BLOB_ENDPOINT, api_version="2026-04-06", transport=transport, **RETRY)
++        self.addCleanup(service.close)
++        return AzureLeaseStore(service, clock=clock or FixtureClock()), transport
++
++    def test_upper_bounds_include_server_date_precision_and_rtt(self):
++        from test_azure_contracts import response
++        clock = FixtureClock()
++        leases, transport = self.azure_leases([response(201), response(201, headers={"x-ms-lease-id": "real"})], clock)
++        send = transport.send
++        def measured_send(request, **kwargs):
++            if request.headers.get("x-ms-lease-action") == "acquire":
++                clock.advance(0.5)
++            return send(request, **kwargs)
++        transport.send = measured_send
++        handle = leases.acquire("one", 60)
++        self.assertEqual(handle.observed_until, FixtureClock().now()+timedelta(seconds=58))
++        self.assertEqual(getattr(handle, "acquired_upper", None), FixtureClock().now()+timedelta(seconds=1.5),
++                         "Expiry/takeover need the server upper bound, never the lower observed_until")
++        self.assertEqual(handle.ownership_until_upper, FixtureClock().now()+timedelta(seconds=61.5))
++
++    def test_date_precision_plus_rtt_must_fit_two_second_bound(self):
++        from sec_edgar_ingest.storage.contracts import ClockUncertain
++        from test_azure_contracts import response
++        clock = FixtureClock()
++        leases, transport = self.azure_leases([response(201), response(201, headers={"x-ms-lease-id": "real"})], clock)
++        send = transport.send
++        def measured_send(request, **kwargs):
++            if request.headers.get("x-ms-lease-action") == "acquire":
++                clock.advance(1.01)
++            return send(request, **kwargs)
++        transport.send = measured_send
++        with self.assertRaises(ClockUncertain):
++            leases.acquire("one", 60)
++
++    def test_azure_journal_fences_read_and_write_with_lease_and_actual_etag(self):
++        from sec_edgar_ingest.storage.contracts import LeaseHandle
++        from test_azure_contracts import response
++        clock = FixtureClock()
++        leases, transport = self.azure_leases([response(etag='"first"'), response(etag='"first"', body=b'{"epoch":4}'),
++                                               response(201, etag='"read-fenced"'), response(201, etag='"written"')], clock)
++        handle = LeaseHandle("one", "real", clock.now()+timedelta(seconds=58))
++        self.assertTrue(hasattr(leases, "read_journal"), "Azure sentinel journal must use actual leased Blob operations")
++        read = leases.read_journal(handle)
++        self.assertEqual(read.version, '"read-fenced"')
++        written = leases.write_journal(handle, {"epoch": 5}, read.version)
++        self.assertEqual(written.version, '"written"')
++        for request in transport.requests:
++            self.assertEqual(request.headers["x-ms-lease-id"], "real")
++        self.assertEqual(transport.requests[1].headers["If-Match"], '"first"')
++        self.assertEqual(transport.requests[2].headers["If-Match"], '"first"')
++        self.assertEqual(transport.requests[3].headers["If-Match"], '"read-fenced"')
++        self.assertFalse(transport.responses)
++
++    def test_actual_azure_release_never_writes_a_shortened_guard(self):
++        from azure.core.exceptions import HttpResponseError
++        from sec_edgar_ingest.storage.contracts import LeaseHandle
++        from test_azure_contracts import response, blob_error
++        for unknown in (False, True):
++            with self.subTest(unknown=unknown):
++                clock = FixtureClock()
++                body = b'{"clean_release":false,"unsafe_until":"2026-10-06T00:02:32+00:00"}'
++                final = blob_error(500, "InternalError") if unknown else response()
++                leases, transport = self.azure_leases([response(etag='"old"'), response(etag='"old"', body=body),
++                                                       response(201, etag='"fenced"'), final], clock)
++                handle = LeaseHandle("one", "actual-id", clock.now()+timedelta(seconds=58))
++                row = leases.read_journal(handle)
++                if unknown:
++                    with self.assertRaises(HttpResponseError):
++                        leases.release(handle)
++                else:
++                    leases.release(handle)
++                writes = [request for request in transport.requests if request.method == "PUT" and "comp=lease" not in request.url]
++                self.assertEqual([request.body for request in writes], [body])
++                self.assertEqual(row.value["unsafe_until"], "2026-10-06T00:02:32+00:00")
++                self.assertFalse(row.value["clean_release"])
++                self.assertFalse(callable(getattr(leases, "release_clean", None)))
++                self.assertEqual(transport.requests[-1].headers["x-ms-lease-action"], "release")
++                self.assertEqual(transport.requests[-1].headers["x-ms-lease-id"], "actual-id")
++                self.assertFalse(transport.responses)
++
++    def test_azure_journal_id_etag_and_outage_fail_closed(self):
++        from sec_edgar_ingest.storage.contracts import LeaseHandle
++        from azure.core.exceptions import HttpResponseError
++        from test_azure_contracts import blob_error
++        for code, status in (("LeaseIdMismatchWithBlobOperation", 412), ("ConditionNotMet", 412), ("InternalError", 500)):
++            for method in ("read", "write"):
++                with self.subTest(code=code, method=method):
++                    clock = FixtureClock()
++                    leases, transport = self.azure_leases([blob_error(status, code)], clock)
++                    handle = LeaseHandle("one", "stale", clock.now()+timedelta(seconds=58))
++                    operation = (lambda: leases.read_journal(handle)) if method == "read" else (lambda: leases.write_journal(handle, {}, '"old"'))
++                    with self.assertRaises(HttpResponseError if status == 500 else OwnershipLost):
++                        operation()
++                    self.assertEqual(len(transport.requests), 1)
++
++    def test_local_acquisition_upper_is_observed_after_conditional_confirmation(self):
++        from support import Faults
++        with tempfile.TemporaryDirectory() as directory:
++            clock, faults = FixtureClock(), Faults()
++            _, _, leases = store_bundle(Path(directory), clock=clock, observer=faults)
++            self.addCleanup(leases.close)
++            faults.at("state.after_insert", lambda: clock.advance(0.25))
++            handle = leases.acquire("one", 60)
++            self.assertGreaterEqual(handle.acquired_upper, clock.now(),
++                                    "The upper acquisition observation must follow the actual conditional create confirmation")
++            self.assertEqual(handle.acquired_upper, handle.observation.upper)
++
++    def test_local_server_observation_bounds_paired_sampling_latency(self):
++        with tempfile.TemporaryDirectory() as directory:
++            clock = FixtureClock()
++            _, _, leases = store_bundle(Path(directory), clock=clock)
++            self.addCleanup(leases.close)
++            original_now = clock.now
++            def measured_now():
++                instant = original_now()
++                clock.advance(0.1)
++                return instant
++            clock.now = measured_now
++            bounds = leases.observe_time()
++            self.assertEqual(bounds.lower, FixtureClock().now())
++            self.assertGreaterEqual(bounds.upper, clock.instant,
++                                    "Pairing old UTC with a later monotonic sample needs the full measured sampling interval")
++            self.assertEqual(bounds.monotonic_at, clock.monotonic())
++
++
++class CoordinationTests(unittest.TestCase):
++    def setUp(self):
++        self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.coordination"),
++                             "Every SEC request needs finite leased-journal coordination")
++        self.coordination = importlib.import_module("sec_edgar_ingest.coordination")
++        self.harness_count = 0
++        self.events = []
++
++    def tearDown(self):
++        from support import retain_coordination_trace
++        if self.events:
++            retain_coordination_trace(self._testMethodName+".json", self.events)
++
++    def harness(self, root, clock):
++        from support import coordination_harness
++        h = coordination_harness(root, clock=clock)
++        self.harness_count += 1
++        h.trace_name = self._testMethodName+f"-{self.harness_count}.json"
++        return h
++
++    def test_expired_lease_does_not_allow_overlap_with_old_request(self):
++        from support import fixture_clock
++        directory = self.enterContext(tempfile.TemporaryDirectory())
++        clock = fixture_clock()
++        h = self.harness(Path(directory), clock)
++        self.addCleanup(h.close)
++        h.start("backfill-a", "backfill")
++        clock.advance(59)
++        h.hold_request("backfill-a")
++        old_end = h.permits["backfill-a"].must_end_by
++        h.expire_owner("backfill-a")
++        h.acquire_successor("daily-b")
++        guard = h.turns["daily-b"].earliest_safe
++        self.assertGreaterEqual(guard, old_end)
++        self.assertGreaterEqual(guard, clock.now()+timedelta(seconds=92))
++        clock.advance((old_end-clock.now()).total_seconds()-1)
++        self.assertEqual([owner for owner, _ in h.starts], ["backfill-a"])
++        h.finish_request("backfill-a")
++        clock.advance(2)
++        h.reserve("daily-b")
++        self.assertEqual(h.maximum_active, 1)
++        self.assertEqual([owner for owner, _ in h.starts], ["backfill-a", "daily-b"])
++
++    def test_delayed_dispatch_cannot_compress_actual_socket_starts(self):
++        from support import fixture_clock
++        directory = self.enterContext(tempfile.TemporaryDirectory())
++        clock = fixture_clock()
++        h = self.harness(Path(directory), clock)
++        self.addCleanup(h.close)
++        h.start("one", "backfill")
++        permit = h.turns["one"].reserve("delayed")
++        clock.advance(permit.start_before_mono-clock.monotonic()-0.00001)
++        h.dispatch("one", permit)
++        h.finish_request("one")
++        h.start("two", "daily")
++        h.reserve("two")
++        self.assertGreaterEqual((h.starts[1][1]-h.starts[0][1]).total_seconds(), 1/3)
++
++    def test_stale_epoch_and_dispatch_deadline_are_refused(self):
++        from support import fixture_clock
++        directory = self.enterContext(tempfile.TemporaryDirectory())
++        clock = fixture_clock()
++        h = self.harness(Path(directory), clock)
++        self.addCleanup(h.close)
++        h.start("one", "backfill")
++        permit = h.turns["one"].reserve("stale")
++        clock.advance(permit.start_before_mono-clock.monotonic()+0.00001)
++        with self.assertRaises(OwnershipLost):
++            h.turns["one"].assert_current(permit)
++        self.assertTrue(h.turns["one"].cancelled.is_set())
++        self.assertEqual(h.starts, [])
++
++    def test_restart_retains_global_cooldown(self):
++        from support import fixture_clock
++        directory = self.enterContext(tempfile.TemporaryDirectory())
++        root, clock = Path(directory), fixture_clock()
++        h = self.harness(root, clock)
++        h.start("one", "backfill")
++        h.reserve("one")
++        until = clock.now()+timedelta(seconds=120)
++        h.coordinators["one"].defer_until(until)
++        h.finish_request("one")
++        h.close()
++        reopened = self.harness(root, clock)
++        self.addCleanup(reopened.close)
++        reopened.start("daily", "daily")
++        reopened.reserve("daily")
++        self.assertGreaterEqual(reopened.starts[0][1], until)
++
++
++    def build(self, root, clock, faults=None):
++        state, _, leases = store_bundle(root, clock=clock, observer=faults)
++        self.addCleanup(state.close)
++        self.addCleanup(leases.close)
++        coordinator = self.coordination.Coordinator(fixture_settings(), state, leases, clock)
++        coordinator.observer = self.events.append
++        return coordinator, leases
++
++    def test_takeover_guard_remains_fixed_while_successor_renews(self):
++        from support import fixture_clock
++        directory = self.enterContext(tempfile.TemporaryDirectory())
++        clock = fixture_clock()
++        h = self.harness(Path(directory), clock)
++        self.addCleanup(h.close)
++        h.start("old", "backfill")
++        h.hold_request("old")
++        h.expire_owner("old")
++        h.acquire_successor("new")
++        earliest = h.turns["new"].earliest_safe
++        for ordinal in range(4):
++            clock.advance(20)
++            self.assertEqual(h.turns["new"].earliest_safe, earliest)
++            if ordinal == 0:
++                h.finish_request("old")
++        self.assertGreater(h.turns["new"].handle.ownership_until_upper, earliest)
++        h.reserve("new")
++        self.assertGreaterEqual(h.starts[-1][1], earliest)
++        self.assertEqual(h.maximum_active, 1)
++
++    def test_unknown_renewal_outcome_waits_full_exchange_after_confirmed_acquisition(self):
++        from support import fixture_clock
++        directory = self.enterContext(tempfile.TemporaryDirectory())
++        clock = fixture_clock()
++        h = self.harness(Path(directory), clock)
++        self.addCleanup(h.close)
++        h.start("old", "backfill")
++        h.hold_request("old")
++        def unknown():
++            raise TimeoutError("renewal committed but acknowledgement lost")
++        h.faults["old"].at("lease.after_renew", unknown)
++        clock.advance(20)
++        self.assertTrue(h.turns["old"].cancelled.is_set())
++        clock.advance(60)
++        h.acquire_successor("new")
++        acquired = h.turns["new"].handle.acquired_upper
++        self.assertGreaterEqual(h.turns["new"].earliest_safe, acquired+timedelta(seconds=92))
++        clock.advance(10)
++        h.finish_request("old")
++        h.reserve("new")
++        self.assertGreaterEqual(h.starts[-1][1], acquired+timedelta(seconds=92))
++        self.assertEqual(h.maximum_active, 1)
++
++    def test_renewal_loss_during_body_returns_retained_partial_and_shared_cancellation(self):
++        from support import ControlledSender, Faults, fixture_clock
++        directory = self.enterContext(tempfile.TemporaryDirectory())
++        root, clock, faults = Path(directory), fixture_clock(), Faults()
++        coordinator, leases = self.build(root, clock, faults)
++        events = self.events
++        coordinator.observer = events.append
++        def renewal_fails():
++            raise TimeoutError("unknown renewal outcome")
++        faults.at("lease.after_renew", renewal_fails)
++        sender = ControlledSender(root, clock, on_send=lambda cancellation, permit: clock.advance(20))
++        receipt = coordinator.exchange(fixture_context(), "https://www.sec.gov/Archives/edgar/full-index/2015/QTR1/index.json", sender)
++        self.assertFalse(receipt.complete)
++        self.assertEqual(receipt.error.code, "ownership_lost")
++        self.assertTrue(receipt.temporary_path.exists())
++        self.assertGreater(receipt.byte_count, 0)
++        self.assertTrue(sender.cancellations[0].is_set())
++        self.assertTrue(any(event["event"] == "loss" for event in events))
++        self.assertEqual(len(sender.starts), 1)
++
++    def test_reservation_outage_stops_dispatch_and_keeps_durable_guard(self):
++        from support import fixture_clock
++        directory = self.enterContext(tempfile.TemporaryDirectory())
++        clock = fixture_clock()
++        h = self.harness(Path(directory), clock)
++        self.addCleanup(h.close)
++        h.start("old", "backfill")
++        def unknown():
++            raise OSError("journal committed but reply lost")
++        h.faults["old"].at("journal.after_write", unknown)
++        with self.assertRaises(OwnershipLost):
++            h.turns["old"].reserve("uncertain-unused-slot")
++        self.assertTrue(h.turns["old"].cancelled.is_set())
++        row = h.leases["old"].read_journal(h.turns["old"].handle)
++        self.assertFalse(row.value["clean_release"])
++        self.assertIsNotNone(row.value["last_start"])
++        self.assertEqual(h.starts, [])
++        h.expire_owner("old")
++        h.acquire_successor("new")
++        self.assertGreaterEqual(h.turns["new"].earliest_safe, self.coordination.utc_value(row.value["unsafe_until"]))
++        h.reserve("new")
++        self.assertEqual([owner for owner, _ in h.starts], ["new"])
++
++    def test_clock_uncertainty_stops_before_sender(self):
++        from support import fixture_clock
++        from sec_edgar_ingest.storage.contracts import TimeBounds
++        directory = self.enterContext(tempfile.TemporaryDirectory())
++        clock = fixture_clock()
++        h = self.harness(Path(directory), clock)
++        self.addCleanup(h.close)
++        h.start("old", "backfill")
++        observe_time = h.leases["old"].observe_time
++        h.leases["old"].observe_time = lambda handle=None: TimeBounds(clock.now(), clock.now()+timedelta(seconds=2.01), clock.monotonic())
++        with self.assertRaises(OwnershipLost):
++            h.reserve("old")
++        self.assertTrue(h.turns["old"].cancelled.is_set())
++        self.assertEqual(h.starts, [])
++        h.leases["old"].observe_time = observe_time
++        row = h.leases["old"].read_journal(h.turns["old"].handle)
++        self.assertFalse(row.value["clean_release"])
++
++    def test_expired_queue_ticket_is_cas_retired_without_erasing_another(self):
++        from support import ControlledSender, fixture_clock
++        from sec_edgar_ingest.models import QueueTicket
++        directory = self.enterContext(tempfile.TemporaryDirectory())
++        root, clock = Path(directory), fixture_clock()
++        coordinator, _ = self.build(root, clock)
++        ticket = QueueTicket("expired", "old", "daily", clock.now(), clock.now()+timedelta(seconds=1))
++        coordinator.store.insert("QueueTicket", ticket.ticket_id, {**ticket.to_mapping(), "status": "waiting"})
++        clock.advance(2)
++        sender = ControlledSender(root, clock)
++        coordinator.exchange(fixture_context(), "https://www.sec.gov/Archives/edgar/full-index/2015/QTR1/index.json", sender)
++        self.assertEqual(coordinator.store.get("QueueTicket", "expired").value["status"], "expired")
++        self.assertEqual(len(tuple(coordinator.store.scan("Coordination", {}))), 0)
++        self.assertEqual(len(sender.starts), 1)
++
++    def test_discovery_download_and_retry_all_use_finite_exchange_turns(self):
++        from support import ControlledSender, fixture_clock
++        directory = self.enterContext(tempfile.TemporaryDirectory())
++        root, clock = Path(directory), fixture_clock()
++        coordinator, _ = self.build(root, clock)
++        events = self.events
++        coordinator.observer = events.append
++        sender = ControlledSender(root, clock, status=503)
++        listing = "https://www.sec.gov/Archives/edgar/full-index/2015/QTR1/index.json"
++        download = "https://www.sec.gov/Archives/edgar/full-index/2015/QTR1/master.zip"
++        coordinator.exchange(fixture_context(command="discover"), listing, sender)
++        until = clock.now()+timedelta(seconds=2)
++        coordinator.defer_until(until)
++        coordinator.exchange(fixture_context(), download, sender)
++        coordinator.exchange(replace(fixture_context(), attempt_id="retry"), download, sender)
++        starts = [instant for _, instant in sender.starts]
++        self.assertGreaterEqual(starts[1], until)
++        self.assertTrue(all((right-left).total_seconds() >= 1/3 for left, right in zip(starts, starts[1:])))
++        epochs = [event["epoch"] for event in sender.events if event["event"] == "request-start"]
++        self.assertEqual(epochs, sorted(set(epochs)))
++        self.assertEqual(len(epochs), 3)
++        self.assertEqual(len([event for event in events if event["event"] == "release"]), 4)
++
++    def test_unbounded_sender_exception_retains_future_guard(self):
++        from support import ControlledSender, fixture_clock
++        directory = self.enterContext(tempfile.TemporaryDirectory())
++        root, clock = Path(directory), fixture_clock()
++        coordinator, _ = self.build(root, clock)
++        def unknown(cancellation, permit):
++            raise RuntimeError("unknown child/drain outcome")
++        sender = ControlledSender(root, clock, on_send=unknown)
++        with self.assertRaises(RuntimeError):
++            coordinator.exchange(fixture_context(), "https://www.sec.gov/Archives/edgar/full-index/2015/QTR1/index.json", sender)
++        successor, _ = self.build(root, clock)
++        clock.advance(60)
++        with successor.turn("new", "daily", clock.now()+timedelta(seconds=3600)) as turn:
++            self.assertGreaterEqual(turn.earliest_safe, turn.handle.acquired_upper+timedelta(seconds=92))
++            permit = turn.reserve("new-request")
++            self.assertGreaterEqual(clock.now(), turn.earliest_safe)
++            turn.complete(permit, drained=True)
++
++    def test_one_permit_per_turn_and_no_reuse_after_complete(self):
++        from support import fixture_clock
++        directory = self.enterContext(tempfile.TemporaryDirectory())
++        clock = fixture_clock()
++        h = self.harness(Path(directory), clock)
++        self.addCleanup(h.close)
++        h.start("one", "backfill")
++        permit = h.reserve("one")
++        with self.assertRaises(OwnershipLost):
++            h.turns["one"].reserve("second")
++        with self.assertRaises(OwnershipLost):
++            h.turns["one"].assert_current(permit)
++
++    def test_guard_calculations_preserve_future_and_prior_uncertainty(self):
++        from support import fixture_clock
++        clock = fixture_clock()
++        previous = clock.now()+timedelta(seconds=40)
++        self.assertEqual(self.coordination.takeover_time(previous, clock.now(), 90, 2, False), clock.now()+timedelta(seconds=92))
++        self.assertEqual(self.coordination.takeover_time(previous, clock.now(), 90, 2, True), previous)
++        self.assertEqual(self.coordination.reservation_guard(previous, 90, 2), previous+timedelta(seconds=92))
++        self.assertEqual(self.coordination.next_start(None, previous, clock.now(), 3), previous)
++
++
++    def test_local_clean_release_atomically_shortens_only_after_positive_drain(self):
++        from support import fixture_clock
++        directory = self.enterContext(tempfile.TemporaryDirectory())
++        clock = fixture_clock()
++        h = self.harness(Path(directory), clock)
++        self.addCleanup(h.close)
++        h.start("one", "backfill")
++        h.hold_request("one")
++        old_guard = h.permits["one"].takeover_after
++        h.finish_request("one")
++        h.start("two", "daily")
++        self.assertLess(h.turns["two"].earliest_safe, old_guard,
++                        "A positively drained local exchange can atomically finalize journal+release")
++        row = h.leases["two"].read_journal(h.turns["two"].handle)
++        self.assertGreaterEqual(self.coordination.utc_value(row.value["unsafe_until"]), h.turns["two"].handle.ownership_until_upper)
++        h.reserve("two")
++        self.assertLess(h.starts[-1][1], clock.now()+timedelta(seconds=1))
++        self.assertLess(h.starts[-1][1], old_guard)
++
++    def test_unknown_atomic_release_stops_turn_and_retains_prior_guard(self):
++        from support import fixture_clock
++        directory = self.enterContext(tempfile.TemporaryDirectory())
++        clock = fixture_clock()
++        h = self.harness(Path(directory), clock)
++        self.addCleanup(h.close)
++        h.start("one", "backfill")
++        h.reserve("one")
++        guard = h.permits["one"].takeover_after
++        def unknown():
++            raise TimeoutError("atomic release outcome not confirmed")
++        h.faults["one"].at("lease.before_clean_release", unknown)
++        h.finish_request("one")
++        self.assertTrue(h.turns["one"].cancelled.is_set())
++        self.assertIsNotNone(h.turns["one"].loss_reason)
++        row = h.leases["one"].read_journal(h.turns["one"].handle)
++        self.assertFalse(row.value["clean_release"])
++        self.assertEqual(self.coordination.utc_value(row.value["unsafe_until"]), guard)
++
++    def test_conservative_known_and_unknown_release_preserve_guard_and_progress(self):
++        from support import ControlledSender, Faults, fixture_clock
++        for unknown in (False, True):
++            with self.subTest(unknown=unknown):
++                directory = self.enterContext(tempfile.TemporaryDirectory())
++                root, clock, faults = Path(directory), fixture_clock(), Faults()
++                coordinator, leases = self.build(root, clock, faults)
++                # This capability shape is Azure's: journal update and release are separate operations.
++                leases.release_clean = None
++                if unknown:
++                    def fault():
++                        raise TimeoutError("release committed, acknowledgement unknown")
++                    faults.at("lease.after_release", fault)
++                events = []
++                coordinator.observer = events.append
++                sender = ControlledSender(root, clock)
++                receipt = coordinator.exchange(fixture_context(), "https://www.sec.gov/Archives/edgar/full-index/2015/QTR1/index.json", sender)
++                self.assertEqual(receipt.error.code if receipt.error else None, "ownership_lost" if unknown else None)
++                self.assertTrue(sender.cancellations[0].is_set())
++                successor, _ = self.build(root, clock)
++                with successor.turn("successor", "daily", clock.now()+timedelta(seconds=3600)) as turn:
++                    self.assertGreaterEqual(turn.earliest_safe, turn.handle.acquired_upper+timedelta(seconds=92))
++                    row = successor.leases.read_journal(turn.handle)
++                    self.assertFalse(row.value["clean_release"])
++                    permit = turn.reserve("after-release")
++                    self.assertGreaterEqual(clock.now(), turn.earliest_safe)
++                    turn.assert_current(permit)
++                    turn.complete(permit, drained=True)
++
++    def test_exchange_deadline_cancels_even_when_lease_renewals_succeed(self):
++        from support import ControlledSender, fixture_clock
++        directory = self.enterContext(tempfile.TemporaryDirectory())
++        root, clock = Path(directory), fixture_clock()
++        coordinator, _ = self.build(root, clock)
++        sender = ControlledSender(root, clock, on_send=lambda cancellation, permit: clock.advance(90))
++        receipt = coordinator.exchange(fixture_context(), "https://www.sec.gov/Archives/edgar/full-index/2015/QTR1/index.json", sender)
++        self.assertEqual(receipt.error.code, "ownership_lost")
++        self.assertTrue(sender.cancellations[0].is_set())
++        self.assertTrue(receipt.temporary_path.exists())
++
++    def test_request_begun_just_before_finite_expiry_has_full_takeover_guard(self):
++        from support import ControlledSender, Faults, fixture_clock
++        directory = self.enterContext(tempfile.TemporaryDirectory())
++        root, clock, faults = Path(directory), fixture_clock(), Faults()
++        state, _, leases = store_bundle(root, clock=clock, observer=faults)
++        self.addCleanup(state.close)
++        self.addCleanup(leases.close)
++        # A slow-renew fixture places the controlled start immediately before the real finite expiry.
++        settings = fixture_settings(coordination={"renew_every_seconds": 59.99})
++        coordinator = self.coordination.Coordinator(settings, state, leases, clock)
++        with coordinator.turn("near-expiry", "backfill", clock.now()+timedelta(seconds=3600)) as turn:
++            clock.advance(59)
++            permit = turn.reserve("near-boundary")
++            turn.assert_current(permit)
++            self.assertLessEqual((turn.handle.ownership_until_upper-clock.now()).total_seconds(), 1)
++            self.assertGreaterEqual(permit.takeover_after, turn.handle.ownership_until_upper+timedelta(seconds=92))
++            sender = ControlledSender(root, clock, on_send=lambda cancellation, permit: clock.advance(1))
++            receipt = sender.send("https://www.sec.gov/Archives/edgar/full-index/2015/QTR1/index.json", fixture_context(), permit,
++                                  cancellation=turn.cancelled)
++            self.assertTrue(turn.cancelled.is_set())
++            self.assertFalse(receipt.complete)
++
++    def test_stale_epoch_refuses_socket_even_under_current_lease(self):
++        from support import fixture_clock
++        directory = self.enterContext(tempfile.TemporaryDirectory())
++        clock = fixture_clock()
++        h = self.harness(Path(directory), clock)
++        self.addCleanup(h.close)
++        h.start("one", "daily")
++        permit = h.turns["one"].reserve("request")
++        with self.assertRaises(OwnershipLost):
++            h.turns["one"].assert_current(replace(permit, epoch=permit.epoch+1))
++        self.assertTrue(h.turns["one"].cancelled.is_set())
++        self.assertEqual(h.starts, [])
++
++
++    def test_three_independent_exchange_processes_prove_intervals_priority_and_epochs(self):
++        import support
++        self.assertTrue(hasattr(support, "exchange_process_trace"),
++                        "Three actual Coordinator.exchange processes must retain interval/ownership/priority traces")
++        directory = self.enterContext(tempfile.TemporaryDirectory())
++        trace = support.exchange_process_trace(Path(directory))
++        starts = [event for event in trace if event["event"] == "socket-start"]
++        ends = [event for event in trace if event["event"] == "socket-end"]
++        self.assertEqual([event["worker"] for event in starts], ["backfill", "daily", "reconciliation", "backfill"])
++        self.assertEqual(len({event["pid"] for event in starts}), 3)
++        self.assertEqual(len(starts), len(ends))
++        for previous, current in zip(starts, starts[1:]):
++            self.assertGreaterEqual(current["logical_mono"]-previous["logical_mono"], 1/3)
++        for start in starts:
++            end = next(event for event in ends if event["request_id"] == start["request_id"])
++            self.assertLessEqual(end["logical_mono"], start["deadline_mono"])
++            self.assertEqual(start["epoch"], start["journal_epoch"])
++            self.assertEqual(start["owner"], start["journal_owner"])
++            self.assertFalse(start["cancelled"])
++            self.assertLess(start["logical_mono"], start["start_before_mono"])
++        intervals = sorted((start["logical_mono"], next(event["logical_mono"] for event in ends if event["request_id"] == start["request_id"])) for start in starts)
++        self.assertTrue(all(left[1] <= right[0] for left, right in zip(intervals, intervals[1:])))
++        self.assertEqual([event["epoch"] for event in starts], sorted({event["epoch"] for event in starts}))
++        choices = [event for event in trace if event["event"] == "queue-choice"]
++        self.assertTrue(any(event.get("priority") == "daily" for event in choices))
++        self.assertEqual(len([event for event in trace if event["event"] == "acquire"]), 4)
++        self.assertEqual(len([event for event in trace if event["event"] == "release"]), 4)
++        self.assertFalse(any(event["event"] in ("process-error", "loss") for event in trace))
++        support.retain_coordination_trace("three-process-exchange.json", trace)
++
++
++    def test_storage_latency_cannot_undercount_latest_permitted_dispatch(self):
++        from support import fixture_clock
++        directory = self.enterContext(tempfile.TemporaryDirectory())
++        clock = fixture_clock()
++        h = self.harness(Path(directory), clock)
++        self.addCleanup(h.close)
++        h.start("one", "backfill")
++        h.faults["one"].at("journal.after_read", lambda: clock.advance(0.2))
++        permit = h.turns["one"].reserve("delayed-storage")
++        clock.advance(permit.start_before_mono-clock.monotonic()-0.00001)
++        h.dispatch("one", permit)
++        h.finish_request("one")
++        h.start("two", "daily")
++        h.reserve("two")
++        spacing = (h.starts[1][1]-h.starts[0][1]).total_seconds()
++        self.assertGreaterEqual(spacing, 1/3,
++                                "Storage latency between clock observation and durable reservation must not create a compressed transport interval")
++
++    def test_queue_storage_outage_after_drain_retains_partial_receipt(self):
++        from support import ControlledSender, Faults, fixture_clock
++        directory = self.enterContext(tempfile.TemporaryDirectory())
++        root, clock, faults = Path(directory), fixture_clock(), Faults()
++        coordinator, _ = self.build(root, clock, faults)
++        def outage():
++            raise OSError("ticket status acknowledgement unknown")
++        faults.at("state.after_replace", outage)
++        sender = ControlledSender(root, clock)
++        try:
++            receipt = coordinator.exchange(fixture_context(), "https://www.sec.gov/Archives/edgar/full-index/2015/QTR1/index.json", sender)
++        except OSError as error:
++            self.fail(f"A queue outage after positive sender drain must preserve the returned receipt: {error}")
++        self.assertFalse(receipt.complete)
++        self.assertEqual(receipt.error.code, "ownership_lost")
++        self.assertTrue(receipt.temporary_path.exists())
++        self.assertTrue(sender.cancellations[0].is_set())
++
++
++    def test_full_exchange_after_unknown_renewal_waits_confirmed_successor_guard(self):
++        from support import ControlledSender, Faults, fixture_clock
++        directory = self.enterContext(tempfile.TemporaryDirectory())
++        root, clock, faults = Path(directory), fixture_clock(), Faults()
++        old, _ = self.build(root, clock, faults)
++        def unknown():
++            raise TimeoutError("renewal committed but acknowledgement lost")
++        faults.at("lease.after_renew", unknown)
++        old_sender = ControlledSender(root, clock, on_send=lambda cancellation, permit: clock.advance(20))
++        old_receipt = old.exchange(replace(fixture_context(), execution_id="old"), "https://www.sec.gov/Archives/edgar/full-index/2015/QTR1/index.json", old_sender)
++        self.assertEqual(old_receipt.error.code, "ownership_lost")
++        self.assertTrue(old_sender.cancellations[0].is_set())
++        clock.advance(60)
++        successor, _ = self.build(root, clock)
++        sender = ControlledSender(root, clock)
++        receipt = successor.exchange(replace(fixture_context(priority="daily"), execution_id="new"), "https://www.sec.gov/Archives/edgar/full-index/2015/QTR1/index.json", sender)
++        self.assertTrue(receipt.complete)
++        acquired = [event for event in self.events if event["event"] == "acquire" and event["owner"].startswith("new:")][0]
++        acquired_at = self.coordination.utc_value(acquired["at"])
++        self.assertGreaterEqual(sender.starts[0][1], acquired_at+timedelta(seconds=92))
++        self.assertLessEqual(old_sender.ends[0][1], sender.starts[0][1])
++        self.assertTrue(old_receipt.temporary_path.exists())
++
++    def test_shared_cancellation_event_reaches_spawned_transport_child(self):
++        import multiprocessing
++        from support import ControlledSender, Faults, fixture_clock, cancellation_child
++        directory = self.enterContext(tempfile.TemporaryDirectory())
++        root, clock, faults = Path(directory), fixture_clock(), Faults()
++        coordinator, _ = self.build(root, clock, faults)
++        def unknown():
++            raise TimeoutError("unknown renewal during child body stream")
++        faults.at("lease.after_renew", unknown)
++        context = multiprocessing.get_context("spawn")
++        ready, returned = context.Event(), context.Queue()
++        def stream(cancellation, permit):
++            process = context.Process(target=cancellation_child, args=(cancellation, ready, returned))
++            process.start()
++            try:
++                self.assertTrue(ready.wait(5))
++                clock.advance(20)
++                outcome = returned.get(timeout=5)
++                self.assertTrue(outcome["cancelled"])
++                process.join(5)
++                self.assertEqual(process.exitcode, 0)
++            finally:
++                if process.is_alive():
++                    process.terminate()
++                    process.join(5)
++                returned.close()
++                returned.join_thread()
++        sender = ControlledSender(root, clock, on_send=stream)
++        receipt = coordinator.exchange(fixture_context(), "https://www.sec.gov/Archives/edgar/full-index/2015/QTR1/index.json", sender)
++        self.assertEqual(receipt.error.code, "ownership_lost")
++        self.assertTrue(receipt.temporary_path.exists())
+
+Command: git diff --cached --stat
+Exit: 0
+ .../src/sec_edgar_ingest/coordination.py           | 516 +++++++++++++++
+ .../src/sec_edgar_ingest/models.py                 |   3 +
+ .../src/sec_edgar_ingest/storage/azure.py          |  73 ++-
+ .../src/sec_edgar_ingest/storage/contracts.py      |  39 +-
+ .../src/sec_edgar_ingest/storage/local.py          | 104 ++-
+ packages/sec-edgar-ingest/tests/support.py         | 334 ++++++++++
+ .../sec-edgar-ingest/tests/test_coordination.py    | 705 +++++++++++++++++++++
+ 7 files changed, 1760 insertions(+), 14 deletions(-)

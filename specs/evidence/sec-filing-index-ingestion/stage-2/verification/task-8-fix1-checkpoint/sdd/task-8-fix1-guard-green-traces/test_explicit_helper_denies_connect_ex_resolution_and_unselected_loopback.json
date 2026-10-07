@@ -1,0 +1,19 @@
+{
+  "argv": [
+    "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/bin/python",
+    "-c",
+    "\nimport importlib.util, json, socket\nimport azure.identity as identity\ncalls = []\ndef record(name, result=None):\n    def operation(*args, **kwargs):\n        calls.append(name)\n        return result\n    return operation\nsocket.socket.connect = record('connect')\nsocket.socket.connect_ex = record('connect_ex', 0)\nsocket.socket.sendto = record('sendto', 1)\nsocket.getaddrinfo = record('getaddrinfo', [(socket.AF_INET, socket.SOCK_STREAM, 6, '', ('127.0.0.1', 42421))])\nsocket.gethostbyname = record('gethostbyname', '127.0.0.1')\nsocket.gethostbyname_ex = record('gethostbyname_ex', ('fixture', [], ['127.0.0.1']))\nsocket.gethostbyaddr = record('gethostbyaddr', ('fixture', [], ['127.0.0.1']))\nsocket.getnameinfo = record('getnameinfo', ('fixture', '443'))\nfor name in ('DefaultAzureCredential', 'ManagedIdentityCredential'):\n    cls = getattr(identity, name)\n    cls.__init__ = record('credential_constructor')\n    cls.get_token = record('credential_token', 'recorded token, not an authentication')\n    cls.get_token_info = record('credential_token_info', 'recorded token info')\nold_credential = object.__new__(identity.DefaultAzureCredential)\ndef blocked(operation):\n    try:\n        operation()\n    except AssertionError:\n        return True\n    return False\n\n\nimport support\nsupport.block_external_network()\nwith socket.socket() as sock:\n    denied = [blocked(lambda: sock.connect_ex(('198.51.100.1', 443))),\n              blocked(lambda: socket.getaddrinfo('unapproved.invalid', 443)),\n              blocked(lambda: sock.connect(('127.0.0.1', 42422))),\n              blocked(lambda: sock.connect_ex(('::1', 42422)))]\nprint(json.dumps({'denied': denied, 'calls': calls}))\n"
+  ],
+  "exit": 0,
+  "proof": {
+    "calls": [],
+    "denied": [
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "stderr": "",
+  "stdout": "{\"denied\": [true, true, true, true], \"calls\": []}\n"
+}

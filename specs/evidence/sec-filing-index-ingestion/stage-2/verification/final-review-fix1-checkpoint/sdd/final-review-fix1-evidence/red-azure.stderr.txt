@@ -1,0 +1,27 @@
+test_intended_history_registration_round_trips_and_replaces_with_whole_record_cas (test_azure_state_payloads.AzureStatePayloadTests.test_intended_history_registration_round_trips_and_replaces_with_whole_record_cas) ... ERROR
+
+======================================================================
+ERROR: test_intended_history_registration_round_trips_and_replaces_with_whole_record_cas (test_azure_state_payloads.AzureStatePayloadTests.test_intended_history_registration_round_trips_and_replaces_with_whole_record_cas)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_azure_state_payloads.py", line 105, in setUp
+    self.settings = fixture_settings(storage={
+                    ~~~~~~~~~~~~~~~~^^^^^^^^^^
+        "backend": "azure", "root": None, "account_name": "secedgardevb8617",
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+        etl={"parser_version": "sec-envelope-v1"},
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        worker={"image_digest": "sha256:" + "1" * 64, "provenance": "configured-image"})
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/support.py", line 29, in fixture_settings
+    return Settings.from_mapping(value)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/config.py", line 203, in from_mapping
+    raise ValueError(f"azure storage missing explicit bindings: {sorted(required - value['storage'].keys())}")
+ValueError: azure storage missing explicit bindings: ['lock_container', 'quarantine_container', 'raw_container', 'workset_container']
+
+----------------------------------------------------------------------
+Ran 1 test in 0.010s
+
+FAILED (errors=1)

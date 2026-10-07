@@ -1,0 +1,38 @@
+test_archive_shapes_truncation_and_crc_failure_are_retained (test_validation.ValidationTests.test_archive_shapes_truncation_and_crc_failure_are_retained) ... FAIL
+
+======================================================================
+FAIL: test_archive_shapes_truncation_and_crc_failure_are_retained (test_validation.ValidationTests.test_archive_shapes_truncation_and_crc_failure_are_retained)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_validation.py", line 35, in invalid
+    self.validate(body, kind=kind, **options)
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_validation.py", line 31, in validate
+    return self.validation.validate_envelope(source, receipt, settings or self.settings)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/validation.py", line 186, in validate_envelope
+    count = _scan_text(stream, source, receipt, settings.http.max_expanded_bytes)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/validation.py", line 156, in _scan_text
+    while body := stream.read(min(STREAM_BYTES, limit-count+1)):
+                  ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/zipfile/__init__.py", line 1084, in read
+    data = self._read1(n)
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/zipfile/__init__.py", line 1160, in _read1
+    data = self._decompressor.decompress(data, n)
+zlib.error: Error -3 while decompressing data: invalid block type
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_validation.py", line 160, in test_archive_shapes_truncation_and_crc_failure_are_retained
+    self.invalid("zip-bad-deflate", bytes(invalid_deflate), "invalid_archive")
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_validation.py", line 37, in invalid
+    self.assertIsInstance(error, self.validation.ValidationError, "invalid envelopes must expose their original receipt")
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: error('Error -3 while decompressing data: invalid block type') is not an instance of <class 'sec_edgar_ingest.validation.ValidationError'> : invalid envelopes must expose their original receipt
+
+----------------------------------------------------------------------
+Ran 1 test in 0.022s
+
+FAILED (failures=1)

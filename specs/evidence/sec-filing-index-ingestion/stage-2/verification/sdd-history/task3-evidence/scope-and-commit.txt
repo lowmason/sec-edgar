@@ -1,0 +1,64 @@
+COMMAND: git rev-parse HEAD
+EXIT: 0
+3085d6765f65529820743c2d86dca84a497c2060
+
+COMMAND: git diff --cached --name-only
+EXIT: 0
+
+COMMAND: git add -- packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/__init__.py packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/contracts.py packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py packages/sec-edgar-ingest/src/sec_edgar_ingest/state.py packages/sec-edgar-ingest/tests/test_storage.py packages/sec-edgar-ingest/tests/test_state.py packages/sec-edgar-ingest/tests/test_azure_contracts.py packages/sec-edgar-ingest/tests/support.py specs/evidence/sec-filing-index-ingestion/stage-2/sdk-signatures.json
+EXIT: 0
+
+COMMAND: git diff --cached --name-only
+EXIT: 0
+packages/sec-edgar-ingest/src/sec_edgar_ingest/state.py
+packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/__init__.py
+packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py
+packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/contracts.py
+packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py
+packages/sec-edgar-ingest/tests/support.py
+packages/sec-edgar-ingest/tests/test_azure_contracts.py
+packages/sec-edgar-ingest/tests/test_state.py
+packages/sec-edgar-ingest/tests/test_storage.py
+specs/evidence/sec-filing-index-ingestion/stage-2/sdk-signatures.json
+
+COMMAND: git diff --cached --check
+EXIT: 0
+
+COMMAND: git diff --cached --stat
+EXIT: 0
+ .../sec-edgar-ingest/src/sec_edgar_ingest/state.py | 191 ++++++++++
+ .../src/sec_edgar_ingest/storage/__init__.py       |  20 ++
+ .../src/sec_edgar_ingest/storage/azure.py          | 374 +++++++++++++++++++
+ .../src/sec_edgar_ingest/storage/contracts.py      | 134 +++++++
+ .../src/sec_edgar_ingest/storage/local.py          | 289 +++++++++++++++
+ packages/sec-edgar-ingest/tests/support.py         |  50 ++-
+ .../sec-edgar-ingest/tests/test_azure_contracts.py | 394 +++++++++++++++++++++
+ packages/sec-edgar-ingest/tests/test_state.py      | 233 ++++++++++++
+ packages/sec-edgar-ingest/tests/test_storage.py    | 182 ++++++++++
+ .../stage-2/sdk-signatures.json                    |  82 +++++
+ 10 files changed, 1948 insertions(+), 1 deletion(-)
+
+COMMAND: git commit -m 'feat: add durable acquisition stores and source state'
+EXIT: 0
+[codex/sec-edgar-stage-2 2012866] feat: add durable acquisition stores and source state
+ 10 files changed, 1948 insertions(+), 1 deletion(-)
+ create mode 100644 packages/sec-edgar-ingest/src/sec_edgar_ingest/state.py
+ create mode 100644 packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/__init__.py
+ create mode 100644 packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py
+ create mode 100644 packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/contracts.py
+ create mode 100644 packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py
+ create mode 100644 packages/sec-edgar-ingest/tests/test_azure_contracts.py
+ create mode 100644 packages/sec-edgar-ingest/tests/test_state.py
+ create mode 100644 packages/sec-edgar-ingest/tests/test_storage.py
+ create mode 100644 specs/evidence/sec-filing-index-ingestion/stage-2/sdk-signatures.json
+
+COMMAND: git rev-parse HEAD
+EXIT: 0
+20128669bef75362eba2b5e9e5d30e84b1f62a28
+
+COMMAND: git status --short
+EXIT: 0
+ D packages/sec-edgar-index-ingest/README.md
+ D packages/sec-edgar-index-ingest/pyproject.toml
+ D packages/sec-edgar-index-ingest/src/sec_edgar_index_ingest/__init__.py
+ D packages/sec-edgar-index-ingest/src/sec_edgar_index_ingest/py.typed

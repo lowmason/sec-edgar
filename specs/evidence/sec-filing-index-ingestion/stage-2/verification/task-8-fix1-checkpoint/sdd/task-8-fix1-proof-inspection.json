@@ -1,0 +1,257 @@
+{
+  "actual_console_fixture_transport_count": 4,
+  "artifacts": [
+    {
+      "bytes": 77862,
+      "path": "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/dist/sec_edgar_ingest-0.1.0-py3-none-any.whl",
+      "sha256": "aabf437bdbf8ba521eab027112377372e4515026f0e153016557cc6829502628"
+    },
+    {
+      "bytes": 66284,
+      "path": "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/dist/sec_edgar_ingest-0.1.0.tar.gz",
+      "sha256": "7fe7003fb193a55c68666a16de34e145c1ccf88fc18e1e05a7f48e77f5d53780"
+    }
+  ],
+  "exact_replay_no_http": true,
+  "fresh_import": "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-wheel-1k5klfr3/fresh-env/lib/python3.14/site-packages/sec_edgar_ingest/__init__.py",
+  "fresh_install_all_command_exits_zero": true,
+  "fresh_proof_file_count": 79,
+  "fresh_proof_manifest_records_verified": 78,
+  "fresh_proof_manifest_sha256": "6ec8c63cd8e68477c52809ef303110d7a6c2d47c805b08eaa15d3d56b8481e6d",
+  "fresh_proof_total_bytes": 487102,
+  "guard_behavior": {
+    "test_explicit_helper_denies_connect_ex_resolution_and_unselected_loopback.json": {
+      "exit": 0,
+      "proof": {
+        "calls": [],
+        "denied": [
+          true,
+          true,
+          true,
+          true
+        ]
+      }
+    },
+    "test_only_selected_fixture_origin_is_allowed_and_scope_closes.json": {
+      "exit": 0,
+      "proof": {
+        "calls": [
+          "connect",
+          "connect_ex",
+          "getaddrinfo"
+        ],
+        "denied": [
+          true,
+          true,
+          true,
+          true,
+          true
+        ]
+      }
+    },
+    "test_ordinary_support_import_installs_connection_resolution_and_auth_denial.json": {
+      "exit": 0,
+      "proof": {
+        "calls": [],
+        "denied": [
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true
+        ]
+      }
+    },
+    "test_provider_construction_and_existing_instance_token_work_never_reach_stubs.json": {
+      "exit": 0,
+      "proof": {
+        "calls": [],
+        "denied": [
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true
+        ]
+      }
+    },
+    "test_spawned_process_has_selected_origin_and_denies_network_and_auth.json": {
+      "exit": 0,
+      "pid": 17697,
+      "proof": {
+        "calls": [
+          "connect"
+        ],
+        "denied": [
+          true,
+          true,
+          true,
+          true,
+          true
+        ],
+        "guard_available": true,
+        "pid": 17697
+      }
+    },
+    "test_suite_runner_installs_guard_before_unittest_executes.json": {
+      "exit": 0,
+      "proof": {
+        "calls": [],
+        "denied": true
+      }
+    }
+  },
+  "installed_proof_root": "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-2/verification/sec-edgar-wheel-1k5klfr3",
+  "kind": "read-only inspection of retained current proof after execution",
+  "original_checkpoint_unchanged_records": 4813,
+  "original_manifest_sha256": "89f4b9c48517d0af42a1099777e910ba8c634b7d337c80c06a8658c03f2ec926",
+  "process_proof": {
+    "all_zero_through_guard": true,
+    "binding_event_counts": {
+      "bind_insert_attempt": 3,
+      "bind_insert_conflict": 2,
+      "bind_insert_success": 1
+    },
+    "deadline_child_exit": -14,
+    "deadline_retained_bytes": 84,
+    "deadline_retained_sha256": "7197490a0df09feb77b6e3f6bbc65b4e974d6175847570d0e437059dab80161f",
+    "first_wire_after_guard_and_old_socket_drain": true,
+    "minimum_successor_wire_spacing_seconds": 0.6754027497954667,
+    "ordered_priorities": [
+      "daily",
+      "daily",
+      "daily",
+      "backfill"
+    ],
+    "parent_exit": -15,
+    "race_processes": [
+      {
+        "exit": 0,
+        "pid": 17026
+      },
+      {
+        "exit": 0,
+        "pid": 17027
+      },
+      {
+        "exit": 0,
+        "pid": 17028
+      }
+    ],
+    "stale_server_requests": 0,
+    "successor_processes": [
+      {
+        "exit": 0,
+        "pid": 16975
+      },
+      {
+        "exit": 0,
+        "pid": 16972
+      }
+    ],
+    "unsafe_observation_count": 85,
+    "unsafe_until_utc": "2026-10-06T21:38:08.152358+00:00",
+    "winner": {
+      "byte_count": 217,
+      "envelope_version": "sec-daily-envelope-v1",
+      "raw_path": "raw/sec/indexes/kind=daily/period=2026-10-01/sha256=a7c7f989eadb3613deaefca4b789fc8e751ae1dc9955e56b04a518ad628519b0/master.idx",
+      "received_at": "2026-10-06T21:38:17.364272+00:00",
+      "representation": "idx",
+      "sha256": "a7c7f989eadb3613deaefca4b789fc8e751ae1dc9955e56b04a518ad628519b0",
+      "source_id": "6cf7f339fd98f08d888586fbf41d907cb071d3a54259128e659f51e1f7caaa72",
+      "validators": {
+        "Content-Length": "217",
+        "Content-Type": "text/plain",
+        "ETag": "\"synthetic-process-0\"",
+        "X-Fixture": "synthetic"
+      }
+    }
+  },
+  "production_sources_identical_to_base_and_built_wheel": [
+    {
+      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/__init__.py",
+      "sha256": "91447944015cec709e8aa7655f7e9d64e1e4508e7023a57fe3746911c0fc6fed"
+    },
+    {
+      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/__main__.py",
+      "sha256": "307299fda7b77d22c64cb51430ec75e5f59d78e9c948786afb3b2544fe45e4b7"
+    },
+    {
+      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/cli.py",
+      "sha256": "7216fcf2f07c965770a4ece67ed9a785afcebc95a6f93c1556b7c79e06671a84"
+    },
+    {
+      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/collection.py",
+      "sha256": "68b655a18d1e5eca7f5d1c5de860f0644a3ccc34ad9ea6edb579ae5a9738f3c9"
+    },
+    {
+      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/config.py",
+      "sha256": "23f302368bf3e9a04204d89679cb087cc6f5f985f134cd48f32086c45339a264"
+    },
+    {
+      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/coordination.py",
+      "sha256": "ee768738ddfa81116c12e7491ed7d1c48cafeccf5de23a2947624329731ffb96"
+    },
+    {
+      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/discovery.py",
+      "sha256": "187a0cfb0c5f44709696dc12feed5cf3698ce7084f701cf7460be042568016b5"
+    },
+    {
+      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/download.py",
+      "sha256": "467068de88ec939c5b60e7d37852c722170a4c218ed0ba1c004ff74c2b627473"
+    },
+    {
+      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py",
+      "sha256": "6442fd063727d5eae7958d12e24e4668ec1dddbd184ee4f235c4208632af03c4"
+    },
+    {
+      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/results.py",
+      "sha256": "aac391e5860eadbba547f4d1d5fdfd93c407a541c254834db95d717029c3f29a"
+    },
+    {
+      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/state.py",
+      "sha256": "4b5c2fc42d3a824cb404bc221ef3fd48f081f9cd03dc2d633ee83c21c7fb8184"
+    },
+    {
+      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/__init__.py",
+      "sha256": "a12bd5c1b2590957895bc75bddbc88e99d08e9df380435e5add8ee3a6a6b9d00"
+    },
+    {
+      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py",
+      "sha256": "7eaed27330fe2b6e7c162faeb937776f37e2d887514008db8eb643a5fe1f682c"
+    },
+    {
+      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/contracts.py",
+      "sha256": "cc76934066f5be3d894e066503f740ec1de085b84d27fbd090708da386ed4993"
+    },
+    {
+      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py",
+      "sha256": "bd1988d702556b04996508c390a46ba6ebed9365aae76b4bd83f3a719d4c484c"
+    },
+    {
+      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/urls.py",
+      "sha256": "7e1f20fc5c951c23efbbfec9a66e60ae4ecd4fda683fd1f95e20d59e28057d77"
+    },
+    {
+      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/validation.py",
+      "sha256": "1885960d908838ee4fa4e733bc91fdcfc1f773cdad2d807844e8e3405f4800b3"
+    },
+    {
+      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/worksets.py",
+      "sha256": "3aba39579b3c4708573ba1b627ffe489118a32cd167929a39764aaea4dff230e"
+    }
+  ],
+  "recorded_at": "2026-10-06T21:46:01.658132+00:00",
+  "runtime_dependency_count": 20,
+  "runtime_versions_identical_to_original_verified_install": true,
+  "scope": "Synthetic macOS offline/auth recording-stub and actual selected-loopback proof only. I1 and all S7 checks remain pending/reserved.",
+  "source_base": "a62c05c0a961fecc2f1ac854b9dac68be3add7ef",
+  "test_guard_excluded_from_wheel": true
+}

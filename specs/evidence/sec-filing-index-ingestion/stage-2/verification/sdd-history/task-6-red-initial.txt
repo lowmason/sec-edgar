@@ -1,0 +1,200 @@
+test_absence_does_not_erase_pending_or_accepted_snapshot (test_discovery.DiscoveryTests.test_absence_does_not_erase_pending_or_accepted_snapshot) ... FAIL
+test_delayed_file_requires_fresh_session_and_old_bytes_stay_immutable (test_discovery.DiscoveryTests.test_delayed_file_requires_fresh_session_and_old_bytes_stay_immutable) ... FAIL
+test_failed_ancestor_never_constructs_child_requests (test_discovery.DiscoveryTests.test_failed_ancestor_never_constructs_child_requests) ... FAIL
+test_first_daily_run_replays_handoff_and_preceding_quarter (test_discovery.DiscoveryTests.test_first_daily_run_replays_handoff_and_preceding_quarter) ... FAIL
+test_later_success_cannot_cross_a_failed_directory (test_discovery.DiscoveryTests.test_later_success_cannot_cross_a_failed_directory) ... FAIL
+test_malformed_untrusted_and_unsupported_listing_remain_gaps (test_discovery.DiscoveryTests.test_malformed_untrusted_and_unsupported_listing_remain_gaps) ... FAIL
+test_missing_requested_quarter_is_gap_not_empty_child (test_discovery.DiscoveryTests.test_missing_requested_quarter_is_gap_not_empty_child) ... FAIL
+test_multi_quarter_outage_includes_entire_boundary_range (test_discovery.DiscoveryTests.test_multi_quarter_outage_includes_entire_boundary_range) ... FAIL
+test_pending_old_source_is_revisited_without_handoff_filter (test_discovery.DiscoveryTests.test_pending_old_source_is_revisited_without_handoff_filter) ... FAIL
+test_restart_reuses_verified_success_and_retries_failure (test_discovery.DiscoveryTests.test_restart_reuses_verified_success_and_retries_failure) ... FAIL
+test_same_session_refuses_changed_refresh_or_configuration (test_discovery.DiscoveryTests.test_same_session_refuses_changed_refresh_or_configuration) ... FAIL
+test_supported_representation_retains_ignored_codec_reason (test_discovery.DiscoveryTests.test_supported_representation_retains_ignored_codec_reason) ... FAIL
+test_valid_empty_listing_has_a_distinct_outcome (test_discovery.DiscoveryTests.test_valid_empty_listing_has_a_distinct_outcome) ... FAIL
+test_filename_calendar_and_hierarchy_validation_including_leap_day (test_discovery.ListingTests.test_filename_calendar_and_hierarchy_validation_including_leap_day) ... ERROR
+test_quarter_functions_rollover_and_contiguous_boundary (test_discovery.ListingTests.test_quarter_functions_rollover_and_contiguous_boundary) ... ERROR
+test_rejects_wrong_directory_duplicate_unsafe_missing_or_wrong_typed_fields (test_discovery.ListingTests.test_rejects_wrong_directory_duplicate_unsafe_missing_or_wrong_typed_fields) ... ERROR
+test_retained_originals_parse_with_verified_manifest_provenance (test_discovery.ListingTests.test_retained_originals_parse_with_verified_manifest_provenance) ... ERROR
+
+======================================================================
+ERROR: test_filename_calendar_and_hierarchy_validation_including_leap_day (test_discovery.ListingTests.test_filename_calendar_and_hierarchy_validation_including_leap_day)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_discovery.py", line 209, in test_filename_calendar_and_hierarchy_validation_including_leap_day
+    self.assertEqual(h.run_single_directory('2024Q1').members[0].period, '2024-02-29')
+                     ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/support.py", line 963, in run_single_directory
+    from sec_edgar_ingest.discovery import discover
+ModuleNotFoundError: No module named 'sec_edgar_ingest.discovery'
+
+======================================================================
+ERROR: test_quarter_functions_rollover_and_contiguous_boundary (test_discovery.ListingTests.test_quarter_functions_rollover_and_contiguous_boundary)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_discovery.py", line 217, in test_quarter_functions_rollover_and_contiguous_boundary
+    from sec_edgar_ingest.discovery import advance_daily_boundary, quarter_of, quarter_span, required_daily_quarters
+ModuleNotFoundError: No module named 'sec_edgar_ingest.discovery'
+
+======================================================================
+ERROR: test_rejects_wrong_directory_duplicate_unsafe_missing_or_wrong_typed_fields (test_discovery.ListingTests.test_rejects_wrong_directory_duplicate_unsafe_missing_or_wrong_typed_fields)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_discovery.py", line 192, in test_rejects_wrong_directory_duplicate_unsafe_missing_or_wrong_typed_fields
+    from sec_edgar_ingest.discovery import parse_listing
+ModuleNotFoundError: No module named 'sec_edgar_ingest.discovery'
+
+======================================================================
+ERROR: test_retained_originals_parse_with_verified_manifest_provenance (test_discovery.ListingTests.test_retained_originals_parse_with_verified_manifest_provenance)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_discovery.py", line 166, in test_retained_originals_parse_with_verified_manifest_provenance
+    from sec_edgar_ingest.discovery import parse_listing
+ModuleNotFoundError: No module named 'sec_edgar_ingest.discovery'
+
+======================================================================
+FAIL: test_absence_does_not_erase_pending_or_accepted_snapshot (test_discovery.DiscoveryTests.test_absence_does_not_erase_pending_or_accepted_snapshot)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_discovery.py", line 15, in setUp
+    self.assertIsNotNone(importlib.util.find_spec('sec_edgar_ingest.discovery'),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         'trusted durable discovery implementation is required')
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : trusted durable discovery implementation is required
+
+======================================================================
+FAIL: test_delayed_file_requires_fresh_session_and_old_bytes_stay_immutable (test_discovery.DiscoveryTests.test_delayed_file_requires_fresh_session_and_old_bytes_stay_immutable)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_discovery.py", line 15, in setUp
+    self.assertIsNotNone(importlib.util.find_spec('sec_edgar_ingest.discovery'),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         'trusted durable discovery implementation is required')
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : trusted durable discovery implementation is required
+
+======================================================================
+FAIL: test_failed_ancestor_never_constructs_child_requests (test_discovery.DiscoveryTests.test_failed_ancestor_never_constructs_child_requests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_discovery.py", line 15, in setUp
+    self.assertIsNotNone(importlib.util.find_spec('sec_edgar_ingest.discovery'),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         'trusted durable discovery implementation is required')
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : trusted durable discovery implementation is required
+
+======================================================================
+FAIL: test_first_daily_run_replays_handoff_and_preceding_quarter (test_discovery.DiscoveryTests.test_first_daily_run_replays_handoff_and_preceding_quarter)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_discovery.py", line 15, in setUp
+    self.assertIsNotNone(importlib.util.find_spec('sec_edgar_ingest.discovery'),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         'trusted durable discovery implementation is required')
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : trusted durable discovery implementation is required
+
+======================================================================
+FAIL: test_later_success_cannot_cross_a_failed_directory (test_discovery.DiscoveryTests.test_later_success_cannot_cross_a_failed_directory)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_discovery.py", line 15, in setUp
+    self.assertIsNotNone(importlib.util.find_spec('sec_edgar_ingest.discovery'),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         'trusted durable discovery implementation is required')
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : trusted durable discovery implementation is required
+
+======================================================================
+FAIL: test_malformed_untrusted_and_unsupported_listing_remain_gaps (test_discovery.DiscoveryTests.test_malformed_untrusted_and_unsupported_listing_remain_gaps)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_discovery.py", line 15, in setUp
+    self.assertIsNotNone(importlib.util.find_spec('sec_edgar_ingest.discovery'),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         'trusted durable discovery implementation is required')
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : trusted durable discovery implementation is required
+
+======================================================================
+FAIL: test_missing_requested_quarter_is_gap_not_empty_child (test_discovery.DiscoveryTests.test_missing_requested_quarter_is_gap_not_empty_child)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_discovery.py", line 15, in setUp
+    self.assertIsNotNone(importlib.util.find_spec('sec_edgar_ingest.discovery'),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         'trusted durable discovery implementation is required')
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : trusted durable discovery implementation is required
+
+======================================================================
+FAIL: test_multi_quarter_outage_includes_entire_boundary_range (test_discovery.DiscoveryTests.test_multi_quarter_outage_includes_entire_boundary_range)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_discovery.py", line 15, in setUp
+    self.assertIsNotNone(importlib.util.find_spec('sec_edgar_ingest.discovery'),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         'trusted durable discovery implementation is required')
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : trusted durable discovery implementation is required
+
+======================================================================
+FAIL: test_pending_old_source_is_revisited_without_handoff_filter (test_discovery.DiscoveryTests.test_pending_old_source_is_revisited_without_handoff_filter)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_discovery.py", line 15, in setUp
+    self.assertIsNotNone(importlib.util.find_spec('sec_edgar_ingest.discovery'),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         'trusted durable discovery implementation is required')
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : trusted durable discovery implementation is required
+
+======================================================================
+FAIL: test_restart_reuses_verified_success_and_retries_failure (test_discovery.DiscoveryTests.test_restart_reuses_verified_success_and_retries_failure)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_discovery.py", line 15, in setUp
+    self.assertIsNotNone(importlib.util.find_spec('sec_edgar_ingest.discovery'),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         'trusted durable discovery implementation is required')
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : trusted durable discovery implementation is required
+
+======================================================================
+FAIL: test_same_session_refuses_changed_refresh_or_configuration (test_discovery.DiscoveryTests.test_same_session_refuses_changed_refresh_or_configuration)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_discovery.py", line 15, in setUp
+    self.assertIsNotNone(importlib.util.find_spec('sec_edgar_ingest.discovery'),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         'trusted durable discovery implementation is required')
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : trusted durable discovery implementation is required
+
+======================================================================
+FAIL: test_supported_representation_retains_ignored_codec_reason (test_discovery.DiscoveryTests.test_supported_representation_retains_ignored_codec_reason)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_discovery.py", line 15, in setUp
+    self.assertIsNotNone(importlib.util.find_spec('sec_edgar_ingest.discovery'),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         'trusted durable discovery implementation is required')
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : trusted durable discovery implementation is required
+
+======================================================================
+FAIL: test_valid_empty_listing_has_a_distinct_outcome (test_discovery.DiscoveryTests.test_valid_empty_listing_has_a_distinct_outcome)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_discovery.py", line 15, in setUp
+    self.assertIsNotNone(importlib.util.find_spec('sec_edgar_ingest.discovery'),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         'trusted durable discovery implementation is required')
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : trusted durable discovery implementation is required
+
+----------------------------------------------------------------------
+Ran 17 tests in 0.028s
+
+FAILED (failures=13, errors=4)

@@ -1,0 +1,331 @@
+COMMAND: uv run --offline --frozen --package sec-edgar-ingest python -m unittest discover -s packages/sec-edgar-ingest/tests -p test_urls.py -v
+EXIT: 1
+test_conflicting_or_escaping_child_is_refused (test_urls.UrlTests.test_conflicting_or_escaping_child_is_refused) ... 
+  test_conflicting_or_escaping_child_is_refused (test_urls.UrlTests.test_conflicting_or_escaping_child_is_refused) (name='parent metadata') ... FAIL
+  test_conflicting_or_escaping_child_is_refused (test_urls.UrlTests.test_conflicting_or_escaping_child_is_refused) (name='foreign absolute') ... FAIL
+  test_conflicting_or_escaping_child_is_refused (test_urls.UrlTests.test_conflicting_or_escaping_child_is_refused) (name='escape absolute') ... FAIL
+  test_conflicting_or_escaping_child_is_refused (test_urls.UrlTests.test_conflicting_or_escaping_child_is_refused) (name='escape relative') ... FAIL
+  test_conflicting_or_escaping_child_is_refused (test_urls.UrlTests.test_conflicting_or_escaping_child_is_refused) (name='name conflict') ... FAIL
+  test_conflicting_or_escaping_child_is_refused (test_urls.UrlTests.test_conflicting_or_escaping_child_is_refused) (name='encoded name') ... FAIL
+  test_conflicting_or_escaping_child_is_refused (test_urls.UrlTests.test_conflicting_or_escaping_child_is_refused) (name='nested child') ... FAIL
+  test_conflicting_or_escaping_child_is_refused (test_urls.UrlTests.test_conflicting_or_escaping_child_is_refused) (name='query') ... FAIL
+  test_conflicting_or_escaping_child_is_refused (test_urls.UrlTests.test_conflicting_or_escaping_child_is_refused) (name='name separator') ... FAIL
+  test_conflicting_or_escaping_child_is_refused (test_urls.UrlTests.test_conflicting_or_escaping_child_is_refused) (name='directory flag') ... FAIL
+  test_conflicting_or_escaping_child_is_refused (test_urls.UrlTests.test_conflicting_or_escaping_child_is_refused) (name='file flag') ... FAIL
+  test_conflicting_or_escaping_child_is_refused (test_urls.UrlTests.test_conflicting_or_escaping_child_is_refused) (name='filing content') ... FAIL
+test_listing_hierarchy_and_immediate_children (test_urls.UrlTests.test_listing_hierarchy_and_immediate_children) ... ok
+test_source_shapes_and_stable_identity (test_urls.UrlTests.test_source_shapes_and_stable_identity) ... ok
+test_unsafe_source_matrix (test_urls.UrlTests.test_unsafe_source_matrix) ... 
+  test_unsafe_source_matrix (test_urls.UrlTests.test_unsafe_source_matrix) (name='http') ... FAIL
+  test_unsafe_source_matrix (test_urls.UrlTests.test_unsafe_source_matrix) (name='foreign host') ... FAIL
+  test_unsafe_source_matrix (test_urls.UrlTests.test_unsafe_source_matrix) (name='userinfo') ... FAIL
+  test_unsafe_source_matrix (test_urls.UrlTests.test_unsafe_source_matrix) (name='port') ... FAIL
+  test_unsafe_source_matrix (test_urls.UrlTests.test_unsafe_source_matrix) (name='query') ... FAIL
+  test_unsafe_source_matrix (test_urls.UrlTests.test_unsafe_source_matrix) (name='fragment') ... FAIL
+  test_unsafe_source_matrix (test_urls.UrlTests.test_unsafe_source_matrix) (name='dot') ... FAIL
+  test_unsafe_source_matrix (test_urls.UrlTests.test_unsafe_source_matrix) (name='encoded parent') ... FAIL
+  test_unsafe_source_matrix (test_urls.UrlTests.test_unsafe_source_matrix) (name='encoded slash') ... FAIL
+  test_unsafe_source_matrix (test_urls.UrlTests.test_unsafe_source_matrix) (name='encoded backslash') ... FAIL
+  test_unsafe_source_matrix (test_urls.UrlTests.test_unsafe_source_matrix) (name='control') ... FAIL
+  test_unsafe_source_matrix (test_urls.UrlTests.test_unsafe_source_matrix) (name='newline') ... FAIL
+  test_unsafe_source_matrix (test_urls.UrlTests.test_unsafe_source_matrix) (name='filing content') ... FAIL
+  test_unsafe_source_matrix (test_urls.UrlTests.test_unsafe_source_matrix) (name='case sensitive') ... FAIL
+  test_unsafe_source_matrix (test_urls.UrlTests.test_unsafe_source_matrix) (name='wrong kind') ... FAIL
+  test_unsafe_source_matrix (test_urls.UrlTests.test_unsafe_source_matrix) (name='wrong file') ... FAIL
+  test_unsafe_source_matrix (test_urls.UrlTests.test_unsafe_source_matrix) (name='invalid quarter') ... FAIL
+  test_unsafe_source_matrix (test_urls.UrlTests.test_unsafe_source_matrix) (name='invalid day') ... FAIL
+  test_unsafe_source_matrix (test_urls.UrlTests.test_unsafe_source_matrix) (name='day outside quarter') ... FAIL
+  test_unsafe_source_matrix (test_urls.UrlTests.test_unsafe_source_matrix) (name='double encoding') ... FAIL
+
+======================================================================
+FAIL: test_conflicting_or_escaping_child_is_refused (test_urls.UrlTests.test_conflicting_or_escaping_child_is_refused) (name='parent metadata')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_urls.py", line 81, in test_conflicting_or_escaping_child_is_refused
+    with self.subTest(name=name), self.assertRaises(ValueError):
+                                  ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_conflicting_or_escaping_child_is_refused (test_urls.UrlTests.test_conflicting_or_escaping_child_is_refused) (name='foreign absolute')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_urls.py", line 81, in test_conflicting_or_escaping_child_is_refused
+    with self.subTest(name=name), self.assertRaises(ValueError):
+                                  ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_conflicting_or_escaping_child_is_refused (test_urls.UrlTests.test_conflicting_or_escaping_child_is_refused) (name='escape absolute')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_urls.py", line 81, in test_conflicting_or_escaping_child_is_refused
+    with self.subTest(name=name), self.assertRaises(ValueError):
+                                  ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_conflicting_or_escaping_child_is_refused (test_urls.UrlTests.test_conflicting_or_escaping_child_is_refused) (name='escape relative')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_urls.py", line 81, in test_conflicting_or_escaping_child_is_refused
+    with self.subTest(name=name), self.assertRaises(ValueError):
+                                  ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_conflicting_or_escaping_child_is_refused (test_urls.UrlTests.test_conflicting_or_escaping_child_is_refused) (name='name conflict')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_urls.py", line 81, in test_conflicting_or_escaping_child_is_refused
+    with self.subTest(name=name), self.assertRaises(ValueError):
+                                  ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_conflicting_or_escaping_child_is_refused (test_urls.UrlTests.test_conflicting_or_escaping_child_is_refused) (name='encoded name')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_urls.py", line 81, in test_conflicting_or_escaping_child_is_refused
+    with self.subTest(name=name), self.assertRaises(ValueError):
+                                  ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_conflicting_or_escaping_child_is_refused (test_urls.UrlTests.test_conflicting_or_escaping_child_is_refused) (name='nested child')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_urls.py", line 81, in test_conflicting_or_escaping_child_is_refused
+    with self.subTest(name=name), self.assertRaises(ValueError):
+                                  ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_conflicting_or_escaping_child_is_refused (test_urls.UrlTests.test_conflicting_or_escaping_child_is_refused) (name='query')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_urls.py", line 81, in test_conflicting_or_escaping_child_is_refused
+    with self.subTest(name=name), self.assertRaises(ValueError):
+                                  ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_conflicting_or_escaping_child_is_refused (test_urls.UrlTests.test_conflicting_or_escaping_child_is_refused) (name='name separator')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_urls.py", line 81, in test_conflicting_or_escaping_child_is_refused
+    with self.subTest(name=name), self.assertRaises(ValueError):
+                                  ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_conflicting_or_escaping_child_is_refused (test_urls.UrlTests.test_conflicting_or_escaping_child_is_refused) (name='directory flag')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_urls.py", line 81, in test_conflicting_or_escaping_child_is_refused
+    with self.subTest(name=name), self.assertRaises(ValueError):
+                                  ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_conflicting_or_escaping_child_is_refused (test_urls.UrlTests.test_conflicting_or_escaping_child_is_refused) (name='file flag')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_urls.py", line 81, in test_conflicting_or_escaping_child_is_refused
+    with self.subTest(name=name), self.assertRaises(ValueError):
+                                  ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_conflicting_or_escaping_child_is_refused (test_urls.UrlTests.test_conflicting_or_escaping_child_is_refused) (name='filing content')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_urls.py", line 81, in test_conflicting_or_escaping_child_is_refused
+    with self.subTest(name=name), self.assertRaises(ValueError):
+                                  ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_unsafe_source_matrix (test_urls.UrlTests.test_unsafe_source_matrix) (name='http')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_urls.py", line 50, in test_unsafe_source_matrix
+    with self.subTest(name=name), self.assertRaises(ValueError):
+                                  ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_unsafe_source_matrix (test_urls.UrlTests.test_unsafe_source_matrix) (name='foreign host')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_urls.py", line 50, in test_unsafe_source_matrix
+    with self.subTest(name=name), self.assertRaises(ValueError):
+                                  ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_unsafe_source_matrix (test_urls.UrlTests.test_unsafe_source_matrix) (name='userinfo')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_urls.py", line 50, in test_unsafe_source_matrix
+    with self.subTest(name=name), self.assertRaises(ValueError):
+                                  ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_unsafe_source_matrix (test_urls.UrlTests.test_unsafe_source_matrix) (name='port')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_urls.py", line 50, in test_unsafe_source_matrix
+    with self.subTest(name=name), self.assertRaises(ValueError):
+                                  ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_unsafe_source_matrix (test_urls.UrlTests.test_unsafe_source_matrix) (name='query')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_urls.py", line 50, in test_unsafe_source_matrix
+    with self.subTest(name=name), self.assertRaises(ValueError):
+                                  ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_unsafe_source_matrix (test_urls.UrlTests.test_unsafe_source_matrix) (name='fragment')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_urls.py", line 50, in test_unsafe_source_matrix
+    with self.subTest(name=name), self.assertRaises(ValueError):
+                                  ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_unsafe_source_matrix (test_urls.UrlTests.test_unsafe_source_matrix) (name='dot')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_urls.py", line 50, in test_unsafe_source_matrix
+    with self.subTest(name=name), self.assertRaises(ValueError):
+                                  ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_unsafe_source_matrix (test_urls.UrlTests.test_unsafe_source_matrix) (name='encoded parent')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_urls.py", line 50, in test_unsafe_source_matrix
+    with self.subTest(name=name), self.assertRaises(ValueError):
+                                  ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_unsafe_source_matrix (test_urls.UrlTests.test_unsafe_source_matrix) (name='encoded slash')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_urls.py", line 50, in test_unsafe_source_matrix
+    with self.subTest(name=name), self.assertRaises(ValueError):
+                                  ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_unsafe_source_matrix (test_urls.UrlTests.test_unsafe_source_matrix) (name='encoded backslash')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_urls.py", line 50, in test_unsafe_source_matrix
+    with self.subTest(name=name), self.assertRaises(ValueError):
+                                  ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_unsafe_source_matrix (test_urls.UrlTests.test_unsafe_source_matrix) (name='control')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_urls.py", line 50, in test_unsafe_source_matrix
+    with self.subTest(name=name), self.assertRaises(ValueError):
+                                  ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_unsafe_source_matrix (test_urls.UrlTests.test_unsafe_source_matrix) (name='newline')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_urls.py", line 50, in test_unsafe_source_matrix
+    with self.subTest(name=name), self.assertRaises(ValueError):
+                                  ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_unsafe_source_matrix (test_urls.UrlTests.test_unsafe_source_matrix) (name='filing content')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_urls.py", line 50, in test_unsafe_source_matrix
+    with self.subTest(name=name), self.assertRaises(ValueError):
+                                  ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_unsafe_source_matrix (test_urls.UrlTests.test_unsafe_source_matrix) (name='case sensitive')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_urls.py", line 50, in test_unsafe_source_matrix
+    with self.subTest(name=name), self.assertRaises(ValueError):
+                                  ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_unsafe_source_matrix (test_urls.UrlTests.test_unsafe_source_matrix) (name='wrong kind')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_urls.py", line 50, in test_unsafe_source_matrix
+    with self.subTest(name=name), self.assertRaises(ValueError):
+                                  ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_unsafe_source_matrix (test_urls.UrlTests.test_unsafe_source_matrix) (name='wrong file')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_urls.py", line 50, in test_unsafe_source_matrix
+    with self.subTest(name=name), self.assertRaises(ValueError):
+                                  ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_unsafe_source_matrix (test_urls.UrlTests.test_unsafe_source_matrix) (name='invalid quarter')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_urls.py", line 50, in test_unsafe_source_matrix
+    with self.subTest(name=name), self.assertRaises(ValueError):
+                                  ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_unsafe_source_matrix (test_urls.UrlTests.test_unsafe_source_matrix) (name='invalid day')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_urls.py", line 50, in test_unsafe_source_matrix
+    with self.subTest(name=name), self.assertRaises(ValueError):
+                                  ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_unsafe_source_matrix (test_urls.UrlTests.test_unsafe_source_matrix) (name='day outside quarter')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_urls.py", line 50, in test_unsafe_source_matrix
+    with self.subTest(name=name), self.assertRaises(ValueError):
+                                  ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_unsafe_source_matrix (test_urls.UrlTests.test_unsafe_source_matrix) (name='double encoding')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_urls.py", line 50, in test_unsafe_source_matrix
+    with self.subTest(name=name), self.assertRaises(ValueError):
+                                  ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.004s
+
+FAILED (failures=32)

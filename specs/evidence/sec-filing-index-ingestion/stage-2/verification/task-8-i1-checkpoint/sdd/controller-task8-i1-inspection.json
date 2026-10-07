@@ -1,0 +1,89 @@
+{
+  "recorded_at": "2026-10-06T23:08:51.329837+00:00",
+  "kind": "read-only independent retained combined-sequence inspection; no command rerun or network",
+  "bundle": "specs/evidence/sec-filing-index-ingestion/stage-2/verification/sec-edgar-stage-2-k8g11etz",
+  "manifest_records": 96,
+  "all_payload_hashes_match": true,
+  "command_exits_expected": [
+    {
+      "label": "literal-absolute-root-refusal",
+      "exit": 2
+    },
+    {
+      "label": "discover-1",
+      "exit": 0
+    },
+    {
+      "label": "collect-1",
+      "exit": 0
+    },
+    {
+      "label": "collect-2",
+      "exit": 0
+    },
+    {
+      "label": "collect-1-exact-replay",
+      "exit": 0
+    },
+    {
+      "label": "closed-quarter-daily-refusal",
+      "exit": 2
+    },
+    {
+      "label": "daily-discover-1",
+      "exit": 0
+    },
+    {
+      "label": "daily-collect-1",
+      "exit": 3
+    },
+    {
+      "label": "daily-collect-1-replay",
+      "exit": 3
+    },
+    {
+      "label": "daily-collect-2",
+      "exit": 0
+    },
+    {
+      "label": "daily-collect-3",
+      "exit": 0
+    }
+  ],
+  "final_transport_rows": 11,
+  "binding_count": 3,
+  "delayed_statuses": [
+    404,
+    200
+  ],
+  "daily_outcomes": [
+    "success",
+    "incomplete",
+    "success",
+    "success"
+  ],
+  "recovery_and_final_snapshot_ref": "worksets/sec/snapshot/sha256=47c7d3517815f0932f6bce1b1701500854b0dd5b954904734824c073e375198f/workset.json",
+  "completed_members_fetched_once": true,
+  "final_attempt_transport_rows": 0,
+  "canonical_worksets_and_raw_pins_verified": [
+    {
+      "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+      "sha256": "68b0e0e1c09010a02e45ac0d0adc2621f23d61a84448064d15d0cee9e5aab399",
+      "bytes": 261,
+      "raw_path": "raw/sec/indexes/kind=quarterly/period=2015Q1/sha256=68b0e0e1c09010a02e45ac0d0adc2621f23d61a84448064d15d0cee9e5aab399/master.zip"
+    },
+    {
+      "source_id": "0a6a3b5899f59720e13ac68455ccce6375e2065fc210d9dda6f00c3be4371bf4",
+      "sha256": "258e0245ed05b9340e156bc1572f88425962b0bcb9b25eca60ecb8c6052815c9",
+      "bytes": 230,
+      "raw_path": "raw/sec/indexes/kind=daily/period=2026-10-02/sha256=258e0245ed05b9340e156bc1572f88425962b0bcb9b25eca60ecb8c6052815c9/master.idx"
+    },
+    {
+      "source_id": "6cf7f339fd98f08d888586fbf41d907cb071d3a54259128e659f51e1f7caaa72",
+      "sha256": "4dc2efcff18a472cac890b5a3e4cc38a1f78a6fd9e672e0a8dababec4a91e6c0",
+      "bytes": 230,
+      "raw_path": "raw/sec/indexes/kind=daily/period=2026-10-01/sha256=4dc2efcff18a472cac890b5a3e4cc38a1f78a6fd9e672e0a8dababec4a91e6c0/master.idx"
+    }
+  ],
+  "exit_code": 0
+}

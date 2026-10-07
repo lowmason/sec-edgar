@@ -1,0 +1,43 @@
+{
+  "events": [
+    {
+      "event": "socket-accepted",
+      "monotonic": 2771827.783666625
+    },
+    {
+      "event": "request-received",
+      "monotonic": 2771827.783713333
+    },
+    {
+      "event": "peer-disconnected",
+      "monotonic": 2771828.102211916
+    },
+    {
+      "event": "socket-closed",
+      "monotonic": 2771828.102213541
+    }
+  ],
+  "extra": {
+    "receipt": {
+      "byte_count": 0,
+      "complete": false,
+      "error": {
+        "code": "exchange_deadline",
+        "details": {},
+        "message": "HTTP child was drained after exchange_deadline",
+        "retryable": true,
+        "source_id": null
+      },
+      "headers": {},
+      "received_at": "2026-10-07T00:22:43.819382+00:00",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": 0,
+      "temporary_path": "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/tmpk72zp0t5/sender/body",
+      "url": "http://127.0.0.1:57320/fixture"
+    }
+  },
+  "requests": [
+    "GET /fixture HTTP/1.1\r\nHost: 127.0.0.1:57320\r\nUser-Agent: Lowell Mason sec-edgar-ingest mason.lowell@mac.com\r\nAccept-Encoding: identity\r\nAccept: */*\r\nConnection: keep-alive\r\n\r\n"
+  ],
+  "sent_bytes": 0
+}

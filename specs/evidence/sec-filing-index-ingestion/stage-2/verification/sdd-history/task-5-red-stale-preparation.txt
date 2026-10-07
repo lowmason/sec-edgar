@@ -1,0 +1,16 @@
+test_timer_installation_failure_and_stale_child_start_send_zero_requests (test_download.BoundedProcessTests.test_timer_installation_failure_and_stale_child_start_send_zero_requests) ... 
+  test_timer_installation_failure_and_stale_child_start_send_zero_requests (test_download.BoundedProcessTests.test_timer_installation_failure_and_stale_child_start_send_zero_requests) (name='stale-prepared-request') ... FAIL
+
+======================================================================
+FAIL: test_timer_installation_failure_and_stale_child_start_send_zero_requests (test_download.BoundedProcessTests.test_timer_installation_failure_and_stale_child_start_send_zero_requests) (name='stale-prepared-request')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_download.py", line 340, in test_timer_installation_failure_and_stale_child_start_send_zero_requests
+    self.assertFalse(receipt.complete)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+AssertionError: True is not false
+
+----------------------------------------------------------------------
+Ran 1 test in 0.829s
+
+FAILED (failures=1)

@@ -1,0 +1,2012 @@
+# Review package: 046f240..1d1bd25
+
+## Commits
+1d1bd25 refactor: name acquisition settings policy bounds
+2fb9722 feat: define validated acquisition and workset contracts
+
+## Files changed
+ .gitignore                                         |   3 +
+ conf/sec-edgar-ingest.yaml                         |  56 ++
+ packages/sec-edgar-ingest/README.md                |  49 ++
+ .../src/sec_edgar_ingest/config.py                 | 280 ++++++++++
+ .../src/sec_edgar_ingest/models.py                 | 593 +++++++++++++++++++++
+ .../sec-edgar-ingest/src/sec_edgar_ingest/urls.py  |  93 ++++
+ .../src/sec_edgar_ingest/worksets.py               | 159 ++++++
+ .../tests/fixtures/config/local.json               |  56 ++
+ packages/sec-edgar-ingest/tests/support.py         |  78 +++
+ packages/sec-edgar-ingest/tests/test_config.py     | 231 ++++++++
+ packages/sec-edgar-ingest/tests/test_urls.py       |  82 +++
+ packages/sec-edgar-ingest/tests/test_worksets.py   | 220 ++++++++
+ 12 files changed, 1900 insertions(+)
+
+## Diff
+diff --git a/.gitignore b/.gitignore
+index 3c7f655..748d0bb 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -4,10 +4,13 @@ __pycache__/
+ build/
+ dist/
+ wheels/
+ *.egg-info
+ 
+ # Virtual environments
+ .venv
+ 
+ # Local planning roadmap
+ /specs/sec-filing-index-ingestion-roadmap.md
++
++# Explicit local-fixture acquisition state
++.fixture-state/
+diff --git a/conf/sec-edgar-ingest.yaml b/conf/sec-edgar-ingest.yaml
+new file mode 100644
+index 0000000..4203aa1
+--- /dev/null
++++ b/conf/sec-edgar-ingest.yaml
+@@ -0,0 +1,56 @@
++{
++  "config_version": "sec-acquisition-v1",
++  "backfill": {
++    "start_quarter": "2015Q1",
++    "end_quarter": "open"
++  },
++  "daily": {
++    "start_date": "2026-10-01"
++  },
++  "sec": {
++    "user_agent": "Lowell Mason sec-edgar-ingest mason.lowell@mac.com",
++    "requests_per_second": 3,
++    "max_active_collectors": 1
++  },
++  "http": {
++    "max_attempts": 5,
++    "retry_base_seconds": 2,
++    "retry_cap_seconds": 120,
++    "connect_timeout_seconds": 15,
++    "read_timeout_seconds": 60,
++    "exchange_deadline_seconds": 90,
++    "max_received_bytes": 67108864,
++    "max_expanded_bytes": 536870912
++  },
++  "coordination": {
++    "lease_seconds": 60,
++    "renew_every_seconds": 20,
++    "namespace": "sec-owner-lowell-mason",
++    "clock_uncertainty_seconds": 2
++  },
++  "storage": {
++    "backend": "local-fixture",
++    "root": ".fixture-state",
++    "source_table": "SourceState",
++    "attempt_table": "Attempts",
++    "blob_api_version": "2026-04-06",
++    "table_api_version": "2020-12-06"
++  },
++  "etl": {
++    "parser_version": "fixture-envelope-v1",
++    "schema_version": "sec-index-v1"
++  },
++  "worker": {
++    "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
++    "provenance": "synthetic-fixture"
++  },
++  "jobs": {
++    "replica_retry_limit": 0
++  },
++  "orchestration": {
++    "transient_replays": 1
++  },
++  "reconciliation": {
++    "require_withdrawal_approval": true
++  }
++}
+diff --git a/packages/sec-edgar-ingest/README.md b/packages/sec-edgar-ingest/README.md
+index c829daa..0bd3774 100644
+--- a/packages/sec-edgar-ingest/README.md
++++ b/packages/sec-edgar-ingest/README.md
+@@ -17,10 +17,59 @@ uv run --frozen --package sec-edgar-ingest python -m sec_edgar_ingest --version
+ ```
+ 
+ The package pins Requests and the Azure identity, Blob Storage, and Table Storage
+ SDKs for the approved acquisition boundary. The root constrains their accepted
+ transitive versions, and `uv.lock` records the workspace resolution. A local
+ package build does not establish container compatibility or worker capacity.
+ 
+ The client and download scaffolds are preserved as references, outside the
+ workspace and runtime dependency graph. This milestone performs no live SEC
+ requests or Azure operations.
++
++Configuration v1 in `conf/sec-edgar-ingest.yaml` uses **JSON syntax**, a subset
++of YAML 1.2. The stdlib JSON loader rejects general YAML, duplicate keys and
++nonfinite values. `Settings.from_mapping` validates settings without constructing
++credentials, clients or transports; `load_config` only reads the selected file.
++`pin_context` resolves `open` once from the explicit run-start date and freezes
++the complete effective configuration, its SHA-256, image/parser/schema provenance
++and finite UTC command deadline into the workset context.
++
++The checked-in configuration explicitly selects `local-fixture`, the ignored
++`.fixture-state/` root, synthetic parser provenance and an all-zero fixture image
++digest. Loading it creates no state directory. Fixture storage initialization is
++responsible for creating that root later, and all contenders must share the same
++root and binding. Fixture-only HTTP caps can be smaller for bounded generated
++streams; `fixture.allow_clock_override` and `fixture.allow_deadline_override`
++explicitly label test overrides. Azure refuses these override markers, synthetic
++provenance and the all-zero digest. No real image digest, principal or endpoint
++configuration is supplied by the fixture file.
++
++Azure configuration must explicitly name the accepted `secedgardevb8617` account,
++its credential-free Blob/Table HTTPS endpoints, `raw`, `worksets`, `quarantine`
++and `locks` containers, `SourceState` and `Attempts`, Blob API `2026-04-06` and
++Table API `2020-12-06`, immutable image provenance and parser/schema identifiers.
++All workflows bind to namespace `sec-owner-lowell-mason`, lock blob
++`sec-owner-lowell-mason/sentinel.json` and binding registry blob
++`sec-owner-lowell-mason/binding.json` in `locks`. The later storage adapter must
++conditionally create/check the registry; settings validation creates no lane or
++resource. Lease 60 seconds, renewal every 20 seconds and clock uncertainty at
++most 2 seconds are application mechanics. The adapter must derive actual
++server-time bounds and fail closed when they exceed the configured uncertainty.
++
++The accepted starting values are 2015 Q1 through the run's open quarter for
++initial development, daily handoff `2026-10-01`, 3 SEC requests per second with
++no bursts, one active collector, five total HTTP attempts, exponential jitter
++from 2 seconds capped at 120 seconds while honoring longer server delays,
++15/60-second connect/read timeouts, a 90-second complete exchange, 67,108,864
++received bytes and 536,870,912 expanded IDX bytes. Job retry limit is zero and
++orchestration permits at most one confirmed-transient replay. The intended full
++historical range starts in 2010 Q1. Daily scheduling starts at 05:00 Eastern every
++day; reconciliation starts Sunday at 06:00 Eastern. Trigger definitions and
++activation belong to later stages. These defaults establish no coverage,
++recovery horizon, worker capacity or SLA.
++
++Workset JSON uses `sec-acquisition-v1`; schema provenance remains `sec-index-v1`.
++Source members and directory outcomes are sorted deterministically, and strict
++decoders verify their content hash and exact membership. Snapshots name each
++source and its immutable raw hash/path. The selected acquisition envelope
++identifiers are `sec-quarterly-envelope-v1` for ZIP and `sec-daily-envelope-v1`
++for IDX. `parser_version` remains provenance; no row parser is implemented here.
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/config.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/config.py
+new file mode 100644
+index 0000000..5018710
+--- /dev/null
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/config.py
+@@ -0,0 +1,280 @@
++"""Validated, side-effect-free settings for the acquisition boundary.
++
++Configuration files use JSON syntax, a subset of YAML 1.2; general YAML is unsupported.
++"""
++from __future__ import annotations
++
++import hashlib
++import re
++from dataclasses import dataclass, replace
++from datetime import date
++from pathlib import Path
++from typing import Literal
++from urllib.parse import urlsplit
++
++from .models import (FORMAT_VERSION, IMAGE_PATTERN, SCHEMA_VERSION, Record, RunContext,
++                     canonical_json, parse_json, quarter_for, quarter_value, record_from_mapping,
++                     require_number, require_text, safe_relative_path, validate_record_fields)
++
++ACCOUNT_NAME = "secedgardevb8617"
++COORDINATION_NAMESPACE = "sec-owner-lowell-mason"
++LOCK_BLOB = COORDINATION_NAMESPACE + "/sentinel.json"
++BINDING_REGISTRY_BLOB = COORDINATION_NAMESPACE + "/binding.json"
++OWNER_USER_AGENT = "Lowell Mason sec-edgar-ingest mason.lowell@mac.com"
++REQUEST_BUDGET_PER_SECOND = 3
++ACTIVE_COLLECTOR_LIMIT = 1
++HTTP_ATTEMPT_LIMIT = 5
++CLOCK_UNCERTAINTY_LIMIT_SECONDS = 2
++AZURE_LEASE_MIN_SECONDS = 15
++AZURE_LEASE_MAX_SECONDS = 60
++TRANSIENT_REPLAY_LIMIT = 1
++WORKER_ALLOWANCE_SECONDS = 3600
++MAX_EXCHANGE_SECONDS = 90
++MAX_RECEIVED_BYTES = 67108864
++MAX_EXPANDED_BYTES = 536870912
++
++
++@dataclass(frozen=True, slots=True)
++class BackfillSettings(Record):
++    start_quarter: str
++    end_quarter: str
++
++
++@dataclass(frozen=True, slots=True)
++class DailySettings(Record):
++    start_date: date
++
++
++@dataclass(frozen=True, slots=True)
++class SecSettings(Record):
++    user_agent: str
++    requests_per_second: float
++    max_active_collectors: int
++
++
++@dataclass(frozen=True, slots=True)
++class HttpSettings(Record):
++    max_attempts: int
++    retry_base_seconds: float
++    retry_cap_seconds: float
++    connect_timeout_seconds: float
++    read_timeout_seconds: float
++    exchange_deadline_seconds: float
++    max_received_bytes: int
++    max_expanded_bytes: int
++
++
++@dataclass(frozen=True, slots=True)
++class CoordinationSettings(Record):
++    lease_seconds: float
++    renew_every_seconds: float
++    namespace: str
++    clock_uncertainty_seconds: float
++
++
++@dataclass(frozen=True, slots=True)
++class StorageSettings(Record):
++    backend: Literal["local-fixture", "azure"]
++    source_table: str
++    attempt_table: str
++    blob_api_version: str
++    table_api_version: str
++    root: str | None = None
++    account_name: str | None = None
++    blob_endpoint: str | None = None
++    table_endpoint: str | None = None
++    raw_container: str = "raw"
++    workset_container: str = "worksets"
++    quarantine_container: str = "quarantine"
++    lock_container: str = "locks"
++    lock_blob: str = LOCK_BLOB
++    binding_registry_blob: str = BINDING_REGISTRY_BLOB
++
++
++@dataclass(frozen=True, slots=True)
++class EtlSettings(Record):
++    parser_version: str
++    schema_version: str
++
++
++@dataclass(frozen=True, slots=True)
++class WorkerSettings(Record):
++    image_digest: str
++    provenance: str
++
++
++@dataclass(frozen=True, slots=True)
++class JobsSettings(Record):
++    replica_retry_limit: int
++
++
++@dataclass(frozen=True, slots=True)
++class OrchestrationSettings(Record):
++    transient_replays: int
++
++
++@dataclass(frozen=True, slots=True)
++class ReconciliationSettings(Record):
++    require_withdrawal_approval: bool
++
++
++@dataclass(frozen=True, slots=True)
++class FixtureOverrides(Record):
++    allow_clock_override: bool = False
++    allow_deadline_override: bool = False
++
++
++@dataclass(frozen=True, slots=True)
++class Settings(Record):
++    config_version: str
++    backfill: BackfillSettings
++    daily: DailySettings
++    sec: SecSettings
++    http: HttpSettings
++    coordination: CoordinationSettings
++    storage: StorageSettings
++    etl: EtlSettings
++    worker: WorkerSettings
++    jobs: JobsSettings
++    orchestration: OrchestrationSettings
++    reconciliation: ReconciliationSettings
++    fixture: FixtureOverrides | None = None
++
++    def __post_init__(self):
++        validate_record_fields(self)
++        if self.config_version != FORMAT_VERSION:
++            raise ValueError("unsupported config_version")
++        start = quarter_value(self.backfill.start_quarter)
++        if self.backfill.end_quarter != "open" and quarter_value(self.backfill.end_quarter) < start:
++            raise ValueError("backfill quarters are reversed")
++        if type(self.daily.start_date) is not date:
++            raise ValueError("daily.start_date must be an ISO date")
++        require_text(self.sec.user_agent, "sec.user_agent")
++        if self.sec.user_agent != OWNER_USER_AGENT:
++            raise ValueError("sec.user_agent must use the accepted owner identity")
++        require_number(self.sec.requests_per_second, "sec.requests_per_second", positive=True)
++        if self.sec.requests_per_second > REQUEST_BUDGET_PER_SECOND:
++            raise ValueError("sec.requests_per_second exceeds the accepted shared request budget")
++        if type(self.sec.max_active_collectors) is not int or self.sec.max_active_collectors != ACTIVE_COLLECTOR_LIMIT:
++            raise ValueError("sec.max_active_collectors must equal 1")
++        for label in ("max_attempts", "max_received_bytes", "max_expanded_bytes"):
++            require_number(getattr(self.http, label), "http." + label, positive=True, integer=True)
++        for label in ("retry_base_seconds", "retry_cap_seconds", "connect_timeout_seconds",
++                      "read_timeout_seconds", "exchange_deadline_seconds"):
++            require_number(getattr(self.http, label), "http." + label, positive=True)
++        if self.http.max_attempts > HTTP_ATTEMPT_LIMIT or self.http.retry_cap_seconds < self.http.retry_base_seconds:
++            raise ValueError("http retry settings exceed the accepted attempts or reverse the delay bounds")
++        if self.http.exchange_deadline_seconds > MAX_EXCHANGE_SECONDS or self.http.max_received_bytes > MAX_RECEIVED_BYTES or self.http.max_expanded_bytes > MAX_EXPANDED_BYTES:
++            raise ValueError("http guard settings exceed accepted acquisition bounds")
++        for label in ("lease_seconds", "renew_every_seconds"):
++            require_number(getattr(self.coordination, label), "coordination." + label, positive=True)
++        require_number(self.coordination.clock_uncertainty_seconds, "coordination.clock_uncertainty_seconds")
++        if self.coordination.clock_uncertainty_seconds > CLOCK_UNCERTAINTY_LIMIT_SECONDS:
++            raise ValueError("coordination.clock_uncertainty_seconds exceeds accepted bound")
++        if self.coordination.renew_every_seconds >= self.coordination.lease_seconds:
++            raise ValueError("coordination requires 0 < renew_every_seconds < lease_seconds")
++        if self.coordination.namespace != COORDINATION_NAMESPACE:
++            raise ValueError("coordination.namespace must use the one deployment binding")
++        _validate_storage(self.storage)
++        require_text(self.etl.parser_version, "etl.parser_version")
++        if re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", self.etl.parser_version) is None or self.etl.parser_version.lower() in ("latest", "open"):
++            raise ValueError("etl.parser_version must be explicit immutable provenance")
++        if self.etl.schema_version != SCHEMA_VERSION:
++            raise ValueError("unsupported etl.schema_version")
++        if not isinstance(self.worker.image_digest, str) or IMAGE_PATTERN.fullmatch(self.worker.image_digest) is None:
++            raise ValueError("worker.image_digest must be an immutable sha256 digest")
++        require_text(self.worker.provenance, "worker.provenance")
++        if type(self.jobs.replica_retry_limit) is not int or self.jobs.replica_retry_limit != 0:
++            raise ValueError("jobs.replica_retry_limit must equal 0")
++        if type(self.orchestration.transient_replays) is not int or not 0 <= self.orchestration.transient_replays <= TRANSIENT_REPLAY_LIMIT:
++            raise ValueError("orchestration.transient_replays must be at most 1")
++        if self.reconciliation.require_withdrawal_approval is not True:
++            raise ValueError("reconciliation.require_withdrawal_approval must be true")
++        if self.storage.backend == "azure":
++            _validate_azure_policy(self)
++
++    @classmethod
++    def from_mapping(cls, value: dict[str, object]) -> Settings:
++        if isinstance(value, dict) and isinstance(value.get("storage"), dict) and value["storage"].get("backend") == "azure":
++            required = {"account_name", "blob_endpoint", "table_endpoint", "raw_container", "workset_container",
++                        "quarantine_container", "lock_container", "lock_blob", "binding_registry_blob",
++                        "source_table", "attempt_table", "blob_api_version", "table_api_version"}
++            if required - value["storage"].keys():
++                raise ValueError(f"azure storage missing explicit bindings: {sorted(required - value['storage'].keys())}")
++        return record_from_mapping(cls, value, require_all=False)
++
++    @property
++    def config_sha256(self) -> str:
++        return hashlib.sha256(canonical_json(self.to_mapping())).hexdigest()
++
++
++def _validate_storage(storage: StorageSettings) -> None:
++    if storage.source_table != "SourceState" or storage.attempt_table != "Attempts":
++        raise ValueError("storage tables must use the accepted SourceState/Attempts binding")
++    if storage.blob_api_version != "2026-04-06" or storage.table_api_version != "2020-12-06":
++        raise ValueError("unsupported storage data-plane API versions")
++    for label, expected in (("raw_container", "raw"), ("workset_container", "worksets"),
++                            ("quarantine_container", "quarantine"), ("lock_container", "locks"),
++                            ("lock_blob", LOCK_BLOB), ("binding_registry_blob", BINDING_REGISTRY_BLOB)):
++        if getattr(storage, label) != expected:
++            raise ValueError(f"storage.{label} must use the one deployment binding")
++    if storage.backend == "local-fixture":
++        safe_relative_path(storage.root, "storage.root")
++        if any(getattr(storage, label) is not None for label in ("account_name", "blob_endpoint", "table_endpoint")):
++            raise ValueError("local-fixture storage cannot include Azure account endpoints")
++    elif storage.backend == "azure":
++        if storage.root is not None or storage.account_name != ACCOUNT_NAME:
++            raise ValueError("azure storage must use the accepted account binding")
++        for kind, endpoint in (("blob", storage.blob_endpoint), ("table", storage.table_endpoint)):
++            require_text(endpoint, f"storage.{kind}_endpoint")
++            parsed = urlsplit(endpoint)
++            if parsed.scheme != "https" or parsed.netloc != f"{ACCOUNT_NAME}.{kind}.core.windows.net" or parsed.path not in ("", "/") or parsed.query or parsed.fragment or "?" in endpoint or "#" in endpoint:
++                raise ValueError(f"storage.{kind}_endpoint must be the accepted credential-free HTTPS endpoint")
++    else:
++        raise ValueError("unsupported storage.backend")
++
++
++def _validate_azure_policy(settings: Settings) -> None:
++    if settings.fixture is not None:
++        raise ValueError("fixture overrides are permitted only for local-fixture storage")
++    if settings.sec.requests_per_second != REQUEST_BUDGET_PER_SECOND:
++        raise ValueError("azure request budget must match the deployment binding")
++    if "fixture" in settings.worker.provenance.lower() or "synthetic" in settings.worker.provenance.lower() or settings.worker.image_digest == "sha256:" + "0" * 64:
++        raise ValueError("synthetic fixture image is forbidden for Azure")
++    if "fixture" in settings.etl.parser_version.lower():
++        raise ValueError("fixture parser provenance is forbidden for Azure")
++    if (settings.http.exchange_deadline_seconds != MAX_EXCHANGE_SECONDS
++            or settings.http.max_received_bytes != MAX_RECEIVED_BYTES
++            or settings.http.max_expanded_bytes != MAX_EXPANDED_BYTES):
++        raise ValueError("lower HTTP guard overrides are fixture-only")
++    if not AZURE_LEASE_MIN_SECONDS <= settings.coordination.lease_seconds <= AZURE_LEASE_MAX_SECONDS:
++        raise ValueError("azure finite lease_seconds must be in the supported 15..60 second range")
++
++
++def load_config(path: Path) -> Settings:
++    try:
++        value = parse_json(path.read_text(encoding="utf-8"))
++    except (ValueError, UnicodeDecodeError) as error:
++        raise ValueError("configuration requires strict JSON syntax (YAML 1.2 subset)") from error
++    return Settings.from_mapping(value)
++
++
++def pin_context(settings: Settings, context: RunContext, today: date) -> tuple[RunContext, str]:
++    if type(today) is not date:
++        raise ValueError("today must be an explicit date")
++    if today != context.started_at.date() and not (settings.fixture and settings.fixture.allow_clock_override):
++        raise ValueError("fixture clock override must be explicitly labelled")
++    expected = {"image_digest": settings.worker.image_digest, "parser_version": settings.etl.parser_version,
++                "schema_version": settings.etl.schema_version, "config_sha256": settings.config_sha256}
++    for label, value in expected.items():
++        if getattr(context, label) != value:
++            raise ValueError(f"context {label} does not match the effective configuration")
++    duration = (context.deadline - context.started_at).total_seconds()
++    if duration > WORKER_ALLOWANCE_SECONDS and not (settings.fixture and settings.fixture.allow_deadline_override):
++        raise ValueError("context deadline exceeds the accepted 3600-second worker allowance")
++    end = quarter_for(today) if settings.backfill.end_quarter == "open" else settings.backfill.end_quarter
++    if quarter_value(end) > quarter_value(quarter_for(today)):
++        raise ValueError("backfill endpoint is in a future quarter")
++    if quarter_value(end) < quarter_value(settings.backfill.start_quarter):
++        raise ValueError("pinned backfill endpoint precedes start_quarter")
++    return replace(context, effective_config=settings.to_mapping()), end
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py
+new file mode 100644
+index 0000000..8f20fa3
+--- /dev/null
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py
+@@ -0,0 +1,593 @@
++"""Deeply immutable acquisition records and strict detached mapping conversion."""
++from __future__ import annotations
++
++import json
++import math
++import re
++import types
++from collections.abc import Mapping
++from dataclasses import dataclass, fields, is_dataclass, MISSING, field
++from datetime import date, datetime, timedelta
++from pathlib import Path, PurePosixPath
++from typing import Literal, Union, get_args, get_origin, get_type_hints
++
++from .urls import canonical_source_url, canonical_listing_url, source_id as url_source_id
++
++FORMAT_VERSION = "sec-acquisition-v1"
++SCHEMA_VERSION = "sec-index-v1"
++QUARTERLY_ENVELOPE_VERSION = "sec-quarterly-envelope-v1"
++DAILY_ENVELOPE_VERSION = "sec-daily-envelope-v1"
++SHA256_PATTERN = re.compile(r"[0-9a-f]{64}\Z")
++IMAGE_PATTERN = re.compile(r"sha256:[0-9a-f]{64}\Z")
++QUARTER_PATTERN = re.compile(r"([0-9]{4})Q([1-4])\Z")
++Priority = Literal["daily", "backfill", "reconciliation"]
++Representation = Literal["zip", "idx"]
++
++
++def canonical_json(value: object) -> bytes:
++    return json.dumps(value, sort_keys=True, separators=(",", ":"),
++                      ensure_ascii=False, allow_nan=False).encode("utf-8")
++
++
++def _unique_json_object(pairs):
++    value = {}
++    for key, item in pairs:
++        if key in value:
++            raise ValueError(f"duplicate JSON key: {key}")
++        value[key] = item
++    return value
++
++
++def _reject_json_constant(value):
++    raise ValueError(f"nonfinite JSON constant: {value}")
++
++
++def parse_json(body: bytes | str) -> object:
++    try:
++        if isinstance(body, bytes):
++            body = body.decode("utf-8")
++        return json.loads(body, object_pairs_hook=_unique_json_object,
++                          parse_constant=_reject_json_constant)
++    except (json.JSONDecodeError, UnicodeDecodeError, RecursionError) as error:
++        raise ValueError("invalid UTF-8 JSON document") from error
++
++
++def require_text(value: object, label: str) -> None:
++    if not isinstance(value, str) or not value.strip() or any(ord(char) < 32 or ord(char) == 127 for char in value):
++        raise ValueError(f"{label} must be a nonempty safe string")
++
++
++def require_hash(value: object, label: str) -> None:
++    if not isinstance(value, str) or SHA256_PATTERN.fullmatch(value) is None:
++        raise ValueError(f"{label} must be a lower-case SHA-256 hash")
++
++
++def require_utc(value: object, label: str) -> None:
++    if not isinstance(value, datetime) or value.utcoffset() != timedelta(0):
++        raise ValueError(f"{label} must be timezone-aware UTC")
++
++
++def require_number(value: object, label: str, *, minimum: float = 0, positive: bool = False, integer: bool = False) -> None:
++    if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
++        raise ValueError(f"{label} must be finite")
++    if integer and not isinstance(value, int):
++        raise ValueError(f"{label} must be an integer")
++    if value < minimum or (positive and value <= minimum):
++        raise ValueError(f"{label} is outside its allowed range")
++
++
++def quarter_value(value: str) -> tuple[int, int]:
++    match = QUARTER_PATTERN.fullmatch(value) if isinstance(value, str) else None
++    if match is None or int(match[1]) == 0:
++        raise ValueError("quarter must have YYYYQ1..YYYYQ4 form")
++    return int(match[1]), int(match[2])
++
++
++def quarter_for(day: date) -> str:
++    return f"{day.year:04d}Q{(day.month - 1) // 3 + 1}"
++
++
++def safe_relative_path(value: object, label: str) -> str:
++    require_text(value, label)
++    path = PurePosixPath(value)
++    segments = value.split("/")
++    if path.is_absolute() or any(segment in ("", ".", "..") for segment in segments) or any(char in value for char in "\\:%?#"):
++        raise ValueError(f"{label} must be a safe relative POSIX path")
++    return value
++
++
++@dataclass(frozen=True, slots=True)
++class FrozenMapping(Mapping[str, object]):
++    _items: Mapping[str, object]
++
++    def __post_init__(self):
++        object.__setattr__(self, "_items", types.MappingProxyType(dict(self._items)))
++
++    def __getitem__(self, key):
++        return self._items[key]
++
++    def __iter__(self):
++        return iter(self._items)
++
++    def __len__(self):
++        return len(self._items)
++
++    def __deepcopy__(self, memo):
++        return self
++
++
++def freeze(value: object) -> object:
++    if isinstance(value, Mapping):
++        if any(not isinstance(key, str) for key in value):
++            raise ValueError("mapping keys must be strings")
++        return FrozenMapping({key: freeze(item) for key, item in value.items()})
++    if isinstance(value, (list, tuple)):
++        return tuple(freeze(item) for item in value)
++    if value is None or isinstance(value, (str, bool, int)):
++        return value
++    if isinstance(value, float) and math.isfinite(value):
++        return value
++    raise ValueError("nested values must be finite JSON values")
++
++
++def to_mapping_value(value: object) -> object:
++    if isinstance(value, Mapping):
++        return {key: to_mapping_value(item) for key, item in value.items()}
++    if is_dataclass(value):
++        return {item.name: to_mapping_value(getattr(value, item.name)) for item in fields(value)}
++    if isinstance(value, tuple):
++        return [to_mapping_value(item) for item in value]
++    if isinstance(value, (datetime, date)):
++        return value.isoformat()
++    if isinstance(value, Path):
++        return value.as_posix()
++    return value
++
++
++def _decode_value(annotation: object, value: object, label: str, require_all: bool) -> object:
++    origin, arguments = get_origin(annotation), get_args(annotation)
++    if annotation is object:
++        return freeze(value)
++    if origin in (Union, types.UnionType):
++        for option in arguments:
++            try:
++                return _decode_value(option, value, label, require_all)
++            except (ValueError, TypeError):
++                pass
++        raise ValueError(f"{label} has an invalid type")
++    if origin is Literal:
++        if value not in arguments or not isinstance(value, type(arguments[0])):
++            raise ValueError(f"{label} has an unsupported value")
++        return value
++    if origin is Mapping:
++        if not isinstance(value, Mapping):
++            raise ValueError(f"{label} must be an object")
++        return FrozenMapping({_decode_value(arguments[0], key, label, require_all):
++                              _decode_value(arguments[1], item, label, require_all) for key, item in value.items()})
++    if origin is tuple:
++        if not isinstance(value, (tuple, list)):
++            raise ValueError(f"{label} must be an array")
++        return tuple(_decode_value(arguments[0], item, label, require_all) for item in value)
++    if annotation in (date, datetime):
++        if not isinstance(value, str):
++            raise ValueError(f"{label} must be an ISO string")
++        try:
++            return annotation.fromisoformat(value)
++        except ValueError as error:
++            raise ValueError(f"{label} must be a valid ISO string") from error
++    if annotation is Path:
++        require_text(value, label)
++        return Path(value)
++    if is_dataclass(annotation):
++        return record_from_mapping(annotation, value, require_all=require_all)
++    if annotation is type(None):
++        if value is not None:
++            raise ValueError(f"{label} must be null")
++    elif annotation is float:
++        require_number(value, label, minimum=-float("inf"))
++        return float(value)
++    elif type(value) is not annotation:
++        raise ValueError(f"{label} has an invalid type")
++    return value
++
++
++def record_from_mapping(record_type: type, value: object, *, require_all: bool = True):
++    if not isinstance(value, Mapping):
++        raise ValueError(f"{record_type.__name__} must be an object")
++    record_fields = {item.name: item for item in fields(record_type)}
++    unknown = set(value) - set(record_fields)
++    if unknown:
++        raise ValueError(f"{record_type.__name__} unknown keys: {sorted(unknown)}")
++    required = set(record_fields) if require_all else {
++        name for name, item in record_fields.items() if item.default is MISSING and item.default_factory is MISSING
++    }
++    if required - set(value):
++        raise ValueError(f"{record_type.__name__} missing keys: {sorted(required - set(value))}")
++    annotations = get_type_hints(record_type)
++    return record_type(**{key: _decode_value(annotations[key], item, key, require_all) for key, item in value.items()})
++
++
++def _typed_value(annotation: object, value: object, label: str) -> object:
++    origin, arguments = get_origin(annotation), get_args(annotation)
++    if annotation is object:
++        return freeze(value)
++    if origin in (Union, types.UnionType):
++        for option in arguments:
++            try:
++                return _typed_value(option, value, label)
++            except ValueError:
++                pass
++        raise ValueError(f"{label} has an invalid type")
++    if origin is Literal:
++        if value not in arguments or not isinstance(value, type(arguments[0])):
++            raise ValueError(f"{label} has an unsupported value")
++    elif origin is Mapping:
++        if not isinstance(value, Mapping):
++            raise ValueError(f"{label} must be a mapping")
++        return FrozenMapping({_typed_value(arguments[0], key, label): _typed_value(arguments[1], item, label)
++                              for key, item in value.items()})
++    elif origin is tuple:
++        if not isinstance(value, (tuple, list)):
++            raise ValueError(f"{label} must be a tuple")
++        return tuple(_typed_value(arguments[0], item, label) for item in value)
++    elif is_dataclass(annotation):
++        if type(value) is not annotation:
++            raise ValueError(f"{label} must be {annotation.__name__}")
++    elif annotation is float:
++        require_number(value, label, minimum=-float("inf"))
++        return float(value)
++    elif annotation is Path:
++        if not isinstance(value, Path):
++            raise ValueError(f"{label} must be a Path")
++    elif type(value) is not annotation:
++        raise ValueError(f"{label} has an invalid type")
++    return value
++
++
++def validate_record_fields(record: object) -> None:
++    annotations = get_type_hints(type(record))
++    for item in fields(record):
++        object.__setattr__(record, item.name, _typed_value(annotations[item.name], getattr(record, item.name), item.name))
++
++
++def require_envelope(representation: str, envelope_version: str) -> None:
++    expected = {"zip": QUARTERLY_ENVELOPE_VERSION, "idx": DAILY_ENVELOPE_VERSION}
++    if representation not in expected or envelope_version != expected[representation]:
++        raise ValueError("unsupported representation/envelope_version combination")
++
++
++class Record:
++    def __post_init__(self):
++        validate_record_fields(self)
++
++    def to_mapping(self) -> dict[str, object]:
++        return {item.name: to_mapping_value(getattr(self, item.name)) for item in fields(self)}
++
++    @classmethod
++    def from_mapping(cls, value: dict[str, object]):
++        return record_from_mapping(cls, value)
++
++
++@dataclass(frozen=True, slots=True)
++class Source(Record):
++    source_id: str
++    canonical_url: str
++    kind: Literal["quarterly", "daily"]
++    period: str
++    representation: Representation
++
++    def __post_init__(self):
++        validate_record_fields(self)
++        if self.kind not in ("quarterly", "daily"):
++            raise ValueError("unsupported source kind")
++        url = canonical_source_url(self.canonical_url, self.kind)
++        if url != self.canonical_url or url_source_id(url) != self.source_id:
++            raise ValueError("source identity does not match canonical URL")
++        expected_representation = "zip" if self.kind == "quarterly" else "idx"
++        if self.representation != expected_representation:
++            raise ValueError("source representation does not match kind")
++        if self.kind == "quarterly":
++            year, quarter = quarter_value(self.period)
++            if f"/{year}/QTR{quarter}/" not in url:
++                raise ValueError("source period does not match URL")
++        else:
++            try:
++                day = date.fromisoformat(self.period)
++            except (ValueError, TypeError) as error:
++                raise ValueError("daily period must be an ISO date") from error
++            if day.isoformat() != self.period or not url.endswith(f"/master.{day:%Y%m%d}.idx"):
++                raise ValueError("source date does not match URL")
++
++
++@dataclass(frozen=True, slots=True)
++class RunContext(Record):
++    run_id: str
++    execution_id: str
++    command: str
++    attempt_id: str
++    image_digest: str
++    parser_version: str
++    schema_version: str
++    config_sha256: str
++    started_at: datetime
++    deadline: datetime
++    priority: Priority
++    effective_config: Mapping[str, object] = field(default_factory=dict)
++
++    def __post_init__(self):
++        validate_record_fields(self)
++        for label in ("run_id", "execution_id", "command", "attempt_id", "parser_version"):
++            require_text(getattr(self, label), label)
++        if IMAGE_PATTERN.fullmatch(self.image_digest) is None:
++            raise ValueError("image_digest must be immutable sha256")
++        if self.schema_version != SCHEMA_VERSION:
++            raise ValueError("unsupported schema_version")
++        require_hash(self.config_sha256, "config_sha256")
++        require_utc(self.started_at, "started_at")
++        require_utc(self.deadline, "deadline")
++        if self.deadline <= self.started_at:
++            raise ValueError("deadline must be after started_at")
++        if self.priority not in ("daily", "backfill", "reconciliation"):
++            raise ValueError("unsupported priority")
++        object.__setattr__(self, "effective_config", freeze(self.effective_config))
++
++
++@dataclass(frozen=True, slots=True)
++class Error(Record):
++    code: str
++    message: str
++    retryable: bool
++    source_id: str | None
++    details: Mapping[str, object]
++
++    def __post_init__(self):
++        validate_record_fields(self)
++        require_text(self.code, "code")
++        require_text(self.message, "message")
++        if type(self.retryable) is not bool:
++            raise ValueError("retryable must be boolean")
++        if self.source_id is not None:
++            require_hash(self.source_id, "source_id")
++        object.__setattr__(self, "details", freeze(self.details))
++
++
++@dataclass(frozen=True, slots=True)
++class DirectoryOutcome(Record):
++    url: str
++    period: str
++    outcome: Literal["available", "no_new_sources", "discovery_failed"]
++    listing_sha256: str | None
++    source_ids: tuple[str, ...]
++    error: Error | None
++
++    def __post_init__(self):
++        validate_record_fields(self)
++        if canonical_listing_url(self.url) != self.url:
++            raise ValueError("directory URL must be canonical")
++        require_text(self.period, "period")
++        if self.outcome not in ("available", "no_new_sources", "discovery_failed"):
++            raise ValueError("unsupported directory outcome")
++        if self.listing_sha256 is not None:
++            require_hash(self.listing_sha256, "listing_sha256")
++        for identity in self.source_ids:
++            require_hash(identity, "source_id")
++        if len(set(self.source_ids)) != len(self.source_ids):
++            raise ValueError("duplicate directory source IDs")
++        object.__setattr__(self, "source_ids", tuple(sorted(self.source_ids)))
++        if self.outcome == "discovery_failed":
++            if self.error is None or self.source_ids or self.listing_sha256 is not None:
++                raise ValueError("failed discovery requires error and no accepted listing")
++        elif self.error is not None or self.listing_sha256 is None:
++            raise ValueError("successful discovery requires a listing hash and no error")
++
++
++@dataclass(frozen=True, slots=True)
++class SourceWorkset(Record):
++    workset_id: str
++    context: RunContext
++    pinned_end_quarter: str
++    discovery_id: str
++    members: tuple[Source, ...]
++    directories: tuple[DirectoryOutcome, ...]
++    discovery_complete: bool
++    overlap_from: date
++    acquisition_mode: Literal["reuse_accepted", "refresh"]
++
++    def __post_init__(self):
++        validate_record_fields(self)
++        object.__setattr__(self, "members", tuple(self.members))
++        object.__setattr__(self, "directories", tuple(self.directories))
++
++
++@dataclass(frozen=True, slots=True)
++class Snapshot(Record):
++    source_id: str
++    sha256: str
++    raw_path: str
++    byte_count: int
++    received_at: datetime
++    validators: Mapping[str, str]
++    representation: Representation
++    envelope_version: str
++
++    def __post_init__(self):
++        validate_record_fields(self)
++        require_hash(self.source_id, "source_id")
++        require_hash(self.sha256, "sha256")
++        safe_relative_path(self.raw_path, "raw_path")
++        components = self.raw_path.split("/")
++        has_hash = any(item == self.sha256 or item == f"{self.sha256}.{self.representation}" for item in components)
++        if "latest" in components or self.source_id not in components or not has_hash:
++            raise ValueError("raw_path must address this source and exact snapshot hash")
++        require_number(self.byte_count, "byte_count", integer=True)
++        require_utc(self.received_at, "received_at")
++        if self.representation not in ("zip", "idx"):
++            raise ValueError("unsupported representation")
++        require_envelope(self.representation, self.envelope_version)
++        if self.raw_path.endswith((".zip", ".idx")) and not self.raw_path.endswith("." + self.representation):
++            raise ValueError("raw_path extension conflicts with representation")
++        if not isinstance(self.validators, Mapping) or any(not isinstance(key, str) or not isinstance(item, str) for key, item in self.validators.items()):
++            raise ValueError("validators must be string mappings")
++        object.__setattr__(self, "validators", freeze(self.validators))
++
++
++@dataclass(frozen=True, slots=True)
++class Binding(Record):
++    source_workset_id: str
++    source_id: str
++    snapshot_sha256: str
++
++    def __post_init__(self):
++        validate_record_fields(self)
++        for label in ("source_workset_id", "source_id", "snapshot_sha256"):
++            require_hash(getattr(self, label), label)
++
++
++@dataclass(frozen=True, slots=True)
++class SnapshotWorkset(Record):
++    workset_id: str
++    source_workset_id: str
++    context: RunContext
++    snapshots: tuple[Snapshot, ...]
++    pinned_end_quarter: str
++    directories: tuple[DirectoryOutcome, ...]
++    overlap_from: date
++    acquisition_mode: Literal["reuse_accepted", "refresh"] = "reuse_accepted"
++
++    def __post_init__(self):
++        validate_record_fields(self)
++        object.__setattr__(self, "snapshots", tuple(self.snapshots))
++        object.__setattr__(self, "directories", tuple(self.directories))
++
++
++@dataclass(frozen=True, slots=True)
++class CommandResult(Record):
++    context: RunContext
++    outcome: str
++    source_workset_ref: str | None
++    snapshot_workset_ref: str | None
++    discovered: int
++    downloaded: int
++    unchanged: int
++    pending: int
++    failed: int
++    quarantined: int
++    gaps: tuple[Error, ...]
++    started_at: datetime
++    ended_at: datetime
++
++    def __post_init__(self):
++        validate_record_fields(self)
++        require_text(self.outcome, "outcome")
++        for label in ("discovered", "downloaded", "unchanged", "pending", "failed", "quarantined"):
++            require_number(getattr(self, label), label, integer=True)
++        require_utc(self.started_at, "started_at")
++        require_utc(self.ended_at, "ended_at")
++        if self.ended_at < self.started_at:
++            raise ValueError("ended_at precedes started_at")
++        object.__setattr__(self, "gaps", tuple(self.gaps))
++
++
++@dataclass(frozen=True, slots=True)
++class Versioned(Record):
++    value: Mapping[str, object]
++    version: str
++
++    def __post_init__(self):
++        validate_record_fields(self)
++        require_text(self.version, "version")
++        if self.version == "*":
++            raise ValueError("version must be an actual opaque revision")
++        object.__setattr__(self, "value", freeze(self.value))
++
++
++@dataclass(frozen=True, slots=True)
++class QueueTicket(Record):
++    ticket_id: str
++    owner_id: str
++    priority: Priority
++    enqueued_at: datetime
++    expires_at: datetime
++
++    def __post_init__(self):
++        validate_record_fields(self)
++        require_text(self.ticket_id, "ticket_id")
++        require_text(self.owner_id, "owner_id")
++        if self.priority not in ("daily", "backfill", "reconciliation"):
++            raise ValueError("unsupported queue priority")
++        require_utc(self.enqueued_at, "enqueued_at")
++        require_utc(self.expires_at, "expires_at")
++        if self.expires_at <= self.enqueued_at:
++            raise ValueError("queue ticket must have a finite positive lifetime")
++
++
++@dataclass(frozen=True, slots=True)
++class Permit(Record):
++    owner_id: str
++    epoch: int
++    request_id: str
++    must_start_before: datetime
++    must_end_by: datetime
++    takeover_after: datetime
++    start_before_mono: float
++    deadline_mono: float
++
++    def __post_init__(self):
++        validate_record_fields(self)
++        require_text(self.owner_id, "owner_id")
++        require_text(self.request_id, "request_id")
++        require_number(self.epoch, "epoch", integer=True)
++        for label in ("must_start_before", "must_end_by", "takeover_after"):
++            require_utc(getattr(self, label), label)
++        if not self.must_start_before <= self.must_end_by <= self.takeover_after:
++            raise ValueError("permit ownership windows are reversed")
++        require_number(self.start_before_mono, "start_before_mono")
++        require_number(self.deadline_mono, "deadline_mono")
++        if self.deadline_mono < self.start_before_mono:
++            raise ValueError("permit monotonic windows are reversed")
++
++
++@dataclass(frozen=True, slots=True)
++class BodyReceipt(Record):
++    url: str
++    status: int
++    headers: Mapping[str, str]
++    temporary_path: Path
++    received_at: datetime
++    byte_count: int
++    sha256: str
++    complete: bool
++    error: Error | None
++
++    def __post_init__(self):
++        validate_record_fields(self)
++        require_text(self.url, "url")
++        require_number(self.status, "status", integer=True)
++        if self.status != 0 and not 100 <= self.status <= 599:
++            raise ValueError("status must be an HTTP status or zero for no response")
++        require_number(self.byte_count, "byte_count", integer=True)
++        require_hash(self.sha256, "sha256")
++        require_utc(self.received_at, "received_at")
++        if type(self.complete) is not bool:
++            raise ValueError("complete must be boolean")
++        if not isinstance(self.headers, Mapping) or any(not isinstance(key, str) or not isinstance(item, str) for key, item in self.headers.items()):
++            raise ValueError("headers must be string mappings")
++        object.__setattr__(self, "headers", freeze(self.headers))
++        object.__setattr__(self, "temporary_path", Path(self.temporary_path))
++
++
++@dataclass(frozen=True, slots=True)
++class ValidatedBody(Record):
++    receipt: BodyReceipt
++    representation: Representation
++    envelope_version: str
++    expanded_byte_count: int
++
++    def __post_init__(self):
++        validate_record_fields(self)
++        if self.representation not in ("zip", "idx"):
++            raise ValueError("unsupported representation")
++        require_envelope(self.representation, self.envelope_version)
++        require_number(self.expanded_byte_count, "expanded_byte_count", integer=True)
++        if not self.receipt.complete or self.receipt.error is not None:
++            raise ValueError("validated body requires a complete receipt")
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/urls.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/urls.py
+new file mode 100644
+index 0000000..e07b81c
+--- /dev/null
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/urls.py
+@@ -0,0 +1,93 @@
++"""Validate SEC index origins, selected representations, and listing children."""
++import hashlib
++import re
++from datetime import date
++from urllib.parse import unquote, urlsplit
++
++SEC_ORIGIN = "https://www.sec.gov"
++INDEX_ROOT = "/Archives/edgar/"
++YEAR = r"[1-9][0-9]{3}"
++QUARTERLY_SOURCE = re.compile(rf"{INDEX_ROOT}full-index/({YEAR})/QTR([1-4])/master\.zip\Z")
++DAILY_SOURCE = re.compile(rf"{INDEX_ROOT}daily-index/({YEAR})/QTR([1-4])/master\.([0-9]{{8}})\.idx\Z")
++DIRECTORY = re.compile(rf"{INDEX_ROOT}(?:full-index|daily-index)/(?:{YEAR}/(?:QTR[1-4]/)?)?\Z")
++
++
++def _safe_url_path(url: str) -> str:
++    if not isinstance(url, str) or any(char.isspace() or ord(char) < 32 or ord(char) == 127 for char in url):
++        raise ValueError("SEC URL must contain no whitespace or control characters")
++    try:
++        parsed = urlsplit(url)
++        valid_origin = (parsed.scheme == "https" and parsed.hostname == "www.sec.gov"
++                        and parsed.username is None and parsed.password is None
++                        and parsed.port is None and ":" not in parsed.netloc)
++    except ValueError as error:
++        raise ValueError("invalid SEC origin") from error
++    if not valid_origin or parsed.query or parsed.fragment or "?" in url or "#" in url:
++        raise ValueError("SEC URL requires the exact HTTPS origin and no credentials, port, query or fragment")
++    path = parsed.path
++    if not path.startswith(INDEX_ROOT) or "\\" in path:
++        raise ValueError("SEC URL must be beneath an accepted index hierarchy")
++    for segment in path.split("/")[1:]:
++        try:
++            decoded = unquote(segment, errors="strict")
++        except UnicodeDecodeError as error:
++            raise ValueError("invalid path encoding") from error
++        if decoded in (".", "..") or any(char in decoded for char in "/\\%") or any(ord(char) < 32 or ord(char) == 127 for char in decoded):
++            raise ValueError("unsafe decoded SEC path segment")
++    return path
++
++
++def canonical_source_url(url: str, kind: str) -> str:
++    path = _safe_url_path(url)
++    if kind == "quarterly":
++        valid = QUARTERLY_SOURCE.fullmatch(path) is not None
++    elif kind == "daily":
++        match = DAILY_SOURCE.fullmatch(path)
++        valid = False
++        if match is not None:
++            try:
++                day = date(int(match[3][:4]), int(match[3][4:6]), int(match[3][6:]))
++            except ValueError as error:
++                raise ValueError("daily source contains an invalid calendar date") from error
++            valid = day.year == int(match[1]) and (day.month - 1) // 3 + 1 == int(match[2])
++    else:
++        raise ValueError("unsupported source kind")
++    if not valid:
++        raise ValueError("source must be a selected master.zip or master.YYYYMMDD.idx in its matching hierarchy")
++    return SEC_ORIGIN + path
++
++
++def canonical_listing_url(url: str) -> str:
++    path = _safe_url_path(url)
++    if not path.endswith("index.json") or DIRECTORY.fullmatch(path[:-len("index.json")]) is None:
++        raise ValueError("listing must be index.json under an accepted index directory")
++    return SEC_ORIGIN + path
++
++
++def child_url(parent: str, href: str, name: str, is_directory: bool) -> str:
++    listing = canonical_listing_url(parent + "index.json" if parent.endswith("/") else parent)
++    if type(is_directory) is not bool or not isinstance(name, str) or not name or any(char in name for char in "/\\%?#") or name in (".", ".."):
++        raise ValueError("child name must be an immediate safe descendant")
++    if not isinstance(href, str) or not href:
++        raise ValueError("child href is required")
++    parent_path = listing.rsplit("/", 1)[0] + "/"
++    suffix = name + ("/" if is_directory else "")
++    expected = parent_path + suffix
++    parsed = urlsplit(href)
++    if parsed.scheme or parsed.netloc or href.startswith("/"):
++        child_path = _safe_url_path(href)
++        candidate = SEC_ORIGIN + child_path
++        if candidate != expected:
++            raise ValueError("absolute child href must match its name and immediate parent")
++    elif href != suffix:
++        raise ValueError("child name and href must agree exactly")
++    if is_directory:
++        if DIRECTORY.fullmatch(_safe_url_path(expected)) is None:
++            raise ValueError("child directory is outside the accepted hierarchy")
++        return expected
++    kind = "quarterly" if "/full-index/" in expected else "daily"
++    return canonical_source_url(expected, kind)
++
++
++def source_id(url: str) -> str:
++    return hashlib.sha256(url.encode("utf-8")).hexdigest()
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/worksets.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/worksets.py
+new file mode 100644
+index 0000000..f93c422
+--- /dev/null
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/worksets.py
+@@ -0,0 +1,159 @@
++"""Strict deterministic codecs for pinned source and snapshot worksets."""
++import hashlib
++from dataclasses import replace
++from datetime import date
++
++from .config import Settings, pin_context
++from .models import (FORMAT_VERSION, DirectoryOutcome, RunContext, Snapshot, SnapshotWorkset,
++                     Source, SourceWorkset, canonical_json, parse_json, quarter_for, quarter_value,
++                     require_hash, require_text)
++
++
++def workset_digest(payload: dict[str, object]) -> str:
++    return hashlib.sha256(canonical_json(payload)).hexdigest()
++
++
++def _payload(workset: SourceWorkset | SnapshotWorkset) -> dict[str, object]:
++    if not isinstance(workset, (SourceWorkset, SnapshotWorkset)):
++        raise ValueError("unsupported workset type")
++    return {"format_version": FORMAT_VERSION,
++            "workset_type": "source" if isinstance(workset, SourceWorkset) else "snapshot",
++            **workset.to_mapping()}
++
++
++def _identity(workset: SourceWorkset | SnapshotWorkset) -> str:
++    value = _payload(workset)
++    value.pop("workset_id")
++    return workset_digest(value)
++
++
++def _identified(workset: SourceWorkset | SnapshotWorkset):
++    return replace(workset, workset_id=_identity(workset))
++
++
++def encode_workset(workset: SourceWorkset | SnapshotWorkset) -> bytes:
++    return canonical_json(_payload(workset))
++
++
++def _decode(body: bytes, kind: str):
++    if not isinstance(body, bytes):
++        raise ValueError("workset body must be bytes")
++    value = parse_json(body)
++    if not isinstance(value, dict) or value.get("format_version") != FORMAT_VERSION or value.get("workset_type") != kind:
++        raise ValueError("unsupported workset format version or type")
++    identity = value.get("workset_id")
++    require_hash(identity, "workset_id")
++    payload = {key: item for key, item in value.items() if key != "workset_id"}
++    if workset_digest(payload) != identity:
++        raise ValueError("workset identity does not match the canonical payload")
++    record_value = {key: item for key, item in value.items() if key not in ("format_version", "workset_type")}
++    workset = (SourceWorkset if kind == "source" else SnapshotWorkset).from_mapping(record_value)
++    if kind == "source":
++        _validate_source(workset)
++    else:
++        _validate_snapshot(workset)
++    return workset
++
++
++def decode_source_workset(body: bytes) -> SourceWorkset:
++    return _decode(body, "source")
++
++
++def decode_snapshot_workset(body: bytes) -> SnapshotWorkset:
++    return _decode(body, "snapshot")
++
++
++def _validate_common(workset: SourceWorkset | SnapshotWorkset) -> dict[str, DirectoryOutcome]:
++    require_hash(workset.workset_id, "workset_id")
++    if not workset.context.effective_config:
++        raise ValueError("workset context must pin its effective configuration")
++    settings = Settings.from_mapping(workset.context.to_mapping()["effective_config"])
++    pin_context(settings, workset.context, workset.context.started_at.date())
++    end = quarter_value(workset.pinned_end_quarter)
++    if end < quarter_value(settings.backfill.start_quarter) or end > quarter_value(quarter_for(workset.context.started_at.date())):
++        raise ValueError("workset requires a resolved endpoint within the run's quarter range")
++    if settings.backfill.end_quarter != "open" and workset.pinned_end_quarter != settings.backfill.end_quarter:
++        raise ValueError("workset endpoint differs from the pinned effective configuration")
++    if type(workset.overlap_from) is not date or workset.overlap_from > workset.context.started_at.date():
++        raise ValueError("overlap_from must be a date no later than the run start")
++    if workset.acquisition_mode not in ("reuse_accepted", "refresh"):
++        raise ValueError("unsupported acquisition_mode")
++    urls = [directory.url for directory in workset.directories]
++    if len(set(urls)) != len(urls):
++        raise ValueError("duplicate workset directories")
++    if urls != sorted(urls):
++        raise ValueError("workset directories must be in canonical order")
++    by_source = {}
++    for directory in workset.directories:
++        for identity in directory.source_ids:
++            if identity in by_source:
++                raise ValueError("duplicate source membership across directory outcomes")
++            by_source[identity] = directory
++    return by_source
++
++
++def _validate_source(workset: SourceWorkset, *, check_identity: bool = True) -> None:
++    by_source = _validate_common(workset)
++    require_text(workset.discovery_id, "discovery_id")
++    identities = [source.source_id for source in workset.members]
++    if len(set(identities)) != len(identities):
++        raise ValueError("duplicate workset sources")
++    if identities != sorted(identities):
++        raise ValueError("source members must be in canonical order")
++    if set(identities) != set(by_source):
++        raise ValueError("directory outcomes must name every source member exactly once")
++    for source in workset.members:
++        if by_source[source.source_id].url != source.canonical_url.rsplit("/", 1)[0] + "/index.json":
++            raise ValueError("source member must originate from its validated immediate listing child")
++        source_period = quarter_for(date.fromisoformat(source.period)) if source.kind == "daily" else source.period
++        if quarter_value(source_period) > quarter_value(workset.pinned_end_quarter):
++            raise ValueError("source member is after the pinned endpoint")
++    complete = bool(workset.directories) and all(directory.outcome != "discovery_failed" for directory in workset.directories)
++    if type(workset.discovery_complete) is not bool or workset.discovery_complete != complete:
++        raise ValueError("discovery completeness must match successful directory evidence")
++    if check_identity and workset.workset_id != _identity(workset):
++        raise ValueError("workset identity does not match its content")
++
++
++def _validate_snapshot(workset: SnapshotWorkset, *, check_identity: bool = True) -> None:
++    by_source = _validate_common(workset)
++    require_hash(workset.source_workset_id, "source_workset_id")
++    if not workset.directories or any(directory.outcome == "discovery_failed" for directory in workset.directories):
++        raise ValueError("snapshot workset requires complete successful source discovery")
++    identities = [snapshot.source_id for snapshot in workset.snapshots]
++    if len(set(identities)) != len(identities):
++        raise ValueError("duplicate snapshot members")
++    if identities != sorted(identities):
++        raise ValueError("snapshot members must be in canonical order")
++    if set(identities) != set(by_source):
++        raise ValueError("snapshot workset must name every source member exactly once")
++    for snapshot in workset.snapshots:
++        expected = "zip" if "/full-index/" in by_source[snapshot.source_id].url else "idx"
++        if snapshot.representation != expected:
++            raise ValueError("snapshot representation differs from its source member")
++    if check_identity and workset.workset_id != _identity(workset):
++        raise ValueError("workset identity does not match its content")
++
++
++def make_source_workset(context: RunContext, end_quarter: str, discovery_id: str,
++                        members: tuple[Source, ...], directories: tuple[DirectoryOutcome, ...],
++                        overlap_from: date) -> SourceWorkset:
++    workset = SourceWorkset("0" * 64, context, end_quarter, discovery_id,
++                           tuple(sorted(members, key=lambda member: member.source_id)),
++                           tuple(sorted(directories, key=lambda directory: directory.url)),
++                           bool(directories) and all(directory.outcome != "discovery_failed" for directory in directories),
++                           overlap_from, "refresh" if context.command == "refresh" else "reuse_accepted")
++    _validate_source(workset, check_identity=False)
++    return _identified(workset)
++
++
++def make_snapshot_workset(source: SourceWorkset, snapshots: tuple[Snapshot, ...]) -> SnapshotWorkset:
++    _validate_source(source)
++    if not source.discovery_complete:
++        raise ValueError("cannot snapshot an incomplete source workset")
++    workset = SnapshotWorkset("0" * 64, source.workset_id, source.context,
++                             tuple(sorted(snapshots, key=lambda snapshot: snapshot.source_id)),
++                             source.pinned_end_quarter, source.directories, source.overlap_from,
++                             source.acquisition_mode)
++    _validate_snapshot(workset, check_identity=False)
++    return _identified(workset)
+diff --git a/packages/sec-edgar-ingest/tests/fixtures/config/local.json b/packages/sec-edgar-ingest/tests/fixtures/config/local.json
+new file mode 100644
+index 0000000..4203aa1
+--- /dev/null
++++ b/packages/sec-edgar-ingest/tests/fixtures/config/local.json
+@@ -0,0 +1,56 @@
++{
++  "config_version": "sec-acquisition-v1",
++  "backfill": {
++    "start_quarter": "2015Q1",
++    "end_quarter": "open"
++  },
++  "daily": {
++    "start_date": "2026-10-01"
++  },
++  "sec": {
++    "user_agent": "Lowell Mason sec-edgar-ingest mason.lowell@mac.com",
++    "requests_per_second": 3,
++    "max_active_collectors": 1
++  },
++  "http": {
++    "max_attempts": 5,
++    "retry_base_seconds": 2,
++    "retry_cap_seconds": 120,
++    "connect_timeout_seconds": 15,
++    "read_timeout_seconds": 60,
++    "exchange_deadline_seconds": 90,
++    "max_received_bytes": 67108864,
++    "max_expanded_bytes": 536870912
++  },
++  "coordination": {
++    "lease_seconds": 60,
++    "renew_every_seconds": 20,
++    "namespace": "sec-owner-lowell-mason",
++    "clock_uncertainty_seconds": 2
++  },
++  "storage": {
++    "backend": "local-fixture",
++    "root": ".fixture-state",
++    "source_table": "SourceState",
++    "attempt_table": "Attempts",
++    "blob_api_version": "2026-04-06",
++    "table_api_version": "2020-12-06"
++  },
++  "etl": {
++    "parser_version": "fixture-envelope-v1",
++    "schema_version": "sec-index-v1"
++  },
++  "worker": {
++    "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
++    "provenance": "synthetic-fixture"
++  },
++  "jobs": {
++    "replica_retry_limit": 0
++  },
++  "orchestration": {
++    "transient_replays": 1
++  },
++  "reconciliation": {
++    "require_withdrawal_approval": true
++  }
++}
+diff --git a/packages/sec-edgar-ingest/tests/support.py b/packages/sec-edgar-ingest/tests/support.py
+new file mode 100644
+index 0000000..d0ee6d6
+--- /dev/null
++++ b/packages/sec-edgar-ingest/tests/support.py
+@@ -0,0 +1,78 @@
++"""Validated builders shared by offline acquisition tests."""
++import json
++from datetime import date, datetime, timedelta, timezone
++from pathlib import Path
++from typing import TYPE_CHECKING
++
++if TYPE_CHECKING:
++    from sec_edgar_ingest.config import Settings
++    from sec_edgar_ingest.models import RunContext, Source, SourceWorkset
++
++FIXTURE_CONFIG = Path(__file__).parent / "fixtures/config/local.json"
++
++
++def fixture_settings(**overrides: object) -> "Settings":
++    from sec_edgar_ingest.config import Settings
++    value = json.loads(FIXTURE_CONFIG.read_text())
++    for key, override in overrides.items():
++        if isinstance(override, dict) and isinstance(value.get(key), dict):
++            value[key].update(override)
++        else:
++            value[key] = override
++    return Settings.from_mapping(value)
++
++
++def fixture_context(command: str = "collect", priority: str = "backfill") -> "RunContext":
++    from sec_edgar_ingest.config import pin_context
++    from sec_edgar_ingest.models import RunContext
++    settings = fixture_settings()
++    started = datetime(2026, 10, 6, tzinfo=timezone.utc)
++    context = RunContext(
++        run_id="fixture-run", execution_id="fixture-execution", command=command,
++        attempt_id="fixture-attempt", image_digest=settings.worker.image_digest,
++        parser_version=settings.etl.parser_version, schema_version=settings.etl.schema_version,
++        config_sha256=settings.config_sha256, started_at=started,
++        deadline=started + timedelta(seconds=3600), priority=priority,
++    )
++    return pin_context(settings, context, date(2026, 10, 6))[0]
++
++
++def fixture_source(period: str = "2015Q1", kind: str = "quarterly") -> "Source":
++    from sec_edgar_ingest.models import Source
++    from sec_edgar_ingest.urls import child_url, source_id
++    if kind == "quarterly":
++        year, quarter = period.split("Q")
++        parent = f"https://www.sec.gov/Archives/edgar/full-index/{year}/QTR{quarter}/index.json"
++        name, representation = "master.zip", "zip"
++    else:
++        day = date.fromisoformat(period)
++        quarter = (day.month - 1) // 3 + 1
++        parent = f"https://www.sec.gov/Archives/edgar/daily-index/{day.year}/QTR{quarter}/index.json"
++        name, representation = f"master.{day:%Y%m%d}.idx", "idx"
++    url = child_url(parent, name, name, False)
++    return Source(source_id(url), url, kind, period, representation)
++
++
++def fixture_workset(members: tuple["Source", ...], discovery_complete: bool = True) -> "SourceWorkset":
++    from sec_edgar_ingest.models import DirectoryOutcome, Error
++    from sec_edgar_ingest.worksets import make_source_workset
++    by_directory = {}
++    for source in members:
++        url = source.canonical_url.rsplit("/", 1)[0] + "/index.json"
++        by_directory.setdefault(url, []).append(source)
++    if not by_directory:
++        by_directory["https://www.sec.gov/Archives/edgar/full-index/2015/QTR1/index.json"] = []
++    directories = tuple(
++        DirectoryOutcome(url, group[0].period if group else "2015Q1",
++                         "available" if group else "no_new_sources", "a" * 64,
++                         tuple(member.source_id for member in group), None)
++        for url, group in by_directory.items()
++    )
++    if not discovery_complete:
++        failed = DirectoryOutcome(
++            "https://www.sec.gov/Archives/edgar/full-index/2015/QTR2/index.json",
++            "2015Q2", "discovery_failed", None, (), Error("listing", "failed", True, None, {}),
++        )
++        directories += (failed,)
++    return make_source_workset(fixture_context(), "2026Q4", "fixture-discovery",
++                               tuple(members), directories, date(2026, 10, 1))
+diff --git a/packages/sec-edgar-ingest/tests/test_config.py b/packages/sec-edgar-ingest/tests/test_config.py
+new file mode 100644
+index 0000000..fff465c
+--- /dev/null
++++ b/packages/sec-edgar-ingest/tests/test_config.py
+@@ -0,0 +1,231 @@
++import copy
++import importlib
++import importlib.util
++import tempfile
++import unittest
++from dataclasses import FrozenInstanceError, replace
++from datetime import date, datetime, timedelta, timezone
++from pathlib import Path
++from unittest.mock import patch
++
++from support import FIXTURE_CONFIG, fixture_context, fixture_settings
++
++
++class ConfigTests(unittest.TestCase):
++    def setUp(self):
++        self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.config"),
++                             "Settings validation must exist before acquisition I/O")
++        self.config = importlib.import_module("sec_edgar_ingest.config")
++
++    def test_second_collector_is_refused(self):
++        value = fixture_settings().to_mapping()
++        value["sec"]["max_active_collectors"] = 2
++        with self.assertRaisesRegex(ValueError, "max_active_collectors"):
++            self.config.Settings.from_mapping(value)
++
++    def test_invalid_configuration_precedes_external_factories(self):
++        value = fixture_settings().to_mapping()
++        value["sec"]["max_active_collectors"] = 2
++        with patch("azure.identity.DefaultAzureCredential") as credential, \
++             patch("azure.storage.blob.BlobServiceClient") as client, \
++             patch("requests.Session") as transport:
++            with self.assertRaises(ValueError):
++                self.config.Settings.from_mapping(value)
++            for factory in (credential, client, transport):
++                factory.assert_not_called()
++
++    def test_rejects_configuration_matrix(self):
++        cases = [
++            ("missing identity", "sec.user_agent", None),
++            ("missing range", "backfill.start_quarter", None),
++            ("missing endpoint", "backfill.end_quarter", None),
++            ("missing handoff", "daily.start_date", None),
++            ("reversed quarters", "backfill.end_quarter", "2014Q4"),
++            ("unsupported config", "config_version", "v2"),
++            ("unsupported schema", "etl.schema_version", "sec-index-v2"),
++            ("absent parser", "etl.parser_version", None),
++            ("absent image", "worker.image_digest", None),
++            ("malformed image", "worker.image_digest", "latest"),
++            ("zero rate", "sec.requests_per_second", 0),
++            ("target at ten", "sec.requests_per_second", 10),
++            ("negative attempts", "http.max_attempts", -1),
++            ("too many attempts", "http.max_attempts", 6),
++            ("NaN", "http.read_timeout_seconds", float("nan")),
++            ("infinity", "http.exchange_deadline_seconds", float("inf")),
++            ("zero received", "http.max_received_bytes", 0),
++            ("negative expanded", "http.max_expanded_bytes", -1),
++            ("unsafe path", "storage.root", "../outside"),
++            ("absolute output path", "storage.root", "/tmp/outside"),
++            ("bad namespace", "coordination.namespace", "independent-lane"),
++            ("renew after lease", "coordination.renew_every_seconds", 60),
++            ("bad retries", "jobs.replica_retry_limit", 1),
++            ("bad replays", "orchestration.transient_replays", 2),
++            ("no withdrawal gate", "reconciliation.require_withdrawal_approval", False),
++            ("unknown nested key", "http.burst", 3),
++            ("unknown root key", "unexpected", True),
++        ]
++        for name, dotted, replacement in cases:
++            with self.subTest(name=name):
++                value = fixture_settings().to_mapping()
++                path = dotted.split(".")
++                target = value
++                for key in path[:-1]:
++                    target = target[key]
++                if replacement is None:
++                    target.pop(path[-1])
++                else:
++                    target[path[-1]] = replacement
++                with self.assertRaises(ValueError):
++                    self.config.Settings.from_mapping(value)
++
++    def azure_value(self):
++        value = fixture_settings().to_mapping()
++        value["storage"] = {
++            "backend": "azure", "account_name": "secedgardevb8617",
++            "blob_endpoint": "https://secedgardevb8617.blob.core.windows.net",
++            "table_endpoint": "https://secedgardevb8617.table.core.windows.net",
++            "raw_container": "raw", "workset_container": "worksets",
++            "quarantine_container": "quarantine", "lock_container": "locks",
++            "lock_blob": "sec-owner-lowell-mason/sentinel.json",
++            "binding_registry_blob": "sec-owner-lowell-mason/binding.json",
++            "source_table": "SourceState", "attempt_table": "Attempts",
++            "blob_api_version": "2026-04-06", "table_api_version": "2020-12-06",
++        }
++        value["worker"] = {"image_digest": "sha256:" + "1" * 64,
++                           "provenance": "immutable-image"}
++        value["etl"]["parser_version"] = "accepted-parser-v1"
++        return value
++
++    def test_azure_explicit_binding_and_credential_free_endpoints(self):
++        valid = self.azure_value()
++        settings = self.config.Settings.from_mapping(valid)
++        self.assertEqual(settings.storage.lock_container, "locks")
++        self.assertEqual(settings.storage.account_name, "secedgardevb8617")
++        cases = [
++            ("missing Azure endpoint", "storage.blob_endpoint", None),
++            ("credentials in endpoint", "storage.blob_endpoint",
++             "https://user:secret@secedgardevb8617.blob.core.windows.net"),
++            ("query credential", "storage.table_endpoint",
++             "https://secedgardevb8617.table.core.windows.net?sig=hidden"),
++            ("foreign account", "storage.account_name", "otheraccount"),
++            ("foreign endpoint", "storage.table_endpoint", "https://other.table.core.windows.net"),
++            ("different sentinel", "storage.lock_blob", "independent-sentinel"),
++            ("different namespace", "coordination.namespace", "othernamespace"),
++            ("different budget", "sec.requests_per_second", 2),
++            ("synthetic image", "worker.image_digest", "sha256:" + "0" * 64),
++            ("fixture marker", "worker.provenance", "synthetic-fixture"),
++            ("fixture parser", "etl.parser_version", "fixture-envelope-v1"),
++            ("fixture-only cap", "http.max_received_bytes", 32),
++            ("fixture-only override", "fixture", {"allow_deadline_override": True}),
++        ]
++        for name, dotted, replacement in cases:
++            with self.subTest(name=name):
++                value = copy.deepcopy(valid)
++                parts = dotted.split(".")
++                target = value if len(parts) == 1 else value[parts[0]]
++                if replacement is None:
++                    target.pop(parts[-1])
++                else:
++                    target[parts[-1]] = replacement
++                with self.assertRaises(ValueError):
++                    self.config.Settings.from_mapping(value)
++
++    def test_mapping_is_detached_and_typed_settings_are_frozen(self):
++        settings = fixture_settings()
++        detached = settings.to_mapping()
++        detached["sec"]["user_agent"] = "changed"
++        self.assertEqual(settings.sec.user_agent, "Lowell Mason sec-edgar-ingest mason.lowell@mac.com")
++        with self.assertRaises(FrozenInstanceError):
++            settings.sec.user_agent = "changed"
++        with self.assertRaises(FrozenInstanceError):
++            settings.config_version = "changed"
++        self.assertEqual(settings.config_sha256, fixture_settings().config_sha256)
++        self.assertNotEqual(settings.config_sha256,
++                            fixture_settings(http={"read_timeout_seconds": 59}).config_sha256)
++
++    def test_json_yaml_subset_loads_without_creating_fixture_root(self):
++        with tempfile.TemporaryDirectory() as temporary:
++            path = Path(temporary) / "config.yaml"
++            path.write_bytes(FIXTURE_CONFIG.read_bytes())
++            self.assertEqual(self.config.load_config(path), fixture_settings())
++            self.assertFalse((Path(temporary) / ".fixture-state").exists())
++            path.write_text("config_version: sec-acquisition-v1")
++            with self.assertRaisesRegex(ValueError, "JSON"):
++                self.config.load_config(path)
++
++    def test_fixture_overrides_are_explicit_and_validated(self):
++        settings = fixture_settings(http={"exchange_deadline_seconds": .2,
++                                          "max_received_bytes": 32, "max_expanded_bytes": 128},
++                                    fixture={"allow_clock_override": True,
++                                             "allow_deadline_override": True})
++        self.assertEqual(settings.http.max_received_bytes, 32)
++        context = replace(fixture_context(), config_sha256=settings.config_sha256,
++                          deadline=datetime(2026, 10, 6, tzinfo=timezone.utc) + timedelta(seconds=4000))
++        pinned, end = self.config.pin_context(settings, context, date(2026, 10, 6))
++        self.assertEqual(end, "2026Q4")
++        self.assertEqual(pinned.effective_config["fixture"]["allow_deadline_override"], True)
++
++    def test_pin_context_checks_range_identity_and_deadline(self):
++        context = fixture_context()
++        cases = [
++            ("future endpoint", fixture_settings(backfill={"end_quarter": "2027Q1"}), context),
++            ("unbound config", fixture_settings(), replace(context, config_sha256="f" * 64)),
++            ("unbound image", fixture_settings(), replace(context, image_digest="sha256:" + "f" * 64)),
++            ("unbound parser", fixture_settings(), replace(context, parser_version="other-v1")),
++            ("too long", fixture_settings(), replace(context, deadline=context.started_at + timedelta(seconds=3601))),
++        ]
++        for name, settings, candidate in cases:
++            with self.subTest(name=name), self.assertRaises(ValueError):
++                self.config.pin_context(settings, candidate, date(2026, 10, 6))
++        self.assertEqual(self.config.pin_context(fixture_settings(), context, date(2026, 10, 6))[1], "2026Q4")
++        for day, quarter in [(date(2024, 2, 29), "2024Q1"), (date(2024, 3, 31), "2024Q1"),
++                             (date(2024, 4, 1), "2024Q2"), (date(2025, 1, 1), "2025Q1")]:
++            with self.subTest(day=day):
++                settings = fixture_settings()
++                started = datetime.combine(day, datetime.min.time(), timezone.utc)
++                dated = replace(context, started_at=started, deadline=started + timedelta(seconds=3600))
++                self.assertEqual(self.config.pin_context(settings, dated, day)[1], quarter)
++
++    def test_clock_override_is_fixture_only_and_explicit(self):
++        context = fixture_context()
++        with self.assertRaisesRegex(ValueError, "clock"):
++            self.config.pin_context(fixture_settings(), context, date(2026, 10, 5))
++        settings = fixture_settings(fixture={"allow_clock_override": True})
++        context = replace(context, config_sha256=settings.config_sha256)
++        pinned, quarter = self.config.pin_context(settings, context, date(2026, 10, 5))
++        self.assertEqual(quarter, "2026Q4")
++        self.assertTrue(pinned.effective_config["fixture"]["allow_clock_override"])
++
++    def test_azure_deadlines_and_two_callers_share_one_binding(self):
++        settings = self.config.Settings.from_mapping(self.azure_value())
++        original = fixture_context()
++        context = replace(original, image_digest=settings.worker.image_digest,
++                          parser_version=settings.etl.parser_version,
++                          config_sha256=settings.config_sha256)
++        self.assertEqual(self.config.pin_context(settings, context, date(2026, 10, 6))[1], "2026Q4")
++        for name, start, end in [
++            ("over allowance", context.started_at, context.started_at + timedelta(seconds=3601)),
++            ("at start", context.started_at, context.started_at),
++            ("before start", context.started_at, context.started_at - timedelta(seconds=1)),
++            ("non-UTC", context.started_at.replace(tzinfo=None), context.deadline),
++        ]:
++            with self.subTest(name=name), self.assertRaises(ValueError):
++                candidate = replace(context, started_at=start, deadline=end)
++                self.config.pin_context(settings, candidate, date(2026, 10, 6))
++        contender = self.azure_value()
++        contender["coordination"]["namespace"] = "backfill-independent"
++        with self.assertRaisesRegex(ValueError, "namespace"):
++            self.config.Settings.from_mapping(contender)
++        self.assertEqual(settings.storage.lock_blob, fixture_settings().storage.lock_blob)
++
++    def test_config_parser_rejects_duplicate_keys_and_non_utf8(self):
++        with tempfile.TemporaryDirectory() as directory:
++            path = Path(directory) / "config.yaml"
++            body = FIXTURE_CONFIG.read_text()
++            for name, malformed in [
++                ("duplicate keys", body.replace('"config_version":', '"config_version":"sec-acquisition-v1","config_version":').encode()),
++                ("non-UTF8", body.encode("utf-16")),
++            ]:
++                with self.subTest(name=name), self.assertRaises(ValueError):
++                    path.write_bytes(malformed)
++                    self.config.load_config(path)
+diff --git a/packages/sec-edgar-ingest/tests/test_urls.py b/packages/sec-edgar-ingest/tests/test_urls.py
+new file mode 100644
+index 0000000..f492056
+--- /dev/null
++++ b/packages/sec-edgar-ingest/tests/test_urls.py
+@@ -0,0 +1,82 @@
++import hashlib
++import importlib
++import importlib.util
++import unittest
++
++
++ORIGIN = "https://www.sec.gov/Archives/edgar/"
++
++
++class UrlTests(unittest.TestCase):
++    def setUp(self):
++        self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.urls"),
++                             "Unsafe URLs must be refused before acquisition")
++        self.urls = importlib.import_module("sec_edgar_ingest.urls")
++
++    def test_source_shapes_and_stable_identity(self):
++        quarterly = ORIGIN + "full-index/2015/QTR1/master.zip"
++        daily = ORIGIN + "daily-index/2024/QTR1/master.20240229.idx"
++        self.assertEqual(self.urls.canonical_source_url(quarterly, "quarterly"), quarterly)
++        self.assertEqual(self.urls.canonical_source_url(daily, "daily"), daily)
++        self.assertEqual(self.urls.source_id(quarterly), hashlib.sha256(quarterly.encode()).hexdigest())
++        self.assertEqual(self.urls.source_id(quarterly), self.urls.source_id(quarterly))
++        self.assertEqual(self.urls.canonical_source_url(quarterly.replace("www.sec.gov", "WWW.SEC.GOV"), "quarterly"), quarterly)
++
++    def test_unsafe_source_matrix(self):
++        path = "full-index/2015/QTR1/master.zip"
++        cases = [
++            ("http", ORIGIN.replace("https", "http") + path, "quarterly"),
++            ("foreign host", ORIGIN.replace("www.sec.gov", "evil.sec.gov") + path, "quarterly"),
++            ("userinfo", ORIGIN.replace("www.sec.gov", "user:password@www.sec.gov") + path, "quarterly"),
++            ("port", ORIGIN.replace("www.sec.gov", "www.sec.gov:443") + path, "quarterly"),
++            ("query", ORIGIN + path + "?q=1", "quarterly"),
++            ("fragment", ORIGIN + path + "#x", "quarterly"),
++            ("dot", ORIGIN + "full-index/2015/./QTR1/master.zip", "quarterly"),
++            ("encoded parent", ORIGIN + "full-index/2015/%2e%2e/QTR1/master.zip", "quarterly"),
++            ("encoded slash", ORIGIN + "full-index/2015%2fQTR1/master.zip", "quarterly"),
++            ("encoded backslash", ORIGIN + "full-index/2015%5cQTR1/master.zip", "quarterly"),
++            ("control", ORIGIN + "full-index/2015/QTR1/master.zip%00", "quarterly"),
++            ("newline", ORIGIN + "full-index/2015/QTR1/\nmaster.zip", "quarterly"),
++            ("filing content", ORIGIN + "data/123/abc.txt", "daily"),
++            ("case sensitive", ORIGIN + path.replace("QTR1", "qtr1"), "quarterly"),
++            ("wrong kind", ORIGIN + path, "daily"),
++            ("wrong file", ORIGIN + path.replace("master.zip", "company.zip"), "quarterly"),
++            ("invalid quarter", ORIGIN + path.replace("QTR1", "QTR5"), "quarterly"),
++            ("invalid day", ORIGIN + "daily-index/2023/QTR1/master.20230229.idx", "daily"),
++            ("day outside quarter", ORIGIN + "daily-index/2024/QTR2/master.20240229.idx", "daily"),
++            ("double encoding", ORIGIN + "full-index/2015/%252e%252e/QTR1/master.zip", "quarterly"),
++        ]
++        for name, url, kind in cases:
++            with self.subTest(name=name), self.assertRaises(ValueError):
++                self.urls.canonical_source_url(url, kind)
++
++    def test_listing_hierarchy_and_immediate_children(self):
++        root = ORIGIN + "full-index/index.json"
++        year = self.urls.child_url(root, "2015/", "2015", True)
++        self.assertEqual(year, ORIGIN + "full-index/2015/")
++        quarter = self.urls.child_url(year + "index.json", "QTR1/", "QTR1", True)
++        self.assertEqual(quarter, ORIGIN + "full-index/2015/QTR1/")
++        source = self.urls.child_url(quarter + "index.json", "master.zip", "master.zip", False)
++        self.assertEqual(source, quarter + "master.zip")
++        self.assertEqual(self.urls.canonical_listing_url(root), root)
++        self.assertEqual(self.urls.canonical_listing_url(quarter + "index.json"), quarter + "index.json")
++
++    def test_conflicting_or_escaping_child_is_refused(self):
++        parent = ORIGIN + "full-index/2015/QTR1/index.json"
++        cases = [
++            ("parent metadata", "../", "..", True),
++            ("foreign absolute", "https://evil.test/master.zip", "master.zip", False),
++            ("escape absolute", ORIGIN + "full-index/2016/QTR1/master.zip", "master.zip", False),
++            ("escape relative", "../QTR2/master.zip", "master.zip", False),
++            ("name conflict", "company.zip", "master.zip", False),
++            ("encoded name", "%6daster.zip", "master.zip", False),
++            ("nested child", "nested/master.zip", "master.zip", False),
++            ("query", "master.zip?q=1", "master.zip", False),
++            ("name separator", "master.zip", "nested/master.zip", False),
++            ("directory flag", "master.zip", "master.zip", True),
++            ("file flag", "QTR1/", "QTR1", False),
++            ("filing content", "/Archives/edgar/data/1/a.txt", "a.txt", False),
++        ]
++        for name, href, child, directory in cases:
++            with self.subTest(name=name), self.assertRaises(ValueError):
++                self.urls.child_url(parent, href, child, directory)
+diff --git a/packages/sec-edgar-ingest/tests/test_worksets.py b/packages/sec-edgar-ingest/tests/test_worksets.py
+new file mode 100644
+index 0000000..b2251a9
+--- /dev/null
++++ b/packages/sec-edgar-ingest/tests/test_worksets.py
+@@ -0,0 +1,220 @@
++import copy
++import importlib
++import importlib.util
++import json
++import unittest
++from dataclasses import FrozenInstanceError, replace
++from datetime import datetime, timedelta, timezone
++from pathlib import Path
++
++from support import fixture_context, fixture_settings, fixture_source, fixture_workset
++
++
++class WorksetTests(unittest.TestCase):
++    def setUp(self):
++        self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.worksets"),
++                             "Immutable workset identity must be enforced")
++        self.worksets = importlib.import_module("sec_edgar_ingest.worksets")
++        self.models = importlib.import_module("sec_edgar_ingest.models")
++
++    def snapshot(self, source, digest="b" * 64):
++        return self.models.Snapshot(source.source_id, digest,
++                                    f"raw/{source.source_id}/{digest}/master.zip", 12,
++                                    fixture_context().started_at, {"etag": "abc"}, "zip", "sec-quarterly-envelope-v1")
++
++    def tamper(self, workset, edit, decoder=None):
++        value = json.loads(self.worksets.encode_workset(workset))
++        edit(value)
++        value["workset_id"] = self.worksets.workset_digest({key: item for key, item in value.items() if key != "workset_id"})
++        with self.assertRaises(ValueError):
++            (decoder or self.worksets.decode_source_workset)(self.worksets.canonical_json(value))
++
++    def test_member_order_does_not_change_workset_identity(self):
++        a, b = fixture_source("2015Q1"), fixture_source("2015Q2")
++        first = fixture_workset((a, b))
++        second = fixture_workset((b, a))
++        self.assertEqual(first.workset_id, second.workset_id)
++        self.assertEqual(self.worksets.decode_source_workset(self.worksets.encode_workset(first)), first)
++        changed = replace(first, pinned_end_quarter="2026Q3")
++        with self.assertRaisesRegex(ValueError, "identity"):
++            self.worksets.decode_source_workset(self.worksets.encode_workset(changed))
++
++    def test_changed_context_or_content_changes_identity(self):
++        source = fixture_source()
++        first = fixture_workset((source,))
++        changed = self.worksets.make_source_workset(replace(first.context, execution_id="different"),
++                  first.pinned_end_quarter, first.discovery_id, first.members, first.directories, first.overlap_from)
++        self.assertNotEqual(first.workset_id, changed.workset_id)
++        refreshed = self.worksets.make_source_workset(replace(first.context, command="refresh"),
++                  first.pinned_end_quarter, first.discovery_id, first.members, first.directories, first.overlap_from)
++        self.assertEqual(refreshed.acquisition_mode, "refresh")
++        self.assertNotEqual(first.workset_id, refreshed.workset_id)
++        one = self.worksets.make_snapshot_workset(first, (self.snapshot(source),))
++        two = self.worksets.make_snapshot_workset(first, (self.snapshot(source, "c" * 64),))
++        self.assertNotEqual(one.workset_id, two.workset_id)
++        self.assertEqual(self.worksets.decode_snapshot_workset(self.worksets.encode_workset(one)), one)
++
++    def test_detached_serializers_and_deep_immutability(self):
++        source = fixture_source()
++        workset = fixture_workset((source,))
++        context_mapping = workset.context.to_mapping()
++        context_mapping["effective_config"]["sec"]["user_agent"] = "mutated"
++        self.assertEqual(workset.context.effective_config["sec"]["requests_per_second"], 3)
++        with self.assertRaises(TypeError):
++            workset.context.effective_config["sec"]["requests_per_second"] = 9
++        with self.assertRaises(FrozenInstanceError):
++            source.period = "changed"
++        error_input = {"nested": {"items": ["first"]}}
++        error = self.models.Error("guard", "rejected", False, source.source_id, error_input)
++        error_input["nested"]["items"].append("second")
++        self.assertEqual(error.details["nested"]["items"], ("first",))
++        with self.assertRaises(TypeError):
++            error.details["nested"]["new"] = True
++        exported = error.to_mapping()
++        exported["details"]["nested"]["items"].append("third")
++        self.assertEqual(error.details["nested"]["items"], ("first",))
++        snapshot = self.snapshot(source)
++        with self.assertRaises(TypeError):
++            snapshot.validators["etag"] = "changed"
++
++    def test_duplicate_sources_and_directory_identity_are_refused(self):
++        source = fixture_source()
++        with self.assertRaisesRegex(ValueError, "duplicate"):
++            fixture_workset((source, source))
++        workset = fixture_workset((source,))
++        with self.assertRaisesRegex(ValueError, "duplicate"):
++            self.worksets.make_source_workset(workset.context, workset.pinned_end_quarter, workset.discovery_id,
++                                             workset.members, workset.directories * 2, workset.overlap_from)
++        self.tamper(workset, lambda value: value["directories"][0].update(source_ids=[]))
++        self.tamper(workset, lambda value: value["members"][0].update(source_id="d" * 64))
++
++    def test_empty_complete_requires_successful_directory_evidence(self):
++        empty = fixture_workset(())
++        self.assertTrue(empty.discovery_complete)
++        self.assertEqual(self.worksets.decode_source_workset(self.worksets.encode_workset(empty)), empty)
++        failed = fixture_workset((), discovery_complete=False)
++        self.assertFalse(failed.discovery_complete)
++        with self.assertRaisesRegex(ValueError, "incomplete"):
++            self.worksets.make_snapshot_workset(failed, ())
++        self.tamper(empty, lambda value: value.update(directories=[]))
++        self.tamper(failed, lambda value: value.update(discovery_complete=True))
++
++    def test_decoder_rejects_versions_unknown_fields_timestamps_and_hashes(self):
++        workset = fixture_workset((fixture_source(),))
++        cases = [
++            ("version", lambda value: value.update(format_version="sec-acquisition-v2")),
++            ("unknown", lambda value: value.update(latest="current")),
++            ("naive UTC", lambda value: value["context"].update(started_at="2026-10-06T00:00:00")),
++            ("offset UTC", lambda value: value["context"].update(started_at="2026-10-06T01:00:00+01:00")),
++            ("schema", lambda value: value["context"].update(schema_version="sec-index-v2")),
++            ("config SHA", lambda value: value["context"].update(config_sha256="f" * 64)),
++            ("nonhex", lambda value: value["directories"][0].update(listing_sha256="Z" * 64)),
++            ("unpinned", lambda value: value.update(pinned_end_quarter="open")),
++            ("future", lambda value: value.update(pinned_end_quarter="2027Q1")),
++            ("mutable config", lambda value: value["context"]["effective_config"]["sec"].update(requests_per_second=8)),
++        ]
++        for name, edit in cases:
++            with self.subTest(name=name):
++                self.tamper(workset, edit)
++        body = self.worksets.encode_workset(workset)
++        with self.assertRaises(ValueError):
++            self.worksets.decode_source_workset(body.replace(b'"format_version":', b'"format_version":"sec-acquisition-v1","format_version":'))
++        with self.assertRaises(ValueError):
++            self.worksets.decode_source_workset(b'{"value":NaN}')
++
++    def test_snapshot_requires_exact_members_and_immutable_raw_reference(self):
++        a, b = fixture_source("2015Q1"), fixture_source("2015Q2")
++        source = fixture_workset((a, b))
++        with self.assertRaisesRegex(ValueError, "member"):
++            self.worksets.make_snapshot_workset(source, (self.snapshot(a),))
++        with self.assertRaisesRegex(ValueError, "duplicate"):
++            self.worksets.make_snapshot_workset(source, (self.snapshot(a), self.snapshot(a)))
++        with self.assertRaises(ValueError):
++            self.snapshot(a, "not-a-hash")
++        with self.assertRaises(ValueError):
++            replace(self.snapshot(a), raw_path="raw/latest/master.zip")
++        with self.assertRaises(ValueError):
++            replace(self.snapshot(a), raw_path="../raw/" + "b" * 64)
++        with self.assertRaises(ValueError):
++            replace(self.snapshot(a), representation="idx")
++        snapshot = self.worksets.make_snapshot_workset(source, (self.snapshot(b), self.snapshot(a)))
++        self.assertEqual(snapshot.source_workset_id, source.workset_id)
++        self.assertEqual(snapshot.directories, source.directories)
++        self.assertEqual(snapshot.overlap_from, source.overlap_from)
++        self.assertEqual(snapshot.pinned_end_quarter, source.pinned_end_quarter)
++        self.tamper(snapshot, lambda value: value["snapshots"].pop(), self.worksets.decode_snapshot_workset)
++        self.tamper(snapshot, lambda value: value["snapshots"][0].update(raw_path="raw/latest"), self.worksets.decode_snapshot_workset)
++
++    def test_common_records_have_complete_detached_mapping_round_trips(self):
++        context = fixture_context()
++        source = fixture_source()
++        error = self.models.Error("failure", "details", True, source.source_id, {"nested": [1]})
++        records = [
++            source, context, error, self.snapshot(source),
++            self.models.Binding("a" * 64, source.source_id, "b" * 64),
++            self.models.Versioned({"nested": {"list": [1]}}, 'W/"actual-etag"'),
++            self.models.QueueTicket("ticket", "owner", "daily", context.started_at, context.deadline),
++            self.models.Permit("owner", 1, "request", context.started_at, context.deadline,
++                               context.deadline + timedelta(seconds=2), 10., 100.),
++            self.models.BodyReceipt(source.canonical_url, 200, {"ETag": "abc"}, Path("staging/body"),
++                                    context.started_at, 12, "b" * 64, True, None),
++            self.models.CommandResult(context, "incomplete", None, None, 1, 0, 0, 1, 0, 0,
++                                      (error,), context.started_at, context.deadline),
++        ]
++        records.append(self.models.ValidatedBody(records[-2], "zip", "sec-quarterly-envelope-v1", 20))
++        for record in records:
++            with self.subTest(record=type(record).__name__):
++                self.assertEqual(type(record).from_mapping(record.to_mapping()), record)
++        versioned = records[5]
++        with self.assertRaises(TypeError):
++            versioned.value["nested"]["list"] = ()
++
++    def test_common_records_reject_mutable_wrong_typed_fields(self):
++        context = fixture_context()
++        constructors = [
++            ("context mapping", lambda: replace(fixture_workset(()), context=context.to_mapping())),
++            ("mutable members", lambda: replace(fixture_workset(()), members=({"source_id": "a" * 64},))),
++            ("mutable errors", lambda: self.models.CommandResult(context, "failure", None, None,
++                                     0, 0, 0, 0, 1, 0, ({"code": "bad"},), context.started_at, context.deadline)),
++            ("wrong receipt", lambda: self.models.ValidatedBody({"complete": True}, "zip", "sec-quarterly-envelope-v1", 1)),
++        ]
++        for name, constructor in constructors:
++            with self.subTest(name=name):
++                try:
++                    constructor()
++                except Exception as error:
++                    self.assertIsInstance(error, ValueError, "invalid typed record must report a contract error")
++                else:
++                    self.fail("invalid typed record accepted")
++        workset = fixture_workset((fixture_source(),))
++        self.assertEqual(copy.deepcopy(workset), workset)
++
++    def test_version_and_directory_content_are_part_of_identity(self):
++        first = fixture_workset((fixture_source(),))
++        changed_directory = replace(first.directories[0], listing_sha256="d" * 64)
++        second = self.worksets.make_source_workset(first.context, first.pinned_end_quarter, first.discovery_id,
++                    first.members, (changed_directory,), first.overlap_from)
++        self.assertNotEqual(first.workset_id, second.workset_id)
++        settings = fixture_settings(etl={"parser_version": "fixture-envelope-v2"})
++        context = replace(first.context, parser_version=settings.etl.parser_version,
++                          config_sha256=settings.config_sha256)
++        config = importlib.import_module("sec_edgar_ingest.config")
++        context = config.pin_context(settings, context, context.started_at.date())[0]
++        third = self.worksets.make_source_workset(context, first.pinned_end_quarter, first.discovery_id,
++                                                 first.members, first.directories, first.overlap_from)
++        self.assertNotEqual(first.workset_id, third.workset_id)
++
++    def test_body_receipt_and_snapshot_envelopes_are_explicit(self):
++        source = fixture_source()
++        snapshot = self.snapshot(source)
++        self.assertEqual(snapshot.envelope_version, "sec-quarterly-envelope-v1")
++        for name, changes in [
++            ("unknown envelope", {"envelope_version": "latest"}),
++            ("wrong representation envelope", {"envelope_version": "sec-daily-envelope-v1"}),
++            ("wrong timestamp", {"received_at": datetime(2026, 10, 6)}),
++        ]:
++            with self.subTest(name=name), self.assertRaises(ValueError):
++                replace(snapshot, **changes)
++        workset = fixture_workset((source,))
++        with self.assertRaises(ValueError):
++            self.worksets.decode_source_workset(self.worksets.encode_workset(workset).decode().encode("utf-16"))

@@ -1,0 +1,77 @@
+argv=['.venv/bin/python', '-m', 'unittest', 'discover', '-s', 'packages/sec-edgar-ingest/tests', '-p', 'test_acquisition_processes.py', '-v']
+stdout:
+
+stderr:
+test_held_socket_parent_death_zero_successor_unsafe_interval_and_daily_next (test_acquisition_processes.AcquisitionProcessTests.test_held_socket_parent_death_zero_successor_unsafe_interval_and_daily_next) ... FAIL
+test_stale_sender_awakened_after_allowed_start_sends_zero (test_acquisition_processes.AcquisitionProcessTests.test_stale_sender_awakened_after_allowed_start_sends_zero) ... ERROR
+test_three_independent_collectors_barrier_request_and_actual_binding_race (test_acquisition_processes.AcquisitionProcessTests.test_three_independent_collectors_barrier_request_and_actual_binding_race) ... FAIL
+
+======================================================================
+ERROR: test_stale_sender_awakened_after_allowed_start_sends_zero (test_acquisition_processes.AcquisitionProcessTests.test_stale_sender_awakened_after_allowed_start_sends_zero)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/download.py", line 642, in send
+    process.start()
+    ~~~~~~~~~~~~~^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/multiprocessing/process.py", line 121, in start
+    self._popen = self._Popen(self)
+                  ~~~~~~~~~~~^^^^^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/multiprocessing/context.py", line 288, in _Popen
+    return Popen(process_obj)
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/multiprocessing/popen_spawn_posix.py", line 32, in __init__
+    super().__init__(process_obj)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/multiprocessing/popen_fork.py", line 20, in __init__
+    self._launch(process_obj)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/multiprocessing/popen_spawn_posix.py", line 47, in _launch
+    reduction.dump(process_obj, fp)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/multiprocessing/reduction.py", line 60, in dump
+    ForkingPickler(file, protocol).dump(obj)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+TypeError: cannot pickle '_thread.lock' object
+when serializing dict item '_lock'
+when serializing threading.Condition state
+when serializing threading.Condition object
+when serializing dict item '_cond'
+when serializing threading.Event state
+when serializing threading.Event object
+when serializing tuple item 1
+when serializing dict item '_args'
+when serializing multiprocessing.context.SpawnProcess state
+when serializing multiprocessing.context.SpawnProcess object
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_acquisition_processes.py", line 95, in test_stale_sender_awakened_after_allowed_start_sends_zero
+    receipt = sender.send(server.url, real_context(clock, settings), real_permit(clock, seconds=0.4), cancellation=threading.Event())
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/download.py", line 670, in send
+    raise SenderFailure("HTTP supervisor could not confirm its child outcome: "+str(error), receipt) from error
+sec_edgar_ingest.download.SenderFailure: HTTP supervisor could not confirm its child outcome: cannot pickle '_thread.lock' object
+
+======================================================================
+FAIL: test_held_socket_parent_death_zero_successor_unsafe_interval_and_daily_next (test_acquisition_processes.AcquisitionProcessTests.test_held_socket_parent_death_zero_successor_unsafe_interval_and_daily_next)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_acquisition_processes.py", line 73, in test_held_socket_parent_death_zero_successor_unsafe_interval_and_daily_next
+    self.assertTrue(hasattr(support, 'integrated_takeover_proof'), 'Task 8 needs an integrated held-socket takeover trace')
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : Task 8 needs an integrated held-socket takeover trace
+
+======================================================================
+FAIL: test_three_independent_collectors_barrier_request_and_actual_binding_race (test_acquisition_processes.AcquisitionProcessTests.test_three_independent_collectors_barrier_request_and_actual_binding_race)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_acquisition_processes.py", line 19, in test_three_independent_collectors_barrier_request_and_actual_binding_race
+    self.assertTrue(hasattr(support, 'acquisition_race_entry'), 'Task 8 needs three independent collecting processes and request/binding barriers')
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : Task 8 needs three independent collecting processes and request/binding barriers
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.057s
+
+FAILED (failures=2, errors=1)
+
+exit_code=1

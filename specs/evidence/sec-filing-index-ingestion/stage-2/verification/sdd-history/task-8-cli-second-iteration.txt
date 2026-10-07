@@ -1,0 +1,25 @@
+argv=['.venv/bin/python', '-m', 'unittest', 'discover', '-s', 'packages/sec-edgar-ingest/tests', '-p', 'test_cli.py', '-v']
+stdout:
+
+stderr:
+test_collection_outcomes_are_named_and_non_success (test_cli.CliTests.test_collection_outcomes_are_named_and_non_success) ... ok
+test_completed_attempt_cannot_change_config_deadline_mode_refresh_or_workset (test_cli.CliTests.test_completed_attempt_cannot_change_config_deadline_mode_refresh_or_workset) ... ok
+test_failed_discovery_is_not_empty_success (test_cli.CliTests.test_failed_discovery_is_not_empty_success) ... ok
+test_fixture_pack_required_and_overrides_rejected_in_azure_before_clients (test_cli.CliTests.test_fixture_pack_required_and_overrides_rejected_in_azure_before_clients) ... ok
+test_missing_identity_creates_no_external_clients (test_cli.CliTests.test_missing_identity_creates_no_external_clients) ... ok
+test_success_result_current_context_hash_and_replay_no_requests (test_cli.CliTests.test_success_result_current_context_hash_and_replay_no_requests) ... ok
+test_unknown_and_missing_workset_refuse_without_false_completion (test_cli.CliTests.test_unknown_and_missing_workset_refuse_without_false_completion) ... ok
+test_unsafe_identifiers_refuse_before_backend_construction (test_cli.CliTests.test_unsafe_identifiers_refuse_before_backend_construction) ... ok
+test_valid_empty_and_help_do_not_offer_unimplemented_stages (test_cli.CliTests.test_valid_empty_and_help_do_not_offer_unimplemented_stages) ... ok
+test_pack_validates_hash_provenance_url_path_and_never_falls_back (test_cli.FixturePackTests.test_pack_validates_hash_provenance_url_path_and_never_falls_back) ... ok
+test_canonical_result_codec_is_strict_and_roundtrips (test_cli.ResultTests.test_canonical_result_codec_is_strict_and_roundtrips) ... ok
+test_exact_exit_mapping_and_structured_event (test_cli.ResultTests.test_exact_exit_mapping_and_structured_event) ... ok
+test_result_precedes_attempt_and_conflicting_bytes_refuse (test_cli.ResultTests.test_result_precedes_attempt_and_conflicting_bytes_refuse) ... ok
+test_result_reader_refuses_wrong_path_correlation (test_cli.ResultTests.test_result_reader_refuses_wrong_path_correlation) ... ok
+
+----------------------------------------------------------------------
+Ran 14 tests in 31.429s
+
+OK
+
+exit_code=0

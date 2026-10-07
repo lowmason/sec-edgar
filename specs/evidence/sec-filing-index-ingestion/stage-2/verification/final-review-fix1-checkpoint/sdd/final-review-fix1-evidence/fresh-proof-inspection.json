@@ -1,0 +1,450 @@
+{
+  "actual_implementation_head": "66f4aa9caa5b9c5bbe943026e7dbc7adc1e8b25f",
+  "all22_stage7_checks": "reserved",
+  "base": "9098fe9b664d9f44a663fdd8357e34030c37e932",
+  "check": {
+    "all_output_lines_inspected": true,
+    "command": {
+      "argv": [
+        "scripts/check-sec-edgar-ingest.sh"
+      ],
+      "cwd": "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar",
+      "elapsed_seconds": 106.99618458282202,
+      "exit": 0
+    },
+    "stderr": {
+      "bytes": 49948,
+      "path": ".sdd/2-sec-filing-index-ingestion-stage-2-spec/final-review-fix1-evidence/latest-complete-check-corrected.stderr.txt",
+      "sha256": "dbd06ab5e7211f84abbb04ead35838721937e0ec54abe914cd20896403a6273a"
+    },
+    "stdout": {
+      "bytes": 239,
+      "path": ".sdd/2-sec-filing-index-ingestion-stage-2-spec/final-review-fix1-evidence/latest-complete-check-corrected.stdout.txt",
+      "sha256": "ba27b3d9a4d1a3c5ca3a96921f0a6905567cb342878a6040211c3f49ecd2a4f3"
+    },
+    "test_footer": "Ran 302 tests in 106.619s",
+    "test_records": 302
+  },
+  "combined": {
+    "command_exits": [
+      {
+        "exit": 2,
+        "label": "literal-absolute-root-refusal"
+      },
+      {
+        "exit": 0,
+        "label": "discover-1"
+      },
+      {
+        "exit": 0,
+        "label": "collect-1"
+      },
+      {
+        "exit": 0,
+        "label": "collect-2"
+      },
+      {
+        "exit": 0,
+        "label": "collect-1-exact-replay"
+      },
+      {
+        "exit": 2,
+        "label": "closed-quarter-daily-refusal"
+      },
+      {
+        "exit": 0,
+        "label": "daily-discover-1"
+      },
+      {
+        "exit": 3,
+        "label": "daily-collect-1"
+      },
+      {
+        "exit": 3,
+        "label": "daily-collect-1-replay"
+      },
+      {
+        "exit": 0,
+        "label": "daily-collect-2"
+      },
+      {
+        "exit": 0,
+        "label": "daily-collect-3"
+      }
+    ],
+    "completed_members_fetched_once": true,
+    "config_sha256": {
+      "proposed_daily": "6bf4c06fd8d4891aad27fbeb1221dbfb08920a670d79462233c3fbff83d4ac6f",
+      "quarterly": "a8b1ebc0e3e64c56d9aad5e7b4b15ca111495885c2a9849dbc96721c203ab856"
+    },
+    "contexts": [
+      {
+        "attempt": "discover-1",
+        "current_started_at": "2026-10-07T00:31:23.697895+00:00",
+        "execution": "fixture-discover",
+        "source_origin_started_at": "2026-10-07T00:31:23.697895+00:00"
+      },
+      {
+        "attempt": "collect-1",
+        "current_started_at": "2026-10-07T00:31:25.180958+00:00",
+        "execution": "fixture-collect",
+        "source_origin_started_at": "2026-10-07T00:31:23.697895+00:00"
+      },
+      {
+        "attempt": "collect-2",
+        "current_started_at": "2026-10-07T00:31:25.874271+00:00",
+        "execution": "fixture-collect-retry",
+        "source_origin_started_at": "2026-10-07T00:31:23.697895+00:00"
+      },
+      {
+        "attempt": "daily-discover-1",
+        "current_started_at": "2026-10-07T00:31:26.145557+00:00",
+        "execution": "fixture-daily-discover",
+        "source_origin_started_at": "2026-10-07T00:31:26.145557+00:00"
+      },
+      {
+        "attempt": "daily-collect-1",
+        "current_started_at": "2026-10-07T00:31:28.549994+00:00",
+        "execution": "fixture-daily-collect",
+        "source_origin_started_at": "2026-10-07T00:31:26.145557+00:00"
+      },
+      {
+        "attempt": "daily-collect-2",
+        "current_started_at": "2026-10-07T00:31:29.995901+00:00",
+        "execution": "fixture-daily-retry",
+        "source_origin_started_at": "2026-10-07T00:31:26.145557+00:00"
+      },
+      {
+        "attempt": "daily-collect-3",
+        "current_started_at": "2026-10-07T00:31:30.592251+00:00",
+        "execution": "fixture-daily-offline",
+        "source_origin_started_at": "2026-10-07T00:31:26.145557+00:00"
+      }
+    ],
+    "cursor_values": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      2
+    ],
+    "delayed_statuses": [
+      404,
+      200
+    ],
+    "exact_complete_and_incomplete_replays_equal": true,
+    "manifest": {
+      "manifest": {
+        "bytes": 18628,
+        "path": "specs/evidence/sec-filing-index-ingestion/stage-2/verification/sec-edgar-stage-2-46bhxh8j/sha256-manifest.json",
+        "sha256": "beee194e1a67f1870c2b1d948c9ea29044f6ba0b6d9da0008443ccb13a8d4ab7"
+      },
+      "payload_records": 96,
+      "physical_bytes": 502536,
+      "physical_files": 97,
+      "root": "specs/evidence/sec-filing-index-ingestion/stage-2/verification/sec-edgar-stage-2-46bhxh8j",
+      "rootmap": {
+        "bytes": 752,
+        "path": "specs/evidence/sec-filing-index-ingestion/stage-2/verification/sec-edgar-stage-2-46bhxh8j/retention-map.json",
+        "sha256": "ccacf92a765a38e22a7fe53e8c9a5f4178e036189f5ff5e204a3fe65c594d157"
+      }
+    },
+    "raw": {
+      "raw/sec/indexes/kind=daily/period=2026-10-01/sha256=4dc2efcff18a472cac890b5a3e4cc38a1f78a6fd9e672e0a8dababec4a91e6c0/master.idx": {
+        "bytes": 230,
+        "sha256": "4dc2efcff18a472cac890b5a3e4cc38a1f78a6fd9e672e0a8dababec4a91e6c0",
+        "source_id": "6cf7f339fd98f08d888586fbf41d907cb071d3a54259128e659f51e1f7caaa72"
+      },
+      "raw/sec/indexes/kind=daily/period=2026-10-02/sha256=258e0245ed05b9340e156bc1572f88425962b0bcb9b25eca60ecb8c6052815c9/master.idx": {
+        "bytes": 230,
+        "sha256": "258e0245ed05b9340e156bc1572f88425962b0bcb9b25eca60ecb8c6052815c9",
+        "source_id": "0a6a3b5899f59720e13ac68455ccce6375e2065fc210d9dda6f00c3be4371bf4"
+      },
+      "raw/sec/indexes/kind=quarterly/period=2015Q1/sha256=68b0e0e1c09010a02e45ac0d0adc2621f23d61a84448064d15d0cee9e5aab399/master.zip": {
+        "bytes": 261,
+        "sha256": "68b0e0e1c09010a02e45ac0d0adc2621f23d61a84448064d15d0cee9e5aab399",
+        "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998"
+      }
+    },
+    "table_counts": {
+      "Attempt": 7,
+      "Binding": 3,
+      "FixtureResponseCursor": 10,
+      "TransportAttempt": 11
+    },
+    "transports_by_attempt": {
+      "collect-1": 1,
+      "collect-2": 0,
+      "daily-collect-1": 2,
+      "daily-collect-2": 1,
+      "daily-collect-3": 0,
+      "daily-discover-1": 4,
+      "discover-1": 3
+    },
+    "worksets": {
+      "worksets/sec/snapshot/sha256=aee51809276870393e90d9ede0399baacfe2f96798a6ae9c2ed26c4aba01bb98/workset.json": "aee51809276870393e90d9ede0399baacfe2f96798a6ae9c2ed26c4aba01bb98",
+      "worksets/sec/snapshot/sha256=b6388dacb7dd1743eeb58d05c4dff7a4cdef255ac5c24ceefd96542a06efaec5/workset.json": "b6388dacb7dd1743eeb58d05c4dff7a4cdef255ac5c24ceefd96542a06efaec5",
+      "worksets/sec/source/sha256=2d51330ddb11231aa5331f83a835b647913f79b3e902f04620b9493781f2622c/workset.json": "2d51330ddb11231aa5331f83a835b647913f79b3e902f04620b9493781f2622c",
+      "worksets/sec/source/sha256=f9885e59487ca8fc3adb228658c4829f7c4bf39e668b477527e2dd5c7132ea4d/workset.json": "f9885e59487ca8fc3adb228658c4829f7c4bf39e668b477527e2dd5c7132ea4d"
+    }
+  },
+  "compatibility": {
+    "four_historical_combined_worksets_decode_and_encode_unchanged": [
+      {
+        "bytes": 4579,
+        "path": "specs/evidence/sec-filing-index-ingestion/stage-2/verification/sec-edgar-stage-2-k8g11etz/state/.fixture-state/objects/worksets/sec/snapshot/sha256=47c7d3517815f0932f6bce1b1701500854b0dd5b954904734824c073e375198f/workset.json",
+        "sha256": "dd1ebab03beb14b870466401dbccc4ce47c7d0c730ba867c1c867997cb4d4407",
+        "workset_id": "47c7d3517815f0932f6bce1b1701500854b0dd5b954904734824c073e375198f"
+      },
+      {
+        "bytes": 3704,
+        "path": "specs/evidence/sec-filing-index-ingestion/stage-2/verification/sec-edgar-stage-2-k8g11etz/state/.fixture-state/objects/worksets/sec/snapshot/sha256=d1308ba7f1dec961504aaf1705713a4e7ae81d2d462d08b33e86ed2cd414d5b7/workset.json",
+        "sha256": "b9a270dd3d214358731c8ed6be89c418e89822cd315cbc573ddc54d742230573",
+        "workset_id": "d1308ba7f1dec961504aaf1705713a4e7ae81d2d462d08b33e86ed2cd414d5b7"
+      },
+      {
+        "bytes": 3325,
+        "path": "specs/evidence/sec-filing-index-ingestion/stage-2/verification/sec-edgar-stage-2-k8g11etz/state/.fixture-state/objects/worksets/sec/source/sha256=21fcc11d93bb2e1aade886510e9a4648b633199110d7eb797cbce09d2dfa16de/workset.json",
+        "sha256": "83ccb71ebdaeecdb8b1f0ee68d86fe7d94575eb8d65c8a6ee4b1bae611f19107",
+        "workset_id": "21fcc11d93bb2e1aade886510e9a4648b633199110d7eb797cbce09d2dfa16de"
+      },
+      {
+        "bytes": 3885,
+        "path": "specs/evidence/sec-filing-index-ingestion/stage-2/verification/sec-edgar-stage-2-k8g11etz/state/.fixture-state/objects/worksets/sec/source/sha256=2492e6531be8b568621521e16c984bf415dccc70d034207e81cc2d6d8034a64d/workset.json",
+        "sha256": "90f19e518f10526de157945a1fb8cae34e803a65949fd97bd358c91e14a54fc8",
+        "workset_id": "2492e6531be8b568621521e16c984bf415dccc70d034207e81cc2d6d8034a64d"
+      }
+    ],
+    "generated_BASE_byte_comparisons": [
+      {
+        "encoded_bytes_equal_BASE": true,
+        "kinds": [
+          "quarterly"
+        ],
+        "snapshot_id": "4fe3cf8b05420137215ce8e7ed54a317c2eac94e8c8d02b0fd0201c075e075cb",
+        "source_id": "7ec4bbc8a277d1fb0681c534bb9dab61273e3633e8c618bff9f5bbd14bdaa1d1"
+      },
+      {
+        "encoded_bytes_equal_BASE": true,
+        "kinds": [
+          "daily"
+        ],
+        "snapshot_id": "4ac627345b73c1842e8a75e97757b2b1f98c470231103808cb82b12c7456e289",
+        "source_id": "a9b3bb2502f1480ac05c3987f04fb5ab8c126ad418ee01d4fd05e1dc6db168cf"
+      },
+      {
+        "encoded_bytes_equal_BASE": true,
+        "kinds": [
+          "daily",
+          "daily"
+        ],
+        "snapshot_id": "2fcfdd13811407272e86c02eacd68d48dd070d3b91e639507382a73c77a6535f",
+        "source_id": "03b5c900ef0e857b42e6cae3593964dfa12d9542cc5c528593e3e4331353d074"
+      }
+    ]
+  },
+  "exit_code": 0,
+  "fresh_scoped_review": "pending controller",
+  "installed": {
+    "all19_source_and_typing_files_equal_wheel": true,
+    "artifact_hashes": [
+      {
+        "bytes": 79085,
+        "path": "specs/evidence/sec-filing-index-ingestion/stage-2/verification/sec-edgar-wheel-n0zc5qlc/build-artifacts/sec_edgar_ingest-0.1.0-py3-none-any.whl",
+        "sha256": "349b9524fca4963de4a2ffdf3fb96f28708c01dba49564594a92944cc3ee5d28"
+      },
+      {
+        "bytes": 67566,
+        "path": "specs/evidence/sec-filing-index-ingestion/stage-2/verification/sec-edgar-wheel-n0zc5qlc/build-artifacts/sec_edgar_ingest-0.1.0.tar.gz",
+        "sha256": "fce247b48d02155eed403ff0456f5e5bc246cde244534e6eb428c9a44d361b30"
+      }
+    ],
+    "command_count": 11,
+    "exact_replay_no_http": true,
+    "installed_versions": {
+      "cli_file": "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-wheel-n0zc5qlc/fresh-env/lib/python3.14/site-packages/sec_edgar_ingest/cli.py",
+      "package_file": "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-wheel-n0zc5qlc/fresh-env/lib/python3.14/site-packages/sec_edgar_ingest/__init__.py",
+      "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+      "prefix": "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-edgar-wheel-n0zc5qlc/fresh-env",
+      "python": "3.14.0 (main, Oct 14 2025, 21:10:22) [Clang 20.1.4 ]",
+      "version": "0.1.0",
+      "versions": {
+        "PyJWT": "2.15.1",
+        "azure-core": "1.41.0",
+        "azure-data-tables": "12.7.0",
+        "azure-identity": "1.26.0",
+        "azure-storage-blob": "12.31.0",
+        "certifi": "2026.7.22",
+        "cffi": "2.1.1",
+        "charset-normalizer": "3.5.2",
+        "cryptography": "50.0.2",
+        "idna": "3.20",
+        "isodate": "0.7.2",
+        "msal": "1.39.0",
+        "msal-extensions": "1.3.1",
+        "multidict": "7.0.0",
+        "propcache": "0.5.4",
+        "pycparser": "3.0",
+        "requests": "2.34.2",
+        "sec-edgar-ingest": "0.1.0",
+        "typing_extensions": "4.16.0",
+        "urllib3": "2.8.0",
+        "yarl": "1.25.1"
+      }
+    },
+    "manifest": {
+      "manifest": {
+        "bytes": 13454,
+        "path": "specs/evidence/sec-filing-index-ingestion/stage-2/verification/sec-edgar-wheel-n0zc5qlc/sha256-manifest.json",
+        "sha256": "126a1c3c666e1e41f63d37f68ec95ec145f55a28ec6a1ea97676fa9941caff47"
+      },
+      "payload_records": 78,
+      "physical_bytes": 489607,
+      "physical_files": 79,
+      "root": "specs/evidence/sec-filing-index-ingestion/stage-2/verification/sec-edgar-wheel-n0zc5qlc",
+      "rootmap": {
+        "bytes": 458,
+        "path": "specs/evidence/sec-filing-index-ingestion/stage-2/verification/sec-edgar-wheel-n0zc5qlc/retention-map.json",
+        "sha256": "54bb08335d8dec94bf4b735562f266fdfcedba88d61cf575f5153968b4a65626"
+      }
+    },
+    "only_two_production_files_changed_from_BASE": true,
+    "package_source_hashes": [
+      {
+        "bytes": 22,
+        "equals_base": true,
+        "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/__init__.py",
+        "sha256": "91447944015cec709e8aa7655f7e9d64e1e4508e7023a57fe3746911c0fc6fed"
+      },
+      {
+        "bytes": 79,
+        "equals_base": true,
+        "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/__main__.py",
+        "sha256": "307299fda7b77d22c64cb51430ec75e5f59d78e9c948786afb3b2544fe45e4b7"
+      },
+      {
+        "bytes": 14383,
+        "equals_base": true,
+        "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/cli.py",
+        "sha256": "7216fcf2f07c965770a4ece67ed9a785afcebc95a6f93c1556b7c79e06671a84"
+      },
+      {
+        "bytes": 22873,
+        "equals_base": true,
+        "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/collection.py",
+        "sha256": "68b655a18d1e5eca7f5d1c5de860f0644a3ccc34ad9ea6edb579ae5a9738f3c9"
+      },
+      {
+        "bytes": 13948,
+        "equals_base": true,
+        "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/config.py",
+        "sha256": "23f302368bf3e9a04204d89679cb087cc6f5f985f134cd48f32086c45339a264"
+      },
+      {
+        "bytes": 29853,
+        "equals_base": true,
+        "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/coordination.py",
+        "sha256": "ee768738ddfa81116c12e7491ed7d1c48cafeccf5de23a2947624329731ffb96"
+      },
+      {
+        "bytes": 21217,
+        "equals_base": true,
+        "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/discovery.py",
+        "sha256": "187a0cfb0c5f44709696dc12feed5cf3698ce7084f701cf7460be042568016b5"
+      },
+      {
+        "bytes": 42134,
+        "equals_base": true,
+        "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/download.py",
+        "sha256": "467068de88ec939c5b60e7d37852c722170a4c218ed0ba1c004ff74c2b627473"
+      },
+      {
+        "bytes": 24775,
+        "equals_base": true,
+        "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py",
+        "sha256": "6442fd063727d5eae7958d12e24e4668ec1dddbd184ee4f235c4208632af03c4"
+      },
+      {
+        "bytes": 0,
+        "equals_base": true,
+        "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/py.typed",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "bytes": 2466,
+        "equals_base": true,
+        "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/results.py",
+        "sha256": "aac391e5860eadbba547f4d1d5fdfd93c407a541c254834db95d717029c3f29a"
+      },
+      {
+        "bytes": 31268,
+        "equals_base": true,
+        "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/state.py",
+        "sha256": "4b5c2fc42d3a824cb404bc221ef3fd48f081f9cd03dc2d633ee83c21c7fb8184"
+      },
+      {
+        "bytes": 1205,
+        "equals_base": true,
+        "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/__init__.py",
+        "sha256": "a12bd5c1b2590957895bc75bddbc88e99d08e9df380435e5add8ee3a6a6b9d00"
+      },
+      {
+        "bytes": 25749,
+        "equals_base": false,
+        "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py",
+        "sha256": "849957766c99e5b42b6c33e1f7b5fe78ecb5b84e19db6b87643f42bfb61a2133"
+      },
+      {
+        "bytes": 7502,
+        "equals_base": true,
+        "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/contracts.py",
+        "sha256": "cc76934066f5be3d894e066503f740ec1de085b84d27fbd090708da386ed4993"
+      },
+      {
+        "bytes": 19921,
+        "equals_base": true,
+        "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py",
+        "sha256": "bd1988d702556b04996508c390a46ba6ebed9365aae76b4bd83f3a719d4c484c"
+      },
+      {
+        "bytes": 4532,
+        "equals_base": true,
+        "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/urls.py",
+        "sha256": "7e1f20fc5c951c23efbbfec9a66e60ae4ecd4fda683fd1f95e20d59e28057d77"
+      },
+      {
+        "bytes": 11350,
+        "equals_base": true,
+        "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/validation.py",
+        "sha256": "1885960d908838ee4fa4e733bc91fdcfc1f773cdad2d807844e8e3405f4800b3"
+      },
+      {
+        "bytes": 10293,
+        "equals_base": false,
+        "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/worksets.py",
+        "sha256": "bc74aefcb04eb3fd0b11cc503b604f100664484cf49996a46b52f14ea0020cfd"
+      }
+    ],
+    "transport_count": 4
+  },
+  "live_access_or_credentials_used": false,
+  "owner_yes": {
+    "bytes": 579,
+    "path": "specs/evidence/sec-filing-index-ingestion/stage-2/verification/task-8-i1-checkpoint/sdd/task-8-daily-endpoint-owner-answer.json",
+    "sha256": "f9720b21df9f56135386496f39bb2ec4d310614410b1b5f8645fdc07a7b963ac"
+  },
+  "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+  "primary": {
+    "changed_protected_files": [],
+    "primary_status": " D packages/sec-edgar-index-ingest/README.md\n D packages/sec-edgar-index-ingest/pyproject.toml\n D packages/sec-edgar-index-ingest/src/sec_edgar_index_ingest/__init__.py\n D packages/sec-edgar-index-ingest/src/sec_edgar_index_ingest/py.typed\n?? specs/sec-filing-index-ingestion-roadmap.md\n",
+    "restored_deletions": []
+  },
+  "python": "3.14.0 (main, Oct 14 2025, 21:10:22) [Clang 20.1.4 ]",
+  "recorded_at": "2026-10-07T00:32:25.339155+00:00",
+  "sdk_source_hashes_unchanged": 27
+}

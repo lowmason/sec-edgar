@@ -1,0 +1,20 @@
+HEAD: 1d6f61947fac947d872cf0a395e93bbc252adaa2
+Command: uv run --offline --frozen --package sec-edgar-ingest python -m unittest discover -s packages/sec-edgar-ingest/tests -p test_coordination.py -k test_turn_deadline_conversion_cannot_add -v
+Exit: 1
+test_turn_deadline_conversion_cannot_add_the_delay_after_utc_sampling (test_coordination.CoordinationTests.test_turn_deadline_conversion_cannot_add_the_delay_after_utc_sampling) ... FAIL
+
+======================================================================
+FAIL: test_turn_deadline_conversion_cannot_add_the_delay_after_utc_sampling (test_coordination.CoordinationTests.test_turn_deadline_conversion_cannot_add_the_delay_after_utc_sampling)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_coordination.py", line 370, in test_turn_deadline_conversion_cannot_add_the_delay_after_utc_sampling
+    self.assertLessEqual(turn.deadline_mono, expected,
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "A turn deadline must not extend an absolute UTC deadline by a later mono sample")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 1.25 not less than or equal to 1.0 : A turn deadline must not extend an absolute UTC deadline by a later mono sample
+
+----------------------------------------------------------------------
+Ran 1 test in 0.019s
+
+FAILED (failures=1)

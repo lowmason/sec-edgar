@@ -1,0 +1,111 @@
+{
+  "events": [
+    {
+      "event": "socket-accepted",
+      "monotonic": 2771827.074554083
+    },
+    {
+      "event": "request-received",
+      "monotonic": 2771827.074600833
+    },
+    {
+      "event": "headers-sent",
+      "monotonic": 2771827.074618125
+    },
+    {
+      "byte_count": 21,
+      "event": "entity-sent",
+      "monotonic": 2771827.074640666
+    },
+    {
+      "byte_count": 42,
+      "event": "entity-sent",
+      "monotonic": 2771827.099714625
+    },
+    {
+      "byte_count": 63,
+      "event": "entity-sent",
+      "monotonic": 2771827.124770208
+    },
+    {
+      "byte_count": 84,
+      "event": "entity-sent",
+      "monotonic": 2771827.149818625
+    },
+    {
+      "byte_count": 105,
+      "event": "entity-sent",
+      "monotonic": 2771827.174858041
+    },
+    {
+      "byte_count": 126,
+      "event": "entity-sent",
+      "monotonic": 2771827.199898125
+    },
+    {
+      "byte_count": 147,
+      "event": "entity-sent",
+      "monotonic": 2771827.224934458
+    },
+    {
+      "byte_count": 168,
+      "event": "entity-sent",
+      "monotonic": 2771827.249975875
+    },
+    {
+      "byte_count": 189,
+      "event": "entity-sent",
+      "monotonic": 2771827.275024708
+    },
+    {
+      "byte_count": 210,
+      "event": "entity-sent",
+      "monotonic": 2771827.300065166
+    },
+    {
+      "byte_count": 231,
+      "event": "entity-sent",
+      "monotonic": 2771827.325096125
+    },
+    {
+      "byte_count": 252,
+      "event": "entity-sent",
+      "monotonic": 2771827.350143041
+    },
+    {
+      "event": "socket-closed",
+      "monotonic": 2771827.375186041
+    }
+  ],
+  "extra": {
+    "elapsed": 0.4131586248986423,
+    "receipt": {
+      "byte_count": 252,
+      "complete": false,
+      "error": {
+        "code": "ownership_lost",
+        "details": {
+          "epoch": 1,
+          "next_allowed_at": "2026-10-07T00:22:43.663521+00:00",
+          "request_id": "f1135c5e35b94f02a2d5daa02373e464"
+        },
+        "message": "turn/lease/exchange monotonic window expired",
+        "retryable": true,
+        "source_id": null
+      },
+      "headers": {
+        "Connection": "close",
+        "Content-Length": "1000000"
+      },
+      "received_at": "2026-10-07T00:22:43.112130+00:00",
+      "sha256": "3890e168e8f44cab2859173b531fb5ac083ba34f4f9dcda9e97925303d4dedab",
+      "status": 200,
+      "temporary_path": "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/tmpinph59lc/sender/body",
+      "url": "http://127.0.0.1:57308/fixture"
+    }
+  },
+  "requests": [
+    "GET /fixture HTTP/1.1\r\nHost: 127.0.0.1:57308\r\nUser-Agent: Lowell Mason sec-edgar-ingest mason.lowell@mac.com\r\nAccept-Encoding: identity\r\nAccept: */*\r\nConnection: keep-alive\r\n\r\n"
+  ],
+  "sent_bytes": 252
+}

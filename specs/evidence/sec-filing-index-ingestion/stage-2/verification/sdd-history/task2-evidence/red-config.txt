@@ -1,0 +1,103 @@
+COMMAND: uv run --offline --frozen --package sec-edgar-ingest python -m unittest discover -s packages/sec-edgar-ingest/tests -p test_config.py -v
+EXIT: 1
+test_azure_explicit_binding_and_credential_free_endpoints (test_config.ConfigTests.test_azure_explicit_binding_and_credential_free_endpoints) ... FAIL
+test_fixture_overrides_are_explicit_and_validated (test_config.ConfigTests.test_fixture_overrides_are_explicit_and_validated) ... FAIL
+test_invalid_configuration_precedes_external_factories (test_config.ConfigTests.test_invalid_configuration_precedes_external_factories) ... FAIL
+test_json_yaml_subset_loads_without_creating_fixture_root (test_config.ConfigTests.test_json_yaml_subset_loads_without_creating_fixture_root) ... FAIL
+test_mapping_is_detached_and_typed_settings_are_frozen (test_config.ConfigTests.test_mapping_is_detached_and_typed_settings_are_frozen) ... FAIL
+test_pin_context_checks_range_identity_and_deadline (test_config.ConfigTests.test_pin_context_checks_range_identity_and_deadline) ... FAIL
+test_rejects_configuration_matrix (test_config.ConfigTests.test_rejects_configuration_matrix) ... FAIL
+test_second_collector_is_refused (test_config.ConfigTests.test_second_collector_is_refused) ... FAIL
+
+======================================================================
+FAIL: test_azure_explicit_binding_and_credential_free_endpoints (test_config.ConfigTests.test_azure_explicit_binding_and_credential_free_endpoints)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_config.py", line 17, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.config"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Settings validation must exist before acquisition I/O")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Settings validation must exist before acquisition I/O
+
+======================================================================
+FAIL: test_fixture_overrides_are_explicit_and_validated (test_config.ConfigTests.test_fixture_overrides_are_explicit_and_validated)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_config.py", line 17, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.config"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Settings validation must exist before acquisition I/O")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Settings validation must exist before acquisition I/O
+
+======================================================================
+FAIL: test_invalid_configuration_precedes_external_factories (test_config.ConfigTests.test_invalid_configuration_precedes_external_factories)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_config.py", line 17, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.config"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Settings validation must exist before acquisition I/O")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Settings validation must exist before acquisition I/O
+
+======================================================================
+FAIL: test_json_yaml_subset_loads_without_creating_fixture_root (test_config.ConfigTests.test_json_yaml_subset_loads_without_creating_fixture_root)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_config.py", line 17, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.config"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Settings validation must exist before acquisition I/O")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Settings validation must exist before acquisition I/O
+
+======================================================================
+FAIL: test_mapping_is_detached_and_typed_settings_are_frozen (test_config.ConfigTests.test_mapping_is_detached_and_typed_settings_are_frozen)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_config.py", line 17, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.config"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Settings validation must exist before acquisition I/O")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Settings validation must exist before acquisition I/O
+
+======================================================================
+FAIL: test_pin_context_checks_range_identity_and_deadline (test_config.ConfigTests.test_pin_context_checks_range_identity_and_deadline)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_config.py", line 17, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.config"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Settings validation must exist before acquisition I/O")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Settings validation must exist before acquisition I/O
+
+======================================================================
+FAIL: test_rejects_configuration_matrix (test_config.ConfigTests.test_rejects_configuration_matrix)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_config.py", line 17, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.config"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Settings validation must exist before acquisition I/O")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Settings validation must exist before acquisition I/O
+
+======================================================================
+FAIL: test_second_collector_is_refused (test_config.ConfigTests.test_second_collector_is_refused)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_config.py", line 17, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.config"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Settings validation must exist before acquisition I/O")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Settings validation must exist before acquisition I/O
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.001s
+
+FAILED (failures=8)

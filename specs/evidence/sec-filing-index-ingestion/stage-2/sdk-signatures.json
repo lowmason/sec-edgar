@@ -1,0 +1,82 @@
+{
+  "confirmed_semantics": {
+    "api_versions": "Explicit Blob api_version=2026-04-06 and Table api_version=2020-12-06 are supported. Blob default is 2026-10-06 so explicit pin is mandatory. _serialize.py:66,166; Tables _base_client.py:47,154",
+    "blob_immutable_create": "upload_blob(data, overwrite=False, match_condition=MatchConditions.IfMissing) emits If-None-Match: *; _serialize.py:88-89; _upload_helpers.py:76",
+    "etag_observation": "Table get raw_response_hook must capture actual response ETag; missing odata.etag otherwise permits synthesized Timestamp ETag in _deserialize.py:191-199. Query page service odata.etag is actual per-entity version; absence fails closed.",
+    "lease_id": "BlobLeaseClient.acquire/renew/release return None; acquired/renewed .id is service-returned. Sentinel upload public keyword lease=actual_id emits x-ms-lease-id. _lease.py:119,167,176,221; _serialize.py:98-103",
+    "pagination": "query_entities is lazy ItemPaged; by_page exhausts all continuations including an empty continued page. _models.py:348; azure/core/paging.py:134",
+    "retry_policy": "retry_total=0,retry_connect=0,retry_read=0,retry_status=0 disable Storage pipeline replay. Installed Blob download content processing separately uses bounded three-attempt idempotent loops (_download.py:237-261,484-556); they cannot authorize SEC retries.",
+    "server_time": "raw_response_hook receives PipelineResponse; http_response.headers Date is observed per Storage operation. Missing/excess-latency/skew observation must fail closed.",
+    "table_create": "create_entity is atomic Insert Entity POST; duplicate 409 maps ResourceExistsError. No If-None-Match parameter is required for insert. _table_client.py:394-411; generated/_operations.py:384,424,1652",
+    "table_replace": "update_entity(entity, mode=UpdateMode.REPLACE, etag=actual_opaque_etag, match_condition=MatchConditions.IfNotModified) emits PUT with exact If-Match; no wildcard/upsert. _table_client.py:447-469; _serialize.py:20"
+  },
+  "corrections": [
+    "Use installed plural MatchConditions.",
+    "Use service-returned lease.id after acquire/renew, not the None method result.",
+    "Do not trust Table synthesized ETag fallback.",
+    "Blob conditional create uses If-None-Match; Table atomic Insert Entity uses conditional create semantics without an invented If-None-Match header."
+  ],
+  "enum_values": {
+    "IfMissing": 5,
+    "IfNotModified": 2,
+    "UpdateMode.REPLACE": "replace"
+  },
+  "http_contract_tests": "packages/sec-edgar-ingest/tests/test_azure_contracts.py",
+  "inspection": "Installed metadata, public signatures and source only; no client/credential construction or network.",
+  "signatures": {
+    "azure.data.tables._table_client.TableClient": "(endpoint: str, table_name: str, *, credential: azure.core.credentials.AzureSasCredential | azure.core.credentials.AzureNamedKeyCredential | azure.core.credentials.TokenCredential | None = None, audience: str | Literal['https://storage.azure.com', 'https://storage.azure.us', 'https://storage.azure.cn', 'https://cosmos.azure.com', 'https://cosmos.azure.us', 'https://cosmos.azure.cn'] | None = None, api_version: str | None = None, **kwargs: Any) -> None",
+    "azure.data.tables._table_client.TableClient.create_entity": "(self, entity: azure.data.tables._entity.TableEntity | Mapping[str, Any], **kwargs) -> Dict[str, Any]",
+    "azure.data.tables._table_client.TableClient.get_entity": "(self, partition_key: str, row_key: str, *, select: str | List[str] | None = None, **kwargs) -> azure.data.tables._entity.TableEntity",
+    "azure.data.tables._table_client.TableClient.query_entities": "(self, query_filter: str, *, results_per_page: int | None = None, select: str | List[str] | None = None, parameters: Dict[str, Any] | None = None, **kwargs) -> azure.core.paging.ItemPaged[azure.data.tables._entity.TableEntity]",
+    "azure.data.tables._table_client.TableClient.update_entity": "(self, entity: azure.data.tables._entity.TableEntity | Mapping[str, Any], mode: azure.data.tables._models.UpdateMode = <UpdateMode.MERGE: 'merge'>, *, etag: str | None = None, match_condition: azure.core._match_conditions.MatchConditions | None = None, **kwargs) -> Dict[str, Any]",
+    "azure.data.tables._table_service_client.TableServiceClient": "(endpoint: str, *, credential: azure.core.credentials.AzureSasCredential | azure.core.credentials.AzureNamedKeyCredential | azure.core.credentials.TokenCredential | None = None, api_version: str | None = None, audience: str | Literal['https://storage.azure.com', 'https://storage.azure.us', 'https://storage.azure.cn', 'https://cosmos.azure.com', 'https://cosmos.azure.us', 'https://cosmos.azure.cn'] | None = None, **kwargs: Any) -> None",
+    "azure.data.tables._table_service_client.TableServiceClient.get_table_client": "(self, table_name: str, **kwargs: Any) -> azure.data.tables._table_client.TableClient",
+    "azure.storage.blob._blob_client.BlobClient": "(account_url: str, container_name: str, blob_name: str, snapshot: Dict[str, Any] | str | None = None, credential: str | Dict[str, str] | ForwardRef('AzureNamedKeyCredential') | ForwardRef('AzureSasCredential') | ForwardRef('TokenCredential') | None = None, **kwargs: Any) -> None",
+    "azure.storage.blob._blob_client.BlobClient.acquire_lease": "(self, lease_duration: int = -1, lease_id: str | None = None, **kwargs: Any) -> azure.storage.blob._lease.BlobLeaseClient",
+    "azure.storage.blob._blob_client.BlobClient.download_blob": "(self, offset: int | None = None, length: int | None = None, *, encoding: str | None = None, **kwargs: Any) -> azure.storage.blob._download.StorageStreamDownloader[str] | azure.storage.blob._download.StorageStreamDownloader[bytes]",
+    "azure.storage.blob._blob_client.BlobClient.get_blob_properties": "(self, **kwargs: Any) -> azure.storage.blob._models.BlobProperties",
+    "azure.storage.blob._blob_client.BlobClient.upload_blob": "(self, data: bytes | str | Iterable[~AnyStr] | IO[bytes], blob_type: str | azure.storage.blob._models.BlobType = <BlobType.BLOCKBLOB: 'BlockBlob'>, length: int | None = None, metadata: Dict[str, str] | None = None, **kwargs: Any) -> Dict[str, Any]",
+    "azure.storage.blob._blob_service_client.BlobServiceClient": "(account_url: str, credential: str | Dict[str, str] | ForwardRef('AzureNamedKeyCredential') | ForwardRef('AzureSasCredential') | ForwardRef('TokenCredential') | None = None, **kwargs: Any) -> None",
+    "azure.storage.blob._blob_service_client.BlobServiceClient.get_blob_client": "(self, container: azure.storage.blob._models.ContainerProperties | str, blob: str, snapshot: Dict[str, Any] | str | None = None, *, version_id: str | None = None) -> azure.storage.blob._blob_client.BlobClient",
+    "azure.storage.blob._lease.BlobLeaseClient": "(client: ForwardRef('BlobClient') | ForwardRef('ContainerClient'), lease_id: str | None = None) -> None",
+    "azure.storage.blob._lease.BlobLeaseClient.acquire": "(self, lease_duration: int = -1, **kwargs: Any) -> None",
+    "azure.storage.blob._lease.BlobLeaseClient.release": "(self, **kwargs: Any) -> None",
+    "azure.storage.blob._lease.BlobLeaseClient.renew": "(self, **kwargs: Any) -> None"
+  },
+  "source_root": "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages",
+  "source_sha256": {
+    "azure/core/_match_conditions.py": "dd32216f8bc13b58417bb31a4304bff62f9dea9ee8e239f92fa33e3a241a8648",
+    "azure/core/paging.py": "0372ca1b9b5e822095f80f22cfcb5b5cef18c54a464f881874c734bfb7db979d",
+    "azure/core/pipeline/policies/_custom_hook.py": "99aec487bb1736b78b4d91a3d8c1fdbaf7083fc7f394c159ab409d177837f746",
+    "azure/core/pipeline/policies/_retry.py": "23439b098cfd8569dd4ea702097680ad440c5933a04a41075e1fc034005c9967",
+    "azure/data/tables/_base_client.py": "b99462979ecbdaa8af019c20d7f1ecedf0e8d57064fa38f291e32e239f6cf83b",
+    "azure/data/tables/_deserialize.py": "0d904ccc3b24959a77346143987bfebc1b6311c418e53213c20ebf5bec4fd354",
+    "azure/data/tables/_entity.py": "c02cdd15a9e3bb0064e3632ceb286deb5429223180c7eba1938bf760061d266b",
+    "azure/data/tables/_generated/operations/_operations.py": "9686c87498fc4edc82e5be6a05da4830f4d5eb1ba827a0e970eb5e19527a0154",
+    "azure/data/tables/_models.py": "9de1d84bed9d2e979f044a48a92a09c3a0555e3e4587f989f4eca31fdc9bfb28",
+    "azure/data/tables/_policies.py": "cc8be7cda52ca3c17a7abb1f055b5acfbc270205fd876d8d030e4e2436c5544a",
+    "azure/data/tables/_serialize.py": "4ddf52fbc94ca9ec8bb1d49605723a2849dcac6494d1f86e856b0c7df3a3f305",
+    "azure/data/tables/_table_client.py": "370beff55f3db6930f4253bac49606aa6b0c4a08210187edab25d6be14233ff1",
+    "azure/data/tables/_table_service_client.py": "ce67601e07dc03b1e489f99b150d0905b76f06d8ea92044cec8c9b5d38f291b2",
+    "azure/storage/blob/_blob_client.py": "d9a8839d0ba04b0fb9cb3e9d266f5f90afdd0aa0c8a25e859cffb770e2f8c976",
+    "azure/storage/blob/_blob_client_helpers.py": "7249c8b70b27660be4889502e2f79f8851853fa8c434781d88fe2aeadf612648",
+    "azure/storage/blob/_blob_service_client.py": "a3b6f4e01058f01bd219619c772f4ebcd8eb85fae7ee95472f3b6d8b4737f1a8",
+    "azure/storage/blob/_deserialize.py": "49e111366713a1cc826e58ab7a86ff5c2a1f48086dfc7162e4b7f2c8e17a89c0",
+    "azure/storage/blob/_download.py": "712b54b3f2640c97a78c63578c4903c3758de79b2c0da72e479ed5da22a62530",
+    "azure/storage/blob/_generated/operations/_blob_operations.py": "9fec00f231d4035487dff7ad4f339040c973bd66b9e9465926047d78d4987f60",
+    "azure/storage/blob/_generated/operations/_block_blob_operations.py": "4bdb479216221f600592442270697c594fb65df8f379f36c2ce0b558e2d986a6",
+    "azure/storage/blob/_lease.py": "77bb448badcec1daf632eb5e72ce02fc0c301d38f0a5150746adc6122f8def15",
+    "azure/storage/blob/_models.py": "acbab88e8ea8352187d656d8f43668a49f082b034c07ff65b2e3796c559755f5",
+    "azure/storage/blob/_serialize.py": "823c83e68c4cffac06ff998e7094d14d4ffb1ad8b6d12dbf2f91ae8b10800ca0",
+    "azure/storage/blob/_shared/base_client.py": "2a9723be1a2717c32ff5148eb6b4c9a0cd84fb057143fe00af007f0c077d609e",
+    "azure/storage/blob/_shared/policies.py": "6bf7f67fdd6d57de708e39721aa59b5b69e2e0a9a69630570cb2e82efb734719",
+    "azure/storage/blob/_shared/response_handlers.py": "f6b3bb8c5e1d5369a1ae97e08368b088e5517ff9ea5ba2d19ac475ed3b94b53c",
+    "azure/storage/blob/_upload_helpers.py": "e42c09e4da9f85421e55a727057344e804e734ba920075ecc43e71d8cff25f44"
+  },
+  "versions": {
+    "azure-core": "1.41.0",
+    "azure-data-tables": "12.7.0",
+    "azure-identity": "1.26.0",
+    "azure-storage-blob": "12.31.0"
+  }
+}

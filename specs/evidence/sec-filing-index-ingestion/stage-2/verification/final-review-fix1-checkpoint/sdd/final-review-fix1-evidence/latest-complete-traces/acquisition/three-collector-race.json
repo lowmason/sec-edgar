@@ -1,0 +1,1486 @@
+{
+  "events": [
+    {
+      "at": "2026-10-07T00:29:06.084836+00:00",
+      "event": "request_barrier_ready",
+      "monotonic_ns": 2772210046135291,
+      "pid": 50088
+    },
+    {
+      "at": "2026-10-07T00:29:06.084836+00:00",
+      "event": "request_barrier_ready",
+      "monotonic_ns": 2772210046135958,
+      "pid": 50090
+    },
+    {
+      "at": "2026-10-07T00:29:06.086160+00:00",
+      "event": "request_barrier_ready",
+      "monotonic_ns": 2772210047459708,
+      "pid": 50089
+    },
+    {
+      "at": "2026-10-07T00:29:06.088679+00:00",
+      "event": "request_barrier_released",
+      "monotonic_ns": 2772210049975875,
+      "pid": 50089
+    },
+    {
+      "at": "2026-10-07T00:29:06.088713+00:00",
+      "event": "request_barrier_released",
+      "monotonic_ns": 2772210050010291,
+      "pid": 50090
+    },
+    {
+      "at": "2026-10-07T00:29:06.088741+00:00",
+      "event": "request_barrier_released",
+      "monotonic_ns": 2772210050039208,
+      "pid": 50088
+    },
+    {
+      "at": "2026-10-07T00:29:06.097775+00:00",
+      "event": "enqueue",
+      "mono": 2772210.059076458,
+      "monotonic_ns": 2772210059078458,
+      "owner": "process-0:process-0:4a122568806d46b7959dd11fd4c11c6c",
+      "pid": 50088,
+      "priority": "backfill",
+      "ticket_id": "9009fd2e0d604bf0a5299e500b55361d"
+    },
+    {
+      "at": "2026-10-07T00:29:06.099487+00:00",
+      "event": "queue-choice",
+      "mono": 2772210.060789,
+      "monotonic_ns": 2772210060790541,
+      "owner": "process-0:process-0:4a122568806d46b7959dd11fd4c11c6c",
+      "pid": 50088,
+      "priority": "backfill",
+      "ticket_id": "9009fd2e0d604bf0a5299e500b55361d"
+    },
+    {
+      "at": "2026-10-07T00:29:06.099844+00:00",
+      "event": "enqueue",
+      "mono": 2772210.061145458,
+      "monotonic_ns": 2772210061147666,
+      "owner": "process-1:process-1:e11f24497ed640669f74f86509636ac8",
+      "pid": 50089,
+      "priority": "backfill",
+      "ticket_id": "5d051d34a076463cbf5ea8990effb5cb"
+    },
+    {
+      "at": "2026-10-07T00:29:06.101536+00:00",
+      "event": "enqueue",
+      "mono": 2772210.062838916,
+      "monotonic_ns": 2772210062841166,
+      "owner": "process-2:process-2:7ffcf4d2ef444d6f8880b125378245f8",
+      "pid": 50090,
+      "priority": "backfill",
+      "ticket_id": "6ca787bbc62c45658e262f6a286d8588"
+    },
+    {
+      "at": "2026-10-07T00:29:06.101841+00:00",
+      "event": "queue-choice",
+      "mono": 2772210.063142875,
+      "monotonic_ns": 2772210063144750,
+      "owner": "process-0:process-0:4a122568806d46b7959dd11fd4c11c6c",
+      "pid": 50089,
+      "priority": "backfill",
+      "ticket_id": "9009fd2e0d604bf0a5299e500b55361d"
+    },
+    {
+      "at": "2026-10-07T00:29:06.102304+00:00",
+      "event": "queue-choice",
+      "mono": 2772210.063605458,
+      "monotonic_ns": 2772210063606916,
+      "owner": "process-0:process-0:4a122568806d46b7959dd11fd4c11c6c",
+      "pid": 50088,
+      "priority": "backfill",
+      "ticket_id": "9009fd2e0d604bf0a5299e500b55361d"
+    },
+    {
+      "at": "2026-10-07T00:29:06.103092+00:00",
+      "epoch": 1,
+      "event": "acquire",
+      "lease_id": "0524501c-7c8d-46df-ac84-29f1a4f954a1",
+      "mono": 2772210.064392458,
+      "monotonic_ns": 2772210064394041,
+      "owner": "process-0:process-0:4a122568806d46b7959dd11fd4c11c6c",
+      "ownership_until": "2026-10-07T00:30:06.099497+00:00",
+      "pid": 50088
+    },
+    {
+      "at": "2026-10-07T00:29:06.103097+00:00",
+      "earliest_safe": "2026-10-07T00:29:06.102597+00:00",
+      "epoch": 1,
+      "event": "takeover",
+      "mono": 2772210.064397333,
+      "monotonic_ns": 2772210064398041,
+      "owner": "process-0:process-0:4a122568806d46b7959dd11fd4c11c6c",
+      "pid": 50088
+    },
+    {
+      "at": "2026-10-07T00:29:06.104108+00:00",
+      "event": "queue-choice",
+      "mono": 2772210.065411166,
+      "monotonic_ns": 2772210065412916,
+      "owner": "process-0:process-0:4a122568806d46b7959dd11fd4c11c6c",
+      "pid": 50090,
+      "priority": "backfill",
+      "ticket_id": "9009fd2e0d604bf0a5299e500b55361d"
+    },
+    {
+      "at": "2026-10-07T00:29:06.104786+00:00",
+      "epoch": 1,
+      "event": "reserve",
+      "mono": 2772210.066087,
+      "monotonic_ns": 2772210066088708,
+      "next_allowed_at": "2026-10-07T00:29:06.770688+00:00",
+      "owner": "process-0:process-0:4a122568806d46b7959dd11fd4c11c6c",
+      "pid": 50088,
+      "request_id": "93a56f0833b943a5ab0a1005ea5120a4",
+      "start_before_mono": 2772210.3986509587
+    },
+    {
+      "at": "2026-10-07T00:29:06.105644+00:00",
+      "epoch": 1,
+      "event": "request-start",
+      "mono": 2772210.066944958,
+      "monotonic_ns": 2772210066945958,
+      "owner": "process-0:process-0:4a122568806d46b7959dd11fd4c11c6c",
+      "pid": 50088,
+      "request_id": "93a56f0833b943a5ab0a1005ea5120a4"
+    },
+    {
+      "at": "2026-10-07T00:29:06.108690+00:00",
+      "epoch": 1,
+      "event": "request-end",
+      "mono": 2772210.069991375,
+      "monotonic_ns": 2772210069992291,
+      "owner": "process-0:process-0:4a122568806d46b7959dd11fd4c11c6c",
+      "pid": 50088,
+      "request_id": "93a56f0833b943a5ab0a1005ea5120a4"
+    },
+    {
+      "at": "2026-10-07T00:29:06.111055+00:00",
+      "epoch": 1,
+      "event": "drain-pacing",
+      "mono": 2772210.072357875,
+      "monotonic_ns": 2772210072359750,
+      "not_before": "2026-10-07T00:29:06.443741+00:00",
+      "owner": "process-0:process-0:4a122568806d46b7959dd11fd4c11c6c",
+      "pid": 50088
+    },
+    {
+      "at": "2026-10-07T00:29:06.112834+00:00",
+      "clean_release": true,
+      "drained": true,
+      "epoch": 1,
+      "event": "release",
+      "mono": 2772210.07413525,
+      "monotonic_ns": 2772210074136791,
+      "owner": "process-0:process-0:4a122568806d46b7959dd11fd4c11c6c",
+      "pid": 50088,
+      "unsafe_until": "2026-10-07T00:29:06.112099+00:00"
+    },
+    {
+      "at": "2026-10-07T00:29:06.120605+00:00",
+      "event": "receipt_checkpoint",
+      "monotonic_ns": 2772210081904708,
+      "pid": 50088
+    },
+    {
+      "at": "2026-10-07T00:29:06.360427+00:00",
+      "event": "queue-choice",
+      "mono": 2772210.321735875,
+      "monotonic_ns": 2772210321744916,
+      "owner": "process-1:process-1:e11f24497ed640669f74f86509636ac8",
+      "pid": 50089,
+      "priority": "backfill",
+      "ticket_id": "5d051d34a076463cbf5ea8990effb5cb"
+    },
+    {
+      "at": "2026-10-07T00:29:06.361205+00:00",
+      "event": "queue-choice",
+      "mono": 2772210.322510625,
+      "monotonic_ns": 2772210322517333,
+      "owner": "process-1:process-1:e11f24497ed640669f74f86509636ac8",
+      "pid": 50090,
+      "priority": "backfill",
+      "ticket_id": "5d051d34a076463cbf5ea8990effb5cb"
+    },
+    {
+      "at": "2026-10-07T00:29:06.366082+00:00",
+      "event": "queue-choice",
+      "mono": 2772210.327385208,
+      "monotonic_ns": 2772210327388458,
+      "owner": "process-1:process-1:e11f24497ed640669f74f86509636ac8",
+      "pid": 50089,
+      "priority": "backfill",
+      "ticket_id": "5d051d34a076463cbf5ea8990effb5cb"
+    },
+    {
+      "at": "2026-10-07T00:29:06.369325+00:00",
+      "epoch": 2,
+      "event": "acquire",
+      "lease_id": "9fd7b3bd-8490-4ff5-bb79-20b86698034d",
+      "mono": 2772210.330625125,
+      "monotonic_ns": 2772210330628125,
+      "owner": "process-1:process-1:e11f24497ed640669f74f86509636ac8",
+      "ownership_until": "2026-10-07T00:30:06.360470+00:00",
+      "pid": 50089
+    },
+    {
+      "at": "2026-10-07T00:29:06.369333+00:00",
+      "earliest_safe": "2026-10-07T00:29:06.112099+00:00",
+      "epoch": 2,
+      "event": "takeover",
+      "mono": 2772210.330633416,
+      "monotonic_ns": 2772210330634791,
+      "owner": "process-1:process-1:e11f24497ed640669f74f86509636ac8",
+      "pid": 50089
+    },
+    {
+      "at": "2026-10-07T00:29:06.614851+00:00",
+      "event": "queue-choice",
+      "mono": 2772210.576154791,
+      "monotonic_ns": 2772210576160125,
+      "owner": "process-1:process-1:e11f24497ed640669f74f86509636ac8",
+      "pid": 50090,
+      "priority": "backfill",
+      "ticket_id": "5d051d34a076463cbf5ea8990effb5cb"
+    },
+    {
+      "at": "2026-10-07T00:29:06.783429+00:00",
+      "epoch": 2,
+      "event": "reserve",
+      "mono": 2772210.744730666,
+      "monotonic_ns": 2772210744740250,
+      "next_allowed_at": "2026-10-07T00:29:07.447908+00:00",
+      "owner": "process-1:process-1:e11f24497ed640669f74f86509636ac8",
+      "pid": 50089,
+      "request_id": "fd023abe341241fa93efdff5a0fef7da",
+      "start_before_mono": 2772211.0758688333
+    },
+    {
+      "at": "2026-10-07T00:29:06.787069+00:00",
+      "epoch": 2,
+      "event": "request-start",
+      "mono": 2772210.748376,
+      "monotonic_ns": 2772210748381833,
+      "owner": "process-1:process-1:e11f24497ed640669f74f86509636ac8",
+      "pid": 50089,
+      "request_id": "fd023abe341241fa93efdff5a0fef7da"
+    },
+    {
+      "at": "2026-10-07T00:29:06.796356+00:00",
+      "epoch": 2,
+      "event": "request-end",
+      "mono": 2772210.757657916,
+      "monotonic_ns": 2772210757661083,
+      "owner": "process-1:process-1:e11f24497ed640669f74f86509636ac8",
+      "pid": 50089,
+      "request_id": "fd023abe341241fa93efdff5a0fef7da"
+    },
+    {
+      "at": "2026-10-07T00:29:06.801380+00:00",
+      "epoch": 2,
+      "event": "drain-pacing",
+      "mono": 2772210.76268,
+      "monotonic_ns": 2772210762682791,
+      "not_before": "2026-10-07T00:29:07.133557+00:00",
+      "owner": "process-1:process-1:e11f24497ed640669f74f86509636ac8",
+      "pid": 50089
+    },
+    {
+      "at": "2026-10-07T00:29:06.804223+00:00",
+      "clean_release": true,
+      "drained": true,
+      "epoch": 2,
+      "event": "release",
+      "mono": 2772210.765522375,
+      "monotonic_ns": 2772210765525125,
+      "owner": "process-1:process-1:e11f24497ed640669f74f86509636ac8",
+      "pid": 50089,
+      "unsafe_until": "2026-10-07T00:29:06.802985+00:00"
+    },
+    {
+      "at": "2026-10-07T00:29:06.816518+00:00",
+      "event": "receipt_checkpoint",
+      "monotonic_ns": 2772210777814458,
+      "pid": 50089
+    },
+    {
+      "at": "2026-10-07T00:29:06.870554+00:00",
+      "event": "queue-choice",
+      "mono": 2772210.831856583,
+      "monotonic_ns": 2772210831860791,
+      "owner": "process-2:process-2:7ffcf4d2ef444d6f8880b125378245f8",
+      "pid": 50090,
+      "priority": "backfill",
+      "ticket_id": "6ca787bbc62c45658e262f6a286d8588"
+    },
+    {
+      "at": "2026-10-07T00:29:06.874949+00:00",
+      "event": "queue-choice",
+      "mono": 2772210.836250166,
+      "monotonic_ns": 2772210836253333,
+      "owner": "process-2:process-2:7ffcf4d2ef444d6f8880b125378245f8",
+      "pid": 50090,
+      "priority": "backfill",
+      "ticket_id": "6ca787bbc62c45658e262f6a286d8588"
+    },
+    {
+      "at": "2026-10-07T00:29:06.877703+00:00",
+      "epoch": 3,
+      "event": "acquire",
+      "lease_id": "d30eb1e5-f8af-4441-a7ea-9c37494057b8",
+      "mono": 2772210.839002041,
+      "monotonic_ns": 2772210839004791,
+      "owner": "process-2:process-2:7ffcf4d2ef444d6f8880b125378245f8",
+      "ownership_until": "2026-10-07T00:30:06.870583+00:00",
+      "pid": 50090
+    },
+    {
+      "at": "2026-10-07T00:29:06.877711+00:00",
+      "earliest_safe": "2026-10-07T00:29:06.802985+00:00",
+      "epoch": 3,
+      "event": "takeover",
+      "mono": 2772210.83900975,
+      "monotonic_ns": 2772210839011041,
+      "owner": "process-2:process-2:7ffcf4d2ef444d6f8880b125378245f8",
+      "pid": 50090
+    },
+    {
+      "at": "2026-10-07T00:29:07.461216+00:00",
+      "epoch": 3,
+      "event": "reserve",
+      "mono": 2772211.422516875,
+      "monotonic_ns": 2772211422526291,
+      "next_allowed_at": "2026-10-07T00:29:08.124944+00:00",
+      "owner": "process-2:process-2:7ffcf4d2ef444d6f8880b125378245f8",
+      "pid": 50090,
+      "request_id": "9f9fba67952845519e819df3cb96a172",
+      "start_before_mono": 2772211.7529004994
+    },
+    {
+      "at": "2026-10-07T00:29:07.464342+00:00",
+      "epoch": 3,
+      "event": "request-start",
+      "mono": 2772211.425641541,
+      "monotonic_ns": 2772211425645625,
+      "owner": "process-2:process-2:7ffcf4d2ef444d6f8880b125378245f8",
+      "pid": 50090,
+      "request_id": "9f9fba67952845519e819df3cb96a172"
+    },
+    {
+      "at": "2026-10-07T00:29:07.473633+00:00",
+      "epoch": 3,
+      "event": "request-end",
+      "mono": 2772211.434933,
+      "monotonic_ns": 2772211434936375,
+      "owner": "process-2:process-2:7ffcf4d2ef444d6f8880b125378245f8",
+      "pid": 50090,
+      "request_id": "9f9fba67952845519e819df3cb96a172"
+    },
+    {
+      "at": "2026-10-07T00:29:07.478559+00:00",
+      "epoch": 3,
+      "event": "drain-pacing",
+      "mono": 2772211.439857541,
+      "monotonic_ns": 2772211439860375,
+      "not_before": "2026-10-07T00:29:07.810759+00:00",
+      "owner": "process-2:process-2:7ffcf4d2ef444d6f8880b125378245f8",
+      "pid": 50090
+    },
+    {
+      "at": "2026-10-07T00:29:07.481314+00:00",
+      "clean_release": true,
+      "drained": true,
+      "epoch": 3,
+      "event": "release",
+      "mono": 2772211.442611666,
+      "monotonic_ns": 2772211442614500,
+      "owner": "process-2:process-2:7ffcf4d2ef444d6f8880b125378245f8",
+      "pid": 50090,
+      "unsafe_until": "2026-10-07T00:29:07.480126+00:00"
+    },
+    {
+      "at": "2026-10-07T00:29:07.493004+00:00",
+      "event": "receipt_checkpoint",
+      "monotonic_ns": 2772211454298833,
+      "pid": 50090
+    },
+    {
+      "at": "2026-10-07T00:29:07.509090+00:00",
+      "event": "bind_read_absent",
+      "key": "b23d0edd881821ae44696ffa62c28185ef98f34f2f8b0ba7eddc964bb48670f0:6cf7f339fd98f08d888586fbf41d907cb071d3a54259128e659f51e1f7caaa72",
+      "monotonic_ns": 2772211470381291,
+      "pid": 50090
+    },
+    {
+      "at": "2026-10-07T00:29:07.510143+00:00",
+      "event": "bind_read_absent",
+      "key": "b23d0edd881821ae44696ffa62c28185ef98f34f2f8b0ba7eddc964bb48670f0:6cf7f339fd98f08d888586fbf41d907cb071d3a54259128e659f51e1f7caaa72",
+      "monotonic_ns": 2772211471436625,
+      "pid": 50089
+    },
+    {
+      "at": "2026-10-07T00:29:07.515555+00:00",
+      "event": "bind_read_absent",
+      "key": "b23d0edd881821ae44696ffa62c28185ef98f34f2f8b0ba7eddc964bb48670f0:6cf7f339fd98f08d888586fbf41d907cb071d3a54259128e659f51e1f7caaa72",
+      "monotonic_ns": 2772211476848791,
+      "pid": 50088
+    },
+    {
+      "at": "2026-10-07T00:29:07.518523+00:00",
+      "event": "bind_insert_attempt",
+      "monotonic_ns": 2772211479817500,
+      "pid": 50090,
+      "snapshot_sha256": "50bfaf7cb3875499de180987512a200158a3994b3ac8396646a050e378be2d5a"
+    },
+    {
+      "at": "2026-10-07T00:29:07.518550+00:00",
+      "event": "bind_insert_attempt",
+      "monotonic_ns": 2772211479844125,
+      "pid": 50088,
+      "snapshot_sha256": "a7c7f989eadb3613deaefca4b789fc8e751ae1dc9955e56b04a518ad628519b0"
+    },
+    {
+      "at": "2026-10-07T00:29:07.518594+00:00",
+      "event": "bind_insert_attempt",
+      "monotonic_ns": 2772211479888208,
+      "pid": 50089,
+      "snapshot_sha256": "7f4f306b51ee21ede9c9d9a03b5a647de6eb35d42a2d71933d288b46c450171b"
+    },
+    {
+      "at": "2026-10-07T00:29:07.519090+00:00",
+      "event": "bind_insert_success",
+      "monotonic_ns": 2772211480384541,
+      "pid": 50089,
+      "snapshot_sha256": "7f4f306b51ee21ede9c9d9a03b5a647de6eb35d42a2d71933d288b46c450171b"
+    },
+    {
+      "at": "2026-10-07T00:29:07.520162+00:00",
+      "event": "bind_insert_conflict",
+      "monotonic_ns": 2772211481456291,
+      "pid": 50090
+    },
+    {
+      "at": "2026-10-07T00:29:07.520434+00:00",
+      "event": "bind_insert_conflict",
+      "monotonic_ns": 2772211481728541,
+      "pid": 50088
+    },
+    {
+      "at": "2026-10-07T00:29:07.521034+00:00",
+      "event": "bind_read_winner",
+      "monotonic_ns": 2772211482328166,
+      "pid": 50088,
+      "snapshot_sha256": "7f4f306b51ee21ede9c9d9a03b5a647de6eb35d42a2d71933d288b46c450171b"
+    },
+    {
+      "at": "2026-10-07T00:29:07.524538+00:00",
+      "event": "bind_read_winner",
+      "monotonic_ns": 2772211485832541,
+      "pid": 50090,
+      "snapshot_sha256": "7f4f306b51ee21ede9c9d9a03b5a647de6eb35d42a2d71933d288b46c450171b"
+    },
+    {
+      "at": "2026-10-07T00:29:07.525030+00:00",
+      "event": "bind_read_winner",
+      "monotonic_ns": 2772211486324750,
+      "pid": 50088,
+      "snapshot_sha256": "7f4f306b51ee21ede9c9d9a03b5a647de6eb35d42a2d71933d288b46c450171b"
+    },
+    {
+      "at": "2026-10-07T00:29:07.526260+00:00",
+      "event": "bind_read_winner",
+      "monotonic_ns": 2772211487554041,
+      "pid": 50089,
+      "snapshot_sha256": "7f4f306b51ee21ede9c9d9a03b5a647de6eb35d42a2d71933d288b46c450171b"
+    },
+    {
+      "at": "2026-10-07T00:29:07.528220+00:00",
+      "event": "bind_read_winner",
+      "monotonic_ns": 2772211489514416,
+      "pid": 50090,
+      "snapshot_sha256": "7f4f306b51ee21ede9c9d9a03b5a647de6eb35d42a2d71933d288b46c450171b"
+    },
+    {
+      "at": "2026-10-07T00:29:07.533347+00:00",
+      "event": "result_written",
+      "monotonic_ns": 2772211494641500,
+      "pid": 50088,
+      "result_ref": "runs/sec/fixture-run/collect/process-0/result.json"
+    },
+    {
+      "at": "2026-10-07T00:29:07.534114+00:00",
+      "event": "result_written",
+      "monotonic_ns": 2772211495407875,
+      "pid": 50089,
+      "result_ref": "runs/sec/fixture-run/collect/process-1/result.json"
+    },
+    {
+      "at": "2026-10-07T00:29:07.537259+00:00",
+      "event": "result_written",
+      "monotonic_ns": 2772211498552833,
+      "pid": 50090,
+      "result_ref": "runs/sec/fixture-run/collect/process-2/result.json"
+    }
+  ],
+  "processes": [
+    {
+      "exit": 0,
+      "pid": 50088
+    },
+    {
+      "exit": 0,
+      "pid": 50089
+    },
+    {
+      "exit": 0,
+      "pid": 50090
+    }
+  ],
+  "raw_hex": "53796e74686574696320534543206163717569736974696f6e20656e76656c6f70650a43494b7c436f6d70616e79204e616d657c466f726d20547970657c446174652046696c65647c46696c65204e616d650a2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d0a3132333435367c70726f636573732d317c31302d4b7c323032362d31302d30317c65646761722f646174612f3132333435362f666978747572652e7478740a",
+  "records": [
+    {
+      "candidate_sha256": "a7c7f989eadb3613deaefca4b789fc8e751ae1dc9955e56b04a518ad628519b0",
+      "events": [
+        {
+          "at": "2026-10-07T00:29:06.084836+00:00",
+          "event": "request_barrier_ready",
+          "monotonic_ns": 2772210046135291,
+          "pid": 50088
+        },
+        {
+          "at": "2026-10-07T00:29:06.088741+00:00",
+          "event": "request_barrier_released",
+          "monotonic_ns": 2772210050039208,
+          "pid": 50088
+        },
+        {
+          "at": "2026-10-07T00:29:06.097775+00:00",
+          "event": "enqueue",
+          "mono": 2772210.059076458,
+          "monotonic_ns": 2772210059078458,
+          "owner": "process-0:process-0:4a122568806d46b7959dd11fd4c11c6c",
+          "pid": 50088,
+          "priority": "backfill",
+          "ticket_id": "9009fd2e0d604bf0a5299e500b55361d"
+        },
+        {
+          "at": "2026-10-07T00:29:06.099487+00:00",
+          "event": "queue-choice",
+          "mono": 2772210.060789,
+          "monotonic_ns": 2772210060790541,
+          "owner": "process-0:process-0:4a122568806d46b7959dd11fd4c11c6c",
+          "pid": 50088,
+          "priority": "backfill",
+          "ticket_id": "9009fd2e0d604bf0a5299e500b55361d"
+        },
+        {
+          "at": "2026-10-07T00:29:06.102304+00:00",
+          "event": "queue-choice",
+          "mono": 2772210.063605458,
+          "monotonic_ns": 2772210063606916,
+          "owner": "process-0:process-0:4a122568806d46b7959dd11fd4c11c6c",
+          "pid": 50088,
+          "priority": "backfill",
+          "ticket_id": "9009fd2e0d604bf0a5299e500b55361d"
+        },
+        {
+          "at": "2026-10-07T00:29:06.103092+00:00",
+          "epoch": 1,
+          "event": "acquire",
+          "lease_id": "0524501c-7c8d-46df-ac84-29f1a4f954a1",
+          "mono": 2772210.064392458,
+          "monotonic_ns": 2772210064394041,
+          "owner": "process-0:process-0:4a122568806d46b7959dd11fd4c11c6c",
+          "ownership_until": "2026-10-07T00:30:06.099497+00:00",
+          "pid": 50088
+        },
+        {
+          "at": "2026-10-07T00:29:06.103097+00:00",
+          "earliest_safe": "2026-10-07T00:29:06.102597+00:00",
+          "epoch": 1,
+          "event": "takeover",
+          "mono": 2772210.064397333,
+          "monotonic_ns": 2772210064398041,
+          "owner": "process-0:process-0:4a122568806d46b7959dd11fd4c11c6c",
+          "pid": 50088
+        },
+        {
+          "at": "2026-10-07T00:29:06.104786+00:00",
+          "epoch": 1,
+          "event": "reserve",
+          "mono": 2772210.066087,
+          "monotonic_ns": 2772210066088708,
+          "next_allowed_at": "2026-10-07T00:29:06.770688+00:00",
+          "owner": "process-0:process-0:4a122568806d46b7959dd11fd4c11c6c",
+          "pid": 50088,
+          "request_id": "93a56f0833b943a5ab0a1005ea5120a4",
+          "start_before_mono": 2772210.3986509587
+        },
+        {
+          "at": "2026-10-07T00:29:06.105644+00:00",
+          "epoch": 1,
+          "event": "request-start",
+          "mono": 2772210.066944958,
+          "monotonic_ns": 2772210066945958,
+          "owner": "process-0:process-0:4a122568806d46b7959dd11fd4c11c6c",
+          "pid": 50088,
+          "request_id": "93a56f0833b943a5ab0a1005ea5120a4"
+        },
+        {
+          "at": "2026-10-07T00:29:06.108690+00:00",
+          "epoch": 1,
+          "event": "request-end",
+          "mono": 2772210.069991375,
+          "monotonic_ns": 2772210069992291,
+          "owner": "process-0:process-0:4a122568806d46b7959dd11fd4c11c6c",
+          "pid": 50088,
+          "request_id": "93a56f0833b943a5ab0a1005ea5120a4"
+        },
+        {
+          "at": "2026-10-07T00:29:06.111055+00:00",
+          "epoch": 1,
+          "event": "drain-pacing",
+          "mono": 2772210.072357875,
+          "monotonic_ns": 2772210072359750,
+          "not_before": "2026-10-07T00:29:06.443741+00:00",
+          "owner": "process-0:process-0:4a122568806d46b7959dd11fd4c11c6c",
+          "pid": 50088
+        },
+        {
+          "at": "2026-10-07T00:29:06.112834+00:00",
+          "clean_release": true,
+          "drained": true,
+          "epoch": 1,
+          "event": "release",
+          "mono": 2772210.07413525,
+          "monotonic_ns": 2772210074136791,
+          "owner": "process-0:process-0:4a122568806d46b7959dd11fd4c11c6c",
+          "pid": 50088,
+          "unsafe_until": "2026-10-07T00:29:06.112099+00:00"
+        },
+        {
+          "at": "2026-10-07T00:29:06.120605+00:00",
+          "event": "receipt_checkpoint",
+          "monotonic_ns": 2772210081904708,
+          "pid": 50088
+        },
+        {
+          "at": "2026-10-07T00:29:07.515555+00:00",
+          "event": "bind_read_absent",
+          "key": "b23d0edd881821ae44696ffa62c28185ef98f34f2f8b0ba7eddc964bb48670f0:6cf7f339fd98f08d888586fbf41d907cb071d3a54259128e659f51e1f7caaa72",
+          "monotonic_ns": 2772211476848791,
+          "pid": 50088
+        },
+        {
+          "at": "2026-10-07T00:29:07.518550+00:00",
+          "event": "bind_insert_attempt",
+          "monotonic_ns": 2772211479844125,
+          "pid": 50088,
+          "snapshot_sha256": "a7c7f989eadb3613deaefca4b789fc8e751ae1dc9955e56b04a518ad628519b0"
+        },
+        {
+          "at": "2026-10-07T00:29:07.520434+00:00",
+          "event": "bind_insert_conflict",
+          "monotonic_ns": 2772211481728541,
+          "pid": 50088
+        },
+        {
+          "at": "2026-10-07T00:29:07.521034+00:00",
+          "event": "bind_read_winner",
+          "monotonic_ns": 2772211482328166,
+          "pid": 50088,
+          "snapshot_sha256": "7f4f306b51ee21ede9c9d9a03b5a647de6eb35d42a2d71933d288b46c450171b"
+        },
+        {
+          "at": "2026-10-07T00:29:07.525030+00:00",
+          "event": "bind_read_winner",
+          "monotonic_ns": 2772211486324750,
+          "pid": 50088,
+          "snapshot_sha256": "7f4f306b51ee21ede9c9d9a03b5a647de6eb35d42a2d71933d288b46c450171b"
+        },
+        {
+          "at": "2026-10-07T00:29:07.533347+00:00",
+          "event": "result_written",
+          "monotonic_ns": 2772211494641500,
+          "pid": 50088,
+          "result_ref": "runs/sec/fixture-run/collect/process-0/result.json"
+        }
+      ],
+      "result": {
+        "context": {
+          "attempt_id": "process-0",
+          "command": "collect",
+          "config_sha256": "70cadd455a9ce2e892d25e327ea6f8f3ecd5ae7635e043536f62d2bb1f900b50",
+          "deadline": "2026-10-07T00:29:36.082874+00:00",
+          "effective_config": {
+            "backfill": {
+              "end_quarter": "open",
+              "start_quarter": "2015Q1"
+            },
+            "config_version": "sec-acquisition-v1",
+            "coordination": {
+              "clock_uncertainty_seconds": 2.0,
+              "lease_seconds": 60.0,
+              "namespace": "sec-owner-lowell-mason",
+              "renew_every_seconds": 20.0
+            },
+            "daily": {
+              "start_date": "2026-10-01"
+            },
+            "etl": {
+              "parser_version": "fixture-envelope-v1",
+              "schema_version": "sec-index-v1"
+            },
+            "fixture": null,
+            "http": {
+              "connect_timeout_seconds": 15.0,
+              "exchange_deadline_seconds": 90.0,
+              "max_attempts": 5,
+              "max_expanded_bytes": 536870912,
+              "max_received_bytes": 67108864,
+              "read_timeout_seconds": 60.0,
+              "retry_base_seconds": 2.0,
+              "retry_cap_seconds": 120.0
+            },
+            "jobs": {
+              "replica_retry_limit": 0
+            },
+            "orchestration": {
+              "transient_replays": 1
+            },
+            "reconciliation": {
+              "require_withdrawal_approval": true
+            },
+            "sec": {
+              "max_active_collectors": 1,
+              "requests_per_second": 3.0,
+              "user_agent": "Lowell Mason sec-edgar-ingest mason.lowell@mac.com"
+            },
+            "storage": {
+              "account_name": null,
+              "attempt_table": "Attempts",
+              "backend": "local-fixture",
+              "binding_registry_blob": "sec-owner-lowell-mason/binding.json",
+              "blob_api_version": "2026-04-06",
+              "blob_endpoint": null,
+              "lock_blob": "sec-owner-lowell-mason/sentinel.json",
+              "lock_container": "locks",
+              "quarantine_container": "quarantine",
+              "raw_container": "raw",
+              "root": ".fixture-state",
+              "source_table": "SourceState",
+              "table_api_version": "2020-12-06",
+              "table_endpoint": null,
+              "workset_container": "worksets"
+            },
+            "worker": {
+              "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "provenance": "synthetic-fixture"
+            }
+          },
+          "execution_id": "process-0",
+          "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "parser_version": "fixture-envelope-v1",
+          "pinned_on": "2026-10-07",
+          "priority": "backfill",
+          "run_id": "fixture-run",
+          "schema_version": "sec-index-v1",
+          "started_at": "2026-10-07T00:29:06.081651+00:00"
+        },
+        "discovered": 1,
+        "downloaded": 1,
+        "ended_at": "2026-10-07T00:29:07.529872+00:00",
+        "failed": 0,
+        "gaps": [],
+        "outcome": "success",
+        "pending": 0,
+        "quarantined": 0,
+        "snapshot_workset_ref": "worksets/sec/snapshot/sha256=48c7785e92d1dc3d14d1898173dba7e3625b2ee8580216b5b2bb1616010d5405/workset.json",
+        "source_workset_ref": "worksets/sec/source/sha256=b23d0edd881821ae44696ffa62c28185ef98f34f2f8b0ba7eddc964bb48670f0/workset.json",
+        "started_at": "2026-10-07T00:29:06.081651+00:00",
+        "unchanged": 0
+      },
+      "result_hex": "7b22636f6e74657874223a7b22617474656d70745f6964223a2270726f636573732d30222c22636f6d6d616e64223a22636f6c6c656374222c22636f6e6669675f736861323536223a2237306361646434353561396365326538393264323565333237656136663866336563643561653736333565303433353336663632643262623166393030623530222c22646561646c696e65223a22323032362d31302d30375430303a32393a33362e3038323837342b30303a3030222c226566666563746976655f636f6e666967223a7b226261636b66696c6c223a7b22656e645f71756172746572223a226f70656e222c2273746172745f71756172746572223a22323031355131227d2c22636f6e6669675f76657273696f6e223a227365632d6163717569736974696f6e2d7631222c22636f6f7264696e6174696f6e223a7b22636c6f636b5f756e6365727461696e74795f7365636f6e6473223a322e302c226c656173655f7365636f6e6473223a36302e302c226e616d657370616365223a227365632d6f776e65722d6c6f77656c6c2d6d61736f6e222c2272656e65775f65766572795f7365636f6e6473223a32302e307d2c226461696c79223a7b2273746172745f64617465223a22323032362d31302d3031227d2c2265746c223a7b227061727365725f76657273696f6e223a22666978747572652d656e76656c6f70652d7631222c22736368656d615f76657273696f6e223a227365632d696e6465782d7631227d2c2266697874757265223a6e756c6c2c2268747470223a7b22636f6e6e6563745f74696d656f75745f7365636f6e6473223a31352e302c2265786368616e67655f646561646c696e655f7365636f6e6473223a39302e302c226d61785f617474656d707473223a352c226d61785f657870616e6465645f6279746573223a3533363837303931322c226d61785f72656365697665645f6279746573223a36373130383836342c22726561645f74696d656f75745f7365636f6e6473223a36302e302c2272657472795f626173655f7365636f6e6473223a322e302c2272657472795f6361705f7365636f6e6473223a3132302e307d2c226a6f6273223a7b227265706c6963615f72657472795f6c696d6974223a307d2c226f726368657374726174696f6e223a7b227472616e7369656e745f7265706c617973223a317d2c227265636f6e63696c696174696f6e223a7b22726571756972655f7769746864726177616c5f617070726f76616c223a747275657d2c22736563223a7b226d61785f6163746976655f636f6c6c6563746f7273223a312c2272657175657374735f7065725f7365636f6e64223a332e302c22757365725f6167656e74223a224c6f77656c6c204d61736f6e207365632d65646761722d696e67657374206d61736f6e2e6c6f77656c6c406d61632e636f6d227d2c2273746f72616765223a7b226163636f756e745f6e616d65223a6e756c6c2c22617474656d70745f7461626c65223a22417474656d707473222c226261636b656e64223a226c6f63616c2d66697874757265222c2262696e64696e675f72656769737472795f626c6f62223a227365632d6f776e65722d6c6f77656c6c2d6d61736f6e2f62696e64696e672e6a736f6e222c22626c6f625f6170695f76657273696f6e223a22323032362d30342d3036222c22626c6f625f656e64706f696e74223a6e756c6c2c226c6f636b5f626c6f62223a227365632d6f776e65722d6c6f77656c6c2d6d61736f6e2f73656e74696e656c2e6a736f6e222c226c6f636b5f636f6e7461696e6572223a226c6f636b73222c2271756172616e74696e655f636f6e7461696e6572223a2271756172616e74696e65222c227261775f636f6e7461696e6572223a22726177222c22726f6f74223a222e666978747572652d7374617465222c22736f757263655f7461626c65223a22536f757263655374617465222c227461626c655f6170695f76657273696f6e223a22323032302d31322d3036222c227461626c655f656e64706f696e74223a6e756c6c2c22776f726b7365745f636f6e7461696e6572223a22776f726b73657473227d2c22776f726b6572223a7b22696d6167655f646967657374223a227368613235363a30303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030222c2270726f76656e616e6365223a2273796e7468657469632d66697874757265227d7d2c22657865637574696f6e5f6964223a2270726f636573732d30222c22696d6167655f646967657374223a227368613235363a30303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030222c227061727365725f76657273696f6e223a22666978747572652d656e76656c6f70652d7631222c2270696e6e65645f6f6e223a22323032362d31302d3037222c227072696f72697479223a226261636b66696c6c222c2272756e5f6964223a22666978747572652d72756e222c22736368656d615f76657273696f6e223a227365632d696e6465782d7631222c22737461727465645f6174223a22323032362d31302d30375430303a32393a30362e3038313635312b30303a3030227d2c22646973636f7665726564223a312c22646f776e6c6f61646564223a312c22656e6465645f6174223a22323032362d31302d30375430303a32393a30372e3532393837322b30303a3030222c226661696c6564223a302c2267617073223a5b5d2c226f7574636f6d65223a2273756363657373222c2270656e64696e67223a302c2271756172616e74696e6564223a302c22736e617073686f745f776f726b7365745f726566223a22776f726b736574732f7365632f736e617073686f742f7368613235363d343863373738356539326431646333643134643138393831373364626137653336323562326565383538303231366235623262623136313630313064353430352f776f726b7365742e6a736f6e222c22736f757263655f776f726b7365745f726566223a22776f726b736574732f7365632f736f757263652f7368613235363d623233643065646438383138323161653434363936666661363263323831383565663938663334663266386230626137656464633936346262343836373066302f776f726b7365742e6a736f6e222c22737461727465645f6174223a22323032362d31302d30375430303a32393a30362e3038313635312b30303a3030222c22756e6368616e676564223a307d",
+      "result_ref": "runs/sec/fixture-run/collect/process-0/result.json"
+    },
+    {
+      "candidate_sha256": "7f4f306b51ee21ede9c9d9a03b5a647de6eb35d42a2d71933d288b46c450171b",
+      "events": [
+        {
+          "at": "2026-10-07T00:29:06.086160+00:00",
+          "event": "request_barrier_ready",
+          "monotonic_ns": 2772210047459708,
+          "pid": 50089
+        },
+        {
+          "at": "2026-10-07T00:29:06.088679+00:00",
+          "event": "request_barrier_released",
+          "monotonic_ns": 2772210049975875,
+          "pid": 50089
+        },
+        {
+          "at": "2026-10-07T00:29:06.099844+00:00",
+          "event": "enqueue",
+          "mono": 2772210.061145458,
+          "monotonic_ns": 2772210061147666,
+          "owner": "process-1:process-1:e11f24497ed640669f74f86509636ac8",
+          "pid": 50089,
+          "priority": "backfill",
+          "ticket_id": "5d051d34a076463cbf5ea8990effb5cb"
+        },
+        {
+          "at": "2026-10-07T00:29:06.101841+00:00",
+          "event": "queue-choice",
+          "mono": 2772210.063142875,
+          "monotonic_ns": 2772210063144750,
+          "owner": "process-0:process-0:4a122568806d46b7959dd11fd4c11c6c",
+          "pid": 50089,
+          "priority": "backfill",
+          "ticket_id": "9009fd2e0d604bf0a5299e500b55361d"
+        },
+        {
+          "at": "2026-10-07T00:29:06.360427+00:00",
+          "event": "queue-choice",
+          "mono": 2772210.321735875,
+          "monotonic_ns": 2772210321744916,
+          "owner": "process-1:process-1:e11f24497ed640669f74f86509636ac8",
+          "pid": 50089,
+          "priority": "backfill",
+          "ticket_id": "5d051d34a076463cbf5ea8990effb5cb"
+        },
+        {
+          "at": "2026-10-07T00:29:06.366082+00:00",
+          "event": "queue-choice",
+          "mono": 2772210.327385208,
+          "monotonic_ns": 2772210327388458,
+          "owner": "process-1:process-1:e11f24497ed640669f74f86509636ac8",
+          "pid": 50089,
+          "priority": "backfill",
+          "ticket_id": "5d051d34a076463cbf5ea8990effb5cb"
+        },
+        {
+          "at": "2026-10-07T00:29:06.369325+00:00",
+          "epoch": 2,
+          "event": "acquire",
+          "lease_id": "9fd7b3bd-8490-4ff5-bb79-20b86698034d",
+          "mono": 2772210.330625125,
+          "monotonic_ns": 2772210330628125,
+          "owner": "process-1:process-1:e11f24497ed640669f74f86509636ac8",
+          "ownership_until": "2026-10-07T00:30:06.360470+00:00",
+          "pid": 50089
+        },
+        {
+          "at": "2026-10-07T00:29:06.369333+00:00",
+          "earliest_safe": "2026-10-07T00:29:06.112099+00:00",
+          "epoch": 2,
+          "event": "takeover",
+          "mono": 2772210.330633416,
+          "monotonic_ns": 2772210330634791,
+          "owner": "process-1:process-1:e11f24497ed640669f74f86509636ac8",
+          "pid": 50089
+        },
+        {
+          "at": "2026-10-07T00:29:06.783429+00:00",
+          "epoch": 2,
+          "event": "reserve",
+          "mono": 2772210.744730666,
+          "monotonic_ns": 2772210744740250,
+          "next_allowed_at": "2026-10-07T00:29:07.447908+00:00",
+          "owner": "process-1:process-1:e11f24497ed640669f74f86509636ac8",
+          "pid": 50089,
+          "request_id": "fd023abe341241fa93efdff5a0fef7da",
+          "start_before_mono": 2772211.0758688333
+        },
+        {
+          "at": "2026-10-07T00:29:06.787069+00:00",
+          "epoch": 2,
+          "event": "request-start",
+          "mono": 2772210.748376,
+          "monotonic_ns": 2772210748381833,
+          "owner": "process-1:process-1:e11f24497ed640669f74f86509636ac8",
+          "pid": 50089,
+          "request_id": "fd023abe341241fa93efdff5a0fef7da"
+        },
+        {
+          "at": "2026-10-07T00:29:06.796356+00:00",
+          "epoch": 2,
+          "event": "request-end",
+          "mono": 2772210.757657916,
+          "monotonic_ns": 2772210757661083,
+          "owner": "process-1:process-1:e11f24497ed640669f74f86509636ac8",
+          "pid": 50089,
+          "request_id": "fd023abe341241fa93efdff5a0fef7da"
+        },
+        {
+          "at": "2026-10-07T00:29:06.801380+00:00",
+          "epoch": 2,
+          "event": "drain-pacing",
+          "mono": 2772210.76268,
+          "monotonic_ns": 2772210762682791,
+          "not_before": "2026-10-07T00:29:07.133557+00:00",
+          "owner": "process-1:process-1:e11f24497ed640669f74f86509636ac8",
+          "pid": 50089
+        },
+        {
+          "at": "2026-10-07T00:29:06.804223+00:00",
+          "clean_release": true,
+          "drained": true,
+          "epoch": 2,
+          "event": "release",
+          "mono": 2772210.765522375,
+          "monotonic_ns": 2772210765525125,
+          "owner": "process-1:process-1:e11f24497ed640669f74f86509636ac8",
+          "pid": 50089,
+          "unsafe_until": "2026-10-07T00:29:06.802985+00:00"
+        },
+        {
+          "at": "2026-10-07T00:29:06.816518+00:00",
+          "event": "receipt_checkpoint",
+          "monotonic_ns": 2772210777814458,
+          "pid": 50089
+        },
+        {
+          "at": "2026-10-07T00:29:07.510143+00:00",
+          "event": "bind_read_absent",
+          "key": "b23d0edd881821ae44696ffa62c28185ef98f34f2f8b0ba7eddc964bb48670f0:6cf7f339fd98f08d888586fbf41d907cb071d3a54259128e659f51e1f7caaa72",
+          "monotonic_ns": 2772211471436625,
+          "pid": 50089
+        },
+        {
+          "at": "2026-10-07T00:29:07.518594+00:00",
+          "event": "bind_insert_attempt",
+          "monotonic_ns": 2772211479888208,
+          "pid": 50089,
+          "snapshot_sha256": "7f4f306b51ee21ede9c9d9a03b5a647de6eb35d42a2d71933d288b46c450171b"
+        },
+        {
+          "at": "2026-10-07T00:29:07.519090+00:00",
+          "event": "bind_insert_success",
+          "monotonic_ns": 2772211480384541,
+          "pid": 50089,
+          "snapshot_sha256": "7f4f306b51ee21ede9c9d9a03b5a647de6eb35d42a2d71933d288b46c450171b"
+        },
+        {
+          "at": "2026-10-07T00:29:07.526260+00:00",
+          "event": "bind_read_winner",
+          "monotonic_ns": 2772211487554041,
+          "pid": 50089,
+          "snapshot_sha256": "7f4f306b51ee21ede9c9d9a03b5a647de6eb35d42a2d71933d288b46c450171b"
+        },
+        {
+          "at": "2026-10-07T00:29:07.534114+00:00",
+          "event": "result_written",
+          "monotonic_ns": 2772211495407875,
+          "pid": 50089,
+          "result_ref": "runs/sec/fixture-run/collect/process-1/result.json"
+        }
+      ],
+      "result": {
+        "context": {
+          "attempt_id": "process-1",
+          "command": "collect",
+          "config_sha256": "70cadd455a9ce2e892d25e327ea6f8f3ecd5ae7635e043536f62d2bb1f900b50",
+          "deadline": "2026-10-07T00:29:36.084340+00:00",
+          "effective_config": {
+            "backfill": {
+              "end_quarter": "open",
+              "start_quarter": "2015Q1"
+            },
+            "config_version": "sec-acquisition-v1",
+            "coordination": {
+              "clock_uncertainty_seconds": 2.0,
+              "lease_seconds": 60.0,
+              "namespace": "sec-owner-lowell-mason",
+              "renew_every_seconds": 20.0
+            },
+            "daily": {
+              "start_date": "2026-10-01"
+            },
+            "etl": {
+              "parser_version": "fixture-envelope-v1",
+              "schema_version": "sec-index-v1"
+            },
+            "fixture": null,
+            "http": {
+              "connect_timeout_seconds": 15.0,
+              "exchange_deadline_seconds": 90.0,
+              "max_attempts": 5,
+              "max_expanded_bytes": 536870912,
+              "max_received_bytes": 67108864,
+              "read_timeout_seconds": 60.0,
+              "retry_base_seconds": 2.0,
+              "retry_cap_seconds": 120.0
+            },
+            "jobs": {
+              "replica_retry_limit": 0
+            },
+            "orchestration": {
+              "transient_replays": 1
+            },
+            "reconciliation": {
+              "require_withdrawal_approval": true
+            },
+            "sec": {
+              "max_active_collectors": 1,
+              "requests_per_second": 3.0,
+              "user_agent": "Lowell Mason sec-edgar-ingest mason.lowell@mac.com"
+            },
+            "storage": {
+              "account_name": null,
+              "attempt_table": "Attempts",
+              "backend": "local-fixture",
+              "binding_registry_blob": "sec-owner-lowell-mason/binding.json",
+              "blob_api_version": "2026-04-06",
+              "blob_endpoint": null,
+              "lock_blob": "sec-owner-lowell-mason/sentinel.json",
+              "lock_container": "locks",
+              "quarantine_container": "quarantine",
+              "raw_container": "raw",
+              "root": ".fixture-state",
+              "source_table": "SourceState",
+              "table_api_version": "2020-12-06",
+              "table_endpoint": null,
+              "workset_container": "worksets"
+            },
+            "worker": {
+              "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "provenance": "synthetic-fixture"
+            }
+          },
+          "execution_id": "process-1",
+          "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "parser_version": "fixture-envelope-v1",
+          "pinned_on": "2026-10-07",
+          "priority": "backfill",
+          "run_id": "fixture-run",
+          "schema_version": "sec-index-v1",
+          "started_at": "2026-10-07T00:29:06.083122+00:00"
+        },
+        "discovered": 1,
+        "downloaded": 1,
+        "ended_at": "2026-10-07T00:29:07.530603+00:00",
+        "failed": 0,
+        "gaps": [],
+        "outcome": "success",
+        "pending": 0,
+        "quarantined": 0,
+        "snapshot_workset_ref": "worksets/sec/snapshot/sha256=48c7785e92d1dc3d14d1898173dba7e3625b2ee8580216b5b2bb1616010d5405/workset.json",
+        "source_workset_ref": "worksets/sec/source/sha256=b23d0edd881821ae44696ffa62c28185ef98f34f2f8b0ba7eddc964bb48670f0/workset.json",
+        "started_at": "2026-10-07T00:29:06.083122+00:00",
+        "unchanged": 0
+      },
+      "result_hex": "7b22636f6e74657874223a7b22617474656d70745f6964223a2270726f636573732d31222c22636f6d6d616e64223a22636f6c6c656374222c22636f6e6669675f736861323536223a2237306361646434353561396365326538393264323565333237656136663866336563643561653736333565303433353336663632643262623166393030623530222c22646561646c696e65223a22323032362d31302d30375430303a32393a33362e3038343334302b30303a3030222c226566666563746976655f636f6e666967223a7b226261636b66696c6c223a7b22656e645f71756172746572223a226f70656e222c2273746172745f71756172746572223a22323031355131227d2c22636f6e6669675f76657273696f6e223a227365632d6163717569736974696f6e2d7631222c22636f6f7264696e6174696f6e223a7b22636c6f636b5f756e6365727461696e74795f7365636f6e6473223a322e302c226c656173655f7365636f6e6473223a36302e302c226e616d657370616365223a227365632d6f776e65722d6c6f77656c6c2d6d61736f6e222c2272656e65775f65766572795f7365636f6e6473223a32302e307d2c226461696c79223a7b2273746172745f64617465223a22323032362d31302d3031227d2c2265746c223a7b227061727365725f76657273696f6e223a22666978747572652d656e76656c6f70652d7631222c22736368656d615f76657273696f6e223a227365632d696e6465782d7631227d2c2266697874757265223a6e756c6c2c2268747470223a7b22636f6e6e6563745f74696d656f75745f7365636f6e6473223a31352e302c2265786368616e67655f646561646c696e655f7365636f6e6473223a39302e302c226d61785f617474656d707473223a352c226d61785f657870616e6465645f6279746573223a3533363837303931322c226d61785f72656365697665645f6279746573223a36373130383836342c22726561645f74696d656f75745f7365636f6e6473223a36302e302c2272657472795f626173655f7365636f6e6473223a322e302c2272657472795f6361705f7365636f6e6473223a3132302e307d2c226a6f6273223a7b227265706c6963615f72657472795f6c696d6974223a307d2c226f726368657374726174696f6e223a7b227472616e7369656e745f7265706c617973223a317d2c227265636f6e63696c696174696f6e223a7b22726571756972655f7769746864726177616c5f617070726f76616c223a747275657d2c22736563223a7b226d61785f6163746976655f636f6c6c6563746f7273223a312c2272657175657374735f7065725f7365636f6e64223a332e302c22757365725f6167656e74223a224c6f77656c6c204d61736f6e207365632d65646761722d696e67657374206d61736f6e2e6c6f77656c6c406d61632e636f6d227d2c2273746f72616765223a7b226163636f756e745f6e616d65223a6e756c6c2c22617474656d70745f7461626c65223a22417474656d707473222c226261636b656e64223a226c6f63616c2d66697874757265222c2262696e64696e675f72656769737472795f626c6f62223a227365632d6f776e65722d6c6f77656c6c2d6d61736f6e2f62696e64696e672e6a736f6e222c22626c6f625f6170695f76657273696f6e223a22323032362d30342d3036222c22626c6f625f656e64706f696e74223a6e756c6c2c226c6f636b5f626c6f62223a227365632d6f776e65722d6c6f77656c6c2d6d61736f6e2f73656e74696e656c2e6a736f6e222c226c6f636b5f636f6e7461696e6572223a226c6f636b73222c2271756172616e74696e655f636f6e7461696e6572223a2271756172616e74696e65222c227261775f636f6e7461696e6572223a22726177222c22726f6f74223a222e666978747572652d7374617465222c22736f757263655f7461626c65223a22536f757263655374617465222c227461626c655f6170695f76657273696f6e223a22323032302d31322d3036222c227461626c655f656e64706f696e74223a6e756c6c2c22776f726b7365745f636f6e7461696e6572223a22776f726b73657473227d2c22776f726b6572223a7b22696d6167655f646967657374223a227368613235363a30303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030222c2270726f76656e616e6365223a2273796e7468657469632d66697874757265227d7d2c22657865637574696f6e5f6964223a2270726f636573732d31222c22696d6167655f646967657374223a227368613235363a30303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030222c227061727365725f76657273696f6e223a22666978747572652d656e76656c6f70652d7631222c2270696e6e65645f6f6e223a22323032362d31302d3037222c227072696f72697479223a226261636b66696c6c222c2272756e5f6964223a22666978747572652d72756e222c22736368656d615f76657273696f6e223a227365632d696e6465782d7631222c22737461727465645f6174223a22323032362d31302d30375430303a32393a30362e3038333132322b30303a3030227d2c22646973636f7665726564223a312c22646f776e6c6f61646564223a312c22656e6465645f6174223a22323032362d31302d30375430303a32393a30372e3533303630332b30303a3030222c226661696c6564223a302c2267617073223a5b5d2c226f7574636f6d65223a2273756363657373222c2270656e64696e67223a302c2271756172616e74696e6564223a302c22736e617073686f745f776f726b7365745f726566223a22776f726b736574732f7365632f736e617073686f742f7368613235363d343863373738356539326431646333643134643138393831373364626137653336323562326565383538303231366235623262623136313630313064353430352f776f726b7365742e6a736f6e222c22736f757263655f776f726b7365745f726566223a22776f726b736574732f7365632f736f757263652f7368613235363d623233643065646438383138323161653434363936666661363263323831383565663938663334663266386230626137656464633936346262343836373066302f776f726b7365742e6a736f6e222c22737461727465645f6174223a22323032362d31302d30375430303a32393a30362e3038333132322b30303a3030222c22756e6368616e676564223a307d",
+      "result_ref": "runs/sec/fixture-run/collect/process-1/result.json"
+    },
+    {
+      "candidate_sha256": "50bfaf7cb3875499de180987512a200158a3994b3ac8396646a050e378be2d5a",
+      "events": [
+        {
+          "at": "2026-10-07T00:29:06.084836+00:00",
+          "event": "request_barrier_ready",
+          "monotonic_ns": 2772210046135958,
+          "pid": 50090
+        },
+        {
+          "at": "2026-10-07T00:29:06.088713+00:00",
+          "event": "request_barrier_released",
+          "monotonic_ns": 2772210050010291,
+          "pid": 50090
+        },
+        {
+          "at": "2026-10-07T00:29:06.101536+00:00",
+          "event": "enqueue",
+          "mono": 2772210.062838916,
+          "monotonic_ns": 2772210062841166,
+          "owner": "process-2:process-2:7ffcf4d2ef444d6f8880b125378245f8",
+          "pid": 50090,
+          "priority": "backfill",
+          "ticket_id": "6ca787bbc62c45658e262f6a286d8588"
+        },
+        {
+          "at": "2026-10-07T00:29:06.104108+00:00",
+          "event": "queue-choice",
+          "mono": 2772210.065411166,
+          "monotonic_ns": 2772210065412916,
+          "owner": "process-0:process-0:4a122568806d46b7959dd11fd4c11c6c",
+          "pid": 50090,
+          "priority": "backfill",
+          "ticket_id": "9009fd2e0d604bf0a5299e500b55361d"
+        },
+        {
+          "at": "2026-10-07T00:29:06.361205+00:00",
+          "event": "queue-choice",
+          "mono": 2772210.322510625,
+          "monotonic_ns": 2772210322517333,
+          "owner": "process-1:process-1:e11f24497ed640669f74f86509636ac8",
+          "pid": 50090,
+          "priority": "backfill",
+          "ticket_id": "5d051d34a076463cbf5ea8990effb5cb"
+        },
+        {
+          "at": "2026-10-07T00:29:06.614851+00:00",
+          "event": "queue-choice",
+          "mono": 2772210.576154791,
+          "monotonic_ns": 2772210576160125,
+          "owner": "process-1:process-1:e11f24497ed640669f74f86509636ac8",
+          "pid": 50090,
+          "priority": "backfill",
+          "ticket_id": "5d051d34a076463cbf5ea8990effb5cb"
+        },
+        {
+          "at": "2026-10-07T00:29:06.870554+00:00",
+          "event": "queue-choice",
+          "mono": 2772210.831856583,
+          "monotonic_ns": 2772210831860791,
+          "owner": "process-2:process-2:7ffcf4d2ef444d6f8880b125378245f8",
+          "pid": 50090,
+          "priority": "backfill",
+          "ticket_id": "6ca787bbc62c45658e262f6a286d8588"
+        },
+        {
+          "at": "2026-10-07T00:29:06.874949+00:00",
+          "event": "queue-choice",
+          "mono": 2772210.836250166,
+          "monotonic_ns": 2772210836253333,
+          "owner": "process-2:process-2:7ffcf4d2ef444d6f8880b125378245f8",
+          "pid": 50090,
+          "priority": "backfill",
+          "ticket_id": "6ca787bbc62c45658e262f6a286d8588"
+        },
+        {
+          "at": "2026-10-07T00:29:06.877703+00:00",
+          "epoch": 3,
+          "event": "acquire",
+          "lease_id": "d30eb1e5-f8af-4441-a7ea-9c37494057b8",
+          "mono": 2772210.839002041,
+          "monotonic_ns": 2772210839004791,
+          "owner": "process-2:process-2:7ffcf4d2ef444d6f8880b125378245f8",
+          "ownership_until": "2026-10-07T00:30:06.870583+00:00",
+          "pid": 50090
+        },
+        {
+          "at": "2026-10-07T00:29:06.877711+00:00",
+          "earliest_safe": "2026-10-07T00:29:06.802985+00:00",
+          "epoch": 3,
+          "event": "takeover",
+          "mono": 2772210.83900975,
+          "monotonic_ns": 2772210839011041,
+          "owner": "process-2:process-2:7ffcf4d2ef444d6f8880b125378245f8",
+          "pid": 50090
+        },
+        {
+          "at": "2026-10-07T00:29:07.461216+00:00",
+          "epoch": 3,
+          "event": "reserve",
+          "mono": 2772211.422516875,
+          "monotonic_ns": 2772211422526291,
+          "next_allowed_at": "2026-10-07T00:29:08.124944+00:00",
+          "owner": "process-2:process-2:7ffcf4d2ef444d6f8880b125378245f8",
+          "pid": 50090,
+          "request_id": "9f9fba67952845519e819df3cb96a172",
+          "start_before_mono": 2772211.7529004994
+        },
+        {
+          "at": "2026-10-07T00:29:07.464342+00:00",
+          "epoch": 3,
+          "event": "request-start",
+          "mono": 2772211.425641541,
+          "monotonic_ns": 2772211425645625,
+          "owner": "process-2:process-2:7ffcf4d2ef444d6f8880b125378245f8",
+          "pid": 50090,
+          "request_id": "9f9fba67952845519e819df3cb96a172"
+        },
+        {
+          "at": "2026-10-07T00:29:07.473633+00:00",
+          "epoch": 3,
+          "event": "request-end",
+          "mono": 2772211.434933,
+          "monotonic_ns": 2772211434936375,
+          "owner": "process-2:process-2:7ffcf4d2ef444d6f8880b125378245f8",
+          "pid": 50090,
+          "request_id": "9f9fba67952845519e819df3cb96a172"
+        },
+        {
+          "at": "2026-10-07T00:29:07.478559+00:00",
+          "epoch": 3,
+          "event": "drain-pacing",
+          "mono": 2772211.439857541,
+          "monotonic_ns": 2772211439860375,
+          "not_before": "2026-10-07T00:29:07.810759+00:00",
+          "owner": "process-2:process-2:7ffcf4d2ef444d6f8880b125378245f8",
+          "pid": 50090
+        },
+        {
+          "at": "2026-10-07T00:29:07.481314+00:00",
+          "clean_release": true,
+          "drained": true,
+          "epoch": 3,
+          "event": "release",
+          "mono": 2772211.442611666,
+          "monotonic_ns": 2772211442614500,
+          "owner": "process-2:process-2:7ffcf4d2ef444d6f8880b125378245f8",
+          "pid": 50090,
+          "unsafe_until": "2026-10-07T00:29:07.480126+00:00"
+        },
+        {
+          "at": "2026-10-07T00:29:07.493004+00:00",
+          "event": "receipt_checkpoint",
+          "monotonic_ns": 2772211454298833,
+          "pid": 50090
+        },
+        {
+          "at": "2026-10-07T00:29:07.509090+00:00",
+          "event": "bind_read_absent",
+          "key": "b23d0edd881821ae44696ffa62c28185ef98f34f2f8b0ba7eddc964bb48670f0:6cf7f339fd98f08d888586fbf41d907cb071d3a54259128e659f51e1f7caaa72",
+          "monotonic_ns": 2772211470381291,
+          "pid": 50090
+        },
+        {
+          "at": "2026-10-07T00:29:07.518523+00:00",
+          "event": "bind_insert_attempt",
+          "monotonic_ns": 2772211479817500,
+          "pid": 50090,
+          "snapshot_sha256": "50bfaf7cb3875499de180987512a200158a3994b3ac8396646a050e378be2d5a"
+        },
+        {
+          "at": "2026-10-07T00:29:07.520162+00:00",
+          "event": "bind_insert_conflict",
+          "monotonic_ns": 2772211481456291,
+          "pid": 50090
+        },
+        {
+          "at": "2026-10-07T00:29:07.524538+00:00",
+          "event": "bind_read_winner",
+          "monotonic_ns": 2772211485832541,
+          "pid": 50090,
+          "snapshot_sha256": "7f4f306b51ee21ede9c9d9a03b5a647de6eb35d42a2d71933d288b46c450171b"
+        },
+        {
+          "at": "2026-10-07T00:29:07.528220+00:00",
+          "event": "bind_read_winner",
+          "monotonic_ns": 2772211489514416,
+          "pid": 50090,
+          "snapshot_sha256": "7f4f306b51ee21ede9c9d9a03b5a647de6eb35d42a2d71933d288b46c450171b"
+        },
+        {
+          "at": "2026-10-07T00:29:07.537259+00:00",
+          "event": "result_written",
+          "monotonic_ns": 2772211498552833,
+          "pid": 50090,
+          "result_ref": "runs/sec/fixture-run/collect/process-2/result.json"
+        }
+      ],
+      "result": {
+        "context": {
+          "attempt_id": "process-2",
+          "command": "collect",
+          "config_sha256": "70cadd455a9ce2e892d25e327ea6f8f3ecd5ae7635e043536f62d2bb1f900b50",
+          "deadline": "2026-10-07T00:29:36.082875+00:00",
+          "effective_config": {
+            "backfill": {
+              "end_quarter": "open",
+              "start_quarter": "2015Q1"
+            },
+            "config_version": "sec-acquisition-v1",
+            "coordination": {
+              "clock_uncertainty_seconds": 2.0,
+              "lease_seconds": 60.0,
+              "namespace": "sec-owner-lowell-mason",
+              "renew_every_seconds": 20.0
+            },
+            "daily": {
+              "start_date": "2026-10-01"
+            },
+            "etl": {
+              "parser_version": "fixture-envelope-v1",
+              "schema_version": "sec-index-v1"
+            },
+            "fixture": null,
+            "http": {
+              "connect_timeout_seconds": 15.0,
+              "exchange_deadline_seconds": 90.0,
+              "max_attempts": 5,
+              "max_expanded_bytes": 536870912,
+              "max_received_bytes": 67108864,
+              "read_timeout_seconds": 60.0,
+              "retry_base_seconds": 2.0,
+              "retry_cap_seconds": 120.0
+            },
+            "jobs": {
+              "replica_retry_limit": 0
+            },
+            "orchestration": {
+              "transient_replays": 1
+            },
+            "reconciliation": {
+              "require_withdrawal_approval": true
+            },
+            "sec": {
+              "max_active_collectors": 1,
+              "requests_per_second": 3.0,
+              "user_agent": "Lowell Mason sec-edgar-ingest mason.lowell@mac.com"
+            },
+            "storage": {
+              "account_name": null,
+              "attempt_table": "Attempts",
+              "backend": "local-fixture",
+              "binding_registry_blob": "sec-owner-lowell-mason/binding.json",
+              "blob_api_version": "2026-04-06",
+              "blob_endpoint": null,
+              "lock_blob": "sec-owner-lowell-mason/sentinel.json",
+              "lock_container": "locks",
+              "quarantine_container": "quarantine",
+              "raw_container": "raw",
+              "root": ".fixture-state",
+              "source_table": "SourceState",
+              "table_api_version": "2020-12-06",
+              "table_endpoint": null,
+              "workset_container": "worksets"
+            },
+            "worker": {
+              "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "provenance": "synthetic-fixture"
+            }
+          },
+          "execution_id": "process-2",
+          "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "parser_version": "fixture-envelope-v1",
+          "pinned_on": "2026-10-07",
+          "priority": "backfill",
+          "run_id": "fixture-run",
+          "schema_version": "sec-index-v1",
+          "started_at": "2026-10-07T00:29:06.081648+00:00"
+        },
+        "discovered": 1,
+        "downloaded": 1,
+        "ended_at": "2026-10-07T00:29:07.532751+00:00",
+        "failed": 0,
+        "gaps": [],
+        "outcome": "success",
+        "pending": 0,
+        "quarantined": 0,
+        "snapshot_workset_ref": "worksets/sec/snapshot/sha256=48c7785e92d1dc3d14d1898173dba7e3625b2ee8580216b5b2bb1616010d5405/workset.json",
+        "source_workset_ref": "worksets/sec/source/sha256=b23d0edd881821ae44696ffa62c28185ef98f34f2f8b0ba7eddc964bb48670f0/workset.json",
+        "started_at": "2026-10-07T00:29:06.081648+00:00",
+        "unchanged": 0
+      },
+      "result_hex": "7b22636f6e74657874223a7b22617474656d70745f6964223a2270726f636573732d32222c22636f6d6d616e64223a22636f6c6c656374222c22636f6e6669675f736861323536223a2237306361646434353561396365326538393264323565333237656136663866336563643561653736333565303433353336663632643262623166393030623530222c22646561646c696e65223a22323032362d31302d30375430303a32393a33362e3038323837352b30303a3030222c226566666563746976655f636f6e666967223a7b226261636b66696c6c223a7b22656e645f71756172746572223a226f70656e222c2273746172745f71756172746572223a22323031355131227d2c22636f6e6669675f76657273696f6e223a227365632d6163717569736974696f6e2d7631222c22636f6f7264696e6174696f6e223a7b22636c6f636b5f756e6365727461696e74795f7365636f6e6473223a322e302c226c656173655f7365636f6e6473223a36302e302c226e616d657370616365223a227365632d6f776e65722d6c6f77656c6c2d6d61736f6e222c2272656e65775f65766572795f7365636f6e6473223a32302e307d2c226461696c79223a7b2273746172745f64617465223a22323032362d31302d3031227d2c2265746c223a7b227061727365725f76657273696f6e223a22666978747572652d656e76656c6f70652d7631222c22736368656d615f76657273696f6e223a227365632d696e6465782d7631227d2c2266697874757265223a6e756c6c2c2268747470223a7b22636f6e6e6563745f74696d656f75745f7365636f6e6473223a31352e302c2265786368616e67655f646561646c696e655f7365636f6e6473223a39302e302c226d61785f617474656d707473223a352c226d61785f657870616e6465645f6279746573223a3533363837303931322c226d61785f72656365697665645f6279746573223a36373130383836342c22726561645f74696d656f75745f7365636f6e6473223a36302e302c2272657472795f626173655f7365636f6e6473223a322e302c2272657472795f6361705f7365636f6e6473223a3132302e307d2c226a6f6273223a7b227265706c6963615f72657472795f6c696d6974223a307d2c226f726368657374726174696f6e223a7b227472616e7369656e745f7265706c617973223a317d2c227265636f6e63696c696174696f6e223a7b22726571756972655f7769746864726177616c5f617070726f76616c223a747275657d2c22736563223a7b226d61785f6163746976655f636f6c6c6563746f7273223a312c2272657175657374735f7065725f7365636f6e64223a332e302c22757365725f6167656e74223a224c6f77656c6c204d61736f6e207365632d65646761722d696e67657374206d61736f6e2e6c6f77656c6c406d61632e636f6d227d2c2273746f72616765223a7b226163636f756e745f6e616d65223a6e756c6c2c22617474656d70745f7461626c65223a22417474656d707473222c226261636b656e64223a226c6f63616c2d66697874757265222c2262696e64696e675f72656769737472795f626c6f62223a227365632d6f776e65722d6c6f77656c6c2d6d61736f6e2f62696e64696e672e6a736f6e222c22626c6f625f6170695f76657273696f6e223a22323032362d30342d3036222c22626c6f625f656e64706f696e74223a6e756c6c2c226c6f636b5f626c6f62223a227365632d6f776e65722d6c6f77656c6c2d6d61736f6e2f73656e74696e656c2e6a736f6e222c226c6f636b5f636f6e7461696e6572223a226c6f636b73222c2271756172616e74696e655f636f6e7461696e6572223a2271756172616e74696e65222c227261775f636f6e7461696e6572223a22726177222c22726f6f74223a222e666978747572652d7374617465222c22736f757263655f7461626c65223a22536f757263655374617465222c227461626c655f6170695f76657273696f6e223a22323032302d31322d3036222c227461626c655f656e64706f696e74223a6e756c6c2c22776f726b7365745f636f6e7461696e6572223a22776f726b73657473227d2c22776f726b6572223a7b22696d6167655f646967657374223a227368613235363a30303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030222c2270726f76656e616e6365223a2273796e7468657469632d66697874757265227d7d2c22657865637574696f6e5f6964223a2270726f636573732d32222c22696d6167655f646967657374223a227368613235363a30303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030222c227061727365725f76657273696f6e223a22666978747572652d656e76656c6f70652d7631222c2270696e6e65645f6f6e223a22323032362d31302d3037222c227072696f72697479223a226261636b66696c6c222c2272756e5f6964223a22666978747572652d72756e222c22736368656d615f76657273696f6e223a227365632d696e6465782d7631222c22737461727465645f6174223a22323032362d31302d30375430303a32393a30362e3038313634382b30303a3030227d2c22646973636f7665726564223a312c22646f776e6c6f61646564223a312c22656e6465645f6174223a22323032362d31302d30375430303a32393a30372e3533323735312b30303a3030222c226661696c6564223a302c2267617073223a5b5d2c226f7574636f6d65223a2273756363657373222c2270656e64696e67223a302c2271756172616e74696e6564223a302c22736e617073686f745f776f726b7365745f726566223a22776f726b736574732f7365632f736e617073686f742f7368613235363d343863373738356539326431646333643134643138393831373364626137653336323562326565383538303231366235623262623136313630313064353430352f776f726b7365742e6a736f6e222c22736f757263655f776f726b7365745f726566223a22776f726b736574732f7365632f736f757263652f7368613235363d623233643065646438383138323161653434363936666661363263323831383565663938663334663266386230626137656464633936346262343836373066302f776f726b7365742e6a736f6e222c22737461727465645f6174223a22323032362d31302d30375430303a32393a30362e3038313634382b30303a3030222c22756e6368616e676564223a307d",
+      "result_ref": "runs/sec/fixture-run/collect/process-2/result.json"
+    }
+  ],
+  "replay": {
+    "context": {
+      "attempt_id": "collect-1",
+      "command": "collect",
+      "config_sha256": "70cadd455a9ce2e892d25e327ea6f8f3ecd5ae7635e043536f62d2bb1f900b50",
+      "deadline": "2026-10-06T01:00:00+00:00",
+      "effective_config": {
+        "backfill": {
+          "end_quarter": "open",
+          "start_quarter": "2015Q1"
+        },
+        "config_version": "sec-acquisition-v1",
+        "coordination": {
+          "clock_uncertainty_seconds": 2.0,
+          "lease_seconds": 60.0,
+          "namespace": "sec-owner-lowell-mason",
+          "renew_every_seconds": 20.0
+        },
+        "daily": {
+          "start_date": "2026-10-01"
+        },
+        "etl": {
+          "parser_version": "fixture-envelope-v1",
+          "schema_version": "sec-index-v1"
+        },
+        "fixture": null,
+        "http": {
+          "connect_timeout_seconds": 15.0,
+          "exchange_deadline_seconds": 90.0,
+          "max_attempts": 5,
+          "max_expanded_bytes": 536870912,
+          "max_received_bytes": 67108864,
+          "read_timeout_seconds": 60.0,
+          "retry_base_seconds": 2.0,
+          "retry_cap_seconds": 120.0
+        },
+        "jobs": {
+          "replica_retry_limit": 0
+        },
+        "orchestration": {
+          "transient_replays": 1
+        },
+        "reconciliation": {
+          "require_withdrawal_approval": true
+        },
+        "sec": {
+          "max_active_collectors": 1,
+          "requests_per_second": 3.0,
+          "user_agent": "Lowell Mason sec-edgar-ingest mason.lowell@mac.com"
+        },
+        "storage": {
+          "account_name": null,
+          "attempt_table": "Attempts",
+          "backend": "local-fixture",
+          "binding_registry_blob": "sec-owner-lowell-mason/binding.json",
+          "blob_api_version": "2026-04-06",
+          "blob_endpoint": null,
+          "lock_blob": "sec-owner-lowell-mason/sentinel.json",
+          "lock_container": "locks",
+          "quarantine_container": "quarantine",
+          "raw_container": "raw",
+          "root": ".fixture-state",
+          "source_table": "SourceState",
+          "table_api_version": "2020-12-06",
+          "table_endpoint": null,
+          "workset_container": "worksets"
+        },
+        "worker": {
+          "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "provenance": "synthetic-fixture"
+        }
+      },
+      "execution_id": "collection-1",
+      "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "parser_version": "fixture-envelope-v1",
+      "pinned_on": "2026-10-06",
+      "priority": "backfill",
+      "run_id": "fixture-run",
+      "schema_version": "sec-index-v1",
+      "started_at": "2026-10-06T00:00:00+00:00"
+    },
+    "discovered": 1,
+    "downloaded": 0,
+    "ended_at": "2026-10-06T00:00:00+00:00",
+    "failed": 0,
+    "gaps": [],
+    "outcome": "success",
+    "pending": 0,
+    "quarantined": 0,
+    "snapshot_workset_ref": "worksets/sec/snapshot/sha256=48c7785e92d1dc3d14d1898173dba7e3625b2ee8580216b5b2bb1616010d5405/workset.json",
+    "source_workset_ref": "worksets/sec/source/sha256=b23d0edd881821ae44696ffa62c28185ef98f34f2f8b0ba7eddc964bb48670f0/workset.json",
+    "started_at": "2026-10-06T00:00:00+00:00",
+    "unchanged": 1
+  },
+  "winner": {
+    "byte_count": 217,
+    "envelope_version": "sec-daily-envelope-v1",
+    "raw_path": "raw/sec/indexes/kind=daily/period=2026-10-01/sha256=7f4f306b51ee21ede9c9d9a03b5a647de6eb35d42a2d71933d288b46c450171b/master.idx",
+    "received_at": "2026-10-07T00:29:06.795890+00:00",
+    "representation": "idx",
+    "sha256": "7f4f306b51ee21ede9c9d9a03b5a647de6eb35d42a2d71933d288b46c450171b",
+    "source_id": "6cf7f339fd98f08d888586fbf41d907cb071d3a54259128e659f51e1f7caaa72",
+    "validators": {
+      "Content-Length": "217",
+      "Content-Type": "text/plain",
+      "ETag": "\"synthetic-process-1\"",
+      "X-Fixture": "synthetic"
+    }
+  },
+  "workset_hex": "7b226163717569736974696f6e5f6d6f6465223a2272657573655f6163636570746564222c22636f6e74657874223a7b22617474656d70745f6964223a22666978747572652d617474656d7074222c22636f6d6d616e64223a22636f6c6c656374222c22636f6e6669675f736861323536223a2237306361646434353561396365326538393264323565333237656136663866336563643561653736333565303433353336663632643262623166393030623530222c22646561646c696e65223a22323032362d31302d30365430313a30303a30302b30303a3030222c226566666563746976655f636f6e666967223a7b226261636b66696c6c223a7b22656e645f71756172746572223a226f70656e222c2273746172745f71756172746572223a22323031355131227d2c22636f6e6669675f76657273696f6e223a227365632d6163717569736974696f6e2d7631222c22636f6f7264696e6174696f6e223a7b22636c6f636b5f756e6365727461696e74795f7365636f6e6473223a322e302c226c656173655f7365636f6e6473223a36302e302c226e616d657370616365223a227365632d6f776e65722d6c6f77656c6c2d6d61736f6e222c2272656e65775f65766572795f7365636f6e6473223a32302e307d2c226461696c79223a7b2273746172745f64617465223a22323032362d31302d3031227d2c2265746c223a7b227061727365725f76657273696f6e223a22666978747572652d656e76656c6f70652d7631222c22736368656d615f76657273696f6e223a227365632d696e6465782d7631227d2c2266697874757265223a6e756c6c2c2268747470223a7b22636f6e6e6563745f74696d656f75745f7365636f6e6473223a31352e302c2265786368616e67655f646561646c696e655f7365636f6e6473223a39302e302c226d61785f617474656d707473223a352c226d61785f657870616e6465645f6279746573223a3533363837303931322c226d61785f72656365697665645f6279746573223a36373130383836342c22726561645f74696d656f75745f7365636f6e6473223a36302e302c2272657472795f626173655f7365636f6e6473223a322e302c2272657472795f6361705f7365636f6e6473223a3132302e307d2c226a6f6273223a7b227265706c6963615f72657472795f6c696d6974223a307d2c226f726368657374726174696f6e223a7b227472616e7369656e745f7265706c617973223a317d2c227265636f6e63696c696174696f6e223a7b22726571756972655f7769746864726177616c5f617070726f76616c223a747275657d2c22736563223a7b226d61785f6163746976655f636f6c6c6563746f7273223a312c2272657175657374735f7065725f7365636f6e64223a332e302c22757365725f6167656e74223a224c6f77656c6c204d61736f6e207365632d65646761722d696e67657374206d61736f6e2e6c6f77656c6c406d61632e636f6d227d2c2273746f72616765223a7b226163636f756e745f6e616d65223a6e756c6c2c22617474656d70745f7461626c65223a22417474656d707473222c226261636b656e64223a226c6f63616c2d66697874757265222c2262696e64696e675f72656769737472795f626c6f62223a227365632d6f776e65722d6c6f77656c6c2d6d61736f6e2f62696e64696e672e6a736f6e222c22626c6f625f6170695f76657273696f6e223a22323032362d30342d3036222c22626c6f625f656e64706f696e74223a6e756c6c2c226c6f636b5f626c6f62223a227365632d6f776e65722d6c6f77656c6c2d6d61736f6e2f73656e74696e656c2e6a736f6e222c226c6f636b5f636f6e7461696e6572223a226c6f636b73222c2271756172616e74696e655f636f6e7461696e6572223a2271756172616e74696e65222c227261775f636f6e7461696e6572223a22726177222c22726f6f74223a222e666978747572652d7374617465222c22736f757263655f7461626c65223a22536f757263655374617465222c227461626c655f6170695f76657273696f6e223a22323032302d31322d3036222c227461626c655f656e64706f696e74223a6e756c6c2c22776f726b7365745f636f6e7461696e6572223a22776f726b73657473227d2c22776f726b6572223a7b22696d6167655f646967657374223a227368613235363a30303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030222c2270726f76656e616e6365223a2273796e7468657469632d66697874757265227d7d2c22657865637574696f6e5f6964223a22666978747572652d657865637574696f6e222c22696d6167655f646967657374223a227368613235363a30303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030222c227061727365725f76657273696f6e223a22666978747572652d656e76656c6f70652d7631222c2270696e6e65645f6f6e223a22323032362d31302d3036222c227072696f72697479223a226261636b66696c6c222c2272756e5f6964223a22666978747572652d72756e222c22736368656d615f76657273696f6e223a227365632d696e6465782d7631222c22737461727465645f6174223a22323032362d31302d30365430303a30303a30302b30303a3030227d2c226469726563746f72696573223a5b7b226572726f72223a6e756c6c2c226c697374696e675f736861323536223a2261616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161222c226f7574636f6d65223a22617661696c61626c65222c22706572696f64223a22323032362d31302d3031222c22736f757263655f696473223a5b2236636637663333396664393866303864383838353836666266343164393037636230373164336135343235393132386536353966353165316637636161613732225d2c2275726c223a2268747470733a2f2f7777772e7365632e676f762f41726368697665732f65646761722f6461696c792d696e6465782f323032362f515452342f696e6465782e6a736f6e227d5d2c22666f726d61745f76657273696f6e223a227365632d6163717569736974696f6e2d7631222c226f7665726c61705f66726f6d223a22323032362d31302d3031222c2270696e6e65645f656e645f71756172746572223a22323032365134222c22736e617073686f7473223a5b7b22627974655f636f756e74223a3231372c22656e76656c6f70655f76657273696f6e223a227365632d6461696c792d656e76656c6f70652d7631222c227261775f70617468223a227261772f7365632f696e64657865732f6b696e643d6461696c792f706572696f643d323032362d31302d30312f7368613235363d376634663330366235316565323165646539633964396130336235613634376465366562333564343261326437313933336432383862343663343530313731622f6d61737465722e696478222c2272656365697665645f6174223a22323032362d31302d30375430303a32393a30362e3739353839302b30303a3030222c22726570726573656e746174696f6e223a22696478222c22736861323536223a2237663466333036623531656532316564653963396439613033623561363437646536656233356434326132643731393333643238386234366334353031373162222c22736f757263655f6964223a2236636637663333396664393866303864383838353836666266343164393037636230373164336135343235393132386536353966353165316637636161613732222c2276616c696461746f7273223a7b22436f6e74656e742d4c656e677468223a22323137222c22436f6e74656e742d54797065223a22746578742f706c61696e222c2245546167223a225c2273796e7468657469632d70726f636573732d315c22222c22582d46697874757265223a2273796e746865746963227d7d5d2c22736f757263655f776f726b7365745f6964223a2262323364306564643838313832316165343436393666666136326332383138356566393866333466326638623062613765646463393634626234383637306630222c22776f726b7365745f6964223a2234386337373835653932643164633364313464313839383137336462613765333632356232656538353830323136623562326262313631363031306435343035222c22776f726b7365745f74797065223a22736e617073686f74227d"
+}

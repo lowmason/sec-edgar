@@ -1,0 +1,35 @@
+[
+  {
+    "argv": [
+      "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/bin/python",
+      "-c",
+      "from support import cli_process_entry; cli_process_entry()",
+      "discover",
+      "--config",
+      "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-cli-_kuub6uv/config.json",
+      "--fixture-pack",
+      "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-cli-_kuub6uv/manifest.json",
+      "--state-dir",
+      "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-cli-_kuub6uv",
+      "--today",
+      "2026-10-06",
+      "--deadline",
+      "2099-01-01T00:00:00Z",
+      "--run-id",
+      "cli-run",
+      "--mode",
+      "quarterly",
+      "--discovery-id",
+      "discovery",
+      "--execution-id",
+      "execution",
+      "--attempt-id",
+      "attempt",
+      "--attempt-id",
+      "a\\b"
+    ],
+    "exit": 2,
+    "stderr": "{\"error\":\"attempt_id must be a safe relative POSIX path\",\"outcome\":\"configuration\"}\n",
+    "stdout": ""
+  }
+]

@@ -1,0 +1,31 @@
+test_only_ingest_is_a_workspace_member (test_workspace.WorkspaceTests.test_only_ingest_is_a_workspace_member) ... FAIL
+
+======================================================================
+FAIL: test_only_ingest_is_a_workspace_member (test_workspace.WorkspaceTests.test_only_ingest_is_a_workspace_member)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_workspace.py", line 11, in test_only_ingest_is_a_workspace_member
+    self.assertEqual(root["tool"]["uv"]["workspace"]["members"],
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                     ["packages/sec-edgar-ingest"])
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: ['pac[18 chars]gest', 'packages/sec-edgar-index-ingest', 'pac[50 chars]ent'] != ['pac[18 chars]gest']
+
+First list contains 3 additional elements.
+First extra element 1:
+'packages/sec-edgar-index-ingest'
+
+- ['packages/sec-edgar-ingest',
+?                             ^
+
++ ['packages/sec-edgar-ingest']
+?                             ^
+
+-  'packages/sec-edgar-index-ingest',
+-  'packages/sec-edgar-download',
+-  'packages/sec-edgar-client']
+
+----------------------------------------------------------------------
+Ran 1 test in 0.000s
+
+FAILED (failures=1)

@@ -1,0 +1,197 @@
+test_archive_original_is_not_replaced_by_decoded_idx (test_download.DownloadTests.test_archive_original_is_not_replaced_by_decoded_idx) ... FAIL
+test_denial_halts_next_source_and_new_attempt_in_same_run (test_download.DownloadTests.test_denial_halts_next_source_and_new_attempt_in_same_run) ... FAIL
+test_fetch_rejects_untrusted_origin_before_attempt_or_dispatch (test_download.DownloadTests.test_fetch_rejects_untrusted_origin_before_attempt_or_dispatch) ... FAIL
+test_fifth_failure_is_terminal_and_restart_cannot_send_a_sixth (test_download.DownloadTests.test_fifth_failure_is_terminal_and_restart_cannot_send_a_sixth) ... FAIL
+test_final_failed_attempt_retains_server_cooldown (test_download.DownloadTests.test_final_failed_attempt_retains_server_cooldown) ... FAIL
+test_listed_not_found_is_pending_and_redirect_is_refused (test_download.DownloadTests.test_listed_not_found_is_pending_and_redirect_is_refused) ... FAIL
+test_missing_server_time_bounds_never_uses_host_utc_for_retry (test_download.DownloadTests.test_missing_server_time_bounds_never_uses_host_utc_for_retry) ... FAIL
+test_new_command_attempt_is_separate_and_audits_prior_exhaustion (test_download.DownloadTests.test_new_command_attempt_is_separate_and_audits_prior_exhaustion) ... FAIL
+test_ordinal_is_durable_before_sender_dispatch (test_download.DownloadTests.test_ordinal_is_durable_before_sender_dispatch) ... FAIL
+test_pre_dispatch_crash_consumes_ordinal_after_reopen (test_download.DownloadTests.test_pre_dispatch_crash_consumes_ordinal_after_reopen) ... FAIL
+test_retry_after_date_and_invalid_header_are_diagnosed (test_download.DownloadTests.test_retry_after_date_and_invalid_header_are_diagnosed) ... FAIL
+test_retry_after_longer_than_local_cap_is_never_shortened (test_download.DownloadTests.test_retry_after_longer_than_local_cap_is_never_shortened) ... FAIL
+test_retry_delay_jitter_boundaries_preserve_long_server_delay (test_download.DownloadTests.test_retry_delay_jitter_boundaries_preserve_long_server_delay) ... FAIL
+test_retry_sleep_has_no_active_ownership (test_download.DownloadTests.test_retry_sleep_has_no_active_ownership) ... FAIL
+test_server_delay_past_command_deadline_is_durably_deferred (test_download.DownloadTests.test_server_delay_past_command_deadline_is_durably_deferred) ... FAIL
+test_timeout_retry_still_consumes_owner_rate_budget (test_download.DownloadTests.test_timeout_retry_still_consumes_owner_rate_budget) ... FAIL
+
+======================================================================
+FAIL: test_archive_original_is_not_replaced_by_decoded_idx (test_download.DownloadTests.test_archive_original_is_not_replaced_by_decoded_idx)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_download.py", line 16, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.download"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Task 5 requires a bounded sender and durable transport retry client")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Task 5 requires a bounded sender and durable transport retry client
+
+======================================================================
+FAIL: test_denial_halts_next_source_and_new_attempt_in_same_run (test_download.DownloadTests.test_denial_halts_next_source_and_new_attempt_in_same_run)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_download.py", line 16, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.download"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Task 5 requires a bounded sender and durable transport retry client")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Task 5 requires a bounded sender and durable transport retry client
+
+======================================================================
+FAIL: test_fetch_rejects_untrusted_origin_before_attempt_or_dispatch (test_download.DownloadTests.test_fetch_rejects_untrusted_origin_before_attempt_or_dispatch)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_download.py", line 16, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.download"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Task 5 requires a bounded sender and durable transport retry client")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Task 5 requires a bounded sender and durable transport retry client
+
+======================================================================
+FAIL: test_fifth_failure_is_terminal_and_restart_cannot_send_a_sixth (test_download.DownloadTests.test_fifth_failure_is_terminal_and_restart_cannot_send_a_sixth)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_download.py", line 16, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.download"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Task 5 requires a bounded sender and durable transport retry client")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Task 5 requires a bounded sender and durable transport retry client
+
+======================================================================
+FAIL: test_final_failed_attempt_retains_server_cooldown (test_download.DownloadTests.test_final_failed_attempt_retains_server_cooldown)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_download.py", line 16, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.download"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Task 5 requires a bounded sender and durable transport retry client")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Task 5 requires a bounded sender and durable transport retry client
+
+======================================================================
+FAIL: test_listed_not_found_is_pending_and_redirect_is_refused (test_download.DownloadTests.test_listed_not_found_is_pending_and_redirect_is_refused)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_download.py", line 16, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.download"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Task 5 requires a bounded sender and durable transport retry client")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Task 5 requires a bounded sender and durable transport retry client
+
+======================================================================
+FAIL: test_missing_server_time_bounds_never_uses_host_utc_for_retry (test_download.DownloadTests.test_missing_server_time_bounds_never_uses_host_utc_for_retry)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_download.py", line 16, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.download"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Task 5 requires a bounded sender and durable transport retry client")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Task 5 requires a bounded sender and durable transport retry client
+
+======================================================================
+FAIL: test_new_command_attempt_is_separate_and_audits_prior_exhaustion (test_download.DownloadTests.test_new_command_attempt_is_separate_and_audits_prior_exhaustion)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_download.py", line 16, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.download"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Task 5 requires a bounded sender and durable transport retry client")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Task 5 requires a bounded sender and durable transport retry client
+
+======================================================================
+FAIL: test_ordinal_is_durable_before_sender_dispatch (test_download.DownloadTests.test_ordinal_is_durable_before_sender_dispatch)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_download.py", line 16, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.download"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Task 5 requires a bounded sender and durable transport retry client")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Task 5 requires a bounded sender and durable transport retry client
+
+======================================================================
+FAIL: test_pre_dispatch_crash_consumes_ordinal_after_reopen (test_download.DownloadTests.test_pre_dispatch_crash_consumes_ordinal_after_reopen)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_download.py", line 16, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.download"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Task 5 requires a bounded sender and durable transport retry client")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Task 5 requires a bounded sender and durable transport retry client
+
+======================================================================
+FAIL: test_retry_after_date_and_invalid_header_are_diagnosed (test_download.DownloadTests.test_retry_after_date_and_invalid_header_are_diagnosed)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_download.py", line 16, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.download"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Task 5 requires a bounded sender and durable transport retry client")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Task 5 requires a bounded sender and durable transport retry client
+
+======================================================================
+FAIL: test_retry_after_longer_than_local_cap_is_never_shortened (test_download.DownloadTests.test_retry_after_longer_than_local_cap_is_never_shortened)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_download.py", line 16, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.download"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Task 5 requires a bounded sender and durable transport retry client")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Task 5 requires a bounded sender and durable transport retry client
+
+======================================================================
+FAIL: test_retry_delay_jitter_boundaries_preserve_long_server_delay (test_download.DownloadTests.test_retry_delay_jitter_boundaries_preserve_long_server_delay)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_download.py", line 16, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.download"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Task 5 requires a bounded sender and durable transport retry client")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Task 5 requires a bounded sender and durable transport retry client
+
+======================================================================
+FAIL: test_retry_sleep_has_no_active_ownership (test_download.DownloadTests.test_retry_sleep_has_no_active_ownership)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_download.py", line 16, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.download"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Task 5 requires a bounded sender and durable transport retry client")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Task 5 requires a bounded sender and durable transport retry client
+
+======================================================================
+FAIL: test_server_delay_past_command_deadline_is_durably_deferred (test_download.DownloadTests.test_server_delay_past_command_deadline_is_durably_deferred)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_download.py", line 16, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.download"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Task 5 requires a bounded sender and durable transport retry client")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Task 5 requires a bounded sender and durable transport retry client
+
+======================================================================
+FAIL: test_timeout_retry_still_consumes_owner_rate_budget (test_download.DownloadTests.test_timeout_retry_still_consumes_owner_rate_budget)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_download.py", line 16, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.download"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Task 5 requires a bounded sender and durable transport retry client")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Task 5 requires a bounded sender and durable transport retry client
+
+----------------------------------------------------------------------
+Ran 16 tests in 0.002s
+
+FAILED (failures=16)

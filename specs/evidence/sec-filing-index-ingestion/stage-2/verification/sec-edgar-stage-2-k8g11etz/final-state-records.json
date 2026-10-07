@@ -1,0 +1,2906 @@
+{
+  "Attempt": [
+    {
+      "value": {
+        "context": {
+          "attempt_id": "discover-1",
+          "command": "discover",
+          "config_sha256": "a8b1ebc0e3e64c56d9aad5e7b4b15ca111495885c2a9849dbc96721c203ab856",
+          "deadline": "2099-01-01T00:00:00+00:00",
+          "effective_config": {
+            "backfill": {
+              "end_quarter": "2015Q1",
+              "start_quarter": "2015Q1"
+            },
+            "config_version": "sec-acquisition-v1",
+            "coordination": {
+              "clock_uncertainty_seconds": 2.0,
+              "lease_seconds": 60.0,
+              "namespace": "sec-owner-lowell-mason",
+              "renew_every_seconds": 20.0
+            },
+            "daily": {
+              "start_date": "2026-10-01"
+            },
+            "etl": {
+              "parser_version": "fixture-envelope-v1",
+              "schema_version": "sec-index-v1"
+            },
+            "fixture": {
+              "allow_clock_override": true,
+              "allow_deadline_override": true
+            },
+            "http": {
+              "connect_timeout_seconds": 15.0,
+              "exchange_deadline_seconds": 90.0,
+              "max_attempts": 5,
+              "max_expanded_bytes": 536870912,
+              "max_received_bytes": 67108864,
+              "read_timeout_seconds": 60.0,
+              "retry_base_seconds": 2.0,
+              "retry_cap_seconds": 120.0
+            },
+            "jobs": {
+              "replica_retry_limit": 0
+            },
+            "orchestration": {
+              "transient_replays": 1
+            },
+            "reconciliation": {
+              "require_withdrawal_approval": true
+            },
+            "sec": {
+              "max_active_collectors": 1,
+              "requests_per_second": 3.0,
+              "user_agent": "Lowell Mason sec-edgar-ingest mason.lowell@mac.com"
+            },
+            "storage": {
+              "account_name": null,
+              "attempt_table": "Attempts",
+              "backend": "local-fixture",
+              "binding_registry_blob": "sec-owner-lowell-mason/binding.json",
+              "blob_api_version": "2026-04-06",
+              "blob_endpoint": null,
+              "lock_blob": "sec-owner-lowell-mason/sentinel.json",
+              "lock_container": "locks",
+              "quarantine_container": "quarantine",
+              "raw_container": "raw",
+              "root": ".fixture-state",
+              "source_table": "SourceState",
+              "table_api_version": "2020-12-06",
+              "table_endpoint": null,
+              "workset_container": "worksets"
+            },
+            "worker": {
+              "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "provenance": "synthetic-fixture"
+            }
+          },
+          "execution_id": "fixture-discover",
+          "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "parser_version": "fixture-envelope-v1",
+          "pinned_on": "2026-10-06",
+          "priority": "backfill",
+          "run_id": "fixture-run",
+          "schema_version": "sec-index-v1",
+          "started_at": "2026-10-06T23:05:19.599229+00:00"
+        },
+        "ended_at": "2026-10-06T23:05:21.007034+00:00",
+        "outcome": "success",
+        "result": {
+          "context": {
+            "attempt_id": "discover-1",
+            "command": "discover",
+            "config_sha256": "a8b1ebc0e3e64c56d9aad5e7b4b15ca111495885c2a9849dbc96721c203ab856",
+            "deadline": "2099-01-01T00:00:00+00:00",
+            "effective_config": {
+              "backfill": {
+                "end_quarter": "2015Q1",
+                "start_quarter": "2015Q1"
+              },
+              "config_version": "sec-acquisition-v1",
+              "coordination": {
+                "clock_uncertainty_seconds": 2.0,
+                "lease_seconds": 60.0,
+                "namespace": "sec-owner-lowell-mason",
+                "renew_every_seconds": 20.0
+              },
+              "daily": {
+                "start_date": "2026-10-01"
+              },
+              "etl": {
+                "parser_version": "fixture-envelope-v1",
+                "schema_version": "sec-index-v1"
+              },
+              "fixture": {
+                "allow_clock_override": true,
+                "allow_deadline_override": true
+              },
+              "http": {
+                "connect_timeout_seconds": 15.0,
+                "exchange_deadline_seconds": 90.0,
+                "max_attempts": 5,
+                "max_expanded_bytes": 536870912,
+                "max_received_bytes": 67108864,
+                "read_timeout_seconds": 60.0,
+                "retry_base_seconds": 2.0,
+                "retry_cap_seconds": 120.0
+              },
+              "jobs": {
+                "replica_retry_limit": 0
+              },
+              "orchestration": {
+                "transient_replays": 1
+              },
+              "reconciliation": {
+                "require_withdrawal_approval": true
+              },
+              "sec": {
+                "max_active_collectors": 1,
+                "requests_per_second": 3.0,
+                "user_agent": "Lowell Mason sec-edgar-ingest mason.lowell@mac.com"
+              },
+              "storage": {
+                "account_name": null,
+                "attempt_table": "Attempts",
+                "backend": "local-fixture",
+                "binding_registry_blob": "sec-owner-lowell-mason/binding.json",
+                "blob_api_version": "2026-04-06",
+                "blob_endpoint": null,
+                "lock_blob": "sec-owner-lowell-mason/sentinel.json",
+                "lock_container": "locks",
+                "quarantine_container": "quarantine",
+                "raw_container": "raw",
+                "root": ".fixture-state",
+                "source_table": "SourceState",
+                "table_api_version": "2020-12-06",
+                "table_endpoint": null,
+                "workset_container": "worksets"
+              },
+              "worker": {
+                "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+                "provenance": "synthetic-fixture"
+              }
+            },
+            "execution_id": "fixture-discover",
+            "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+            "parser_version": "fixture-envelope-v1",
+            "pinned_on": "2026-10-06",
+            "priority": "backfill",
+            "run_id": "fixture-run",
+            "schema_version": "sec-index-v1",
+            "started_at": "2026-10-06T23:05:19.599229+00:00"
+          },
+          "discovered": 1,
+          "downloaded": 0,
+          "ended_at": "2026-10-06T23:05:21.007034+00:00",
+          "failed": 0,
+          "gaps": [],
+          "outcome": "success",
+          "pending": 0,
+          "quarantined": 0,
+          "snapshot_workset_ref": null,
+          "source_workset_ref": "worksets/sec/source/sha256=21fcc11d93bb2e1aade886510e9a4648b633199110d7eb797cbce09d2dfa16de/workset.json",
+          "started_at": "2026-10-06T23:05:19.599229+00:00",
+          "unchanged": 0
+        },
+        "started_at": "2026-10-06T23:05:19.599229+00:00",
+        "structured_errors": []
+      },
+      "version": "2c678c1c497648e4afeafee8be3b6039"
+    },
+    {
+      "value": {
+        "context": {
+          "attempt_id": "daily-collect-1",
+          "command": "collect",
+          "config_sha256": "6bf4c06fd8d4891aad27fbeb1221dbfb08920a670d79462233c3fbff83d4ac6f",
+          "deadline": "2099-01-01T00:00:00+00:00",
+          "effective_config": {
+            "backfill": {
+              "end_quarter": "open",
+              "start_quarter": "2015Q1"
+            },
+            "config_version": "sec-acquisition-v1",
+            "coordination": {
+              "clock_uncertainty_seconds": 2.0,
+              "lease_seconds": 60.0,
+              "namespace": "sec-owner-lowell-mason",
+              "renew_every_seconds": 20.0
+            },
+            "daily": {
+              "start_date": "2026-10-01"
+            },
+            "etl": {
+              "parser_version": "fixture-envelope-v1",
+              "schema_version": "sec-index-v1"
+            },
+            "fixture": {
+              "allow_clock_override": true,
+              "allow_deadline_override": true
+            },
+            "http": {
+              "connect_timeout_seconds": 15.0,
+              "exchange_deadline_seconds": 90.0,
+              "max_attempts": 5,
+              "max_expanded_bytes": 536870912,
+              "max_received_bytes": 67108864,
+              "read_timeout_seconds": 60.0,
+              "retry_base_seconds": 2.0,
+              "retry_cap_seconds": 120.0
+            },
+            "jobs": {
+              "replica_retry_limit": 0
+            },
+            "orchestration": {
+              "transient_replays": 1
+            },
+            "reconciliation": {
+              "require_withdrawal_approval": true
+            },
+            "sec": {
+              "max_active_collectors": 1,
+              "requests_per_second": 3.0,
+              "user_agent": "Lowell Mason sec-edgar-ingest mason.lowell@mac.com"
+            },
+            "storage": {
+              "account_name": null,
+              "attempt_table": "Attempts",
+              "backend": "local-fixture",
+              "binding_registry_blob": "sec-owner-lowell-mason/binding.json",
+              "blob_api_version": "2026-04-06",
+              "blob_endpoint": null,
+              "lock_blob": "sec-owner-lowell-mason/sentinel.json",
+              "lock_container": "locks",
+              "quarantine_container": "quarantine",
+              "raw_container": "raw",
+              "root": ".fixture-state",
+              "source_table": "SourceState",
+              "table_api_version": "2020-12-06",
+              "table_endpoint": null,
+              "workset_container": "worksets"
+            },
+            "worker": {
+              "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "provenance": "synthetic-fixture"
+            }
+          },
+          "execution_id": "fixture-daily-collect",
+          "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "parser_version": "fixture-envelope-v1",
+          "pinned_on": "2026-10-06",
+          "priority": "daily",
+          "run_id": "fixture-daily",
+          "schema_version": "sec-index-v1",
+          "started_at": "2026-10-06T23:05:24.466535+00:00"
+        },
+        "ended_at": "2026-10-06T23:05:25.747776+00:00",
+        "outcome": "incomplete",
+        "result": {
+          "context": {
+            "attempt_id": "daily-collect-1",
+            "command": "collect",
+            "config_sha256": "6bf4c06fd8d4891aad27fbeb1221dbfb08920a670d79462233c3fbff83d4ac6f",
+            "deadline": "2099-01-01T00:00:00+00:00",
+            "effective_config": {
+              "backfill": {
+                "end_quarter": "open",
+                "start_quarter": "2015Q1"
+              },
+              "config_version": "sec-acquisition-v1",
+              "coordination": {
+                "clock_uncertainty_seconds": 2.0,
+                "lease_seconds": 60.0,
+                "namespace": "sec-owner-lowell-mason",
+                "renew_every_seconds": 20.0
+              },
+              "daily": {
+                "start_date": "2026-10-01"
+              },
+              "etl": {
+                "parser_version": "fixture-envelope-v1",
+                "schema_version": "sec-index-v1"
+              },
+              "fixture": {
+                "allow_clock_override": true,
+                "allow_deadline_override": true
+              },
+              "http": {
+                "connect_timeout_seconds": 15.0,
+                "exchange_deadline_seconds": 90.0,
+                "max_attempts": 5,
+                "max_expanded_bytes": 536870912,
+                "max_received_bytes": 67108864,
+                "read_timeout_seconds": 60.0,
+                "retry_base_seconds": 2.0,
+                "retry_cap_seconds": 120.0
+              },
+              "jobs": {
+                "replica_retry_limit": 0
+              },
+              "orchestration": {
+                "transient_replays": 1
+              },
+              "reconciliation": {
+                "require_withdrawal_approval": true
+              },
+              "sec": {
+                "max_active_collectors": 1,
+                "requests_per_second": 3.0,
+                "user_agent": "Lowell Mason sec-edgar-ingest mason.lowell@mac.com"
+              },
+              "storage": {
+                "account_name": null,
+                "attempt_table": "Attempts",
+                "backend": "local-fixture",
+                "binding_registry_blob": "sec-owner-lowell-mason/binding.json",
+                "blob_api_version": "2026-04-06",
+                "blob_endpoint": null,
+                "lock_blob": "sec-owner-lowell-mason/sentinel.json",
+                "lock_container": "locks",
+                "quarantine_container": "quarantine",
+                "raw_container": "raw",
+                "root": ".fixture-state",
+                "source_table": "SourceState",
+                "table_api_version": "2020-12-06",
+                "table_endpoint": null,
+                "workset_container": "worksets"
+              },
+              "worker": {
+                "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+                "provenance": "synthetic-fixture"
+              }
+            },
+            "execution_id": "fixture-daily-collect",
+            "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+            "parser_version": "fixture-envelope-v1",
+            "pinned_on": "2026-10-06",
+            "priority": "daily",
+            "run_id": "fixture-daily",
+            "schema_version": "sec-index-v1",
+            "started_at": "2026-10-06T23:05:24.466535+00:00"
+          },
+          "discovered": 2,
+          "downloaded": 1,
+          "ended_at": "2026-10-06T23:05:25.747776+00:00",
+          "failed": 1,
+          "gaps": [
+            {
+              "code": "listed_missing",
+              "details": {
+                "ordinal": 1,
+                "outcome": "pending",
+                "request_id": "2f3997484cab43f6bf400e0b6fcf4222"
+              },
+              "message": "a listed source is temporarily absent",
+              "retryable": true,
+              "source_id": "0a6a3b5899f59720e13ac68455ccce6375e2065fc210d9dda6f00c3be4371bf4"
+            }
+          ],
+          "outcome": "incomplete",
+          "pending": 1,
+          "quarantined": 0,
+          "snapshot_workset_ref": null,
+          "source_workset_ref": "worksets/sec/source/sha256=2492e6531be8b568621521e16c984bf415dccc70d034207e81cc2d6d8034a64d/workset.json",
+          "started_at": "2026-10-06T23:05:24.466535+00:00",
+          "unchanged": 0
+        },
+        "started_at": "2026-10-06T23:05:24.466535+00:00",
+        "structured_errors": [
+          {
+            "code": "listed_missing",
+            "details": {
+              "ordinal": 1,
+              "outcome": "pending",
+              "request_id": "2f3997484cab43f6bf400e0b6fcf4222"
+            },
+            "message": "a listed source is temporarily absent",
+            "retryable": true,
+            "source_id": "0a6a3b5899f59720e13ac68455ccce6375e2065fc210d9dda6f00c3be4371bf4"
+          }
+        ]
+      },
+      "version": "203a954a625245e4b4210fc96d0fcc3d"
+    },
+    {
+      "value": {
+        "context": {
+          "attempt_id": "daily-collect-3",
+          "command": "collect",
+          "config_sha256": "6bf4c06fd8d4891aad27fbeb1221dbfb08920a670d79462233c3fbff83d4ac6f",
+          "deadline": "2099-01-01T00:00:00+00:00",
+          "effective_config": {
+            "backfill": {
+              "end_quarter": "open",
+              "start_quarter": "2015Q1"
+            },
+            "config_version": "sec-acquisition-v1",
+            "coordination": {
+              "clock_uncertainty_seconds": 2.0,
+              "lease_seconds": 60.0,
+              "namespace": "sec-owner-lowell-mason",
+              "renew_every_seconds": 20.0
+            },
+            "daily": {
+              "start_date": "2026-10-01"
+            },
+            "etl": {
+              "parser_version": "fixture-envelope-v1",
+              "schema_version": "sec-index-v1"
+            },
+            "fixture": {
+              "allow_clock_override": true,
+              "allow_deadline_override": true
+            },
+            "http": {
+              "connect_timeout_seconds": 15.0,
+              "exchange_deadline_seconds": 90.0,
+              "max_attempts": 5,
+              "max_expanded_bytes": 536870912,
+              "max_received_bytes": 67108864,
+              "read_timeout_seconds": 60.0,
+              "retry_base_seconds": 2.0,
+              "retry_cap_seconds": 120.0
+            },
+            "jobs": {
+              "replica_retry_limit": 0
+            },
+            "orchestration": {
+              "transient_replays": 1
+            },
+            "reconciliation": {
+              "require_withdrawal_approval": true
+            },
+            "sec": {
+              "max_active_collectors": 1,
+              "requests_per_second": 3.0,
+              "user_agent": "Lowell Mason sec-edgar-ingest mason.lowell@mac.com"
+            },
+            "storage": {
+              "account_name": null,
+              "attempt_table": "Attempts",
+              "backend": "local-fixture",
+              "binding_registry_blob": "sec-owner-lowell-mason/binding.json",
+              "blob_api_version": "2026-04-06",
+              "blob_endpoint": null,
+              "lock_blob": "sec-owner-lowell-mason/sentinel.json",
+              "lock_container": "locks",
+              "quarantine_container": "quarantine",
+              "raw_container": "raw",
+              "root": ".fixture-state",
+              "source_table": "SourceState",
+              "table_api_version": "2020-12-06",
+              "table_endpoint": null,
+              "workset_container": "worksets"
+            },
+            "worker": {
+              "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "provenance": "synthetic-fixture"
+            }
+          },
+          "execution_id": "fixture-daily-offline",
+          "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "parser_version": "fixture-envelope-v1",
+          "pinned_on": "2026-10-06",
+          "priority": "daily",
+          "run_id": "fixture-daily",
+          "schema_version": "sec-index-v1",
+          "started_at": "2026-10-06T23:05:26.519166+00:00"
+        },
+        "ended_at": "2026-10-06T23:05:26.554252+00:00",
+        "outcome": "success",
+        "result": {
+          "context": {
+            "attempt_id": "daily-collect-3",
+            "command": "collect",
+            "config_sha256": "6bf4c06fd8d4891aad27fbeb1221dbfb08920a670d79462233c3fbff83d4ac6f",
+            "deadline": "2099-01-01T00:00:00+00:00",
+            "effective_config": {
+              "backfill": {
+                "end_quarter": "open",
+                "start_quarter": "2015Q1"
+              },
+              "config_version": "sec-acquisition-v1",
+              "coordination": {
+                "clock_uncertainty_seconds": 2.0,
+                "lease_seconds": 60.0,
+                "namespace": "sec-owner-lowell-mason",
+                "renew_every_seconds": 20.0
+              },
+              "daily": {
+                "start_date": "2026-10-01"
+              },
+              "etl": {
+                "parser_version": "fixture-envelope-v1",
+                "schema_version": "sec-index-v1"
+              },
+              "fixture": {
+                "allow_clock_override": true,
+                "allow_deadline_override": true
+              },
+              "http": {
+                "connect_timeout_seconds": 15.0,
+                "exchange_deadline_seconds": 90.0,
+                "max_attempts": 5,
+                "max_expanded_bytes": 536870912,
+                "max_received_bytes": 67108864,
+                "read_timeout_seconds": 60.0,
+                "retry_base_seconds": 2.0,
+                "retry_cap_seconds": 120.0
+              },
+              "jobs": {
+                "replica_retry_limit": 0
+              },
+              "orchestration": {
+                "transient_replays": 1
+              },
+              "reconciliation": {
+                "require_withdrawal_approval": true
+              },
+              "sec": {
+                "max_active_collectors": 1,
+                "requests_per_second": 3.0,
+                "user_agent": "Lowell Mason sec-edgar-ingest mason.lowell@mac.com"
+              },
+              "storage": {
+                "account_name": null,
+                "attempt_table": "Attempts",
+                "backend": "local-fixture",
+                "binding_registry_blob": "sec-owner-lowell-mason/binding.json",
+                "blob_api_version": "2026-04-06",
+                "blob_endpoint": null,
+                "lock_blob": "sec-owner-lowell-mason/sentinel.json",
+                "lock_container": "locks",
+                "quarantine_container": "quarantine",
+                "raw_container": "raw",
+                "root": ".fixture-state",
+                "source_table": "SourceState",
+                "table_api_version": "2020-12-06",
+                "table_endpoint": null,
+                "workset_container": "worksets"
+              },
+              "worker": {
+                "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+                "provenance": "synthetic-fixture"
+              }
+            },
+            "execution_id": "fixture-daily-offline",
+            "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+            "parser_version": "fixture-envelope-v1",
+            "pinned_on": "2026-10-06",
+            "priority": "daily",
+            "run_id": "fixture-daily",
+            "schema_version": "sec-index-v1",
+            "started_at": "2026-10-06T23:05:26.519166+00:00"
+          },
+          "discovered": 2,
+          "downloaded": 0,
+          "ended_at": "2026-10-06T23:05:26.554252+00:00",
+          "failed": 0,
+          "gaps": [],
+          "outcome": "success",
+          "pending": 0,
+          "quarantined": 0,
+          "snapshot_workset_ref": "worksets/sec/snapshot/sha256=47c7d3517815f0932f6bce1b1701500854b0dd5b954904734824c073e375198f/workset.json",
+          "source_workset_ref": "worksets/sec/source/sha256=2492e6531be8b568621521e16c984bf415dccc70d034207e81cc2d6d8034a64d/workset.json",
+          "started_at": "2026-10-06T23:05:26.519166+00:00",
+          "unchanged": 2
+        },
+        "started_at": "2026-10-06T23:05:26.519166+00:00",
+        "structured_errors": []
+      },
+      "version": "e68bd5d063cb4c98b03a537c8a109538"
+    },
+    {
+      "value": {
+        "context": {
+          "attempt_id": "daily-collect-2",
+          "command": "collect",
+          "config_sha256": "6bf4c06fd8d4891aad27fbeb1221dbfb08920a670d79462233c3fbff83d4ac6f",
+          "deadline": "2099-01-01T00:00:00+00:00",
+          "effective_config": {
+            "backfill": {
+              "end_quarter": "open",
+              "start_quarter": "2015Q1"
+            },
+            "config_version": "sec-acquisition-v1",
+            "coordination": {
+              "clock_uncertainty_seconds": 2.0,
+              "lease_seconds": 60.0,
+              "namespace": "sec-owner-lowell-mason",
+              "renew_every_seconds": 20.0
+            },
+            "daily": {
+              "start_date": "2026-10-01"
+            },
+            "etl": {
+              "parser_version": "fixture-envelope-v1",
+              "schema_version": "sec-index-v1"
+            },
+            "fixture": {
+              "allow_clock_override": true,
+              "allow_deadline_override": true
+            },
+            "http": {
+              "connect_timeout_seconds": 15.0,
+              "exchange_deadline_seconds": 90.0,
+              "max_attempts": 5,
+              "max_expanded_bytes": 536870912,
+              "max_received_bytes": 67108864,
+              "read_timeout_seconds": 60.0,
+              "retry_base_seconds": 2.0,
+              "retry_cap_seconds": 120.0
+            },
+            "jobs": {
+              "replica_retry_limit": 0
+            },
+            "orchestration": {
+              "transient_replays": 1
+            },
+            "reconciliation": {
+              "require_withdrawal_approval": true
+            },
+            "sec": {
+              "max_active_collectors": 1,
+              "requests_per_second": 3.0,
+              "user_agent": "Lowell Mason sec-edgar-ingest mason.lowell@mac.com"
+            },
+            "storage": {
+              "account_name": null,
+              "attempt_table": "Attempts",
+              "backend": "local-fixture",
+              "binding_registry_blob": "sec-owner-lowell-mason/binding.json",
+              "blob_api_version": "2026-04-06",
+              "blob_endpoint": null,
+              "lock_blob": "sec-owner-lowell-mason/sentinel.json",
+              "lock_container": "locks",
+              "quarantine_container": "quarantine",
+              "raw_container": "raw",
+              "root": ".fixture-state",
+              "source_table": "SourceState",
+              "table_api_version": "2020-12-06",
+              "table_endpoint": null,
+              "workset_container": "worksets"
+            },
+            "worker": {
+              "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "provenance": "synthetic-fixture"
+            }
+          },
+          "execution_id": "fixture-daily-retry",
+          "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "parser_version": "fixture-envelope-v1",
+          "pinned_on": "2026-10-06",
+          "priority": "daily",
+          "run_id": "fixture-daily",
+          "schema_version": "sec-index-v1",
+          "started_at": "2026-10-06T23:05:25.907379+00:00"
+        },
+        "ended_at": "2026-10-06T23:05:26.437639+00:00",
+        "outcome": "success",
+        "result": {
+          "context": {
+            "attempt_id": "daily-collect-2",
+            "command": "collect",
+            "config_sha256": "6bf4c06fd8d4891aad27fbeb1221dbfb08920a670d79462233c3fbff83d4ac6f",
+            "deadline": "2099-01-01T00:00:00+00:00",
+            "effective_config": {
+              "backfill": {
+                "end_quarter": "open",
+                "start_quarter": "2015Q1"
+              },
+              "config_version": "sec-acquisition-v1",
+              "coordination": {
+                "clock_uncertainty_seconds": 2.0,
+                "lease_seconds": 60.0,
+                "namespace": "sec-owner-lowell-mason",
+                "renew_every_seconds": 20.0
+              },
+              "daily": {
+                "start_date": "2026-10-01"
+              },
+              "etl": {
+                "parser_version": "fixture-envelope-v1",
+                "schema_version": "sec-index-v1"
+              },
+              "fixture": {
+                "allow_clock_override": true,
+                "allow_deadline_override": true
+              },
+              "http": {
+                "connect_timeout_seconds": 15.0,
+                "exchange_deadline_seconds": 90.0,
+                "max_attempts": 5,
+                "max_expanded_bytes": 536870912,
+                "max_received_bytes": 67108864,
+                "read_timeout_seconds": 60.0,
+                "retry_base_seconds": 2.0,
+                "retry_cap_seconds": 120.0
+              },
+              "jobs": {
+                "replica_retry_limit": 0
+              },
+              "orchestration": {
+                "transient_replays": 1
+              },
+              "reconciliation": {
+                "require_withdrawal_approval": true
+              },
+              "sec": {
+                "max_active_collectors": 1,
+                "requests_per_second": 3.0,
+                "user_agent": "Lowell Mason sec-edgar-ingest mason.lowell@mac.com"
+              },
+              "storage": {
+                "account_name": null,
+                "attempt_table": "Attempts",
+                "backend": "local-fixture",
+                "binding_registry_blob": "sec-owner-lowell-mason/binding.json",
+                "blob_api_version": "2026-04-06",
+                "blob_endpoint": null,
+                "lock_blob": "sec-owner-lowell-mason/sentinel.json",
+                "lock_container": "locks",
+                "quarantine_container": "quarantine",
+                "raw_container": "raw",
+                "root": ".fixture-state",
+                "source_table": "SourceState",
+                "table_api_version": "2020-12-06",
+                "table_endpoint": null,
+                "workset_container": "worksets"
+              },
+              "worker": {
+                "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+                "provenance": "synthetic-fixture"
+              }
+            },
+            "execution_id": "fixture-daily-retry",
+            "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+            "parser_version": "fixture-envelope-v1",
+            "pinned_on": "2026-10-06",
+            "priority": "daily",
+            "run_id": "fixture-daily",
+            "schema_version": "sec-index-v1",
+            "started_at": "2026-10-06T23:05:25.907379+00:00"
+          },
+          "discovered": 2,
+          "downloaded": 1,
+          "ended_at": "2026-10-06T23:05:26.437639+00:00",
+          "failed": 0,
+          "gaps": [],
+          "outcome": "success",
+          "pending": 0,
+          "quarantined": 0,
+          "snapshot_workset_ref": "worksets/sec/snapshot/sha256=47c7d3517815f0932f6bce1b1701500854b0dd5b954904734824c073e375198f/workset.json",
+          "source_workset_ref": "worksets/sec/source/sha256=2492e6531be8b568621521e16c984bf415dccc70d034207e81cc2d6d8034a64d/workset.json",
+          "started_at": "2026-10-06T23:05:25.907379+00:00",
+          "unchanged": 1
+        },
+        "started_at": "2026-10-06T23:05:25.907379+00:00",
+        "structured_errors": []
+      },
+      "version": "72c6c6cfb9b447ca8e067c28e3efb1f2"
+    },
+    {
+      "value": {
+        "context": {
+          "attempt_id": "collect-2",
+          "command": "collect",
+          "config_sha256": "a8b1ebc0e3e64c56d9aad5e7b4b15ca111495885c2a9849dbc96721c203ab856",
+          "deadline": "2099-01-01T00:00:00+00:00",
+          "effective_config": {
+            "backfill": {
+              "end_quarter": "2015Q1",
+              "start_quarter": "2015Q1"
+            },
+            "config_version": "sec-acquisition-v1",
+            "coordination": {
+              "clock_uncertainty_seconds": 2.0,
+              "lease_seconds": 60.0,
+              "namespace": "sec-owner-lowell-mason",
+              "renew_every_seconds": 20.0
+            },
+            "daily": {
+              "start_date": "2026-10-01"
+            },
+            "etl": {
+              "parser_version": "fixture-envelope-v1",
+              "schema_version": "sec-index-v1"
+            },
+            "fixture": {
+              "allow_clock_override": true,
+              "allow_deadline_override": true
+            },
+            "http": {
+              "connect_timeout_seconds": 15.0,
+              "exchange_deadline_seconds": 90.0,
+              "max_attempts": 5,
+              "max_expanded_bytes": 536870912,
+              "max_received_bytes": 67108864,
+              "read_timeout_seconds": 60.0,
+              "retry_base_seconds": 2.0,
+              "retry_cap_seconds": 120.0
+            },
+            "jobs": {
+              "replica_retry_limit": 0
+            },
+            "orchestration": {
+              "transient_replays": 1
+            },
+            "reconciliation": {
+              "require_withdrawal_approval": true
+            },
+            "sec": {
+              "max_active_collectors": 1,
+              "requests_per_second": 3.0,
+              "user_agent": "Lowell Mason sec-edgar-ingest mason.lowell@mac.com"
+            },
+            "storage": {
+              "account_name": null,
+              "attempt_table": "Attempts",
+              "backend": "local-fixture",
+              "binding_registry_blob": "sec-owner-lowell-mason/binding.json",
+              "blob_api_version": "2026-04-06",
+              "blob_endpoint": null,
+              "lock_blob": "sec-owner-lowell-mason/sentinel.json",
+              "lock_container": "locks",
+              "quarantine_container": "quarantine",
+              "raw_container": "raw",
+              "root": ".fixture-state",
+              "source_table": "SourceState",
+              "table_api_version": "2020-12-06",
+              "table_endpoint": null,
+              "workset_container": "worksets"
+            },
+            "worker": {
+              "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "provenance": "synthetic-fixture"
+            }
+          },
+          "execution_id": "fixture-collect-retry",
+          "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "parser_version": "fixture-envelope-v1",
+          "pinned_on": "2026-10-06",
+          "priority": "backfill",
+          "run_id": "fixture-run",
+          "schema_version": "sec-index-v1",
+          "started_at": "2026-10-06T23:05:21.776421+00:00"
+        },
+        "ended_at": "2026-10-06T23:05:21.800461+00:00",
+        "outcome": "success",
+        "result": {
+          "context": {
+            "attempt_id": "collect-2",
+            "command": "collect",
+            "config_sha256": "a8b1ebc0e3e64c56d9aad5e7b4b15ca111495885c2a9849dbc96721c203ab856",
+            "deadline": "2099-01-01T00:00:00+00:00",
+            "effective_config": {
+              "backfill": {
+                "end_quarter": "2015Q1",
+                "start_quarter": "2015Q1"
+              },
+              "config_version": "sec-acquisition-v1",
+              "coordination": {
+                "clock_uncertainty_seconds": 2.0,
+                "lease_seconds": 60.0,
+                "namespace": "sec-owner-lowell-mason",
+                "renew_every_seconds": 20.0
+              },
+              "daily": {
+                "start_date": "2026-10-01"
+              },
+              "etl": {
+                "parser_version": "fixture-envelope-v1",
+                "schema_version": "sec-index-v1"
+              },
+              "fixture": {
+                "allow_clock_override": true,
+                "allow_deadline_override": true
+              },
+              "http": {
+                "connect_timeout_seconds": 15.0,
+                "exchange_deadline_seconds": 90.0,
+                "max_attempts": 5,
+                "max_expanded_bytes": 536870912,
+                "max_received_bytes": 67108864,
+                "read_timeout_seconds": 60.0,
+                "retry_base_seconds": 2.0,
+                "retry_cap_seconds": 120.0
+              },
+              "jobs": {
+                "replica_retry_limit": 0
+              },
+              "orchestration": {
+                "transient_replays": 1
+              },
+              "reconciliation": {
+                "require_withdrawal_approval": true
+              },
+              "sec": {
+                "max_active_collectors": 1,
+                "requests_per_second": 3.0,
+                "user_agent": "Lowell Mason sec-edgar-ingest mason.lowell@mac.com"
+              },
+              "storage": {
+                "account_name": null,
+                "attempt_table": "Attempts",
+                "backend": "local-fixture",
+                "binding_registry_blob": "sec-owner-lowell-mason/binding.json",
+                "blob_api_version": "2026-04-06",
+                "blob_endpoint": null,
+                "lock_blob": "sec-owner-lowell-mason/sentinel.json",
+                "lock_container": "locks",
+                "quarantine_container": "quarantine",
+                "raw_container": "raw",
+                "root": ".fixture-state",
+                "source_table": "SourceState",
+                "table_api_version": "2020-12-06",
+                "table_endpoint": null,
+                "workset_container": "worksets"
+              },
+              "worker": {
+                "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+                "provenance": "synthetic-fixture"
+              }
+            },
+            "execution_id": "fixture-collect-retry",
+            "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+            "parser_version": "fixture-envelope-v1",
+            "pinned_on": "2026-10-06",
+            "priority": "backfill",
+            "run_id": "fixture-run",
+            "schema_version": "sec-index-v1",
+            "started_at": "2026-10-06T23:05:21.776421+00:00"
+          },
+          "discovered": 1,
+          "downloaded": 0,
+          "ended_at": "2026-10-06T23:05:21.800461+00:00",
+          "failed": 0,
+          "gaps": [],
+          "outcome": "success",
+          "pending": 0,
+          "quarantined": 0,
+          "snapshot_workset_ref": "worksets/sec/snapshot/sha256=d1308ba7f1dec961504aaf1705713a4e7ae81d2d462d08b33e86ed2cd414d5b7/workset.json",
+          "source_workset_ref": "worksets/sec/source/sha256=21fcc11d93bb2e1aade886510e9a4648b633199110d7eb797cbce09d2dfa16de/workset.json",
+          "started_at": "2026-10-06T23:05:21.776421+00:00",
+          "unchanged": 1
+        },
+        "started_at": "2026-10-06T23:05:21.776421+00:00",
+        "structured_errors": []
+      },
+      "version": "48108848f4464d7eba58eaff6c8e0850"
+    },
+    {
+      "value": {
+        "context": {
+          "attempt_id": "daily-discover-1",
+          "command": "discover",
+          "config_sha256": "6bf4c06fd8d4891aad27fbeb1221dbfb08920a670d79462233c3fbff83d4ac6f",
+          "deadline": "2099-01-01T00:00:00+00:00",
+          "effective_config": {
+            "backfill": {
+              "end_quarter": "open",
+              "start_quarter": "2015Q1"
+            },
+            "config_version": "sec-acquisition-v1",
+            "coordination": {
+              "clock_uncertainty_seconds": 2.0,
+              "lease_seconds": 60.0,
+              "namespace": "sec-owner-lowell-mason",
+              "renew_every_seconds": 20.0
+            },
+            "daily": {
+              "start_date": "2026-10-01"
+            },
+            "etl": {
+              "parser_version": "fixture-envelope-v1",
+              "schema_version": "sec-index-v1"
+            },
+            "fixture": {
+              "allow_clock_override": true,
+              "allow_deadline_override": true
+            },
+            "http": {
+              "connect_timeout_seconds": 15.0,
+              "exchange_deadline_seconds": 90.0,
+              "max_attempts": 5,
+              "max_expanded_bytes": 536870912,
+              "max_received_bytes": 67108864,
+              "read_timeout_seconds": 60.0,
+              "retry_base_seconds": 2.0,
+              "retry_cap_seconds": 120.0
+            },
+            "jobs": {
+              "replica_retry_limit": 0
+            },
+            "orchestration": {
+              "transient_replays": 1
+            },
+            "reconciliation": {
+              "require_withdrawal_approval": true
+            },
+            "sec": {
+              "max_active_collectors": 1,
+              "requests_per_second": 3.0,
+              "user_agent": "Lowell Mason sec-edgar-ingest mason.lowell@mac.com"
+            },
+            "storage": {
+              "account_name": null,
+              "attempt_table": "Attempts",
+              "backend": "local-fixture",
+              "binding_registry_blob": "sec-owner-lowell-mason/binding.json",
+              "blob_api_version": "2026-04-06",
+              "blob_endpoint": null,
+              "lock_blob": "sec-owner-lowell-mason/sentinel.json",
+              "lock_container": "locks",
+              "quarantine_container": "quarantine",
+              "raw_container": "raw",
+              "root": ".fixture-state",
+              "source_table": "SourceState",
+              "table_api_version": "2020-12-06",
+              "table_endpoint": null,
+              "workset_container": "worksets"
+            },
+            "worker": {
+              "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "provenance": "synthetic-fixture"
+            }
+          },
+          "execution_id": "fixture-daily-discover",
+          "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "parser_version": "fixture-envelope-v1",
+          "pinned_on": "2026-10-06",
+          "priority": "daily",
+          "run_id": "fixture-daily",
+          "schema_version": "sec-index-v1",
+          "started_at": "2026-10-06T23:05:22.000549+00:00"
+        },
+        "ended_at": "2026-10-06T23:05:24.388425+00:00",
+        "outcome": "success",
+        "result": {
+          "context": {
+            "attempt_id": "daily-discover-1",
+            "command": "discover",
+            "config_sha256": "6bf4c06fd8d4891aad27fbeb1221dbfb08920a670d79462233c3fbff83d4ac6f",
+            "deadline": "2099-01-01T00:00:00+00:00",
+            "effective_config": {
+              "backfill": {
+                "end_quarter": "open",
+                "start_quarter": "2015Q1"
+              },
+              "config_version": "sec-acquisition-v1",
+              "coordination": {
+                "clock_uncertainty_seconds": 2.0,
+                "lease_seconds": 60.0,
+                "namespace": "sec-owner-lowell-mason",
+                "renew_every_seconds": 20.0
+              },
+              "daily": {
+                "start_date": "2026-10-01"
+              },
+              "etl": {
+                "parser_version": "fixture-envelope-v1",
+                "schema_version": "sec-index-v1"
+              },
+              "fixture": {
+                "allow_clock_override": true,
+                "allow_deadline_override": true
+              },
+              "http": {
+                "connect_timeout_seconds": 15.0,
+                "exchange_deadline_seconds": 90.0,
+                "max_attempts": 5,
+                "max_expanded_bytes": 536870912,
+                "max_received_bytes": 67108864,
+                "read_timeout_seconds": 60.0,
+                "retry_base_seconds": 2.0,
+                "retry_cap_seconds": 120.0
+              },
+              "jobs": {
+                "replica_retry_limit": 0
+              },
+              "orchestration": {
+                "transient_replays": 1
+              },
+              "reconciliation": {
+                "require_withdrawal_approval": true
+              },
+              "sec": {
+                "max_active_collectors": 1,
+                "requests_per_second": 3.0,
+                "user_agent": "Lowell Mason sec-edgar-ingest mason.lowell@mac.com"
+              },
+              "storage": {
+                "account_name": null,
+                "attempt_table": "Attempts",
+                "backend": "local-fixture",
+                "binding_registry_blob": "sec-owner-lowell-mason/binding.json",
+                "blob_api_version": "2026-04-06",
+                "blob_endpoint": null,
+                "lock_blob": "sec-owner-lowell-mason/sentinel.json",
+                "lock_container": "locks",
+                "quarantine_container": "quarantine",
+                "raw_container": "raw",
+                "root": ".fixture-state",
+                "source_table": "SourceState",
+                "table_api_version": "2020-12-06",
+                "table_endpoint": null,
+                "workset_container": "worksets"
+              },
+              "worker": {
+                "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+                "provenance": "synthetic-fixture"
+              }
+            },
+            "execution_id": "fixture-daily-discover",
+            "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+            "parser_version": "fixture-envelope-v1",
+            "pinned_on": "2026-10-06",
+            "priority": "daily",
+            "run_id": "fixture-daily",
+            "schema_version": "sec-index-v1",
+            "started_at": "2026-10-06T23:05:22.000549+00:00"
+          },
+          "discovered": 2,
+          "downloaded": 0,
+          "ended_at": "2026-10-06T23:05:24.388425+00:00",
+          "failed": 0,
+          "gaps": [],
+          "outcome": "success",
+          "pending": 0,
+          "quarantined": 0,
+          "snapshot_workset_ref": null,
+          "source_workset_ref": "worksets/sec/source/sha256=2492e6531be8b568621521e16c984bf415dccc70d034207e81cc2d6d8034a64d/workset.json",
+          "started_at": "2026-10-06T23:05:22.000549+00:00",
+          "unchanged": 0
+        },
+        "started_at": "2026-10-06T23:05:22.000549+00:00",
+        "structured_errors": []
+      },
+      "version": "6352a6ac33d24a62b77a0f431d42d9a5"
+    },
+    {
+      "value": {
+        "context": {
+          "attempt_id": "collect-1",
+          "command": "collect",
+          "config_sha256": "a8b1ebc0e3e64c56d9aad5e7b4b15ca111495885c2a9849dbc96721c203ab856",
+          "deadline": "2099-01-01T00:00:00+00:00",
+          "effective_config": {
+            "backfill": {
+              "end_quarter": "2015Q1",
+              "start_quarter": "2015Q1"
+            },
+            "config_version": "sec-acquisition-v1",
+            "coordination": {
+              "clock_uncertainty_seconds": 2.0,
+              "lease_seconds": 60.0,
+              "namespace": "sec-owner-lowell-mason",
+              "renew_every_seconds": 20.0
+            },
+            "daily": {
+              "start_date": "2026-10-01"
+            },
+            "etl": {
+              "parser_version": "fixture-envelope-v1",
+              "schema_version": "sec-index-v1"
+            },
+            "fixture": {
+              "allow_clock_override": true,
+              "allow_deadline_override": true
+            },
+            "http": {
+              "connect_timeout_seconds": 15.0,
+              "exchange_deadline_seconds": 90.0,
+              "max_attempts": 5,
+              "max_expanded_bytes": 536870912,
+              "max_received_bytes": 67108864,
+              "read_timeout_seconds": 60.0,
+              "retry_base_seconds": 2.0,
+              "retry_cap_seconds": 120.0
+            },
+            "jobs": {
+              "replica_retry_limit": 0
+            },
+            "orchestration": {
+              "transient_replays": 1
+            },
+            "reconciliation": {
+              "require_withdrawal_approval": true
+            },
+            "sec": {
+              "max_active_collectors": 1,
+              "requests_per_second": 3.0,
+              "user_agent": "Lowell Mason sec-edgar-ingest mason.lowell@mac.com"
+            },
+            "storage": {
+              "account_name": null,
+              "attempt_table": "Attempts",
+              "backend": "local-fixture",
+              "binding_registry_blob": "sec-owner-lowell-mason/binding.json",
+              "blob_api_version": "2026-04-06",
+              "blob_endpoint": null,
+              "lock_blob": "sec-owner-lowell-mason/sentinel.json",
+              "lock_container": "locks",
+              "quarantine_container": "quarantine",
+              "raw_container": "raw",
+              "root": ".fixture-state",
+              "source_table": "SourceState",
+              "table_api_version": "2020-12-06",
+              "table_endpoint": null,
+              "workset_container": "worksets"
+            },
+            "worker": {
+              "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "provenance": "synthetic-fixture"
+            }
+          },
+          "execution_id": "fixture-collect",
+          "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "parser_version": "fixture-envelope-v1",
+          "pinned_on": "2026-10-06",
+          "priority": "backfill",
+          "run_id": "fixture-run",
+          "schema_version": "sec-index-v1",
+          "started_at": "2026-10-06T23:05:21.086416+00:00"
+        },
+        "ended_at": "2026-10-06T23:05:21.695605+00:00",
+        "outcome": "success",
+        "result": {
+          "context": {
+            "attempt_id": "collect-1",
+            "command": "collect",
+            "config_sha256": "a8b1ebc0e3e64c56d9aad5e7b4b15ca111495885c2a9849dbc96721c203ab856",
+            "deadline": "2099-01-01T00:00:00+00:00",
+            "effective_config": {
+              "backfill": {
+                "end_quarter": "2015Q1",
+                "start_quarter": "2015Q1"
+              },
+              "config_version": "sec-acquisition-v1",
+              "coordination": {
+                "clock_uncertainty_seconds": 2.0,
+                "lease_seconds": 60.0,
+                "namespace": "sec-owner-lowell-mason",
+                "renew_every_seconds": 20.0
+              },
+              "daily": {
+                "start_date": "2026-10-01"
+              },
+              "etl": {
+                "parser_version": "fixture-envelope-v1",
+                "schema_version": "sec-index-v1"
+              },
+              "fixture": {
+                "allow_clock_override": true,
+                "allow_deadline_override": true
+              },
+              "http": {
+                "connect_timeout_seconds": 15.0,
+                "exchange_deadline_seconds": 90.0,
+                "max_attempts": 5,
+                "max_expanded_bytes": 536870912,
+                "max_received_bytes": 67108864,
+                "read_timeout_seconds": 60.0,
+                "retry_base_seconds": 2.0,
+                "retry_cap_seconds": 120.0
+              },
+              "jobs": {
+                "replica_retry_limit": 0
+              },
+              "orchestration": {
+                "transient_replays": 1
+              },
+              "reconciliation": {
+                "require_withdrawal_approval": true
+              },
+              "sec": {
+                "max_active_collectors": 1,
+                "requests_per_second": 3.0,
+                "user_agent": "Lowell Mason sec-edgar-ingest mason.lowell@mac.com"
+              },
+              "storage": {
+                "account_name": null,
+                "attempt_table": "Attempts",
+                "backend": "local-fixture",
+                "binding_registry_blob": "sec-owner-lowell-mason/binding.json",
+                "blob_api_version": "2026-04-06",
+                "blob_endpoint": null,
+                "lock_blob": "sec-owner-lowell-mason/sentinel.json",
+                "lock_container": "locks",
+                "quarantine_container": "quarantine",
+                "raw_container": "raw",
+                "root": ".fixture-state",
+                "source_table": "SourceState",
+                "table_api_version": "2020-12-06",
+                "table_endpoint": null,
+                "workset_container": "worksets"
+              },
+              "worker": {
+                "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+                "provenance": "synthetic-fixture"
+              }
+            },
+            "execution_id": "fixture-collect",
+            "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+            "parser_version": "fixture-envelope-v1",
+            "pinned_on": "2026-10-06",
+            "priority": "backfill",
+            "run_id": "fixture-run",
+            "schema_version": "sec-index-v1",
+            "started_at": "2026-10-06T23:05:21.086416+00:00"
+          },
+          "discovered": 1,
+          "downloaded": 1,
+          "ended_at": "2026-10-06T23:05:21.695605+00:00",
+          "failed": 0,
+          "gaps": [],
+          "outcome": "success",
+          "pending": 0,
+          "quarantined": 0,
+          "snapshot_workset_ref": "worksets/sec/snapshot/sha256=d1308ba7f1dec961504aaf1705713a4e7ae81d2d462d08b33e86ed2cd414d5b7/workset.json",
+          "source_workset_ref": "worksets/sec/source/sha256=21fcc11d93bb2e1aade886510e9a4648b633199110d7eb797cbce09d2dfa16de/workset.json",
+          "started_at": "2026-10-06T23:05:21.086416+00:00",
+          "unchanged": 0
+        },
+        "started_at": "2026-10-06T23:05:21.086416+00:00",
+        "structured_errors": []
+      },
+      "version": "87623b08c30a4d70a5d7de8ab54285ce"
+    }
+  ],
+  "Binding": [
+    {
+      "value": {
+        "snapshot_sha256": "68b0e0e1c09010a02e45ac0d0adc2621f23d61a84448064d15d0cee9e5aab399",
+        "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+        "source_workset_id": "21fcc11d93bb2e1aade886510e9a4648b633199110d7eb797cbce09d2dfa16de"
+      },
+      "version": "cc917f19eb6b4ef3a574590be432969c"
+    },
+    {
+      "value": {
+        "snapshot_sha256": "258e0245ed05b9340e156bc1572f88425962b0bcb9b25eca60ecb8c6052815c9",
+        "source_id": "0a6a3b5899f59720e13ac68455ccce6375e2065fc210d9dda6f00c3be4371bf4",
+        "source_workset_id": "2492e6531be8b568621521e16c984bf415dccc70d034207e81cc2d6d8034a64d"
+      },
+      "version": "10a08c94dcd34393946dbfc1912088b1"
+    },
+    {
+      "value": {
+        "snapshot_sha256": "4dc2efcff18a472cac890b5a3e4cc38a1f78a6fd9e672e0a8dababec4a91e6c0",
+        "source_id": "6cf7f339fd98f08d888586fbf41d907cb071d3a54259128e659f51e1f7caaa72",
+        "source_workset_id": "2492e6531be8b568621521e16c984bf415dccc70d034207e81cc2d6d8034a64d"
+      },
+      "version": "46dcd81b7c2749ee9d84884d7f677bb3"
+    }
+  ],
+  "FixtureResponseCursor": [
+    {
+      "value": {
+        "cursor": 1,
+        "fixture_only": true,
+        "manifest_sha256": "6279105122c2753736cf53be58ab8ba33461c7e730388ba005cafa321000d5de",
+        "url": "https://www.sec.gov/Archives/edgar/daily-index/2026/index.json"
+      },
+      "version": "cd1ec1e11d9f4089a5be64d1856d879a"
+    },
+    {
+      "value": {
+        "cursor": 1,
+        "fixture_only": true,
+        "manifest_sha256": "6279105122c2753736cf53be58ab8ba33461c7e730388ba005cafa321000d5de",
+        "url": "https://www.sec.gov/Archives/edgar/full-index/index.json"
+      },
+      "version": "55273df4f00c4d1e88739f6b4c1a3881"
+    },
+    {
+      "value": {
+        "cursor": 1,
+        "fixture_only": true,
+        "manifest_sha256": "6279105122c2753736cf53be58ab8ba33461c7e730388ba005cafa321000d5de",
+        "url": "https://www.sec.gov/Archives/edgar/daily-index/index.json"
+      },
+      "version": "6570f3fd479c44db98aadeabc3d108e6"
+    },
+    {
+      "value": {
+        "cursor": 1,
+        "fixture_only": true,
+        "manifest_sha256": "6279105122c2753736cf53be58ab8ba33461c7e730388ba005cafa321000d5de",
+        "url": "https://www.sec.gov/Archives/edgar/full-index/2015/QTR1/master.zip"
+      },
+      "version": "667cbb765f854ea686da21e728aed99c"
+    },
+    {
+      "value": {
+        "cursor": 1,
+        "fixture_only": true,
+        "manifest_sha256": "6279105122c2753736cf53be58ab8ba33461c7e730388ba005cafa321000d5de",
+        "url": "https://www.sec.gov/Archives/edgar/daily-index/2026/QTR4/index.json"
+      },
+      "version": "704e947039404008a2ef4b7a84c40fd8"
+    },
+    {
+      "value": {
+        "cursor": 1,
+        "fixture_only": true,
+        "manifest_sha256": "6279105122c2753736cf53be58ab8ba33461c7e730388ba005cafa321000d5de",
+        "url": "https://www.sec.gov/Archives/edgar/full-index/2015/index.json"
+      },
+      "version": "1bbb88ff394a4933a7e082c1084484d9"
+    },
+    {
+      "value": {
+        "cursor": 1,
+        "fixture_only": true,
+        "manifest_sha256": "6279105122c2753736cf53be58ab8ba33461c7e730388ba005cafa321000d5de",
+        "url": "https://www.sec.gov/Archives/edgar/daily-index/2026/QTR4/master.20261001.idx"
+      },
+      "version": "9846260b0e9943919907915629fab548"
+    },
+    {
+      "value": {
+        "cursor": 1,
+        "fixture_only": true,
+        "manifest_sha256": "6279105122c2753736cf53be58ab8ba33461c7e730388ba005cafa321000d5de",
+        "url": "https://www.sec.gov/Archives/edgar/daily-index/2026/QTR3/index.json"
+      },
+      "version": "7ce5522d7d48425d83c65eaff7c2f2e7"
+    },
+    {
+      "value": {
+        "cursor": 1,
+        "fixture_only": true,
+        "manifest_sha256": "6279105122c2753736cf53be58ab8ba33461c7e730388ba005cafa321000d5de",
+        "url": "https://www.sec.gov/Archives/edgar/full-index/2015/QTR1/index.json"
+      },
+      "version": "e93cc5dda7e34d2485b41f591f252107"
+    },
+    {
+      "value": {
+        "cursor": 2,
+        "fixture_only": true,
+        "manifest_sha256": "6279105122c2753736cf53be58ab8ba33461c7e730388ba005cafa321000d5de",
+        "url": "https://www.sec.gov/Archives/edgar/daily-index/2026/QTR4/master.20261002.idx"
+      },
+      "version": "8a4dd79f445948149dd5df54ebc228b7"
+    }
+  ],
+  "TransportAttempt": [
+    {
+      "value": {
+        "attempt_key": "28c5fb2b23596b8d7f957feb6f808771f0fe7c8f316231b32a2aa85880d56f7a",
+        "begun_at": "2026-10-06T23:05:25.710259+00:00",
+        "byte_count": 230,
+        "context": {
+          "attempt_id": "daily-collect-1",
+          "command": "collect",
+          "config_sha256": "6bf4c06fd8d4891aad27fbeb1221dbfb08920a670d79462233c3fbff83d4ac6f",
+          "deadline": "2099-01-01T00:00:00+00:00",
+          "effective_config": {
+            "backfill": {
+              "end_quarter": "open",
+              "start_quarter": "2015Q1"
+            },
+            "config_version": "sec-acquisition-v1",
+            "coordination": {
+              "clock_uncertainty_seconds": 2.0,
+              "lease_seconds": 60.0,
+              "namespace": "sec-owner-lowell-mason",
+              "renew_every_seconds": 20.0
+            },
+            "daily": {
+              "start_date": "2026-10-01"
+            },
+            "etl": {
+              "parser_version": "fixture-envelope-v1",
+              "schema_version": "sec-index-v1"
+            },
+            "fixture": {
+              "allow_clock_override": true,
+              "allow_deadline_override": true
+            },
+            "http": {
+              "connect_timeout_seconds": 15.0,
+              "exchange_deadline_seconds": 90.0,
+              "max_attempts": 5,
+              "max_expanded_bytes": 536870912,
+              "max_received_bytes": 67108864,
+              "read_timeout_seconds": 60.0,
+              "retry_base_seconds": 2.0,
+              "retry_cap_seconds": 120.0
+            },
+            "jobs": {
+              "replica_retry_limit": 0
+            },
+            "orchestration": {
+              "transient_replays": 1
+            },
+            "reconciliation": {
+              "require_withdrawal_approval": true
+            },
+            "sec": {
+              "max_active_collectors": 1,
+              "requests_per_second": 3.0,
+              "user_agent": "Lowell Mason sec-edgar-ingest mason.lowell@mac.com"
+            },
+            "storage": {
+              "account_name": null,
+              "attempt_table": "Attempts",
+              "backend": "local-fixture",
+              "binding_registry_blob": "sec-owner-lowell-mason/binding.json",
+              "blob_api_version": "2026-04-06",
+              "blob_endpoint": null,
+              "lock_blob": "sec-owner-lowell-mason/sentinel.json",
+              "lock_container": "locks",
+              "quarantine_container": "quarantine",
+              "raw_container": "raw",
+              "root": ".fixture-state",
+              "source_table": "SourceState",
+              "table_api_version": "2020-12-06",
+              "table_endpoint": null,
+              "workset_container": "worksets"
+            },
+            "worker": {
+              "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "provenance": "synthetic-fixture"
+            }
+          },
+          "execution_id": "fixture-daily-collect",
+          "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "parser_version": "fixture-envelope-v1",
+          "pinned_on": "2026-10-06",
+          "priority": "daily",
+          "run_id": "fixture-daily",
+          "schema_version": "sec-index-v1",
+          "started_at": "2026-10-06T23:05:24.466535+00:00"
+        },
+        "ended_at": "2026-10-06T23:05:25.725985+00:00",
+        "error": null,
+        "next_allowed_at": "2026-10-06T23:05:26.363761+00:00",
+        "ordinal": 1,
+        "outcome": "received",
+        "ownership_epoch": 10,
+        "permit": {
+          "deadline_mono": 2767279.676787625,
+          "epoch": 10,
+          "must_end_by": "2026-10-06T23:06:55.697093+00:00",
+          "must_start_before": "2026-10-06T23:05:26.030427+00:00",
+          "next_allowed_at": "2026-10-06T23:05:26.363761+00:00",
+          "owner_id": "fixture-daily-collect:daily-collect-1:250061a1b02d4ee2a6b090ada7d24112",
+          "request_id": "32f0abb89c5b45b48336112a377058d0",
+          "start_before_mono": 2767190.0101209586,
+          "takeover_after": "2026-10-06T23:07:57.098377+00:00"
+        },
+        "permit_next_allowed_at": "2026-10-06T23:05:26.363761+00:00",
+        "prior_exhaustion": [],
+        "receipt": {
+          "byte_count": 230,
+          "complete": true,
+          "error": null,
+          "headers": {
+            "Content-Length": "230",
+            "Content-Type": "text/plain",
+            "ETag": "\"synthetic-Synthetic Fixture Co 1\"",
+            "X-Fixture": "synthetic"
+          },
+          "received_at": "2026-10-06T23:05:25.714759+00:00",
+          "sha256": "4dc2efcff18a472cac890b5a3e4cc38a1f78a6fd9e672e0a8dababec4a91e6c0",
+          "status": 200,
+          "temporary_path": "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-fixture-z_9fit_q/body-74ea30e7c42e41d3b649271f0ceddf85",
+          "url": "https://www.sec.gov/Archives/edgar/daily-index/2026/QTR4/master.20261001.idx"
+        },
+        "request_id": "32f0abb89c5b45b48336112a377058d0",
+        "retry": {},
+        "source_id": "6cf7f339fd98f08d888586fbf41d907cb071d3a54259128e659f51e1f7caaa72",
+        "status": 200,
+        "url": "https://www.sec.gov/Archives/edgar/daily-index/2026/QTR4/master.20261001.idx"
+      },
+      "version": "d25eef4108764ac19dc1bfb5eb8e5d84"
+    },
+    {
+      "value": {
+        "attempt_key": "d89fa65d118ab262a1a8b67d5872366a65f367bfacb591bb5fb250200041b6e2",
+        "begun_at": "2026-10-06T23:05:23.003351+00:00",
+        "byte_count": 287,
+        "context": {
+          "attempt_id": "daily-discover-1",
+          "command": "discover",
+          "config_sha256": "6bf4c06fd8d4891aad27fbeb1221dbfb08920a670d79462233c3fbff83d4ac6f",
+          "deadline": "2099-01-01T00:00:00+00:00",
+          "effective_config": {
+            "backfill": {
+              "end_quarter": "open",
+              "start_quarter": "2015Q1"
+            },
+            "config_version": "sec-acquisition-v1",
+            "coordination": {
+              "clock_uncertainty_seconds": 2.0,
+              "lease_seconds": 60.0,
+              "namespace": "sec-owner-lowell-mason",
+              "renew_every_seconds": 20.0
+            },
+            "daily": {
+              "start_date": "2026-10-01"
+            },
+            "etl": {
+              "parser_version": "fixture-envelope-v1",
+              "schema_version": "sec-index-v1"
+            },
+            "fixture": {
+              "allow_clock_override": true,
+              "allow_deadline_override": true
+            },
+            "http": {
+              "connect_timeout_seconds": 15.0,
+              "exchange_deadline_seconds": 90.0,
+              "max_attempts": 5,
+              "max_expanded_bytes": 536870912,
+              "max_received_bytes": 67108864,
+              "read_timeout_seconds": 60.0,
+              "retry_base_seconds": 2.0,
+              "retry_cap_seconds": 120.0
+            },
+            "jobs": {
+              "replica_retry_limit": 0
+            },
+            "orchestration": {
+              "transient_replays": 1
+            },
+            "reconciliation": {
+              "require_withdrawal_approval": true
+            },
+            "sec": {
+              "max_active_collectors": 1,
+              "requests_per_second": 3.0,
+              "user_agent": "Lowell Mason sec-edgar-ingest mason.lowell@mac.com"
+            },
+            "storage": {
+              "account_name": null,
+              "attempt_table": "Attempts",
+              "backend": "local-fixture",
+              "binding_registry_blob": "sec-owner-lowell-mason/binding.json",
+              "blob_api_version": "2026-04-06",
+              "blob_endpoint": null,
+              "lock_blob": "sec-owner-lowell-mason/sentinel.json",
+              "lock_container": "locks",
+              "quarantine_container": "quarantine",
+              "raw_container": "raw",
+              "root": ".fixture-state",
+              "source_table": "SourceState",
+              "table_api_version": "2020-12-06",
+              "table_endpoint": null,
+              "workset_container": "worksets"
+            },
+            "worker": {
+              "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "provenance": "synthetic-fixture"
+            }
+          },
+          "execution_id": "fixture-daily-discover",
+          "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "parser_version": "fixture-envelope-v1",
+          "pinned_on": "2026-10-06",
+          "priority": "daily",
+          "run_id": "fixture-daily",
+          "schema_version": "sec-index-v1",
+          "started_at": "2026-10-06T23:05:22.000549+00:00"
+        },
+        "ended_at": "2026-10-06T23:05:23.018123+00:00",
+        "error": null,
+        "next_allowed_at": "2026-10-06T23:05:23.659457+00:00",
+        "ordinal": 1,
+        "outcome": "received",
+        "ownership_epoch": 6,
+        "permit": {
+          "deadline_mono": 2767276.972493166,
+          "epoch": 6,
+          "must_end_by": "2026-10-06T23:06:52.992789+00:00",
+          "must_start_before": "2026-10-06T23:05:23.326123+00:00",
+          "next_allowed_at": "2026-10-06T23:05:23.659457+00:00",
+          "owner_id": "fixture-daily-discover:daily-discover-1:a5abc7788abe4b3a9d714652eba3d613",
+          "request_id": "6d4361c7cbfe48feaa203187b5604789",
+          "start_before_mono": 2767187.3058264996,
+          "takeover_after": "2026-10-06T23:07:54.355692+00:00"
+        },
+        "permit_next_allowed_at": "2026-10-06T23:05:23.659457+00:00",
+        "prior_exhaustion": [],
+        "receipt": {
+          "byte_count": 287,
+          "complete": true,
+          "error": null,
+          "headers": {
+            "Content-Type": "application/json",
+            "X-Fixture": "synthetic"
+          },
+          "received_at": "2026-10-06T23:05:23.007610+00:00",
+          "sha256": "d7660c59fd179fb60293211d85d1b5961ff97c911df237ccca9b80a425642bc7",
+          "status": 200,
+          "temporary_path": "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-fixture-_8w0bh81/body-091f540da0f84ad2a18e43dab9ac3ff3",
+          "url": "https://www.sec.gov/Archives/edgar/daily-index/2026/index.json"
+        },
+        "request_id": "6d4361c7cbfe48feaa203187b5604789",
+        "retry": {},
+        "source_id": null,
+        "status": 200,
+        "url": "https://www.sec.gov/Archives/edgar/daily-index/2026/index.json"
+      },
+      "version": "6d02456800c04723a042133511ea943c"
+    },
+    {
+      "value": {
+        "attempt_key": "d89fa65d118ab262a1a8b67d5872366a65f367bfacb591bb5fb250200041b6e2",
+        "begun_at": "2026-10-06T23:05:24.355547+00:00",
+        "byte_count": 352,
+        "context": {
+          "attempt_id": "daily-discover-1",
+          "command": "discover",
+          "config_sha256": "6bf4c06fd8d4891aad27fbeb1221dbfb08920a670d79462233c3fbff83d4ac6f",
+          "deadline": "2099-01-01T00:00:00+00:00",
+          "effective_config": {
+            "backfill": {
+              "end_quarter": "open",
+              "start_quarter": "2015Q1"
+            },
+            "config_version": "sec-acquisition-v1",
+            "coordination": {
+              "clock_uncertainty_seconds": 2.0,
+              "lease_seconds": 60.0,
+              "namespace": "sec-owner-lowell-mason",
+              "renew_every_seconds": 20.0
+            },
+            "daily": {
+              "start_date": "2026-10-01"
+            },
+            "etl": {
+              "parser_version": "fixture-envelope-v1",
+              "schema_version": "sec-index-v1"
+            },
+            "fixture": {
+              "allow_clock_override": true,
+              "allow_deadline_override": true
+            },
+            "http": {
+              "connect_timeout_seconds": 15.0,
+              "exchange_deadline_seconds": 90.0,
+              "max_attempts": 5,
+              "max_expanded_bytes": 536870912,
+              "max_received_bytes": 67108864,
+              "read_timeout_seconds": 60.0,
+              "retry_base_seconds": 2.0,
+              "retry_cap_seconds": 120.0
+            },
+            "jobs": {
+              "replica_retry_limit": 0
+            },
+            "orchestration": {
+              "transient_replays": 1
+            },
+            "reconciliation": {
+              "require_withdrawal_approval": true
+            },
+            "sec": {
+              "max_active_collectors": 1,
+              "requests_per_second": 3.0,
+              "user_agent": "Lowell Mason sec-edgar-ingest mason.lowell@mac.com"
+            },
+            "storage": {
+              "account_name": null,
+              "attempt_table": "Attempts",
+              "backend": "local-fixture",
+              "binding_registry_blob": "sec-owner-lowell-mason/binding.json",
+              "blob_api_version": "2026-04-06",
+              "blob_endpoint": null,
+              "lock_blob": "sec-owner-lowell-mason/sentinel.json",
+              "lock_container": "locks",
+              "quarantine_container": "quarantine",
+              "raw_container": "raw",
+              "root": ".fixture-state",
+              "source_table": "SourceState",
+              "table_api_version": "2020-12-06",
+              "table_endpoint": null,
+              "workset_container": "worksets"
+            },
+            "worker": {
+              "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "provenance": "synthetic-fixture"
+            }
+          },
+          "execution_id": "fixture-daily-discover",
+          "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "parser_version": "fixture-envelope-v1",
+          "pinned_on": "2026-10-06",
+          "priority": "daily",
+          "run_id": "fixture-daily",
+          "schema_version": "sec-index-v1",
+          "started_at": "2026-10-06T23:05:22.000549+00:00"
+        },
+        "ended_at": "2026-10-06T23:05:24.370370+00:00",
+        "error": null,
+        "next_allowed_at": "2026-10-06T23:05:25.010094+00:00",
+        "ordinal": 1,
+        "outcome": "received",
+        "ownership_epoch": 8,
+        "permit": {
+          "deadline_mono": 2767278.32312525,
+          "epoch": 8,
+          "must_end_by": "2026-10-06T23:06:54.343426+00:00",
+          "must_start_before": "2026-10-06T23:05:24.676760+00:00",
+          "next_allowed_at": "2026-10-06T23:05:25.010094+00:00",
+          "owner_id": "fixture-daily-discover:daily-discover-1:36320731332847df9452d8a300ae57c4",
+          "request_id": "67d9c92d4b1249bb9cb4f0d97dc04e00",
+          "start_before_mono": 2767188.6564585837,
+          "takeover_after": "2026-10-06T23:07:55.709298+00:00"
+        },
+        "permit_next_allowed_at": "2026-10-06T23:05:25.010094+00:00",
+        "prior_exhaustion": [],
+        "receipt": {
+          "byte_count": 352,
+          "complete": true,
+          "error": null,
+          "headers": {
+            "Content-Type": "application/json",
+            "X-Fixture": "synthetic"
+          },
+          "received_at": "2026-10-06T23:05:24.359756+00:00",
+          "sha256": "32eb8001fb131584156014f9ff5ad6dc2a8a97efa7fc63fb712173fdbccc3e94",
+          "status": 200,
+          "temporary_path": "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-fixture-_8w0bh81/body-10d26a9998b5495d94a84929c096546d",
+          "url": "https://www.sec.gov/Archives/edgar/daily-index/2026/QTR4/index.json"
+        },
+        "request_id": "67d9c92d4b1249bb9cb4f0d97dc04e00",
+        "retry": {},
+        "source_id": null,
+        "status": 200,
+        "url": "https://www.sec.gov/Archives/edgar/daily-index/2026/QTR4/index.json"
+      },
+      "version": "028749de1ee2410dad11f94d707a5d8c"
+    },
+    {
+      "value": {
+        "attempt_key": "28c5fb2b23596b8d7f957feb6f808771f0fe7c8f316231b32a2aa85880d56f7a",
+        "begun_at": "2026-10-06T23:05:25.056550+00:00",
+        "byte_count": 0,
+        "context": {
+          "attempt_id": "daily-collect-1",
+          "command": "collect",
+          "config_sha256": "6bf4c06fd8d4891aad27fbeb1221dbfb08920a670d79462233c3fbff83d4ac6f",
+          "deadline": "2099-01-01T00:00:00+00:00",
+          "effective_config": {
+            "backfill": {
+              "end_quarter": "open",
+              "start_quarter": "2015Q1"
+            },
+            "config_version": "sec-acquisition-v1",
+            "coordination": {
+              "clock_uncertainty_seconds": 2.0,
+              "lease_seconds": 60.0,
+              "namespace": "sec-owner-lowell-mason",
+              "renew_every_seconds": 20.0
+            },
+            "daily": {
+              "start_date": "2026-10-01"
+            },
+            "etl": {
+              "parser_version": "fixture-envelope-v1",
+              "schema_version": "sec-index-v1"
+            },
+            "fixture": {
+              "allow_clock_override": true,
+              "allow_deadline_override": true
+            },
+            "http": {
+              "connect_timeout_seconds": 15.0,
+              "exchange_deadline_seconds": 90.0,
+              "max_attempts": 5,
+              "max_expanded_bytes": 536870912,
+              "max_received_bytes": 67108864,
+              "read_timeout_seconds": 60.0,
+              "retry_base_seconds": 2.0,
+              "retry_cap_seconds": 120.0
+            },
+            "jobs": {
+              "replica_retry_limit": 0
+            },
+            "orchestration": {
+              "transient_replays": 1
+            },
+            "reconciliation": {
+              "require_withdrawal_approval": true
+            },
+            "sec": {
+              "max_active_collectors": 1,
+              "requests_per_second": 3.0,
+              "user_agent": "Lowell Mason sec-edgar-ingest mason.lowell@mac.com"
+            },
+            "storage": {
+              "account_name": null,
+              "attempt_table": "Attempts",
+              "backend": "local-fixture",
+              "binding_registry_blob": "sec-owner-lowell-mason/binding.json",
+              "blob_api_version": "2026-04-06",
+              "blob_endpoint": null,
+              "lock_blob": "sec-owner-lowell-mason/sentinel.json",
+              "lock_container": "locks",
+              "quarantine_container": "quarantine",
+              "raw_container": "raw",
+              "root": ".fixture-state",
+              "source_table": "SourceState",
+              "table_api_version": "2020-12-06",
+              "table_endpoint": null,
+              "workset_container": "worksets"
+            },
+            "worker": {
+              "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "provenance": "synthetic-fixture"
+            }
+          },
+          "execution_id": "fixture-daily-collect",
+          "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "parser_version": "fixture-envelope-v1",
+          "pinned_on": "2026-10-06",
+          "priority": "daily",
+          "run_id": "fixture-daily",
+          "schema_version": "sec-index-v1",
+          "started_at": "2026-10-06T23:05:24.466535+00:00"
+        },
+        "ended_at": "2026-10-06T23:05:25.079991+00:00",
+        "error": {
+          "code": "listed_missing",
+          "details": {
+            "ordinal": 1,
+            "outcome": "pending",
+            "request_id": "2f3997484cab43f6bf400e0b6fcf4222"
+          },
+          "message": "a listed source is temporarily absent",
+          "retryable": true,
+          "source_id": "0a6a3b5899f59720e13ac68455ccce6375e2065fc210d9dda6f00c3be4371bf4"
+        },
+        "next_allowed_at": "2026-10-06T23:05:25.685567+00:00",
+        "ordinal": 1,
+        "outcome": "pending",
+        "ownership_epoch": 9,
+        "permit": {
+          "deadline_mono": 2767278.998597041,
+          "epoch": 9,
+          "must_end_by": "2026-10-06T23:06:55.018899+00:00",
+          "must_start_before": "2026-10-06T23:05:25.352233+00:00",
+          "next_allowed_at": "2026-10-06T23:05:25.685567+00:00",
+          "owner_id": "fixture-daily-collect:daily-collect-1:32a133f98a354e65a3ee01a5210b5e7c",
+          "request_id": "2f3997484cab43f6bf400e0b6fcf4222",
+          "start_before_mono": 2767189.3319303743,
+          "takeover_after": "2026-10-06T23:07:56.486398+00:00"
+        },
+        "permit_next_allowed_at": "2026-10-06T23:05:25.685567+00:00",
+        "prior_exhaustion": [],
+        "receipt": {
+          "byte_count": 0,
+          "complete": true,
+          "error": null,
+          "headers": {
+            "Content-Length": "0",
+            "X-Fixture": "synthetic"
+          },
+          "received_at": "2026-10-06T23:05:25.066823+00:00",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "status": 404,
+          "temporary_path": "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-fixture-z_9fit_q/body-29caf91a274540ffba1982f9790cbd4c",
+          "url": "https://www.sec.gov/Archives/edgar/daily-index/2026/QTR4/master.20261002.idx"
+        },
+        "request_id": "2f3997484cab43f6bf400e0b6fcf4222",
+        "retry": {},
+        "source_id": "0a6a3b5899f59720e13ac68455ccce6375e2065fc210d9dda6f00c3be4371bf4",
+        "status": 404,
+        "url": "https://www.sec.gov/Archives/edgar/daily-index/2026/QTR4/master.20261002.idx"
+      },
+      "version": "a8e6bd486bd842368cedb000989ffbe3"
+    },
+    {
+      "value": {
+        "attempt_key": "1b080ca6601d3fae97848b25730611bcc2ef02da3d0c9018682f3b932fcbc3ec",
+        "begun_at": "2026-10-06T23:05:20.979713+00:00",
+        "byte_count": 197,
+        "context": {
+          "attempt_id": "discover-1",
+          "command": "discover",
+          "config_sha256": "a8b1ebc0e3e64c56d9aad5e7b4b15ca111495885c2a9849dbc96721c203ab856",
+          "deadline": "2099-01-01T00:00:00+00:00",
+          "effective_config": {
+            "backfill": {
+              "end_quarter": "2015Q1",
+              "start_quarter": "2015Q1"
+            },
+            "config_version": "sec-acquisition-v1",
+            "coordination": {
+              "clock_uncertainty_seconds": 2.0,
+              "lease_seconds": 60.0,
+              "namespace": "sec-owner-lowell-mason",
+              "renew_every_seconds": 20.0
+            },
+            "daily": {
+              "start_date": "2026-10-01"
+            },
+            "etl": {
+              "parser_version": "fixture-envelope-v1",
+              "schema_version": "sec-index-v1"
+            },
+            "fixture": {
+              "allow_clock_override": true,
+              "allow_deadline_override": true
+            },
+            "http": {
+              "connect_timeout_seconds": 15.0,
+              "exchange_deadline_seconds": 90.0,
+              "max_attempts": 5,
+              "max_expanded_bytes": 536870912,
+              "max_received_bytes": 67108864,
+              "read_timeout_seconds": 60.0,
+              "retry_base_seconds": 2.0,
+              "retry_cap_seconds": 120.0
+            },
+            "jobs": {
+              "replica_retry_limit": 0
+            },
+            "orchestration": {
+              "transient_replays": 1
+            },
+            "reconciliation": {
+              "require_withdrawal_approval": true
+            },
+            "sec": {
+              "max_active_collectors": 1,
+              "requests_per_second": 3.0,
+              "user_agent": "Lowell Mason sec-edgar-ingest mason.lowell@mac.com"
+            },
+            "storage": {
+              "account_name": null,
+              "attempt_table": "Attempts",
+              "backend": "local-fixture",
+              "binding_registry_blob": "sec-owner-lowell-mason/binding.json",
+              "blob_api_version": "2026-04-06",
+              "blob_endpoint": null,
+              "lock_blob": "sec-owner-lowell-mason/sentinel.json",
+              "lock_container": "locks",
+              "quarantine_container": "quarantine",
+              "raw_container": "raw",
+              "root": ".fixture-state",
+              "source_table": "SourceState",
+              "table_api_version": "2020-12-06",
+              "table_endpoint": null,
+              "workset_container": "worksets"
+            },
+            "worker": {
+              "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "provenance": "synthetic-fixture"
+            }
+          },
+          "execution_id": "fixture-discover",
+          "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "parser_version": "fixture-envelope-v1",
+          "pinned_on": "2026-10-06",
+          "priority": "backfill",
+          "run_id": "fixture-run",
+          "schema_version": "sec-index-v1",
+          "started_at": "2026-10-06T23:05:19.599229+00:00"
+        },
+        "ended_at": "2026-10-06T23:05:20.994892+00:00",
+        "error": null,
+        "next_allowed_at": "2026-10-06T23:05:21.634556+00:00",
+        "ordinal": 1,
+        "outcome": "received",
+        "ownership_epoch": 3,
+        "permit": {
+          "deadline_mono": 2767274.947598916,
+          "epoch": 3,
+          "must_end_by": "2026-10-06T23:06:50.967888+00:00",
+          "must_start_before": "2026-10-06T23:05:21.301222+00:00",
+          "next_allowed_at": "2026-10-06T23:05:21.634556+00:00",
+          "owner_id": "fixture-discover:discover-1:4568ea3167ba4107bf3f332a7293b6ca",
+          "request_id": "cac751844ded46b5877089f879396d3b",
+          "start_before_mono": 2767185.2809322495,
+          "takeover_after": "2026-10-06T23:07:52.333949+00:00"
+        },
+        "permit_next_allowed_at": "2026-10-06T23:05:21.634556+00:00",
+        "prior_exhaustion": [],
+        "receipt": {
+          "byte_count": 197,
+          "complete": true,
+          "error": null,
+          "headers": {
+            "Content-Type": "application/json",
+            "X-Fixture": "synthetic"
+          },
+          "received_at": "2026-10-06T23:05:20.984195+00:00",
+          "sha256": "58af35e69e11a9c273ed928520bbf412f7133356b09eac39641f6487c6f1421c",
+          "status": 200,
+          "temporary_path": "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-fixture-7b72yeil/body-c904da4b5dd8467eb6967eb923a412b5",
+          "url": "https://www.sec.gov/Archives/edgar/full-index/2015/QTR1/index.json"
+        },
+        "request_id": "cac751844ded46b5877089f879396d3b",
+        "retry": {},
+        "source_id": null,
+        "status": 200,
+        "url": "https://www.sec.gov/Archives/edgar/full-index/2015/QTR1/index.json"
+      },
+      "version": "7624062bbbe24b3c80df58927fa13621"
+    },
+    {
+      "value": {
+        "attempt_key": "d89fa65d118ab262a1a8b67d5872366a65f367bfacb591bb5fb250200041b6e2",
+        "begun_at": "2026-10-06T23:05:23.682087+00:00",
+        "byte_count": 82,
+        "context": {
+          "attempt_id": "daily-discover-1",
+          "command": "discover",
+          "config_sha256": "6bf4c06fd8d4891aad27fbeb1221dbfb08920a670d79462233c3fbff83d4ac6f",
+          "deadline": "2099-01-01T00:00:00+00:00",
+          "effective_config": {
+            "backfill": {
+              "end_quarter": "open",
+              "start_quarter": "2015Q1"
+            },
+            "config_version": "sec-acquisition-v1",
+            "coordination": {
+              "clock_uncertainty_seconds": 2.0,
+              "lease_seconds": 60.0,
+              "namespace": "sec-owner-lowell-mason",
+              "renew_every_seconds": 20.0
+            },
+            "daily": {
+              "start_date": "2026-10-01"
+            },
+            "etl": {
+              "parser_version": "fixture-envelope-v1",
+              "schema_version": "sec-index-v1"
+            },
+            "fixture": {
+              "allow_clock_override": true,
+              "allow_deadline_override": true
+            },
+            "http": {
+              "connect_timeout_seconds": 15.0,
+              "exchange_deadline_seconds": 90.0,
+              "max_attempts": 5,
+              "max_expanded_bytes": 536870912,
+              "max_received_bytes": 67108864,
+              "read_timeout_seconds": 60.0,
+              "retry_base_seconds": 2.0,
+              "retry_cap_seconds": 120.0
+            },
+            "jobs": {
+              "replica_retry_limit": 0
+            },
+            "orchestration": {
+              "transient_replays": 1
+            },
+            "reconciliation": {
+              "require_withdrawal_approval": true
+            },
+            "sec": {
+              "max_active_collectors": 1,
+              "requests_per_second": 3.0,
+              "user_agent": "Lowell Mason sec-edgar-ingest mason.lowell@mac.com"
+            },
+            "storage": {
+              "account_name": null,
+              "attempt_table": "Attempts",
+              "backend": "local-fixture",
+              "binding_registry_blob": "sec-owner-lowell-mason/binding.json",
+              "blob_api_version": "2026-04-06",
+              "blob_endpoint": null,
+              "lock_blob": "sec-owner-lowell-mason/sentinel.json",
+              "lock_container": "locks",
+              "quarantine_container": "quarantine",
+              "raw_container": "raw",
+              "root": ".fixture-state",
+              "source_table": "SourceState",
+              "table_api_version": "2020-12-06",
+              "table_endpoint": null,
+              "workset_container": "worksets"
+            },
+            "worker": {
+              "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "provenance": "synthetic-fixture"
+            }
+          },
+          "execution_id": "fixture-daily-discover",
+          "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "parser_version": "fixture-envelope-v1",
+          "pinned_on": "2026-10-06",
+          "priority": "daily",
+          "run_id": "fixture-daily",
+          "schema_version": "sec-index-v1",
+          "started_at": "2026-10-06T23:05:22.000549+00:00"
+        },
+        "ended_at": "2026-10-06T23:05:23.697307+00:00",
+        "error": null,
+        "next_allowed_at": "2026-10-06T23:05:24.335844+00:00",
+        "ordinal": 1,
+        "outcome": "received",
+        "ownership_epoch": 7,
+        "permit": {
+          "deadline_mono": 2767277.648876916,
+          "epoch": 7,
+          "must_end_by": "2026-10-06T23:06:53.669176+00:00",
+          "must_start_before": "2026-10-06T23:05:24.002510+00:00",
+          "next_allowed_at": "2026-10-06T23:05:24.335844+00:00",
+          "owner_id": "fixture-daily-discover:daily-discover-1:9ad14ff518de4ee5b912e5d10392ccc2",
+          "request_id": "175b9209362246e3b73190c25bad26d3",
+          "start_before_mono": 2767187.9822102496,
+          "takeover_after": "2026-10-06T23:07:55.030232+00:00"
+        },
+        "permit_next_allowed_at": "2026-10-06T23:05:24.335844+00:00",
+        "prior_exhaustion": [],
+        "receipt": {
+          "byte_count": 82,
+          "complete": true,
+          "error": null,
+          "headers": {
+            "Content-Type": "application/json",
+            "X-Fixture": "synthetic"
+          },
+          "received_at": "2026-10-06T23:05:23.686036+00:00",
+          "sha256": "52b4c5e475b57259a26bae0dbf22e6280e051be3f6ef99964e37571fd84f5b8a",
+          "status": 200,
+          "temporary_path": "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-fixture-_8w0bh81/body-57068578cd9c48f48837e4885b8a1a62",
+          "url": "https://www.sec.gov/Archives/edgar/daily-index/2026/QTR3/index.json"
+        },
+        "request_id": "175b9209362246e3b73190c25bad26d3",
+        "retry": {},
+        "source_id": null,
+        "status": 200,
+        "url": "https://www.sec.gov/Archives/edgar/daily-index/2026/QTR3/index.json"
+      },
+      "version": "673432162417478ea6e5be5b77357a7c"
+    },
+    {
+      "value": {
+        "attempt_key": "1b080ca6601d3fae97848b25730611bcc2ef02da3d0c9018682f3b932fcbc3ec",
+        "begun_at": "2026-10-06T23:05:20.306163+00:00",
+        "byte_count": 180,
+        "context": {
+          "attempt_id": "discover-1",
+          "command": "discover",
+          "config_sha256": "a8b1ebc0e3e64c56d9aad5e7b4b15ca111495885c2a9849dbc96721c203ab856",
+          "deadline": "2099-01-01T00:00:00+00:00",
+          "effective_config": {
+            "backfill": {
+              "end_quarter": "2015Q1",
+              "start_quarter": "2015Q1"
+            },
+            "config_version": "sec-acquisition-v1",
+            "coordination": {
+              "clock_uncertainty_seconds": 2.0,
+              "lease_seconds": 60.0,
+              "namespace": "sec-owner-lowell-mason",
+              "renew_every_seconds": 20.0
+            },
+            "daily": {
+              "start_date": "2026-10-01"
+            },
+            "etl": {
+              "parser_version": "fixture-envelope-v1",
+              "schema_version": "sec-index-v1"
+            },
+            "fixture": {
+              "allow_clock_override": true,
+              "allow_deadline_override": true
+            },
+            "http": {
+              "connect_timeout_seconds": 15.0,
+              "exchange_deadline_seconds": 90.0,
+              "max_attempts": 5,
+              "max_expanded_bytes": 536870912,
+              "max_received_bytes": 67108864,
+              "read_timeout_seconds": 60.0,
+              "retry_base_seconds": 2.0,
+              "retry_cap_seconds": 120.0
+            },
+            "jobs": {
+              "replica_retry_limit": 0
+            },
+            "orchestration": {
+              "transient_replays": 1
+            },
+            "reconciliation": {
+              "require_withdrawal_approval": true
+            },
+            "sec": {
+              "max_active_collectors": 1,
+              "requests_per_second": 3.0,
+              "user_agent": "Lowell Mason sec-edgar-ingest mason.lowell@mac.com"
+            },
+            "storage": {
+              "account_name": null,
+              "attempt_table": "Attempts",
+              "backend": "local-fixture",
+              "binding_registry_blob": "sec-owner-lowell-mason/binding.json",
+              "blob_api_version": "2026-04-06",
+              "blob_endpoint": null,
+              "lock_blob": "sec-owner-lowell-mason/sentinel.json",
+              "lock_container": "locks",
+              "quarantine_container": "quarantine",
+              "raw_container": "raw",
+              "root": ".fixture-state",
+              "source_table": "SourceState",
+              "table_api_version": "2020-12-06",
+              "table_endpoint": null,
+              "workset_container": "worksets"
+            },
+            "worker": {
+              "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "provenance": "synthetic-fixture"
+            }
+          },
+          "execution_id": "fixture-discover",
+          "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "parser_version": "fixture-envelope-v1",
+          "pinned_on": "2026-10-06",
+          "priority": "backfill",
+          "run_id": "fixture-run",
+          "schema_version": "sec-index-v1",
+          "started_at": "2026-10-06T23:05:19.599229+00:00"
+        },
+        "ended_at": "2026-10-06T23:05:20.321389+00:00",
+        "error": null,
+        "next_allowed_at": "2026-10-06T23:05:20.962346+00:00",
+        "ordinal": 1,
+        "outcome": "received",
+        "ownership_epoch": 2,
+        "permit": {
+          "deadline_mono": 2767274.275391291,
+          "epoch": 2,
+          "must_end_by": "2026-10-06T23:06:50.295678+00:00",
+          "must_start_before": "2026-10-06T23:05:20.629012+00:00",
+          "next_allowed_at": "2026-10-06T23:05:20.962346+00:00",
+          "owner_id": "fixture-discover:discover-1:2818e42af4d14fe487a8aab4baab2c11",
+          "request_id": "01b93078590641b2bc7209552f633e45",
+          "start_before_mono": 2767184.6087246244,
+          "takeover_after": "2026-10-06T23:07:51.642324+00:00"
+        },
+        "permit_next_allowed_at": "2026-10-06T23:05:20.962346+00:00",
+        "prior_exhaustion": [],
+        "receipt": {
+          "byte_count": 180,
+          "complete": true,
+          "error": null,
+          "headers": {
+            "Content-Type": "application/json",
+            "X-Fixture": "synthetic"
+          },
+          "received_at": "2026-10-06T23:05:20.310557+00:00",
+          "sha256": "32fff5ff6a37979890bc180de561f8cb58cbcc6f37d0cd92d5048ba0c4a10e31",
+          "status": 200,
+          "temporary_path": "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-fixture-7b72yeil/body-11d2d4c4f7f34375937ffff2077f9fcf",
+          "url": "https://www.sec.gov/Archives/edgar/full-index/2015/index.json"
+        },
+        "request_id": "01b93078590641b2bc7209552f633e45",
+        "retry": {},
+        "source_id": null,
+        "status": 200,
+        "url": "https://www.sec.gov/Archives/edgar/full-index/2015/index.json"
+      },
+      "version": "cb296f1bc072479a8e40bfe4e7557277"
+    },
+    {
+      "value": {
+        "attempt_key": "8c443ca3cb7815ef00263f4ef25b5705f71dbdd0d6882c22d4f30040e5672dcc",
+        "begun_at": "2026-10-06T23:05:26.385006+00:00",
+        "byte_count": 230,
+        "context": {
+          "attempt_id": "daily-collect-2",
+          "command": "collect",
+          "config_sha256": "6bf4c06fd8d4891aad27fbeb1221dbfb08920a670d79462233c3fbff83d4ac6f",
+          "deadline": "2099-01-01T00:00:00+00:00",
+          "effective_config": {
+            "backfill": {
+              "end_quarter": "open",
+              "start_quarter": "2015Q1"
+            },
+            "config_version": "sec-acquisition-v1",
+            "coordination": {
+              "clock_uncertainty_seconds": 2.0,
+              "lease_seconds": 60.0,
+              "namespace": "sec-owner-lowell-mason",
+              "renew_every_seconds": 20.0
+            },
+            "daily": {
+              "start_date": "2026-10-01"
+            },
+            "etl": {
+              "parser_version": "fixture-envelope-v1",
+              "schema_version": "sec-index-v1"
+            },
+            "fixture": {
+              "allow_clock_override": true,
+              "allow_deadline_override": true
+            },
+            "http": {
+              "connect_timeout_seconds": 15.0,
+              "exchange_deadline_seconds": 90.0,
+              "max_attempts": 5,
+              "max_expanded_bytes": 536870912,
+              "max_received_bytes": 67108864,
+              "read_timeout_seconds": 60.0,
+              "retry_base_seconds": 2.0,
+              "retry_cap_seconds": 120.0
+            },
+            "jobs": {
+              "replica_retry_limit": 0
+            },
+            "orchestration": {
+              "transient_replays": 1
+            },
+            "reconciliation": {
+              "require_withdrawal_approval": true
+            },
+            "sec": {
+              "max_active_collectors": 1,
+              "requests_per_second": 3.0,
+              "user_agent": "Lowell Mason sec-edgar-ingest mason.lowell@mac.com"
+            },
+            "storage": {
+              "account_name": null,
+              "attempt_table": "Attempts",
+              "backend": "local-fixture",
+              "binding_registry_blob": "sec-owner-lowell-mason/binding.json",
+              "blob_api_version": "2026-04-06",
+              "blob_endpoint": null,
+              "lock_blob": "sec-owner-lowell-mason/sentinel.json",
+              "lock_container": "locks",
+              "quarantine_container": "quarantine",
+              "raw_container": "raw",
+              "root": ".fixture-state",
+              "source_table": "SourceState",
+              "table_api_version": "2020-12-06",
+              "table_endpoint": null,
+              "workset_container": "worksets"
+            },
+            "worker": {
+              "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "provenance": "synthetic-fixture"
+            }
+          },
+          "execution_id": "fixture-daily-retry",
+          "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "parser_version": "fixture-envelope-v1",
+          "pinned_on": "2026-10-06",
+          "priority": "daily",
+          "run_id": "fixture-daily",
+          "schema_version": "sec-index-v1",
+          "started_at": "2026-10-06T23:05:25.907379+00:00"
+        },
+        "ended_at": "2026-10-06T23:05:26.399292+00:00",
+        "error": null,
+        "next_allowed_at": "2026-10-06T23:05:27.038779+00:00",
+        "ordinal": 1,
+        "outcome": "received",
+        "ownership_epoch": 11,
+        "permit": {
+          "deadline_mono": 2767280.351804916,
+          "epoch": 11,
+          "must_end_by": "2026-10-06T23:06:56.372111+00:00",
+          "must_start_before": "2026-10-06T23:05:26.705445+00:00",
+          "next_allowed_at": "2026-10-06T23:05:27.038779+00:00",
+          "owner_id": "fixture-daily-retry:daily-collect-2:e01770da655746f7ae28bf0c4d918fa2",
+          "request_id": "0bd216d3b3e54437a2ac572d496174ea",
+          "start_before_mono": 2767190.6851382493,
+          "takeover_after": "2026-10-06T23:07:57.927153+00:00"
+        },
+        "permit_next_allowed_at": "2026-10-06T23:05:27.038779+00:00",
+        "prior_exhaustion": [],
+        "receipt": {
+          "byte_count": 230,
+          "complete": true,
+          "error": null,
+          "headers": {
+            "Content-Length": "230",
+            "Content-Type": "text/plain",
+            "ETag": "\"synthetic-Synthetic Fixture Co 2\"",
+            "X-Fixture": "synthetic"
+          },
+          "received_at": "2026-10-06T23:05:26.388806+00:00",
+          "sha256": "258e0245ed05b9340e156bc1572f88425962b0bcb9b25eca60ecb8c6052815c9",
+          "status": 200,
+          "temporary_path": "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-fixture-h7qp6ovt/body-c94748b3949f4b45a98c4b41bf8ccf7b",
+          "url": "https://www.sec.gov/Archives/edgar/daily-index/2026/QTR4/master.20261002.idx"
+        },
+        "request_id": "0bd216d3b3e54437a2ac572d496174ea",
+        "retry": {},
+        "source_id": "0a6a3b5899f59720e13ac68455ccce6375e2065fc210d9dda6f00c3be4371bf4",
+        "status": 200,
+        "url": "https://www.sec.gov/Archives/edgar/daily-index/2026/QTR4/master.20261002.idx"
+      },
+      "version": "ac6452109dd44a77b9725bd62ca07e3c"
+    },
+    {
+      "value": {
+        "attempt_key": "d89fa65d118ab262a1a8b67d5872366a65f367bfacb591bb5fb250200041b6e2",
+        "begun_at": "2026-10-06T23:05:22.329720+00:00",
+        "byte_count": 176,
+        "context": {
+          "attempt_id": "daily-discover-1",
+          "command": "discover",
+          "config_sha256": "6bf4c06fd8d4891aad27fbeb1221dbfb08920a670d79462233c3fbff83d4ac6f",
+          "deadline": "2099-01-01T00:00:00+00:00",
+          "effective_config": {
+            "backfill": {
+              "end_quarter": "open",
+              "start_quarter": "2015Q1"
+            },
+            "config_version": "sec-acquisition-v1",
+            "coordination": {
+              "clock_uncertainty_seconds": 2.0,
+              "lease_seconds": 60.0,
+              "namespace": "sec-owner-lowell-mason",
+              "renew_every_seconds": 20.0
+            },
+            "daily": {
+              "start_date": "2026-10-01"
+            },
+            "etl": {
+              "parser_version": "fixture-envelope-v1",
+              "schema_version": "sec-index-v1"
+            },
+            "fixture": {
+              "allow_clock_override": true,
+              "allow_deadline_override": true
+            },
+            "http": {
+              "connect_timeout_seconds": 15.0,
+              "exchange_deadline_seconds": 90.0,
+              "max_attempts": 5,
+              "max_expanded_bytes": 536870912,
+              "max_received_bytes": 67108864,
+              "read_timeout_seconds": 60.0,
+              "retry_base_seconds": 2.0,
+              "retry_cap_seconds": 120.0
+            },
+            "jobs": {
+              "replica_retry_limit": 0
+            },
+            "orchestration": {
+              "transient_replays": 1
+            },
+            "reconciliation": {
+              "require_withdrawal_approval": true
+            },
+            "sec": {
+              "max_active_collectors": 1,
+              "requests_per_second": 3.0,
+              "user_agent": "Lowell Mason sec-edgar-ingest mason.lowell@mac.com"
+            },
+            "storage": {
+              "account_name": null,
+              "attempt_table": "Attempts",
+              "backend": "local-fixture",
+              "binding_registry_blob": "sec-owner-lowell-mason/binding.json",
+              "blob_api_version": "2026-04-06",
+              "blob_endpoint": null,
+              "lock_blob": "sec-owner-lowell-mason/sentinel.json",
+              "lock_container": "locks",
+              "quarantine_container": "quarantine",
+              "raw_container": "raw",
+              "root": ".fixture-state",
+              "source_table": "SourceState",
+              "table_api_version": "2020-12-06",
+              "table_endpoint": null,
+              "workset_container": "worksets"
+            },
+            "worker": {
+              "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "provenance": "synthetic-fixture"
+            }
+          },
+          "execution_id": "fixture-daily-discover",
+          "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "parser_version": "fixture-envelope-v1",
+          "pinned_on": "2026-10-06",
+          "priority": "daily",
+          "run_id": "fixture-daily",
+          "schema_version": "sec-index-v1",
+          "started_at": "2026-10-06T23:05:22.000549+00:00"
+        },
+        "ended_at": "2026-10-06T23:05:22.343899+00:00",
+        "error": null,
+        "next_allowed_at": "2026-10-06T23:05:22.985784+00:00",
+        "ordinal": 1,
+        "outcome": "received",
+        "ownership_epoch": 5,
+        "permit": {
+          "deadline_mono": 2767276.298821291,
+          "epoch": 5,
+          "must_end_by": "2026-10-06T23:06:52.319116+00:00",
+          "must_start_before": "2026-10-06T23:05:22.652450+00:00",
+          "next_allowed_at": "2026-10-06T23:05:22.985784+00:00",
+          "owner_id": "fixture-daily-discover:daily-discover-1:6b4c55506ea8476e8c458da546aab13d",
+          "request_id": "bd87428d47af4521836a3a5c61b1bb42",
+          "start_before_mono": 2767186.6321546244,
+          "takeover_after": "2026-10-06T23:07:54.018786+00:00"
+        },
+        "permit_next_allowed_at": "2026-10-06T23:05:22.985784+00:00",
+        "prior_exhaustion": [],
+        "receipt": {
+          "byte_count": 176,
+          "complete": true,
+          "error": null,
+          "headers": {
+            "Content-Type": "application/json",
+            "X-Fixture": "synthetic"
+          },
+          "received_at": "2026-10-06T23:05:22.333563+00:00",
+          "sha256": "44196541abe6841a5e9e959b26a1161959d015750143fa45a156ba1c3a75295e",
+          "status": 200,
+          "temporary_path": "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-fixture-_8w0bh81/body-0ba5ddac7f074a00a99bcaee81c507d0",
+          "url": "https://www.sec.gov/Archives/edgar/daily-index/index.json"
+        },
+        "request_id": "bd87428d47af4521836a3a5c61b1bb42",
+        "retry": {},
+        "source_id": null,
+        "status": 200,
+        "url": "https://www.sec.gov/Archives/edgar/daily-index/index.json"
+      },
+      "version": "1c1b464b86d44b3497f4c598294c8465"
+    },
+    {
+      "value": {
+        "attempt_key": "e46a7a7dfdd8b972c65cd7365a8146d63c470a71c29e385b98848b7c75964667",
+        "begun_at": "2026-10-06T23:05:21.653504+00:00",
+        "byte_count": 261,
+        "context": {
+          "attempt_id": "collect-1",
+          "command": "collect",
+          "config_sha256": "a8b1ebc0e3e64c56d9aad5e7b4b15ca111495885c2a9849dbc96721c203ab856",
+          "deadline": "2099-01-01T00:00:00+00:00",
+          "effective_config": {
+            "backfill": {
+              "end_quarter": "2015Q1",
+              "start_quarter": "2015Q1"
+            },
+            "config_version": "sec-acquisition-v1",
+            "coordination": {
+              "clock_uncertainty_seconds": 2.0,
+              "lease_seconds": 60.0,
+              "namespace": "sec-owner-lowell-mason",
+              "renew_every_seconds": 20.0
+            },
+            "daily": {
+              "start_date": "2026-10-01"
+            },
+            "etl": {
+              "parser_version": "fixture-envelope-v1",
+              "schema_version": "sec-index-v1"
+            },
+            "fixture": {
+              "allow_clock_override": true,
+              "allow_deadline_override": true
+            },
+            "http": {
+              "connect_timeout_seconds": 15.0,
+              "exchange_deadline_seconds": 90.0,
+              "max_attempts": 5,
+              "max_expanded_bytes": 536870912,
+              "max_received_bytes": 67108864,
+              "read_timeout_seconds": 60.0,
+              "retry_base_seconds": 2.0,
+              "retry_cap_seconds": 120.0
+            },
+            "jobs": {
+              "replica_retry_limit": 0
+            },
+            "orchestration": {
+              "transient_replays": 1
+            },
+            "reconciliation": {
+              "require_withdrawal_approval": true
+            },
+            "sec": {
+              "max_active_collectors": 1,
+              "requests_per_second": 3.0,
+              "user_agent": "Lowell Mason sec-edgar-ingest mason.lowell@mac.com"
+            },
+            "storage": {
+              "account_name": null,
+              "attempt_table": "Attempts",
+              "backend": "local-fixture",
+              "binding_registry_blob": "sec-owner-lowell-mason/binding.json",
+              "blob_api_version": "2026-04-06",
+              "blob_endpoint": null,
+              "lock_blob": "sec-owner-lowell-mason/sentinel.json",
+              "lock_container": "locks",
+              "quarantine_container": "quarantine",
+              "raw_container": "raw",
+              "root": ".fixture-state",
+              "source_table": "SourceState",
+              "table_api_version": "2020-12-06",
+              "table_endpoint": null,
+              "workset_container": "worksets"
+            },
+            "worker": {
+              "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "provenance": "synthetic-fixture"
+            }
+          },
+          "execution_id": "fixture-collect",
+          "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "parser_version": "fixture-envelope-v1",
+          "pinned_on": "2026-10-06",
+          "priority": "backfill",
+          "run_id": "fixture-run",
+          "schema_version": "sec-index-v1",
+          "started_at": "2026-10-06T23:05:21.086416+00:00"
+        },
+        "ended_at": "2026-10-06T23:05:21.669645+00:00",
+        "error": null,
+        "next_allowed_at": "2026-10-06T23:05:22.307684+00:00",
+        "ordinal": 1,
+        "outcome": "received",
+        "ownership_epoch": 4,
+        "permit": {
+          "deadline_mono": 2767275.620724041,
+          "epoch": 4,
+          "must_end_by": "2026-10-06T23:06:51.641016+00:00",
+          "must_start_before": "2026-10-06T23:05:21.974350+00:00",
+          "next_allowed_at": "2026-10-06T23:05:22.307684+00:00",
+          "owner_id": "fixture-collect:collect-1:13c91357be21463682125eb4ba546234",
+          "request_id": "c55bbe2bc3224c59a19e479a66c81151",
+          "start_before_mono": 2767185.9540573745,
+          "takeover_after": "2026-10-06T23:07:53.104525+00:00"
+        },
+        "permit_next_allowed_at": "2026-10-06T23:05:22.307684+00:00",
+        "prior_exhaustion": [],
+        "receipt": {
+          "byte_count": 261,
+          "complete": true,
+          "error": null,
+          "headers": {
+            "Content-Length": "261",
+            "Content-Type": "application/zip",
+            "ETag": "\"synthetic-Synthetic Fixture Co\"",
+            "X-Fixture": "synthetic"
+          },
+          "received_at": "2026-10-06T23:05:21.657796+00:00",
+          "sha256": "68b0e0e1c09010a02e45ac0d0adc2621f23d61a84448064d15d0cee9e5aab399",
+          "status": 200,
+          "temporary_path": "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-fixture-6oqnxtav/body-8ac142ad508c4818b775e86b35063f6b",
+          "url": "https://www.sec.gov/Archives/edgar/full-index/2015/QTR1/master.zip"
+        },
+        "request_id": "c55bbe2bc3224c59a19e479a66c81151",
+        "retry": {},
+        "source_id": "f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998",
+        "status": 200,
+        "url": "https://www.sec.gov/Archives/edgar/full-index/2015/QTR1/master.zip"
+      },
+      "version": "87afb8e1e5374d28a12b5cd444108007"
+    },
+    {
+      "value": {
+        "attempt_key": "1b080ca6601d3fae97848b25730611bcc2ef02da3d0c9018682f3b932fcbc3ec",
+        "begun_at": "2026-10-06T23:05:19.624936+00:00",
+        "byte_count": 175,
+        "context": {
+          "attempt_id": "discover-1",
+          "command": "discover",
+          "config_sha256": "a8b1ebc0e3e64c56d9aad5e7b4b15ca111495885c2a9849dbc96721c203ab856",
+          "deadline": "2099-01-01T00:00:00+00:00",
+          "effective_config": {
+            "backfill": {
+              "end_quarter": "2015Q1",
+              "start_quarter": "2015Q1"
+            },
+            "config_version": "sec-acquisition-v1",
+            "coordination": {
+              "clock_uncertainty_seconds": 2.0,
+              "lease_seconds": 60.0,
+              "namespace": "sec-owner-lowell-mason",
+              "renew_every_seconds": 20.0
+            },
+            "daily": {
+              "start_date": "2026-10-01"
+            },
+            "etl": {
+              "parser_version": "fixture-envelope-v1",
+              "schema_version": "sec-index-v1"
+            },
+            "fixture": {
+              "allow_clock_override": true,
+              "allow_deadline_override": true
+            },
+            "http": {
+              "connect_timeout_seconds": 15.0,
+              "exchange_deadline_seconds": 90.0,
+              "max_attempts": 5,
+              "max_expanded_bytes": 536870912,
+              "max_received_bytes": 67108864,
+              "read_timeout_seconds": 60.0,
+              "retry_base_seconds": 2.0,
+              "retry_cap_seconds": 120.0
+            },
+            "jobs": {
+              "replica_retry_limit": 0
+            },
+            "orchestration": {
+              "transient_replays": 1
+            },
+            "reconciliation": {
+              "require_withdrawal_approval": true
+            },
+            "sec": {
+              "max_active_collectors": 1,
+              "requests_per_second": 3.0,
+              "user_agent": "Lowell Mason sec-edgar-ingest mason.lowell@mac.com"
+            },
+            "storage": {
+              "account_name": null,
+              "attempt_table": "Attempts",
+              "backend": "local-fixture",
+              "binding_registry_blob": "sec-owner-lowell-mason/binding.json",
+              "blob_api_version": "2026-04-06",
+              "blob_endpoint": null,
+              "lock_blob": "sec-owner-lowell-mason/sentinel.json",
+              "lock_container": "locks",
+              "quarantine_container": "quarantine",
+              "raw_container": "raw",
+              "root": ".fixture-state",
+              "source_table": "SourceState",
+              "table_api_version": "2020-12-06",
+              "table_endpoint": null,
+              "workset_container": "worksets"
+            },
+            "worker": {
+              "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+              "provenance": "synthetic-fixture"
+            }
+          },
+          "execution_id": "fixture-discover",
+          "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "parser_version": "fixture-envelope-v1",
+          "pinned_on": "2026-10-06",
+          "priority": "backfill",
+          "run_id": "fixture-run",
+          "schema_version": "sec-index-v1",
+          "started_at": "2026-10-06T23:05:19.599229+00:00"
+        },
+        "ended_at": "2026-10-06T23:05:19.633832+00:00",
+        "error": null,
+        "next_allowed_at": "2026-10-06T23:05:20.288131+00:00",
+        "ordinal": 1,
+        "outcome": "received",
+        "ownership_epoch": 1,
+        "permit": {
+          "deadline_mono": 2767273.601178541,
+          "epoch": 1,
+          "must_end_by": "2026-10-06T23:06:49.621463+00:00",
+          "must_start_before": "2026-10-06T23:05:19.954797+00:00",
+          "next_allowed_at": "2026-10-06T23:05:20.288131+00:00",
+          "owner_id": "fixture-discover:discover-1:8a33c60725a045f1b20505d42b800c92",
+          "request_id": "6bf09396f0bc402588b753e2a3cead25",
+          "start_before_mono": 2767183.9345118743,
+          "takeover_after": "2026-10-06T23:07:51.614476+00:00"
+        },
+        "permit_next_allowed_at": "2026-10-06T23:05:20.288131+00:00",
+        "prior_exhaustion": [],
+        "receipt": {
+          "byte_count": 175,
+          "complete": true,
+          "error": null,
+          "headers": {
+            "Content-Type": "application/json",
+            "X-Fixture": "synthetic"
+          },
+          "received_at": "2026-10-06T23:05:19.627099+00:00",
+          "sha256": "2238e6e45c468be5a35d36546f7dfb5239c961e58316858113ee6e56025584ea",
+          "status": 200,
+          "temporary_path": "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-fixture-7b72yeil/body-8d21af0b2c034124a8861be2e26e9507",
+          "url": "https://www.sec.gov/Archives/edgar/full-index/index.json"
+        },
+        "request_id": "6bf09396f0bc402588b753e2a3cead25",
+        "retry": {},
+        "source_id": null,
+        "status": 200,
+        "url": "https://www.sec.gov/Archives/edgar/full-index/index.json"
+      },
+      "version": "7036f7181d014357bf6e5cea8c76832f"
+    }
+  ]
+}

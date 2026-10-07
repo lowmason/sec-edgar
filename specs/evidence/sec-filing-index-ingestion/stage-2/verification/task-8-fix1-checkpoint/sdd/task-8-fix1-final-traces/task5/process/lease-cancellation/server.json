@@ -1,0 +1,56 @@
+{
+  "events": [
+    {
+      "event": "socket-accepted",
+      "monotonic": 2762041.0285005
+    },
+    {
+      "event": "request-received",
+      "monotonic": 2762041.028541875
+    },
+    {
+      "event": "headers-sent",
+      "monotonic": 2762041.028572875
+    },
+    {
+      "byte_count": 6,
+      "event": "entity-sent",
+      "monotonic": 2762041.028589625
+    },
+    {
+      "byte_count": 12,
+      "event": "entity-sent",
+      "monotonic": 2762041.0536605
+    },
+    {
+      "event": "socket-closed",
+      "monotonic": 2762041.078738333
+    }
+  ],
+  "extra": {
+    "receipt": {
+      "byte_count": 12,
+      "complete": false,
+      "error": {
+        "code": "cancelled",
+        "details": {},
+        "message": "HTTP child was drained after cancelled",
+        "retryable": false,
+        "source_id": null
+      },
+      "headers": {
+        "Connection": "close",
+        "Content-Length": "1000000"
+      },
+      "received_at": "2026-10-06T21:39:37.065001+00:00",
+      "sha256": "f16f5229bf40154f38c5dc89e273a0aa14100e81dd370cc7090a72c97a60623c",
+      "status": 200,
+      "temporary_path": "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/tmpkax_kdkv/sender/body",
+      "url": "http://127.0.0.1:50029/fixture"
+    }
+  },
+  "requests": [
+    "GET /fixture HTTP/1.1\r\nHost: 127.0.0.1:50029\r\nUser-Agent: Lowell Mason sec-edgar-ingest mason.lowell@mac.com\r\nAccept-Encoding: identity\r\nAccept: */*\r\nConnection: keep-alive\r\n\r\n"
+  ],
+  "sent_bytes": 12
+}

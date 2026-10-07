@@ -1,0 +1,9 @@
+common settings backfill.end_quarter: 2015Q1
+actual pin_context endpoint: 2015Q1
+actual source kind/period: daily 2026-10-01
+attempting daily workset with exact existing pin:
+ValueError: source member is after the pinned endpoint
+Reproduced: exact pinned endpoint rejects required daily 2026 member.
+attempting daily workset with an invented 2026Q4 endpoint:
+ValueError: workset endpoint differs from its exact pinned configuration/date resolution
+Reproduced: overriding endpoint without approved config change is also rejected.

@@ -1,0 +1,1842 @@
+{
+  "above_entity_logical_utf8_bytes": 1200011,
+  "entities": [
+    {
+      "conservative_entity_bound_bytes": 1456,
+      "entity": {
+        "PartitionKey": "sec-owner-lowell-mason:Attempt",
+        "PayloadByteCount": 1200128,
+        "PayloadFormat": "sec-state-blob-v1",
+        "PayloadSha256": "8b3b3302c5692efa3eac6f8ee7b8295ada6219837c3580ebe618bf74d9fcf0e3",
+        "RowKey": "overflow-attempt",
+        "StableKey": "overflow-attempt"
+      },
+      "etag": "W/\"service-5\"",
+      "key": "overflow-attempt",
+      "partition": "sec-owner-lowell-mason:Attempt",
+      "property_name_and_value_bytes": 432,
+      "string_utf16_bytes": {
+        "PartitionKey": 60,
+        "PayloadFormat": 34,
+        "PayloadSha256": 128,
+        "RowKey": 32,
+        "StableKey": 32
+      },
+      "table": "Attempts"
+    },
+    {
+      "conservative_entity_bound_bytes": 1432,
+      "entity": {
+        "PartitionKey": "sec-owner-lowell-mason:DiscoveryBoundary",
+        "PayloadByteCount": 41142,
+        "PayloadFormat": "sec-state-blob-v1",
+        "PayloadSha256": "9754a0a34d0720e87b8fa36a1b902d4a72a9426cad5184102e6b0fd7cb36fe47",
+        "RowKey": "daily",
+        "StableKey": "daily"
+      },
+      "etag": "W/\"service-4\"",
+      "key": "daily",
+      "partition": "sec-owner-lowell-mason:DiscoveryBoundary",
+      "property_name_and_value_bytes": 408,
+      "string_utf16_bytes": {
+        "PartitionKey": 80,
+        "PayloadFormat": 34,
+        "PayloadSha256": 128,
+        "RowKey": 10,
+        "StableKey": 10
+      },
+      "table": "SourceState"
+    },
+    {
+      "conservative_entity_bound_bytes": 24786,
+      "entity": {
+        "PartitionKey": "sec-owner-lowell-mason:DiscoverySession",
+        "Payload": "{\"discovery_id\":\"intended-history\",\"frozen\":{\"acquisition_mode\":\"reuse_accepted\",\"context\":{\"attempt_id\":\"fixture-attempt\",\"command\":\"discover\",\"config_sha256\":\"613fee0b522399aae712041139baed987e7fcd0d8e19984908f06d31f919ada0\",\"deadline\":\"2026-10-06T01:00:00+00:00\",\"effective_config\":{\"backfill\":{\"end_quarter\":\"open\",\"start_quarter\":\"2010Q1\"},\"config_version\":\"sec-acquisition-v1\",\"coordination\":{\"clock_uncertainty_seconds\":2.0,\"lease_seconds\":60.0,\"namespace\":\"sec-owner-lowell-mason\",\"renew_every_seconds\":20.0},\"daily\":{\"start_date\":\"2026-10-01\"},\"etl\":{\"parser_version\":\"fixture-envelope-v1\",\"schema_version\":\"sec-index-v1\"},\"fixture\":null,\"http\":{\"connect_timeout_seconds\":15.0,\"exchange_deadline_seconds\":90.0,\"max_attempts\":5,\"max_expanded_bytes\":536870912,\"max_received_bytes\":67108864,\"read_timeout_seconds\":60.0,\"retry_base_seconds\":2.0,\"retry_cap_seconds\":120.0},\"jobs\":{\"replica_retry_limit\":0},\"orchestration\":{\"transient_replays\":1},\"reconciliation\":{\"require_withdrawal_approval\":true},\"sec\":{\"max_active_collectors\":1,\"requests_per_second\":3.0,\"user_agent\":\"Lowell Mason sec-edgar-ingest mason.lowell@mac.com\"},\"storage\":{\"account_name\":null,\"attempt_table\":\"Attempts\",\"backend\":\"local-fixture\",\"binding_registry_blob\":\"sec-owner-lowell-mason/binding.json\",\"blob_api_version\":\"2026-04-06\",\"blob_endpoint\":null,\"lock_blob\":\"sec-owner-lowell-mason/sentinel.json\",\"lock_container\":\"locks\",\"quarantine_container\":\"quarantine\",\"raw_container\":\"raw\",\"root\":\".fixture-state\",\"source_table\":\"SourceState\",\"table_api_version\":\"2020-12-06\",\"table_endpoint\":null,\"workset_container\":\"worksets\"},\"worker\":{\"image_digest\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"provenance\":\"synthetic-fixture\"}},\"execution_id\":\"fixture-execution\",\"image_digest\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"parser_version\":\"fixture-envelope-v1\",\"pinned_on\":\"2026-10-06\",\"priority\":\"backfill\",\"run_id\":\"fixture-run\",\"schema_version\":\"sec-index-v1\",\"started_at\":\"2026-10-06T00:00:00+00:00\"},\"mode\":\"quarterly\",\"overlap_from\":\"2010-01-01\",\"today\":\"2026-10-06\",\"units\":[{\"period\":\"2010Q1\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2010/QTR1/index.json\"},{\"period\":\"2010Q2\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2010/QTR2/index.json\"},{\"period\":\"2010Q3\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2010/QTR3/index.json\"},{\"period\":\"2010Q4\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2010/QTR4/index.json\"},{\"period\":\"2010\",\"role\":\"year\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2010/index.json\"},{\"period\":\"2011Q1\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2011/QTR1/index.json\"},{\"period\":\"2011Q2\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2011/QTR2/index.json\"},{\"period\":\"2011Q3\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2011/QTR3/index.json\"},{\"period\":\"2011Q4\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2011/QTR4/index.json\"},{\"period\":\"2011\",\"role\":\"year\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2011/index.json\"},{\"period\":\"2012Q1\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2012/QTR1/index.json\"},{\"period\":\"2012Q2\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2012/QTR2/index.json\"},{\"period\":\"2012Q3\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2012/QTR3/index.json\"},{\"period\":\"2012Q4\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2012/QTR4/index.json\"},{\"period\":\"2012\",\"role\":\"year\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2012/index.json\"},{\"period\":\"2013Q1\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2013/QTR1/index.json\"},{\"period\":\"2013Q2\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2013/QTR2/index.json\"},{\"period\":\"2013Q3\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2013/QTR3/index.json\"},{\"period\":\"2013Q4\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2013/QTR4/index.json\"},{\"period\":\"2013\",\"role\":\"year\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2013/index.json\"},{\"period\":\"2014Q1\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2014/QTR1/index.json\"},{\"period\":\"2014Q2\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2014/QTR2/index.json\"},{\"period\":\"2014Q3\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2014/QTR3/index.json\"},{\"period\":\"2014Q4\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2014/QTR4/index.json\"},{\"period\":\"2014\",\"role\":\"year\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2014/index.json\"},{\"period\":\"2015Q1\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2015/QTR1/index.json\"},{\"period\":\"2015Q2\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2015/QTR2/index.json\"},{\"period\":\"2015Q3\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2015/QTR3/index.json\"},{\"period\":\"2015Q4\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2015/QTR4/index.json\"},{\"period\":\"2015\",\"role\":\"year\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2015/index.json\"},{\"period\":\"2016Q1\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2016/QTR1/index.json\"},{\"period\":\"2016Q2\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2016/QTR2/index.json\"},{\"period\":\"2016Q3\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2016/QTR3/index.json\"},{\"period\":\"2016Q4\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2016/QTR4/index.json\"},{\"period\":\"2016\",\"role\":\"year\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2016/index.json\"},{\"period\":\"2017Q1\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2017/QTR1/index.json\"},{\"period\":\"2017Q2\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2017/QTR2/index.json\"},{\"period\":\"2017Q3\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2017/QTR3/index.json\"},{\"period\":\"2017Q4\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2017/QTR4/index.json\"},{\"period\":\"2017\",\"role\":\"year\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2017/index.json\"},{\"period\":\"2018Q1\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2018/QTR1/index.json\"},{\"period\":\"2018Q2\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2018/QTR2/index.json\"},{\"period\":\"2018Q3\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2018/QTR3/index.json\"},{\"period\":\"2018Q4\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2018/QTR4/index.json\"},{\"period\":\"2018\",\"role\":\"year\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2018/index.json\"},{\"period\":\"2019Q1\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2019/QTR1/index.json\"},{\"period\":\"2019Q2\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2019/QTR2/index.json\"},{\"period\":\"2019Q3\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2019/QTR3/index.json\"},{\"period\":\"2019Q4\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2019/QTR4/index.json\"},{\"period\":\"2019\",\"role\":\"year\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2019/index.json\"},{\"period\":\"2020Q1\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2020/QTR1/index.json\"},{\"period\":\"2020Q2\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2020/QTR2/index.json\"},{\"period\":\"2020Q3\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2020/QTR3/index.json\"},{\"period\":\"2020Q4\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2020/QTR4/index.json\"},{\"period\":\"2020\",\"role\":\"year\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2020/index.json\"},{\"period\":\"2021Q1\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2021/QTR1/index.json\"},{\"period\":\"2021Q2\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2021/QTR2/index.json\"},{\"period\":\"2021Q3\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2021/QTR3/index.json\"},{\"period\":\"2021Q4\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2021/QTR4/index.json\"},{\"period\":\"2021\",\"role\":\"year\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2021/index.json\"},{\"period\":\"2022Q1\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2022/QTR1/index.json\"},{\"period\":\"2022Q2\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2022/QTR2/index.json\"},{\"period\":\"2022Q3\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2022/QTR3/index.json\"},{\"period\":\"2022Q4\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2022/QTR4/index.json\"},{\"period\":\"2022\",\"role\":\"year\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2022/index.json\"},{\"period\":\"2023Q1\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2023/QTR1/index.json\"},{\"period\":\"2023Q2\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2023/QTR2/index.json\"},{\"period\":\"2023Q3\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2023/QTR3/index.json\"},{\"period\":\"2023Q4\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2023/QTR4/index.json\"},{\"period\":\"2023\",\"role\":\"year\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2023/index.json\"},{\"period\":\"2024Q1\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2024/QTR1/index.json\"},{\"period\":\"2024Q2\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2024/QTR2/index.json\"},{\"period\":\"2024Q3\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2024/QTR3/index.json\"},{\"period\":\"2024Q4\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2024/QTR4/index.json\"},{\"period\":\"2024\",\"role\":\"year\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2024/index.json\"},{\"period\":\"2025Q1\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2025/QTR1/index.json\"},{\"period\":\"2025Q2\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2025/QTR2/index.json\"},{\"period\":\"2025Q3\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2025/QTR3/index.json\"},{\"period\":\"2025Q4\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2025/QTR4/index.json\"},{\"period\":\"2025\",\"role\":\"year\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2025/index.json\"},{\"period\":\"2026Q1\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2026/QTR1/index.json\"},{\"period\":\"2026Q2\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2026/QTR2/index.json\"},{\"period\":\"2026Q3\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2026/QTR3/index.json\"},{\"period\":\"2026Q4\",\"role\":\"quarter\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2026/QTR4/index.json\"},{\"period\":\"2026\",\"role\":\"year\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/2026/index.json\"},{\"bridge_period\":\"2026Q4\",\"period\":\"full-index\",\"role\":\"root\",\"url\":\"https://www.sec.gov/Archives/edgar/full-index/index.json\"}]},\"history\":[],\"predecessor_workset_id\":null,\"registered\":true,\"workset_id\":null}",
+        "RowKey": "a2e19d382987bce2d2c7bf8ceee56f8b2d2f83865e59bf08e6dff4a4f5b33575",
+        "StableKey": "a2e19d382987bce2d2c7bf8ceee56f8b2d2f83865e59bf08e6dff4a4f5b33575"
+      },
+      "etag": "W/\"service-3\"",
+      "key": "a2e19d382987bce2d2c7bf8ceee56f8b2d2f83865e59bf08e6dff4a4f5b33575",
+      "partition": "sec-owner-lowell-mason:DiscoverySession",
+      "property_name_and_value_bytes": 23762,
+      "string_utf16_bytes": {
+        "PartitionKey": 78,
+        "Payload": 23360,
+        "RowKey": 128,
+        "StableKey": 128
+      },
+      "table": "SourceState"
+    }
+  ],
+  "immutable_contents": [
+    {
+      "bytes": 930,
+      "path": "/locks/sec-owner-lowell-mason/binding.json",
+      "retained_bytes_file": "content-00.json",
+      "sha256": "282e7eee2d1e9a05e0e52dd03103873e8fdbf992fc13381009807f42f3a9555e"
+    },
+    {
+      "bytes": 41627,
+      "path": "/worksets/state/sha256=19e7d327bc004c07a845b3472bf05e2c336b7b27cfefb31030793ae7d7d7d8dc.json",
+      "retained_bytes_file": "content-01.json",
+      "sha256": "19e7d327bc004c07a845b3472bf05e2c336b7b27cfefb31030793ae7d7d7d8dc"
+    },
+    {
+      "bytes": 1200128,
+      "path": "/worksets/state/sha256=8b3b3302c5692efa3eac6f8ee7b8295ada6219837c3580ebe618bf74d9fcf0e3.json",
+      "retained_bytes_file": "content-02.json",
+      "sha256": "8b3b3302c5692efa3eac6f8ee7b8295ada6219837c3580ebe618bf74d9fcf0e3"
+    },
+    {
+      "bytes": 41142,
+      "path": "/worksets/state/sha256=9754a0a34d0720e87b8fa36a1b902d4a72a9426cad5184102e6b0fd7cb36fe47.json",
+      "retained_bytes_file": "content-03.json",
+      "sha256": "9754a0a34d0720e87b8fa36a1b902d4a72a9426cad5184102e6b0fd7cb36fe47"
+    },
+    {
+      "bytes": 41655,
+      "path": "/worksets/state/sha256=ac5c8c96cc6d906b05c8dd9be9d727f97930763a4d1ed8217e5c9eccfe65941e.json",
+      "retained_bytes_file": "content-04.json",
+      "sha256": "ac5c8c96cc6d906b05c8dd9be9d727f97930763a4d1ed8217e5c9eccfe65941e"
+    }
+  ],
+  "inventory_units": 86,
+  "kind": "offline scripted actual SDK wire/layout",
+  "live_storage_access": false,
+  "losing_candidate_immutable_path": "/worksets/state/sha256=ac5c8c96cc6d906b05c8dd9be9d727f97930763a4d1ed8217e5c9eccfe65941e.json",
+  "losing_candidate_referenced_by_winner": false,
+  "losing_candidate_sha256": "ac5c8c96cc6d906b05c8dd9be9d727f97930763a4d1ed8217e5c9eccfe65941e",
+  "original_etag": "W/\"service-2\"",
+  "original_logical_utf16_bytes": 83022,
+  "original_logical_utf8_bytes": 41511,
+  "requests": [
+    {
+      "body_bytes": 930,
+      "body_sha256": "282e7eee2d1e9a05e0e52dd03103873e8fdbf992fc13381009807f42f3a9555e",
+      "headers": {
+        "Accept": "application/xml",
+        "Content-Length": "930",
+        "Content-Type": "application/octet-stream",
+        "If-None-Match": "*",
+        "User-Agent": "azsdk-python-storage-blob/12.31.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-blob-type": "BlockBlob",
+        "x-ms-client-request-id": "3facf5a0-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2026-04-06"
+      },
+      "method": "PUT",
+      "url": "https://secedgardevb8617.blob.core.windows.net/locks/sec-owner-lowell-mason/binding.json"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fadf7e8-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState()?$top=128&$filter=PartitionKey%20eq%20%27sec-owner-lowell-mason%3ASource%27&sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fae05bc-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADiscoveryBoundary',RowKey='daily')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 13334,
+      "body_sha256": "7e95786706c3ca133f4eaa8f844dfaa6787f95ec058ca966a151811d6d64ffeb",
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "Content-Length": "13334",
+        "Content-Type": "application/json;odata=nometadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fae1eee-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "POST",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fae42b6-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADiscoveryBoundary',RowKey='daily')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fae4842-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='59149b44f1f3d14890fedbf4c6e921146cfabe643dc4ffb24e2b4d9e52e99a57')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fae5436-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='d1f661f91745d9bde46e5788591174ebc9a3bd9d3b0ac23d4eb6c83ec99be41e')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fae6246-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='cc9747582032b36863c285a49902dd8c47ea3730edc19e8975fe28ceffc4c5b6')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fae6c64-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='e74b2219d81195927e35ed89af29f8903553c25a7ed3aedfb394c4dea451448f')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fae759c-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='df3be47731ecfb1fe3343d0c9adb0b436cf9c2d016e7231af7951f88c9598620')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fae7f56-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='3fd928d60e6a64688a55d60569607a6d8d755ecfb6988949ab843786ba6e2e5a')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fae887a-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='8e21183bfad174b31d2863b4139029d4024bae55f2f00d64e7089d6cba1e6e1b')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fae90d6-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='13ccb42fe574f9b5212680357acbde28fe0eee5e2f56e65ff3964d98430af72d')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fae99f0-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='7af9edc7143795512895cfbda1a2e801074f7d75922206f1bb4800ba91761015')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3faea33c-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='1735f77478b990bc1339c1369bd2dcdb18e61f28b4c117c76b7077e44167b44b')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3faeac4c-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='7e99d63f620ddb7b479393a403879aa1b185d02dc86bc49dcbf53242db103a27')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3faeb57a-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='b26a5ac1f2dd20d71c7adaede6e1ed3a9bf19f218070cdcdc923e93b2e06ac3a')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3faebe4e-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='eb976cc2bde366a54e8e9393da842ff697808707578031040cbbb2aa4aefd957')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3faec77c-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='4cb0e18cce8d8a30aed3af841f7c8e34a80db597982b321efb522abff8658609')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3faed136-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='1fe3b2dad8e79258b6626b7f483e77224303f3527fad39a442249d809032c101')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3faeda82-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='ed7b5c66474508fb7ea1d37a57f7f6ca38bbcd7574114cb89c68299c1f717ce9')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3faee32e-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='c953a7f1075a7387534a3186a07e8bb9435be9b6d652931bd0e4bb80270c0b2b')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3faeec02-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='e1aa56723273abe8a3e7a75a0aab80759535e043fdf02d60b7c0de78fb7cac6a')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3faef53a-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='27736f3bc6d4f864ff642ae87db9c4df9bb550cdd4d4333e58b78be846255c5f')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3faefda0-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='a0d9b75057b2ebf0125fda2b967324e718ad435a7565fb270b940ef6890483c6')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3faf05d4-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='1d21c24782a5ec94c078471014f0e13fa084c5a8676440ab37dbbcaf76b82f66')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3faf0df4-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='11325ce51b7324ac9b4118224259a7f8557b8caaddec2f8cf5070061d6ced06b')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3faf16be-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='2f3dfa5778125ecc3b3310b760b088e177e18b42b821222da9d360c23fe4bff7')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3faf1fba-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='bca3e9a97bc7b949a6fac8b0a30645f8c34f7cccf7b9d55cc3914fd45cac02fc')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3faf2820-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='5707dcb1138364a3b580ca7730e9e4cbc9d42935c5f3e8bce6f258707ab0e480')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3faf3130-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='7d39ea11ac35436928d993b1181924467f0be853a3ad605dbf13c9933a4a9b2f')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3faf396e-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='b6d5dd04e65d3c698f27bc3457f740faa3f7754043070f10bcf9713a69024b05')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3faf4274-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='db3255519f442e0182e0e8d8a9da97e59667e3ffdd98023c24688067f18a75da')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3faf4b0c-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='1320c58aee2ab948c86ace257473734ef7c71a760620228f25b127284cbcbb09')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3faf53ea-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='579efb2502d855984566e42a6de7e97d5360741eb9007258168bf6e16c7d0fc2')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3faf5cf0-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='d724b5c6eabc396767dc4fea17e1fa515cff96f0c2dafd6f704831a5303be327')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3faf65a6-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='ebb0a1c84da6a4055ff4e6e2168b163b82ae95179ef4bd54de2cac959ba28877')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3faf6e98-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='c33fd253669861f129f37065877e500b281d319f90025550be20300443ae9cba')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3faf7dca-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='2e1d5aa674c9a8a5d4a5f7c6a4652086fe2d5319fd001fd8204a30cd58c42002')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3faf85f4-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='949aa4cea23cfc406dde647de65cdcb9723811530aad07b251bb324bbfad1617')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3faf8f40-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='16aba75a92f85a614dd2e4fc29115a71bb43963906f788b84b8920d913432def')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3faf9828-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='b8026e8c4b9f6f1d9b234c00935424e590f5280eac50dba125f61305708a7301')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fafa0f2-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='18ce9ce45c689bdf7c8d5e86e29aa75e0f7bf0d77263a8ce34652cbb35484642')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fafa9ee-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='224e3967f0d410163abd0d2cd8ae3a89dafdecf53449074b5a40383c06748827')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fafb312-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='7a229aab5bfb62b3d50857aa0b224164f4a18f697d3ca8a8ee2f6177fa7361c7')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fafbc5e-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='99bd23fbe31488589a0c76adbaa7138123dec8ea428b2995b429a762e2c7801b')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fafc5b4-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='0255f1132bfff1df2ccd44d6da8ce3458eb02119a0b6d58209c6cbe52eafb542')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fafcef6-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='c2ca591121d5df480e7552265dfbf5a57f3edbdfdbc96d1d033a4811600b0452')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fafd7a2-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='93a724ddfbd69f26c311ab9fcf4b98e7fa607412b62d0c9fa34e1ae2c9ea45f3')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fafdfcc-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='5fb0c415bef14e90e9652778d56d461dc7f74cddc2d1a6b0b71276e5b1acd241')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fafe8c8-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='bb3e6db08eb6961d0d33e29f4fea48274709ba8a057d24a296a058ba7fedbf88')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3faff1c4-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='d35be10b878bbd65db2ccb5a274e770f7bc221cc8f6a3fae9fb1bc2861f124e9')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3faffb06-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='ffa1353c479a1d0852bdbe13b9a5c827e3fd58b2fba193dbd3d69f0d36bc6a9f')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb00470-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='99341daaa4bfe891c52086ff4f1749abfe62bf8695240cde6e451a56c10d7a27')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb00d9e-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='05a8c75556eb8bb3f127be1c39ae691de37f0932ccc88b52b61a9aaacd6c4683')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb016ae-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='1b232900d9f69b73f378e5c7e7d3681083473e8cb267190d235a468ba007b39e')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb01fc8-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='e36dbdf41b294211b55baaad245f2af0fab607be1492e882c9f441dc5c2a5cf9')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb028ba-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='ac247eecf4852e6328ba6ef4fdc0555e03a55964130128f4597a774c24b264fe')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb031c0-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='bd912ecb002cdbabed37101fec9ddcf149291ce6d038a8b5b077919b48aaa9f2')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb03af8-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='7098febca6b64f9a31ed54a0b64fc38cb1704efbbf20140d6c17dc1f27e8a949')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb04408-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='e986bacb622e793db7d8252cfb25d830bab0b7dfa6a358ef704efc11043194d5')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb04d22-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='796ff39035875b8ea921a4107e63368ec62803079568c6dc7d9e761d13eb7e35')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb05614-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='238b94d31a287a567e054cb3b035e0573b2e6e4baeeebe06dc44797315de3dec')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb05f10-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='61d777b4c877c2731fde97ffb981b5810d3df96c1b987dc5390920a0c58695c4')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb0680c-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='25ddebc1eb86d482c153f9fab0fb6f9d335fd1674c165ad56985b6e3d30976bd')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb070cc-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='494fbaa8d061f7504051fd453a35b86da942b220da65e907899b1353dfec45a6')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb07a2c-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='203d03e37f509a3e1c169a5e1252736312d4aa67212daa2fb2c764f4dc49d579')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb0833c-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='d27334fd980211a48f10f6ec68ce82db35c436f8725629574639e1fbe0a09f74')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb08c74-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='63e1a21b7560657774159f6d2756b21258e3a8ebb0c28bfb2b5650233d64669d')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb0955c-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='0795450559dc3484f3b93b6e72c853a6183b0ab6d35f851771570bc51751dd9c')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb09e76-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='5fe25468a1585c4849ec503a7bd46df1363ea1dc864625e0c91f30169c5b37ab')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb0af06-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='93d5b1452ebc4c44cd65fad1403180586e6ac864c833acbb4acd99cb3bc5fcc2')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb0b8ac-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='96edf2984c0505a705dc569255d30c58f3e24926feae851814c13c68795f8e08')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb0c1d0-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='be3b37c3457bce64a7262a181f24174f2c582fb71abe55d4716cc081aba8ecf0')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb0cacc-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='230c6e01d0bae0af5207adf56e79e12bd34d419562cc3fd6c12d4082140d82f5')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb0d3dc-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='3d6601ce44922647d4dd2b88e088e6d1210fb1fea3844c4739414140891b79ed')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb0dd50-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='4429bc0eead84c7b416092fc51f49d3d5358b837ff09bbfaba5bb0b39ee03d21')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb0e692-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='93aa1867346c2bbf1a44e829169f733b178e3e5f49792a27ed37df30da569e9e')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb0ef48-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='20ad88d1c3847552f4be61a8724c41d87aa088c3a348ba0ac95b2757fbb6eeb0')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb0f84e-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='adb76cbc1a216e7d45a2f1cc375f00c87a43bea6a2ca96d0ca50e22edbec1a78')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb10154-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='7b7bdd1e7c6be6542a51beea4534342b82ac507be0902adf61777281150e92d3')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb10a82-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='3166567f7a810f7bcf9300a50fbba4094bb5bf3755567afda9b6acc9ed106057')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb113b0-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='268fb6df6fcbf561a88fbc1190ed5057a2c55959d70dd1d698f83bb1a82596ac')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb11c34-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='b507e82f6ae142d372349293795d2b5ff29ed58a320e2be6e2fac22fb33bb18c')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb124cc-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='3ebf90ab13b113b14574225f459565a159d116935844c58e2944da2c278fe839')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb12df0-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='831ab3b0af77ef0901cec589a0d358e528cbb4119201ead9b4cb1ca79b7891d1')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb1369c-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='23a8e9b06309866f86bc3593de6ca6fbd32ce6a3db7b52f8811fdebaaaef95a2')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb13fd4-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='65b208bcea5a102a289ddf6389ccdb5ce831798380acc4563e5373767c618539')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb148b2-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='72119b065f79e7423f91dcbfd59c3eea9fdbe1a01fdb3461ee64c685d5bd7777')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb151fe-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='9d3f3e459123ab97492e082a5a0214f6fe7ef9672c241663244e429da3cc8fda')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb15adc-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADirectoryProgress',RowKey='60fdf9cea5a3abe79c93d6cf4360e77dd936607341239c1ed1435bbcc3c7e6d6')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 41627,
+      "body_sha256": "19e7d327bc004c07a845b3472bf05e2c336b7b27cfefb31030793ae7d7d7d8dc",
+      "headers": {
+        "Accept": "application/xml",
+        "Content-Length": "41627",
+        "Content-Type": "application/octet-stream",
+        "If-None-Match": "*",
+        "User-Agent": "azsdk-python-storage-blob/12.31.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-blob-type": "BlockBlob",
+        "x-ms-client-request-id": "3fb1948e-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2026-04-06"
+      },
+      "method": "PUT",
+      "url": "https://secedgardevb8617.blob.core.windows.net/worksets/state/sha256%3D19e7d327bc004c07a845b3472bf05e2c336b7b27cfefb31030793ae7d7d7d8dc.json"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/xml",
+        "User-Agent": "azsdk-python-storage-blob/12.31.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb19d12-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-range": "bytes=0-33554431",
+        "x-ms-version": "2026-04-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.blob.core.windows.net/worksets/state/sha256%3D19e7d327bc004c07a845b3472bf05e2c336b7b27cfefb31030793ae7d7d7d8dc.json"
+    },
+    {
+      "body_bytes": 449,
+      "body_sha256": "6f731070ea3487df630c0880bcd8a480c62ede4eae10c2a6b3fde09729ae7b8d",
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "Content-Length": "449",
+        "Content-Type": "application/json;odata=nometadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb1a64a-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "POST",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/xml",
+        "User-Agent": "azsdk-python-storage-blob/12.31.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb1adfc-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-range": "bytes=0-33554431",
+        "x-ms-version": "2026-04-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.blob.core.windows.net/worksets/state/sha256%3D19e7d327bc004c07a845b3472bf05e2c336b7b27cfefb31030793ae7d7d7d8dc.json"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb1f2bc-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADiscoverySession',RowKey='a2e19d382987bce2d2c7bf8ceee56f8b2d2f83865e59bf08e6dff4a4f5b33575')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 13333,
+      "body_sha256": "72463b008f97d3948cb42d98c8c65f5ed1d9d0f690de6103f9b6198b20f2067f",
+      "headers": {
+        "Accept": "application/json",
+        "Content-Length": "13333",
+        "Content-Type": "application/json",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "If-Match": "W/\"service-1\"",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb21224-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "PUT",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADiscoverySession',RowKey='a2e19d382987bce2d2c7bf8ceee56f8b2d2f83865e59bf08e6dff4a4f5b33575')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb2261a-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADiscoveryBoundary',RowKey='daily')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/xml",
+        "User-Agent": "azsdk-python-storage-blob/12.31.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb22e08-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-range": "bytes=0-33554431",
+        "x-ms-version": "2026-04-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.blob.core.windows.net/worksets/state/sha256%3D19e7d327bc004c07a845b3472bf05e2c336b7b27cfefb31030793ae7d7d7d8dc.json"
+    },
+    {
+      "body_bytes": 41142,
+      "body_sha256": "9754a0a34d0720e87b8fa36a1b902d4a72a9426cad5184102e6b0fd7cb36fe47",
+      "headers": {
+        "Accept": "application/xml",
+        "Content-Length": "41142",
+        "Content-Type": "application/octet-stream",
+        "If-None-Match": "*",
+        "User-Agent": "azsdk-python-storage-blob/12.31.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-blob-type": "BlockBlob",
+        "x-ms-client-request-id": "3fb2c62e-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2026-04-06"
+      },
+      "method": "PUT",
+      "url": "https://secedgardevb8617.blob.core.windows.net/worksets/state/sha256%3D9754a0a34d0720e87b8fa36a1b902d4a72a9426cad5184102e6b0fd7cb36fe47.json"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/xml",
+        "User-Agent": "azsdk-python-storage-blob/12.31.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb2ce1c-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-range": "bytes=0-33554431",
+        "x-ms-version": "2026-04-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.blob.core.windows.net/worksets/state/sha256%3D9754a0a34d0720e87b8fa36a1b902d4a72a9426cad5184102e6b0fd7cb36fe47.json"
+    },
+    {
+      "body_bytes": 449,
+      "body_sha256": "118808f56352ba4ba0025ff9aed6ddfe005c3c73a782dcb4510e68d89af28891",
+      "headers": {
+        "Accept": "application/json",
+        "Content-Length": "449",
+        "Content-Type": "application/json",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "If-Match": "W/\"service-2\"",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb2d6dc-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "PUT",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADiscoveryBoundary',RowKey='daily')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/xml",
+        "User-Agent": "azsdk-python-storage-blob/12.31.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb2de0c-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-range": "bytes=0-33554431",
+        "x-ms-version": "2026-04-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.blob.core.windows.net/worksets/state/sha256%3D9754a0a34d0720e87b8fa36a1b902d4a72a9426cad5184102e6b0fd7cb36fe47.json"
+    },
+    {
+      "body_bytes": 41655,
+      "body_sha256": "ac5c8c96cc6d906b05c8dd9be9d727f97930763a4d1ed8217e5c9eccfe65941e",
+      "headers": {
+        "Accept": "application/xml",
+        "Content-Length": "41655",
+        "Content-Type": "application/octet-stream",
+        "If-None-Match": "*",
+        "User-Agent": "azsdk-python-storage-blob/12.31.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-blob-type": "BlockBlob",
+        "x-ms-client-request-id": "3fb352a6-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2026-04-06"
+      },
+      "method": "PUT",
+      "url": "https://secedgardevb8617.blob.core.windows.net/worksets/state/sha256%3Dac5c8c96cc6d906b05c8dd9be9d727f97930763a4d1ed8217e5c9eccfe65941e.json"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/xml",
+        "User-Agent": "azsdk-python-storage-blob/12.31.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb35954-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-range": "bytes=0-33554431",
+        "x-ms-version": "2026-04-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.blob.core.windows.net/worksets/state/sha256%3Dac5c8c96cc6d906b05c8dd9be9d727f97930763a4d1ed8217e5c9eccfe65941e.json"
+    },
+    {
+      "body_bytes": 449,
+      "body_sha256": "44e11fc28703d964534585036951eb4d12958a91ee5c99b7f83e0f87f7cb6ac7",
+      "headers": {
+        "Accept": "application/json",
+        "Content-Length": "449",
+        "Content-Type": "application/json",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "If-Match": "W/\"service-2\"",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb360c0-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "PUT",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADiscoveryBoundary',RowKey='daily')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb365f2-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/SourceState(PartitionKey='sec-owner-lowell-mason%3ADiscoveryBoundary',RowKey='daily')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/xml",
+        "User-Agent": "azsdk-python-storage-blob/12.31.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb36c96-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-range": "bytes=0-33554431",
+        "x-ms-version": "2026-04-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.blob.core.windows.net/worksets/state/sha256%3D9754a0a34d0720e87b8fa36a1b902d4a72a9426cad5184102e6b0fd7cb36fe47.json"
+    },
+    {
+      "body_bytes": 1200128,
+      "body_sha256": "8b3b3302c5692efa3eac6f8ee7b8295ada6219837c3580ebe618bf74d9fcf0e3",
+      "headers": {
+        "Accept": "application/xml",
+        "Content-Length": "1200128",
+        "Content-Type": "application/octet-stream",
+        "If-None-Match": "*",
+        "User-Agent": "azsdk-python-storage-blob/12.31.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-blob-type": "BlockBlob",
+        "x-ms-client-request-id": "3fb46420-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2026-04-06"
+      },
+      "method": "PUT",
+      "url": "https://secedgardevb8617.blob.core.windows.net/worksets/state/sha256%3D8b3b3302c5692efa3eac6f8ee7b8295ada6219837c3580ebe618bf74d9fcf0e3.json"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/xml",
+        "User-Agent": "azsdk-python-storage-blob/12.31.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb46a06-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-range": "bytes=0-33554431",
+        "x-ms-version": "2026-04-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.blob.core.windows.net/worksets/state/sha256%3D8b3b3302c5692efa3eac6f8ee7b8295ada6219837c3580ebe618bf74d9fcf0e3.json"
+    },
+    {
+      "body_bytes": 463,
+      "body_sha256": "dec8b6b9f181121f30096e8fb8fc1ba96d46e902823f2f635fdb473174059bff",
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "Content-Length": "463",
+        "Content-Type": "application/json;odata=nometadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb47e1a-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "POST",
+      "url": "https://secedgardevb8617.table.core.windows.net/Attempts?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/xml",
+        "User-Agent": "azsdk-python-storage-blob/12.31.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb4845a-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-range": "bytes=0-33554431",
+        "x-ms-version": "2026-04-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.blob.core.windows.net/worksets/state/sha256%3D8b3b3302c5692efa3eac6f8ee7b8295ada6219837c3580ebe618bf74d9fcf0e3.json"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/json;odata=minimalmetadata",
+        "DataServiceVersion": "3.0",
+        "Date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "User-Agent": "azsdk-python-data-tables/12.7.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb4dcca-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-version": "2020-12-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.table.core.windows.net/Attempts(PartitionKey='sec-owner-lowell-mason%3AAttempt',RowKey='overflow-attempt')?sv=offline&sig=synthetic"
+    },
+    {
+      "body_bytes": 0,
+      "body_sha256": null,
+      "headers": {
+        "Accept": "application/xml",
+        "User-Agent": "azsdk-python-storage-blob/12.31.0 Python/3.14.0 (macOS-26.6.2-arm64-arm-64bit-Mach-O)",
+        "x-ms-client-request-id": "3fb4e544-c1e6-11f1-b2cd-29b2ea4e8685",
+        "x-ms-date": "Wed, 07 Oct 2026 00:30:08 GMT",
+        "x-ms-range": "bytes=0-33554431",
+        "x-ms-version": "2026-04-06"
+      },
+      "method": "GET",
+      "url": "https://secedgardevb8617.blob.core.windows.net/worksets/state/sha256%3D8b3b3302c5692efa3eac6f8ee7b8295ada6219837c3580ebe618bf74d9fcf0e3.json"
+    }
+  ],
+  "state_and_objects_share_same_object_store": true,
+  "winner_etag": "W/\"service-4\"",
+  "winner_verified_after_distinct_losing_candidate": true
+}

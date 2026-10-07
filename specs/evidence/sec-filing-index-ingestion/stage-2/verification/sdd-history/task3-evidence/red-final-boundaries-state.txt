@@ -1,0 +1,51 @@
+COMMAND: uv run --offline --frozen --package sec-edgar-ingest python -m unittest discover -s packages/sec-edgar-ingest/tests -p test_state.py -v
+EXIT: 1
+test_attempts_reopen_unfinished_and_finish_idempotently_without_erasure (test_state.StateTests.test_attempts_reopen_unfinished_and_finish_idempotently_without_erasure) ... ok
+test_binding_requires_snapshot_and_cas_conflicts_are_bounded (test_state.StateTests.test_binding_requires_snapshot_and_cas_conflicts_are_bounded) ... ok
+test_discovery_and_later_failure_preserve_success_and_existing_pin (test_state.StateTests.test_discovery_and_later_failure_preserve_success_and_existing_pin) ... ok
+test_existing_pin_wins_even_if_a_retry_candidate_is_unremembered (test_state.StateTests.test_existing_pin_wins_even_if_a_retry_candidate_is_unremembered) ... FAIL
+test_first_pin_survives_reopen_and_newer_snapshot (test_state.StateTests.test_first_pin_survives_reopen_and_newer_snapshot) ... ok
+test_independent_processes_observe_absence_then_race_first_pin (test_state.StateTests.test_independent_processes_observe_absence_then_race_first_pin) ... ok
+test_mismatched_observed_source_address_is_not_remembered (test_state.StateTests.test_mismatched_observed_source_address_is_not_remembered) ... ok
+test_older_receipt_and_out_of_order_discovery_never_move_pointers_back (test_state.StateTests.test_older_receipt_and_out_of_order_discovery_never_move_pointers_back) ... FAIL
+test_pending_sources_include_old_failed_and_all_pages (test_state.StateTests.test_pending_sources_include_old_failed_and_all_pages) ... ok
+test_request_attempts_are_immutable_auditable_and_bounded (test_state.StateTests.test_request_attempts_are_immutable_auditable_and_bounded) ... ok
+test_snapshot_durable_boundary_can_be_replayed_without_erasing_raw_or_success (test_state.StateTests.test_snapshot_durable_boundary_can_be_replayed_without_erasing_raw_or_success) ... ok
+
+======================================================================
+FAIL: test_existing_pin_wins_even_if_a_retry_candidate_is_unremembered (test_state.StateTests.test_existing_pin_wins_even_if_a_retry_candidate_is_unremembered)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_state.py", line 230, in test_existing_pin_wins_even_if_a_retry_candidate_is_unremembered
+    actual = self.state.bind_once(candidate)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/state.py", line 105, in bind_once
+    self.snapshot(binding.source_id, binding.snapshot_sha256)
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/state.py", line 97, in snapshot
+    raise Conflict("snapshot is not durably remembered")
+sec_edgar_ingest.storage.contracts.Conflict: snapshot is not durably remembered
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_state.py", line 232, in test_existing_pin_wins_even_if_a_retry_candidate_is_unremembered
+    self.fail(f"A durable existing pin must win before validating a retry candidate: {error}")
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: A durable existing pin must win before validating a retry candidate: snapshot is not durably remembered
+
+======================================================================
+FAIL: test_older_receipt_and_out_of_order_discovery_never_move_pointers_back (test_state.StateTests.test_older_receipt_and_out_of_order_discovery_never_move_pointers_back)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_state.py", line 115, in test_older_receipt_and_out_of_order_discovery_never_move_pointers_back
+    self.assertEqual(receipt["latest_downloaded_snapshot"], old.sha256)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: '11507a0e2f5e69d5dfa40a62a1bd7b6ee57e6bcd85c67c9b8431b36fff21c437' != 'cba06b5736faf67e54b07b561eae94395e774c517a7d910a54369e1263ccfbd4'
+- 11507a0e2f5e69d5dfa40a62a1bd7b6ee57e6bcd85c67c9b8431b36fff21c437
++ cba06b5736faf67e54b07b561eae94395e774c517a7d910a54369e1263ccfbd4
+
+
+----------------------------------------------------------------------
+Ran 11 tests in 0.204s
+
+FAILED (failures=2)

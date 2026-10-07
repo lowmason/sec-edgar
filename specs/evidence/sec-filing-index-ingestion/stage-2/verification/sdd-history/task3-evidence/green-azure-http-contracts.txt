@@ -1,0 +1,23 @@
+COMMAND: uv run --offline --frozen --package sec-edgar-ingest python -m unittest discover -s packages/sec-edgar-ingest/tests -p test_azure_contracts.py -v
+EXIT: 0
+test_attempt_rows_use_only_attempts_table (test_azure_contracts.AzureContractTests.test_attempt_rows_use_only_attempts_table) ... ok
+test_blob_collision_verifies_equal_content_and_preserves_different_content (test_azure_contracts.AzureContractTests.test_blob_collision_verifies_equal_content_and_preserves_different_content) ... ok
+test_blob_create_is_explicit_version_and_if_none_match (test_azure_contracts.AzureContractTests.test_blob_create_is_explicit_version_and_if_none_match) ... ok
+test_blob_errors_do_not_retry_or_become_immutable_success (test_azure_contracts.AzureContractTests.test_blob_errors_do_not_retry_or_become_immutable_success) ... ok
+test_blob_stage_promote_uses_blob_create_without_dfs_rename (test_azure_contracts.AzureContractTests.test_blob_stage_promote_uses_blob_create_without_dfs_rename) ... ok
+test_factory_conditions_fixed_registry_before_authority_clients (test_azure_contracts.AzureContractTests.test_factory_conditions_fixed_registry_before_authority_clients) ... ok
+test_installed_pins_are_exact (test_azure_contracts.AzureContractTests.test_installed_pins_are_exact) ... ok
+test_lease_acquire_renew_and_release_use_service_id_and_pinned_version (test_azure_contracts.AzureContractTests.test_lease_acquire_renew_and_release_use_service_id_and_pinned_version) ... ok
+test_lease_conflict_loss_expiry_and_unbounded_clock_fail_closed (test_azure_contracts.AzureContractTests.test_lease_conflict_loss_expiry_and_unbounded_clock_fail_closed) ... ok
+test_lease_owned_check_rewrites_same_journal_with_exact_etag_and_actual_id (test_azure_contracts.AzureContractTests.test_lease_owned_check_rewrites_same_journal_with_exact_etag_and_actual_id) ... ok
+test_table_create_conflict_stale_replace_and_not_found_map_exactly (test_azure_contracts.AzureContractTests.test_table_create_conflict_stale_replace_and_not_found_map_exactly) ... ok
+test_table_get_uses_raw_header_never_timestamp_fabricated_etag (test_azure_contracts.AzureContractTests.test_table_get_uses_raw_header_never_timestamp_fabricated_etag) ... ok
+test_table_insert_is_atomic_create_and_returns_actual_write_etag (test_azure_contracts.AzureContractTests.test_table_insert_is_atomic_create_and_returns_actual_write_etag) ... ok
+test_table_query_exhausts_continuations_including_empty_page (test_azure_contracts.AzureContractTests.test_table_query_exhausts_continuations_including_empty_page) ... ok
+test_table_query_missing_service_etag_and_unknown_errors_fail_closed (test_azure_contracts.AzureContractTests.test_table_query_missing_service_etag_and_unknown_errors_fail_closed) ... ok
+test_table_replace_uses_put_and_exact_opaque_if_match (test_azure_contracts.AzureContractTests.test_table_replace_uses_put_and_exact_opaque_if_match) ... ok
+
+----------------------------------------------------------------------
+Ran 16 tests in 0.050s
+
+OK

@@ -1,0 +1,49 @@
+command=["git", "commit", "-m", "feat: pin immutable snapshots and resume incomplete collection"]
+stdout:
+[codex/sec-edgar-stage-2 4761e0e] feat: pin immutable snapshots and resume incomplete collection
+ 5 files changed, 1268 insertions(+), 4 deletions(-)
+ create mode 100644 packages/sec-edgar-ingest/src/sec_edgar_ingest/collection.py
+ create mode 100644 packages/sec-edgar-ingest/tests/test_collection.py
+
+stderr:
+
+exit_code=0
+
+command=["git", "log", "-1", "--format=%H%n%s"]
+stdout:
+4761e0e027782a1a78a4f43af6512fe193e77bf4
+feat: pin immutable snapshots and resume incomplete collection
+
+stderr:
+
+exit_code=0
+
+command=["git", "show", "--format=", "--name-only", "HEAD"]
+stdout:
+packages/sec-edgar-ingest/src/sec_edgar_ingest/collection.py
+packages/sec-edgar-ingest/src/sec_edgar_ingest/state.py
+packages/sec-edgar-ingest/src/sec_edgar_ingest/worksets.py
+packages/sec-edgar-ingest/tests/support.py
+packages/sec-edgar-ingest/tests/test_collection.py
+
+stderr:
+
+exit_code=0
+
+command=["git", "status", "--short"]
+stdout:
+ D packages/sec-edgar-index-ingest/README.md
+ D packages/sec-edgar-index-ingest/pyproject.toml
+ D packages/sec-edgar-index-ingest/src/sec_edgar_index_ingest/__init__.py
+ D packages/sec-edgar-index-ingest/src/sec_edgar_index_ingest/py.typed
+
+stderr:
+
+exit_code=0
+
+command=["git", "diff", "--cached", "--name-only"]
+stdout:
+
+stderr:
+
+exit_code=0

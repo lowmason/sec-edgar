@@ -1,0 +1,223 @@
+test_inline_rows_keep_original_payload_and_replace_both_formats (test_azure_state_payloads.AzureStatePayloadTests.test_inline_rows_keep_original_payload_and_replace_both_formats) ... FAIL
+test_intended_history_registration_round_trips_and_replaces_with_whole_record_cas (test_azure_state_payloads.AzureStatePayloadTests.test_intended_history_registration_round_trips_and_replaces_with_whole_record_cas) ... FAIL
+test_large_values_above_entity_limit_round_trip_without_splitting_table_updates (test_azure_state_payloads.AzureStatePayloadTests.test_large_values_above_entity_limit_round_trip_without_splitting_table_updates) ... FAIL
+test_missing_corrupt_and_wrong_identity_large_content_is_refused (test_azure_state_payloads.AzureStatePayloadTests.test_missing_corrupt_and_wrong_identity_large_content_is_refused) ... FAIL
+test_oversized_stable_identity_is_refused_before_any_storage_write (test_azure_state_payloads.AzureStatePayloadTests.test_oversized_stable_identity_is_refused_before_any_storage_write) ... ERROR
+test_partial_blob_never_publishes_table_and_failed_table_candidate_retries (test_azure_state_payloads.AzureStatePayloadTests.test_partial_blob_never_publishes_table_and_failed_table_candidate_retries) ... ERROR
+
+======================================================================
+ERROR: test_oversized_stable_identity_is_refused_before_any_storage_write (test_azure_state_payloads.AzureStatePayloadTests.test_oversized_stable_identity_is_refused_before_any_storage_write)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_azure_state_payloads.py", line 249, in test_oversized_stable_identity_is_refused_before_any_storage_write
+    store.insert("Source", "😀" * 40000, {})
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py", line 100, in insert
+    self._client(kind).create_entity(entity=entity, raw_response_hook=capture)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/core/tracing/decorator.py", line 119, in wrapper_use_tracer
+    return func(*args, **kwargs)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/data/tables/_table_client.py", line 410, in create_entity
+    raise error
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/data/tables/_table_client.py", line 398, in create_entity
+    self._client.table.insert_entity(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        table=self.table_name,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        **kwargs,
+        ^^^^^^^^^
+    ),
+    ^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/core/tracing/decorator.py", line 119, in wrapper_use_tracer
+    return func(*args, **kwargs)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/data/tables/_generated/operations/_operations.py", line 1705, in insert_entity
+    raise HttpResponseError(response=response, model=error)
+azure.core.exceptions.HttpResponseError: Operation returned an invalid status 'scripted offline response'
+Content: {"odata.error": {"code": "PropertyValueTooLarge", "message": {"lang": "en-US", "value": "offline failure"}}}
+
+======================================================================
+ERROR: test_partial_blob_never_publishes_table_and_failed_table_candidate_retries (test_azure_state_payloads.AzureStatePayloadTests.test_partial_blob_never_publishes_table_and_failed_table_candidate_retries)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_azure_state_payloads.py", line 227, in test_partial_blob_never_publishes_table_and_failed_table_candidate_retries
+    store.insert("Source", "partial", value)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py", line 100, in insert
+    self._client(kind).create_entity(entity=entity, raw_response_hook=capture)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/core/tracing/decorator.py", line 119, in wrapper_use_tracer
+    return func(*args, **kwargs)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/data/tables/_table_client.py", line 410, in create_entity
+    raise error
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/data/tables/_table_client.py", line 398, in create_entity
+    self._client.table.insert_entity(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        table=self.table_name,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        **kwargs,
+        ^^^^^^^^^
+    ),
+    ^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/core/tracing/decorator.py", line 119, in wrapper_use_tracer
+    return func(*args, **kwargs)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/data/tables/_generated/operations/_operations.py", line 1705, in insert_entity
+    raise HttpResponseError(response=response, model=error)
+azure.core.exceptions.HttpResponseError: Operation returned an invalid status 'scripted offline response'
+Content: {"odata.error": {"code": "PropertyValueTooLarge", "message": {"lang": "en-US", "value": "offline failure"}}}
+
+======================================================================
+FAIL: test_inline_rows_keep_original_payload_and_replace_both_formats (test_azure_state_payloads.AzureStatePayloadTests.test_inline_rows_keep_original_payload_and_replace_both_formats)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_azure_state_payloads.py", line 188, in test_inline_rows_keep_original_payload_and_replace_both_formats
+    self.assertEqual(saved, {"PartitionKey": "sec-owner-lowell-mason:Source", "RowKey": "compatible",
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                             "StableKey": "compatible", "Payload": self.azure.payload_bytes(small).decode()})
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: {'Par[41 chars]e', 'PartitionKey@odata.type': 'Edm.String', '[192 chars]ing'} != {'Par[41 chars]e', 'RowKey': 'compatible', 'StableKey': 'comp[42 chars]]}}'}
+  {'PartitionKey': 'sec-owner-lowell-mason:Source',
+-  'PartitionKey@odata.type': 'Edm.String',
+   'Payload': '{"nested":{"a":[1,"é"]}}',
+-  'Payload@odata.type': 'Edm.String',
+   'RowKey': 'compatible',
+-  'RowKey@odata.type': 'Edm.String',
+-  'StableKey': 'compatible',
+?                           ^
+
++  'StableKey': 'compatible'}
+?                           ^
+
+-  'StableKey@odata.type': 'Edm.String'}
+
+======================================================================
+FAIL: test_intended_history_registration_round_trips_and_replaces_with_whole_record_cas (test_azure_state_payloads.AzureStatePayloadTests.test_intended_history_registration_round_trips_and_replaces_with_whole_record_cas)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_azure_state_payloads.py", line 143, in test_intended_history_registration_round_trips_and_replaces_with_whole_record_cas
+    state = self.register_intended_history(store)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_azure_state_payloads.py", line 137, in register_intended_history
+    state.begin_discovery("intended-history", frozen, context, "quarterly", "reuse_accepted")
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/state.py", line 103, in begin_discovery
+    self._change_boundary(register)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/state.py", line 123, in _change_boundary
+    return self.store.insert("DiscoveryBoundary", "daily", value)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py", line 100, in insert
+    self._client(kind).create_entity(entity=entity, raw_response_hook=capture)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/core/tracing/decorator.py", line 119, in wrapper_use_tracer
+    return func(*args, **kwargs)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/data/tables/_table_client.py", line 410, in create_entity
+    raise error
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/data/tables/_table_client.py", line 398, in create_entity
+    self._client.table.insert_entity(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        table=self.table_name,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        **kwargs,
+        ^^^^^^^^^
+    ),
+    ^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/core/tracing/decorator.py", line 119, in wrapper_use_tracer
+    return func(*args, **kwargs)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/data/tables/_generated/operations/_operations.py", line 1705, in insert_entity
+    raise HttpResponseError(response=response, model=error)
+azure.core.exceptions.HttpResponseError: Operation returned an invalid status 'scripted offline response'
+Content: {"odata.error": {"code": "PropertyValueTooLarge", "message": {"lang": "en-US", "value": "offline failure"}}}
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_azure_state_payloads.py", line 145, in test_intended_history_registration_round_trips_and_replaces_with_whole_record_cas
+    self.fail(f"accepted intended-history registration exceeds the offline Table limit: {error}")
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: accepted intended-history registration exceeds the offline Table limit: Operation returned an invalid status 'scripted offline response'
+Content: {"odata.error": {"code": "PropertyValueTooLarge", "message": {"lang": "en-US", "value": "offline failure"}}}
+
+======================================================================
+FAIL: test_large_values_above_entity_limit_round_trip_without_splitting_table_updates (test_azure_state_payloads.AzureStatePayloadTests.test_large_values_above_entity_limit_round_trip_without_splitting_table_updates)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_azure_state_payloads.py", line 170, in test_large_values_above_entity_limit_round_trip_without_splitting_table_updates
+    written = store.insert("DirectoryProgress", "large", value)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py", line 100, in insert
+    self._client(kind).create_entity(entity=entity, raw_response_hook=capture)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/core/tracing/decorator.py", line 119, in wrapper_use_tracer
+    return func(*args, **kwargs)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/data/tables/_table_client.py", line 410, in create_entity
+    raise error
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/data/tables/_table_client.py", line 398, in create_entity
+    self._client.table.insert_entity(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        table=self.table_name,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        **kwargs,
+        ^^^^^^^^^
+    ),
+    ^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/core/tracing/decorator.py", line 119, in wrapper_use_tracer
+    return func(*args, **kwargs)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/data/tables/_generated/operations/_operations.py", line 1705, in insert_entity
+    raise HttpResponseError(response=response, model=error)
+azure.core.exceptions.HttpResponseError: Operation returned an invalid status 'scripted offline response'
+Content: {"odata.error": {"code": "PropertyValueTooLarge", "message": {"lang": "en-US", "value": "offline failure"}}}
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_azure_state_payloads.py", line 172, in test_large_values_above_entity_limit_round_trip_without_splitting_table_updates
+    self.fail(f"large logical record must use verified immutable content: {error}")
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: large logical record must use verified immutable content: Operation returned an invalid status 'scripted offline response'
+Content: {"odata.error": {"code": "PropertyValueTooLarge", "message": {"lang": "en-US", "value": "offline failure"}}}
+
+======================================================================
+FAIL: test_missing_corrupt_and_wrong_identity_large_content_is_refused (test_azure_state_payloads.AzureStatePayloadTests.test_missing_corrupt_and_wrong_identity_large_content_is_refused)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_azure_state_payloads.py", line 204, in test_missing_corrupt_and_wrong_identity_large_content_is_refused
+    row = store.insert("Source", "large", {"text": "x" * 40000})
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py", line 100, in insert
+    self._client(kind).create_entity(entity=entity, raw_response_hook=capture)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/core/tracing/decorator.py", line 119, in wrapper_use_tracer
+    return func(*args, **kwargs)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/data/tables/_table_client.py", line 410, in create_entity
+    raise error
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/data/tables/_table_client.py", line 398, in create_entity
+    self._client.table.insert_entity(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        table=self.table_name,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        **kwargs,
+        ^^^^^^^^^
+    ),
+    ^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/core/tracing/decorator.py", line 119, in wrapper_use_tracer
+    return func(*args, **kwargs)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/lib/python3.14/site-packages/azure/data/tables/_generated/operations/_operations.py", line 1705, in insert_entity
+    raise HttpResponseError(response=response, model=error)
+azure.core.exceptions.HttpResponseError: Operation returned an invalid status 'scripted offline response'
+Content: {"odata.error": {"code": "PropertyValueTooLarge", "message": {"lang": "en-US", "value": "offline failure"}}}
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_azure_state_payloads.py", line 206, in test_missing_corrupt_and_wrong_identity_large_content_is_refused
+    self.fail(f"large record cannot reach corruption checks: {error}")
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: large record cannot reach corruption checks: Operation returned an invalid status 'scripted offline response'
+Content: {"odata.error": {"code": "PropertyValueTooLarge", "message": {"lang": "en-US", "value": "offline failure"}}}
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.069s
+
+FAILED (failures=4, errors=2)

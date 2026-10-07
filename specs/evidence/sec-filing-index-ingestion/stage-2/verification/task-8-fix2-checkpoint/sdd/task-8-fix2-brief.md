@@ -1,0 +1,17 @@
+# Task 8 fix round 2 — residual I2 authentication guard
+BASE: 35b47692168677acbe0410a33fc758d6d569a7a4.
+Implementer: resume /root/task8_implement. You are not alone in the codebase; preserve others' changes. Keep all prior retained proof and the four original deletions. Stage named paths only. No live SEC/Azure/authentication/compute access; no Stage 3, completion stamp, tick or retirement.
+
+Read task-8-brief.md (global constraints), task-8-fix1-brief.md, and the scoped review receipt supplied by the controller. I3 installation documentation is addressed. I1 required combined Step4 remains pending the same owner endpoint decision; do not execute optional approved daily sequence without an actual answer or change production pin/hash contracts.
+
+Residual I2: new tests/network_guard.py filters MSAL classes by name ending in Application, leaving public pinned msal.ManagedIdentityClient unguarded. Reviewer recording stubs reached both its constructor and existing-instance acquire_token_for_client after guard install; zero network stub calls. Exact final command/output will be retained in task-8-fix1-rereview.md before dispatch.
+
+Ownership: minimal test-only network_guard.py and test_network_guard.py changes, plus existing support/runner only if necessary. Append report and verification evidence without overwriting any old checkpoint. No production changes expected. Deny public pinned managed identity provider construction and relevant existing-instance token/auth operations before originals; inspect actual installed provider signatures/classes locally instead of guessing naming conventions. Maintain all selected-origin network behavior and fake scripted credentials.
+
+TDD: first add meaningful recording-stub regression reproducing the public constructor and existing-instance token bypass (and any same-family operation concretely found), run RED, then minimal fix and focused GREEN. Never call real provider authentication. Run the prescribed complete offline check entry point after the last implementation change; this covers guard, CLI, actual process/takeover/recovery and workspace checks. Avoid an additional full rerun after final GREEN unless new changes or failures justify it. Retain exact commands, complete outputs, process traces, artifacts and all refusals. Recheck primary preservation.
+
+If production Python and package metadata/build inputs are byte-identical to BASE/current validated wheel, verify equality and reuse fresh installed-wheel proof with explicit hashes/mapping; only rerun fresh installed proof if artifact drift makes it necessary.
+
+Retain new/changed SDD evidence in a separate append-only checkpoint with original-to-retained maps and SHA manifests. Include controller review/retention receipts and new diff handoffs; standard diffs may be losslessly gzipped with original/compressed hashes and retrieval mapping. Original two checkpoints remain unchanged. Do not include the future scoped review in this implementer checkpoint; controller retains it later. Report exact current counts and historical failures honestly.
+
+Append fix round 2 report: what changed, actual contracts, RED/GREEN commands/output, prescribed checks, wheel equality/reuse, current proof paths/hashes, owner gate still pending. Commit only named test/proof paths, report exact BASE->HEAD, empty index and four original unstaged deletions, then freeze for fresh scoped I2 re-review. Do not claim Task8 or Stage2 complete.

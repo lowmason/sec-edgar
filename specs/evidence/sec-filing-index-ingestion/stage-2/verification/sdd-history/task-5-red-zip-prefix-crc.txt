@@ -1,0 +1,18 @@
+test_forged_expanded_size_and_prefix_crc_cannot_hide_deflate_suffix (test_validation.ValidationTests.test_forged_expanded_size_and_prefix_crc_cannot_hide_deflate_suffix) ... FAIL
+
+======================================================================
+FAIL: test_forged_expanded_size_and_prefix_crc_cannot_hide_deflate_suffix (test_validation.ValidationTests.test_forged_expanded_size_and_prefix_crc_cannot_hide_deflate_suffix)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_validation.py", line 176, in test_forged_expanded_size_and_prefix_crc_cannot_hide_deflate_suffix
+    self.invalid("zip-forged-prefix-crc", bytes(archive), "invalid_archive")
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_validation.py", line 43, in invalid
+    self.fail("invalid envelope was accepted: "+name)
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: invalid envelope was accepted: zip-forged-prefix-crc
+
+----------------------------------------------------------------------
+Ran 1 test in 0.014s
+
+FAILED (failures=1)

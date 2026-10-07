@@ -1,0 +1,875 @@
+{
+  "collection_crashes": [
+    {
+      "path": "crash-after_binding.json",
+      "process_exits": [
+        73,
+        0,
+        0
+      ],
+      "process_pids": [
+        50754,
+        50758,
+        50761
+      ],
+      "snapshot_id": "97cb05b16e15daaf87428c33ef61464fe19971a6505561b8439a74958b561439"
+    },
+    {
+      "path": "crash-after_promotion_receipt.json",
+      "process_exits": [
+        73,
+        0,
+        0
+      ],
+      "process_pids": [
+        50720,
+        50736,
+        50741
+      ],
+      "snapshot_id": "97cb05b16e15daaf87428c33ef61464fe19971a6505561b8439a74958b561439"
+    },
+    {
+      "path": "crash-after_raw_promotion.json",
+      "process_exits": [
+        73,
+        0,
+        0
+      ],
+      "process_pids": [
+        50710,
+        50714,
+        50717
+      ],
+      "snapshot_id": "97cb05b16e15daaf87428c33ef61464fe19971a6505561b8439a74958b561439"
+    },
+    {
+      "path": "crash-after_receipt_checkpoint.json",
+      "process_exits": [
+        73,
+        0,
+        0
+      ],
+      "process_pids": [
+        50700,
+        50704,
+        50707
+      ],
+      "snapshot_id": "97cb05b16e15daaf87428c33ef61464fe19971a6505561b8439a74958b561439"
+    },
+    {
+      "path": "crash-after_snapshot_record.json",
+      "process_exits": [
+        73,
+        0,
+        0
+      ],
+      "process_pids": [
+        50744,
+        50748,
+        50751
+      ],
+      "snapshot_id": "97cb05b16e15daaf87428c33ef61464fe19971a6505561b8439a74958b561439"
+    },
+    {
+      "path": "crash-after_snapshot_workset_write.json",
+      "process_exits": [
+        73,
+        0,
+        0
+      ],
+      "process_pids": [
+        50764,
+        50768,
+        50771
+      ],
+      "snapshot_id": "97cb05b16e15daaf87428c33ef61464fe19971a6505561b8439a74958b561439"
+    },
+    {
+      "path": "crash-before_result_write.json",
+      "process_exits": [
+        73,
+        0,
+        0
+      ],
+      "process_pids": [
+        50774,
+        50778,
+        50781
+      ],
+      "snapshot_id": "97cb05b16e15daaf87428c33ef61464fe19971a6505561b8439a74958b561439"
+    },
+    {
+      "path": "retry-prefix-crash-after_binding.json",
+      "process_exits": [
+        73,
+        0,
+        0
+      ],
+      "process_pids": [
+        50879,
+        50883,
+        50886
+      ],
+      "snapshot_id": "8a98a5d394ee96d487b8ff9a62362f4375239f72b388eb0361d1dbac4fe68da8"
+    },
+    {
+      "path": "retry-prefix-crash-after_promotion_receipt.json",
+      "process_exits": [
+        73,
+        0,
+        0
+      ],
+      "process_pids": [
+        50859,
+        50863,
+        50866
+      ],
+      "snapshot_id": "8a98a5d394ee96d487b8ff9a62362f4375239f72b388eb0361d1dbac4fe68da8"
+    },
+    {
+      "path": "retry-prefix-crash-after_raw_promotion.json",
+      "process_exits": [
+        73,
+        0,
+        0
+      ],
+      "process_pids": [
+        50849,
+        50853,
+        50856
+      ],
+      "snapshot_id": "8a98a5d394ee96d487b8ff9a62362f4375239f72b388eb0361d1dbac4fe68da8"
+    },
+    {
+      "path": "retry-prefix-crash-after_receipt_checkpoint.json",
+      "process_exits": [
+        73,
+        0,
+        0
+      ],
+      "process_pids": [
+        50839,
+        50843,
+        50846
+      ],
+      "snapshot_id": "8a98a5d394ee96d487b8ff9a62362f4375239f72b388eb0361d1dbac4fe68da8"
+    },
+    {
+      "path": "retry-prefix-crash-after_snapshot_record.json",
+      "process_exits": [
+        73,
+        0,
+        0
+      ],
+      "process_pids": [
+        50869,
+        50873,
+        50876
+      ],
+      "snapshot_id": "8a98a5d394ee96d487b8ff9a62362f4375239f72b388eb0361d1dbac4fe68da8"
+    },
+    {
+      "path": "retry-prefix-crash-after_snapshot_workset_write.json",
+      "process_exits": [
+        73,
+        0,
+        0
+      ],
+      "process_pids": [
+        50889,
+        50893,
+        50896
+      ],
+      "snapshot_id": "8a98a5d394ee96d487b8ff9a62362f4375239f72b388eb0361d1dbac4fe68da8"
+    },
+    {
+      "path": "retry-prefix-crash-before_result_write.json",
+      "process_exits": [
+        73,
+        0,
+        0
+      ],
+      "process_pids": [
+        50899,
+        50903,
+        50906
+      ],
+      "snapshot_id": "8a98a5d394ee96d487b8ff9a62362f4375239f72b388eb0361d1dbac4fe68da8"
+    }
+  ],
+  "exit_code": 0,
+  "guard_receipts": [
+    {
+      "exit": 0,
+      "path": "test_explicit_helper_denies_connect_ex_resolution_and_unselected_loopback.json",
+      "proof": {
+        "calls": [],
+        "denied": [
+          true,
+          true,
+          true,
+          true
+        ]
+      }
+    },
+    {
+      "exit": 0,
+      "path": "test_only_selected_fixture_origin_is_allowed_and_scope_closes.json",
+      "proof": {
+        "calls": [
+          "connect",
+          "connect_ex",
+          "getaddrinfo"
+        ],
+        "denied": [
+          true,
+          true,
+          true,
+          true,
+          true
+        ]
+      }
+    },
+    {
+      "exit": 0,
+      "path": "test_ordinary_support_import_installs_connection_resolution_and_auth_denial.json",
+      "proof": {
+        "calls": [],
+        "denied": [
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true
+        ]
+      }
+    },
+    {
+      "exit": 0,
+      "path": "test_provider_construction_and_existing_instance_token_work_never_reach_stubs.json",
+      "proof": {
+        "calls": [],
+        "denied": [
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true
+        ]
+      }
+    },
+    {
+      "exit": 0,
+      "path": "test_public_managed_identity_constructor_and_existing_tokens_never_reach_stubs.json",
+      "proof": {
+        "calls": [],
+        "denied": [
+          true,
+          true,
+          true,
+          true
+        ]
+      }
+    },
+    {
+      "exit": 0,
+      "path": "test_spawned_process_has_selected_origin_and_denies_network_and_auth.json",
+      "proof": {
+        "calls": [
+          "connect"
+        ],
+        "denied": [
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true
+        ],
+        "guard_available": true,
+        "pid": 51584
+      }
+    },
+    {
+      "exit": 0,
+      "path": "test_suite_runner_installs_guard_before_unittest_executes.json",
+      "proof": {
+        "calls": [],
+        "denied": true
+      }
+    }
+  ],
+  "independent_timer": {
+    "child_exit": {
+      "event": "child-joined",
+      "exitcode": -14,
+      "monotonic": 2772209.430342291,
+      "pid": 50082,
+      "utc": "2026-10-07T00:29:05.469052+00:00"
+    },
+    "prefix_bytes": 91,
+    "prefix_sha256": "87b88e4e14bba7c4429183a1b7e80dbd146a5ca0278c3b7da0403e941f60373b"
+  },
+  "recorded_at": "2026-10-07T00:33:36.827854+00:00",
+  "result_attempt_crashes": [
+    {
+      "actual_context": {
+        "attempt_id": "collect-1",
+        "command": "collect",
+        "config_sha256": "6b9aaea3e19c5756f51437125b5e65bcd1c62cf5272a6137cccbd00362cb7564",
+        "deadline": "2099-01-01T00:00:00+00:00",
+        "effective_config": {
+          "backfill": {
+            "end_quarter": "2015Q1",
+            "start_quarter": "2015Q1"
+          },
+          "config_version": "sec-acquisition-v1",
+          "coordination": {
+            "clock_uncertainty_seconds": 2.0,
+            "lease_seconds": 60.0,
+            "namespace": "sec-owner-lowell-mason",
+            "renew_every_seconds": 20.0
+          },
+          "daily": {
+            "start_date": "2026-10-01"
+          },
+          "etl": {
+            "parser_version": "fixture-envelope-v1",
+            "schema_version": "sec-index-v1"
+          },
+          "fixture": {
+            "allow_clock_override": true,
+            "allow_deadline_override": true
+          },
+          "http": {
+            "connect_timeout_seconds": 15.0,
+            "exchange_deadline_seconds": 90.0,
+            "max_attempts": 5,
+            "max_expanded_bytes": 536870912,
+            "max_received_bytes": 67108864,
+            "read_timeout_seconds": 60.0,
+            "retry_base_seconds": 0.001,
+            "retry_cap_seconds": 0.001
+          },
+          "jobs": {
+            "replica_retry_limit": 0
+          },
+          "orchestration": {
+            "transient_replays": 1
+          },
+          "reconciliation": {
+            "require_withdrawal_approval": true
+          },
+          "sec": {
+            "max_active_collectors": 1,
+            "requests_per_second": 3.0,
+            "user_agent": "Lowell Mason sec-edgar-ingest mason.lowell@mac.com"
+          },
+          "storage": {
+            "account_name": null,
+            "attempt_table": "Attempts",
+            "backend": "local-fixture",
+            "binding_registry_blob": "sec-owner-lowell-mason/binding.json",
+            "blob_api_version": "2026-04-06",
+            "blob_endpoint": null,
+            "lock_blob": "sec-owner-lowell-mason/sentinel.json",
+            "lock_container": "locks",
+            "quarantine_container": "quarantine",
+            "raw_container": "raw",
+            "root": ".fixture-state",
+            "source_table": "SourceState",
+            "table_api_version": "2020-12-06",
+            "table_endpoint": null,
+            "workset_container": "worksets"
+          },
+          "worker": {
+            "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+            "provenance": "synthetic-fixture"
+          }
+        },
+        "execution_id": "cli-collect",
+        "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "parser_version": "fixture-envelope-v1",
+        "pinned_on": "2026-10-06",
+        "priority": "backfill",
+        "run_id": "cli-run",
+        "schema_version": "sec-index-v1",
+        "started_at": "2026-10-07T00:30:03.178281+00:00"
+      },
+      "crash_exit": 74,
+      "path": "result-crash-after_attempt_finish.json",
+      "prior_immutable_result_preserved": true,
+      "replay_exit": 0,
+      "result_sha256": "a4f0c32e5d4201977d367150de7e83c9bf34e52723de4388c1ffbef06736616d"
+    },
+    {
+      "actual_context": {
+        "attempt_id": "collect-1",
+        "command": "collect",
+        "config_sha256": "6b9aaea3e19c5756f51437125b5e65bcd1c62cf5272a6137cccbd00362cb7564",
+        "deadline": "2099-01-01T00:00:00+00:00",
+        "effective_config": {
+          "backfill": {
+            "end_quarter": "2015Q1",
+            "start_quarter": "2015Q1"
+          },
+          "config_version": "sec-acquisition-v1",
+          "coordination": {
+            "clock_uncertainty_seconds": 2.0,
+            "lease_seconds": 60.0,
+            "namespace": "sec-owner-lowell-mason",
+            "renew_every_seconds": 20.0
+          },
+          "daily": {
+            "start_date": "2026-10-01"
+          },
+          "etl": {
+            "parser_version": "fixture-envelope-v1",
+            "schema_version": "sec-index-v1"
+          },
+          "fixture": {
+            "allow_clock_override": true,
+            "allow_deadline_override": true
+          },
+          "http": {
+            "connect_timeout_seconds": 15.0,
+            "exchange_deadline_seconds": 90.0,
+            "max_attempts": 5,
+            "max_expanded_bytes": 536870912,
+            "max_received_bytes": 67108864,
+            "read_timeout_seconds": 60.0,
+            "retry_base_seconds": 0.001,
+            "retry_cap_seconds": 0.001
+          },
+          "jobs": {
+            "replica_retry_limit": 0
+          },
+          "orchestration": {
+            "transient_replays": 1
+          },
+          "reconciliation": {
+            "require_withdrawal_approval": true
+          },
+          "sec": {
+            "max_active_collectors": 1,
+            "requests_per_second": 3.0,
+            "user_agent": "Lowell Mason sec-edgar-ingest mason.lowell@mac.com"
+          },
+          "storage": {
+            "account_name": null,
+            "attempt_table": "Attempts",
+            "backend": "local-fixture",
+            "binding_registry_blob": "sec-owner-lowell-mason/binding.json",
+            "blob_api_version": "2026-04-06",
+            "blob_endpoint": null,
+            "lock_blob": "sec-owner-lowell-mason/sentinel.json",
+            "lock_container": "locks",
+            "quarantine_container": "quarantine",
+            "raw_container": "raw",
+            "root": ".fixture-state",
+            "source_table": "SourceState",
+            "table_api_version": "2020-12-06",
+            "table_endpoint": null,
+            "workset_container": "worksets"
+          },
+          "worker": {
+            "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+            "provenance": "synthetic-fixture"
+          }
+        },
+        "execution_id": "cli-collect",
+        "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "parser_version": "fixture-envelope-v1",
+        "pinned_on": "2026-10-06",
+        "priority": "backfill",
+        "run_id": "cli-run",
+        "schema_version": "sec-index-v1",
+        "started_at": "2026-10-07T00:29:58.398735+00:00"
+      },
+      "crash_exit": 74,
+      "path": "result-crash-after_result_object.json",
+      "prior_immutable_result_preserved": true,
+      "replay_exit": 0,
+      "result_sha256": "230c93966b4598e109832ac3200d67ceeef15d745baddab246e383e8d2535149"
+    },
+    {
+      "actual_context": {
+        "attempt_id": "collect-1",
+        "command": "collect",
+        "config_sha256": "6b9aaea3e19c5756f51437125b5e65bcd1c62cf5272a6137cccbd00362cb7564",
+        "deadline": "2099-01-01T00:00:00+00:00",
+        "effective_config": {
+          "backfill": {
+            "end_quarter": "2015Q1",
+            "start_quarter": "2015Q1"
+          },
+          "config_version": "sec-acquisition-v1",
+          "coordination": {
+            "clock_uncertainty_seconds": 2.0,
+            "lease_seconds": 60.0,
+            "namespace": "sec-owner-lowell-mason",
+            "renew_every_seconds": 20.0
+          },
+          "daily": {
+            "start_date": "2026-10-01"
+          },
+          "etl": {
+            "parser_version": "fixture-envelope-v1",
+            "schema_version": "sec-index-v1"
+          },
+          "fixture": {
+            "allow_clock_override": true,
+            "allow_deadline_override": true
+          },
+          "http": {
+            "connect_timeout_seconds": 15.0,
+            "exchange_deadline_seconds": 90.0,
+            "max_attempts": 5,
+            "max_expanded_bytes": 536870912,
+            "max_received_bytes": 67108864,
+            "read_timeout_seconds": 60.0,
+            "retry_base_seconds": 0.001,
+            "retry_cap_seconds": 0.001
+          },
+          "jobs": {
+            "replica_retry_limit": 0
+          },
+          "orchestration": {
+            "transient_replays": 1
+          },
+          "reconciliation": {
+            "require_withdrawal_approval": true
+          },
+          "sec": {
+            "max_active_collectors": 1,
+            "requests_per_second": 3.0,
+            "user_agent": "Lowell Mason sec-edgar-ingest mason.lowell@mac.com"
+          },
+          "storage": {
+            "account_name": null,
+            "attempt_table": "Attempts",
+            "backend": "local-fixture",
+            "binding_registry_blob": "sec-owner-lowell-mason/binding.json",
+            "blob_api_version": "2026-04-06",
+            "blob_endpoint": null,
+            "lock_blob": "sec-owner-lowell-mason/sentinel.json",
+            "lock_container": "locks",
+            "quarantine_container": "quarantine",
+            "raw_container": "raw",
+            "root": ".fixture-state",
+            "source_table": "SourceState",
+            "table_api_version": "2020-12-06",
+            "table_endpoint": null,
+            "workset_container": "worksets"
+          },
+          "worker": {
+            "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+            "provenance": "synthetic-fixture"
+          }
+        },
+        "execution_id": "cli-collect",
+        "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "parser_version": "fixture-envelope-v1",
+        "pinned_on": "2026-10-06",
+        "priority": "backfill",
+        "run_id": "cli-run",
+        "schema_version": "sec-index-v1",
+        "started_at": "2026-10-07T00:30:00.790982+00:00"
+      },
+      "crash_exit": 74,
+      "path": "result-crash-before_attempt_finish.json",
+      "prior_immutable_result_preserved": true,
+      "replay_exit": 0,
+      "result_sha256": "15b11ef6b84e7dabdd9a6676fb7c71e26d6eafb2f76e70194dae30d39aee1940"
+    },
+    {
+      "actual_context": {
+        "attempt_id": "collect-1",
+        "command": "collect",
+        "config_sha256": "6b9aaea3e19c5756f51437125b5e65bcd1c62cf5272a6137cccbd00362cb7564",
+        "deadline": "2099-01-01T00:00:00+00:00",
+        "effective_config": {
+          "backfill": {
+            "end_quarter": "2015Q1",
+            "start_quarter": "2015Q1"
+          },
+          "config_version": "sec-acquisition-v1",
+          "coordination": {
+            "clock_uncertainty_seconds": 2.0,
+            "lease_seconds": 60.0,
+            "namespace": "sec-owner-lowell-mason",
+            "renew_every_seconds": 20.0
+          },
+          "daily": {
+            "start_date": "2026-10-01"
+          },
+          "etl": {
+            "parser_version": "fixture-envelope-v1",
+            "schema_version": "sec-index-v1"
+          },
+          "fixture": {
+            "allow_clock_override": true,
+            "allow_deadline_override": true
+          },
+          "http": {
+            "connect_timeout_seconds": 15.0,
+            "exchange_deadline_seconds": 90.0,
+            "max_attempts": 5,
+            "max_expanded_bytes": 536870912,
+            "max_received_bytes": 67108864,
+            "read_timeout_seconds": 60.0,
+            "retry_base_seconds": 0.001,
+            "retry_cap_seconds": 0.001
+          },
+          "jobs": {
+            "replica_retry_limit": 0
+          },
+          "orchestration": {
+            "transient_replays": 1
+          },
+          "reconciliation": {
+            "require_withdrawal_approval": true
+          },
+          "sec": {
+            "max_active_collectors": 1,
+            "requests_per_second": 3.0,
+            "user_agent": "Lowell Mason sec-edgar-ingest mason.lowell@mac.com"
+          },
+          "storage": {
+            "account_name": null,
+            "attempt_table": "Attempts",
+            "backend": "local-fixture",
+            "binding_registry_blob": "sec-owner-lowell-mason/binding.json",
+            "blob_api_version": "2026-04-06",
+            "blob_endpoint": null,
+            "lock_blob": "sec-owner-lowell-mason/sentinel.json",
+            "lock_container": "locks",
+            "quarantine_container": "quarantine",
+            "raw_container": "raw",
+            "root": ".fixture-state",
+            "source_table": "SourceState",
+            "table_api_version": "2020-12-06",
+            "table_endpoint": null,
+            "workset_container": "worksets"
+          },
+          "worker": {
+            "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+            "provenance": "synthetic-fixture"
+          }
+        },
+        "execution_id": "cli-collect",
+        "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "parser_version": "fixture-envelope-v1",
+        "pinned_on": "2026-10-06",
+        "priority": "backfill",
+        "run_id": "cli-run",
+        "schema_version": "sec-index-v1",
+        "started_at": "2026-10-07T00:29:55.991776+00:00"
+      },
+      "crash_exit": 74,
+      "path": "result-crash-before_result_object.json",
+      "prior_immutable_result_preserved": false,
+      "replay_exit": 0,
+      "result_sha256": "b75067368334957a885519555f1851d6a3518bb4fcb7ce8f06fe9be2c84b8414"
+    }
+  ],
+  "retry_prefix_preservation": [
+    {
+      "old_temporary_exists": false,
+      "path": "retry-prefix-crash-after_binding.json",
+      "process_exits": [
+        73,
+        0,
+        0
+      ],
+      "process_pids": [
+        50879,
+        50883,
+        50886
+      ],
+      "retained_prefix_sha256": "78a431c8a01f444e3b71b1be06b4b5b7240935db9153b88bf6bec6004cf46584",
+      "snapshot_id": "8a98a5d394ee96d487b8ff9a62362f4375239f72b388eb0361d1dbac4fe68da8"
+    },
+    {
+      "old_temporary_exists": false,
+      "path": "retry-prefix-crash-after_promotion_receipt.json",
+      "process_exits": [
+        73,
+        0,
+        0
+      ],
+      "process_pids": [
+        50859,
+        50863,
+        50866
+      ],
+      "retained_prefix_sha256": "78a431c8a01f444e3b71b1be06b4b5b7240935db9153b88bf6bec6004cf46584",
+      "snapshot_id": "8a98a5d394ee96d487b8ff9a62362f4375239f72b388eb0361d1dbac4fe68da8"
+    },
+    {
+      "old_temporary_exists": false,
+      "path": "retry-prefix-crash-after_raw_promotion.json",
+      "process_exits": [
+        73,
+        0,
+        0
+      ],
+      "process_pids": [
+        50849,
+        50853,
+        50856
+      ],
+      "retained_prefix_sha256": "78a431c8a01f444e3b71b1be06b4b5b7240935db9153b88bf6bec6004cf46584",
+      "snapshot_id": "8a98a5d394ee96d487b8ff9a62362f4375239f72b388eb0361d1dbac4fe68da8"
+    },
+    {
+      "old_temporary_exists": false,
+      "path": "retry-prefix-crash-after_receipt_checkpoint.json",
+      "process_exits": [
+        73,
+        0,
+        0
+      ],
+      "process_pids": [
+        50839,
+        50843,
+        50846
+      ],
+      "retained_prefix_sha256": "78a431c8a01f444e3b71b1be06b4b5b7240935db9153b88bf6bec6004cf46584",
+      "snapshot_id": "8a98a5d394ee96d487b8ff9a62362f4375239f72b388eb0361d1dbac4fe68da8"
+    },
+    {
+      "old_temporary_exists": false,
+      "path": "retry-prefix-crash-after_snapshot_record.json",
+      "process_exits": [
+        73,
+        0,
+        0
+      ],
+      "process_pids": [
+        50869,
+        50873,
+        50876
+      ],
+      "retained_prefix_sha256": "78a431c8a01f444e3b71b1be06b4b5b7240935db9153b88bf6bec6004cf46584",
+      "snapshot_id": "8a98a5d394ee96d487b8ff9a62362f4375239f72b388eb0361d1dbac4fe68da8"
+    },
+    {
+      "old_temporary_exists": false,
+      "path": "retry-prefix-crash-after_snapshot_workset_write.json",
+      "process_exits": [
+        73,
+        0,
+        0
+      ],
+      "process_pids": [
+        50889,
+        50893,
+        50896
+      ],
+      "retained_prefix_sha256": "78a431c8a01f444e3b71b1be06b4b5b7240935db9153b88bf6bec6004cf46584",
+      "snapshot_id": "8a98a5d394ee96d487b8ff9a62362f4375239f72b388eb0361d1dbac4fe68da8"
+    },
+    {
+      "old_temporary_exists": false,
+      "path": "retry-prefix-crash-before_result_write.json",
+      "process_exits": [
+        73,
+        0,
+        0
+      ],
+      "process_pids": [
+        50899,
+        50903,
+        50906
+      ],
+      "retained_prefix_sha256": "78a431c8a01f444e3b71b1be06b4b5b7240935db9153b88bf6bec6004cf46584",
+      "snapshot_id": "8a98a5d394ee96d487b8ff9a62362f4375239f72b388eb0361d1dbac4fe68da8"
+    }
+  ],
+  "scope": "synthetic local macOS process/selected-loopback evidence; all22 S7 reserved; no live provider assertion",
+  "stale_dispatch": {
+    "server_requests": 0,
+    "socket_starts": 0
+  },
+  "takeover": {
+    "minimum_wire_spacing_seconds": 0.6826716247014701,
+    "old_child_drained": true,
+    "old_socket_closed": 2772199.526756375,
+    "parent_exit": -15,
+    "parent_pid": 49989,
+    "successor_exit": 0,
+    "successor_first_start": 2772201.932859416,
+    "unsafe_until_mono": 2772201.562657625,
+    "unsafe_until_utc": "2026-10-07T00:28:57.601317+00:00",
+    "wire_priority_order": [
+      "daily",
+      "daily",
+      "daily",
+      "backfill"
+    ],
+    "zero_successor_observations": 85
+  },
+  "three_collectors": {
+    "events": {
+      "acquire": 3,
+      "bind_insert_attempt": 3,
+      "bind_insert_conflict": 2,
+      "bind_insert_success": 1,
+      "bind_read_absent": 3,
+      "bind_read_winner": 5,
+      "drain-pacing": 3,
+      "enqueue": 3,
+      "queue-choice": 10,
+      "receipt_checkpoint": 3,
+      "release": 3,
+      "request-end": 3,
+      "request-start": 3,
+      "request_barrier_ready": 3,
+      "request_barrier_released": 3,
+      "reserve": 3,
+      "result_written": 3,
+      "takeover": 3
+    },
+    "minimum_start_spacing_seconds": 0.677263792,
+    "processes": [
+      {
+        "exit": 0,
+        "pid": 50088
+      },
+      {
+        "exit": 0,
+        "pid": 50089
+      },
+      {
+        "exit": 0,
+        "pid": 50090
+      }
+    ],
+    "replay_downloaded": 0,
+    "replay_unchanged": 1,
+    "winner": {
+      "byte_count": 217,
+      "envelope_version": "sec-daily-envelope-v1",
+      "raw_path": "raw/sec/indexes/kind=daily/period=2026-10-01/sha256=7f4f306b51ee21ede9c9d9a03b5a647de6eb35d42a2d71933d288b46c450171b/master.idx",
+      "received_at": "2026-10-07T00:29:06.795890+00:00",
+      "representation": "idx",
+      "sha256": "7f4f306b51ee21ede9c9d9a03b5a647de6eb35d42a2d71933d288b46c450171b",
+      "source_id": "6cf7f339fd98f08d888586fbf41d907cb071d3a54259128e659f51e1f7caaa72",
+      "validators": {
+        "Content-Length": "217",
+        "Content-Type": "text/plain",
+        "ETag": "\"synthetic-process-1\"",
+        "X-Fixture": "synthetic"
+      }
+    }
+  }
+}

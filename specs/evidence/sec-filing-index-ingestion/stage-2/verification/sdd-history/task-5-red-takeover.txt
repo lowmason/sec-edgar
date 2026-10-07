@@ -1,0 +1,30 @@
+test_independent_fatal_timer_survives_supervisor_death_during_blocking_headers (test_download.BoundedProcessTests.test_independent_fatal_timer_survives_supervisor_death_during_blocking_headers) ... ERROR
+
+======================================================================
+ERROR: test_independent_fatal_timer_survives_supervisor_death_during_blocking_headers (test_download.BoundedProcessTests.test_independent_fatal_timer_survives_supervisor_death_during_blocking_headers)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/coordination.py", line 413, in reserve
+    bounds = self._refresh()
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/coordination.py", line 346, in _refresh
+    self._require_live()
+    ~~~~~~~~~~~~~~~~~~^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/coordination.py", line 338, in _require_live
+    raise OwnershipLost(self.loss_reason or "turn is closed")
+sec_edgar_ingest.storage.contracts.OwnershipLost: turn/lease/exchange monotonic window expired
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_download.py", line 540, in test_independent_fatal_timer_survives_supervisor_death_during_blocking_headers
+    receipt = coordinator.exchange(real_context(self.clock, self.settings), successor.url, sender)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/coordination.py", line 260, in exchange
+    permit = turn.reserve(uuid.uuid4().hex)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/coordination.py", line 450, in reserve
+    raise OwnershipLost(str(error)) from error
+sec_edgar_ingest.storage.contracts.OwnershipLost: turn/lease/exchange monotonic window expired
+
+----------------------------------------------------------------------
+Ran 1 test in 10.531s
+
+FAILED (errors=1)

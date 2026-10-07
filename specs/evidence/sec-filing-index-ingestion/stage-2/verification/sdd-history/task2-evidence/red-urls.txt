@@ -1,0 +1,55 @@
+COMMAND: uv run --offline --frozen --package sec-edgar-ingest python -m unittest discover -s packages/sec-edgar-ingest/tests -p test_urls.py -v
+EXIT: 1
+test_conflicting_or_escaping_child_is_refused (test_urls.UrlTests.test_conflicting_or_escaping_child_is_refused) ... FAIL
+test_listing_hierarchy_and_immediate_children (test_urls.UrlTests.test_listing_hierarchy_and_immediate_children) ... FAIL
+test_source_shapes_and_stable_identity (test_urls.UrlTests.test_source_shapes_and_stable_identity) ... FAIL
+test_unsafe_source_matrix (test_urls.UrlTests.test_unsafe_source_matrix) ... FAIL
+
+======================================================================
+FAIL: test_conflicting_or_escaping_child_is_refused (test_urls.UrlTests.test_conflicting_or_escaping_child_is_refused)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_urls.py", line 12, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.urls"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Unsafe URLs must be refused before acquisition")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Unsafe URLs must be refused before acquisition
+
+======================================================================
+FAIL: test_listing_hierarchy_and_immediate_children (test_urls.UrlTests.test_listing_hierarchy_and_immediate_children)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_urls.py", line 12, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.urls"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Unsafe URLs must be refused before acquisition")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Unsafe URLs must be refused before acquisition
+
+======================================================================
+FAIL: test_source_shapes_and_stable_identity (test_urls.UrlTests.test_source_shapes_and_stable_identity)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_urls.py", line 12, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.urls"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Unsafe URLs must be refused before acquisition")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Unsafe URLs must be refused before acquisition
+
+======================================================================
+FAIL: test_unsafe_source_matrix (test_urls.UrlTests.test_unsafe_source_matrix)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_urls.py", line 12, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.urls"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Unsafe URLs must be refused before acquisition")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Unsafe URLs must be refused before acquisition
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.001s
+
+FAILED (failures=4)

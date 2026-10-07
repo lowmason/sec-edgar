@@ -1,0 +1,53 @@
+Command: uv run --offline --frozen --package sec-edgar-ingest python -m unittest discover -s packages/sec-edgar-ingest/tests -p test_coordination.py -v
+Exit: 1
+test_clock_uncertainty_stops_before_sender (test_coordination.CoordinationTests.test_clock_uncertainty_stops_before_sender) ... ok
+test_conservative_known_and_unknown_release_preserve_guard_and_progress (test_coordination.CoordinationTests.test_conservative_known_and_unknown_release_preserve_guard_and_progress) ... ok
+test_delayed_dispatch_cannot_compress_actual_socket_starts (test_coordination.CoordinationTests.test_delayed_dispatch_cannot_compress_actual_socket_starts) ... ok
+test_discovery_download_and_retry_all_use_finite_exchange_turns (test_coordination.CoordinationTests.test_discovery_download_and_retry_all_use_finite_exchange_turns) ... ok
+test_exchange_deadline_cancels_even_when_lease_renewals_succeed (test_coordination.CoordinationTests.test_exchange_deadline_cancels_even_when_lease_renewals_succeed) ... ok
+test_expired_lease_does_not_allow_overlap_with_old_request (test_coordination.CoordinationTests.test_expired_lease_does_not_allow_overlap_with_old_request) ... ok
+test_expired_queue_ticket_is_cas_retired_without_erasing_another (test_coordination.CoordinationTests.test_expired_queue_ticket_is_cas_retired_without_erasing_another) ... ok
+test_full_exchange_after_unknown_renewal_waits_confirmed_successor_guard (test_coordination.CoordinationTests.test_full_exchange_after_unknown_renewal_waits_confirmed_successor_guard) ... ok
+test_guard_calculations_preserve_future_and_prior_uncertainty (test_coordination.CoordinationTests.test_guard_calculations_preserve_future_and_prior_uncertainty) ... ok
+test_local_clean_release_atomically_shortens_only_after_positive_drain (test_coordination.CoordinationTests.test_local_clean_release_atomically_shortens_only_after_positive_drain) ... ok
+test_one_permit_per_turn_and_no_reuse_after_complete (test_coordination.CoordinationTests.test_one_permit_per_turn_and_no_reuse_after_complete) ... ok
+test_queue_storage_outage_after_drain_retains_partial_receipt (test_coordination.CoordinationTests.test_queue_storage_outage_after_drain_retains_partial_receipt) ... ok
+test_real_monitor_wakes_when_reservation_installs_short_exchange_deadline (test_coordination.CoordinationTests.test_real_monitor_wakes_when_reservation_installs_short_exchange_deadline) ... ok
+test_renewal_loss_during_body_returns_retained_partial_and_shared_cancellation (test_coordination.CoordinationTests.test_renewal_loss_during_body_returns_retained_partial_and_shared_cancellation) ... ok
+test_request_begun_just_before_finite_expiry_has_full_takeover_guard (test_coordination.CoordinationTests.test_request_begun_just_before_finite_expiry_has_full_takeover_guard) ... ok
+test_reservation_outage_stops_dispatch_and_keeps_durable_guard (test_coordination.CoordinationTests.test_reservation_outage_stops_dispatch_and_keeps_durable_guard) ... ok
+test_restart_retains_global_cooldown (test_coordination.CoordinationTests.test_restart_retains_global_cooldown) ... ok
+test_shared_cancellation_event_reaches_spawned_transport_child (test_coordination.CoordinationTests.test_shared_cancellation_event_reaches_spawned_transport_child) ... ok
+test_stale_epoch_and_dispatch_deadline_are_refused (test_coordination.CoordinationTests.test_stale_epoch_and_dispatch_deadline_are_refused) ... ok
+test_stale_epoch_refuses_socket_even_under_current_lease (test_coordination.CoordinationTests.test_stale_epoch_refuses_socket_even_under_current_lease) ... ok
+test_storage_latency_cannot_undercount_latest_permitted_dispatch (test_coordination.CoordinationTests.test_storage_latency_cannot_undercount_latest_permitted_dispatch) ... ok
+test_takeover_guard_remains_fixed_while_successor_renews (test_coordination.CoordinationTests.test_takeover_guard_remains_fixed_while_successor_renews) ... ok
+test_three_independent_exchange_processes_prove_intervals_priority_and_epochs (test_coordination.CoordinationTests.test_three_independent_exchange_processes_prove_intervals_priority_and_epochs) ... ok
+test_unbounded_sender_exception_retains_future_guard (test_coordination.CoordinationTests.test_unbounded_sender_exception_retains_future_guard) ... ok
+test_unknown_atomic_release_stops_turn_and_retains_prior_guard (test_coordination.CoordinationTests.test_unknown_atomic_release_stops_turn_and_retains_prior_guard) ... ok
+test_unknown_renewal_outcome_waits_full_exchange_after_confirmed_acquisition (test_coordination.CoordinationTests.test_unknown_renewal_outcome_waits_full_exchange_after_confirmed_acquisition) ... ok
+test_actual_azure_release_never_writes_a_shortened_guard (test_coordination.JournalContractTests.test_actual_azure_release_never_writes_a_shortened_guard) ... ok
+test_azure_journal_fences_read_and_write_with_lease_and_actual_etag (test_coordination.JournalContractTests.test_azure_journal_fences_read_and_write_with_lease_and_actual_etag) ... ok
+test_azure_journal_id_etag_and_outage_fail_closed (test_coordination.JournalContractTests.test_azure_journal_id_etag_and_outage_fail_closed) ... ok
+test_date_precision_plus_rtt_must_fit_two_second_bound (test_coordination.JournalContractTests.test_date_precision_plus_rtt_must_fit_two_second_bound) ... ok
+test_journal_is_durable_and_fenced_by_actual_lease_and_version (test_coordination.JournalContractTests.test_journal_is_durable_and_fenced_by_actual_lease_and_version) ... ok
+test_local_acquisition_upper_is_observed_after_conditional_confirmation (test_coordination.JournalContractTests.test_local_acquisition_upper_is_observed_after_conditional_confirmation) ... ok
+test_local_constructor_recovers_real_wal_transition_contention_and_skips_warm_transition (test_coordination.JournalContractTests.test_local_constructor_recovers_real_wal_transition_contention_and_skips_warm_transition) ... FAIL
+test_local_server_observation_bounds_paired_sampling_latency (test_coordination.JournalContractTests.test_local_server_observation_bounds_paired_sampling_latency) ... ok
+test_permit_exposes_detached_validated_persisted_next_allowed_time (test_coordination.JournalContractTests.test_permit_exposes_detached_validated_persisted_next_allowed_time) ... ok
+test_three_simultaneous_constructors_on_initialized_root_share_actual_state (test_coordination.JournalContractTests.test_three_simultaneous_constructors_on_initialized_root_share_actual_state) ... ok
+test_upper_bounds_include_server_date_precision_and_rtt (test_coordination.JournalContractTests.test_upper_bounds_include_server_date_precision_and_rtt) ... ok
+
+======================================================================
+FAIL: test_local_constructor_recovers_real_wal_transition_contention_and_skips_warm_transition (test_coordination.JournalContractTests.test_local_constructor_recovers_real_wal_transition_contention_and_skips_warm_transition)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_coordination.py", line 240, in test_local_constructor_recovers_real_wal_transition_contention_and_skips_warm_transition
+    with self.assertRaises(sqlite3.OperationalError):
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: OperationalError not raised
+
+----------------------------------------------------------------------
+Ran 37 tests in 1.651s
+
+FAILED (failures=1)

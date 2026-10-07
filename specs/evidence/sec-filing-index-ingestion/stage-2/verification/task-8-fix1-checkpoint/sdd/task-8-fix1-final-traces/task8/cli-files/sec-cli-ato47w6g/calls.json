@@ -1,0 +1,62 @@
+[
+  {
+    "argv": [
+      "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/bin/python",
+      "-c",
+      "from support import cli_process_entry; cli_process_entry()",
+      "discover",
+      "--config",
+      "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-cli-ato47w6g/config.json",
+      "--fixture-pack",
+      "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-cli-ato47w6g/manifest.json",
+      "--state-dir",
+      "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-cli-ato47w6g",
+      "--today",
+      "2026-10-06",
+      "--deadline",
+      "2099-01-01T00:00:00Z",
+      "--run-id",
+      "cli-run",
+      "--mode",
+      "quarterly",
+      "--discovery-id",
+      "cli-discovery",
+      "--execution-id",
+      "cli-discover",
+      "--attempt-id",
+      "discover-1"
+    ],
+    "exit": 0,
+    "stderr": "{\"context\":{\"attempt_id\":\"discover-1\",\"command\":\"discover\",\"config_sha256\":\"6b9aaea3e19c5756f51437125b5e65bcd1c62cf5272a6137cccbd00362cb7564\",\"deadline\":\"2099-01-01T00:00:00+00:00\",\"effective_config\":{\"backfill\":{\"end_quarter\":\"2015Q1\",\"start_quarter\":\"2015Q1\"},\"config_version\":\"sec-acquisition-v1\",\"coordination\":{\"clock_uncertainty_seconds\":2.0,\"lease_seconds\":60.0,\"namespace\":\"sec-owner-lowell-mason\",\"renew_every_seconds\":20.0},\"daily\":{\"start_date\":\"2026-10-01\"},\"etl\":{\"parser_version\":\"fixture-envelope-v1\",\"schema_version\":\"sec-index-v1\"},\"fixture\":{\"allow_clock_override\":true,\"allow_deadline_override\":true},\"http\":{\"connect_timeout_seconds\":15.0,\"exchange_deadline_seconds\":90.0,\"max_attempts\":5,\"max_expanded_bytes\":536870912,\"max_received_bytes\":67108864,\"read_timeout_seconds\":60.0,\"retry_base_seconds\":0.001,\"retry_cap_seconds\":0.001},\"jobs\":{\"replica_retry_limit\":0},\"orchestration\":{\"transient_replays\":1},\"reconciliation\":{\"require_withdrawal_approval\":true},\"sec\":{\"max_active_collectors\":1,\"requests_per_second\":3.0,\"user_agent\":\"Lowell Mason sec-edgar-ingest mason.lowell@mac.com\"},\"storage\":{\"account_name\":null,\"attempt_table\":\"Attempts\",\"backend\":\"local-fixture\",\"binding_registry_blob\":\"sec-owner-lowell-mason/binding.json\",\"blob_api_version\":\"2026-04-06\",\"blob_endpoint\":null,\"lock_blob\":\"sec-owner-lowell-mason/sentinel.json\",\"lock_container\":\"locks\",\"quarantine_container\":\"quarantine\",\"raw_container\":\"raw\",\"root\":\".fixture-state\",\"source_table\":\"SourceState\",\"table_api_version\":\"2020-12-06\",\"table_endpoint\":null,\"workset_container\":\"worksets\"},\"worker\":{\"image_digest\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"provenance\":\"synthetic-fixture\"}},\"execution_id\":\"cli-discover\",\"image_digest\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"parser_version\":\"fixture-envelope-v1\",\"pinned_on\":\"2026-10-06\",\"priority\":\"backfill\",\"run_id\":\"cli-run\",\"schema_version\":\"sec-index-v1\",\"started_at\":\"2026-10-06T21:38:20.556902+00:00\"},\"event\":\"command_started\",\"fields\":{\"command\":\"discover\"}}\n{\"context\":{\"attempt_id\":\"discover-1\",\"command\":\"discover\",\"config_sha256\":\"6b9aaea3e19c5756f51437125b5e65bcd1c62cf5272a6137cccbd00362cb7564\",\"deadline\":\"2099-01-01T00:00:00+00:00\",\"effective_config\":{\"backfill\":{\"end_quarter\":\"2015Q1\",\"start_quarter\":\"2015Q1\"},\"config_version\":\"sec-acquisition-v1\",\"coordination\":{\"clock_uncertainty_seconds\":2.0,\"lease_seconds\":60.0,\"namespace\":\"sec-owner-lowell-mason\",\"renew_every_seconds\":20.0},\"daily\":{\"start_date\":\"2026-10-01\"},\"etl\":{\"parser_version\":\"fixture-envelope-v1\",\"schema_version\":\"sec-index-v1\"},\"fixture\":{\"allow_clock_override\":true,\"allow_deadline_override\":true},\"http\":{\"connect_timeout_seconds\":15.0,\"exchange_deadline_seconds\":90.0,\"max_attempts\":5,\"max_expanded_bytes\":536870912,\"max_received_bytes\":67108864,\"read_timeout_seconds\":60.0,\"retry_base_seconds\":0.001,\"retry_cap_seconds\":0.001},\"jobs\":{\"replica_retry_limit\":0},\"orchestration\":{\"transient_replays\":1},\"reconciliation\":{\"require_withdrawal_approval\":true},\"sec\":{\"max_active_collectors\":1,\"requests_per_second\":3.0,\"user_agent\":\"Lowell Mason sec-edgar-ingest mason.lowell@mac.com\"},\"storage\":{\"account_name\":null,\"attempt_table\":\"Attempts\",\"backend\":\"local-fixture\",\"binding_registry_blob\":\"sec-owner-lowell-mason/binding.json\",\"blob_api_version\":\"2026-04-06\",\"blob_endpoint\":null,\"lock_blob\":\"sec-owner-lowell-mason/sentinel.json\",\"lock_container\":\"locks\",\"quarantine_container\":\"quarantine\",\"raw_container\":\"raw\",\"root\":\".fixture-state\",\"source_table\":\"SourceState\",\"table_api_version\":\"2020-12-06\",\"table_endpoint\":null,\"workset_container\":\"worksets\"},\"worker\":{\"image_digest\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"provenance\":\"synthetic-fixture\"}},\"execution_id\":\"cli-discover\",\"image_digest\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"parser_version\":\"fixture-envelope-v1\",\"pinned_on\":\"2026-10-06\",\"priority\":\"backfill\",\"run_id\":\"cli-run\",\"schema_version\":\"sec-index-v1\",\"started_at\":\"2026-10-06T21:38:20.556902+00:00\"},\"event\":\"command_finished\",\"fields\":{\"counters\":{\"discovered\":1,\"downloaded\":0,\"failed\":0,\"pending\":0,\"quarantined\":0,\"unchanged\":0},\"outcome\":\"success\",\"result_ref\":\"runs/sec/cli-run/discover/discover-1/result.json\"}}\n",
+    "stdout": "{\"outcome\":\"success\",\"result_ref\":\"runs/sec/cli-run/discover/discover-1/result.json\",\"snapshot_workset_ref\":null,\"source_workset_ref\":\"worksets/sec/source/sha256=25540617265b1c10c8d115c8c15e6abedfeb386255f573d26babf471e8860a7e/workset.json\"}\n"
+  },
+  {
+    "argv": [
+      "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/bin/python",
+      "-c",
+      "from support import cli_process_entry; cli_process_entry()",
+      "collect",
+      "--config",
+      "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-cli-ato47w6g/config.json",
+      "--fixture-pack",
+      "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-cli-ato47w6g/manifest.json",
+      "--state-dir",
+      "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-cli-ato47w6g",
+      "--today",
+      "2026-10-06",
+      "--deadline",
+      "2099-01-01T00:00:00Z",
+      "--run-id",
+      "cli-run",
+      "--workset",
+      "worksets/sec/source/sha256=25540617265b1c10c8d115c8c15e6abedfeb386255f573d26babf471e8860a7e/workset.json",
+      "--execution-id",
+      "cli-collect",
+      "--attempt-id",
+      "collect-1"
+    ],
+    "exit": 5,
+    "stderr": "{\"context\":{\"attempt_id\":\"collect-1\",\"command\":\"collect\",\"config_sha256\":\"6b9aaea3e19c5756f51437125b5e65bcd1c62cf5272a6137cccbd00362cb7564\",\"deadline\":\"2099-01-01T00:00:00+00:00\",\"effective_config\":{\"backfill\":{\"end_quarter\":\"2015Q1\",\"start_quarter\":\"2015Q1\"},\"config_version\":\"sec-acquisition-v1\",\"coordination\":{\"clock_uncertainty_seconds\":2.0,\"lease_seconds\":60.0,\"namespace\":\"sec-owner-lowell-mason\",\"renew_every_seconds\":20.0},\"daily\":{\"start_date\":\"2026-10-01\"},\"etl\":{\"parser_version\":\"fixture-envelope-v1\",\"schema_version\":\"sec-index-v1\"},\"fixture\":{\"allow_clock_override\":true,\"allow_deadline_override\":true},\"http\":{\"connect_timeout_seconds\":15.0,\"exchange_deadline_seconds\":90.0,\"max_attempts\":5,\"max_expanded_bytes\":536870912,\"max_received_bytes\":67108864,\"read_timeout_seconds\":60.0,\"retry_base_seconds\":0.001,\"retry_cap_seconds\":0.001},\"jobs\":{\"replica_retry_limit\":0},\"orchestration\":{\"transient_replays\":1},\"reconciliation\":{\"require_withdrawal_approval\":true},\"sec\":{\"max_active_collectors\":1,\"requests_per_second\":3.0,\"user_agent\":\"Lowell Mason sec-edgar-ingest mason.lowell@mac.com\"},\"storage\":{\"account_name\":null,\"attempt_table\":\"Attempts\",\"backend\":\"local-fixture\",\"binding_registry_blob\":\"sec-owner-lowell-mason/binding.json\",\"blob_api_version\":\"2026-04-06\",\"blob_endpoint\":null,\"lock_blob\":\"sec-owner-lowell-mason/sentinel.json\",\"lock_container\":\"locks\",\"quarantine_container\":\"quarantine\",\"raw_container\":\"raw\",\"root\":\".fixture-state\",\"source_table\":\"SourceState\",\"table_api_version\":\"2020-12-06\",\"table_endpoint\":null,\"workset_container\":\"worksets\"},\"worker\":{\"image_digest\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"provenance\":\"synthetic-fixture\"}},\"execution_id\":\"cli-collect\",\"image_digest\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"parser_version\":\"fixture-envelope-v1\",\"pinned_on\":\"2026-10-06\",\"priority\":\"backfill\",\"run_id\":\"cli-run\",\"schema_version\":\"sec-index-v1\",\"started_at\":\"2026-10-06T21:38:22.117976+00:00\"},\"event\":\"command_started\",\"fields\":{\"command\":\"collect\"}}\n{\"context\":{\"attempt_id\":\"collect-1\",\"command\":\"collect\",\"config_sha256\":\"6b9aaea3e19c5756f51437125b5e65bcd1c62cf5272a6137cccbd00362cb7564\",\"deadline\":\"2099-01-01T00:00:00+00:00\",\"effective_config\":{\"backfill\":{\"end_quarter\":\"2015Q1\",\"start_quarter\":\"2015Q1\"},\"config_version\":\"sec-acquisition-v1\",\"coordination\":{\"clock_uncertainty_seconds\":2.0,\"lease_seconds\":60.0,\"namespace\":\"sec-owner-lowell-mason\",\"renew_every_seconds\":20.0},\"daily\":{\"start_date\":\"2026-10-01\"},\"etl\":{\"parser_version\":\"fixture-envelope-v1\",\"schema_version\":\"sec-index-v1\"},\"fixture\":{\"allow_clock_override\":true,\"allow_deadline_override\":true},\"http\":{\"connect_timeout_seconds\":15.0,\"exchange_deadline_seconds\":90.0,\"max_attempts\":5,\"max_expanded_bytes\":536870912,\"max_received_bytes\":67108864,\"read_timeout_seconds\":60.0,\"retry_base_seconds\":0.001,\"retry_cap_seconds\":0.001},\"jobs\":{\"replica_retry_limit\":0},\"orchestration\":{\"transient_replays\":1},\"reconciliation\":{\"require_withdrawal_approval\":true},\"sec\":{\"max_active_collectors\":1,\"requests_per_second\":3.0,\"user_agent\":\"Lowell Mason sec-edgar-ingest mason.lowell@mac.com\"},\"storage\":{\"account_name\":null,\"attempt_table\":\"Attempts\",\"backend\":\"local-fixture\",\"binding_registry_blob\":\"sec-owner-lowell-mason/binding.json\",\"blob_api_version\":\"2026-04-06\",\"blob_endpoint\":null,\"lock_blob\":\"sec-owner-lowell-mason/sentinel.json\",\"lock_container\":\"locks\",\"quarantine_container\":\"quarantine\",\"raw_container\":\"raw\",\"root\":\".fixture-state\",\"source_table\":\"SourceState\",\"table_api_version\":\"2020-12-06\",\"table_endpoint\":null,\"workset_container\":\"worksets\"},\"worker\":{\"image_digest\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"provenance\":\"synthetic-fixture\"}},\"execution_id\":\"cli-collect\",\"image_digest\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"parser_version\":\"fixture-envelope-v1\",\"pinned_on\":\"2026-10-06\",\"priority\":\"backfill\",\"run_id\":\"cli-run\",\"schema_version\":\"sec-index-v1\",\"started_at\":\"2026-10-06T21:38:22.117976+00:00\"},\"event\":\"command_finished\",\"fields\":{\"counters\":{\"discovered\":1,\"downloaded\":0,\"failed\":1,\"pending\":1,\"quarantined\":5,\"unchanged\":0},\"outcome\":\"retry_exhausted\",\"result_ref\":\"runs/sec/cli-run/collect/collect-1/result.json\"}}\n",
+    "stdout": "{\"outcome\":\"retry_exhausted\",\"result_ref\":\"runs/sec/cli-run/collect/collect-1/result.json\",\"snapshot_workset_ref\":null,\"source_workset_ref\":\"worksets/sec/source/sha256=25540617265b1c10c8d115c8c15e6abedfeb386255f573d26babf471e8860a7e/workset.json\"}\n"
+  }
+]

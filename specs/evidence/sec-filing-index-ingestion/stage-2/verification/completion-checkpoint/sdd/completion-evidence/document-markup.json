@@ -1,0 +1,76 @@
+{
+  "active_authoritative_stamp_existed_before_roadmap_edit": {
+    "bytes": 19914,
+    "path": "specs/sec-filing-index-ingestion-stage-2-spec.md",
+    "sha256": "d7e7efbd4377121903379b04b828df1d40a94fe724cb3d23f3c2fab3fb593269"
+  },
+  "actual_steps_before": 33,
+  "actual_steps_completed": 33,
+  "all22_stage7_checks": "reserved",
+  "all_approved_plan_code_examples_unchanged": true,
+  "deviation_notes": [
+    {
+      "note": "Exact acquisition pins were retained; local verification used macOS 26.6.2 arm64/Python 3.14.0, distinct from accepted Linux amd64/Python 3.14.8 evidence and a future worker image.",
+      "step": 3,
+      "task": 1
+    },
+    {
+      "note": "RunContext adds deeply immutable effective_config and pinned_on; make_source_workset accepts keyword-only acquisition_mode, copied into SnapshotWorkset, with strict shared source/directory/raw-period identity validation.",
+      "step": 2,
+      "task": 2
+    },
+    {
+      "note": "AzureStateStore accepts keyword-only objects/observer and keeps legacy small Payload rows; oversized whole records use verified canonical worksets/state/sha256=<hash>.json objects plus one bounded Table descriptor with actual ETag CAS.",
+      "step": 3,
+      "task": 3
+    },
+    {
+      "note": "TimeBounds and LeaseHandle upper observations bound takeover; Azure clean release retains the full unsafe_until guard because journal update and release are separate operations, while local release_clean is atomic.",
+      "step": 2,
+      "task": 4
+    },
+    {
+      "note": "Coordinator.exchange adds keyword-only on_response and a shared fail-closed policy latch; durable request_history/begin_request retain retry ordinals and server delays across attempts without reusing historical host-monotonic values.",
+      "step": 3,
+      "task": 5
+    },
+    {
+      "note": "AcquisitionState adds discovery_session/begin_discovery/directory_gap/finish_discovery and record_directory evidence/selection/expected_gap keywords; immutable origin provenance is verified on cached recovery.",
+      "step": 3,
+      "task": 6
+    },
+    {
+      "note": "collection.stage_receipt adds optional keyword-only request_id; production supplies the verified actual transport reservation and omission fails closed, preserving BodyReceipt and write-once Binding identity.",
+      "step": 2,
+      "task": 7
+    },
+    {
+      "note": "Generated synthetic configs keep relative storage.root with absolute fixture --state-dir and explicit clock/deadline override flags; quarterly uses 2015Q1 and owner-approved dailyend=open uses 2026-10-06, with the exact Yes receipt retained.",
+      "step": 4,
+      "task": 8
+    },
+    {
+      "note": "The latest post-fix prescribed check passed 302 tests; fresh installed-wheel and approved combined/process/recovery proofs cover the final source, and fresh GPT-6.1 Max default-role fallback review closed all findings; same-family Codex CLI second seat was explicitly skipped.",
+      "step": 5,
+      "task": 8
+    }
+  ],
+  "no_other_active_plan_implements_spec_suffix": true,
+  "old_plan": "specs/plans/2-sec-filing-index-ingestion-stage-2-spec.md",
+  "old_spec": "specs/sec-filing-index-ingestion-stage-2-spec.md",
+  "original_owner_approval_paragraphs_preserved_and_marked_historical": true,
+  "recorded_at": "2026-10-07T01:05:51.121170+00:00",
+  "retired_plan": {
+    "bytes": 113770,
+    "path": "specs/plans/completed/2-sec-filing-index-ingestion-stage-2-spec.md",
+    "sha256": "ad5be30f660046f20c73d816ed3319a353d2fa9f02ebaade4b9502341cf6e4a7"
+  },
+  "retired_spec": {
+    "bytes": 19971,
+    "path": "specs/completed/sec-filing-index-ingestion-stage-2-spec.md",
+    "sha256": "6af09dfa865b7ae28a5c1beb8f40bda57b795c09396d76924f37bf12673545a4"
+  },
+  "retirement_commit_subject": "chore(specs): retire plan 2",
+  "status": "**Status: COMPLETE (2026-10-06)** \u2014 executed via subagent-driven-development; nothing deferred",
+  "unchecked_steps_remaining": 0
+}

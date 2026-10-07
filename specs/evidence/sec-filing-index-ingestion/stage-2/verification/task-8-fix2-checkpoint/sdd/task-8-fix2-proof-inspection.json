@@ -1,0 +1,232 @@
+{
+  "all18_production_sources_equal_BASE_and_validated_wheel": true,
+  "artifacts": [
+    {
+      "bytes": 77862,
+      "identical_to_validated_fix1_artifact": true,
+      "name": "sec_edgar_ingest-0.1.0-py3-none-any.whl",
+      "reused_retained_path": "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-2/verification/sec-edgar-wheel-1k5klfr3/build-artifacts/sec_edgar_ingest-0.1.0-py3-none-any.whl",
+      "sha256": "aabf437bdbf8ba521eab027112377372e4515026f0e153016557cc6829502628"
+    },
+    {
+      "bytes": 66284,
+      "identical_to_validated_fix1_artifact": true,
+      "name": "sec_edgar_ingest-0.1.0.tar.gz",
+      "reused_retained_path": "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-2/verification/sec-edgar-wheel-1k5klfr3/build-artifacts/sec_edgar_ingest-0.1.0.tar.gz",
+      "sha256": "7fe7003fb193a55c68666a16de34e145c1ccf88fc18e1e05a7f48e77f5d53780"
+    }
+  ],
+  "current_process_proof": {
+    "binding_conflicts": 2,
+    "binding_inserts": 3,
+    "binding_winners": 1,
+    "deadline_child_exit": -14,
+    "deadline_retained_bytes": 91,
+    "deadline_retained_sha256": "87b88e4e14bba7c4429183a1b7e80dbd146a5ca0278c3b7da0403e941f60373b",
+    "minimum_wire_spacing_seconds": 0.6780580841004848,
+    "parent_exit": -15,
+    "priorities": [
+      "daily",
+      "daily",
+      "daily",
+      "backfill"
+    ],
+    "race_processes": [
+      {
+        "exit": 0,
+        "pid": 23819
+      },
+      {
+        "exit": 0,
+        "pid": 23820
+      },
+      {
+        "exit": 0,
+        "pid": 23821
+      }
+    ],
+    "stale_server_requests": 0,
+    "successor_processes": [
+      {
+        "exit": 0,
+        "pid": 23795
+      },
+      {
+        "exit": 0,
+        "pid": 23792
+      }
+    ],
+    "unsafe_until_utc": "2026-10-06T22:05:58.351613+00:00",
+    "winner": {
+      "byte_count": 217,
+      "envelope_version": "sec-daily-envelope-v1",
+      "raw_path": "raw/sec/indexes/kind=daily/period=2026-10-01/sha256=a7c7f989eadb3613deaefca4b789fc8e751ae1dc9955e56b04a518ad628519b0/master.idx",
+      "received_at": "2026-10-06T22:06:07.543494+00:00",
+      "representation": "idx",
+      "sha256": "a7c7f989eadb3613deaefca4b789fc8e751ae1dc9955e56b04a518ad628519b0",
+      "source_id": "6cf7f339fd98f08d888586fbf41d907cb071d3a54259128e659f51e1f7caaa72",
+      "validators": {
+        "Content-Length": "217",
+        "Content-Type": "text/plain",
+        "ETag": "\"synthetic-process-0\"",
+        "X-Fixture": "synthetic"
+      }
+    },
+    "zero_successor_observations": 84
+  },
+  "fresh_install_rerun_needed": false,
+  "fresh_installed_proof_manifest_sha256": "6ec8c63cd8e68477c52809ef303110d7a6c2d47c805b08eaa15d3d56b8481e6d",
+  "fresh_installed_proof_reused": "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-2/verification/sec-edgar-wheel-1k5klfr3",
+  "full_check_sha256": "f8d4af430fadfec27aea03ef51e936f94652c8defd82b8c9ab9c5ca433a8809c",
+  "guard_proof": {
+    "public_and_module_aliases": {
+      "calls": [],
+      "denied": [
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    "spawned": {
+      "calls": [
+        "connect"
+      ],
+      "denied": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "guard_available": true,
+      "pid": 24749
+    }
+  },
+  "limits": "Synthetic recording-stub auth proof plus actual bounded macOS loopback/process proof; I1 remains pending and all S7 checks reserved.",
+  "prior_checkpoint_manifest_records_unchanged": {
+    "specs/evidence/sec-filing-index-ingestion/stage-2/verification/sha256-manifest.json": 4813,
+    "specs/evidence/sec-filing-index-ingestion/stage-2/verification/task-8-fix1-checkpoint/sha256-manifest.json": 4661
+  },
+  "production_source_hashes": [
+    {
+      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/__init__.py",
+      "sha256": "91447944015cec709e8aa7655f7e9d64e1e4508e7023a57fe3746911c0fc6fed"
+    },
+    {
+      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/__main__.py",
+      "sha256": "307299fda7b77d22c64cb51430ec75e5f59d78e9c948786afb3b2544fe45e4b7"
+    },
+    {
+      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/cli.py",
+      "sha256": "7216fcf2f07c965770a4ece67ed9a785afcebc95a6f93c1556b7c79e06671a84"
+    },
+    {
+      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/collection.py",
+      "sha256": "68b655a18d1e5eca7f5d1c5de860f0644a3ccc34ad9ea6edb579ae5a9738f3c9"
+    },
+    {
+      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/config.py",
+      "sha256": "23f302368bf3e9a04204d89679cb087cc6f5f985f134cd48f32086c45339a264"
+    },
+    {
+      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/coordination.py",
+      "sha256": "ee768738ddfa81116c12e7491ed7d1c48cafeccf5de23a2947624329731ffb96"
+    },
+    {
+      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/discovery.py",
+      "sha256": "187a0cfb0c5f44709696dc12feed5cf3698ce7084f701cf7460be042568016b5"
+    },
+    {
+      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/download.py",
+      "sha256": "467068de88ec939c5b60e7d37852c722170a4c218ed0ba1c004ff74c2b627473"
+    },
+    {
+      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py",
+      "sha256": "6442fd063727d5eae7958d12e24e4668ec1dddbd184ee4f235c4208632af03c4"
+    },
+    {
+      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/results.py",
+      "sha256": "aac391e5860eadbba547f4d1d5fdfd93c407a541c254834db95d717029c3f29a"
+    },
+    {
+      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/state.py",
+      "sha256": "4b5c2fc42d3a824cb404bc221ef3fd48f081f9cd03dc2d633ee83c21c7fb8184"
+    },
+    {
+      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/__init__.py",
+      "sha256": "a12bd5c1b2590957895bc75bddbc88e99d08e9df380435e5add8ee3a6a6b9d00"
+    },
+    {
+      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py",
+      "sha256": "7eaed27330fe2b6e7c162faeb937776f37e2d887514008db8eb643a5fe1f682c"
+    },
+    {
+      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/contracts.py",
+      "sha256": "cc76934066f5be3d894e066503f740ec1de085b84d27fbd090708da386ed4993"
+    },
+    {
+      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py",
+      "sha256": "bd1988d702556b04996508c390a46ba6ebed9365aae76b4bd83f3a719d4c484c"
+    },
+    {
+      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/urls.py",
+      "sha256": "7e1f20fc5c951c23efbbfec9a66e60ae4ecd4fda683fd1f95e20d59e28057d77"
+    },
+    {
+      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/validation.py",
+      "sha256": "1885960d908838ee4fa4e733bc91fdcfc1f773cdad2d807844e8e3405f4800b3"
+    },
+    {
+      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/worksets.py",
+      "sha256": "3aba39579b3c4708573ba1b627ffe489118a32cd167929a39764aaea4dff230e"
+    }
+  ],
+  "recorded_at": "2026-10-06T22:09:01.227778+00:00",
+  "reuse_reason": "Both rebuilt artifacts and all build inputs/18 production sources are byte-identical to the already verified fix1 installed-wheel proof; test-only files remain excluded.",
+  "runtime_dependency_count": 20,
+  "source_base": "35b47692168677acbe0410a33fc758d6d569a7a4",
+  "unchanged_build_inputs": [
+    {
+      "path": "packages/sec-edgar-ingest/README.md",
+      "sha256": "1554795e1e4904c3cd499288f20beb0a8388ade7082afdf3dab448d8b98e6e88"
+    },
+    {
+      "path": "packages/sec-edgar-ingest/pyproject.toml",
+      "sha256": "081f99aaff410e67a72efb71df82093f2c8b6f92ee77e608b1fb3ca100d434a1"
+    },
+    {
+      "path": "pyproject.toml",
+      "sha256": "c63a8426c3fa738eccd30429b0efeade8a7c65fff9ce33cd3d68999d3dfda194"
+    },
+    {
+      "path": "uv.lock",
+      "sha256": "7a1b45b2944241e9b8fda35b5e87977c6ec189a3c72f4ca1f3f861661220f42c"
+    }
+  ],
+  "workspace_versions_equal_retained_fresh_install": {
+    "PyJWT": "2.15.1",
+    "azure-core": "1.41.0",
+    "azure-data-tables": "12.7.0",
+    "azure-identity": "1.26.0",
+    "azure-storage-blob": "12.31.0",
+    "certifi": "2026.7.22",
+    "cffi": "2.1.1",
+    "charset-normalizer": "3.5.2",
+    "cryptography": "50.0.2",
+    "idna": "3.20",
+    "isodate": "0.7.2",
+    "msal": "1.39.0",
+    "msal-extensions": "1.3.1",
+    "multidict": "7.0.0",
+    "propcache": "0.5.4",
+    "pycparser": "3.0",
+    "requests": "2.34.2",
+    "sec-edgar-ingest": "0.1.0",
+    "typing_extensions": "4.16.0",
+    "urllib3": "2.8.0",
+    "yarl": "1.25.1"
+  }
+}

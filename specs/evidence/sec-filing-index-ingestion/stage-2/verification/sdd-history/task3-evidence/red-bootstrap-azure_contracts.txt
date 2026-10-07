@@ -1,0 +1,19 @@
+COMMAND: uv run --offline --frozen --package sec-edgar-ingest python -m unittest discover -s packages/sec-edgar-ingest/tests -p test_azure_contracts.py -v
+EXIT: 1
+test_installed_pins_are_exact (test_azure_contracts.AzureContractTests.test_installed_pins_are_exact) ... FAIL
+
+======================================================================
+FAIL: test_installed_pins_are_exact (test_azure_contracts.AzureContractTests.test_installed_pins_are_exact)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_azure_contracts.py", line 8, in setUp
+    self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.storage"),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         "Pinned SDK adapters must issue conditional storage HTTP requests")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Pinned SDK adapters must issue conditional storage HTTP requests
+
+----------------------------------------------------------------------
+Ran 1 test in 0.000s
+
+FAILED (failures=1)

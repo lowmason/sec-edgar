@@ -1,0 +1,61 @@
+{
+  "events": [
+    {
+      "event": "socket-accepted",
+      "monotonic": 2771820.355445916
+    },
+    {
+      "event": "request-received",
+      "monotonic": 2771820.355483333
+    },
+    {
+      "event": "headers-sent",
+      "monotonic": 2771820.355513166
+    },
+    {
+      "byte_count": 6,
+      "event": "entity-sent",
+      "monotonic": 2771820.355535166
+    },
+    {
+      "byte_count": 12,
+      "event": "entity-sent",
+      "monotonic": 2771820.379073916
+    },
+    {
+      "byte_count": 18,
+      "event": "entity-sent",
+      "monotonic": 2771820.400596333
+    },
+    {
+      "event": "socket-closed",
+      "monotonic": 2771820.425703166
+    }
+  ],
+  "extra": {
+    "receipt": {
+      "byte_count": 18,
+      "complete": false,
+      "error": {
+        "code": "cancelled",
+        "details": {},
+        "message": "HTTP child was drained after cancelled",
+        "retryable": false,
+        "source_id": null
+      },
+      "headers": {
+        "Connection": "close",
+        "Content-Length": "1000000"
+      },
+      "received_at": "2026-10-07T00:22:36.393014+00:00",
+      "sha256": "7202c2884994a287fd9248f20986fce935c50c6f7796bacc8188d8c638283683",
+      "status": 200,
+      "temporary_path": "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/tmp_wbhvtvi/sender/body",
+      "url": "http://127.0.0.1:57278/fixture"
+    }
+  },
+  "requests": [
+    "GET /fixture HTTP/1.1\r\nHost: 127.0.0.1:57278\r\nUser-Agent: Lowell Mason sec-edgar-ingest mason.lowell@mac.com\r\nAccept-Encoding: identity\r\nAccept: */*\r\nConnection: keep-alive\r\n\r\n"
+  ],
+  "sent_bytes": 18
+}

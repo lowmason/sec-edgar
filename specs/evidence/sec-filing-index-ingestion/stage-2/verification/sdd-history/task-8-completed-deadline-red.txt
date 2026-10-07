@@ -1,0 +1,22 @@
+argv=['.venv/bin/python', '-m', 'unittest', '-v', 'test_cli.CompletedDeadlineTests']
+stdout:
+
+stderr:
+test_completed_attempt_replays_after_deadline_without_fabricating_start (test_cli.CompletedDeadlineTests.test_completed_attempt_replays_after_deadline_without_fabricating_start) ... FAIL
+
+======================================================================
+FAIL: test_completed_attempt_replays_after_deadline_without_fabricating_start (test_cli.CompletedDeadlineTests.test_completed_attempt_replays_after_deadline_without_fabricating_start)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_cli.py", line 494, in test_completed_attempt_replays_after_deadline_without_fabricating_start
+    self.assertEqual(code, 0, errors.getvalue())
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 2 != 0 : {"error":"deadline must be after started_at","outcome":"configuration"}
+
+
+----------------------------------------------------------------------
+Ran 1 test in 1.520s
+
+FAILED (failures=1)
+
+exit_code=1

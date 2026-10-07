@@ -1,0 +1,23 @@
+{
+  "argv": [
+    "uv",
+    "run",
+    "--offline",
+    "--frozen",
+    "--package",
+    "sec-edgar-ingest",
+    "python",
+    "packages/sec-edgar-ingest/tests/network_guard.py",
+    "discover",
+    "-s",
+    "packages/sec-edgar-ingest/tests",
+    "-p",
+    "test_acquisition_processes.py",
+    "-k",
+    "test_real_clock_context_pins_actual_day_after_frozen_fixture_date",
+    "-v"
+  ],
+  "cwd": "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar",
+  "elapsed_seconds": 0.14389958325773478,
+  "exit": 1
+}

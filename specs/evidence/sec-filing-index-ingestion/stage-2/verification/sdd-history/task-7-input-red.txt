@@ -1,0 +1,79 @@
+command=["/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/bin/python", "-m", "unittest", "-v", "test_collection.CollectionTests.test_direct_member_call_refuses_incompatible_versions_before_fetch", "test_collection.CollectionTests.test_path_components_are_refused_before_request", "test_collection.CollectionTests.test_state_failure_record_conflict_returns_honest_gap", "test_collection.CollectionTests.test_process_exit_preserves_first_pin_and_fetches_only_unresolved_member"]
+stdout:
+
+stderr:
+test_direct_member_call_refuses_incompatible_versions_before_fetch (test_collection.CollectionTests.test_direct_member_call_refuses_incompatible_versions_before_fetch) ... FAIL
+test_path_components_are_refused_before_request (test_collection.CollectionTests.test_path_components_are_refused_before_request) ... 
+  test_path_components_are_refused_before_request (test_collection.CollectionTests.test_path_components_are_refused_before_request) (field='run_id') ... FAIL
+  test_path_components_are_refused_before_request (test_collection.CollectionTests.test_path_components_are_refused_before_request) (field='attempt_id') ... FAIL
+test_state_failure_record_conflict_returns_honest_gap (test_collection.CollectionTests.test_state_failure_record_conflict_returns_honest_gap) ... ERROR
+test_process_exit_preserves_first_pin_and_fetches_only_unresolved_member (test_collection.CollectionTests.test_process_exit_preserves_first_pin_and_fetches_only_unresolved_member) ... ok
+
+======================================================================
+ERROR: test_state_failure_record_conflict_returns_honest_gap (test_collection.CollectionTests.test_state_failure_record_conflict_returns_honest_gap)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/collection.py", line 281, in collect
+    snapshot = collect_member(workset, source, context, settings, client, state, objects, faults)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/collection.py", line 184, in collect_member
+    snapshot = state.reusable_snapshot(source, expected_envelope(source))
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/state.py", line 276, in reusable_snapshot
+    raise Conflict("reusable source has conflicting immutable identity")
+sec_edgar_ingest.storage.contracts.Conflict: reusable source has conflicting immutable identity
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 391, in test_state_failure_record_conflict_returns_honest_gap
+    result = h.collect(self.workset)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/support.py", line 1064, in collect
+    result = collect(workset, context, self.settings, self.client, self.source_state, self.objects, self.faults)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/collection.py", line 294, in collect
+    state.record_failure(source, error)
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/state.py", line 420, in record_failure
+    self._update_source(source, change)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/state.py", line 42, in _update_source
+    raise Conflict("source identity has conflicting metadata")
+sec_edgar_ingest.storage.contracts.Conflict: source identity has conflicting metadata
+
+======================================================================
+FAIL: test_direct_member_call_refuses_incompatible_versions_before_fetch (test_collection.CollectionTests.test_direct_member_call_refuses_incompatible_versions_before_fetch)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 368, in test_direct_member_call_refuses_incompatible_versions_before_fetch
+    with self.assertRaises(ValueError):
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_path_components_are_refused_before_request (test_collection.CollectionTests.test_path_components_are_refused_before_request) (field='run_id')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 380, in test_path_components_are_refused_before_request
+    self.assertEqual(result.outcome, 'configuration')
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'success' != 'configuration'
+- success
++ configuration
+
+
+======================================================================
+FAIL: test_path_components_are_refused_before_request (test_collection.CollectionTests.test_path_components_are_refused_before_request) (field='attempt_id')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 380, in test_path_components_are_refused_before_request
+    self.assertEqual(result.outcome, 'configuration')
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'success' != 'configuration'
+- success
++ configuration
+
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.492s
+
+FAILED (failures=3, errors=1)
+
+exit_code=1

@@ -1,0 +1,87 @@
+[
+  {
+    "at": "2026-10-06T00:00:00+00:00",
+    "event": "enqueue",
+    "mono": 0.0,
+    "owner": "fixture-execution:fixture-attempt:db1f79dc302e4195836d72c7259348ca",
+    "priority": "backfill",
+    "ticket_id": "413b951f8ba4436a9a7c1790717c7ef1"
+  },
+  {
+    "at": "2026-10-06T00:00:00+00:00",
+    "event": "queue-choice",
+    "mono": 0.0,
+    "owner": "fixture-execution:fixture-attempt:db1f79dc302e4195836d72c7259348ca",
+    "priority": "backfill",
+    "ticket_id": "413b951f8ba4436a9a7c1790717c7ef1"
+  },
+  {
+    "at": "2026-10-06T00:00:00+00:00",
+    "event": "queue-choice",
+    "mono": 0.0,
+    "owner": "fixture-execution:fixture-attempt:db1f79dc302e4195836d72c7259348ca",
+    "priority": "backfill",
+    "ticket_id": "413b951f8ba4436a9a7c1790717c7ef1"
+  },
+  {
+    "at": "2026-10-06T00:00:00+00:00",
+    "epoch": 1,
+    "event": "acquire",
+    "lease_id": "5e2354c8-fd45-4f50-9f10-7e82551708f1",
+    "mono": 0.0,
+    "owner": "fixture-execution:fixture-attempt:db1f79dc302e4195836d72c7259348ca",
+    "ownership_until": "2026-10-06T00:01:00+00:00"
+  },
+  {
+    "at": "2026-10-06T00:00:00+00:00",
+    "earliest_safe": "2026-10-06T00:00:00+00:00",
+    "epoch": 1,
+    "event": "takeover",
+    "mono": 0.0,
+    "owner": "fixture-execution:fixture-attempt:db1f79dc302e4195836d72c7259348ca"
+  },
+  {
+    "at": "2026-10-06T00:00:00+00:00",
+    "epoch": 1,
+    "event": "reserve",
+    "mono": 0.0,
+    "next_allowed_at": "2026-10-06T00:00:00.666668+00:00",
+    "owner": "fixture-execution:fixture-attempt:db1f79dc302e4195836d72c7259348ca",
+    "request_id": "4d48325177464c41801ade4da79b0d3f",
+    "start_before_mono": 0.3333333333333333
+  },
+  {
+    "at": "2026-10-06T00:00:00+00:00",
+    "epoch": 1,
+    "event": "request-start",
+    "mono": 0.0,
+    "owner": "fixture-execution:fixture-attempt:db1f79dc302e4195836d72c7259348ca",
+    "request_id": "4d48325177464c41801ade4da79b0d3f"
+  },
+  {
+    "at": "2026-10-06T00:00:00+00:00",
+    "epoch": 1,
+    "event": "request-end",
+    "mono": 0.0,
+    "owner": "fixture-execution:fixture-attempt:db1f79dc302e4195836d72c7259348ca",
+    "request_id": "4d48325177464c41801ade4da79b0d3f"
+  },
+  {
+    "at": "2026-10-06T00:00:00+00:00",
+    "clean_release": true,
+    "drained": true,
+    "epoch": 1,
+    "event": "release",
+    "mono": 0.0,
+    "owner": "fixture-execution:fixture-attempt:db1f79dc302e4195836d72c7259348ca",
+    "unsafe_until": "2026-10-06T00:00:00+00:00"
+  },
+  {
+    "at": "2026-10-06T00:00:00+00:00",
+    "epoch": 1,
+    "event": "loss",
+    "mono": 0.0,
+    "owner": "fixture-execution:fixture-attempt:db1f79dc302e4195836d72c7259348ca",
+    "reason": "queue cleanup outcome unknown: ticket status acknowledgement unknown"
+  }
+]

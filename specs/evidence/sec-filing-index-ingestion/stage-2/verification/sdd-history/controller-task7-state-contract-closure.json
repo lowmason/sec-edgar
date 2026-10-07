@@ -1,0 +1,35 @@
+{
+  "recorded_at": "2026-10-06T19:27:59.462723+00:00",
+  "review_head": "4761e0e027782a1a78a4f43af6512fe193e77bf4",
+  "method": "metadata-only current line lookup and Task7 state diff inspection; unchanged bodies previously inspected, no suite rerun",
+  "unchanged_contracts": {
+    "remember_snapshot": {
+      "line": 241,
+      "behavior": "first same-hash receipt metadata retained; actual immutable insert collision rereads accepted Snapshot; checks raw path/count/representation/envelope; SourceState recency monotonic"
+    },
+    "snapshot": {
+      "line": 337,
+      "behavior": "exact source/hash durable row; Conflict if absent"
+    },
+    "bind_once": {
+      "line": 347,
+      "behavior": "existing winner before loser validation; actual insert AlreadyExists then reread/adopt winner"
+    },
+    "_insert_immutable": {
+      "line": 361,
+      "behavior": "actual insert AlreadyExists then exact existing detached value equality or Conflict"
+    },
+    "begin_attempt": {
+      "line": 369,
+      "behavior": "key includes run/execution/command/attempt/image; insert/adopt then whole context equality; active context only after validation"
+    },
+    "request_history": {
+      "line": 422,
+      "behavior": "actual scan by attempt_key and URL; whole persisted context equality; sorted ordinal"
+    }
+  },
+  "reviewer_cross_task_obligations": [
+    "Task8 immutable result object before finish_attempt and repair",
+    "Task8 equivalent early path-component guard before backend/result paths"
+  ]
+}

@@ -1,0 +1,15 @@
+test_unconfirmed_cooldown_write_does_not_claim_a_persisted_next_allowed (test_download.PolicyHandoffTests.test_unconfirmed_cooldown_write_does_not_claim_a_persisted_next_allowed) ... FAIL
+
+======================================================================
+FAIL: test_unconfirmed_cooldown_write_does_not_claim_a_persisted_next_allowed (test_download.PolicyHandoffTests.test_unconfirmed_cooldown_write_does_not_claim_a_persisted_next_allowed)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_download.py", line 360, in test_unconfirmed_cooldown_write_does_not_claim_a_persisted_next_allowed
+    self.assertIs(row.value["retry"].get("cooldown_confirmed"), False)
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: None is not False
+
+----------------------------------------------------------------------
+Ran 1 test in 0.050s
+
+FAILED (failures=1)

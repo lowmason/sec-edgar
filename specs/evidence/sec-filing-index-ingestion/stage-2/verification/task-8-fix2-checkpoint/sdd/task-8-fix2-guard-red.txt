@@ -1,0 +1,57 @@
+started_at=2026-10-06T22:04:59.052496+00:00
+argv=['.venv/bin/python', '-m', 'unittest', 'discover', '-s', 'packages/sec-edgar-ingest/tests', '-p', 'test_network_guard.py', '-v']
+cwd=/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar
+stdout:
+
+stderr:
+test_explicit_helper_denies_connect_ex_resolution_and_unselected_loopback (test_network_guard.NetworkGuardTests.test_explicit_helper_denies_connect_ex_resolution_and_unselected_loopback) ... ok
+test_only_selected_fixture_origin_is_allowed_and_scope_closes (test_network_guard.NetworkGuardTests.test_only_selected_fixture_origin_is_allowed_and_scope_closes) ... ok
+test_ordinary_support_import_installs_connection_resolution_and_auth_denial (test_network_guard.NetworkGuardTests.test_ordinary_support_import_installs_connection_resolution_and_auth_denial) ... ok
+test_provider_construction_and_existing_instance_token_work_never_reach_stubs (test_network_guard.NetworkGuardTests.test_provider_construction_and_existing_instance_token_work_never_reach_stubs) ... ok
+test_public_managed_identity_constructor_and_existing_tokens_never_reach_stubs (test_network_guard.NetworkGuardTests.test_public_managed_identity_constructor_and_existing_tokens_never_reach_stubs) ... FAIL
+test_spawned_process_has_selected_origin_and_denies_network_and_auth (test_network_guard.NetworkGuardTests.test_spawned_process_has_selected_origin_and_denies_network_and_auth) ... FAIL
+test_suite_runner_installs_guard_before_unittest_executes (test_network_guard.NetworkGuardTests.test_suite_runner_installs_guard_before_unittest_executes) ... ok
+
+======================================================================
+FAIL: test_public_managed_identity_constructor_and_existing_tokens_never_reach_stubs (test_network_guard.NetworkGuardTests.test_public_managed_identity_constructor_and_existing_tokens_never_reach_stubs)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_network_guard.py", line 165, in test_public_managed_identity_constructor_and_existing_tokens_never_reach_stubs
+    self.assertEqual(proof['denied'], [True] * 4)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: [False, False, False, False] != [True, True, True, True]
+
+First differing element 0:
+False
+True
+
+- [False, False, False, False]
++ [True, True, True, True]
+
+======================================================================
+FAIL: test_spawned_process_has_selected_origin_and_denies_network_and_auth (test_network_guard.NetworkGuardTests.test_spawned_process_has_selected_origin_and_denies_network_and_auth)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_network_guard.py", line 195, in test_spawned_process_has_selected_origin_and_denies_network_and_auth
+    self.assertEqual(proof['denied'], [True] * 7)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: [True, True, True, True, True, False, False] != [True, True, True, True, True, True, True]
+
+First differing element 5:
+False
+True
+
+- [True, True, True, True, True, False, False]
+?                                ^^^^   ^^^^
+
++ [True, True, True, True, True, True, True]
+?                                ^^^   ^^^
+
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.673s
+
+FAILED (failures=2)
+
+finished_at=2026-10-06T22:04:59.762730+00:00
+exit_code=1

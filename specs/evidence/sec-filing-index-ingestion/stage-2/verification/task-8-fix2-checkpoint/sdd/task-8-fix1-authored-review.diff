@@ -1,0 +1,629 @@
+diff --git a/README.md b/README.md
+index 10eeae1..c80a4dd 100644
+--- a/README.md
++++ b/README.md
+@@ -6,6 +6,20 @@ This Python 3.14+ workspace implements acquisition in
+ Python package. The CLI supports `discover`, `collect`, help, and version `0.1.0`.
+ It produces immutable source and snapshot worksets and durable command results.
+ 
++Set up the workspace using the already authorized cache, then build the installable
++wheel without changing pins:
++
++```sh
++uv sync --offline --frozen --package sec-edgar-ingest
++uv build --offline --all-packages
++```
++
++For a fresh wheel installation, follow the exact lock-export/hash-checked cached
++dependency/wheel commands in the [package installation instructions](packages/sec-edgar-ingest/README.md)
++and [runbook](docs/runbooks/sec-edgar-ingest-acquisition.md). Python 3.14+, uv and
++cached runtime/build requirements are prerequisites; a missing cache requires
++separately authorized setup.
++
+ Run the complete local check using cached, pinned dependencies:
+ 
+ ```sh
+@@ -15,7 +29,10 @@ scripts/check-sec-edgar-ingest.sh
+ The script runs offline fixture and mocked Azure tests, builds wheel and sdist,
+ checks both CLI entry points, compiles the package, and checks the diff. A missing
+ cache is a prerequisite failure. Tests use committed synthetic/retained fixtures;
+-only the expressly bounded process fixtures contact local loopback servers.
++the suite installs network/resolution and provider-auth denial before test imports.
++Only explicitly selected bounded loopback fixture origins are allowed, including
++in their spawned transport children. Production CLI/SDK behavior is outside this
++test-only guard.
+ 
+ Configuration in `conf/sec-edgar-ingest.yaml` uses JSON syntax, a YAML 1.2 subset.
+ Its `local-fixture` backend requires an explicit validated `--fixture-pack` and
+diff --git a/docs/runbooks/sec-edgar-ingest-acquisition.md b/docs/runbooks/sec-edgar-ingest-acquisition.md
+index e0fff48..5ac47a1 100644
+--- a/docs/runbooks/sec-edgar-ingest-acquisition.md
++++ b/docs/runbooks/sec-edgar-ingest-acquisition.md
+@@ -7,6 +7,48 @@ wheel/sdist, entry point, compilation, and whitespace checks. Dependencies/build
+ requirements must already be cached; a missing cache does not authorize registry,
+ SEC, authentication, Azure, or compute activity.
+ 
++
++Set up the existing workspace from the accepted cache without changing the lock:
++
++```sh
++uv sync --offline --frozen --package sec-edgar-ingest
++uv build --offline --all-packages
++```
++
++Python 3.14+, uv, the locked runtime wheels and the cached `uv_build` build
++requirement must already be available from the authorized dependency setup.
++A missing cache is a prerequisite failure; obtain that separately authorized
++setup rather than fetching dependencies or changing pins during a fixture run.
++
++To install the built wheel in a fresh environment, run from the repository root:
++
++```sh
++python3 -m venv --without-pip /tmp/sec-edgar-installed
++uv export --offline --frozen --no-dev --no-emit-workspace \
++  --output-file /tmp/sec-edgar-pinned-requirements.txt
++uv pip install --offline --no-index \
++  --find-links specs/evidence/sec-filing-index-ingestion/stage-2/verification/sdd-history/task1-evidence/wheels \
++  --python /tmp/sec-edgar-installed/bin/python --require-hashes \
++  -r /tmp/sec-edgar-pinned-requirements.txt
++uv pip install --offline --no-index --no-deps \
++  --python /tmp/sec-edgar-installed/bin/python \
++  dist/sec_edgar_ingest-0.1.0-py3-none-any.whl
++/tmp/sec-edgar-installed/bin/sec-edgar-ingest --help
++/tmp/sec-edgar-installed/bin/python -m sec_edgar_ingest --version
++```
++
++Use a fresh unused environment path. `python3` must be the available Python 3.14+
++interpreter (the workspace `.venv/bin/python` also works). The retained wheel
++cache contains the accepted 20 runtime versions for this local macOS platform;
++other platforms require their separately authorized matching cached artifacts.
++The hash-bearing export preserves exact lock pins. Wheel installation uses
++`--no-deps` only after that explicit dependency installation. These uv pip/build
++commands have no `--frozen` option; the lock export, exact hashes, offline and
++no-index flags enforce the selected installation. Run fixture commands with
++`/tmp/sec-edgar-installed/bin/sec-edgar-ingest` and the same explicit config,
++pack and state-dir arguments below. The console works outside the source checkout;
++no editable import or PYTHONPATH is needed.
++
+ The checked-in config is strict JSON syntax in a `.yaml` file. It selects local
+ fixture storage with synthetic provenance. To reproduce the bounded archived
+ quarter demonstration, prepare an explicitly labelled config:
+diff --git a/packages/sec-edgar-ingest/README.md b/packages/sec-edgar-ingest/README.md
+index 165aacd..1a18582 100644
+--- a/packages/sec-edgar-ingest/README.md
++++ b/packages/sec-edgar-ingest/README.md
+@@ -20,6 +20,48 @@ uses the lock's exact 20 runtime versions and the four direct pins in this packa
+ Offline checks refuse a missing cache. This local macOS build does not establish
+ Linux container compatibility or worker capacity.
+ 
++
++Set up the existing workspace from the accepted cache without changing the lock:
++
++```sh
++uv sync --offline --frozen --package sec-edgar-ingest
++uv build --offline --all-packages
++```
++
++Python 3.14+, uv, the locked runtime wheels and the cached `uv_build` build
++requirement must already be available from the authorized dependency setup.
++A missing cache is a prerequisite failure; obtain that separately authorized
++setup rather than fetching dependencies or changing pins during a fixture run.
++
++To install the built wheel in a fresh environment, run from the repository root:
++
++```sh
++python3 -m venv --without-pip /tmp/sec-edgar-installed
++uv export --offline --frozen --no-dev --no-emit-workspace \
++  --output-file /tmp/sec-edgar-pinned-requirements.txt
++uv pip install --offline --no-index \
++  --find-links specs/evidence/sec-filing-index-ingestion/stage-2/verification/sdd-history/task1-evidence/wheels \
++  --python /tmp/sec-edgar-installed/bin/python --require-hashes \
++  -r /tmp/sec-edgar-pinned-requirements.txt
++uv pip install --offline --no-index --no-deps \
++  --python /tmp/sec-edgar-installed/bin/python \
++  dist/sec_edgar_ingest-0.1.0-py3-none-any.whl
++/tmp/sec-edgar-installed/bin/sec-edgar-ingest --help
++/tmp/sec-edgar-installed/bin/python -m sec_edgar_ingest --version
++```
++
++Use a fresh unused environment path. `python3` must be the available Python 3.14+
++interpreter (the workspace `.venv/bin/python` also works). The retained wheel
++cache contains the accepted 20 runtime versions for this local macOS platform;
++other platforms require their separately authorized matching cached artifacts.
++The hash-bearing export preserves exact lock pins. Wheel installation uses
++`--no-deps` only after that explicit dependency installation. These uv pip/build
++commands have no `--frozen` option; the lock export, exact hashes, offline and
++no-index flags enforce the selected installation. Run fixture commands with
++`/tmp/sec-edgar-installed/bin/sec-edgar-ingest` and the same explicit config,
++pack and state-dir arguments below. The console works outside the source checkout;
++no editable import or PYTHONPATH is needed.
++
+ The configuration filename is YAML, but its supported syntax is strict **JSON**,
+ a subset of YAML 1.2. Duplicate keys, nonfinite values, unsupported fields, missing
+ identity/version pins, invalid storage bindings, and unsafe paths are refused.
+diff --git a/packages/sec-edgar-ingest/tests/network_guard.py b/packages/sec-edgar-ingest/tests/network_guard.py
+new file mode 100644
+index 0000000..54ea9d8
+--- /dev/null
++++ b/packages/sec-edgar-ingest/tests/network_guard.py
+@@ -0,0 +1,179 @@
++"""Test-only network/provider denial with scoped, exact loopback fixture origins.
++
++This module is outside the installed package. The runner installs it before test
++imports; support imports install it for focused runs and spawned fixture helpers.
++"""
++from __future__ import annotations
++
++import builtins
++import importlib
++import socket
++import sys
++from collections import Counter
++from contextlib import contextmanager
++from functools import wraps
++from threading import RLock
++from urllib.parse import urlsplit
++
++_INSTALLED = False
++_ORIGINS: Counter[tuple[str, int]] = Counter()
++_LOCK = RLock()
++_AUTH_CLASSES: set[type] = set()
++_IMPORT = builtins.__import__
++
++
++def _deny_auth(*args, **kwargs):
++    raise AssertionError('offline tests forbid credential construction and token activity')
++
++
++def _guard_loaded_auth() -> None:
++    for name, module in tuple(sys.modules.items()):
++        if module is None or not (name.startswith('azure.identity') or name == 'msal'):
++            continue
++        for label, value in tuple(vars(module).items()):
++            if not isinstance(value, type) or value in _AUTH_CLASSES:
++                continue
++            is_credential = name.startswith('azure.identity') and label.endswith('Credential') and value.__module__.startswith('azure.identity')
++            is_application = name == 'msal' and label.endswith('Application') and value.__module__.startswith('msal')
++            if not (is_credential or is_application):
++                continue
++            _AUTH_CLASSES.add(value)
++            value.__init__ = _deny_auth
++            for method in dir(value):
++                if method in ('get_token', 'get_token_info', 'initiate_auth_code_flow') or method.startswith('acquire_token'):
++                    setattr(value, method, _deny_auth)
++
++
++def _guarded_import(name, *args, **kwargs):
++    module = _IMPORT(name, *args, **kwargs)
++    imported = getattr(module, '__name__', '')
++    if name.startswith(('azure.identity', 'msal')) or imported.startswith(('azure.identity', 'msal')):
++        _guard_loaded_auth()
++    return module
++
++
++def _require_address(address) -> None:
++    if not isinstance(address, tuple) or len(address) < 2:
++        raise AssertionError('offline tests allow only selected loopback fixture addresses')
++    host, port = address[:2]
++    if isinstance(port, str) and port.isdecimal():
++        port = int(port)
++    with _LOCK:
++        allowed = type(port) is int and _ORIGINS[(host, port)] > 0
++    if not allowed:
++        raise AssertionError('offline tests refuse an unselected network address')
++
++
++def _require_host(host) -> None:
++    with _LOCK:
++        allowed = host in ('127.0.0.1', '::1') and any(key[0] == host and count > 0 for key, count in _ORIGINS.items())
++    if not allowed:
++        raise AssertionError('offline tests refuse unselected name resolution')
++
++
++def _connection_guard(operation):
++    @wraps(operation)
++    def guarded(sock, address, *args, **kwargs):
++        _require_address(address)
++        return operation(sock, address, *args, **kwargs)
++    return guarded
++
++
++def _lookup_guard(operation):
++    @wraps(operation)
++    def guarded(host, port, *args, **kwargs):
++        _require_address((host, port))
++        return operation(host, port, *args, **kwargs)
++    return guarded
++
++
++def _host_guard(operation):
++    @wraps(operation)
++    def guarded(host, *args, **kwargs):
++        _require_host(host)
++        return operation(host, *args, **kwargs)
++    return guarded
++
++
++def _sendto_guard(operation):
++    @wraps(operation)
++    def guarded(sock, data, *args):
++        _require_address(args[-1] if args else None)
++        return operation(sock, data, *args)
++    return guarded
++
++
++def _sendmsg_guard(operation):
++    @wraps(operation)
++    def guarded(sock, buffers, ancdata=(), flags=0, address=None):
++        _require_address(address)
++        return operation(sock, buffers, ancdata, flags, address)
++    return guarded
++
++
++def install() -> None:
++    """Deny real Python socket/DNS and Azure/MSAL provider work before tests run."""
++    global _INSTALLED
++    if _INSTALLED:
++        return
++    _INSTALLED = True
++    socket.socket.connect = _connection_guard(socket.socket.connect)
++    socket.socket.connect_ex = _connection_guard(socket.socket.connect_ex)
++    socket.socket.sendto = _sendto_guard(socket.socket.sendto)
++    if hasattr(socket.socket, 'sendmsg'):
++        socket.socket.sendmsg = _sendmsg_guard(socket.socket.sendmsg)
++    socket.getaddrinfo = _lookup_guard(socket.getaddrinfo)
++    original_nameinfo = socket.getnameinfo
++    @wraps(original_nameinfo)
++    def getnameinfo(address, flags):
++        _require_address(address)
++        return original_nameinfo(address, flags)
++    socket.getnameinfo = getnameinfo
++    for name in ('gethostbyname', 'gethostbyname_ex', 'gethostbyaddr'):
++        setattr(socket, name, _host_guard(getattr(socket, name)))
++    # These imports load code only. Constructors and token methods are blocked
++    # before returning; later Azure identity imports are guarded as well.
++    builtins.__import__ = _guarded_import
++    importlib.import_module('azure.identity')
++    importlib.import_module('msal')
++    _guard_loaded_auth()
++
++
++@contextmanager
++def selected_origin(origin: str):
++    """Authorize one explicit fixture port until its bounded fixture is closed."""
++    parsed = urlsplit(origin)
++    if (parsed.scheme != 'http' or parsed.hostname not in ('127.0.0.1', '::1') or
++            parsed.port is None or not 1 <= parsed.port <= 65535 or parsed.username or
++            parsed.password or parsed.path or parsed.query or parsed.fragment):
++        raise ValueError('test origin must be an exact literal loopback HTTP origin')
++    address = parsed.hostname, parsed.port
++    with _LOCK:
++        _ORIGINS[address] += 1
++    try:
++        yield
++    finally:
++        with _LOCK:
++            _ORIGINS[address] -= 1
++            if not _ORIGINS[address]:
++                del _ORIGINS[address]
++
++
++def guarded_transport_child(transport, cancellation, channel, *, target, origin):
++    """Spawn carries only this selected fixture origin and its original target."""
++    install()
++    with selected_origin(origin):
++        return target(transport, cancellation, channel)
++
++
++def main(argv=None) -> None:
++    install()
++    import unittest
++    unittest.main(module=None, argv=['unittest', *(sys.argv[1:] if argv is None else argv)])
++
++
++if __name__ in ('__main__', '__mp_main__'):
++    # Support and spawn targets share one guard instance when run as a file.
++    sys.modules.setdefault('network_guard', sys.modules[__name__])
++if __name__ == '__main__':
++    main()
+diff --git a/packages/sec-edgar-ingest/tests/support.py b/packages/sec-edgar-ingest/tests/support.py
+index a17871b..ec117be 100644
+--- a/packages/sec-edgar-ingest/tests/support.py
++++ b/packages/sec-edgar-ingest/tests/support.py
+@@ -5,6 +5,10 @@ from datetime import date, datetime, timedelta, timezone
+ from pathlib import Path
+ from typing import TYPE_CHECKING
+ 
++from network_guard import install as _install_offline_guard, selected_origin
++
++_install_offline_guard()
++
+ if TYPE_CHECKING:
+     from sec_edgar_ingest.config import Settings
+     from sec_edgar_ingest.download import ResponseSpec
+@@ -630,6 +634,8 @@ class LoopbackServer:
+         self.socket.settimeout(0.05)
+         self.origin = f"http://127.0.0.1:{self.socket.getsockname()[1]}"
+         self.url = self.origin+"/fixture"
++        self._network_origin = selected_origin(self.origin)
++        self._network_origin.__enter__()
+         self.thread = threading.Thread(target=self._serve, name="bounded-loopback-fixture", daemon=True)
+         self.thread.start()
+ 
+@@ -712,9 +718,12 @@ class LoopbackServer:
+     def close(self):
+         self.stopped.set()
+         self.socket.close()
+-        self.thread.join(2)
+-        if self.thread.is_alive():
+-            raise AssertionError("fixture server did not drain")
++        try:
++            self.thread.join(2)
++            if self.thread.is_alive():
++                raise AssertionError("fixture server did not drain")
++        finally:
++            self._network_origin.__exit__(None, None, None)
+ 
+ 
+ def loopback_sender(settings, clock, origin, *, target=None, spool=None):
+@@ -729,7 +738,9 @@ def loopback_sender(settings, clock, origin, *, target=None, spool=None):
+                 raise ValueError("fixture sender can contact only its one selected loopback origin")
+             return origin
+         def _child_target(self):
+-            return target or super()._child_target()
++            from functools import partial
++            from network_guard import guarded_transport_child
++            return partial(guarded_transport_child, target=target or super()._child_target(), origin=origin)
+         def _spool_directory(self):
+             if spool is None:
+                 return super()._spool_directory()
+@@ -1295,14 +1306,8 @@ ACQUISITION_PACK = Path(__file__).parent / 'fixtures/acquisition/manifest.json'
+ 
+ 
+ def block_external_network():
+-    """Tests admit only expressly selected loopback sockets and never ambient auth."""
+-    import socket
+-    original = socket.socket.connect
+-    def connect(sock, address):
+-        if not isinstance(address, tuple) or address[0] not in ('127.0.0.1', '::1'):
+-            raise AssertionError('offline acquisition tests refuse external network')
+-        return original(sock, address)
+-    socket.socket.connect = connect
++    """Keep existing fixture call sites under the suite's exact-origin/auth guard."""
++    _install_offline_guard()
+ 
+ 
+ def cli_process_entry():
+diff --git a/packages/sec-edgar-ingest/tests/test_network_guard.py b/packages/sec-edgar-ingest/tests/test_network_guard.py
+new file mode 100644
+index 0000000..5158fb1
+--- /dev/null
++++ b/packages/sec-edgar-ingest/tests/test_network_guard.py
+@@ -0,0 +1,186 @@
++"""Behavioral offline guard regressions; every denied route uses recording stubs."""
++import json
++import multiprocessing
++import os
++import subprocess
++import sys
++import unittest
++from pathlib import Path
++
++TESTS = Path(__file__).parent
++STUBS = r'''
++import importlib.util, json, socket
++import azure.identity as identity
++import msal
++calls = []
++def record(name, result=None):
++    def operation(*args, **kwargs):
++        calls.append(name)
++        return result
++    return operation
++socket.socket.connect = record('connect')
++socket.socket.connect_ex = record('connect_ex', 0)
++socket.socket.sendto = record('sendto', 1)
++socket.getaddrinfo = record('getaddrinfo', [(socket.AF_INET, socket.SOCK_STREAM, 6, '', ('127.0.0.1', 42421))])
++socket.gethostbyname = record('gethostbyname', '127.0.0.1')
++socket.gethostbyname_ex = record('gethostbyname_ex', ('fixture', [], ['127.0.0.1']))
++socket.gethostbyaddr = record('gethostbyaddr', ('fixture', [], ['127.0.0.1']))
++socket.getnameinfo = record('getnameinfo', ('fixture', '443'))
++for name in ('DefaultAzureCredential', 'ManagedIdentityCredential'):
++    cls = getattr(identity, name)
++    cls.__init__ = record('credential_constructor')
++    cls.get_token = record('credential_token', 'recorded token, not an authentication')
++    cls.get_token_info = record('credential_token_info', 'recorded token info')
++old_credential = object.__new__(identity.DefaultAzureCredential)
++for name in ('PublicClientApplication', 'ConfidentialClientApplication'):
++    cls = getattr(msal, name)
++    cls.__init__ = record('msal_constructor')
++    cls.acquire_token_silent = record('msal_token', 'recorded token')
++old_msal = object.__new__(msal.PublicClientApplication)
++def blocked(operation):
++    try:
++        operation()
++    except AssertionError:
++        return True
++    return False
++'''
++
++
++def guarded_spawn_probe(selected, output):
++    namespace = {}
++    exec(STUBS, namespace)
++    if not import_available():
++        output.put({'guard_available': False})
++        return
++    import network_guard
++    network_guard.install()
++    with network_guard.selected_origin(selected):
++        exec("with socket.socket() as sock:\n    denied = [blocked(lambda: sock.connect(('198.51.100.1', 443))), blocked(lambda: sock.connect_ex(('127.0.0.1', 42422))), blocked(lambda: socket.getaddrinfo('unapproved.invalid', 443)), blocked(lambda: identity.DefaultAzureCredential()), blocked(lambda: old_credential.get_token('scope'))]\n    sock.connect(('127.0.0.1', 42421))", namespace)
++    output.put({'guard_available': True, 'denied': namespace['denied'], 'calls': namespace['calls'], 'pid': os.getpid()})
++
++
++def import_available():
++    import importlib.util
++    return 'network_guard' in sys.modules or importlib.util.find_spec('network_guard') is not None
++
++
++class NetworkGuardTests(unittest.TestCase):
++    def probe(self, code):
++        done = subprocess.run([sys.executable, '-c', STUBS + '\n' + code],
++            cwd=TESTS, env={**os.environ, 'PYTHONPATH': str(TESTS), 'PYTHONDONTWRITEBYTECODE': '1'},
++            capture_output=True, text=True, timeout=15)
++        self.assertEqual(done.returncode, 0, done.stderr)
++        proof = json.loads(done.stdout)
++        self.retain({'argv': done.args, 'stdout': done.stdout, 'stderr': done.stderr, 'exit': done.returncode, 'proof': proof})
++        return proof
++
++    def retain(self, proof):
++        destination = os.environ.get('SEC_EDGAR_TASK8_GUARD_TRACE_DIR')
++        if destination:
++            root = Path(destination)
++            root.mkdir(parents=True, exist_ok=True)
++            (root / (self.id().split('.')[-1] + '.json')).write_text(json.dumps(proof, indent=2, sort_keys=True) + '\n')
++
++    def test_ordinary_support_import_installs_connection_resolution_and_auth_denial(self):
++        proof = self.probe("""
++import support
++with socket.socket() as sock:
++    denied = [blocked(lambda: sock.connect(('198.51.100.1', 443))),
++              blocked(lambda: sock.connect_ex(('198.51.100.1', 443))),
++              blocked(lambda: socket.getaddrinfo('unapproved.invalid', 443)),
++              blocked(lambda: socket.gethostbyname('unapproved.invalid')),
++              blocked(lambda: socket.gethostbyname_ex('unapproved.invalid')),
++              blocked(lambda: socket.gethostbyaddr('198.51.100.1')),
++              blocked(lambda: socket.getnameinfo(('198.51.100.1', 443), 0)),
++              blocked(lambda: identity.DefaultAzureCredential()),
++              blocked(lambda: old_credential.get_token('scope')),
++              blocked(lambda: sock.sendto(b'fixture', ('198.51.100.1', 443)))]
++print(json.dumps({'denied': denied, 'calls': calls}))
++""")
++        self.assertEqual(proof['denied'], [True] * 10)
++        self.assertEqual(proof['calls'], [])
++
++    def test_explicit_helper_denies_connect_ex_resolution_and_unselected_loopback(self):
++        proof = self.probe("""
++import support
++support.block_external_network()
++with socket.socket() as sock:
++    denied = [blocked(lambda: sock.connect_ex(('198.51.100.1', 443))),
++              blocked(lambda: socket.getaddrinfo('unapproved.invalid', 443)),
++              blocked(lambda: sock.connect(('127.0.0.1', 42422))),
++              blocked(lambda: sock.connect_ex(('::1', 42422)))]
++print(json.dumps({'denied': denied, 'calls': calls}))
++""")
++        self.assertEqual(proof['denied'], [True] * 4)
++        self.assertEqual(proof['calls'], [])
++
++    def test_only_selected_fixture_origin_is_allowed_and_scope_closes(self):
++        self.assertTrue(import_available(), 'a separate test-only selected-origin guard is required')
++        proof = self.probe("""
++import support, network_guard
++with socket.socket() as sock:
++    with network_guard.selected_origin('http://127.0.0.1:42421'):
++        sock.connect(('127.0.0.1', 42421))
++        sock.connect_ex(('127.0.0.1', 42421))
++        socket.getaddrinfo('127.0.0.1', 42421)
++        denied = [blocked(lambda: sock.connect(('127.0.0.1', 42422))),
++                  blocked(lambda: socket.getaddrinfo('localhost', 42421)),
++                  blocked(lambda: socket.getaddrinfo('127.0.0.1', 42422)),
++                  blocked(lambda: identity.ManagedIdentityCredential())]
++    denied.append(blocked(lambda: sock.connect(('127.0.0.1', 42421))))
++print(json.dumps({'denied': denied, 'calls': calls}))
++""")
++        self.assertEqual(proof['denied'], [True] * 5)
++        self.assertEqual(proof['calls'], ['connect', 'connect_ex', 'getaddrinfo'])
++
++    def test_provider_construction_and_existing_instance_token_work_never_reach_stubs(self):
++        proof = self.probe("""
++import support
++proof = [blocked(lambda: identity.DefaultAzureCredential()),
++         blocked(lambda: identity.ManagedIdentityCredential()),
++         blocked(lambda: old_credential.get_token('scope')),
++         blocked(lambda: old_credential.get_token_info('scope')),
++         blocked(lambda: msal.PublicClientApplication('fixture-client')),
++         blocked(lambda: msal.ConfidentialClientApplication('fixture-client')),
++         blocked(lambda: old_msal.acquire_token_silent(['scope'], account=None))]
++print(json.dumps({'denied': proof, 'calls': calls}))
++""")
++        self.assertEqual(proof['denied'], [True] * 7)
++        self.assertEqual(proof['calls'], [])
++
++    def test_suite_runner_installs_guard_before_unittest_executes(self):
++        self.assertTrue(import_available(), 'the test runner must install denial before discovery')
++        proof = self.probe("""
++import unittest, network_guard
++captured = {}
++def run(**kwargs):
++    with socket.socket() as sock:
++        captured['denied'] = blocked(lambda: sock.connect_ex(('198.51.100.1', 443)))
++    captured['calls'] = calls
++unittest.main = run
++network_guard.main(['discover', '-s', '.'])
++print(json.dumps(captured))
++""")
++        self.assertTrue(proof['denied'])
++        self.assertEqual(proof['calls'], [])
++
++    def test_spawned_process_has_selected_origin_and_denies_network_and_auth(self):
++        spawn = multiprocessing.get_context('spawn')
++        output = spawn.Queue()
++        process = spawn.Process(target=guarded_spawn_probe, args=('http://127.0.0.1:42421', output))
++        try:
++            process.start()
++            proof = output.get(timeout=15)
++            process.join(5)
++            self.retain({'pid': process.pid, 'exit': process.exitcode, 'proof': proof})
++            self.assertEqual(process.exitcode, 0)
++            self.assertTrue(proof['guard_available'], 'spawned fixture needs an explicit installed guard')
++            self.assertEqual(proof['denied'], [True] * 5)
++            self.assertEqual(proof['calls'], ['connect'])
++            self.assertNotEqual(proof['pid'], os.getpid())
++        finally:
++            if process.is_alive():
++                process.terminate()
++                process.join(2)
++            output.close()
++            output.join_thread()
+diff --git a/scripts/check-sec-edgar-ingest.sh b/scripts/check-sec-edgar-ingest.sh
+index c38cc5a..6c26597 100755
+--- a/scripts/check-sec-edgar-ingest.sh
++++ b/scripts/check-sec-edgar-ingest.sh
+@@ -1,6 +1,6 @@
+ #!/bin/sh
+ set -eu
+-uv run --offline --frozen --package sec-edgar-ingest python -m unittest discover -s packages/sec-edgar-ingest/tests -p 'test_*.py' -v
++uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/network_guard.py discover -s packages/sec-edgar-ingest/tests -p 'test_*.py' -v
+ uv build --offline --all-packages
+ uv run --offline --frozen --package sec-edgar-ingest sec-edgar-ingest --help
+ uv run --offline --frozen --package sec-edgar-ingest python -m sec_edgar_ingest --version
+diff --git a/specs/evidence/sec-filing-index-ingestion/stage-2/verification.md b/specs/evidence/sec-filing-index-ingestion/stage-2/verification.md
+index 3f7b519..c81447c 100644
+--- a/specs/evidence/sec-filing-index-ingestion/stage-2/verification.md
++++ b/specs/evidence/sec-filing-index-ingestion/stage-2/verification.md
+@@ -78,3 +78,24 @@ The20 native/runtime artifact versions match accepted constraints; macOS native
+ Runbook documents conservative full Azure unsafe-guard retention on clean release and waiting without lease break; owner-wide unrepresentable Retry-After latch/raw reason/deferred5 with no reset/expiry/new-run escape; current vs historical context, immutable result repair, new-attempt recovery, failed-directory new worksets, pending older work, quarantine/raw retention and shared owner budget.
+ 
+ No live SEC/Azure/auth/registry/compute work, Linux/default90s performance measurement, workers/schedules/provisioning, historical/global format coverage or SLA is claimed. S7-11/12/14/18/19 and **all remaining17 of the22 Stage7 checks are reserved**, including actual owner-wide effective behavior, Azure lease/inflight/CAS/HNS, identities/network, worker measurements and integrated live smoke/replay. The pending owner endpoint answer, actual approved combined sequence, fresh Task8 review and final GPT-6.1 Max review/completion protocol must resolve before Stage2 stamp/tick/retirement. Stage3 is outside this work.
++
++
++## Task8 fix1 current checkpoint at a62c05c BASE
++
++The sections above preserve the original a62c05c evidence. This appended checkpoint records current I2/I3 corrections and checks, ready for fresh scoped re-review. The operative full review remains Spec FAIL / Quality NEEDS_FIXES until the controller's new scoped receipt; no implementer-issued PASS is asserted. I1's owner endpoint decision still gates the required combined Step4, and all22 Stage7 checks remain reserved.
++
++The suite now invokes the test-only `network_guard.py` runner before test imports. Focused `support` imports install the same guard. Socket connect/connect_ex, DNS/reverse resolution, sendto/sendmsg and Azure identity/MSAL provider constructor/token activity are denied before their original operations. Selected loopback fixtures register exact literal HTTP host/port origins for their bounded lifetime; spawned actual fixture transports carry only their selected origin and original child target. Scripted Azure tests and production package behavior are preserved. Six new behavioral tests use recording stubs to prove denial without real external requests/auth; actual existing socket/process proofs separately ran under the guard. Root/package README and runbook now give explicit offline/frozen workspace setup and exported-lock/hash-checked cached dependency plus wheel installation commands, with platform/cache prerequisites.
++
++[Focused RED](verification/task-8-fix1-checkpoint/sdd/task-8-fix1-guard-red.txt) retains6 failures before implementation. [Focused GREEN](verification/task-8-fix1-checkpoint/sdd/task-8-fix1-guard-green.txt) retains6 passed tests; [covering iteration](verification/task-8-fix1-checkpoint/sdd/task-8-fix1-covering.txt) retains41 tests/exit1 with3 new helper errors while all35 existing CLI/process/workspace tests passed. The helper's find_spec lookup incorrectly handled an already aliased `__spec__=None` runner module; the focused runner [subsequent GREEN](verification/task-8-fix1-checkpoint/sdd/task-8-fix1-runner-green.txt) and complete current check cover its correction. Original failed probe/full review and all historical original checkpoint receipts stay unchanged.
++
++[Current full check](verification/task-8-fix1-checkpoint/sdd/task-8-fix1-final-check.txt) ran `scripts/check-sec-edgar-ingest.sh` once after the final implementation change:288 tests/105.281s, all records OK, current CLI25/process4/workspace6/guard6 and scriptedAzure17 included, wheel+sdist/help/version0.1.0/compileall/CRLF-equivalent whitespace check, exit0. Complete48547-byte313-line log SHA `b6147807e5741a4766434bcc7ebd5453e58dfe3792b63e66a59e2034b9ee01f7`. [Every-line inspection](verification/task-8-fix1-checkpoint/sdd/task-8-fix1-final-check-inspection.json) confirms every record/footer and no unexpected non-test warning/failure. No implementation/package/test source change followed; proof/report retention is separate.
++
++[Current guard traces](verification/task-8-fix1-checkpoint/sdd/task-8-fix1-final-traces/guard) prove10 ordinary import denials/zero stub calls,4 explicit helper denials, exactly3 selected connect/connect_ex/getaddrinfo stub calls with5 other routes denied,7 Azure/MSAL construction/existing-token denials without provider work, installed denial before unittest executes, and separate PID17697 with only its one selected stub connection/five denied routes. This is synthetic behavioral evidence, not actual external networking.
++
++[Current process trace roots](verification/task-8-fix1-checkpoint/sdd/task-8-fix1-final-traces/task8) retain three independent collector PIDs17026/17027/17028 and3 real Binding inserts/1 winner/2 conflicts. Winner217-byte SHA `a7c7f989eadb3613deaefca4b789fc8e751ae1dc9955e56b04a518ad628519b0`. Actual killed-parent held socket proof has85 zero-successor observations through persisted UTC unsafe-until `2026-10-06T21:38:08.152358+00:00`, successor starts after guard/socket closure and daily,daily,daily,backfill order with minimum wire spacing0.675402750s. Independent child17016 exits-14 with84 retained bytes SHA `7197490a0df09feb77b6e3f6bbc65b4e974d6175847570d0e437059dab80161f`; stale-start yields0 server requests. Same current full suite covers actual result-object/Attempt process failure/repair and open-daily pending404 cursor/replay. Synthetic .8s/.4s fixture timers/2s lease remain labelled; accepted production90s/60s/3RPS defaults remain unchanged. macOS proof does not establish Linux/default90s worker performance.
++
++[Artifact comparison](verification/task-8-fix1-checkpoint/sdd/task-8-fix1-artifact-comparison.json) confirms18 production Python source files unchanged from BASE and equal to old/new wheel members. Package README changes wheel METADATA/sdist, producing current wheel77862B SHA `aabf437bdbf8ba521eab027112377372e4515026f0e153016557cc6829502628` and sdist66284B SHA `7fe7003fb193a55c68666a16de34e145c1ccf88fc18e1e05a7f48e77f5d53780`. The test guard is excluded from the installed distribution. Changed artifact bytes justified [fresh installed proof](verification/sec-edgar-wheel-1k5klfr3/wheel-proof-summary.json):20 identical pinned runtime dependencies plus package0.1.0; fresh site-packages import/actual console, outside source cwd/no editable overrides; quarterly discover/download/reuse/completed replay exit0 and TransportAttempt count4 unchanged during replay. The new retained root has79 files/487102B, actual artifacts/metadata/input hashes/argv/output/exit/config/state/raw/result/workset bytes and [original-root map](verification/sec-edgar-wheel-1k5klfr3/retention-map.json), with only disposable venv excluded. Its source workset0ee03fee... and snapshot3fb3fdb3... are fully recorded in the summary; effective config SHA remains `a8b1ebc0e3e64c56d9aad5e7b4b15ca111495885c2a9849dbc96721c203ab856`. All exact version values remain those in the table above; original installed proof bytes are unchanged.
++
++[New checkpoint map](verification/task-8-fix1-checkpoint/retention-map.json), [SHA manifest](verification/task-8-fix1-checkpoint/sha256-manifest.json), [exact new count/byte inventory](verification/task-8-fix1-checkpoint/evidence-inventory.json) and [current source/review hashes](verification/task-8-fix1-checkpoint/source-revisions.json) retain all new current review/probe/controller/fix and changed-report/progress versions. The18MB original standard diff is losslessly compressed with both hashes/sizes and explicit decompression mapping. Complete raw current/intermediate/failing process/CLI/guard records remain retained. Original checkpoint4813 manifest records and manifest SHA `89f4b9c48517d0af42a1099777e910ba8c634b7d337c80c06a8658c03f2ec926` remain unchanged. Separate [inspection](verification/task-8-fix1-checkpoint/sdd/task-8-fix1-proof-inspection.json) and [primary preservation](verification/task-8-fix1-checkpoint/sdd/task-8-fix1-primary-preservation.json) verify those facts without modifying primary or staging the four old deletions/roadmap. Append-only mapping preserves historical absolute references; control exclusions avoid hash cycles, and no SDD/native archive occurs.
++
++The I1 owner answer has not arrived. Prepared --include-approved-daily remains unexecuted; quarter/open-daily ordinary proofs do not discharge the prescribed combined gate. No live SEC/Azure/auth/registry/compute access, stage retirement, infrastructure, schedules or Stage3 is included. Fresh scoped I2/I3 review, eventual owner-approved combined sequence and final GPT-6.1 Max whole-branch review remain explicit gates.

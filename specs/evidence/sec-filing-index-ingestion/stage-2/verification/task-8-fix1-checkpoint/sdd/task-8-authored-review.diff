@@ -1,0 +1,3127 @@
+Task8 authored implementation/documentation/proof-driver diff view. Range 73ea758e37f6b6ed78103b2a731b2f125bd96a96..a62c05c0a961fecc2f1ac854b9dac68be3add7ef
+Complete unfiltered package: review-73ea758..a62c05c.diff
+Retained original data remains accessible there and through verification/sha256-manifest.json + sdd-retention-map.json; this view does not remove those requirements.
+Named paths: [".gitignore", "README.md", "docs/runbooks/sec-edgar-ingest-acquisition.md", "packages/sec-edgar-ingest/README.md", "packages/sec-edgar-ingest/src/sec_edgar_ingest/cli.py", "packages/sec-edgar-ingest/src/sec_edgar_ingest/download.py", "packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py", "packages/sec-edgar-ingest/src/sec_edgar_ingest/results.py", "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/21105f019f995a508212e1aea8b954cc17965311f95d2bee96cd3929068384e7.body", "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/2238e6e45c468be5a35d36546f7dfb5239c961e58316858113ee6e56025584ea.body", "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/258e0245ed05b9340e156bc1572f88425962b0bcb9b25eca60ecb8c6052815c9.body", "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/295ea06a8709fc8a1280e0f394504d2589a79b044afd394199772a8ded166d59.body", "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/30e26ab496e04432e3c6c18e7717d05267f3a25b1f349b012c99734d91f35441.body", "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/32eb8001fb131584156014f9ff5ad6dc2a8a97efa7fc63fb712173fdbccc3e94.body", "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/32fff5ff6a37979890bc180de561f8cb58cbcc6f37d0cd92d5048ba0c4a10e31.body", "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/4021d2e373bff5ccc8588b4d8077586f8684d3f3153823cdd13b0555c030cc28.body", "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/44196541abe6841a5e9e959b26a1161959d015750143fa45a156ba1c3a75295e.body", "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/4dc2efcff18a472cac890b5a3e4cc38a1f78a6fd9e672e0a8dababec4a91e6c0.body", "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/52b4c5e475b57259a26bae0dbf22e6280e051be3f6ef99964e37571fd84f5b8a.body", "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/58af35e69e11a9c273ed928520bbf412f7133356b09eac39641f6487c6f1421c.body", "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/634dccc56d14ab6d6ac8bd0f565d04a9133416e5fb0ca8ecb09096a58c6312fc.body", "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/68b0e0e1c09010a02e45ac0d0adc2621f23d61a84448064d15d0cee9e5aab399.body", "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/95e7e13dffd163f5ab77a98032435d7fbb62900752caa672b2159a37c56041ad.body", "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/ab4132221967a34c4ea3b6f797f41a4782bc853df450dbc763de354b4e972fc3.body", "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/d33e4176f1fae064d45af39190561b7bb61edac6f7462378554e662fb0b329e2.body", "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/d7660c59fd179fb60293211d85d1b5961ff97c911df237ccca9b80a425642bc7.body", "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/dd36466564b870eb44518366fe09113e11484b4c5b9e4bde1b36b5b74c98c03c.body", "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855.body", "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/ebad8fd92aa0dc8acd373ff8ac13cd65581b9204a268d0552e3aee3642a60f58.body", "packages/sec-edgar-ingest/tests/fixtures/acquisition/manifest.json", "packages/sec-edgar-ingest/tests/support.py", "packages/sec-edgar-ingest/tests/test_acquisition_processes.py", "packages/sec-edgar-ingest/tests/test_cli.py", "packages/sec-edgar-ingest/tests/test_workspace.py", "scripts/check-sec-edgar-ingest.sh", "specs/evidence/sec-filing-index-ingestion/stage-2/verification.md", "specs/evidence/sec-filing-index-ingestion/stage-2/verification/built-source-integrity.json", "specs/evidence/sec-filing-index-ingestion/stage-2/verification/evidence-inventory.json", "specs/evidence/sec-filing-index-ingestion/stage-2/verification/fixture-sequence.py", "specs/evidence/sec-filing-index-ingestion/stage-2/verification/installed-wheel-proof.py", "specs/evidence/sec-filing-index-ingestion/stage-2/verification/routing-retry-receipt.json", "specs/evidence/sec-filing-index-ingestion/stage-2/verification/source-revisions.json"]
+
+diff --git a/.gitignore b/.gitignore
+index 748d0bb..986fe6d 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -7,10 +7,14 @@ wheels/
+ *.egg-info
+ 
+ # Virtual environments
+ .venv
+ 
+ # Local planning roadmap
+ /specs/sec-filing-index-ingestion-roadmap.md
+ 
+ # Explicit local-fixture acquisition state
+ .fixture-state/
++
++# Retained Stage 2 proof includes original local state and cached artifact bytes.
++!/specs/evidence/sec-filing-index-ingestion/stage-2/verification/
++!/specs/evidence/sec-filing-index-ingestion/stage-2/verification/**
+diff --git a/README.md b/README.md
+index 9d4e989..10eeae1 100644
+--- a/README.md
++++ b/README.md
+@@ -1,29 +1,31 @@
+ # SEC EDGAR filing-index ingestion
+ 
+-This Python 3.14+ workspace has one implementation package:
++This Python 3.14+ workspace implements acquisition in
+ [`sec-edgar-ingest`](packages/sec-edgar-ingest/README.md), imported as
+-`sec_edgar_ingest`. The root is a workspace coordinator and is not an installable
+-Python package.
++`sec_edgar_ingest`. The root coordinates the workspace and is not an installable
++Python package. The CLI supports `discover`, `collect`, help, and version `0.1.0`.
++It produces immutable source and snapshot worksets and durable command results.
+ 
+-The current milestone establishes packaging, version reporting, and CLI help.
+-Acquisition is still under development; `discover` and `collect` are not runnable
+-commands yet. Row parsing, publication, and orchestration are outside this
+-milestone.
++Run the complete local check using cached, pinned dependencies:
+ 
+ ```sh
+-uv sync --frozen
+-uv run --frozen --package sec-edgar-ingest sec-edgar-ingest --help
+-uv run --frozen --package sec-edgar-ingest python -m sec_edgar_ingest --version
+-uv build --all-packages
++scripts/check-sec-edgar-ingest.sh
+ ```
+ 
+-Run the offline tests with:
++The script runs offline fixture and mocked Azure tests, builds wheel and sdist,
++checks both CLI entry points, compiles the package, and checks the diff. A missing
++cache is a prerequisite failure. Tests use committed synthetic/retained fixtures;
++only the expressly bounded process fixtures contact local loopback servers.
+ 
+-```sh
+-uv run --frozen --package sec-edgar-ingest python -m unittest discover -s packages/sec-edgar-ingest/tests -p 'test_*.py' -v
+-```
++Configuration in `conf/sec-edgar-ingest.yaml` uses JSON syntax, a YAML 1.2 subset.
++Its `local-fixture` backend requires an explicit validated `--fixture-pack` and
++has no live fallback. See the [acquisition runbook](docs/runbooks/sec-edgar-ingest-acquisition.md)
++for commands, shared issuer requirements, failure meanings, and safe recovery.
++The [Stage 2 verification record](specs/evidence/sec-filing-index-ingestion/stage-2/verification.md)
++distinguishes retained and synthetic evidence from the later runtime gates.
+ 
+ The `sec-edgar-client` and `sec-edgar-download` scaffolds remain on disk for
+-reference. They are excluded from the workspace and runtime dependency graph.
+-The superseded `sec-edgar-index-ingest` scaffold remains deleted. The local
+-planning roadmap is ignored by Git.
++reference, excluded from the workspace and runtime dependencies. The four
++superseded `sec-edgar-index-ingest` files remain deleted and unstaged. The local
++planning roadmap is ignored. Row parsing, publication, reconciliation approval,
++Azure provisioning, and scheduled activation belong to later stages.
+diff --git a/docs/runbooks/sec-edgar-ingest-acquisition.md b/docs/runbooks/sec-edgar-ingest-acquisition.md
+new file mode 100644
+index 0000000..e0fff48
+--- /dev/null
++++ b/docs/runbooks/sec-edgar-ingest-acquisition.md
+@@ -0,0 +1,152 @@
++# SEC filing-index acquisition recovery
++
++Use the installed `sec-edgar-ingest` command or the workspace entry point. All
++commands use an explicit validated config and a finite aware UTC deadline. Check
++help first and run `scripts/check-sec-edgar-ingest.sh` for the offline validation,
++wheel/sdist, entry point, compilation, and whitespace checks. Dependencies/build
++requirements must already be cached; a missing cache does not authorize registry,
++SEC, authentication, Azure, or compute activity.
++
++The checked-in config is strict JSON syntax in a `.yaml` file. It selects local
++fixture storage with synthetic provenance. To reproduce the bounded archived
++quarter demonstration, prepare an explicitly labelled config:
++
++```sh
++python3 - <<'PY'
++import json
++from pathlib import Path
++config = json.loads(Path('conf/sec-edgar-ingest.yaml').read_text())
++config['backfill'] = {'start_quarter': '2015Q1', 'end_quarter': '2015Q1'}
++config['fixture'] = {'allow_clock_override': True, 'allow_deadline_override': True}
++Path('/tmp/sec-edgar-quarter-fixture.json').write_text(json.dumps(config))
++PY
++uv run --offline --frozen --package sec-edgar-ingest sec-edgar-ingest discover \
++  --config /tmp/sec-edgar-quarter-fixture.json \
++  --fixture-pack packages/sec-edgar-ingest/tests/fixtures/acquisition/manifest.json \
++  --state-dir /tmp/sec-edgar-acquisition-proof --today 2026-10-06 \
++  --deadline 2099-01-01T00:00:00Z --mode quarterly \
++  --discovery-id fixture-quarter --run-id fixture-run \
++  --execution-id fixture-discover --attempt-id discover-1
++```
++
++This generates only the synthetic 2015 Q1 subset. The actual root is
++`/tmp/sec-edgar-acquisition-proof/.fixture-state` because `--state-dir` is the
++fixture base directory and `storage.root` remains the validated relative value.
++The resolved actual root is bound in the registry. Preserve that directory and
++its original-to-retained path map when copying evidence. The distant deadline
++and explicit pin date are fixture-only; they confer no production authorization.
++
++Copy `source_workset_ref` from stdout into the next command:
++
++```sh
++uv run --offline --frozen --package sec-edgar-ingest sec-edgar-ingest collect \
++  --config /tmp/sec-edgar-quarter-fixture.json \
++  --fixture-pack packages/sec-edgar-ingest/tests/fixtures/acquisition/manifest.json \
++  --state-dir /tmp/sec-edgar-acquisition-proof --today 2026-10-06 \
++  --deadline 2099-01-01T00:00:00Z --workset SOURCE_WORKSET_REF \
++  --run-id fixture-run --execution-id fixture-collect --attempt-id collect-1
++```
++
++The workset reference must be
++`worksets/sec/source/sha256=<source-workset-id>/workset.json`. Source discovery
++freezes source identities and gaps. Collection pins exact original body hashes
++using write-once Bindings, then writes
++`worksets/sec/snapshot/sha256=<snapshot-workset-id>/workset.json` only when every
++member and directory is complete. New collection attempts use their current
++run/execution/attempt context in the result; the snapshot workset retains its
++immutable discovery origin. ETL inputs must name this exact snapshot workset.
++
++For a terminal incomplete result, preserve the same source workset and use a
++**new attempt ID** and explicit execution ID. Completed earlier members use their
++existing pins, with no new request. A completed attempt ID replays its exact saved
++result and original context. Changed config, image, versions, deadline, correlation,
++mode, discovery ID, refresh policy, or workset are refused under the same attempt.
++An incomplete discovery session can be retried with a new command attempt and
++its same discovery ID; successful recovery emits a new immutable source workset
++including repaired directories. The earlier gap-bearing workset/result remains.
++
++The committed pack contains daily root/year/QTR3/QTR4 listings, the handoff source,
++and a delayed source scripted as 404 then valid IDX. The response cursor is stored
++under an explicitly fixture-only record keyed by manifest hash and URL. Changing
++a manifest changes that script identity. This cursor is not production acquisition
++state or live permission. A daily command needs a valid current-quarter endpoint;
++closed `2015Q1` cannot contain October 2026 sources. The approved Step 4 text's
++one-config collision remains an owner decision; the retained proposed two-config
++sequence is reviewable and must not be represented as a passed gate until approved.
++
++Every result contains counters and structured gaps. The stdout result reference is
++`runs/sec/<run-id>/<command>/<attempt-id>/result.json`; stderr logs carry the full
++pinned current context. Result bytes are written immutable before Attempt
++completion. If a process dies after writing a result, replaying its exact inputs
++checks that result, restores its original start/context, and repairs the matching
++Attempt. A conflicting or corrupt result is refused. Unexpected command errors
++retain an Attempt error and return 9 without inventing a completed result.
++
++| Exit | Outcome | Operator meaning |
++| --- | --- | --- |
++| 0 | `success`, `no_new_sources` | Acquisition complete; a valid decoded empty listing is distinct from failure. |
++| 2 | `configuration` | Invalid args/config/identity/fixture inputs; validation precedes backend construction. |
++| 3 | `discovery_failed`, `incomplete` | Explicit directory gaps or multiple partially acquired members remain. |
++| 4 | `pending` | A single listed source returned 404; keep it pending and revisit older work. |
++| 5 | `retry_exhausted`, `deferred`, `throttled` | Inclusive attempt/deadline/server-delay policy stopped this command. |
++| 6 | `access_blocked` | Durable access denial stops all further sends in this run. |
++| 7 | `quarantined`, `invalid_source` | Invalid/truncated/guard-violating bytes were refused and evidence retained. |
++| 8 | `ownership_lost` | New requests stop; preserve the unsafe in-flight ownership window. |
++| 9 | `state_conflict`, `internal_error` | Immutable provenance/state conflict or unexpected failure needs investigation. |
++
++A multi-source partial result retains every member error and pending/error counts;
++a run-wide access/ownership/policy stop takes precedence. Downloaded counts new
++accepted exchanges; unchanged counts verified pins or recovered originals; pending
++counts unverified members. Quarantine counts nonempty failed receipt bodies
++confirmed for the current command context, including retry prefixes. Older
++quarantine evidence remains retained even when a successor reports zero new
++quarantines. An HTTP failure, missing listing, open-quarter absence, or pending
++source never approves withdrawal and never erases an earlier successful pin.
++
++Never advance discovery past a failed directory read. Revisit pending/failed source
++identities and failed directories irrespective of quarter. Daily discovery starts
++at the approved handoff and replays overlap with the baseline. A successfully
++decoded empty directory means no new source; invalid/truncated/denial bytes never
++stand in for an empty directory.
++
++Raw originals are promoted and verified before Snapshot state or Binding creation.
++Quarterly locations end in `master.zip`; daily locations end in `master.idx` under
++`raw/sec/indexes/kind=<kind>/period=<period>/sha256=<hash>/`. Keep the original
++archive, receipt headers, staging/promotion checkpoints, quarantine body/sidecars,
++worksets, results, and Attempt/transport audit. Recovery checks exact old context,
++request ID, receipt hash and raw path. Existing Bindings win before latest/reuse
++policy. Do not delete manifests or replace pins to force progress.
++
++All pipelines in the deployment must share `sec-owner-lowell-mason`, its fixed
++Blob sentinel/registry, storage binding and one no-burst 3 requests/second budget.
++Discovery, download, retry and reconciliation each reserve from that budget.
++Additional workers do not create request lanes. A lease loss or unconfirmed child
++outcome stops the issuer. A successor waits through the persisted unsafe ownership
++window plus bounded in-flight allowance, even after an old process disappears.
++The fatal child timer and verified socket drain bound the selected local transport.
++
++Local clean release can atomically finalize the sentinel and release its lease.
++Azure cannot atomically acknowledge those two operations, so even a clean Azure
++release retains the full conservative unsafe guard. Wait for its stored UTC guard;
++do not break the lease or shorten the journal to improve throughput. Server UTC
++bounds and current fencing are timing authority. Retained Permit/retry monotonic
++values identify their originating host-domain evidence and confer no restart
++scheduling authority.
++
++SEC access denial halts the run durably. An unrepresentable valid `Retry-After`
++retains its raw header/receipt and installs a durable **owner-wide policy block**;
++this reports deferred/5. It has no reset/expiry API. A new run, process restart,
++longer local deadline, or guessed delay cannot escape the block. Investigate the
++retained reason and obtain an explicit policy resolution. Ordinary representable
++server delays remain honored through the shared sentinel before issuer handoff.
++
++Azure adapter tests use offline scripted transports. Actual local process tests
++use bounded synthetic loopback bodies, shorter explicitly recorded test timers,
++and independent clients/shared durable stores. Retained Stage 1 body hashes anchor
++the selected representations. None of these proves live SEC availability, global
++format coverage, a recovery horizon, Linux/default-90-second performance, live Azure
++lease/CAS/HNS/network/auth behavior, worker sizing, or the 22 reserved S7 checks.
++No production schedules, jobs, infrastructure, parser, publication, or withdrawal
++approval are implemented here.
++
++A completed attempt can replay its exact saved result after its original deadline. This returns the saved context and does not start another acquisition. An expired deadline cannot start unfinished work; supply a new attempt ID and a valid deadline for that recovery.
+diff --git a/packages/sec-edgar-ingest/README.md b/packages/sec-edgar-ingest/README.md
+index 0bd3774..165aacd 100644
+--- a/packages/sec-edgar-ingest/README.md
++++ b/packages/sec-edgar-ingest/README.md
+@@ -1,75 +1,88 @@
+ # sec-edgar-ingest
+ 
+-`sec-edgar-ingest` is the sole SEC filing-index acquisition implementation in this
+-workspace. It requires Python 3.14 or newer and exposes the `sec_edgar_ingest`
+-import package, the `sec-edgar-ingest` console entry point, and
+-`python -m sec_edgar_ingest`.
+-
+-At this milestone the CLI provides help and version `0.1.0`. Invoking it without
+-arguments prints help. `discover` and `collect` are not implemented yet;
+-acquisition completion is a later milestone.
++`sec-edgar-ingest` acquires immutable SEC filing-index originals on Python 3.14+.
++It exposes the `sec_edgar_ingest` import package, `sec-edgar-ingest` console entry
++point, and `python -m sec_edgar_ingest`. Invoking it without arguments prints help.
++`discover` freezes a source workset; `collect` resolves that workset's members to
++write-once snapshot pins and emits a separate snapshot workset when complete.
+ 
+ From the repository root:
+ 
+ ```sh
+-uv run --frozen --package sec-edgar-ingest sec-edgar-ingest --help
+-uv run --frozen --package sec-edgar-ingest python -m sec_edgar_ingest --version
++uv run --offline --frozen --package sec-edgar-ingest sec-edgar-ingest --help
++uv run --offline --frozen --package sec-edgar-ingest python -m sec_edgar_ingest --version
++uv build --offline --all-packages
++scripts/check-sec-edgar-ingest.sh
+ ```
+ 
+-The package pins Requests and the Azure identity, Blob Storage, and Table Storage
+-SDKs for the approved acquisition boundary. The root constrains their accepted
+-transitive versions, and `uv.lock` records the workspace resolution. A local
+-package build does not establish container compatibility or worker capacity.
++Build/dependency requirements were cached during the accepted setup. Installation
++uses the lock's exact 20 runtime versions and the four direct pins in this package.
++Offline checks refuse a missing cache. This local macOS build does not establish
++Linux container compatibility or worker capacity.
++
++The configuration filename is YAML, but its supported syntax is strict **JSON**,
++a subset of YAML 1.2. Duplicate keys, nonfinite values, unsupported fields, missing
++identity/version pins, invalid storage bindings, and unsafe paths are refused.
++Loading/validating configuration constructs no external clients. The checked-in
++file selects `local-fixture`, relative `.fixture-state`, synthetic parser/image
++provenance and the accepted SEC User-Agent. Every fixture invocation must supply
++`--fixture-pack PATH`. Fixture manifests bind canonical SEC URLs to explicit
++original body files and SHA-256 values; missing/exhausted responses never fetch
++the URL. Fixture-only durable response cursors let a new process advance a
++scripted 404 to its later valid response.
++
++Every acquisition command requires `--config`, `--run-id`, `--execution-id`,
++`--attempt-id`, and an aware UTC `--deadline`. `discover` requires `--mode
++quarterly|daily` and `--discovery-id`; `--refresh` freezes explicit acquisition
++refresh. `collect --workset REF` accepts the exact immutable source object path,
++`worksets/sec/source/sha256=<id>/workset.json`. Help describes the full arguments.
++Identifier path segments are checked before any backend construction.
+ 
+-The client and download scaffolds are preserved as references, outside the
+-workspace and runtime dependency graph. This milestone performs no live SEC
+-requests or Azure operations.
++`--state-dir PATH` is fixture-only: it selects the base directory beneath which
++relative `storage.root` is placed. The actual durable root is
++`PATH / storage.root`, and its resolved path is part of the shared deployment
++registry. Contenders must use the same root and binding. The config hash continues
++to include its unchanged relative root. `--today YYYY-MM-DD` requires the explicit
++`fixture.allow_clock_override` marker; distant fixture deadlines require
++`fixture.allow_deadline_override`. Arbitrary input configurations do not receive
++implicit override markers. Azure rejects fixture packs, state/date overrides,
++these marker fields, synthetic versions, all-zero images, and distant deadlines.
+ 
+-Configuration v1 in `conf/sec-edgar-ingest.yaml` uses **JSON syntax**, a subset
+-of YAML 1.2. The stdlib JSON loader rejects general YAML, duplicate keys and
+-nonfinite values. `Settings.from_mapping` validates settings without constructing
+-credentials, clients or transports; `load_config` only reads the selected file.
+-`pin_context` resolves `open` once from the explicit run-start date and freezes
+-the complete effective configuration, its SHA-256, image/parser/schema provenance
+-and finite UTC command deadline into the workset context.
++Pinning resolves `end_quarter=open` once at command start and freezes the exact
++configuration, its SHA-256, actual pin date, image digest, parser/schema versions,
++and deadline. Daily discovery needs an endpoint containing the current quarter.
++A closed historical-quarter config cannot admit October 2026 daily sources.
++Fixture subsets do not revise the accepted development/intended historical range.
+ 
+-The checked-in configuration explicitly selects `local-fixture`, the ignored
+-`.fixture-state/` root, synthetic parser provenance and an all-zero fixture image
+-digest. Loading it creates no state directory. Fixture storage initialization is
+-responsible for creating that root later, and all contenders must share the same
+-root and binding. Fixture-only HTTP caps can be smaller for bounded generated
+-streams; `fixture.allow_clock_override` and `fixture.allow_deadline_override`
+-explicitly label test overrides. Azure refuses these override markers, synthetic
+-provenance and the all-zero digest. No real image digest, principal or endpoint
+-configuration is supplied by the fixture file.
++All collectors share namespace `sec-owner-lowell-mason`, one finite leased Blob
++sentinel and one request budget across discovery, downloads, retries, and
++reconciliation. Azure uses the explicitly configured accepted account
++`secedgardevb8617`, containers `raw`, `worksets`, `quarantine`, `locks`, tables
++`SourceState`, `Attempts`, Blob API `2026-04-06`, Table API `2020-12-06`, and fixed
++sentinel/registry keys in `locks`. Construction checks the durable binding;
++it provisions nothing. Lease/server time uncertainty fails closed.
+ 
+-Azure configuration must explicitly name the accepted `secedgardevb8617` account,
+-its credential-free Blob/Table HTTPS endpoints, `raw`, `worksets`, `quarantine`
+-and `locks` containers, `SourceState` and `Attempts`, Blob API `2026-04-06` and
+-Table API `2020-12-06`, immutable image provenance and parser/schema identifiers.
+-All workflows bind to namespace `sec-owner-lowell-mason`, lock blob
+-`sec-owner-lowell-mason/sentinel.json` and binding registry blob
+-`sec-owner-lowell-mason/binding.json` in `locks`. The later storage adapter must
+-conditionally create/check the registry; settings validation creates no lane or
+-resource. Lease 60 seconds, renewal every 20 seconds and clock uncertainty at
+-most 2 seconds are application mechanics. The adapter must derive actual
+-server-time bounds and fail closed when they exceed the configured uncertainty.
++Accepted starting values are 2015 Q1 through the run's open quarter for initial
++development, intended history from 2010 Q1, daily handoff `2026-10-01`, 3 requests
++per second without bursts, one active collector, five total request attempts,
++exponential jitter from 2 seconds capped at 120 while honoring longer server
++delays, connect/read timeouts 15/60 seconds, and guards of 90 seconds per complete
++exchange, 67,108,864 received bytes, and 536,870,912 expanded IDX bytes. Job retry
++limit is zero; at most one positively confirmed transient orchestration replay
++is a later contract. These values establish no coverage, recovery horizon,
++capacity, or SLA.
+ 
+-The accepted starting values are 2015 Q1 through the run's open quarter for
+-initial development, daily handoff `2026-10-01`, 3 SEC requests per second with
+-no bursts, one active collector, five total HTTP attempts, exponential jitter
+-from 2 seconds capped at 120 seconds while honoring longer server delays,
+-15/60-second connect/read timeouts, a 90-second complete exchange, 67,108,864
+-received bytes and 536,870,912 expanded IDX bytes. Job retry limit is zero and
+-orchestration permits at most one confirmed-transient replay. The intended full
+-historical range starts in 2010 Q1. Daily scheduling starts at 05:00 Eastern every
+-day; reconciliation starts Sunday at 06:00 Eastern. Trigger definitions and
+-activation belong to later stages. These defaults establish no coverage,
+-recovery horizon, worker capacity or SLA.
++The selected acquisition envelopes are one DEFLATE `master.idx` in a quarterly
++ZIP and plain daily IDX. Original archives remain raw ZIP bytes. Worksets use
++`sec-acquisition-v1`; schema is `sec-index-v1`; envelope identifiers are
++`sec-quarterly-envelope-v1` and `sec-daily-envelope-v1`. Parser version is pinned
++provenance. No row parser is implemented.
+ 
+-Workset JSON uses `sec-acquisition-v1`; schema provenance remains `sec-index-v1`.
+-Source members and directory outcomes are sorted deterministically, and strict
+-decoders verify their content hash and exact membership. Snapshots name each
+-source and its immutable raw hash/path. The selected acquisition envelope
+-identifiers are `sec-quarterly-envelope-v1` for ZIP and `sec-daily-envelope-v1`
+-for IDX. `parser_version` remains provenance; no row parser is implemented here.
++Stdout is one JSON object with outcome, result reference, and source/snapshot
++workset references. Stderr is structured command logging. Durable results live at
++`runs/sec/<run-id>/<command>/<attempt-id>/result.json`. Exactly matching completed
++attempts replay that result without HTTP; a new attempt continues terminal
++incomplete work using the existing frozen workset. See the
++[runbook](../../docs/runbooks/sec-edgar-ingest-acquisition.md) for exit codes,
++quarantine/pending work, result repair, stopped ownership, and the conservative
++Azure clean-release guard.
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/cli.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/cli.py
+index 0fb95ca..84d9700 100644
+--- a/packages/sec-edgar-ingest/src/sec_edgar_ingest/cli.py
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/cli.py
+@@ -1,12 +1,292 @@
++"""Validate acquisition intent before constructing the explicitly selected backend."""
++from __future__ import annotations
++
+ import argparse
++import re
++import sys
+ from collections.abc import Sequence
++from dataclasses import replace
++from datetime import date, datetime, timezone
++from pathlib import Path
+ 
+ from . import __version__
++from .collection import collect
++from .config import Settings, load_config, pin_context
++from .coordination import Clock, Coordinator
++from .discovery import discover
++from .download import BoundedSender, FixturePack, RequestClient
++from .models import CommandResult, Error, RunContext, canonical_json, quarter_for, safe_relative_path
++from .results import exit_code, log_event, read_result, result_path, write_result
++from .state import AcquisitionState, attempt_key
++from .storage import open_stores
++from .storage.contracts import CAS_ATTEMPTS, ClockUncertain, Conflict, OwnershipLost
++from .worksets import decode_source_workset
++
++SOURCE_REF = re.compile(r'worksets/sec/source/sha256=[0-9a-f]{64}/workset\.json\Z')
++
++
++class _ExpiredAttempt(ValueError):
++    pass
++
++
++class _NoFaults:
++    def hit(self, point: str) -> None:
++        pass
++
++
++class _CheckedSender:
++    # RequestClient retains an unconfirmed transport; CLI must also retain an unexpected command error.
++    def __init__(self, sender):
++        self.sender, self.failure = sender, None
++
++    def send(self, *args, **kwargs):
++        try:
++            return self.sender.send(*args, **kwargs)
++        except (OwnershipLost, ClockUncertain):
++            raise
++        except Exception as error:
++            self.failure = error
++            raise
++
++    def close(self):
++        if hasattr(self.sender, 'close'):
++            self.sender.close()
++
++
++def _parser() -> argparse.ArgumentParser:
++    parser = argparse.ArgumentParser(prog='sec-edgar-ingest')
++    parser.add_argument('--version', action='version', version=__version__)
++    commands = parser.add_subparsers(dest='command')
++    for command in ('discover', 'collect'):
++        sub = commands.add_parser(command)
++        for name in ('config', 'run-id', 'execution-id', 'attempt-id', 'deadline'):
++            sub.add_argument('--' + name, required=True)
++        for name in ('fixture-pack', 'state-dir', 'today'):
++            sub.add_argument('--' + name)
++        if command == 'discover':
++            sub.add_argument('--mode', required=True, choices=('quarterly', 'daily'))
++            sub.add_argument('--discovery-id', required=True)
++            sub.add_argument('--refresh', action='store_true')
++        else:
++            sub.add_argument('--workset', required=True)
++    return parser
++
++
++def _segment(value: str, name: str) -> None:
++    if '/' in safe_relative_path(value, name):
++        raise ValueError(name + ' must be a single path segment')
++
++
++def _validate(args) -> tuple[Settings, date | None, datetime, FixturePack | None]:
++    for name in ('run_id', 'execution_id', 'attempt_id'):
++        _segment(getattr(args, name), name)
++    if args.command == 'discover':
++        _segment(args.discovery_id, 'discovery_id')
++    elif SOURCE_REF.fullmatch(args.workset) is None:
++        raise ValueError('workset must name the exact immutable source-workset object path')
++    settings = load_config(Path(args.config))
++    if not settings.coordination.lease_seconds.is_integer():
++        raise ValueError('coordination requires whole finite lease seconds')
++    deadline = datetime.fromisoformat(args.deadline.replace('Z', '+00:00'))
++    if deadline.utcoffset() != timezone.utc.utcoffset(deadline):
++        raise ValueError('deadline must be timezone-aware UTC')
++    today = date.fromisoformat(args.today) if args.today else None
++    if args.today and today.isoformat() != args.today:
++        raise ValueError('today must be a canonical ISO date')
++    if settings.storage.backend == 'azure':
++        if args.fixture_pack or args.state_dir or args.today:
++            raise ValueError('fixture pack, state directory and date override are fixture-only')
++        pack = None
++    else:
++        if not args.fixture_pack:
++            raise ValueError('local-fixture commands require an explicit fixture pack')
++        if not settings.fixture or (args.today and not settings.fixture.allow_clock_override):
++            if args.today:
++                raise ValueError('today requires the explicit fixture clock override marker')
++        pack = FixturePack.load(Path(args.fixture_pack))
++    # A completed result may outlive its deadline; only its saved context can authorize replay.
++    now = Clock().now()
++    if deadline > now:
++        checked = _new_context(args, settings, deadline, today, now)
++        if args.command == 'discover' and args.mode == 'daily':
++            _, end = pin_context(settings, checked, checked.pinned_on)
++            if end != quarter_for(checked.pinned_on):
++                raise ValueError('daily discovery endpoint must include the current quarter')
++    return settings, today, deadline, pack
++
++
++def _new_context(args, settings, deadline, today, started) -> RunContext:
++    priority = 'daily' if args.command == 'discover' and args.mode == 'daily' else 'backfill'
++    context = RunContext(args.run_id, args.execution_id, args.command, args.attempt_id,
++                         settings.worker.image_digest, settings.etl.parser_version, settings.etl.schema_version,
++                         settings.config_sha256, started, deadline, priority)
++    return pin_context(settings, context, today or started.date())[0]
++
++
++def _intent(args, pack) -> dict[str, object]:
++    return {'command': args.command, 'today': args.today,
++            'fixture_sha256': pack.manifest_sha256 if pack is not None else None,
++            'mode': args.mode if args.command == 'discover' else None,
++            'discovery_id': args.discovery_id if args.command == 'discover' else None,
++            'refresh': args.refresh if args.command == 'discover' else None,
++            'workset': args.workset if args.command == 'collect' else None}
++
++
++def _matching_context(saved, current, *, explicit_today) -> RunContext:
++    expected = current.to_mapping()
++    actual = saved.to_mapping()
++    expected['started_at'] = actual['started_at']
++    if not explicit_today:
++        expected['pinned_on'] = actual['pinned_on']
++    if expected != actual:
++        raise Conflict('attempt replay differs from its exact saved correlation/config/image/versions/deadline')
++    # Validate the original start and pin date; never fabricate a fresh start for replay.
++    pin_context(Settings.from_mapping(actual['effective_config']), saved, saved.pinned_on)
++    return saved
++
++
++def _existing_context(current, state, objects, intent, explicit_today):
++    path = result_path(current)
++    intent_path = path.rsplit('/', 1)[0] + '/command.json'
++    try:
++        saved = read_result(path, objects)
++    except FileNotFoundError:
++        saved = None
++    if saved is not None:
++        context = _matching_context(saved.context, current, explicit_today=explicit_today)
++        if objects.read(intent_path) != canonical_json(intent):
++            raise Conflict('completed attempt command inputs differ from the frozen invocation')
++        state.begin_attempt(context)
++        state.finish_attempt(saved)
++        return context, saved
++    row = state.store.get('Attempt', attempt_key(current))
++    context = _matching_context(RunContext.from_mapping(row.to_mapping()['value']['context']), current,
++                                explicit_today=explicit_today) if row is not None else current
++    state.begin_attempt(context)
++    objects.put_once(intent_path, canonical_json(intent))
++    return context, None
++
++
++def _discover_result(workset, context, clock):
++    gaps = tuple(directory.error for directory in workset.directories if directory.error is not None)
++    outcome = 'discovery_failed' if not workset.discovery_complete else ('success' if workset.members else 'no_new_sources')
++    return CommandResult(context, outcome, f'worksets/sec/source/sha256={workset.workset_id}/workset.json',
++                         None, len(workset.members), 0, 0, 0, len(gaps), 0, gaps,
++                         context.started_at, max(context.started_at, clock.now()))
++
++
++def _collection_outcome(result):
++    if result.outcome != 'incomplete' or len({gap.source_id for gap in result.gaps if gap.source_id}) != 1 or result.discovered != 1:
++        return result
++    gap = next((gap for gap in result.gaps if gap.source_id), None)
++    if gap is None:
++        return result
++    transport = gap.details.get('outcome')
++    outcome = {'pending': 'pending', 'exhausted': 'retry_exhausted', 'deferred': 'deferred',
++               'quarantined': 'quarantined'}.get(transport)
++    return replace(result, outcome=outcome) if outcome else result
++
++
++def _retain_error(state, context, outcome, error):
++    for _ in range(CAS_ATTEMPTS):
++        row = state.store.get('Attempt', attempt_key(context))
++        if row is None:
++            return
++        value = row.to_mapping()['value']
++        if value['context'] != context.to_mapping() or value['result'] is not None:
++            return
++        value.update(outcome=outcome, ended_at=Clock().now().isoformat(),
++                     structured_errors=[error.to_mapping()])
++        try:
++            state.store.replace('Attempt', attempt_key(context), value, row.version)
++            return
++        except Conflict:
++            continue
++    raise Conflict('error retention exhausted conditional races')
++
++
++def _stdout(result, reference):
++    sys.stdout.write(canonical_json({'outcome': result.outcome, 'result_ref': reference,
++        'source_workset_ref': result.source_workset_ref, 'snapshot_workset_ref': result.snapshot_workset_ref}).decode() + '\n')
++    return exit_code(result.outcome)
+ 
+ 
+ def main(argv: Sequence[str] | None = None) -> int:
+-    parser = argparse.ArgumentParser(prog="sec-edgar-ingest")
+-    parser.add_argument("--version", action="version", version=__version__)
+-    parser.parse_args(argv)
+-    parser.print_help()
+-    return 0
++    parser = _parser()
++    args = parser.parse_args(argv)
++    if args.command is None:
++        parser.print_help()
++        return 0
++    try:
++        settings, today, deadline, pack = _validate(args)
++    except (ValueError, OSError, TypeError) as error:
++        sys.stderr.write(canonical_json({'outcome': 'configuration', 'error': str(error)}).decode() + '\n')
++        return 2
++    state = context = sender = None
++    opened = ()
++    try:
++        clock = Clock()
++        opened = open_stores(settings, base_path=Path(args.state_dir) if args.state_dir else None)
++        store, objects, leases = opened
++        state = AcquisitionState(store, clock=clock)
++        path = f'runs/sec/{args.run_id}/{args.command}/{args.attempt_id}/result.json'
++        try:
++            prior = read_result(path, objects)
++        except FileNotFoundError:
++            prior = None
++        if prior is None and deadline <= clock.now():
++            raise _ExpiredAttempt('an expired deadline permits only an exact completed-result replay')
++        started = prior.context.started_at if prior is not None else clock.now()
++        pin_date = today or (prior.context.pinned_on if prior is not None else None)
++        context = _new_context(args, settings, deadline, pin_date, started)
++        workset = None
++        if args.command == 'collect':
++            try:
++                workset = decode_source_workset(objects.read(args.workset))
++            except (ValueError, OSError):
++                state.begin_attempt(context)
++                raise
++            if args.workset != f'worksets/sec/source/sha256={workset.workset_id}/workset.json':
++                raise Conflict('workset object path differs from its content identity')
++            context = replace(context, priority=workset.context.priority)
++        context, saved = _existing_context(context, state, objects, _intent(args, pack), bool(args.today))
++        if saved is not None:
++            log_event(context, 'result_replayed', {'result_ref': result_path(context)})
++            return _stdout(saved, result_path(context))
++        coordinator = Coordinator(settings, store, leases, clock)
++        sender = _CheckedSender(pack.sender(store) if pack is not None else BoundedSender(settings, clock))
++        client = RequestClient(settings, coordinator, sender, state, clock)
++        log_event(context, 'command_started', {'command': args.command})
++        if args.command == 'discover':
++            workset = discover(settings, context, args.mode, args.discovery_id, client, state, objects,
++                               context.pinned_on, refresh=args.refresh)
++            result = _discover_result(workset, context, clock)
++        else:
++            result = _collection_outcome(collect(workset, context, settings, client, state, objects, _NoFaults()))
++        if sender.failure is not None:
++            raise sender.failure
++        reference = write_result(result, objects, state)
++        log_event(context, 'command_finished', {'outcome': result.outcome, 'result_ref': reference,
++            'counters': {name: getattr(result, name) for name in ('discovered', 'downloaded', 'unchanged', 'pending', 'failed', 'quarantined')}})
++        return _stdout(result, reference)
++    except Exception as exception:
++        outcome = 'configuration' if isinstance(exception, _ExpiredAttempt) else 'ownership_lost' if isinstance(exception, (OwnershipLost, ClockUncertain)) else ('state_conflict' if isinstance(exception, (Conflict, ValueError, OSError, KeyError)) else 'internal_error')
++        error = Error(outcome, str(exception), False, None, {'type': type(exception).__name__})
++        if state is not None and context is not None:
++            try:
++                _retain_error(state, context, outcome, error)
++            except Exception as retention:
++                error = Error('internal_error', 'attempt error could not be retained: ' + str(retention), False, None, {'cause': error.to_mapping()})
++                outcome = 'internal_error'
++        if context is not None:
++            log_event(context, 'command_error', {'outcome': outcome, 'error': error.to_mapping()})
++        else:
++            sys.stderr.write(canonical_json({'outcome': outcome, 'error': error.to_mapping()}).decode() + '\n')
++        sys.stdout.write(canonical_json({'outcome': outcome, 'result_ref': None, 'source_workset_ref': None, 'snapshot_workset_ref': None}).decode() + '\n')
++        return exit_code(outcome)
++    finally:
++        if sender is not None and hasattr(sender, 'close'):
++            sender.close()
++        for resource in reversed(opened):
++            if hasattr(resource, 'close'):
++                resource.close()
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/download.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/download.py
+index a549817..8d3baab 100644
+--- a/packages/sec-edgar-ingest/src/sec_edgar_ingest/download.py
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/download.py
+@@ -664,10 +664,114 @@ class BoundedSender:
+                     _drain_child(process)
+                     _trace_transport(transport, "child-joined", pid=process.pid, exitcode=process.exitcode)
+                 except OwnershipLost as drain_error:
+                     receipt, _ = self._receipt(transport, reason="shutdown_unverified")
+                     raise SenderFailure(str(drain_error), receipt) from error
+             receipt, _ = self._receipt(transport, reason="sender_unverified")
+             raise SenderFailure("HTTP supervisor could not confirm its child outcome: "+str(error), receipt) from error
+         finally:
+             reader.close()
+             writer.close()
++
++
++class FixtureError(ValueError):
++    """Missing, corrupt or exhausted explicit fixture inputs never authorize HTTP."""
++
++
++@dataclass(frozen=True)
++class FixturePack:
++    responses: dict[str, tuple[ResponseSpec, ...]]
++    manifest_sha256: str
++    provenance: str
++
++    @classmethod
++    def load(cls, path: Path) -> FixturePack:
++        from .models import canonical_json, parse_json, require_hash, safe_relative_path
++        root = Path(path).resolve().parent
++        value = parse_json(Path(path).read_bytes())
++        if not isinstance(value, dict) or set(value) != {'fixture_version', 'provenance', 'responses'}:
++            raise FixtureError('fixture manifest requires the exact v1 fields')
++        if value['fixture_version'] != 'sec-acquisition-fixture-v1' or value['provenance'] not in ('synthetic', 'retained-stage-1'):
++            raise FixtureError('unsupported fixture version or provenance')
++        if not isinstance(value['responses'], dict) or not value['responses']:
++            raise FixtureError('fixture responses must be a nonempty URL mapping')
++        responses = {}
++        for url, items in value['responses'].items():
++            try:
++                _canonical_request_url(url)
++            except (ValueError, TypeError) as error:
++                raise FixtureError('fixture response URL must be a canonical SEC identity') from error
++            if not isinstance(items, list) or not items:
++                raise FixtureError('fixture URL requires a nonempty response sequence')
++            parsed = []
++            for spec in items:
++                required = {'status', 'headers', 'body_path', 'body_sha256'}
++                if not isinstance(spec, dict) or not required <= spec.keys() or set(spec) - required - {'fault'}:
++                    raise FixtureError('fixture response has unsupported fields')
++                if type(spec['status']) is not int or not 100 <= spec['status'] <= 599:
++                    raise FixtureError('fixture status must be an HTTP integer')
++                if not isinstance(spec['headers'], dict) or any(not isinstance(key, str) or not isinstance(item, str) for key, item in spec['headers'].items()):
++                    raise FixtureError('fixture headers require string keys and values')
++                fault = spec.get('fault')
++                if fault is not None and fault not in ('read_timeout', 'connection_failed', 'incomplete_body', 'ownership_lost'):
++                    raise FixtureError('unsupported explicit fixture fault')
++                relative = safe_relative_path(spec['body_path'], 'fixture body_path')
++                file = (root / relative).resolve()
++                if not file.is_relative_to(root) or not file.is_file():
++                    raise FixtureError('fixture body must be a file beneath the manifest directory')
++                require_hash(spec['body_sha256'], 'fixture body_sha256')
++                body = file.read_bytes()
++                if hashlib.sha256(body).hexdigest() != spec['body_sha256']:
++                    raise FixtureError('fixture body hash differs from explicit manifest')
++                parsed.append(ResponseSpec(spec['status'], body, dict(spec['headers']), fault))
++            responses[url] = tuple(parsed)
++        return cls(responses, hashlib.sha256(canonical_json(value)).hexdigest(), value['provenance'])
++
++    def sender(self, state) -> Sender:
++        return _FixtureSender(self, state)
++
++
++class _FixtureSender:
++    def __init__(self, pack: FixturePack, state):
++        self.pack, self.state = pack, state
++        self.clock = Clock()
++        self.directory = tempfile.TemporaryDirectory(prefix='sec-fixture-')
++
++    def send(self, url: str, context: RunContext, permit: Permit, *, cancellation) -> BodyReceipt:
++        from .models import canonical_json
++        from .storage.contracts import AlreadyExists, CAS_ATTEMPTS, Conflict
++        if context.effective_config.get('storage', {}).get('backend') != 'local-fixture':
++            raise FixtureError('fixture transport refuses a production context')
++        if cancellation.is_set() or self.clock.monotonic() >= permit.start_before_mono:
++            raise OwnershipLost('fixture transport refuses a cancelled or expired permit')
++        sequence = self.pack.responses.get(url)
++        if sequence is None:
++            raise FixtureError('fixture has no mapping for ' + url)
++        key = hashlib.sha256(canonical_json({'manifest_sha256': self.pack.manifest_sha256, 'url': url})).hexdigest()
++        for _ in range(CAS_ATTEMPTS):
++            row = self.state.get('FixtureResponseCursor', key)
++            previous = row.to_mapping()['value'] if row is not None else {
++                'fixture_only': True, 'manifest_sha256': self.pack.manifest_sha256, 'url': url, 'cursor': 0}
++            if set(previous) != {'fixture_only', 'manifest_sha256', 'url', 'cursor'} or previous['fixture_only'] is not True or previous['manifest_sha256'] != self.pack.manifest_sha256 or previous['url'] != url or type(previous['cursor']) is not int or previous['cursor'] < 0:
++                raise FixtureError('durable fixture cursor has conflicting provenance')
++            cursor = previous['cursor']
++            if cursor >= len(sequence):
++                raise FixtureError('fixture response mapping is exhausted: ' + url)
++            changed = {**previous, 'cursor': cursor + 1}
++            try:
++                if row is None:
++                    self.state.insert('FixtureResponseCursor', key, changed)
++                else:
++                    self.state.replace('FixtureResponseCursor', key, changed, row.version)
++                break
++            except (AlreadyExists, Conflict):
++                continue
++        else:
++            raise FixtureError('fixture response cursor exhausted conditional races')
++        spec = sequence[cursor]
++        error = Error(spec.fault, 'explicit fixture transport fault: ' + spec.fault,
++                      spec.fault != 'ownership_lost', None, {}) if spec.fault else None
++        return _new_receipt(url, spec.body, spec.status, spec.headers, self.clock.now(),
++                            complete=error is None, error=error, root=self.directory.name)
++
++    def close(self):
++        self.directory.cleanup()
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py
+index 5d4d3f0..03689eb 100644
+--- a/packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py
+@@ -495,20 +495,29 @@ class CommandResult(Record):
+         validate_record_fields(self)
+         require_text(self.outcome, "outcome")
+         for label in ("discovered", "downloaded", "unchanged", "pending", "failed", "quarantined"):
+             require_number(getattr(self, label), label, integer=True)
+         require_utc(self.started_at, "started_at")
+         require_utc(self.ended_at, "ended_at")
+         if self.ended_at < self.started_at:
+             raise ValueError("ended_at precedes started_at")
+         object.__setattr__(self, "gaps", tuple(self.gaps))
+ 
++    def to_json(self) -> bytes:
++        return canonical_json(self.to_mapping())
++
++    @classmethod
++    def from_json(cls, body: bytes) -> CommandResult:
++        if not isinstance(body, bytes):
++            raise ValueError("result body must be bytes")
++        return cls.from_mapping(parse_json(body))
++
+ 
+ @dataclass(frozen=True, slots=True)
+ class Versioned(Record):
+     value: Mapping[str, object]
+     version: str
+ 
+     def __post_init__(self):
+         validate_record_fields(self)
+         require_text(self.version, "version")
+         if self.version == "*":
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/results.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/results.py
+new file mode 100644
+index 0000000..871b525
+--- /dev/null
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/results.py
+@@ -0,0 +1,58 @@
++"""Immutable command results precede the ancillary, repairable Attempt record."""
++from __future__ import annotations
++
++import sys
++
++from .models import CommandResult, RunContext, canonical_json, safe_relative_path
++from .state import AcquisitionState, attempt_key
++from .storage.contracts import Conflict, ObjectStore
++
++EXIT_CODES = {
++    'success': 0, 'no_new_sources': 0, 'configuration': 2,
++    'discovery_failed': 3, 'incomplete': 3, 'pending': 4,
++    'retry_exhausted': 5, 'deferred': 5, 'throttled': 5,
++    'access_blocked': 6, 'quarantined': 7, 'invalid_source': 7,
++    'ownership_lost': 8, 'state_conflict': 9, 'internal_error': 9,
++}
++
++
++def exit_code(outcome: str) -> int:
++    return EXIT_CODES[outcome]
++
++
++def result_path(context: RunContext) -> str:
++    for name in ('run_id', 'command', 'attempt_id'):
++        value = safe_relative_path(getattr(context, name), name)
++        if '/' in value:
++            raise ValueError(f'{name} must be a single path segment')
++    if context.command not in ('discover', 'collect'):
++        raise ValueError('results require an acquisition command')
++    return f'runs/sec/{context.run_id}/{context.command}/{context.attempt_id}/result.json'
++
++
++def write_result(result: CommandResult, objects: ObjectStore, state: AcquisitionState) -> str:
++    exit_code(result.outcome)
++    row = state.store.get('Attempt', attempt_key(result.context))
++    if row is None or row.to_mapping()['value']['context'] != result.context.to_mapping():
++        raise Conflict('result requires the exact begun Attempt context')
++    finished = row.to_mapping()['value']['result']
++    if finished is not None and finished != result.to_mapping():
++        raise Conflict('result differs from an already completed Attempt')
++    path = result_path(result.context)
++    objects.put_once(path, result.to_json())
++    state.finish_attempt(result)
++    return path
++
++
++def read_result(path: str, objects: ObjectStore) -> CommandResult:
++    safe_relative_path(path, 'result path')
++    body = objects.read(path)
++    result = CommandResult.from_json(body)
++    if result_path(result.context) != path or result.to_json() != body:
++        raise Conflict('result bytes or path differ from their canonical command identity')
++    exit_code(result.outcome)
++    return result
++
++
++def log_event(context: RunContext, event: str, fields: dict[str, object]) -> None:
++    sys.stderr.write(canonical_json({'context': context.to_mapping(), 'event': event, 'fields': fields}).decode() + '\n')
+diff --git a/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/21105f019f995a508212e1aea8b954cc17965311f95d2bee96cd3929068384e7.body b/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/21105f019f995a508212e1aea8b954cc17965311f95d2bee96cd3929068384e7.body
+new file mode 100644
+index 0000000..57ff40e
+Binary files /dev/null and b/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/21105f019f995a508212e1aea8b954cc17965311f95d2bee96cd3929068384e7.body differ
+diff --git a/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/2238e6e45c468be5a35d36546f7dfb5239c961e58316858113ee6e56025584ea.body b/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/2238e6e45c468be5a35d36546f7dfb5239c961e58316858113ee6e56025584ea.body
+new file mode 100644
+index 0000000..f7ab75c
+--- /dev/null
++++ b/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/2238e6e45c468be5a35d36546f7dfb5239c961e58316858113ee6e56025584ea.body
+@@ -0,0 +1 @@
++{"directory": {"name": "full-index/", "parent-dir": "../", "item": [{"name": "2015", "href": "2015/", "type": "dir", "size": "", "last-modified": "synthetic fixture label"}]}}
+\ No newline at end of file
+diff --git a/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/258e0245ed05b9340e156bc1572f88425962b0bcb9b25eca60ecb8c6052815c9.body b/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/258e0245ed05b9340e156bc1572f88425962b0bcb9b25eca60ecb8c6052815c9.body
+new file mode 100644
+index 0000000..e6feac0
+--- /dev/null
++++ b/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/258e0245ed05b9340e156bc1572f88425962b0bcb9b25eca60ecb8c6052815c9.body
+@@ -0,0 +1,4 @@
++Synthetic SEC acquisition envelope
++CIK|Company Name|Form Type|Date Filed|File Name
++----------------------------------------------------------------------
++123456|Synthetic Fixture Co 2|10-K|2026-10-01|edgar/data/123456/fixture.txt
+diff --git a/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/295ea06a8709fc8a1280e0f394504d2589a79b044afd394199772a8ded166d59.body b/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/295ea06a8709fc8a1280e0f394504d2589a79b044afd394199772a8ded166d59.body
+new file mode 100644
+index 0000000..e5e2517
+--- /dev/null
++++ b/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/295ea06a8709fc8a1280e0f394504d2589a79b044afd394199772a8ded166d59.body
+@@ -0,0 +1,4 @@
++Description: Master Index of EDGAR Dissemination Feed
++CIK|Company Name|Form Type|Date Filed|Filename
++--------------------------------------------------------------
++1001|Synthetic Fixture Co|10-K|2026-10-02|edgar/data/1001/fixture.txt
+diff --git a/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/30e26ab496e04432e3c6c18e7717d05267f3a25b1f349b012c99734d91f35441.body b/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/30e26ab496e04432e3c6c18e7717d05267f3a25b1f349b012c99734d91f35441.body
+new file mode 100644
+index 0000000..0bc353a
+--- /dev/null
++++ b/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/30e26ab496e04432e3c6c18e7717d05267f3a25b1f349b012c99734d91f35441.body
+@@ -0,0 +1 @@
++{"directory": {"name": "/Archives/edgar/full-index", "item": [{"name": "2015", "href": "2015/", "type": "dir"}]}}
+\ No newline at end of file
+diff --git a/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/32eb8001fb131584156014f9ff5ad6dc2a8a97efa7fc63fb712173fdbccc3e94.body b/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/32eb8001fb131584156014f9ff5ad6dc2a8a97efa7fc63fb712173fdbccc3e94.body
+new file mode 100644
+index 0000000..0322260
+--- /dev/null
++++ b/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/32eb8001fb131584156014f9ff5ad6dc2a8a97efa7fc63fb712173fdbccc3e94.body
+@@ -0,0 +1 @@
++{"directory": {"name": "daily-index/2026/QTR4/", "parent-dir": "../", "item": [{"name": "master.20261001.idx", "href": "master.20261001.idx", "type": "file", "size": "", "last-modified": "synthetic fixture label"}, {"name": "master.20261002.idx", "href": "master.20261002.idx", "type": "file", "size": "", "last-modified": "synthetic fixture label"}]}}
+\ No newline at end of file
+diff --git a/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/32fff5ff6a37979890bc180de561f8cb58cbcc6f37d0cd92d5048ba0c4a10e31.body b/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/32fff5ff6a37979890bc180de561f8cb58cbcc6f37d0cd92d5048ba0c4a10e31.body
+new file mode 100644
+index 0000000..d538dfc
+--- /dev/null
++++ b/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/32fff5ff6a37979890bc180de561f8cb58cbcc6f37d0cd92d5048ba0c4a10e31.body
+@@ -0,0 +1 @@
++{"directory": {"name": "full-index/2015/", "parent-dir": "../", "item": [{"name": "QTR1", "href": "QTR1/", "type": "dir", "size": "", "last-modified": "synthetic fixture label"}]}}
+\ No newline at end of file
+diff --git a/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/4021d2e373bff5ccc8588b4d8077586f8684d3f3153823cdd13b0555c030cc28.body b/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/4021d2e373bff5ccc8588b4d8077586f8684d3f3153823cdd13b0555c030cc28.body
+new file mode 100644
+index 0000000..b6247fa
+--- /dev/null
++++ b/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/4021d2e373bff5ccc8588b4d8077586f8684d3f3153823cdd13b0555c030cc28.body
+@@ -0,0 +1 @@
++{"directory": {"name": "/Archives/edgar/daily-index/2026", "item": [{"name": "QTR3", "href": "QTR3/", "type": "dir"}, {"name": "QTR4", "href": "QTR4/", "type": "dir"}]}}
+\ No newline at end of file
+diff --git a/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/44196541abe6841a5e9e959b26a1161959d015750143fa45a156ba1c3a75295e.body b/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/44196541abe6841a5e9e959b26a1161959d015750143fa45a156ba1c3a75295e.body
+new file mode 100644
+index 0000000..f008e45
+--- /dev/null
++++ b/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/44196541abe6841a5e9e959b26a1161959d015750143fa45a156ba1c3a75295e.body
+@@ -0,0 +1 @@
++{"directory": {"name": "daily-index/", "parent-dir": "../", "item": [{"name": "2026", "href": "2026/", "type": "dir", "size": "", "last-modified": "synthetic fixture label"}]}}
+\ No newline at end of file
+diff --git a/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/4dc2efcff18a472cac890b5a3e4cc38a1f78a6fd9e672e0a8dababec4a91e6c0.body b/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/4dc2efcff18a472cac890b5a3e4cc38a1f78a6fd9e672e0a8dababec4a91e6c0.body
+new file mode 100644
+index 0000000..95afadc
+--- /dev/null
++++ b/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/4dc2efcff18a472cac890b5a3e4cc38a1f78a6fd9e672e0a8dababec4a91e6c0.body
+@@ -0,0 +1,4 @@
++Synthetic SEC acquisition envelope
++CIK|Company Name|Form Type|Date Filed|File Name
++----------------------------------------------------------------------
++123456|Synthetic Fixture Co 1|10-K|2026-10-01|edgar/data/123456/fixture.txt
+diff --git a/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/52b4c5e475b57259a26bae0dbf22e6280e051be3f6ef99964e37571fd84f5b8a.body b/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/52b4c5e475b57259a26bae0dbf22e6280e051be3f6ef99964e37571fd84f5b8a.body
+new file mode 100644
+index 0000000..5a0ba0e
+--- /dev/null
++++ b/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/52b4c5e475b57259a26bae0dbf22e6280e051be3f6ef99964e37571fd84f5b8a.body
+@@ -0,0 +1 @@
++{"directory": {"name": "daily-index/2026/QTR3/", "parent-dir": "../", "item": []}}
+\ No newline at end of file
+diff --git a/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/58af35e69e11a9c273ed928520bbf412f7133356b09eac39641f6487c6f1421c.body b/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/58af35e69e11a9c273ed928520bbf412f7133356b09eac39641f6487c6f1421c.body
+new file mode 100644
+index 0000000..960f024
+--- /dev/null
++++ b/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/58af35e69e11a9c273ed928520bbf412f7133356b09eac39641f6487c6f1421c.body
+@@ -0,0 +1 @@
++{"directory": {"name": "full-index/2015/QTR1/", "parent-dir": "../", "item": [{"name": "master.zip", "href": "master.zip", "type": "file", "size": "", "last-modified": "synthetic fixture label"}]}}
+\ No newline at end of file
+diff --git a/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/634dccc56d14ab6d6ac8bd0f565d04a9133416e5fb0ca8ecb09096a58c6312fc.body b/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/634dccc56d14ab6d6ac8bd0f565d04a9133416e5fb0ca8ecb09096a58c6312fc.body
+new file mode 100644
+index 0000000..4e149a0
+--- /dev/null
++++ b/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/634dccc56d14ab6d6ac8bd0f565d04a9133416e5fb0ca8ecb09096a58c6312fc.body
+@@ -0,0 +1 @@
++{"directory": {"name": "/Archives/edgar/full-index/2015/QTR1", "item": [{"name": "master.zip", "href": "master.zip", "type": "file"}]}}
+\ No newline at end of file
+diff --git a/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/68b0e0e1c09010a02e45ac0d0adc2621f23d61a84448064d15d0cee9e5aab399.body b/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/68b0e0e1c09010a02e45ac0d0adc2621f23d61a84448064d15d0cee9e5aab399.body
+new file mode 100644
+index 0000000..e7774b8
+Binary files /dev/null and b/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/68b0e0e1c09010a02e45ac0d0adc2621f23d61a84448064d15d0cee9e5aab399.body differ
+diff --git a/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/95e7e13dffd163f5ab77a98032435d7fbb62900752caa672b2159a37c56041ad.body b/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/95e7e13dffd163f5ab77a98032435d7fbb62900752caa672b2159a37c56041ad.body
+new file mode 100644
+index 0000000..266dc5e
+--- /dev/null
++++ b/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/95e7e13dffd163f5ab77a98032435d7fbb62900752caa672b2159a37c56041ad.body
+@@ -0,0 +1,4 @@
++Description: Master Index of EDGAR Dissemination Feed
++CIK|Company Name|Form Type|Date Filed|Filename
++--------------------------------------------------------------
++1001|Synthetic Fixture Co|10-K|2026-10-01|edgar/data/1001/fixture.txt
+diff --git a/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/ab4132221967a34c4ea3b6f797f41a4782bc853df450dbc763de354b4e972fc3.body b/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/ab4132221967a34c4ea3b6f797f41a4782bc853df450dbc763de354b4e972fc3.body
+new file mode 100644
+index 0000000..53bca38
+--- /dev/null
++++ b/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/ab4132221967a34c4ea3b6f797f41a4782bc853df450dbc763de354b4e972fc3.body
+@@ -0,0 +1 @@
++{"directory": {"name": "/Archives/edgar/full-index/2015", "item": [{"name": "QTR1", "href": "QTR1/", "type": "dir"}]}}
+\ No newline at end of file
+diff --git a/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/d33e4176f1fae064d45af39190561b7bb61edac6f7462378554e662fb0b329e2.body b/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/d33e4176f1fae064d45af39190561b7bb61edac6f7462378554e662fb0b329e2.body
+new file mode 100644
+index 0000000..bd2040b
+--- /dev/null
++++ b/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/d33e4176f1fae064d45af39190561b7bb61edac6f7462378554e662fb0b329e2.body
+@@ -0,0 +1 @@
++{"directory": {"name": "/Archives/edgar/daily-index/2026/QTR3", "item": []}}
+\ No newline at end of file
+diff --git a/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/d7660c59fd179fb60293211d85d1b5961ff97c911df237ccca9b80a425642bc7.body b/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/d7660c59fd179fb60293211d85d1b5961ff97c911df237ccca9b80a425642bc7.body
+new file mode 100644
+index 0000000..7f39714
+--- /dev/null
++++ b/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/d7660c59fd179fb60293211d85d1b5961ff97c911df237ccca9b80a425642bc7.body
+@@ -0,0 +1 @@
++{"directory": {"name": "daily-index/2026/", "parent-dir": "../", "item": [{"name": "QTR3", "href": "QTR3/", "type": "dir", "size": "", "last-modified": "synthetic fixture label"}, {"name": "QTR4", "href": "QTR4/", "type": "dir", "size": "", "last-modified": "synthetic fixture label"}]}}
+\ No newline at end of file
+diff --git a/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/dd36466564b870eb44518366fe09113e11484b4c5b9e4bde1b36b5b74c98c03c.body b/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/dd36466564b870eb44518366fe09113e11484b4c5b9e4bde1b36b5b74c98c03c.body
+new file mode 100644
+index 0000000..371892d
+--- /dev/null
++++ b/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/dd36466564b870eb44518366fe09113e11484b4c5b9e4bde1b36b5b74c98c03c.body
+@@ -0,0 +1 @@
++{"directory": {"name": "/Archives/edgar/daily-index", "item": [{"name": "2026", "href": "2026/", "type": "dir"}]}}
+\ No newline at end of file
+diff --git a/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855.body b/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855.body
+new file mode 100644
+index 0000000..e69de29
+diff --git a/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/ebad8fd92aa0dc8acd373ff8ac13cd65581b9204a268d0552e3aee3642a60f58.body b/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/ebad8fd92aa0dc8acd373ff8ac13cd65581b9204a268d0552e3aee3642a60f58.body
+new file mode 100644
+index 0000000..dc17475
+--- /dev/null
++++ b/packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/ebad8fd92aa0dc8acd373ff8ac13cd65581b9204a268d0552e3aee3642a60f58.body
+@@ -0,0 +1 @@
++{"directory": {"name": "/Archives/edgar/daily-index/2026/QTR4", "item": [{"name": "master.20261001.idx", "href": "master.20261001.idx", "type": "file"}, {"name": "master.20261002.idx", "href": "master.20261002.idx", "type": "file"}]}}
+\ No newline at end of file
+diff --git a/packages/sec-edgar-ingest/tests/fixtures/acquisition/manifest.json b/packages/sec-edgar-ingest/tests/fixtures/acquisition/manifest.json
+new file mode 100644
+index 0000000..a5a5773
+--- /dev/null
++++ b/packages/sec-edgar-ingest/tests/fixtures/acquisition/manifest.json
+@@ -0,0 +1,131 @@
++{
++  "fixture_version": "sec-acquisition-fixture-v1",
++  "provenance": "synthetic",
++  "responses": {
++    "https://www.sec.gov/Archives/edgar/daily-index/2026/QTR3/index.json": [
++      {
++        "body_path": "bodies/52b4c5e475b57259a26bae0dbf22e6280e051be3f6ef99964e37571fd84f5b8a.body",
++        "body_sha256": "52b4c5e475b57259a26bae0dbf22e6280e051be3f6ef99964e37571fd84f5b8a",
++        "headers": {
++          "Content-Type": "application/json",
++          "X-Fixture": "synthetic"
++        },
++        "status": 200
++      }
++    ],
++    "https://www.sec.gov/Archives/edgar/daily-index/2026/QTR4/index.json": [
++      {
++        "body_path": "bodies/32eb8001fb131584156014f9ff5ad6dc2a8a97efa7fc63fb712173fdbccc3e94.body",
++        "body_sha256": "32eb8001fb131584156014f9ff5ad6dc2a8a97efa7fc63fb712173fdbccc3e94",
++        "headers": {
++          "Content-Type": "application/json",
++          "X-Fixture": "synthetic"
++        },
++        "status": 200
++      }
++    ],
++    "https://www.sec.gov/Archives/edgar/daily-index/2026/QTR4/master.20261001.idx": [
++      {
++        "body_path": "bodies/4dc2efcff18a472cac890b5a3e4cc38a1f78a6fd9e672e0a8dababec4a91e6c0.body",
++        "body_sha256": "4dc2efcff18a472cac890b5a3e4cc38a1f78a6fd9e672e0a8dababec4a91e6c0",
++        "headers": {
++          "Content-Length": "230",
++          "Content-Type": "text/plain",
++          "ETag": "\"synthetic-Synthetic Fixture Co 1\"",
++          "X-Fixture": "synthetic"
++        },
++        "status": 200
++      }
++    ],
++    "https://www.sec.gov/Archives/edgar/daily-index/2026/QTR4/master.20261002.idx": [
++      {
++        "body_path": "bodies/e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855.body",
++        "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
++        "headers": {
++          "Content-Length": "0",
++          "X-Fixture": "synthetic"
++        },
++        "status": 404
++      },
++      {
++        "body_path": "bodies/258e0245ed05b9340e156bc1572f88425962b0bcb9b25eca60ecb8c6052815c9.body",
++        "body_sha256": "258e0245ed05b9340e156bc1572f88425962b0bcb9b25eca60ecb8c6052815c9",
++        "headers": {
++          "Content-Length": "230",
++          "Content-Type": "text/plain",
++          "ETag": "\"synthetic-Synthetic Fixture Co 2\"",
++          "X-Fixture": "synthetic"
++        },
++        "status": 200
++      }
++    ],
++    "https://www.sec.gov/Archives/edgar/daily-index/2026/index.json": [
++      {
++        "body_path": "bodies/d7660c59fd179fb60293211d85d1b5961ff97c911df237ccca9b80a425642bc7.body",
++        "body_sha256": "d7660c59fd179fb60293211d85d1b5961ff97c911df237ccca9b80a425642bc7",
++        "headers": {
++          "Content-Type": "application/json",
++          "X-Fixture": "synthetic"
++        },
++        "status": 200
++      }
++    ],
++    "https://www.sec.gov/Archives/edgar/daily-index/index.json": [
++      {
++        "body_path": "bodies/44196541abe6841a5e9e959b26a1161959d015750143fa45a156ba1c3a75295e.body",
++        "body_sha256": "44196541abe6841a5e9e959b26a1161959d015750143fa45a156ba1c3a75295e",
++        "headers": {
++          "Content-Type": "application/json",
++          "X-Fixture": "synthetic"
++        },
++        "status": 200
++      }
++    ],
++    "https://www.sec.gov/Archives/edgar/full-index/2015/QTR1/index.json": [
++      {
++        "body_path": "bodies/58af35e69e11a9c273ed928520bbf412f7133356b09eac39641f6487c6f1421c.body",
++        "body_sha256": "58af35e69e11a9c273ed928520bbf412f7133356b09eac39641f6487c6f1421c",
++        "headers": {
++          "Content-Type": "application/json",
++          "X-Fixture": "synthetic"
++        },
++        "status": 200
++      }
++    ],
++    "https://www.sec.gov/Archives/edgar/full-index/2015/QTR1/master.zip": [
++      {
++        "body_path": "bodies/68b0e0e1c09010a02e45ac0d0adc2621f23d61a84448064d15d0cee9e5aab399.body",
++        "body_sha256": "68b0e0e1c09010a02e45ac0d0adc2621f23d61a84448064d15d0cee9e5aab399",
++        "headers": {
++          "Content-Length": "261",
++          "Content-Type": "application/zip",
++          "ETag": "\"synthetic-Synthetic Fixture Co\"",
++          "X-Fixture": "synthetic"
++        },
++        "status": 200
++      }
++    ],
++    "https://www.sec.gov/Archives/edgar/full-index/2015/index.json": [
++      {
++        "body_path": "bodies/32fff5ff6a37979890bc180de561f8cb58cbcc6f37d0cd92d5048ba0c4a10e31.body",
++        "body_sha256": "32fff5ff6a37979890bc180de561f8cb58cbcc6f37d0cd92d5048ba0c4a10e31",
++        "headers": {
++          "Content-Type": "application/json",
++          "X-Fixture": "synthetic"
++        },
++        "status": 200
++      }
++    ],
++    "https://www.sec.gov/Archives/edgar/full-index/index.json": [
++      {
++        "body_path": "bodies/2238e6e45c468be5a35d36546f7dfb5239c961e58316858113ee6e56025584ea.body",
++        "body_sha256": "2238e6e45c468be5a35d36546f7dfb5239c961e58316858113ee6e56025584ea",
++        "headers": {
++          "Content-Type": "application/json",
++          "X-Fixture": "synthetic"
++        },
++        "status": 200
++      }
++    ]
++  }
++}
+diff --git a/packages/sec-edgar-ingest/tests/support.py b/packages/sec-edgar-ingest/tests/support.py
+index 3739d4b..a17871b 100644
+--- a/packages/sec-edgar-ingest/tests/support.py
++++ b/packages/sec-edgar-ingest/tests/support.py
+@@ -1282,10 +1282,396 @@ def collection_race_entry(root, company, staged_barrier, binding_barrier, output
+         staged_barrier.wait(timeout=20)
+     h.faults.at('after_receipt_checkpoint', await_staging)
+     h.source_state.store = CollectionRaceStore(h.store, binding_barrier, trace)
+     try:
+         result = collect(workset, h.context, h.settings, h.client, h.source_state, h.objects, h.faults)
+         trace('adopted', snapshots=h.snapshot_workset(result).to_mapping()['snapshots'])
+         output.put({'result': result.to_mapping(), 'events': events,
+                     'candidate_sha256': __import__('hashlib').sha256(valid_idx_response('daily', company).body).hexdigest()})
+     finally:
+         h.close()
++
++
++ACQUISITION_PACK = Path(__file__).parent / 'fixtures/acquisition/manifest.json'
++
++
++def block_external_network():
++    """Tests admit only expressly selected loopback sockets and never ambient auth."""
++    import socket
++    original = socket.socket.connect
++    def connect(sock, address):
++        if not isinstance(address, tuple) or address[0] not in ('127.0.0.1', '::1'):
++            raise AssertionError('offline acquisition tests refuse external network')
++        return original(sock, address)
++    socket.socket.connect = connect
++
++
++def cli_process_entry():
++    import sys
++    import sec_edgar_ingest.cli as cli
++    from sec_edgar_ingest.storage import open_stores
++    block_external_network()
++    def audited_open(*args, **kwargs):
++        audit = Path.cwd() / 'constructions.json'
++        count = json.loads(audit.read_text()) if audit.exists() else 0
++        audit.write_text(json.dumps(count + 1))
++        return open_stores(*args, **kwargs)
++    cli.open_stores = audited_open
++    raise SystemExit(cli.main(sys.argv[1:]))
++
++
++class CliHarness:
++    """Actual argument parser in independent Python processes, durable local stores."""
++    def __init__(self, fixture, missing_user_agent=False):
++        import tempfile
++        self.temporary = tempfile.TemporaryDirectory(prefix='sec-cli-')
++        self.root = Path(self.temporary.name)
++        self.config_path = self.root / 'config.json'
++        self.pack_path = self.root / 'manifest.json'
++        config = json.loads(FIXTURE_CONFIG.read_text())
++        config['backfill'] = {'start_quarter': '2015Q1', 'end_quarter': '2015Q1'}
++        config['fixture'] = {'allow_clock_override': True, 'allow_deadline_override': True}
++        config['http']['retry_base_seconds'] = 0.001
++        config['http']['retry_cap_seconds'] = 0.001
++        if missing_user_agent:
++            del config['sec']['user_agent']
++        self.config_path.write_text(json.dumps(config))
++        manifest = json.loads(ACQUISITION_PACK.read_text())
++        for responses in manifest['responses'].values():
++            for response in responses:
++                response['body_path'] = str(Path('bodies') / Path(response['body_path']).name)
++        import shutil
++        shutil.copytree(ACQUISITION_PACK.parent / 'bodies', self.root / 'bodies')
++        self.fixture = fixture
++        quarter = fixture_source().canonical_url
++        quarter_listing = quarter.rsplit('/', 1)[0] + '/index.json'
++        if fixture == 'failed-earlier-quarter':
++            manifest['responses'][quarter_listing] = [self.response(404)]
++        elif fixture == 'valid-empty':
++            empty = listing_response('2015Q1', [], family='full-index')
++            manifest['responses'][quarter_listing] = [self.response(200, empty.body)]
++        elif fixture in ('pending', 'retry-exhausted', 'access-blocked', 'quarantined', 'ownership-lost', 'deferred'):
++            spec = {'pending': (404, b''), 'retry-exhausted': (503, b'failure'),
++                    'access-blocked': (403, b'access denied'), 'quarantined': (200, b'invalid index'),
++                    'ownership-lost': (200, b'prefix'), 'deferred': (503, b'failure')}[fixture]
++            response = self.response(*spec)
++            if fixture == 'ownership-lost':
++                response['fault'] = 'ownership_lost'
++            if fixture == 'deferred':
++                response['headers']['Retry-After'] = '9' * 400
++            manifest['responses'][quarter] = [response] * (5 if fixture == 'retry-exhausted' else 1)
++        self.pack_path.write_text(json.dumps(manifest))
++        self.common = ['--config', str(self.config_path), '--fixture-pack', str(self.pack_path),
++                       '--state-dir', str(self.root), '--today', '2026-10-06',
++                       '--deadline', '2099-01-01T00:00:00Z', '--run-id', 'cli-run']
++        self.calls = []
++
++    def response(self, status, body=b''):
++        import hashlib
++        digest = hashlib.sha256(body).hexdigest()
++        path = self.root / 'bodies' / (digest + '.body')
++        path.write_bytes(body)
++        return {'status': status, 'headers': {}, 'body_path': 'bodies/' + path.name, 'body_sha256': digest}
++
++    @property
++    def external_client_constructions(self):
++        path = self.root / 'constructions.json'
++        return json.loads(path.read_text()) if path.exists() else 0
++
++    @property
++    def state_root(self):
++        return self.root / '.fixture-state'
++
++    def invoke(self, command, arguments, *, common=None):
++        import os
++        import subprocess
++        import sys
++        env = {**os.environ, 'PYTHONPATH': str(Path(__file__).parent), 'PYTHONDONTWRITEBYTECODE': '1'}
++        argv = [sys.executable, '-c', 'from support import cli_process_entry; cli_process_entry()',
++                command, *(self.common if common is None else common), *arguments]
++        completed = subprocess.run(argv, cwd=self.root, env=env, capture_output=True, text=True, timeout=30)
++        self.calls.append({'argv': argv, 'exit': completed.returncode,
++                           'stdout': completed.stdout, 'stderr': completed.stderr})
++        return completed
++
++    def discover(self):
++        return self.invoke('discover', ['--mode', 'quarterly', '--discovery-id', 'cli-discovery',
++                                       '--execution-id', 'cli-discover', '--attempt-id', 'discover-1'])
++
++    def collect(self, workset_ref, *, attempt='collect-1', execution='cli-collect'):
++        return self.invoke('collect', ['--workset', workset_ref, '--execution-id', execution, '--attempt-id', attempt])
++
++    def read_durable_result(self, ref):
++        from sec_edgar_ingest.models import CommandResult
++        return CommandResult.from_json((self.state_root / 'objects' / ref).read_bytes())
++
++    def close(self):
++        import os
++        import shutil
++        destination = os.environ.get('SEC_EDGAR_TASK8_TRACE_DIR')
++        if destination:
++            target = Path(destination) / 'cli-files' / self.root.name
++            self.root.joinpath('calls.json').write_text(json.dumps(self.calls, indent=2, sort_keys=True) + '\n')
++            shutil.copytree(self.root, target, dirs_exist_ok=True)
++            (target / 'retention-map.json').write_text(json.dumps({'original_root': str(self.root), 'retained_root': str(target)}) + '\n')
++        self.temporary.cleanup()
++
++
++def cli_harness(fixture: str, missing_user_agent: bool = False) -> CliHarness:
++    return CliHarness(fixture, missing_user_agent)
++
++
++def result_crash_entry(point, *argv):
++    """Interrupt actual result object/Attempt transitions in an independent CLI process."""
++    import gc
++    import os
++    import sec_edgar_ingest.cli as cli
++    original = cli.write_result
++    class Objects:
++        def __init__(self, objects): self.objects = objects
++        def __getattr__(self, name): return getattr(self.objects, name)
++        def put_once(self, path, body):
++            if path.endswith('/result.json') and point == 'before_result_object':
++                gc.collect()
++                os._exit(74)
++            value = self.objects.put_once(path, body)
++            if path.endswith('/result.json') and point == 'after_result_object':
++                gc.collect()
++                os._exit(74)
++            return value
++    class State:
++        def __init__(self, state): self.state = state
++        def __getattr__(self, name): return getattr(self.state, name)
++        def finish_attempt(self, result):
++            if point == 'before_attempt_finish':
++                gc.collect()
++                os._exit(74)
++            self.state.finish_attempt(result)
++            if point == 'after_attempt_finish':
++                gc.collect()
++                os._exit(74)
++    def writer(result, objects, state):
++        return original(result, Objects(objects), State(state))
++    cli.write_result = writer
++    if point == 'unexpected_error':
++        def failure(*args, **kwargs): raise RuntimeError('explicit unexpected CLI fixture failure')
++        cli.collect = failure
++    if point == 'unexpected_sender':
++        class ExplodingSender:
++            def send(self, *args, **kwargs): raise RuntimeError('explicit unexpected sender fixture failure')
++        cli.FixturePack.sender = lambda self, state: ExplodingSender()
++    block_external_network()
++    raise SystemExit(cli.main(list(argv)))
++
++
++def retain_acquisition_proof(name, value):
++    import os
++    destination = os.environ.get('SEC_EDGAR_TASK8_TRACE_DIR')
++    if destination:
++        root = Path(destination)
++        root.mkdir(parents=True, exist_ok=True)
++        (root / (name + '.json')).write_text(json.dumps(value, indent=2, sort_keys=True) + '\n')
++
++
++def acquisition_race_entry(root, company, request_barrier, staged_barrier, binding_barrier, output):
++    import os
++    import time
++    from dataclasses import replace
++    from sec_edgar_ingest.collection import collect
++    from sec_edgar_ingest.coordination import Clock
++    from sec_edgar_ingest.results import write_result
++    from sec_edgar_ingest.worksets import decode_source_workset
++    root = Path(root)
++    clock = Clock()
++    h = CollectionHarness(root, [valid_idx_response('daily', company='process-' + company)], clock=clock)
++    h.context = replace(real_context(clock, h.settings), execution_id='process-' + company,
++                        attempt_id='process-' + company, deadline=clock.now() + timedelta(seconds=30))
++    events = []
++    def trace(event, **details):
++        events.append({'event': event, 'pid': os.getpid(), 'monotonic_ns': time.monotonic_ns(),
++                       'at': clock.now().isoformat(), **details})
++    def observe(event):
++        details = dict(event)
++        trace(details.pop('event'), **details)
++    h.coordinator.observer = observe
++    def staged():
++        trace('receipt_checkpoint')
++        staged_barrier.wait(timeout=20)
++    h.faults.at('after_receipt_checkpoint', staged)
++    h.source_state.store = CollectionRaceStore(h.store, binding_barrier, trace)
++    workset = decode_source_workset((root / 'input-workset.json').read_bytes())
++    try:
++        trace('request_barrier_ready')
++        request_barrier.wait(timeout=20)
++        trace('request_barrier_released')
++        result = collect(workset, h.context, h.settings, h.client, h.source_state, h.objects, h.faults)
++        reference = write_result(result, h.objects, h.source_state)
++        trace('result_written', result_ref=reference)
++        output.put({'result': result.to_mapping(), 'result_ref': reference, 'events': events,
++                    'candidate_sha256': __import__('hashlib').sha256(valid_idx_response('daily', company='process-' + company).body).hexdigest(),
++                    'result_hex': h.objects.read(reference).hex()})
++    finally:
++        h.close()
++
++
++def _integrated_settings():
++    return fixture_settings(http={'exchange_deadline_seconds': 0.8},
++                            coordination={'lease_seconds': 2, 'renew_every_seconds': 1, 'clock_uncertainty_seconds': 0.05})
++
++
++def _append_process_event(path, event, **fields):
++    import os
++    import time
++    with Path(path).open('a') as stream:
++        stream.write(json.dumps({'event': event, 'pid': os.getpid(), 'monotonic': time.monotonic(),
++                                 'at': datetime.now(timezone.utc).isoformat(), **fields}, sort_keys=True) + '\n')
++        stream.flush()
++        os.fsync(stream.fileno())
++
++
++def integrated_old_sender(root, url, origin, cancellation):
++    import gc
++    from sec_edgar_ingest.coordination import Clock, Coordinator
++    root = Path(root)
++    clock, settings = Clock(), _integrated_settings()
++    store, objects, leases = store_bundle(root / 'state', clock=clock)
++    coordinator = Coordinator(settings, store, leases, clock)
++    coordinator.observer = lambda event: _append_process_event(root / 'old-events.jsonl', 'coordinator', value=event)
++    sender = loopback_sender(settings, clock, origin, spool=root / 'old-sender')
++    context = real_context(clock, settings)
++    with coordinator.turn('integrated-old-owner', 'backfill', context.deadline) as turn:
++        turn.cancelled = cancellation
++        gc.collect()
++        permit = turn.reserve('integrated-old-request')
++        _append_process_event(root / 'old-events.jsonl', 'permit', permit=permit.to_mapping(),
++                              journal=leases.read_journal(turn.handle).to_mapping())
++        turn.assert_current(permit)
++        receipt = sender.send(url, context, permit, cancellation=cancellation)
++        turn.complete(permit, drained=True)
++    raise AssertionError('hostile fixture parent should have been killed')
++
++
++def integrated_successor(root, priority, servers, ready):
++    from dataclasses import replace
++    from sec_edgar_ingest.coordination import Clock, Coordinator
++    from sec_edgar_ingest.download import RequestClient
++    from sec_edgar_ingest.state import AcquisitionState
++    root = Path(root)
++    clock, settings = Clock(), _integrated_settings()
++    store, objects, leases = store_bundle(root / 'state', clock=clock)
++    state = AcquisitionState(store, clock=clock)
++    coordinator = Coordinator(settings, store, leases, clock)
++    trace_path = root / (priority + '-events.jsonl')
++    def observed(event):
++        _append_process_event(trace_path, 'coordinator', value=event)
++        if event['event'] == 'enqueue': ready.set()
++    coordinator.observer = observed
++    class MappedSender:
++        def __init__(self): self.index = 0
++        def send(self, url, context, permit, *, cancellation):
++            selected = servers[self.index]
++            self.index += 1
++            target = root / (priority + '-sender-' + str(self.index))
++            bounded = loopback_sender(settings, clock, selected['origin'], spool=target)
++            _append_process_event(trace_path, 'request-dispatch', permit=permit.to_mapping(), url=url)
++            receipt = bounded.send(selected['url'], context, permit, cancellation=cancellation)
++            return replace(receipt, url=url)
++    sender = MappedSender()
++    client = RequestClient(settings, coordinator, sender, state, clock)
++    client.jitter = lambda: 0
++    context = replace(real_context(clock, settings), run_id='integrated-' + priority,
++                      execution_id='integrated-' + priority, attempt_id='integrated-' + priority,
++                      priority=priority, deadline=clock.now() + timedelta(seconds=20))
++    try:
++        if priority == 'daily':
++            listing = client.fetch('https://www.sec.gov/Archives/edgar/daily-index/2026/QTR4/index.json', context)
++            _append_process_event(trace_path, 'listing-received', receipt=listing.to_mapping(), body_hex=listing.temporary_path.read_bytes().hex())
++            source = fixture_source('2026-10-01', 'daily')
++        else:
++            source = fixture_source()
++        receipt = client.fetch(source.canonical_url, context, source)
++        _append_process_event(trace_path, 'source-received', receipt=receipt.to_mapping(), body_hex=receipt.temporary_path.read_bytes().hex())
++        _append_process_event(trace_path, 'request-history', rows=[row.to_mapping() for row in store.scan('TransportAttempt', {})])
++    finally:
++        leases.close()
++        store.close()
++
++
++def integrated_takeover_proof():
++    import multiprocessing
++    import subprocess
++    import tempfile
++    import time
++    import shutil
++    import os
++    spawn = multiprocessing.get_context('spawn')
++    with tempfile.TemporaryDirectory(prefix='sec-integrated-takeover-') as temporary:
++        root = Path(temporary)
++        old = LoopbackServer(mode='blocked-headers')
++        listing = listing_response('2026Q4', ['master.20261001.idx'])
++        specs = [LoopbackServer(b'retry prefix', status=503, headers={'Retry-After': '1'}),
++                 LoopbackServer(listing.body), LoopbackServer(valid_idx_response('daily').body),
++                 LoopbackServer(valid_idx_response('quarterly').body)]
++        cancellation = spawn.Event()
++        old_process = spawn.Process(target=integrated_old_sender, args=(str(root), old.url, old.origin, cancellation))
++        processes = [old_process]
++        try:
++            old_process.start()
++            if not old.connected.wait(3): raise AssertionError('old child did not reach held loopback')
++            old_process.terminate()
++            old_process.join(2)
++            killed = time.monotonic()
++            old_events = [json.loads(line) for line in (root / 'old-events.jsonl').read_text().splitlines()]
++            reservation = next(event for event in old_events if event['event'] == 'permit')
++            permit = reservation['permit']
++            unsafe_mono = reservation['monotonic'] + (datetime.fromisoformat(permit['takeover_after']) - datetime.fromisoformat(reservation['at'])).total_seconds()
++            # Backfill queues first; the subsequently queued daily client must get the next turn.
++            backfill_ready, daily_ready = spawn.Event(), spawn.Event()
++            mapping = [{'url': server.url, 'origin': server.origin} for server in specs]
++            backfill = spawn.Process(target=integrated_successor, args=(str(root), 'backfill', mapping[3:], backfill_ready))
++            daily = spawn.Process(target=integrated_successor, args=(str(root), 'daily', mapping[:3], daily_ready))
++            processes += [backfill, daily]
++            backfill.start()
++            if not backfill_ready.wait(2): raise AssertionError('backfill client failed to queue')
++            daily.start()
++            if not daily_ready.wait(2): raise AssertionError('daily client failed to queue')
++            observations = []
++            while time.monotonic() < unsafe_mono - 0.02:
++                observations.append({'monotonic': time.monotonic(), 'successor_requests': sum(len(server.requests) for server in specs)})
++                if observations[-1]['successor_requests']: raise AssertionError('successor reached loopback inside persisted unsafe interval')
++                time.sleep(min(0.025, max(0, unsafe_mono - 0.02 - time.monotonic())))
++            for process in (daily, backfill):
++                process.join(10)
++                if process.exitcode != 0: raise AssertionError('integrated successor failed: ' + str(process.exitcode))
++            if not old.closed.wait(1): raise AssertionError('orphan old child socket did not drain')
++            old_transport = [json.loads(line) for line in (root / 'old-sender/transport.jsonl').read_text().splitlines()]
++            armed = next(event for event in old_transport if event['event'] == 'alarm-armed')
++            status = subprocess.run(['ps', '-o', 'stat=', '-p', str(armed['pid'])], capture_output=True, text=True, timeout=1)
++            drained = status.returncode == 1 or not status.stdout.strip() or status.stdout.strip().startswith('Z')
++            daily_events = [json.loads(line) for line in (root / 'daily-events.jsonl').read_text().splitlines()]
++            backfill_events = [json.loads(line) for line in (root / 'backfill-events.jsonl').read_text().splitlines()]
++            starts = sorted([{'priority': 'daily' if index < 3 else 'backfill', **event} for index, server in enumerate(specs) for event in server.events if event['event'] == 'request-received'], key=lambda event: event['monotonic'])
++            for before, after in zip(starts, starts[1:]):
++                if after['monotonic'] - before['monotonic'] < 1 / 3: raise AssertionError('shared wire pacing compressed across listing/retry/download')
++            child_traces = {path.relative_to(root).as_posix(): [json.loads(line) for line in path.read_text().splitlines()] for path in root.rglob('transport.jsonl')}
++            proof = {'parent_pid': old_process.pid, 'parent_exit': old_process.exitcode, 'killed_at': killed,
++                     'successor_exit': daily.exitcode, 'successor_processes': [{'pid': process.pid, 'exit': process.exitcode} for process in (daily, backfill)],
++                     'old_permit': permit, 'old_journal': reservation['journal'], 'unsafe_until_mono': unsafe_mono,
++                     'unsafe_observations': observations, 'zero_successor_through_guard': bool(observations) and all(item['successor_requests'] == 0 for item in observations),
++                     'successor_first_start': starts[0]['monotonic'], 'old_socket_closed': next(event['monotonic'] for event in old.events if event['event'] == 'socket-closed'),
++                     'ordered_priorities': [item['priority'] for item in starts], 'all_wire_starts': starts,
++                     'child_alarm_disposition': armed['alarm_disposition'], 'old_child_drained': drained,
++                     'orphan_status': {'argv': status.args, 'stdout': status.stdout, 'stderr': status.stderr, 'exit': status.returncode},
++                     'old_server': old.events, 'old_events': old_events, 'daily_events': daily_events,
++                     'backfill_events': backfill_events, 'child_traces': child_traces,
++                     'servers': [{'events': server.events, 'requests': server.requests, 'body_hex': server.body.hex(), 'body_sha256': __import__('hashlib').sha256(server.body).hexdigest()} for server in specs]}
++            return proof
++        finally:
++            destination = os.environ.get('SEC_EDGAR_TASK8_TRACE_DIR')
++            if destination:
++                target = Path(destination) / 'integrated-takeover-files'
++                shutil.copytree(root, target, dirs_exist_ok=True)
++                (target / 'retention-map.json').write_text(json.dumps({'original_root': str(root), 'retained_root': str(target)}) + '\n')
++            for process in processes:
++                if process.is_alive(): process.terminate(); process.join(2)
++            old.close()
++            for server in specs: server.close()
+diff --git a/packages/sec-edgar-ingest/tests/test_acquisition_processes.py b/packages/sec-edgar-ingest/tests/test_acquisition_processes.py
+new file mode 100644
+index 0000000..3e8e72f
+--- /dev/null
++++ b/packages/sec-edgar-ingest/tests/test_acquisition_processes.py
+@@ -0,0 +1,136 @@
++"""Real local competing collectors, held sockets, child death and durable takeover."""
++import hashlib
++import json
++import multiprocessing
++import tempfile
++import time
++import unittest
++from dataclasses import replace
++from pathlib import Path
++
++from support import (CollectionHarness, collection_harness, fixture_source, fixture_workset,
++                     retain_acquisition_proof, valid_idx_response)
++from sec_edgar_ingest.worksets import encode_workset
++
++
++class AcquisitionProcessTests(unittest.TestCase):
++    def test_three_independent_collectors_barrier_request_and_actual_binding_race(self):
++        import support
++        self.assertTrue(hasattr(support, 'acquisition_race_entry'), 'Task 8 needs three independent collecting processes and request/binding barriers')
++        spawn = multiprocessing.get_context('spawn')
++        with tempfile.TemporaryDirectory(prefix='sec-acquisition-race-') as temporary:
++            root = Path(temporary)
++            source = fixture_source('2026-10-01', 'daily')
++            workset = fixture_workset((source,))
++            h = collection_harness(root, [])
++            h.objects.put_once(h.source_workset_path(workset), encode_workset(workset))
++            (root / 'input-workset.json').write_bytes(encode_workset(workset))
++            h.close()
++            request, staged, binding = (spawn.Barrier(3) for _ in range(3))
++            output = spawn.Queue()
++            processes = [spawn.Process(target=support.acquisition_race_entry, args=(str(root), str(index), request, staged, binding, output)) for index in range(3)]
++            try:
++                for process in processes: process.start()
++                records = [output.get(timeout=25) for _ in processes]
++                for process in processes:
++                    process.join(5)
++                    self.assertEqual(process.exitcode, 0)
++                events = sorted((event for record in records for event in record['events']), key=lambda event: event['monotonic_ns'])
++                self.assertEqual(len({event['pid'] for event in events}), 3)
++                absent = [event for event in events if event['event'] == 'bind_read_absent']
++                inserts = [event for event in events if event['event'] == 'bind_insert_attempt']
++                self.assertEqual((len(absent), len(inserts)), (3, 3))
++                self.assertLess(max(event['monotonic_ns'] for event in absent), min(event['monotonic_ns'] for event in inserts))
++                self.assertEqual(sum(event['event'] == 'bind_insert_success' for event in events), 1)
++                self.assertEqual(sum(event['event'] == 'bind_insert_conflict' for event in events), 2)
++                starts = [event for event in events if event['event'] == 'request-start']
++                ends = [event for event in events if event['event'] == 'request-end']
++                self.assertEqual(len(starts), 3)
++                for previous, current in zip(starts, starts[1:]):
++                    self.assertGreaterEqual((current['monotonic_ns'] - previous['monotonic_ns']) / 1e9, 1 / 3)
++                    self.assertLess(next(end['monotonic_ns'] for end in ends if end['request_id'] == previous['request_id']), current['monotonic_ns'])
++                self.assertEqual(len({record['result']['snapshot_workset_ref'] for record in records}), 1)
++                h = collection_harness(root, [])
++                h.forbid_fetch = True
++                replay = h.collect(workset)
++                self.assertEqual(replay.outcome, 'success')
++                self.assertEqual(replay.snapshot_workset_ref, records[0]['result']['snapshot_workset_ref'])
++                raw = h.snapshot_workset(replay).snapshots[0]
++                body = h.objects.read(raw.raw_path)
++                self.assertEqual(hashlib.sha256(body).hexdigest(), raw.sha256)
++                proof = {'processes': [{'pid': process.pid, 'exit': process.exitcode} for process in processes],
++                         'records': records, 'events': events, 'winner': raw.to_mapping(), 'raw_hex': body.hex(),
++                         'workset_hex': h.objects.read(replay.snapshot_workset_ref).hex(), 'replay': replay.to_mapping()}
++                retain_acquisition_proof('three-collector-race', proof)
++                h.close()
++            finally:
++                for process in processes:
++                    if process.is_alive(): process.terminate(); process.join(2)
++                output.close(); output.join_thread()
++
++    def test_held_socket_parent_death_zero_successor_unsafe_interval_and_daily_next(self):
++        import support
++        self.assertTrue(hasattr(support, 'integrated_takeover_proof'), 'Task 8 needs an integrated held-socket takeover trace')
++        proof = support.integrated_takeover_proof()
++        retain_acquisition_proof('integrated-takeover', proof)
++        self.assertEqual(proof['parent_exit'], -15)
++        self.assertEqual(proof['successor_exit'], 0)
++        self.assertTrue(proof['zero_successor_through_guard'])
++        self.assertGreaterEqual(proof['successor_first_start'], proof['unsafe_until_mono'])
++        self.assertGreater(proof['successor_first_start'], proof['old_socket_closed'])
++        self.assertEqual(proof['ordered_priorities'][0], 'daily')
++        self.assertIn('backfill', proof['ordered_priorities'])
++        self.assertEqual(len(proof['all_wire_starts']), 4)
++        self.assertEqual(proof['child_alarm_disposition'], 'default-fatal')
++        self.assertTrue(proof['old_child_drained'])
++        retain_acquisition_proof('integrated-takeover', proof)
++
++    def test_stale_sender_awakened_after_allowed_start_sends_zero(self):
++        from support import LoopbackServer, fixture_settings, loopback_sender, real_context, real_permit, stale_start_child
++        from sec_edgar_ingest.coordination import Clock
++        import threading
++        with tempfile.TemporaryDirectory(prefix='sec-acquisition-stale-') as temporary:
++            server = LoopbackServer(b'never requested')
++            try:
++                clock = Clock()
++                settings = fixture_settings(http={'exchange_deadline_seconds': 0.4})
++                sender = loopback_sender(settings, clock, server.origin, target=stale_start_child, spool=Path(temporary) / 'sender')
++                receipt = sender.send(server.url, real_context(clock, settings), real_permit(clock, seconds=0.4), cancellation=multiprocessing.get_context('spawn').Event())
++                self.assertFalse(receipt.complete)
++                self.assertEqual(len(server.requests), 0)
++                trace = (Path(temporary) / 'sender/transport.jsonl').read_text()
++                self.assertNotIn('socket-start', trace)
++                retain_acquisition_proof('stale-dispatch', {'receipt': receipt.to_mapping(), 'transport': [json.loads(line) for line in trace.splitlines()], 'server': server.events, 'body_hex': receipt.temporary_path.read_bytes().hex()})
++            finally:
++                server.close()
++
++    def test_independent_child_deadline_records_actual_fatal_exit_and_prefix(self):
++        import signal
++        from support import LoopbackServer, fixture_settings, loopback_sender, real_context, real_permit
++        from sec_edgar_ingest.coordination import Clock
++        with tempfile.TemporaryDirectory(prefix='sec-acquisition-deadline-') as temporary:
++            server = LoopbackServer(b'x' * 7, mode='trickle')
++            try:
++                clock = Clock()
++                settings = fixture_settings(http={'exchange_deadline_seconds': 0.4})
++                sender = loopback_sender(settings, clock, server.origin, spool=Path(temporary) / 'sender')
++                from unittest.mock import patch
++                def stalled_supervisor(process, cancellation, deadline, clock):
++                    process.join(1)
++                    if process.is_alive():
++                        raise AssertionError('independent child timer failed while supervisor was stalled')
++                    return True
++                with patch('sec_edgar_ingest.download.wait_for_sender', stalled_supervisor):
++                    receipt = sender.send(server.url, real_context(clock, settings), real_permit(clock, seconds=0.4), cancellation=multiprocessing.get_context('spawn').Event())
++                self.assertFalse(receipt.complete)
++                self.assertGreater(receipt.byte_count, 0)
++                self.assertTrue(server.closed.wait(1))
++                trace = [json.loads(line) for line in (Path(temporary) / 'sender/transport.jsonl').read_text().splitlines()]
++                joined = next(event for event in trace if event['event'] == 'child-joined')
++                self.assertEqual(joined['exitcode'], -signal.SIGALRM)
++                body = receipt.temporary_path.read_bytes()
++                self.assertEqual(hashlib.sha256(body).hexdigest(), receipt.sha256)
++                retain_acquisition_proof('independent-child-deadline', {'receipt': receipt.to_mapping(), 'transport': trace, 'server': server.events,
++                    'body_hex': body.hex(), 'body_sha256': hashlib.sha256(body).hexdigest(), 'child_exit': joined})
++            finally:
++                server.close()
+diff --git a/packages/sec-edgar-ingest/tests/test_cli.py b/packages/sec-edgar-ingest/tests/test_cli.py
+new file mode 100644
+index 0000000..7844be1
+--- /dev/null
++++ b/packages/sec-edgar-ingest/tests/test_cli.py
+@@ -0,0 +1,496 @@
++"""CLI/result contracts use actual parsing, separate processes and durable objects."""
++import contextlib
++import hashlib
++import importlib
++import io
++import json
++import tempfile
++import unittest
++from dataclasses import replace
++from pathlib import Path
++
++from support import cli_harness, fixture_context, store_bundle
++from sec_edgar_ingest.models import CommandResult, canonical_json
++
++
++class ResultTests(unittest.TestCase):
++    def results(self):
++        try:
++            return importlib.import_module('sec_edgar_ingest.results')
++        except ModuleNotFoundError:
++            self.fail('Task 8 must implement durable results')
++
++    def result(self):
++        ctx = fixture_context()
++        return CommandResult(ctx, 'success', None, None, 0, 0, 0, 0, 0, 0, (), ctx.started_at, ctx.started_at)
++
++    def test_canonical_result_codec_is_strict_and_roundtrips(self):
++        result = self.result()
++        self.assertTrue(hasattr(result, 'to_json'), 'CommandResult needs canonical JSON codec')
++        body = result.to_json()
++        self.assertEqual(body, canonical_json(result.to_mapping()))
++        self.assertEqual(CommandResult.from_json(body), result)
++        for invalid in (body.replace(b'"success"', b'"success","outcome":"success"'), b'[]', b'{"outcome":NaN}'):
++            with self.subTest(invalid=invalid), self.assertRaises(ValueError):
++                CommandResult.from_json(invalid)
++
++    def test_result_precedes_attempt_and_conflicting_bytes_refuse(self):
++        results = self.results()
++        from sec_edgar_ingest.state import AcquisitionState, attempt_key
++        from sec_edgar_ingest.storage.contracts import Conflict
++        with tempfile.TemporaryDirectory() as temporary:
++            store, objects, leases = store_bundle(Path(temporary))
++            self.addCleanup(store.close)
++            self.addCleanup(leases.close)
++            state = AcquisitionState(store)
++            result = self.result()
++            state.begin_attempt(result.context)
++            finish = state.finish_attempt
++            def observed_finish(value):
++                path = f'runs/sec/{value.context.run_id}/collect/{value.context.attempt_id}/result.json'
++                self.assertEqual(objects.read(path), value.to_json())
++                finish(value)
++            state.finish_attempt = observed_finish
++            path = results.write_result(result, objects, state)
++            self.assertEqual(results.read_result(path, objects), result)
++            self.assertEqual(results.write_result(result, objects, state), path)
++            with self.assertRaises(Conflict):
++                results.write_result(replace(result, downloaded=1), objects, state)
++            self.assertEqual(store.get('Attempt', attempt_key(result.context)).value['outcome'], 'success')
++
++    def test_result_reader_refuses_wrong_path_correlation(self):
++        results = self.results()
++        from sec_edgar_ingest.storage.contracts import Conflict
++        with tempfile.TemporaryDirectory() as temporary:
++            store, objects, leases = store_bundle(Path(temporary))
++            self.addCleanup(store.close)
++            self.addCleanup(leases.close)
++            objects.put_once('runs/sec/wrong/collect/attempt/result.json', self.result().to_json())
++            with self.assertRaises((Conflict, ValueError)):
++                results.read_result('runs/sec/wrong/collect/attempt/result.json', objects)
++
++    def test_exact_exit_mapping_and_structured_event(self):
++        results = self.results()
++        expected = {'success': 0, 'no_new_sources': 0, 'configuration': 2,
++                    'discovery_failed': 3, 'incomplete': 3, 'pending': 4, 'retry_exhausted': 5,
++                    'deferred': 5, 'throttled': 5, 'access_blocked': 6, 'quarantined': 7,
++                    'invalid_source': 7, 'ownership_lost': 8, 'state_conflict': 9, 'internal_error': 9}
++        self.assertEqual({name: results.exit_code(name) for name in expected}, expected)
++        with self.assertRaises(KeyError):
++            results.exit_code('transform_complete')
++        output = io.StringIO()
++        with contextlib.redirect_stderr(output):
++            results.log_event(self.result().context, 'finished', {'pending': 1})
++        event = json.loads(output.getvalue())
++        self.assertEqual(event['event'], 'finished')
++        self.assertEqual(event['context'], self.result().context.to_mapping())
++        self.assertEqual(event['fields'], {'pending': 1})
++
++
++class CliTests(unittest.TestCase):
++    def harness(self, fixture='valid-quarter-and-daily', **kwargs):
++        h = cli_harness(fixture, **kwargs)
++        self.addCleanup(h.close)
++        return h
++
++    def test_failed_discovery_is_not_empty_success(self):
++        h = self.harness('failed-earlier-quarter')
++        completed = h.discover()
++        self.assertEqual(completed.returncode, 3, completed.stderr)
++        result = json.loads(completed.stdout)
++        self.assertEqual(result['outcome'], 'discovery_failed')
++        self.assertIsNone(result['snapshot_workset_ref'])
++        self.assertTrue(h.read_durable_result(result['result_ref']).gaps)
++        self.assertIsNotNone(result['source_workset_ref'])
++
++    def test_missing_identity_creates_no_external_clients(self):
++        h = self.harness(missing_user_agent=True)
++        completed = h.discover()
++        self.assertEqual(completed.returncode, 2, completed.stderr)
++        self.assertEqual(h.external_client_constructions, 0)
++        self.assertFalse(h.state_root.exists())
++        self.assertEqual(json.loads(completed.stderr)['outcome'], 'configuration')
++
++    def test_unsafe_identifiers_refuse_before_backend_construction(self):
++        for name in ('--run-id', '--execution-id', '--attempt-id', '--discovery-id'):
++            for invalid in ('', 'a/b', '../other', '/absolute', 'a\\b', 'a:b', 'a%20b', 'a?b', 'a#b'):
++                with self.subTest(name=name, invalid=invalid):
++                    h = self.harness()
++                    args = ['--mode', 'quarterly', '--discovery-id', 'discovery', '--execution-id', 'execution', '--attempt-id', 'attempt', name, invalid]
++                    done = h.invoke('discover', args)
++                    self.assertEqual(done.returncode, 2)
++                    self.assertEqual(h.external_client_constructions, 0)
++
++    def test_fixture_pack_required_and_overrides_rejected_in_azure_before_clients(self):
++        h = self.harness()
++        common = list(h.common)
++        position = common.index('--fixture-pack')
++        del common[position:position + 2]
++        self.assertEqual(h.invoke('discover', ['--mode', 'quarterly', '--discovery-id', 'd', '--execution-id', 'e', '--attempt-id', 'a'], common=common).returncode, 2)
++        self.assertEqual(h.external_client_constructions, 0)
++
++    def test_valid_empty_and_help_do_not_offer_unimplemented_stages(self):
++        h = self.harness('valid-empty')
++        done = h.discover()
++        self.assertEqual(done.returncode, 0, done.stderr)
++        self.assertEqual(json.loads(done.stdout)['outcome'], 'no_new_sources')
++        from sec_edgar_ingest.cli import main
++        with contextlib.redirect_stdout(io.StringIO()) as output:
++            self.assertEqual(main([]), 0)
++        self.assertIn('discover', output.getvalue())
++        self.assertIn('collect', output.getvalue())
++        self.assertNotIn('transform', output.getvalue())
++        self.assertNotIn('publish', output.getvalue())
++
++    def test_collection_outcomes_are_named_and_non_success(self):
++        expected = {'pending': (4, 'pending'), 'retry-exhausted': (5, 'retry_exhausted'),
++                    'access-blocked': (6, 'access_blocked'), 'quarantined': (7, 'quarantined'),
++                    'ownership-lost': (8, 'ownership_lost'), 'deferred': (5, 'deferred')}
++        for fixture, (code, outcome) in expected.items():
++            with self.subTest(fixture=fixture):
++                h = self.harness(fixture)
++                discovered = h.discover()
++                self.assertEqual(discovered.returncode, 0, discovered.stderr)
++                done = h.collect(json.loads(discovered.stdout)['source_workset_ref'])
++                self.assertEqual(done.returncode, code, done.stderr)
++                record = h.read_durable_result(json.loads(done.stdout)['result_ref'])
++                self.assertEqual(record.outcome, outcome)
++                self.assertTrue(record.gaps)
++                self.assertIsNone(record.snapshot_workset_ref)
++
++    def test_success_result_current_context_hash_and_replay_no_requests(self):
++        h = self.harness()
++        discovered = json.loads(h.discover().stdout)
++        done = h.collect(discovered['source_workset_ref'])
++        self.assertEqual(done.returncode, 0, done.stderr)
++        value = json.loads(done.stdout)
++        record = h.read_durable_result(value['result_ref'])
++        self.assertEqual((record.context.run_id, record.context.execution_id, record.context.command, record.context.attempt_id),
++                         ('cli-run', 'cli-collect', 'collect', 'collect-1'))
++        from sec_edgar_ingest.config import load_config
++        self.assertEqual(record.context.config_sha256, load_config(h.config_path).config_sha256)
++        replay = h.collect(discovered['source_workset_ref'])
++        self.assertEqual(replay.returncode, 0, replay.stderr)
++        self.assertEqual(json.loads(replay.stdout), value)
++        self.assertEqual(h.read_durable_result(value['result_ref']), record)
++        different = h.collect(discovered['source_workset_ref'], execution='wrong-execution')
++        self.assertEqual(different.returncode, 9, different.stderr)
++        self.assertEqual(h.read_durable_result(value['result_ref']), record)
++
++    def test_unknown_and_missing_workset_refuse_without_false_completion(self):
++        for ref in ('worksets/sec/source/sha256=' + 'a' * 64 + '/workset.json', 'unknown.json', '../escape'):
++            with self.subTest(ref=ref):
++                h = self.harness()
++                done = h.collect(ref)
++                self.assertIn(done.returncode, (2, 9), done.stderr)
++                self.assertNotEqual(json.loads(done.stdout or done.stderr).get('outcome'), 'success')
++
++    def test_completed_attempt_cannot_change_config_deadline_mode_refresh_or_workset(self):
++        for variation in ('config', 'deadline', 'mode', 'refresh', 'discovery'):
++            with self.subTest(variation=variation):
++                h = self.harness()
++                first = h.discover()
++                self.assertEqual(first.returncode, 0, first.stderr)
++                common = list(h.common)
++                args = ['--mode', 'quarterly', '--discovery-id', 'cli-discovery', '--execution-id', 'cli-discover', '--attempt-id', 'discover-1']
++                if variation == 'config':
++                    cfg = json.loads(h.config_path.read_text())
++                    cfg['etl']['parser_version'] = 'fixture-version-two'
++                    h.config_path.write_text(json.dumps(cfg))
++                elif variation == 'deadline':
++                    common[common.index('--deadline') + 1] = '2098-01-01T00:00:00Z'
++                elif variation == 'mode':
++                    args[args.index('--mode') + 1] = 'daily'
++                elif variation == 'refresh':
++                    args.append('--refresh')
++                else:
++                    args[args.index('--discovery-id') + 1] = 'different'
++                done = h.invoke('discover', args, common=common)
++                self.assertIn(done.returncode, (2, 9), done.stderr)
++                self.assertNotEqual(done.stdout, first.stdout)
++
++
++class FixturePackTests(unittest.TestCase):
++    def pack_class(self):
++        import sec_edgar_ingest.download as download
++        self.assertTrue(hasattr(download, 'FixturePack'), 'download must implement an explicit validated fixture pack')
++        return download.FixturePack
++
++    def test_pack_validates_hash_provenance_url_path_and_never_falls_back(self):
++        from support import ACQUISITION_PACK
++        cls = self.pack_class()
++        self.assertIsNotNone(cls.load(ACQUISITION_PACK))
++        original = json.loads(ACQUISITION_PACK.read_text())
++        with tempfile.TemporaryDirectory() as temporary:
++            import shutil
++            root = Path(temporary)
++            shutil.copytree(ACQUISITION_PACK.parent / 'bodies', root / 'bodies')
++            for variation in ('provenance', 'hash', 'path', 'url', 'status', 'fault'):
++                value = json.loads(json.dumps(original))
++                url, specs = next(iter(value['responses'].items()))
++                if variation == 'provenance': value['provenance'] = 'live'
++                elif variation == 'hash': specs[0]['body_sha256'] = '0' * 64
++                elif variation == 'path': specs[0]['body_path'] = '../escape'
++                elif variation == 'url': value['responses']['https://example.com/index.json'] = value['responses'].pop(url)
++                elif variation == 'status': specs[0]['status'] = True
++                else: specs[0]['fault'] = {'untyped': 'fault'}
++                path = root / 'manifest.json'
++                path.write_text(json.dumps(value))
++                with self.subTest(variation=variation), self.assertRaises(ValueError):
++                    cls.load(path)
++
++
++class ResultProcessTests(unittest.TestCase):
++    def test_actual_result_and_attempt_crashes_repair_same_context_without_http(self):
++        import os
++        import subprocess
++        import sys
++        from sec_edgar_ingest.state import attempt_key
++        from sec_edgar_ingest.storage.local import LocalStateStore
++        from support import retain_acquisition_proof
++        for point in ('before_result_object', 'after_result_object', 'before_attempt_finish', 'after_attempt_finish'):
++            with self.subTest(point=point):
++                h = cli_harness('valid-quarter-and-daily')
++                self.addCleanup(h.close)
++                discovery = h.discover()
++                self.assertEqual(discovery.returncode, 0, discovery.stderr)
++                ref = json.loads(discovery.stdout)['source_workset_ref']
++                arguments = ['collect', *h.common, '--workset', ref, '--execution-id', 'cli-collect', '--attempt-id', 'collect-1']
++                argv = [sys.executable, '-c', 'import sys; from support import result_crash_entry; result_crash_entry(*sys.argv[1:])', point, *arguments]
++                done = subprocess.run(argv, cwd=h.root, env={**os.environ, 'PYTHONPATH': str(Path(__file__).parent), 'PYTHONDONTWRITEBYTECODE': '1'}, capture_output=True, text=True, timeout=30)
++                self.assertEqual(done.returncode, 74, done.stderr)
++                store = LocalStateStore(h.state_root)
++                rows = [row.to_mapping()['value'] for row in store.scan('Attempt', {}) if row.value['context']['command'] == 'collect']
++                self.assertEqual(len(rows), 1)
++                before = rows[0]
++                result_path = 'runs/sec/cli-run/collect/collect-1/result.json'
++                body_path = h.state_root / 'objects' / result_path
++                before_body = body_path.read_bytes() if body_path.exists() else None
++                if point != 'before_result_object': self.assertIsNotNone(before_body)
++                self.assertEqual(before['outcome'], 'success' if point == 'after_attempt_finish' else 'in_progress')
++                transport_before = [row.to_mapping() for row in store.scan('TransportAttempt', {})]
++                store.close()
++                replay = h.collect(ref)
++                self.assertEqual(replay.returncode, 0, replay.stderr)
++                result = h.read_durable_result(result_path)
++                self.assertEqual(result.context.to_mapping(), before['context'])
++                if before_body is not None: self.assertEqual(body_path.read_bytes(), before_body)
++                store = LocalStateStore(h.state_root)
++                self.assertEqual([row.to_mapping() for row in store.scan('TransportAttempt', {})], transport_before)
++                finished = store.get('Attempt', attempt_key(result.context)).to_mapping()['value']
++                self.assertEqual(finished['result'], result.to_mapping())
++                store.close()
++                retain_acquisition_proof('result-crash-' + point, {'argv': argv, 'crash': {'exit': done.returncode, 'stdout': done.stdout, 'stderr': done.stderr},
++                    'before_attempt': before, 'before_result_hex': before_body.hex() if before_body else None,
++                    'after_result_hex': body_path.read_bytes().hex(), 'after_attempt': finished,
++                    'transport_before': transport_before, 'replay': h.calls[-1], 'original_root': str(h.root)})
++
++    def test_unexpected_error_is_nine_and_retains_attempt_without_result(self):
++        import os
++        import subprocess
++        import sys
++        from sec_edgar_ingest.storage.local import LocalStateStore
++        h = cli_harness('valid-quarter-and-daily')
++        self.addCleanup(h.close)
++        ref = json.loads(h.discover().stdout)['source_workset_ref']
++        argv = [sys.executable, '-c', 'import sys; from support import result_crash_entry; result_crash_entry(*sys.argv[1:])',
++                'unexpected_error', 'collect', *h.common, '--workset', ref, '--execution-id', 'cli-collect', '--attempt-id', 'collect-1']
++        done = subprocess.run(argv, cwd=h.root, env={**os.environ, 'PYTHONPATH': str(Path(__file__).parent)}, capture_output=True, text=True, timeout=30)
++        self.assertEqual(done.returncode, 9, done.stderr)
++        self.assertEqual(json.loads(done.stdout)['outcome'], 'internal_error')
++        self.assertFalse((h.state_root / 'objects/runs/sec/cli-run/collect/collect-1/result.json').exists())
++        store = LocalStateStore(h.state_root)
++        self.addCleanup(store.close)
++        rows = [row.to_mapping()['value'] for row in store.scan('Attempt', {}) if row.value['context']['command'] == 'collect']
++        self.assertEqual(rows[0]['outcome'], 'internal_error')
++        self.assertIsNone(rows[0]['result'])
++        self.assertEqual(rows[0]['structured_errors'][0]['details']['type'], 'RuntimeError')
++
++
++class DailyCliTests(unittest.TestCase):
++    def test_open_daily_fixture_persists_delayed_cursor_and_old_pin_no_http(self):
++        from sec_edgar_ingest.storage.local import LocalStateStore
++        from sec_edgar_ingest.worksets import decode_snapshot_workset
++        h = cli_harness('valid-quarter-and-daily')
++        self.addCleanup(h.close)
++        cfg = json.loads(h.config_path.read_text())
++        cfg['backfill']['end_quarter'] = 'open'
++        h.config_path.write_text(json.dumps(cfg))
++        done = h.invoke('discover', ['--mode', 'daily', '--discovery-id', 'daily', '--execution-id', 'daily-discover', '--attempt-id', 'daily-discover'])
++        self.assertEqual(done.returncode, 0, done.stderr)
++        ref = json.loads(done.stdout)['source_workset_ref']
++        first = h.collect(ref)
++        self.assertEqual(first.returncode, 3, first.stderr)
++        failed = h.read_durable_result(json.loads(first.stdout)['result_ref'])
++        self.assertEqual((failed.outcome, failed.downloaded, failed.pending), ('incomplete', 1, 1))
++        store = LocalStateStore(h.state_root)
++        pins_before = [row.to_mapping()['value'] for row in store.scan('Binding', {})]
++        transports_before = [row.to_mapping()['value'] for row in store.scan('TransportAttempt', {})]
++        store.close()
++        replay = h.collect(ref)
++        self.assertEqual(replay.stdout, first.stdout)
++        second = h.collect(ref, attempt='daily-collect-2', execution='daily-retry')
++        self.assertEqual(second.returncode, 0, second.stderr)
++        result = h.read_durable_result(json.loads(second.stdout)['result_ref'])
++        self.assertEqual((result.downloaded, result.unchanged, result.pending), (1, 1, 0))
++        self.assertEqual(result.context.priority, 'daily')
++        store = LocalStateStore(h.state_root)
++        self.addCleanup(store.close)
++        pins_after = [row.to_mapping()['value'] for row in store.scan('Binding', {})]
++        self.assertTrue(all(pin in pins_after for pin in pins_before))
++        self.assertEqual(len(tuple(store.scan('TransportAttempt', {}))), len(transports_before) + 1)
++        snapshot = decode_snapshot_workset((h.state_root / 'objects' / result.snapshot_workset_ref).read_bytes())
++        self.assertEqual(snapshot.context.command, 'discover')
++        third = h.collect(ref, attempt='daily-collect-3', execution='daily-offline')
++        self.assertEqual(third.returncode, 0, third.stderr)
++        self.assertEqual(json.loads(third.stdout)['snapshot_workset_ref'], result.snapshot_workset_ref)
++        self.assertEqual(len(tuple(store.scan('TransportAttempt', {}))), len(transports_before) + 1)
++
++    def test_fixture_mapping_exhaustion_and_missing_url_never_network(self):
++        from threading import Event
++        from sec_edgar_ingest.download import FixtureError, FixturePack
++        from support import ACQUISITION_PACK, real_permit
++        from sec_edgar_ingest.coordination import Clock
++        with tempfile.TemporaryDirectory() as temporary:
++            store, objects, leases = store_bundle(Path(temporary))
++            self.addCleanup(store.close)
++            self.addCleanup(leases.close)
++            pack = FixturePack.load(ACQUISITION_PACK)
++            sender = pack.sender(store)
++            self.addCleanup(sender.close)
++            clock = Clock()
++            url = next(iter(pack.responses))
++            sender.send(url, fixture_context(), real_permit(clock), cancellation=Event())
++            sender.close()
++            restarted = pack.sender(store)
++            self.addCleanup(restarted.close)
++            with self.assertRaises(FixtureError):
++                restarted.send(url, fixture_context(), real_permit(clock), cancellation=Event())
++            with self.assertRaises(FixtureError):
++                restarted.send('https://www.sec.gov/Archives/edgar/full-index/2016/index.json', fixture_context(), real_permit(clock), cancellation=Event())
++
++
++class ValidationBoundaryTests(unittest.TestCase):
++    def test_fractional_lease_and_closed_daily_endpoint_refuse_before_clients(self):
++        for case in ('fractional-lease', 'closed-daily'):
++            with self.subTest(case=case):
++                h = cli_harness('valid-quarter-and-daily')
++                self.addCleanup(h.close)
++                cfg = json.loads(h.config_path.read_text())
++                if case == 'fractional-lease':
++                    cfg['coordination']['lease_seconds'] = 59.5
++                    h.config_path.write_text(json.dumps(cfg))
++                done = h.invoke('discover', ['--mode', 'daily' if case == 'closed-daily' else 'quarterly', '--discovery-id', 'd', '--execution-id', 'e', '--attempt-id', 'a'])
++                self.assertEqual(done.returncode, 2, done.stderr)
++                self.assertEqual(h.external_client_constructions, 0)
++
++    def test_azure_fixture_arguments_and_distant_deadline_refuse_before_clients(self):
++        h = cli_harness('valid-quarter-and-daily')
++        self.addCleanup(h.close)
++        cfg = json.loads(h.config_path.read_text())
++        cfg.pop('fixture')
++        cfg['http']['retry_base_seconds'], cfg['http']['retry_cap_seconds'] = 2, 120
++        cfg['worker'] = {'image_digest': 'sha256:' + 'a' * 64, 'provenance': 'immutable-image'}
++        cfg['etl']['parser_version'] = 'envelope-v1'
++        storage = cfg['storage']
++        storage.pop('root')
++        storage.update({'backend': 'azure', 'account_name': 'secedgardevb8617',
++                        'blob_endpoint': 'https://secedgardevb8617.blob.core.windows.net',
++                        'table_endpoint': 'https://secedgardevb8617.table.core.windows.net',
++                        'raw_container': 'raw', 'workset_container': 'worksets', 'quarantine_container': 'quarantine', 'lock_container': 'locks',
++                        'lock_blob': 'sec-owner-lowell-mason/sentinel.json', 'binding_registry_blob': 'sec-owner-lowell-mason/binding.json'})
++        h.config_path.write_text(json.dumps(cfg))
++        args = ['--mode', 'quarterly', '--discovery-id', 'd', '--execution-id', 'e', '--attempt-id', 'a']
++        self.assertEqual(h.invoke('discover', args).returncode, 2)
++        common = ['--config', str(h.config_path), '--run-id', 'cli-run', '--deadline', '2099-01-01T00:00:00Z']
++        self.assertEqual(h.invoke('discover', args, common=common).returncode, 2)
++        self.assertEqual(h.external_client_constructions, 0)
++
++    def test_missing_valid_workset_retains_failed_attempt(self):
++        from sec_edgar_ingest.storage.local import LocalStateStore
++        h = cli_harness('valid-quarter-and-daily')
++        self.addCleanup(h.close)
++        done = h.collect('worksets/sec/source/sha256=' + 'a' * 64 + '/workset.json')
++        self.assertEqual(done.returncode, 9)
++        store = LocalStateStore(h.state_root)
++        self.addCleanup(store.close)
++        attempts = list(store.scan('Attempt', {}))
++        self.assertEqual(len(attempts), 1)
++        self.assertEqual(attempts[0].value['outcome'], 'state_conflict')
++        self.assertIsNone(attempts[0].value['result'])
++
++
++class ErrorIntegrityTests(unittest.TestCase):
++    def test_missing_fixture_sender_mapping_retains_error_and_returns_nine(self):
++        h = cli_harness('valid-quarter-and-daily')
++        self.addCleanup(h.close)
++        ref = json.loads(h.discover().stdout)['source_workset_ref']
++        manifest = json.loads(h.pack_path.read_text())
++        from support import fixture_source
++        manifest['responses'].pop(fixture_source().canonical_url)
++        h.pack_path.write_text(json.dumps(manifest))
++        done = h.collect(ref)
++        self.assertEqual(done.returncode, 9, done.stderr)
++        self.assertEqual(json.loads(done.stdout)['outcome'], 'state_conflict')
++        self.assertIsNone(json.loads(done.stdout)['result_ref'])
++
++    def test_result_writer_refuses_prior_different_attempt_result_before_object_write(self):
++        from sec_edgar_ingest.results import write_result, result_path
++        from sec_edgar_ingest.state import AcquisitionState, attempt_key
++        from sec_edgar_ingest.storage.contracts import Conflict
++        with tempfile.TemporaryDirectory() as temporary:
++            store, objects, leases = store_bundle(Path(temporary))
++            self.addCleanup(store.close)
++            self.addCleanup(leases.close)
++            state = AcquisitionState(store)
++            result = ResultTests().result()
++            state.begin_attempt(result.context)
++            state.finish_attempt(replace(result, downloaded=1))
++            with self.assertRaises(Conflict):
++                write_result(result, objects, state)
++            with self.assertRaises(FileNotFoundError):
++                objects.read(result_path(result.context))
++
++    def test_unexpected_real_request_sender_error_is_nine_without_durable_result(self):
++        import os
++        import subprocess
++        import sys
++        from sec_edgar_ingest.storage.local import LocalStateStore
++        h = cli_harness('valid-quarter-and-daily')
++        self.addCleanup(h.close)
++        ref = json.loads(h.discover().stdout)['source_workset_ref']
++        argv = [sys.executable, '-c', 'import sys; from support import result_crash_entry; result_crash_entry(*sys.argv[1:])',
++                'unexpected_sender', 'collect', *h.common, '--workset', ref, '--execution-id', 'cli-collect', '--attempt-id', 'collect-1']
++        done = subprocess.run(argv, cwd=h.root, env={**os.environ, 'PYTHONPATH': str(Path(__file__).parent)}, capture_output=True, text=True, timeout=30)
++        self.assertEqual(done.returncode, 9, done.stderr)
++        self.assertEqual(json.loads(done.stdout)['outcome'], 'internal_error')
++        self.assertIsNone(json.loads(done.stdout)['result_ref'])
++        store = LocalStateStore(h.state_root)
++        self.addCleanup(store.close)
++        transport = list(store.scan('TransportAttempt', {}))
++        self.assertEqual(len([row for row in transport if row.value['context']['command'] == 'collect']), 1)
++        attempts = [row for row in store.scan('Attempt', {}) if row.value['context']['command'] == 'collect']
++        self.assertEqual(attempts[0].value['outcome'], 'internal_error')
++        self.assertIsNone(attempts[0].value['result'])
++
++
++class CompletedDeadlineTests(unittest.TestCase):
++    def test_completed_attempt_replays_after_deadline_without_fabricating_start(self):
++        from datetime import datetime, timezone
++        from unittest.mock import patch
++        from sec_edgar_ingest.cli import main
++        from sec_edgar_ingest.coordination import Clock
++        h = cli_harness('valid-quarter-and-daily')
++        self.addCleanup(h.close)
++        first = h.discover()
++        self.assertEqual(first.returncode, 0, first.stderr)
++        record = h.read_durable_result(json.loads(first.stdout)['result_ref'])
++        class LaterClock(Clock):
++            def now(self): return datetime(2100, 1, 1, tzinfo=timezone.utc)
++        output, errors = io.StringIO(), io.StringIO()
++        args = ['discover', *h.common, '--mode', 'quarterly', '--discovery-id', 'cli-discovery', '--execution-id', 'cli-discover', '--attempt-id', 'discover-1']
++        with patch('sec_edgar_ingest.cli.Clock', LaterClock), contextlib.redirect_stdout(output), contextlib.redirect_stderr(errors):
++            code = main(args)
++        self.assertEqual(code, 0, errors.getvalue())
++        self.assertEqual(output.getvalue(), first.stdout)
++        self.assertEqual(h.read_durable_result(json.loads(first.stdout)['result_ref']), record)
+diff --git a/packages/sec-edgar-ingest/tests/test_workspace.py b/packages/sec-edgar-ingest/tests/test_workspace.py
+index b2d7a6b..f2ec6c8 100644
+--- a/packages/sec-edgar-ingest/tests/test_workspace.py
++++ b/packages/sec-edgar-ingest/tests/test_workspace.py
+@@ -26,40 +26,40 @@ class WorkspaceTests(unittest.TestCase):
+ 
+ class CliTests(unittest.TestCase):
+     def test_main_without_arguments_prints_help(self):
+         from sec_edgar_ingest.cli import main
+ 
+         output = io.StringIO()
+         with contextlib.redirect_stdout(output):
+             result = main([])
+         self.assertEqual(result, 0)
+         self.assertIn("usage: sec-edgar-ingest", output.getvalue())
+-        self.assertNotIn("discover", output.getvalue())
+-        self.assertNotIn("collect", output.getvalue())
++        self.assertIn("discover", output.getvalue())
++        self.assertIn("collect", output.getvalue())
+ 
+     def test_main_help_and_version_exit_successfully(self):
+         from sec_edgar_ingest.cli import main
+ 
+         for argument, expected in (("--help", "usage: sec-edgar-ingest"),
+                                    ("--version", "0.1.0")):
+             with self.subTest(argument=argument):
+                 output = io.StringIO()
+                 with contextlib.redirect_stdout(output):
+                     with self.assertRaises(SystemExit) as raised:
+                         main([argument])
+                 self.assertEqual(raised.exception.code, 0)
+                 self.assertIn(expected, output.getvalue())
+ 
+     def test_unimplemented_commands_are_rejected(self):
+         from sec_edgar_ingest.cli import main
+ 
+-        for command in ("discover", "collect"):
++        for command in ("transform", "publish"):
+             with self.subTest(command=command):
+                 with contextlib.redirect_stderr(io.StringIO()):
+                     with self.assertRaises(SystemExit) as raised:
+                         main([command])
+                 self.assertEqual(raised.exception.code, 2)
+ 
+     def test_installed_distribution_exposes_the_cli(self):
+         from sec_edgar_ingest import __version__
+         from sec_edgar_ingest.cli import main
+ 
+diff --git a/scripts/check-sec-edgar-ingest.sh b/scripts/check-sec-edgar-ingest.sh
+new file mode 100755
+index 0000000..c38cc5a
+--- /dev/null
++++ b/scripts/check-sec-edgar-ingest.sh
+@@ -0,0 +1,9 @@
++#!/bin/sh
++set -eu
++uv run --offline --frozen --package sec-edgar-ingest python -m unittest discover -s packages/sec-edgar-ingest/tests -p 'test_*.py' -v
++uv build --offline --all-packages
++uv run --offline --frozen --package sec-edgar-ingest sec-edgar-ingest --help
++uv run --offline --frozen --package sec-edgar-ingest python -m sec_edgar_ingest --version
++uv run --offline --frozen --package sec-edgar-ingest python -m compileall -q packages/sec-edgar-ingest/src
++# Quarterly original-byte fixtures intentionally retain CRLF; no repository config is changed.
++git -c core.whitespace=cr-at-eol diff --check
+diff --git a/specs/evidence/sec-filing-index-ingestion/stage-2/verification.md b/specs/evidence/sec-filing-index-ingestion/stage-2/verification.md
+new file mode 100644
+index 0000000..3f7b519
+--- /dev/null
++++ b/specs/evidence/sec-filing-index-ingestion/stage-2/verification.md
+@@ -0,0 +1,80 @@
++# Stage 2 acquisition verification
++
++Independent Task 8 implementation, full offline check and fresh installed-wheel fixture proof are ready for review. **The prescribed combined Step 4 sequence remains pending the owner’s daily endpoint choice.** No Task 8 Spec/Quality PASS or Stage 2 completion stamp is asserted here. Stage 2 stays unticked; all22 Stage7 checks are reserved.
++
++Source BASE/last upstream reviewed revision: `73ea758e37f6b6ed78103b2a731b2f125bd96a96`, branch `codex/sec-edgar-stage-2`. [Source/config/lock/prior review SHA inventory](verification/source-revisions.json) records current candidate bytes and every retained Task1–7 full/scoped review receipt SHA. Task7 full receipt SHA `c69f810230e7cb7ec75c85ab250b96141ed771b1874085bfc3a626f8ca32a117`, scoped receipt SHA `5b1e0894379692b58eab780b7cc96d63a0d09d4de2a23b2a46d1ae826a22c816`. Actual Task8 reviewed HEAD/receipts will be added by the controller after the named commit/fresh review; no future revision is fabricated. Config-file SHA `dd50a930e09e840d38109e0953b4b9e0cc1ff3253845d8649d9242fc63192a3a`; uv.lock SHA `7a1b45b2944241e9b8fda35b5e87977c6ec189a3c72f4ca1f3f861661220f42c`. Accepted F1/Stage1 manifest remain `939a724eccf22147015a59d5940ed57f02cc4e9fe9d942a9cd78ae73c34615ff` / `124e96041548daba8216aa495fc69021751555b0f0e4c890ac85e934f512a131`.
++
++## Current commands and exits
++
++| Command | Actual result | Retained proof |
++| --- | --- | --- |
++| scripts/check-sec-edgar-ingest.sh | exit0;282 tests/94.734s, wheel+sdist, help, module0.1.0, compileall, whitespace | [Complete log](verification/sdd-history/task-8-final-check.txt), [all307-line/282-record inspection](verification/sdd-history/task-8-final-check-inspection.json) |
++| uv run --offline --frozen --package sec-edgar-ingest python .../fixture-sequence.py | exit0 for independent quarterly/replay sequence; original closed-quarter daily2; combined Step4 pending | [sec-edgar-stage-2-ajod3d_r](verification/sec-edgar-stage-2-ajod3d_r/sequence-summary.json), [argv and root map](verification/sec-edgar-stage-2-ajod3d_r/retention-map.json) |
++| uv run --offline --frozen --package sec-edgar-ingest python .../installed-wheel-proof.py | exit0; cached20 pins/site-packages import/actual installed fixture commands/4 requests and no new replay requests | [Commands](verification/sec-edgar-wheel-5ufv5ml9/commands.json), [wheel receipt](verification/sec-edgar-wheel-5ufv5ml9/wheel-proof-summary.json) |
++| .venv/bin/python .sdd/.../verify_primary.py | exit0; zero1673 protected-file drift, original4 deletions+untracked roadmap preserved | [Separate primary receipt](verification/sdd-history/task-8-primary-preservation.json) |
++
++The full check log SHA is `6387624674edb1a6f0dcfd68d4e8f0751344e51d58aa1a29db40d0ff5189090f`. Its console presentation was truncated, but the full47241-byte log and every-line inspection are retained. Its CRLF equivalent is explicitly `git -c core.whitespace=cr-at-eol diff --check`, without changing repo config. The final package/source/test implementation was checked once; only proof/report/inventory records were produced afterward. The unexecuted wheel proof query correction used the actual namespace and explicitly required4 transports before asserting no new replay requests. All historical RED/intermediate failures remain with their actual exits; `task-8-process-green.txt` is historical exit1, followed by focused corrected timer exit0 and the current full4-process-test pass.
++
++## Fixture sequence, hashes and counters
++
++The pack is explicitly synthetic v1, file SHA `c96e76610f6a218eb27f647abafe538991330bffa0f471c11e890ce3eeac5a97`, with canonical SEC URL mappings, SHA-addressed local body files and no live fallback. Unreferenced earlier synthetic bodies are preserved, not selected by the manifest. The quarterly archive SHA is `68b0e0e1c09010a02e45ac0d0adc2621f23d61a84448064d15d0cee9e5aab399` (261 bytes); daily handoff IDX SHA `4dc2efcff18a472cac890b5a3e4cc38a1f78a6fd9e672e0a8dababec4a91e6c0` (230 bytes), delayed IDX `258e0245ed05b9340e156bc1572f88425962b0bcb9b25eca60ecb8c6052815c9` (230 bytes). These are envelope fixtures; no row parser or semantic row-date coverage is implied.
++
++| Current independent quarterly result | Discovered | Downloaded | Unchanged | Pending | Failed | Quarantined |
++| --- | --- | --- | --- | --- | --- | --- |
++| discover-1 success | 1 | 0 | 0 | 0 | 0 | 0 |
++| collect-1 success | 1 | 1 | 0 | 0 | 0 | 0 |
++| collect-2 success | 1 | 0 | 1 | 0 | 0 | 0 |
++
++Source workset: `worksets/sec/source/sha256=ac957982f44124a5e49dffad65f4dc7393a226aac8c0fe788ae882ae990550bb/workset.json`. Snapshot workset: `worksets/sec/snapshot/sha256=a20aa8ff3e9df909dba90ddbf88ab83721b652e5d076261571748f16ed74e218/workset.json`. Both replay forms preserve original pins/snapshot and issue no HTTP. Result context is the current collecting execution; snapshot workset origin remains the immutable discovery context. The original absolute storage.root example is refused2; corrected relative `.fixture-state` plus explicit absolute state-dir base and explicit synthetic date/deadline markers are routine controller-authorized driver corrections. Effective quarterly config SHA `a8b1ebc0e3e64c56d9aad5e7b4b15ca111495885c2a9849dbc96721c203ab856`. The proposed separate daily end=open config SHA `6bf4c06fd8d4891aad27fbeb1221dbfb08920a670d79462233c3fbff83d4ac6f` remains unexecuted in the prescribed sequence. [Prepared concrete two-config commands](verification/sec-edgar-stage-2-ajod3d_r/prepared-two-config-commands.json) are available for owner review.
++
++The accepted strict endpoint/hash contract refuses October2026 daily discovery under closed2015Q1. The owner’s pending choice is separate daily config vs a revised pin contract; retries and elapsed time do not answer it. Ordinary already-authorized valid open-daily tests passed: first incomplete3 with downloaded1/pending1, completed failed-result replay no HTTP, new attempt success0 with downloaded1/unchanged1/pending0, final pin reuse no HTTP. Their full durable roots/command logs/pins/response cursors are retained under [current CLI files](verification/sdd-history/task-8-final-traces/task8/cli-files). They do not discharge the combined Step4 gate.
++
++## Actual process evidence
++
++[Three-collector trace](verification/sdd-history/task-8-final-traces/task8/three-collector-race.json):3 independent PIDs/shared stores/clients,3 actual inserts after3 barrier-forced absent reads,1 winner/2 conflicts, one issuer per request interval and shared >=1/3s start spacing. Winner217-byte SHA `7f4f306b51ee21ede9c9d9a03b5a647de6eb35d42a2d71933d288b46c450171b`; restart sender is forbidden, snapshot/raw/result exact bytes remain stable. This race uses explicit scripted synthetic response bodies and real local coordination/state/processes.
++
++[Integrated held-socket trace](verification/sdd-history/task-8-final-traces/task8/integrated-takeover.json) and [retained process files](verification/sdd-history/task-8-final-traces/task8/integrated-takeover-files): actual bounded loopback HTTP and old parent exit-15, default-fatal old child/socket drain/orphan ps receipt, actual durable epoch/request/journal guard, 92 zero-successor observations through stored unsafe-until `2026-10-06T20:55:57.623519+00:00`, independent daily/backfill successor exit0, then4 actual server starts in daily,daily,daily,backfill order. Minimum actual successor wire spacing 0.680565000s. Actual synthetic parameters .8s exchange/2s lease/1s renewal/.05s uncertainty; production90s/60s/20s/2s/3RPS defaults remain intact. Old child exact exit is not reaped by its killed parent; the separate deadline proof captures actual -14.
++
++[Independent child timer](verification/sdd-history/task-8-final-traces/task8/independent-child-deadline.json): stalled supervisor, actual fatal exit-14, 98 prefix bytes SHA `9b4ebbf27e774709b0e27357b252b7e621d86e89fceb6b60c1913038bbf46aa8`, socket closed. [Stale dispatch](verification/sdd-history/task-8-final-traces/task8/stale-dispatch.json): zero actual server requests. Those .4s local tests establish hard lifetime/stale-start mechanics, not default90s or Linux performance.
++
++Four `result-crash-*.json` current traces plus [full CLI roots](verification/sdd-history/task-8-final-traces/task8/cli-files) capture actual CLI result-object/Attempt boundary process exits74 and same-context repair0 with original canonical result bytes/no added transports. Task7's earlier7 crash/race/two-source/quarantine proofs are separately retained. Earlier logical-clock coordination and scripted Azure traces are labelled in original reports; they are not represented as actual wire timestamps or live Azure behavior. All retained Permit/retry monotonic values belong to their historical originating host; persisted UTC/fencing, not those old values, authorize restart scheduling.
++
++## Build and installed runtime
++
++Wheel `sec_edgar_ingest-0.1.0-py3-none-any.whl` (77150 bytes), SHA `46deb58c54bb35cc79283f03ebf9ae4060ba23b2af5bbb8856ab0308c4913bb0`; sdist `sec_edgar_ingest-0.1.0.tar.gz` (65543 bytes), SHA `dac15ddd67184480a9df0810d4e41a0a6c181c24e64608451a2156af36b3643d`. [Metadata/member inspection](verification/sec-edgar-wheel-5ufv5ml9/artifact-inspection.json) confirms>=3.14, four pinned direct dependencies and `sec_edgar_ingest.cli:main`, with other scaffolds excluded. Original artifact bytes are retained under its build-artifacts directory. Lock export with hashes plus Task1 cached native wheels drove offline/no-index fresh-venv installs; uv pip/build do not have --frozen but used the exact accepted hash/pin constraints. Actual console discovery/collection/replay commands ran in the temporary cwd without PYTHONPATH/PYTHONHOME and imported only the fresh site-packages distribution. The mapped disposable venv is excluded; all installation inputs/receipts/artifacts/config/state/body bytes remain.
++
++Local OS `macOS-26.6.2-arm64-arm-64bit-Mach-O`; Darwin25.6.0 arm64; Python `3.14.0 (main, Oct 14 2025, 21:10:22) [Clang 20.1.4 ]`. [Exact installed version receipt](verification/sec-edgar-wheel-5ufv5ml9/installed-versions.json):
++
++| Distribution | Installed version |
++| --- | --- |
++| PyJWT | 2.15.1 |
++| azure-core | 1.41.0 |
++| azure-data-tables | 12.7.0 |
++| azure-identity | 1.26.0 |
++| azure-storage-blob | 12.31.0 |
++| certifi | 2026.7.22 |
++| cffi | 2.1.1 |
++| charset-normalizer | 3.5.2 |
++| cryptography | 50.0.2 |
++| idna | 3.20 |
++| isodate | 0.7.2 |
++| msal | 1.39.0 |
++| msal-extensions | 1.3.1 |
++| multidict | 7.0.0 |
++| propcache | 0.5.4 |
++| pycparser | 3.0 |
++| requests | 2.34.2 |
++| sec-edgar-ingest | 0.1.0 |
++| typing_extensions | 4.16.0 |
++| urllib3 | 2.8.0 |
++| yarl | 1.25.1 |
++
++The20 native/runtime artifact versions match accepted constraints; macOS native wheel hashes/platform differ from Stage1 Linux amd64 archives as already documented, and those actual Task1 native archives are preserved in the full history.
++
++## Retention and reserved work
++
++[History root map](verification/sdd-retention-map.json), [whole-bundle SHA manifest](verification/sha256-manifest.json), and [file/byte inventory](verification/evidence-inventory.json) make copied evidence inspectable without rewriting historical absolute references. Original complete history, failures, full+scoped reviews, reports/diffs/REDGREEN/trace bytes, cached wheels, preflight1673 protected paths/1584 accepted records, audit/progress/shared contracts/Minor ledger and controller receipts are preserved as original bytes. No recursive copy or self-hash cycle is used. No SDD cleanup/native archive happened before retention. Historical Task7 truncated probe output remains an exact command/decisive-field receipt, not fabricated complete output. Other documented historical wrapper limitations in proof-inventory.md remain visible.
++
++Runbook documents conservative full Azure unsafe-guard retention on clean release and waiting without lease break; owner-wide unrepresentable Retry-After latch/raw reason/deferred5 with no reset/expiry/new-run escape; current vs historical context, immutable result repair, new-attempt recovery, failed-directory new worksets, pending older work, quarantine/raw retention and shared owner budget.
++
++No live SEC/Azure/auth/registry/compute work, Linux/default90s performance measurement, workers/schedules/provisioning, historical/global format coverage or SLA is claimed. S7-11/12/14/18/19 and **all remaining17 of the22 Stage7 checks are reserved**, including actual owner-wide effective behavior, Azure lease/inflight/CAS/HNS, identities/network, worker measurements and integrated live smoke/replay. The pending owner endpoint answer, actual approved combined sequence, fresh Task8 review and final GPT-6.1 Max review/completion protocol must resolve before Stage2 stamp/tick/retirement. Stage3 is outside this work.
+diff --git a/specs/evidence/sec-filing-index-ingestion/stage-2/verification/built-source-integrity.json b/specs/evidence/sec-filing-index-ingestion/stage-2/verification/built-source-integrity.json
+new file mode 100644
+index 0000000..b4744bf
+--- /dev/null
++++ b/specs/evidence/sec-filing-index-ingestion/stage-2/verification/built-source-integrity.json
+@@ -0,0 +1,78 @@
++{
++  "all_current_python_sources_match_built_wheel": true,
++  "files": [
++    {
++      "path": "sec_edgar_ingest/__init__.py",
++      "sha256": "91447944015cec709e8aa7655f7e9d64e1e4508e7023a57fe3746911c0fc6fed"
++    },
++    {
++      "path": "sec_edgar_ingest/__main__.py",
++      "sha256": "307299fda7b77d22c64cb51430ec75e5f59d78e9c948786afb3b2544fe45e4b7"
++    },
++    {
++      "path": "sec_edgar_ingest/cli.py",
++      "sha256": "7216fcf2f07c965770a4ece67ed9a785afcebc95a6f93c1556b7c79e06671a84"
++    },
++    {
++      "path": "sec_edgar_ingest/collection.py",
++      "sha256": "68b655a18d1e5eca7f5d1c5de860f0644a3ccc34ad9ea6edb579ae5a9738f3c9"
++    },
++    {
++      "path": "sec_edgar_ingest/config.py",
++      "sha256": "23f302368bf3e9a04204d89679cb087cc6f5f985f134cd48f32086c45339a264"
++    },
++    {
++      "path": "sec_edgar_ingest/coordination.py",
++      "sha256": "ee768738ddfa81116c12e7491ed7d1c48cafeccf5de23a2947624329731ffb96"
++    },
++    {
++      "path": "sec_edgar_ingest/discovery.py",
++      "sha256": "187a0cfb0c5f44709696dc12feed5cf3698ce7084f701cf7460be042568016b5"
++    },
++    {
++      "path": "sec_edgar_ingest/download.py",
++      "sha256": "467068de88ec939c5b60e7d37852c722170a4c218ed0ba1c004ff74c2b627473"
++    },
++    {
++      "path": "sec_edgar_ingest/models.py",
++      "sha256": "6442fd063727d5eae7958d12e24e4668ec1dddbd184ee4f235c4208632af03c4"
++    },
++    {
++      "path": "sec_edgar_ingest/results.py",
++      "sha256": "aac391e5860eadbba547f4d1d5fdfd93c407a541c254834db95d717029c3f29a"
++    },
++    {
++      "path": "sec_edgar_ingest/state.py",
++      "sha256": "4b5c2fc42d3a824cb404bc221ef3fd48f081f9cd03dc2d633ee83c21c7fb8184"
++    },
++    {
++      "path": "sec_edgar_ingest/storage/__init__.py",
++      "sha256": "a12bd5c1b2590957895bc75bddbc88e99d08e9df380435e5add8ee3a6a6b9d00"
++    },
++    {
++      "path": "sec_edgar_ingest/storage/azure.py",
++      "sha256": "7eaed27330fe2b6e7c162faeb937776f37e2d887514008db8eb643a5fe1f682c"
++    },
++    {
++      "path": "sec_edgar_ingest/storage/contracts.py",
++      "sha256": "cc76934066f5be3d894e066503f740ec1de085b84d27fbd090708da386ed4993"
++    },
++    {
++      "path": "sec_edgar_ingest/storage/local.py",
++      "sha256": "bd1988d702556b04996508c390a46ba6ebed9365aae76b4bd83f3a719d4c484c"
++    },
++    {
++      "path": "sec_edgar_ingest/urls.py",
++      "sha256": "7e1f20fc5c951c23efbbfec9a66e60ae4ecd4fda683fd1f95e20d59e28057d77"
++    },
++    {
++      "path": "sec_edgar_ingest/validation.py",
++      "sha256": "1885960d908838ee4fa4e733bc91fdcfc1f773cdad2d807844e8e3405f4800b3"
++    },
++    {
++      "path": "sec_edgar_ingest/worksets.py",
++      "sha256": "3aba39579b3c4708573ba1b627ffe489118a32cd167929a39764aaea4dff230e"
++    }
++  ],
++  "wheel": "specs/evidence/sec-filing-index-ingestion/stage-2/verification/sec-edgar-wheel-5ufv5ml9/build-artifacts/sec_edgar_ingest-0.1.0-py3-none-any.whl"
++}
+diff --git a/specs/evidence/sec-filing-index-ingestion/stage-2/verification/evidence-inventory.json b/specs/evidence/sec-filing-index-ingestion/stage-2/verification/evidence-inventory.json
+new file mode 100644
+index 0000000..92f7e3e
+--- /dev/null
++++ b/specs/evidence/sec-filing-index-ingestion/stage-2/verification/evidence-inventory.json
+@@ -0,0 +1,30 @@
++{
++  "all_original_history_retained": true,
++  "all_payload_files_visible_to_git": true,
++  "cached_native_wheels": {
++    "bytes": 6433484,
++    "count": 20
++  },
++  "excluded_from_top_level_hashing": [
++    {
++      "path": "sha256-manifest.json",
++      "reason": "avoid self-hash cycle; fingerprint in inventory"
++    },
++    {
++      "path": "evidence-inventory.json",
++      "reason": "contains manifest fingerprint; avoid cycle"
++    }
++  ],
++  "history_file_count": 4675,
++  "history_map": "sdd-retention-map.json",
++  "history_total_bytes": 20356182,
++  "payload_file_count": 4813,
++  "payload_total_bytes": 22181542,
++  "recorded_at": "2026-10-06T21:04:55.057689+00:00",
++  "sha256_manifest": {
++    "bytes": 1167609,
++    "path": "sha256-manifest.json",
++    "sha256": "89f4b9c48517d0af42a1099777e910ba8c634b7d337c80c06a8658c03f2ec926"
++  },
++  "stage2_completion": "pending owner Step4 choice and fresh required reviews; no stamp/tick/retirement"
++}
+diff --git a/specs/evidence/sec-filing-index-ingestion/stage-2/verification/fixture-sequence.py b/specs/evidence/sec-filing-index-ingestion/stage-2/verification/fixture-sequence.py
+new file mode 100644
+index 0000000..315c2d4
+--- /dev/null
++++ b/specs/evidence/sec-filing-index-ingestion/stage-2/verification/fixture-sequence.py
+@@ -0,0 +1,159 @@
++"""Retain the authorized quarterly proof and prepare the pending daily alternative.
++
++The optional daily switch is for use only after the owner approves separate configs.
++Its presence does not constitute that approval. Default execution retains the exact
++closed-quarter daily refusal and leaves the prescribed combined Step 4 gate pending.
++"""
++from __future__ import annotations
++
++import argparse
++import hashlib
++import json
++import shutil
++import subprocess
++import tempfile
++from pathlib import Path
++
++from sec_edgar_ingest.config import Settings
++from sec_edgar_ingest.models import CommandResult
++from sec_edgar_ingest.storage.local import LocalStateStore
++
++REPOSITORY = Path(__file__).resolve().parents[5]
++VERIFICATION = Path(__file__).resolve().parent
++PACK = REPOSITORY / 'packages/sec-edgar-ingest/tests/fixtures/acquisition/manifest.json'
++PREFIX = ['uv', 'run', '--offline', '--frozen', '--package', 'sec-edgar-ingest', 'sec-edgar-ingest']
++
++
++def save_json(path: Path, value) -> None:
++    path.write_text(json.dumps(value, indent=2, sort_keys=True) + '\n')
++
++
++def inspect_state(root: Path) -> dict:
++    store = LocalStateStore(root)
++    try:
++        return {kind: [row.to_mapping() for row in store.scan(kind, {})]
++                for kind in ('Binding', 'TransportAttempt', 'Attempt', 'FixtureResponseCursor')}
++    finally:
++        store.close()
++
++
++def main() -> None:
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument('--include-approved-daily', action='store_true')
++    options = parser.parse_args()
++    with tempfile.TemporaryDirectory(prefix='sec-edgar-stage-2-') as temporary:
++        root = Path(temporary)
++        config = json.loads((REPOSITORY / 'conf/sec-edgar-ingest.yaml').read_text())
++        config['backfill'] = {'start_quarter': '2015Q1', 'end_quarter': '2015Q1'}
++        literal = {**config, 'storage': {**config['storage'], 'root': str(root / 'state')}}
++        literal_path = root / 'literal-config.json'
++        save_json(literal_path, literal)
++        config['fixture'] = {'allow_clock_override': True, 'allow_deadline_override': True}
++        config['storage']['root'] = '.fixture-state'
++        quarterly_path = root / 'quarterly-config.json'
++        save_json(quarterly_path, config)
++        daily = {**config, 'backfill': {**config['backfill'], 'end_quarter': 'open'}}
++        daily_path = root / 'proposed-daily-config.json'
++        save_json(daily_path, daily)
++        state_base = root / 'state'
++        state_root = state_base / config['storage']['root']
++        common = ['--config', str(quarterly_path), '--fixture-pack', str(PACK),
++                  '--state-dir', str(state_base), '--deadline', '2099-01-01T00:00:00Z']
++        quarter_args = ['--today', '2026-10-06', '--mode', 'quarterly', '--discovery-id', 'fixture-quarter',
++                        '--run-id', 'fixture-run', '--execution-id', 'fixture-discover', '--attempt-id', 'discover-1']
++        daily_args = ['--today', '2026-10-06', '--mode', 'daily', '--discovery-id', 'fixture-daily',
++                      '--run-id', 'fixture-daily', '--execution-id', 'fixture-daily-discover', '--attempt-id', 'daily-discover-1']
++        calls = []
++        summary = {'provenance': 'synthetic', 'scope': 'one archived quarter fixture subset',
++                   'prescribed_step_4': 'pending owner daily endpoint decision',
++                   'driver_corrections': ['relative configured storage.root with explicit absolute --state-dir base',
++                                          'explicit fixture clock/deadline override markers'],
++                   'config_sha256': {'quarterly': Settings.from_mapping(config).config_sha256,
++                                     'proposed_daily': Settings.from_mapping(daily).config_sha256}}
++
++        def invoke(command, arguments, expected, *, config_path=None, label=None, extras=None):
++            selected = list(common)
++            if config_path is not None:
++                selected[selected.index('--config') + 1] = str(config_path)
++            argv = PREFIX + [command] + selected + arguments
++            if extras is not None:
++                argv = PREFIX + [command] + extras + arguments
++            completed = subprocess.run(argv, cwd=REPOSITORY, capture_output=True, text=True, timeout=120)
++            label = label or arguments[arguments.index('--attempt-id') + 1]
++            save_json(root / (label + '.argv.json'), argv)
++            (root / (label + '.stdout')).write_text(completed.stdout)
++            (root / (label + '.stderr')).write_text(completed.stderr)
++            save_json(root / (label + '.exit.json'), {'exit': completed.returncode, 'expected': expected})
++            calls.append({'label': label, 'argv': argv, 'exit': completed.returncode})
++            assert completed.returncode == expected, completed.stderr
++            return json.loads(completed.stdout) if completed.stdout else None
++
++        def result(output):
++            return CommandResult.from_json((state_root / 'objects' / output['result_ref']).read_bytes())
++
++        try:
++            literal_common = ['--config', str(literal_path), '--fixture-pack', str(PACK),
++                              '--deadline', '2099-01-01T00:00:00Z']
++            invoke('discover', quarter_args, 2, extras=literal_common, label='literal-absolute-root-refusal')
++            discovered = invoke('discover', quarter_args, 0)
++            collect_args = ['--workset', discovered['source_workset_ref'], '--run-id', 'fixture-run',
++                            '--execution-id', 'fixture-collect', '--attempt-id', 'collect-1']
++            first = invoke('collect', collect_args, 0)
++            before = inspect_state(state_root)
++            second = invoke('collect', ['--workset', discovered['source_workset_ref'], '--run-id', 'fixture-run',
++                                        '--execution-id', 'fixture-collect-retry', '--attempt-id', 'collect-2'], 0)
++            replay = invoke('collect', collect_args, 0, label='collect-1-exact-replay')
++            after = inspect_state(state_root)
++            assert replay == first
++            assert second['snapshot_workset_ref'] == first['snapshot_workset_ref']
++            assert after['Binding'] == before['Binding']
++            assert after['TransportAttempt'] == before['TransportAttempt']
++            assert (result(first).downloaded, result(second).unchanged) == (1, 1)
++            invoke('discover', daily_args, 2, label='closed-quarter-daily-refusal')
++            save_json(root / 'prepared-two-config-commands.json', {
++                'approval_required': 'owner selection of separate daily end=open config',
++                'driver_after_approval': PREFIX[:-1] + ['python', str(Path(__file__).resolve()), '--include-approved-daily'],
++                'proposed_daily_discovery_argv': PREFIX + ['discover'] +
++                    [str(daily_path) if item == str(quarterly_path) else item for item in common] + daily_args})
++            summary['quarterly_results'] = [result(output).to_mapping() for output in (discovered, first, second)]
++            summary['quarterly_no_http_replay'] = True
++            if options.include_approved_daily:
++                daily_discovered = invoke('discover', daily_args, 0, config_path=daily_path)
++                source = daily_discovered['source_workset_ref']
++                pending_args = ['--workset', source, '--run-id', 'fixture-daily',
++                                '--execution-id', 'fixture-daily-collect', '--attempt-id', 'daily-collect-1']
++                pending = invoke('collect', pending_args, 3, config_path=daily_path)
++                assert pending['outcome'] == 'incomplete'
++                pinned = inspect_state(state_root)
++                exact = invoke('collect', pending_args, 3, config_path=daily_path, label='daily-collect-1-replay')
++                assert exact == pending
++                assert inspect_state(state_root)['TransportAttempt'] == pinned['TransportAttempt']
++                recovered = invoke('collect', ['--workset', source, '--run-id', 'fixture-daily',
++                    '--execution-id', 'fixture-daily-retry', '--attempt-id', 'daily-collect-2'], 0, config_path=daily_path)
++                complete = inspect_state(state_root)
++                assert all(pin in complete['Binding'] for pin in pinned['Binding'])
++                assert len(complete['TransportAttempt']) == len(pinned['TransportAttempt']) + 1
++                assert recovered['snapshot_workset_ref'] is not None
++                final = invoke('collect', ['--workset', source, '--run-id', 'fixture-daily',
++                    '--execution-id', 'fixture-daily-offline', '--attempt-id', 'daily-collect-3'], 0, config_path=daily_path)
++                assert final['snapshot_workset_ref'] == recovered['snapshot_workset_ref']
++                assert inspect_state(state_root)['TransportAttempt'] == complete['TransportAttempt']
++                summary['daily_results'] = [result(output).to_mapping() for output in (daily_discovered, pending, recovered, final)]
++                summary['prescribed_step_4'] = 'executed with explicitly approved separate configs'
++            save_json(root / 'final-state-records.json', inspect_state(state_root))
++            print(json.dumps({'quarterly': 'passed', 'prescribed_step_4': summary['prescribed_step_4'], 'original_root': str(root)}))
++        finally:
++            save_json(root / 'calls.json', calls)
++            save_json(root / 'sequence-summary.json', summary)
++            retained = VERIFICATION / root.name
++            shutil.copytree(root, retained)
++            save_json(retained / 'retention-map.json', {'original_root': str(root), 'retained_root': str(retained),
++                'configured_relative_root': config['storage']['root'], 'state_dir_base': str(state_base),
++                'original_durable_root': str(state_root), 'retained_durable_root': str(retained / 'state' / config['storage']['root'])})
++            save_json(retained / 'sha256-manifest.json', [{'path': str(path.relative_to(retained)),
++                'bytes': path.stat().st_size, 'sha256': hashlib.sha256(path.read_bytes()).hexdigest()}
++                for path in sorted(retained.rglob('*')) if path.is_file() and path.name != 'sha256-manifest.json'])
++
++
++if __name__ == '__main__':
++    main()
+diff --git a/specs/evidence/sec-filing-index-ingestion/stage-2/verification/installed-wheel-proof.py b/specs/evidence/sec-filing-index-ingestion/stage-2/verification/installed-wheel-proof.py
+new file mode 100644
+index 0000000..642661d
+--- /dev/null
++++ b/specs/evidence/sec-filing-index-ingestion/stage-2/verification/installed-wheel-proof.py
+@@ -0,0 +1,175 @@
++"""Build-artifact inspection and a fresh, pinned, offline wheel CLI proof."""
++from __future__ import annotations
++
++import email
++import hashlib
++import json
++import os
++import platform
++import shutil
++import sqlite3
++import subprocess
++import tarfile
++import tempfile
++import tomllib
++import zipfile
++from pathlib import Path
++
++REPOSITORY = Path(__file__).resolve().parents[5]
++VERIFICATION = Path(__file__).resolve().parent
++WHEELS = REPOSITORY / '.sdd/2-sec-filing-index-ingestion-stage-2-spec/task1-evidence/wheels'
++PACK = REPOSITORY / 'packages/sec-edgar-ingest/tests/fixtures/acquisition/manifest.json'
++
++
++def save_json(path, value):
++    Path(path).write_text(json.dumps(value, indent=2, sort_keys=True) + '\n')
++
++
++def fingerprint(path):
++    body = path.read_bytes()
++    return {'path': str(path), 'bytes': len(body), 'sha256': hashlib.sha256(body).hexdigest()}
++
++
++def inspect_artifacts(root):
++    wheel = REPOSITORY / 'dist/sec_edgar_ingest-0.1.0-py3-none-any.whl'
++    sdist = REPOSITORY / 'dist/sec_edgar_ingest-0.1.0.tar.gz'
++    artifacts = root / 'build-artifacts'
++    artifacts.mkdir()
++    for path in (wheel, sdist):
++        shutil.copy2(path, artifacts / path.name)
++    with zipfile.ZipFile(wheel) as archive:
++        names = archive.namelist()
++        metadata = archive.read('sec_edgar_ingest-0.1.0.dist-info/METADATA')
++        entrypoints = archive.read('sec_edgar_ingest-0.1.0.dist-info/entry_points.txt')
++    with tarfile.open(sdist) as archive:
++        members = archive.getnames()
++        pkg_info = archive.extractfile('sec_edgar_ingest-0.1.0/PKG-INFO').read()
++    for raw in (metadata, pkg_info):
++        parsed = email.message_from_bytes(raw)
++        assert parsed['Name'] == 'sec-edgar-ingest'
++        assert parsed['Version'] == '0.1.0'
++        assert parsed['Requires-Python'] == '>=3.14'
++        assert set(parsed.get_all('Requires-Dist')) == {
++            'requests==2.34.2', 'azure-identity==1.26.0', 'azure-storage-blob==12.31.0', 'azure-data-tables==12.7.0'}
++    assert 'sec_edgar_ingest/results.py' in names
++    assert 'sec_edgar_ingest-0.1.0/src/sec_edgar_ingest/results.py' in members
++    assert b'sec-edgar-ingest = sec_edgar_ingest.cli:main' in entrypoints
++    assert not any('sec_edgar_client/' in name or 'sec_edgar_download/' in name or 'sec_edgar_index_ingest/' in name for name in names)
++    (root / 'wheel-METADATA').write_bytes(metadata)
++    (root / 'sdist-PKG-INFO').write_bytes(pkg_info)
++    (root / 'wheel-entry_points.txt').write_bytes(entrypoints)
++    receipt = {'artifacts': [fingerprint(path) for path in (wheel, sdist)], 'wheel_members': names,
++               'sdist_members': members, 'metadata_assertions': 'passed'}
++    save_json(root / 'artifact-inspection.json', receipt)
++    return wheel
++
++
++def transport_count(state_root):
++    with sqlite3.connect('file:' + str(state_root / 'state.sqlite3') + '?mode=ro', uri=True) as connection:
++        return connection.execute("SELECT COUNT(*) FROM records WHERE partition='sec-owner-lowell-mason:TransportAttempt'").fetchone()[0]
++
++
++def main():
++    with tempfile.TemporaryDirectory(prefix='sec-edgar-wheel-') as temporary:
++        root = Path(temporary)
++        environment = root / 'fresh-env'
++        commands = []
++        summary = {'platform': platform.platform(), 'provenance': 'synthetic local fixture subset',
++                   'dependency_authority': 'Task 1 cached pins only; offline/no-index; no lock changes',
++                   'prescribed_step_4': 'not discharged by the independent installed-quarter fixture'}
++        env = dict(os.environ)
++        env.pop('PYTHONPATH', None)
++        env.pop('PYTHONHOME', None)
++
++        def run(label, argv, *, cwd=root):
++            completed = subprocess.run([str(item) for item in argv], cwd=cwd, env=env, capture_output=True, text=True, timeout=120)
++            save_json(root / (label + '.argv.json'), [str(item) for item in argv])
++            (root / (label + '.stdout')).write_text(completed.stdout)
++            (root / (label + '.stderr')).write_text(completed.stderr)
++            save_json(root / (label + '.exit.json'), {'exit': completed.returncode, 'cwd': str(cwd)})
++            commands.append({'label': label, 'argv': [str(item) for item in argv], 'exit': completed.returncode})
++            assert completed.returncode == 0, completed.stderr
++            return completed.stdout
++
++        try:
++            wheel = inspect_artifacts(root)
++            requirements = root / 'pinned-requirements.txt'
++            run('locked-export', ['uv', 'export', '--offline', '--frozen', '--no-dev', '--no-emit-workspace', '--output-file', requirements], cwd=REPOSITORY)
++            run('fresh-environment', [REPOSITORY / '.venv/bin/python', '-m', 'venv', '--without-pip', environment])
++            python = environment / 'bin/python'
++            run('cached-pinned-install', ['uv', 'pip', 'install', '--offline', '--no-index', '--find-links', WHEELS,
++                '--python', python, '--require-hashes', '-r', requirements])
++            run('wheel-install', ['uv', 'pip', 'install', '--offline', '--no-index', '--no-deps', '--python', python, wheel])
++            probe = """import importlib.metadata as m, json, platform, sys
++import sec_edgar_ingest, sec_edgar_ingest.cli
++print(json.dumps({'python': sys.version, 'platform': platform.platform(), 'prefix': sys.prefix,
++'package_file': sec_edgar_ingest.__file__, 'cli_file': sec_edgar_ingest.cli.__file__,
++'version': sec_edgar_ingest.__version__, 'versions': {dist.metadata['Name']: dist.version for dist in m.distributions()}}))
++"""
++            imported = json.loads(run('installed-import', [python, '-c', probe]))
++            assert Path(imported['package_file']).is_relative_to(environment / 'lib')
++            assert 'site-packages' in imported['package_file'] and 'site-packages' in imported['cli_file']
++            assert imported['version'] == '0.1.0'
++            pins = tomllib.loads((REPOSITORY / 'pyproject.toml').read_text())['tool']['uv']['constraint-dependencies']
++            normalize = lambda name: name.lower().replace('_', '-').replace('.', '-')
++            expected = {normalize(pin.split('==')[0]): pin.split('==')[1] for pin in pins}
++            actual = {normalize(name): version for name, version in imported['versions'].items()}
++            assert len(expected) == 20
++            assert all(actual[name] == version for name, version in expected.items())
++            assert set(actual) == set(expected) | {'sec-edgar-ingest'}
++            save_json(root / 'installed-versions.json', imported)
++            console = environment / 'bin/sec-edgar-ingest'
++            run('installed-help', [console, '--help'])
++            run('installed-version', [python, '-m', 'sec_edgar_ingest', '--version'])
++            config = json.loads((REPOSITORY / 'conf/sec-edgar-ingest.yaml').read_text())
++            config['backfill'] = {'start_quarter': '2015Q1', 'end_quarter': '2015Q1'}
++            config['fixture'] = {'allow_clock_override': True, 'allow_deadline_override': True}
++            config['storage']['root'] = '.fixture-state'
++            path = root / 'wheel-fixture-config.json'
++            save_json(path, config)
++            state_base = root / 'state'
++            state_root = state_base / '.fixture-state'
++            common = ['--config', path, '--fixture-pack', PACK, '--state-dir', state_base,
++                      '--deadline', '2099-01-01T00:00:00Z', '--today', '2026-10-06']
++            discovered = json.loads(run('installed-discover', [console, 'discover', *common, '--mode', 'quarterly',
++                '--discovery-id', 'wheel-quarter', '--run-id', 'wheel-run', '--execution-id', 'wheel-discover', '--attempt-id', 'discover-1']))
++            collect = [console, 'collect', *common, '--workset', discovered['source_workset_ref'], '--run-id', 'wheel-run',
++                       '--execution-id', 'wheel-collect', '--attempt-id', 'collect-1']
++            first = json.loads(run('installed-collect', collect))
++            before = transport_count(state_root)
++            assert before == 4, 'three directory requests plus the original archive must be audited'
++            replay = json.loads(run('installed-exact-replay', collect))
++            second = json.loads(run('installed-pinned-replay', [console, 'collect', *common, '--workset', discovered['source_workset_ref'],
++                '--run-id', 'wheel-run', '--execution-id', 'wheel-retry', '--attempt-id', 'collect-2']))
++            assert first == replay
++            assert first['snapshot_workset_ref'] == second['snapshot_workset_ref']
++            assert transport_count(state_root) == before
++            results = [json.loads((state_root / 'objects' / output['result_ref']).read_text()) for output in (discovered, first, second)]
++            assert all(item['outcome'] == 'success' for item in results)
++            assert (results[1]['downloaded'], results[2]['unchanged']) == (1, 1)
++            snapshot = json.loads((state_root / 'objects' / first['snapshot_workset_ref']).read_text())
++            for item in snapshot['snapshots']:
++                body = (state_root / 'objects' / item['raw_path']).read_bytes()
++                assert hashlib.sha256(body).hexdigest() == item['sha256']
++                assert len(body) == item['byte_count']
++            summary.update(installed_import=imported, installed_results=results, snapshot_workset=snapshot,
++                           exact_replay_no_http=True, transport_count=before,
++                           tested_entrypoint=str(console), tested_cwd=str(root))
++            print(json.dumps({'installed_import': imported['package_file'], 'versions': len(expected),
++                              'fixture_commands': 'passed', 'transport_count': before, 'original_root': str(root)}))
++        finally:
++            save_json(root / 'commands.json', commands)
++            save_json(root / 'wheel-proof-summary.json', summary)
++            retained = VERIFICATION / root.name
++            # The generated environment is disposable. Retain import/entrypoint paths, pins,
++            # logs, exact installed wheel/sdist, fixture config, state, originals and results.
++            shutil.copytree(root, retained, ignore=shutil.ignore_patterns('fresh-env'))
++            save_json(retained / 'retention-map.json', {'original_root': str(root), 'retained_root': str(retained),
++                'exclusions': [{'path': 'fresh-env', 'reason': 'temporary installed environment; artifact bytes, lock export, import receipts, pins and command logs retained'}]})
++            save_json(retained / 'sha256-manifest.json', [{'path': str(path.relative_to(retained)), 'bytes': path.stat().st_size,
++                'sha256': hashlib.sha256(path.read_bytes()).hexdigest()} for path in sorted(retained.rglob('*'))
++                if path.is_file() and path.name != 'sha256-manifest.json'])
++
++
++if __name__ == '__main__':
++    main()
+diff --git a/specs/evidence/sec-filing-index-ingestion/stage-2/verification/routing-retry-receipt.json b/specs/evidence/sec-filing-index-ingestion/stage-2/verification/routing-retry-receipt.json
+new file mode 100644
+index 0000000..75a73cf
+--- /dev/null
++++ b/specs/evidence/sec-filing-index-ingestion/stage-2/verification/routing-retry-receipt.json
+@@ -0,0 +1 @@
++{"action":"resume authorized independent Task 8 writes","prior_error":"workspace routing unauthorized (401)","retry_authority":"user retry forwarded by controller","daily_endpoint_decision":"pending; retry does not approve an option"}
+diff --git a/specs/evidence/sec-filing-index-ingestion/stage-2/verification/source-revisions.json b/specs/evidence/sec-filing-index-ingestion/stage-2/verification/source-revisions.json
+new file mode 100644
+index 0000000..91d44f9
+--- /dev/null
++++ b/specs/evidence/sec-filing-index-ingestion/stage-2/verification/source-revisions.json
+@@ -0,0 +1,245 @@
++{
++  "branch": "codex/sec-edgar-stage-2",
++  "config_file": {
++    "path": "conf/sec-edgar-ingest.yaml",
++    "sha256": "dd50a930e09e840d38109e0953b4b9e0cc1ff3253845d8649d9242fc63192a3a"
++  },
++  "implementation_base": "73ea758e37f6b6ed78103b2a731b2f125bd96a96",
++  "index_diff": "",
++  "lock_sha256": "7a1b45b2944241e9b8fda35b5e87977c6ec189a3c72f4ca1f3f861661220f42c",
++  "prior_task_review_receipts": [
++    {
++      "path": "task-1-review.md",
++      "sha256": "050aff604e7941272026a4e343ff2534944a762f1203ed449f485a6949de5cd8"
++    },
++    {
++      "path": "task-2-rereview1.md",
++      "sha256": "fe66c387d1bb8efbca6b856778af88d249e13208fb73bb6fb38021cabbfb651a"
++    },
++    {
++      "path": "task-2-review.md",
++      "sha256": "badc198cfde16f727deb44aa7ce44dd76392c16670fb0d7cf7615d154f9b1535"
++    },
++    {
++      "path": "task-3-rereview1.md",
++      "sha256": "09ae94018561d1637f7f864b16a66a3d1b4c34378dc32df93fe804b115c1441b"
++    },
++    {
++      "path": "task-3-review.md",
++      "sha256": "94cf1180dedb787e3bf1b6a1028954c25d045c23f287b7242b65cef2a5fd3a17"
++    },
++    {
++      "path": "task-4-rereview1.md",
++      "sha256": "f4969a964170e2d2924e3604d6db4b89dc0297a16ace4071b9574176b325a63f"
++    },
++    {
++      "path": "task-4-review.md",
++      "sha256": "57b9da500c3cf8a159e123ea0b94580be999c84710aecb35f52839f42dfceb2f"
++    },
++    {
++      "path": "task-5-rereview1.md",
++      "sha256": "af25b8fc9a8691de6a1cb4f3c3e14abcbda5e1561bce2deab2b85110b5ba2c6f"
++    },
++    {
++      "path": "task-5-review.md",
++      "sha256": "4c67b3306b16b56f5ab8b4eee8802bd06bd4b38aeb5b475dc2f20b9e5ea79e8c"
++    },
++    {
++      "path": "task-6-rereview1.md",
++      "sha256": "578370d6f786c7d7835c8916b5e9b3367cbd0e9b5bcf78e4c1bff696ace8529e"
++    },
++    {
++      "path": "task-6-review.md",
++      "sha256": "79a6df57d0e450956bd90f0f427c7337602fc3817c9e0aa7b6aea867c8c16421"
++    },
++    {
++      "path": "task-7-rereview1.md",
++      "sha256": "5b1e0894379692b58eab780b7cc96d63a0d09d4de2a23b2a46d1ae826a22c816"
++    },
++    {
++      "path": "task-7-review.md",
++      "sha256": "c69f810230e7cb7ec75c85ab250b96141ed771b1874085bfc3a626f8ca32a117"
++    }
++  ],
++  "recorded_at": "2026-10-06T20:59:42.965519+00:00",
++  "source_candidate_files": [
++    {
++      "bytes": 457,
++      "path": ".gitignore",
++      "sha256": "575a06b4213174515f14aba2020b0884a164a3b54186237434d41c69a1e5e128"
++    },
++    {
++      "bytes": 1738,
++      "path": "README.md",
++      "sha256": "c9d1deeee27b43b833c00e8f29cddeedb1f14615e2680a54d18a0cd1242bfd34"
++    },
++    {
++      "bytes": 5437,
++      "path": "packages/sec-edgar-ingest/README.md",
++      "sha256": "6492913d52bad689dd156c9601f7d22604da7cfe8bb2ab733b83e07af2e68c9e"
++    },
++    {
++      "bytes": 14383,
++      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/cli.py",
++      "sha256": "7216fcf2f07c965770a4ece67ed9a785afcebc95a6f93c1556b7c79e06671a84"
++    },
++    {
++      "bytes": 42134,
++      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/download.py",
++      "sha256": "467068de88ec939c5b60e7d37852c722170a4c218ed0ba1c004ff74c2b627473"
++    },
++    {
++      "bytes": 24775,
++      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py",
++      "sha256": "6442fd063727d5eae7958d12e24e4668ec1dddbd184ee4f235c4208632af03c4"
++    },
++    {
++      "bytes": 2466,
++      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/results.py",
++      "sha256": "aac391e5860eadbba547f4d1d5fdfd93c407a541c254834db95d717029c3f29a"
++    },
++    {
++      "bytes": 82552,
++      "path": "packages/sec-edgar-ingest/tests/support.py",
++      "sha256": "a5466021e0fe9b6281df22768e6ad4d792c265eab60c8c52d03a3e3f9d64e433"
++    },
++    {
++      "bytes": 4142,
++      "path": "packages/sec-edgar-ingest/tests/test_workspace.py",
++      "sha256": "7bd719c05170b193306a848668f73fe868df89ccb79a9d0b81892dba95194757"
++    },
++    {
++      "bytes": 29445,
++      "path": "packages/sec-edgar-ingest/tests/test_cli.py",
++      "sha256": "f97bec4d8d2c6e34d0c92298b45954e69907f3d4dfcf771d44b20fb901e31a65"
++    },
++    {
++      "bytes": 9115,
++      "path": "packages/sec-edgar-ingest/tests/test_acquisition_processes.py",
++      "sha256": "46d3c3ff5c0ff93150bd30511cbe65d1609e4266897a16bdf9839c6adb608917"
++    },
++    {
++      "bytes": 270,
++      "path": "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/21105f019f995a508212e1aea8b954cc17965311f95d2bee96cd3929068384e7.body",
++      "sha256": "21105f019f995a508212e1aea8b954cc17965311f95d2bee96cd3929068384e7"
++    },
++    {
++      "bytes": 175,
++      "path": "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/2238e6e45c468be5a35d36546f7dfb5239c961e58316858113ee6e56025584ea.body",
++      "sha256": "2238e6e45c468be5a35d36546f7dfb5239c961e58316858113ee6e56025584ea"
++    },
++    {
++      "bytes": 230,
++      "path": "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/258e0245ed05b9340e156bc1572f88425962b0bcb9b25eca60ecb8c6052815c9.body",
++      "sha256": "258e0245ed05b9340e156bc1572f88425962b0bcb9b25eca60ecb8c6052815c9"
++    },
++    {
++      "bytes": 234,
++      "path": "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/295ea06a8709fc8a1280e0f394504d2589a79b044afd394199772a8ded166d59.body",
++      "sha256": "295ea06a8709fc8a1280e0f394504d2589a79b044afd394199772a8ded166d59"
++    },
++    {
++      "bytes": 113,
++      "path": "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/30e26ab496e04432e3c6c18e7717d05267f3a25b1f349b012c99734d91f35441.body",
++      "sha256": "30e26ab496e04432e3c6c18e7717d05267f3a25b1f349b012c99734d91f35441"
++    },
++    {
++      "bytes": 352,
++      "path": "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/32eb8001fb131584156014f9ff5ad6dc2a8a97efa7fc63fb712173fdbccc3e94.body",
++      "sha256": "32eb8001fb131584156014f9ff5ad6dc2a8a97efa7fc63fb712173fdbccc3e94"
++    },
++    {
++      "bytes": 180,
++      "path": "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/32fff5ff6a37979890bc180de561f8cb58cbcc6f37d0cd92d5048ba0c4a10e31.body",
++      "sha256": "32fff5ff6a37979890bc180de561f8cb58cbcc6f37d0cd92d5048ba0c4a10e31"
++    },
++    {
++      "bytes": 169,
++      "path": "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/4021d2e373bff5ccc8588b4d8077586f8684d3f3153823cdd13b0555c030cc28.body",
++      "sha256": "4021d2e373bff5ccc8588b4d8077586f8684d3f3153823cdd13b0555c030cc28"
++    },
++    {
++      "bytes": 176,
++      "path": "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/44196541abe6841a5e9e959b26a1161959d015750143fa45a156ba1c3a75295e.body",
++      "sha256": "44196541abe6841a5e9e959b26a1161959d015750143fa45a156ba1c3a75295e"
++    },
++    {
++      "bytes": 230,
++      "path": "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/4dc2efcff18a472cac890b5a3e4cc38a1f78a6fd9e672e0a8dababec4a91e6c0.body",
++      "sha256": "4dc2efcff18a472cac890b5a3e4cc38a1f78a6fd9e672e0a8dababec4a91e6c0"
++    },
++    {
++      "bytes": 82,
++      "path": "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/52b4c5e475b57259a26bae0dbf22e6280e051be3f6ef99964e37571fd84f5b8a.body",
++      "sha256": "52b4c5e475b57259a26bae0dbf22e6280e051be3f6ef99964e37571fd84f5b8a"
++    },
++    {
++      "bytes": 197,
++      "path": "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/58af35e69e11a9c273ed928520bbf412f7133356b09eac39641f6487c6f1421c.body",
++      "sha256": "58af35e69e11a9c273ed928520bbf412f7133356b09eac39641f6487c6f1421c"
++    },
++    {
++      "bytes": 135,
++      "path": "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/634dccc56d14ab6d6ac8bd0f565d04a9133416e5fb0ca8ecb09096a58c6312fc.body",
++      "sha256": "634dccc56d14ab6d6ac8bd0f565d04a9133416e5fb0ca8ecb09096a58c6312fc"
++    },
++    {
++      "bytes": 261,
++      "path": "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/68b0e0e1c09010a02e45ac0d0adc2621f23d61a84448064d15d0cee9e5aab399.body",
++      "sha256": "68b0e0e1c09010a02e45ac0d0adc2621f23d61a84448064d15d0cee9e5aab399"
++    },
++    {
++      "bytes": 234,
++      "path": "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/95e7e13dffd163f5ab77a98032435d7fbb62900752caa672b2159a37c56041ad.body",
++      "sha256": "95e7e13dffd163f5ab77a98032435d7fbb62900752caa672b2159a37c56041ad"
++    },
++    {
++      "bytes": 118,
++      "path": "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/ab4132221967a34c4ea3b6f797f41a4782bc853df450dbc763de354b4e972fc3.body",
++      "sha256": "ab4132221967a34c4ea3b6f797f41a4782bc853df450dbc763de354b4e972fc3"
++    },
++    {
++      "bytes": 76,
++      "path": "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/d33e4176f1fae064d45af39190561b7bb61edac6f7462378554e662fb0b329e2.body",
++      "sha256": "d33e4176f1fae064d45af39190561b7bb61edac6f7462378554e662fb0b329e2"
++    },
++    {
++      "bytes": 287,
++      "path": "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/d7660c59fd179fb60293211d85d1b5961ff97c911df237ccca9b80a425642bc7.body",
++      "sha256": "d7660c59fd179fb60293211d85d1b5961ff97c911df237ccca9b80a425642bc7"
++    },
++    {
++      "bytes": 114,
++      "path": "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/dd36466564b870eb44518366fe09113e11484b4c5b9e4bde1b36b5b74c98c03c.body",
++      "sha256": "dd36466564b870eb44518366fe09113e11484b4c5b9e4bde1b36b5b74c98c03c"
++    },
++    {
++      "bytes": 0,
++      "path": "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855.body",
++      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
++    },
++    {
++      "bytes": 234,
++      "path": "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/ebad8fd92aa0dc8acd373ff8ac13cd65581b9204a268d0552e3aee3642a60f58.body",
++      "sha256": "ebad8fd92aa0dc8acd373ff8ac13cd65581b9204a268d0552e3aee3642a60f58"
++    },
++    {
++      "bytes": 4953,
++      "path": "packages/sec-edgar-ingest/tests/fixtures/acquisition/manifest.json",
++      "sha256": "c96e76610f6a218eb27f647abafe538991330bffa0f471c11e890ce3eeac5a97"
++    },
++    {
++      "bytes": 601,
++      "path": "scripts/check-sec-edgar-ingest.sh",
++      "sha256": "dcc534b106cc51ac4537438132122856bb5d336c8947be4427bee328ca7522aa"
++    },
++    {
++      "bytes": 9938,
++      "path": "docs/runbooks/sec-edgar-ingest-acquisition.md",
++      "sha256": "c9aa3912337a130bc6ae1644f52d81afd97441de8f450d06a3c3ac76ba9d6c7c"
++    }
++  ],
++  "status": " M .gitignore\n M README.md\n D packages/sec-edgar-index-ingest/README.md\n D packages/sec-edgar-index-ingest/pyproject.toml\n D packages/sec-edgar-index-ingest/src/sec_edgar_index_ingest/__init__.py\n D packages/sec-edgar-index-ingest/src/sec_edgar_index_ingest/py.typed\n M packages/sec-edgar-ingest/README.md\n M packages/sec-edgar-ingest/src/sec_edgar_ingest/cli.py\n M packages/sec-edgar-ingest/src/sec_edgar_ingest/download.py\n M packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py\n M packages/sec-edgar-ingest/tests/support.py\n M packages/sec-edgar-ingest/tests/test_workspace.py\n?? docs/\n?? packages/sec-edgar-ingest/src/sec_edgar_ingest/results.py\n?? packages/sec-edgar-ingest/tests/fixtures/acquisition/\n?? packages/sec-edgar-ingest/tests/test_acquisition_processes.py\n?? packages/sec-edgar-ingest/tests/test_cli.py\n?? scripts/\n?? specs/evidence/sec-filing-index-ingestion/stage-2/verification/\n",
++  "step4_daily_decision": "pending owner answer",
++  "task8_review": "pending fresh controller-dispatched review; no self-issued PASS"
++}

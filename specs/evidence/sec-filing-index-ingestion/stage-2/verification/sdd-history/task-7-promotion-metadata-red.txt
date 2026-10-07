@@ -1,0 +1,39 @@
+command=["/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/bin/python", "-m", "unittest", "-v", "test_collection.CollectionTests.test_promotion_metadata_must_match_exact_original_receipt", "test_collection.CollectionTests.test_quarterly_collection_preserves_original_zip_representation"]
+stdout:
+
+stderr:
+test_promotion_metadata_must_match_exact_original_receipt (test_collection.CollectionTests.test_promotion_metadata_must_match_exact_original_receipt) ... 
+  test_promotion_metadata_must_match_exact_original_receipt (test_collection.CollectionTests.test_promotion_metadata_must_match_exact_original_receipt) (field='received_at') ... FAIL
+  test_promotion_metadata_must_match_exact_original_receipt (test_collection.CollectionTests.test_promotion_metadata_must_match_exact_original_receipt) (field='validators') ... FAIL
+test_quarterly_collection_preserves_original_zip_representation (test_collection.CollectionTests.test_quarterly_collection_preserves_original_zip_representation) ... ok
+
+======================================================================
+FAIL: test_promotion_metadata_must_match_exact_original_receipt (test_collection.CollectionTests.test_promotion_metadata_must_match_exact_original_receipt) (field='received_at')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 427, in test_promotion_metadata_must_match_exact_original_receipt
+    self.assertEqual(result.outcome, 'state_conflict')
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'success' != 'state_conflict'
+- success
++ state_conflict
+
+
+======================================================================
+FAIL: test_promotion_metadata_must_match_exact_original_receipt (test_collection.CollectionTests.test_promotion_metadata_must_match_exact_original_receipt) (field='validators')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 427, in test_promotion_metadata_must_match_exact_original_receipt
+    self.assertEqual(result.outcome, 'state_conflict')
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'success' != 'state_conflict'
+- success
++ state_conflict
+
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.219s
+
+FAILED (failures=2)
+
+exit_code=1

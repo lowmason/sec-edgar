@@ -1,0 +1,25 @@
+test_real_clock_context_pins_actual_day_after_frozen_fixture_date (test_acquisition_processes.AcquisitionProcessTests.test_real_clock_context_pins_actual_day_after_frozen_fixture_date) ... FAIL
+
+======================================================================
+FAIL: test_real_clock_context_pins_actual_day_after_frozen_fixture_date (test_acquisition_processes.AcquisitionProcessTests.test_real_clock_context_pins_actual_day_after_frozen_fixture_date)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_acquisition_processes.py", line 26, in test_real_clock_context_pins_actual_day_after_frozen_fixture_date
+    pinned, _ = pin_context(settings, context, context.pinned_on)
+                ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/config.py", line 266, in pin_context
+    raise ValueError("fixture clock override must be explicitly labelled")
+ValueError: fixture clock override must be explicitly labelled
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_acquisition_processes.py", line 28, in test_real_clock_context_pins_actual_day_after_frozen_fixture_date
+    self.fail(f'real-clock acquisition fixture must pass the actual-date guard: {error}')
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: real-clock acquisition fixture must pass the actual-date guard: fixture clock override must be explicitly labelled
+
+----------------------------------------------------------------------
+Ran 1 test in 0.003s
+
+FAILED (failures=1)

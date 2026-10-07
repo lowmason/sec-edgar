@@ -1,0 +1,20 @@
+test_inline_rows_keep_original_payload_and_replace_both_formats (test_azure_state_payloads.AzureStatePayloadTests.test_inline_rows_keep_original_payload_and_replace_both_formats) ... ok
+test_intended_history_registration_round_trips_and_replaces_with_whole_record_cas (test_azure_state_payloads.AzureStatePayloadTests.test_intended_history_registration_round_trips_and_replaces_with_whole_record_cas) ... FAIL
+test_large_values_above_entity_limit_round_trip_without_splitting_table_updates (test_azure_state_payloads.AzureStatePayloadTests.test_large_values_above_entity_limit_round_trip_without_splitting_table_updates) ... ok
+test_missing_corrupt_and_wrong_identity_large_content_is_refused (test_azure_state_payloads.AzureStatePayloadTests.test_missing_corrupt_and_wrong_identity_large_content_is_refused) ... ok
+test_oversized_stable_identity_is_refused_before_any_storage_write (test_azure_state_payloads.AzureStatePayloadTests.test_oversized_stable_identity_is_refused_before_any_storage_write) ... ok
+test_partial_blob_never_publishes_table_and_failed_table_candidate_retries (test_azure_state_payloads.AzureStatePayloadTests.test_partial_blob_never_publishes_table_and_failed_table_candidate_retries) ... ok
+
+======================================================================
+FAIL: test_intended_history_registration_round_trips_and_replaces_with_whole_record_cas (test_azure_state_payloads.AzureStatePayloadTests.test_intended_history_registration_round_trips_and_replaces_with_whole_record_cas)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_azure_state_payloads.py", line 156, in test_intended_history_registration_round_trips_and_replaces_with_whole_record_cas
+    self.assertEqual(winner.value, changed)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: FrozenMapping(_items=mappingproxy({'day':[55589 chars]))})) != {'day': None, 'gaps': {'https://www.sec.g[43277 chars]6'}}}
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.122s
+
+FAILED (failures=1)

@@ -1,0 +1,245 @@
+{
+  "branch": "codex/sec-edgar-stage-2",
+  "config_file": {
+    "path": "conf/sec-edgar-ingest.yaml",
+    "sha256": "dd50a930e09e840d38109e0953b4b9e0cc1ff3253845d8649d9242fc63192a3a"
+  },
+  "implementation_base": "73ea758e37f6b6ed78103b2a731b2f125bd96a96",
+  "index_diff": "",
+  "lock_sha256": "7a1b45b2944241e9b8fda35b5e87977c6ec189a3c72f4ca1f3f861661220f42c",
+  "prior_task_review_receipts": [
+    {
+      "path": "task-1-review.md",
+      "sha256": "050aff604e7941272026a4e343ff2534944a762f1203ed449f485a6949de5cd8"
+    },
+    {
+      "path": "task-2-rereview1.md",
+      "sha256": "fe66c387d1bb8efbca6b856778af88d249e13208fb73bb6fb38021cabbfb651a"
+    },
+    {
+      "path": "task-2-review.md",
+      "sha256": "badc198cfde16f727deb44aa7ce44dd76392c16670fb0d7cf7615d154f9b1535"
+    },
+    {
+      "path": "task-3-rereview1.md",
+      "sha256": "09ae94018561d1637f7f864b16a66a3d1b4c34378dc32df93fe804b115c1441b"
+    },
+    {
+      "path": "task-3-review.md",
+      "sha256": "94cf1180dedb787e3bf1b6a1028954c25d045c23f287b7242b65cef2a5fd3a17"
+    },
+    {
+      "path": "task-4-rereview1.md",
+      "sha256": "f4969a964170e2d2924e3604d6db4b89dc0297a16ace4071b9574176b325a63f"
+    },
+    {
+      "path": "task-4-review.md",
+      "sha256": "57b9da500c3cf8a159e123ea0b94580be999c84710aecb35f52839f42dfceb2f"
+    },
+    {
+      "path": "task-5-rereview1.md",
+      "sha256": "af25b8fc9a8691de6a1cb4f3c3e14abcbda5e1561bce2deab2b85110b5ba2c6f"
+    },
+    {
+      "path": "task-5-review.md",
+      "sha256": "4c67b3306b16b56f5ab8b4eee8802bd06bd4b38aeb5b475dc2f20b9e5ea79e8c"
+    },
+    {
+      "path": "task-6-rereview1.md",
+      "sha256": "578370d6f786c7d7835c8916b5e9b3367cbd0e9b5bcf78e4c1bff696ace8529e"
+    },
+    {
+      "path": "task-6-review.md",
+      "sha256": "79a6df57d0e450956bd90f0f427c7337602fc3817c9e0aa7b6aea867c8c16421"
+    },
+    {
+      "path": "task-7-rereview1.md",
+      "sha256": "5b1e0894379692b58eab780b7cc96d63a0d09d4de2a23b2a46d1ae826a22c816"
+    },
+    {
+      "path": "task-7-review.md",
+      "sha256": "c69f810230e7cb7ec75c85ab250b96141ed771b1874085bfc3a626f8ca32a117"
+    }
+  ],
+  "recorded_at": "2026-10-06T20:59:42.965519+00:00",
+  "source_candidate_files": [
+    {
+      "bytes": 457,
+      "path": ".gitignore",
+      "sha256": "575a06b4213174515f14aba2020b0884a164a3b54186237434d41c69a1e5e128"
+    },
+    {
+      "bytes": 1738,
+      "path": "README.md",
+      "sha256": "c9d1deeee27b43b833c00e8f29cddeedb1f14615e2680a54d18a0cd1242bfd34"
+    },
+    {
+      "bytes": 5437,
+      "path": "packages/sec-edgar-ingest/README.md",
+      "sha256": "6492913d52bad689dd156c9601f7d22604da7cfe8bb2ab733b83e07af2e68c9e"
+    },
+    {
+      "bytes": 14383,
+      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/cli.py",
+      "sha256": "7216fcf2f07c965770a4ece67ed9a785afcebc95a6f93c1556b7c79e06671a84"
+    },
+    {
+      "bytes": 42134,
+      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/download.py",
+      "sha256": "467068de88ec939c5b60e7d37852c722170a4c218ed0ba1c004ff74c2b627473"
+    },
+    {
+      "bytes": 24775,
+      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py",
+      "sha256": "6442fd063727d5eae7958d12e24e4668ec1dddbd184ee4f235c4208632af03c4"
+    },
+    {
+      "bytes": 2466,
+      "path": "packages/sec-edgar-ingest/src/sec_edgar_ingest/results.py",
+      "sha256": "aac391e5860eadbba547f4d1d5fdfd93c407a541c254834db95d717029c3f29a"
+    },
+    {
+      "bytes": 82552,
+      "path": "packages/sec-edgar-ingest/tests/support.py",
+      "sha256": "a5466021e0fe9b6281df22768e6ad4d792c265eab60c8c52d03a3e3f9d64e433"
+    },
+    {
+      "bytes": 4142,
+      "path": "packages/sec-edgar-ingest/tests/test_workspace.py",
+      "sha256": "7bd719c05170b193306a848668f73fe868df89ccb79a9d0b81892dba95194757"
+    },
+    {
+      "bytes": 29445,
+      "path": "packages/sec-edgar-ingest/tests/test_cli.py",
+      "sha256": "f97bec4d8d2c6e34d0c92298b45954e69907f3d4dfcf771d44b20fb901e31a65"
+    },
+    {
+      "bytes": 9115,
+      "path": "packages/sec-edgar-ingest/tests/test_acquisition_processes.py",
+      "sha256": "46d3c3ff5c0ff93150bd30511cbe65d1609e4266897a16bdf9839c6adb608917"
+    },
+    {
+      "bytes": 270,
+      "path": "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/21105f019f995a508212e1aea8b954cc17965311f95d2bee96cd3929068384e7.body",
+      "sha256": "21105f019f995a508212e1aea8b954cc17965311f95d2bee96cd3929068384e7"
+    },
+    {
+      "bytes": 175,
+      "path": "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/2238e6e45c468be5a35d36546f7dfb5239c961e58316858113ee6e56025584ea.body",
+      "sha256": "2238e6e45c468be5a35d36546f7dfb5239c961e58316858113ee6e56025584ea"
+    },
+    {
+      "bytes": 230,
+      "path": "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/258e0245ed05b9340e156bc1572f88425962b0bcb9b25eca60ecb8c6052815c9.body",
+      "sha256": "258e0245ed05b9340e156bc1572f88425962b0bcb9b25eca60ecb8c6052815c9"
+    },
+    {
+      "bytes": 234,
+      "path": "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/295ea06a8709fc8a1280e0f394504d2589a79b044afd394199772a8ded166d59.body",
+      "sha256": "295ea06a8709fc8a1280e0f394504d2589a79b044afd394199772a8ded166d59"
+    },
+    {
+      "bytes": 113,
+      "path": "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/30e26ab496e04432e3c6c18e7717d05267f3a25b1f349b012c99734d91f35441.body",
+      "sha256": "30e26ab496e04432e3c6c18e7717d05267f3a25b1f349b012c99734d91f35441"
+    },
+    {
+      "bytes": 352,
+      "path": "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/32eb8001fb131584156014f9ff5ad6dc2a8a97efa7fc63fb712173fdbccc3e94.body",
+      "sha256": "32eb8001fb131584156014f9ff5ad6dc2a8a97efa7fc63fb712173fdbccc3e94"
+    },
+    {
+      "bytes": 180,
+      "path": "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/32fff5ff6a37979890bc180de561f8cb58cbcc6f37d0cd92d5048ba0c4a10e31.body",
+      "sha256": "32fff5ff6a37979890bc180de561f8cb58cbcc6f37d0cd92d5048ba0c4a10e31"
+    },
+    {
+      "bytes": 169,
+      "path": "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/4021d2e373bff5ccc8588b4d8077586f8684d3f3153823cdd13b0555c030cc28.body",
+      "sha256": "4021d2e373bff5ccc8588b4d8077586f8684d3f3153823cdd13b0555c030cc28"
+    },
+    {
+      "bytes": 176,
+      "path": "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/44196541abe6841a5e9e959b26a1161959d015750143fa45a156ba1c3a75295e.body",
+      "sha256": "44196541abe6841a5e9e959b26a1161959d015750143fa45a156ba1c3a75295e"
+    },
+    {
+      "bytes": 230,
+      "path": "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/4dc2efcff18a472cac890b5a3e4cc38a1f78a6fd9e672e0a8dababec4a91e6c0.body",
+      "sha256": "4dc2efcff18a472cac890b5a3e4cc38a1f78a6fd9e672e0a8dababec4a91e6c0"
+    },
+    {
+      "bytes": 82,
+      "path": "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/52b4c5e475b57259a26bae0dbf22e6280e051be3f6ef99964e37571fd84f5b8a.body",
+      "sha256": "52b4c5e475b57259a26bae0dbf22e6280e051be3f6ef99964e37571fd84f5b8a"
+    },
+    {
+      "bytes": 197,
+      "path": "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/58af35e69e11a9c273ed928520bbf412f7133356b09eac39641f6487c6f1421c.body",
+      "sha256": "58af35e69e11a9c273ed928520bbf412f7133356b09eac39641f6487c6f1421c"
+    },
+    {
+      "bytes": 135,
+      "path": "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/634dccc56d14ab6d6ac8bd0f565d04a9133416e5fb0ca8ecb09096a58c6312fc.body",
+      "sha256": "634dccc56d14ab6d6ac8bd0f565d04a9133416e5fb0ca8ecb09096a58c6312fc"
+    },
+    {
+      "bytes": 261,
+      "path": "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/68b0e0e1c09010a02e45ac0d0adc2621f23d61a84448064d15d0cee9e5aab399.body",
+      "sha256": "68b0e0e1c09010a02e45ac0d0adc2621f23d61a84448064d15d0cee9e5aab399"
+    },
+    {
+      "bytes": 234,
+      "path": "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/95e7e13dffd163f5ab77a98032435d7fbb62900752caa672b2159a37c56041ad.body",
+      "sha256": "95e7e13dffd163f5ab77a98032435d7fbb62900752caa672b2159a37c56041ad"
+    },
+    {
+      "bytes": 118,
+      "path": "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/ab4132221967a34c4ea3b6f797f41a4782bc853df450dbc763de354b4e972fc3.body",
+      "sha256": "ab4132221967a34c4ea3b6f797f41a4782bc853df450dbc763de354b4e972fc3"
+    },
+    {
+      "bytes": 76,
+      "path": "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/d33e4176f1fae064d45af39190561b7bb61edac6f7462378554e662fb0b329e2.body",
+      "sha256": "d33e4176f1fae064d45af39190561b7bb61edac6f7462378554e662fb0b329e2"
+    },
+    {
+      "bytes": 287,
+      "path": "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/d7660c59fd179fb60293211d85d1b5961ff97c911df237ccca9b80a425642bc7.body",
+      "sha256": "d7660c59fd179fb60293211d85d1b5961ff97c911df237ccca9b80a425642bc7"
+    },
+    {
+      "bytes": 114,
+      "path": "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/dd36466564b870eb44518366fe09113e11484b4c5b9e4bde1b36b5b74c98c03c.body",
+      "sha256": "dd36466564b870eb44518366fe09113e11484b4c5b9e4bde1b36b5b74c98c03c"
+    },
+    {
+      "bytes": 0,
+      "path": "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855.body",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 234,
+      "path": "packages/sec-edgar-ingest/tests/fixtures/acquisition/bodies/ebad8fd92aa0dc8acd373ff8ac13cd65581b9204a268d0552e3aee3642a60f58.body",
+      "sha256": "ebad8fd92aa0dc8acd373ff8ac13cd65581b9204a268d0552e3aee3642a60f58"
+    },
+    {
+      "bytes": 4953,
+      "path": "packages/sec-edgar-ingest/tests/fixtures/acquisition/manifest.json",
+      "sha256": "c96e76610f6a218eb27f647abafe538991330bffa0f471c11e890ce3eeac5a97"
+    },
+    {
+      "bytes": 601,
+      "path": "scripts/check-sec-edgar-ingest.sh",
+      "sha256": "dcc534b106cc51ac4537438132122856bb5d336c8947be4427bee328ca7522aa"
+    },
+    {
+      "bytes": 9938,
+      "path": "docs/runbooks/sec-edgar-ingest-acquisition.md",
+      "sha256": "c9aa3912337a130bc6ae1644f52d81afd97441de8f450d06a3c3ac76ba9d6c7c"
+    }
+  ],
+  "status": " M .gitignore\n M README.md\n D packages/sec-edgar-index-ingest/README.md\n D packages/sec-edgar-index-ingest/pyproject.toml\n D packages/sec-edgar-index-ingest/src/sec_edgar_index_ingest/__init__.py\n D packages/sec-edgar-index-ingest/src/sec_edgar_index_ingest/py.typed\n M packages/sec-edgar-ingest/README.md\n M packages/sec-edgar-ingest/src/sec_edgar_ingest/cli.py\n M packages/sec-edgar-ingest/src/sec_edgar_ingest/download.py\n M packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py\n M packages/sec-edgar-ingest/tests/support.py\n M packages/sec-edgar-ingest/tests/test_workspace.py\n?? docs/\n?? packages/sec-edgar-ingest/src/sec_edgar_ingest/results.py\n?? packages/sec-edgar-ingest/tests/fixtures/acquisition/\n?? packages/sec-edgar-ingest/tests/test_acquisition_processes.py\n?? packages/sec-edgar-ingest/tests/test_cli.py\n?? scripts/\n?? specs/evidence/sec-filing-index-ingestion/stage-2/verification/\n",
+  "step4_daily_decision": "pending owner answer",
+  "task8_review": "pending fresh controller-dispatched review; no self-issued PASS"
+}

@@ -1,0 +1,2241 @@
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/coordination.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/coordination.py
+index fa113a4..0519e00 100644
+--- a/packages/sec-edgar-ingest/src/sec_edgar_ingest/coordination.py
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/coordination.py
+@@ -472,9 +472,15 @@ class Turn:
+                 raise OwnershipLost(self.loss_reason)
+             self._drained, self._completed = drained, True
+             try:
+-                self._refresh()
++                bounds = self._refresh()
+                 if not drained:
+                     raise OwnershipLost("sender drain was not positively confirmed")
++                # DNS/TLS/connect may delay wire activity beyond reservation; positive drain bounds it above.
++                interval = timedelta(microseconds=math.ceil(1_000_000/self.coordinator.settings.sec.requests_per_second))
++                self._value["not_before"] = max(utc_value(self._value["not_before"]), bounds.upper+interval).isoformat()
++                self._write()
++                self.coordinator._trace("drain-pacing", owner=self.handle.owner_id, epoch=self.epoch,
++                                        not_before=self._value["not_before"])
+             except Exception as error:
+                 self._lose(str(error))
+                 raise OwnershipLost(str(error)) from error
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/download.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/download.py
+new file mode 100644
+index 0000000..0a9fb95
+--- /dev/null
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/download.py
+@@ -0,0 +1,617 @@
++"""One request client audits every exchange and keeps retries outside ownership."""
++from __future__ import annotations
++
++import hashlib
++import http.client
++import json
++import multiprocessing
++import os
++import random
++import signal
++import sys
++import tempfile
++import time
++import uuid
++from collections.abc import Sequence
++from dataclasses import dataclass, replace
++from datetime import datetime, timedelta, timezone
++from email.utils import parsedate_to_datetime
++from pathlib import Path
++from urllib.parse import urlsplit
++
++from .config import Settings
++from .coordination import Clock, Coordinator, Sender
++from .models import BodyReceipt, Error, Permit, RunContext, Source, require_number, require_utc
++from .state import AcquisitionState
++from .storage.contracts import ClockUncertain, OwnershipLost, TimeBounds
++from .urls import canonical_listing_url, canonical_source_url
++from .validation import ValidationError, advertised_length, header_value, is_denial, validate_envelope
++
++HTTP_OK = 200
++HTTP_NOT_FOUND = 404
++HTTP_TOO_MANY_REQUESTS = 429
++HTTP_SERVER_ERROR = 500
++HTTP_REDIRECT_START = 300
++HTTP_CLIENT_ERROR_START = 400
++
++
++class FetchError(RuntimeError):
++    def __init__(self, error: Error, receipt: BodyReceipt):
++        self.error, self.receipt = error, receipt
++        super().__init__(error.message)
++
++
++def retry_after(value: str | None, now: datetime) -> float | None:
++    require_utc(now, "Retry-After reference time")
++    if value is None:
++        return None
++    stripped = value.strip()
++    if stripped.isascii() and stripped.isdigit():
++        try:
++            seconds = float(int(stripped))
++            require_number(seconds, "Retry-After seconds")
++            return seconds
++        except (OverflowError, ValueError):
++            return None
++    try:
++        instant = parsedate_to_datetime(stripped)
++        require_utc(instant, "Retry-After date")
++        return max(0.0, (instant-now).total_seconds())
++    except (TypeError, ValueError, OverflowError):
++        return None
++
++
++def retry_delay(ordinal: int, server_delay: float | None, settings: Settings, jitter: float) -> float:
++    require_number(ordinal, "retry ordinal", positive=True, integer=True)
++    if ordinal > settings.http.max_attempts:
++        raise ValueError("retry ordinal exceeds the configured attempt budget")
++    require_number(jitter, "retry jitter")
++    if jitter > 1:
++        raise ValueError("jitter outside [0,1]")
++    if server_delay is not None:
++        require_number(server_delay, "server delay")
++    local = min(settings.http.retry_cap_seconds, settings.http.retry_base_seconds * (2 ** (ordinal-1)))
++    return max(local*jitter, server_delay or 0)
++
++
++def _new_receipt(url, body, status, headers, now, *, complete=True, error=None, root=None):
++    destination = Path(tempfile.mkdtemp(prefix="sec-entity-")) if root is None else Path(root)
++    path = destination / ("body-"+uuid.uuid4().hex)
++    path.write_bytes(body)
++    return BodyReceipt(url, status, headers, path, now, len(body), hashlib.sha256(body).hexdigest(), complete, error)
++
++
++@dataclass(frozen=True)
++class ResponseSpec:
++    """Only the offline ScriptedSender consumes these synthetic responses."""
++    status: int
++    body: bytes
++    headers: dict[str, str]
++    fault: str | None = None
++
++
++class ScriptedSender:
++    def __init__(self, responses: Sequence[ResponseSpec]):
++        self.responses = list(responses)
++        self.clock = Clock()
++        self.starts = []
++        self.maximum_active = self.active = 0
++        self.directory = tempfile.TemporaryDirectory(prefix="sec-scripted-")
++
++    def send(self, url: str, context: RunContext, permit: Permit, *, cancellation) -> BodyReceipt:
++        if cancellation.is_set() or self.clock.monotonic() >= permit.start_before_mono:
++            raise OwnershipLost("scripted transport refuses a cancelled or expired permit")
++        if not self.responses:
++            raise RuntimeError("scripted fixture has no remaining response")
++        spec = self.responses.pop(0)
++        self.starts.append(self.clock.monotonic())
++        self.active += 1
++        self.maximum_active = max(self.maximum_active, self.active)
++        try:
++            error = Error(spec.fault, "scripted transport fault: "+spec.fault, True, None, {}) if spec.fault else None
++            body = spec.body
++            return _new_receipt(url, body, spec.status, spec.headers, self.clock.now(), complete=error is None,
++                                error=error, root=self.directory.name)
++        finally:
++            self.active -= 1
++
++    def close(self):
++        self.directory.cleanup()
++
++
++class _AuditedSender:
++    def __init__(self, sender, state, source, ordinal):
++        self.sender, self.state, self.source, self.ordinal = sender, state, source, ordinal
++        self.permit = self.receipt = None
++        self.begun = False
++
++    def send(self, url, context, permit, *, cancellation):
++        self.permit = permit
++        self.state.begin_request(context, url, self.source.source_id if self.source else None, permit.request_id, self.ordinal)
++        self.begun = True
++        self.receipt = self.sender.send(url, context, permit, cancellation=cancellation)
++        return self.receipt
++
++
++class RequestClient:
++    def __init__(self, settings: Settings, coordinator: Coordinator, sender: Sender,
++                 state: AcquisitionState, clock: Clock):
++        self.settings = Settings.from_mapping(settings.to_mapping())
++        if coordinator.settings != self.settings:
++            raise ValueError("request client and coordinator require the same effective settings")
++        if isinstance(sender, ScriptedSender) and settings.storage.backend != "local-fixture":
++            raise ValueError("scripted transport is fixture-only")
++        self.coordinator, self.sender, self.state, self.clock = coordinator, sender, state, clock
++        self.jitter = random.random
++
++    def _error(self, code, message, source, *, retryable=False, details=None):
++        return Error(code, message, retryable, source.source_id if source else None, details or {})
++
++    def _empty(self, url):
++        return _new_receipt(url, b"", 0, {}, self.clock.now(), complete=False)
++
++    def _previous_receipt(self, rows, url):
++        for row in reversed(rows):
++            if row.value.get("receipt") is not None:
++                return BodyReceipt.from_mapping(row.to_mapping()["value"]["receipt"])
++        return self._empty(url)
++
++    def _retry_time_bounds(self) -> TimeBounds:
++        bounds = self.coordinator.leases.observe_time()
++        if not isinstance(bounds, TimeBounds):
++            raise ClockUncertain("retry requires an actual server-time bound")
++        if (bounds.upper-bounds.lower).total_seconds() > self.settings.coordination.clock_uncertainty_seconds:
++            raise ClockUncertain("retry server-time bound exceeds configured uncertainty")
++        return bounds.at(self.clock.monotonic())
++
++    def _outcome(self, receipt, source):
++        if is_denial(receipt):
++            return "halted", self._error("access_denied", "SEC access denial stops every subsequent request in this run", source)
++        if receipt.error is not None or not receipt.complete:
++            error = receipt.error or self._error("incomplete_body", "transport did not receive a complete entity", source, retryable=True)
++            return "retry" if error.retryable and error.code != "ownership_lost" else "failed", error
++        if receipt.status == HTTP_OK:
++            if source is not None:
++                try:
++                    validate_envelope(source, receipt, self.settings)
++                except ValidationError as error:
++                    return "quarantined", self._error(error.code, "invalid acquisition envelope: "+error.code, source)
++            return "received", None
++        if receipt.status == HTTP_NOT_FOUND:
++            return ("pending", self._error("listed_missing", "a listed source is temporarily absent", source, retryable=True)) if source else ("failed", self._error("listing_missing", "directory listing returned 404", source))
++        if HTTP_REDIRECT_START <= receipt.status < HTTP_CLIENT_ERROR_START:
++            return "failed", self._error("redirect_refused", "SEC redirect was refused without following its Location", source, details={"status": receipt.status})
++        if receipt.status == HTTP_TOO_MANY_REQUESTS or receipt.status >= HTTP_SERVER_ERROR:
++            return "retry", self._error("http_retryable", "retryable HTTP response", source, retryable=True, details={"status": receipt.status})
++        return "failed", self._error("http_failed", "HTTP response is not an accepted entity", source, details={"status": receipt.status})
++
++    def _retry_metadata(self, receipt, permit, ordinal):
++        bounds = self._retry_time_bounds()
++        if not isinstance(bounds, TimeBounds):
++            raise ClockUncertain("retry requires server TimeBounds; host UTC is not a substitute")
++        value = header_value(receipt.headers, "Retry-After")
++        server_delay = retry_after(value, bounds.lower)
++        delay = retry_delay(ordinal, server_delay, self.settings, self.jitter())
++        not_before = bounds.upper+timedelta(seconds=delay)
++        if permit.next_allowed_at is not None:
++            not_before = max(not_before, permit.next_allowed_at)
++        return {"retry_after_value": value, "retry_after_valid": value is None or server_delay is not None,
++                "server_delay_seconds": server_delay, "delay_seconds": delay,
++                "not_before": not_before.isoformat(), "server_lower": bounds.lower.isoformat(),
++                "server_upper": bounds.upper.isoformat(), "observed_mono": bounds.monotonic_at,
++                "ready_mono": bounds.monotonic_at+(not_before-bounds.lower).total_seconds()}, not_before
++
++    def fetch(self, url: str, context: RunContext, source: Source | None = None) -> BodyReceipt:
++        canonical = canonical_source_url(url, source.kind) if source else canonical_listing_url(url)
++        if canonical != url or (source is not None and source.canonical_url != url):
++            raise ValueError("request URL must match its canonical SEC identity")
++        command_deadline_mono = self.clock.monotonic()+(context.deadline-self.clock.now()).total_seconds()
++        self.state.begin_attempt(context)
++        halt = self.state.run_halt(context)
++        if halt is not None:
++            raise FetchError(self._error("run_halted", "run was durably halted by SEC access denial", source,
++                                        details={"cause": halt.to_mapping(), "outcome": "halted"}), self._empty(url))
++        rows = self.state.request_history(context, url)
++        ordinal = len(rows)+1
++        if ordinal > self.settings.http.max_attempts:
++            raise FetchError(self._error("attempts_exhausted", "all accounted attempts for this command and URL are exhausted", source, details={"outcome": "exhausted"}), self._previous_receipt(rows, url))
++        while ordinal <= self.settings.http.max_attempts:
++            audited = _AuditedSender(self.sender, self.state, source, ordinal)
++            try:
++                receipt = self.coordinator.exchange(context, url, audited)
++            except Exception as exception:
++                receipt = getattr(exception, "receipt", None) or audited.receipt or self._empty(url)
++                error = self._error("ownership_lost" if isinstance(exception, OwnershipLost) else "sender_unverified",
++                                    "exchange stopped without a confirmed transport outcome: "+str(exception), source, details={"outcome": "failed", "ordinal": ordinal})
++                if audited.begun:
++                    self.state.request_attempt(context, receipt, audited.permit, ordinal, outcome="failed", error=error)
++                if source is not None:
++                    self.state.record_failure(source, error)
++                raise FetchError(error, receipt) from exception
++            outcome, error = self._outcome(receipt, source)
++            retry, next_allowed = {}, audited.permit.next_allowed_at
++            if outcome == "halted":
++                self.state.halt_run(context, error)
++            if outcome == "retry":
++                try:
++                    retry, next_allowed = self._retry_metadata(receipt, audited.permit, ordinal)
++                    self.coordinator.defer_until(next_allowed)
++                except (ClockUncertain, OwnershipLost, ValueError) as exception:
++                    outcome = "failed"
++                    error = self._error("clock_uncertain" if isinstance(exception, ClockUncertain) else "cooldown_unconfirmed",
++                                        "retry cooldown could not be confirmed: "+str(exception), source)
++                else:
++                    if ordinal == self.settings.http.max_attempts:
++                        outcome = "exhausted"
++                        error = self._error("attempts_exhausted", "fifth or configured final request failed", source,
++                                            details={"cause": error.to_mapping()})
++                    elif retry["ready_mono"] >= command_deadline_mono:
++                        outcome = "deferred"
++                        error = self._error("deferred", "retry delay reaches or exceeds this command's deadline", source, retryable=True,
++                                            details={"next_allowed_at": next_allowed.isoformat()})
++            if error is not None:
++                error = replace(error, source_id=source.source_id if source else None,
++                                details={**error.to_mapping()["details"], "outcome": outcome,
++                                         "ordinal": ordinal, "request_id": audited.permit.request_id})
++            self.state.request_attempt(context, receipt, audited.permit, ordinal, outcome=outcome,
++                                       error=error, retry=retry, next_allowed_at=next_allowed)
++            if outcome == "received":
++                return receipt
++            if outcome != "retry":
++                if source is not None:
++                    self.state.record_failure(source, error)
++                raise FetchError(error, receipt)
++            self.clock.sleep(max(0, retry["ready_mono"]-self.clock.monotonic()))
++            ordinal += 1
++        raise AssertionError("unreachable attempt budget")
++
++
++# IPC carries only a completion marker; response metadata and partial bytes survive child death on disk.
++CHUNK_BYTES = 65536
++SUPERVISOR_POLL_SECONDS = 0.05
++DRAIN_JOIN_SECONDS = 1
++SPAWN = multiprocessing.get_context("spawn")
++
++
++class HardTimerUnavailable(RuntimeError):
++    pass
++
++
++class SenderFailure(OwnershipLost):
++    def __init__(self, message: str, receipt: BodyReceipt):
++        self.receipt = receipt
++        super().__init__(message)
++
++
++@dataclass(frozen=True)
++class _Transport:
++    url: str
++    spool: str
++    user_agent: str
++    connect_timeout: float
++    read_timeout: float
++    max_received_bytes: int
++    start_before_mono: float
++    deadline_mono: float
++    fixture_origin: str | None
++    fixture_only: bool
++
++
++def _canonical_request_url(url: str) -> None:
++    if url.endswith("/index.json"):
++        canonical = canonical_listing_url(url)
++    else:
++        kind = "quarterly" if "/full-index/" in url else "daily"
++        canonical = canonical_source_url(url, kind)
++    if canonical != url:
++        raise ValueError("transport requires an exact canonical SEC URL")
++
++
++def _validate_transport_origin(transport: _Transport) -> None:
++    if transport.fixture_origin is None:
++        _canonical_request_url(transport.url)
++        return
++    origin, url = urlsplit(transport.fixture_origin), urlsplit(transport.url)
++    if (not transport.fixture_only or origin.scheme != "http" or origin.hostname != "127.0.0.1"
++            or origin.path or origin.query or origin.fragment or origin.username or origin.password
++            or url.scheme != origin.scheme or url.netloc != origin.netloc or url.fragment or url.username or url.password):
++        raise ValueError("fixture transport is restricted to its explicitly selected loopback origin")
++
++
++def _trace_transport(transport, event, **details):
++    record = {"event": event, "pid": os.getpid(), "monotonic": time.monotonic(),
++              "utc": datetime.now(timezone.utc).isoformat(), **details}
++    descriptor = os.open(str(Path(transport.spool)/"transport.jsonl"), os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o600)
++    try:
++        os.write(descriptor, (json.dumps(record, sort_keys=True)+"\n").encode())
++    finally:
++        os.close(descriptor)
++
++
++def _write_transport_metadata(transport, value):
++    path = Path(transport.spool)/"receipt.json"
++    temporary = path.with_suffix(".new")
++    temporary.write_text(json.dumps(value, sort_keys=True))
++    temporary.replace(path)
++
++
++def arm_child_deadline(transport) -> None:
++    now = time.monotonic()
++    if now >= transport.start_before_mono or now >= transport.deadline_mono:
++        raise OwnershipLost("permit expired before DNS or socket start")
++    if sys.platform not in ("linux", "darwin") or any(not hasattr(signal, name) for name in ("SIGALRM", "ITIMER_REAL", "pthread_sigmask", "setitimer")):
++        raise HardTimerUnavailable("platform has no proven independent fatal HTTP timer")
++    try:
++        signal.signal(signal.SIGALRM, signal.SIG_DFL)
++        signal.pthread_sigmask(signal.SIG_UNBLOCK, {signal.SIGALRM})
++        remaining = transport.deadline_mono-time.monotonic()
++        if remaining <= 0:
++            raise OwnershipLost("whole exchange deadline expired before arming")
++        signal.setitimer(signal.ITIMER_REAL, remaining)
++        blocked = signal.SIGALRM in signal.pthread_sigmask(signal.SIG_BLOCK, set())
++        if blocked or signal.getsignal(signal.SIGALRM) != signal.SIG_DFL or signal.getitimer(signal.ITIMER_REAL)[0] <= 0:
++            raise HardTimerUnavailable("fatal HTTP timer was not positively armed")
++    except (OSError, ValueError, RuntimeError) as error:
++        raise HardTimerUnavailable("could not install independent fatal HTTP timer") from error
++    _trace_transport(transport, "alarm-armed", deadline_mono=transport.deadline_mono,
++                     alarm_disposition="default-fatal", alarm_blocked=blocked)
++
++
++def incomplete_read_bytes(exception: BaseException) -> bytes:
++    pending, visited = [exception], set()
++    while pending:
++        current = pending.pop()
++        if id(current) in visited:
++            continue
++        visited.add(id(current))
++        if isinstance(current, http.client.IncompleteRead) and isinstance(current.partial, bytes):
++            return current.partial
++        if isinstance(current, BaseException):
++            pending.extend(item for item in current.args if isinstance(item, BaseException))
++            pending.extend(item for item in (current.__cause__, current.__context__) if isinstance(item, BaseException))
++    return b""
++
++
++class _TransportProblem(RuntimeError):
++    def __init__(self, code, message, *, retryable=False, details=None):
++        self.code, self.retryable, self.details = code, retryable, details or {}
++        super().__init__(message)
++
++
++def _require_child_current(transport, cancellation, *, starting=False):
++    now = time.monotonic()
++    if cancellation.is_set():
++        raise _TransportProblem("cancelled", "ownership cancellation reached the HTTP child")
++    if now >= transport.deadline_mono:
++        raise _TransportProblem("exchange_deadline", "absolute HTTP exchange deadline expired", retryable=True)
++    if starting and now >= transport.start_before_mono:
++        raise _TransportProblem("permit_expired", "child refused a stale dispatch window")
++
++
++def _write_chunk(stream, body: bytes, count: int, maximum: int) -> int:
++    received = count+len(body)
++    allowed = min(len(body), max(0, maximum-count))
++    if allowed:
++        stream.write(body[:allowed])
++    if received > maximum:
++        raise _TransportProblem("received_limit", "received entity exceeded its absolute byte guard",
++                                details={"received_bytes": received, "retained_bytes": count+allowed})
++    return received
++
++
++def _read_http_entity(transport, cancellation, metadata):
++    import requests
++    from urllib3.exceptions import HTTPError
++    from urllib3.util import Retry
++    session = requests.Session()
++    session.trust_env = False
++    adapter = requests.adapters.HTTPAdapter(pool_connections=1, pool_maxsize=1,
++        max_retries=Retry(total=0, connect=0, read=0, redirect=0, status=0, other=0))
++    session.mount("http://", adapter)
++    session.mount("https://", adapter)
++    count = 0
++    response = None
++    try:
++        _require_child_current(transport, cancellation, starting=True)
++        request = session.prepare_request(requests.Request("GET", transport.url,
++            headers={"User-Agent": transport.user_agent, "Accept-Encoding": "identity"}))
++        # Session.send prepares a possible redirect by consuming its body, even with allow_redirects=False.
++        _require_child_current(transport, cancellation, starting=True)
++        _trace_transport(transport, "socket-start")
++        _require_child_current(transport, cancellation, starting=True)
++        response = adapter.send(request, stream=True, timeout=(transport.connect_timeout, transport.read_timeout),
++                                verify=True, proxies={})
++        metadata.update(status=response.status_code, headers=dict(response.headers), received_at=datetime.now(timezone.utc).isoformat())
++        _write_transport_metadata(transport, metadata)
++        _trace_transport(transport, "headers-received", status=response.status_code)
++        response.raw.decode_content = False
++        encoding = header_value(response.headers, "Content-Encoding")
++        unsupported_encoding = encoding and encoding.strip().lower() != "identity"
++        try:
++            length = advertised_length(response.headers)
++        except ValueError as error:
++            raise _TransportProblem("invalid_content_length", str(error)) from error
++        if length is not None and length > transport.max_received_bytes:
++            raise _TransportProblem("received_limit", "advertised entity exceeds its received byte guard")
++        with (Path(transport.spool)/"body").open("ab", buffering=0) as stream:
++            try:
++                while True:
++                    _require_child_current(transport, cancellation)
++                    chunk = response.raw.read1(min(CHUNK_BYTES, transport.max_received_bytes-count+1), decode_content=False)
++                    if not chunk:
++                        break
++                    count = _write_chunk(stream, chunk, count, transport.max_received_bytes)
++                    _trace_transport(transport, "entity-spooled", retained_bytes=count)
++            except (requests.RequestException, HTTPError, OSError) as error:
++                partial = incomplete_read_bytes(error)
++                if partial:
++                    count = _write_chunk(stream, partial, count, transport.max_received_bytes)
++                    _trace_transport(transport, "incomplete-read-partial-spooled", retained_bytes=count)
++                code = "timeout" if isinstance(error, requests.Timeout) or "timeout" in type(error).__name__.lower() else "incomplete_body"
++                raise _TransportProblem(code, "HTTP stream interrupted: "+str(error), retryable=True) from error
++        if length is not None and length != count:
++            raise _TransportProblem("content_length_mismatch", "advertised entity length differs from retained bytes", retryable=True)
++        if unsupported_encoding:
++            raise _TransportProblem("unsupported_content_encoding", "unexpected Content-Encoding retained without decoding")
++        return count
++    except requests.RequestException as error:
++        code = "timeout" if isinstance(error, requests.Timeout) else "connection_failed"
++        raise _TransportProblem(code, "HTTP connection failed: "+str(error), retryable=True) from error
++    finally:
++        if response is not None:
++            response.close()
++        session.close()
++        _trace_transport(transport, "session-closed", retained_bytes=count)
++
++
++def _child_exchange(transport: _Transport, cancellation, channel):
++    # Spawn carries no SDK clients. Clear ambient credentials/proxy variables before importing Requests.
++    os.environ.clear()
++    metadata = {"status": 0, "headers": {}, "received_at": datetime.now(timezone.utc).isoformat(),
++                "complete": False, "error": None, "unsafe": False}
++    _trace_transport(transport, "child-environment-cleared", remaining_environment_keys=len(os.environ))
++    _write_transport_metadata(transport, metadata)
++    try:
++        _validate_transport_origin(transport)
++        _require_child_current(transport, cancellation, starting=True)
++        arm_child_deadline(transport)
++        _read_http_entity(transport, cancellation, metadata)
++        metadata["complete"] = True
++    except _TransportProblem as error:
++        metadata["error"] = {"code": error.code, "message": str(error), "retryable": error.retryable, "details": error.details}
++    except HardTimerUnavailable as error:
++        metadata["error"] = {"code": "hard_timer_unavailable", "message": str(error), "retryable": False, "details": {}}
++    except OwnershipLost as error:
++        metadata["error"] = {"code": "permit_expired", "message": str(error), "retryable": False, "details": {}}
++    except BaseException as error:
++        metadata["unsafe"] = True
++        metadata["error"] = {"code": "sender_internal", "message": "unexpected HTTP child failure: "+str(error), "retryable": False, "details": {"type": type(error).__name__}}
++    _write_transport_metadata(transport, metadata)
++    try:
++        channel.send_bytes(b"complete")
++        _trace_transport(transport, "child-completed", complete=metadata["complete"])
++    except (OSError, ValueError):
++        _trace_transport(transport, "ipc-send-failed")
++    finally:
++        channel.close()
++        # Leave the fatal timer armed through interpreter exit and process finalizers.
++
++
++def _drain_child(process) -> None:
++    if process.is_alive():
++        process.terminate()
++        process.join(DRAIN_JOIN_SECONDS)
++    if process.is_alive():
++        process.kill()
++        process.join(DRAIN_JOIN_SECONDS)
++    if process.is_alive() or process.exitcode is None:
++        raise OwnershipLost("sender child did not positively drain; retain its unsafe ownership window")
++    process.join(timeout=0)
++
++
++def wait_for_sender(process, cancellation, deadline_mono: float, clock: Clock) -> bool:
++    while process.is_alive():
++        remaining = deadline_mono-clock.monotonic()
++        if cancellation.is_set() or remaining <= 0:
++            _drain_child(process)
++            return False
++        process.join(timeout=min(remaining, SUPERVISOR_POLL_SECONDS))
++    process.join(timeout=0)
++    if process.exitcode is None:
++        raise OwnershipLost("sender completion did not confirm a joined process")
++    return True
++
++
++class BoundedSender:
++    def __init__(self, settings: Settings, clock: Clock):
++        if type(clock) is not Clock:
++            raise ValueError("OS-enforced HTTP timers require the real same-host OS monotonic Clock")
++        if sys.platform not in ("linux", "darwin") or not hasattr(signal, "setitimer"):
++            raise OwnershipLost("execution platform lacks a proven independent fatal HTTP timer")
++        self.settings = Settings.from_mapping(settings.to_mapping())
++        self.clock = clock
++
++    def _validated_origin(self, url):
++        _canonical_request_url(url)
++        return None
++
++    def _child_target(self):
++        return _child_exchange
++
++    def _spool_directory(self):
++        return Path(tempfile.mkdtemp(prefix="sec-http-"))
++
++    def _receipt(self, transport, *, reason=None):
++        body_path = Path(transport.spool)/"body"
++        digest, count = hashlib.sha256(), 0
++        with body_path.open("rb") as body:
++            while chunk := body.read(CHUNK_BYTES):
++                count += len(chunk)
++                digest.update(chunk)
++        try:
++            metadata = json.loads((Path(transport.spool)/"receipt.json").read_text())
++            if not isinstance(metadata, dict) or type(metadata.get("unsafe")) is not bool or type(metadata.get("complete")) is not bool:
++                raise ValueError("invalid child metadata shape")
++            problem = metadata["error"]
++            error = Error(problem["code"], problem["message"], problem["retryable"], None, problem.get("details", {})) if problem else None
++            receipt = BodyReceipt(transport.url, metadata["status"], metadata["headers"], body_path,
++                                  datetime.fromisoformat(metadata["received_at"]), count, digest.hexdigest(),
++                                  metadata["complete"] and reason is None and error is None, error)
++        except (ValueError, TypeError, KeyError, AttributeError, OSError):
++            metadata = {"unsafe": True}
++            error = Error("sender_protocol", "child metadata did not confirm a valid receipt", False, None, {})
++            receipt = BodyReceipt(transport.url, 0, {}, body_path, self.clock.now(), count, digest.hexdigest(), False, error)
++        if reason is not None:
++            receipt = replace(receipt, complete=False, error=Error(reason, "HTTP child was drained after "+reason,
++                              reason == "exchange_deadline", None, {}))
++        return receipt, metadata["unsafe"]
++
++    def send(self, url: str, context: RunContext, permit: Permit, *, cancellation) -> BodyReceipt:
++        origin = self._validated_origin(url)
++        spool = self._spool_directory()
++        (spool/"body").write_bytes(b"")
++        transport = _Transport(url, str(spool), self.settings.sec.user_agent,
++            self.settings.http.connect_timeout_seconds, self.settings.http.read_timeout_seconds,
++            self.settings.http.max_received_bytes, permit.start_before_mono, permit.deadline_mono,
++            origin, self.settings.storage.backend == "local-fixture" and "fixture" in self.settings.worker.provenance)
++        _validate_transport_origin(transport)
++        if cancellation.is_set() or self.clock.monotonic() >= min(permit.start_before_mono, permit.deadline_mono):
++            receipt, _ = self._receipt(transport, reason="permit_expired")
++            raise SenderFailure("sender refused cancellation or a stale permit before spawning", receipt)
++        reader, writer = SPAWN.Pipe(duplex=False)
++        process = SPAWN.Process(target=self._child_target(), args=(transport, cancellation, writer))
++        _trace_transport(transport, "supervisor-start", start_before_mono=permit.start_before_mono, deadline_mono=permit.deadline_mono)
++        stopped = marker = False
++        try:
++            process.start()
++            writer.close()
++            stopped = not wait_for_sender(process, cancellation, permit.deadline_mono, self.clock)
++            _trace_transport(transport, "child-joined", pid=process.pid, exitcode=process.exitcode)
++            if reader.poll(0):
++                try:
++                    marker = reader.recv_bytes(maxlength=32) == b"complete"
++                except (EOFError, OSError):
++                    marker = False
++            reason = "cancelled" if cancellation.is_set() else "exchange_deadline" if stopped or process.exitcode == -signal.SIGALRM else None
++            receipt, unsafe = self._receipt(transport, reason=reason)
++            if unsafe:
++                raise SenderFailure("HTTP child reported an unconfirmed outcome; retain unsafe guard", receipt)
++            if reason is None and (not marker or process.exitcode != 0):
++                receipt = replace(receipt, complete=False, error=Error("ipc_loss", "child receipt or completion channel was not positively confirmed", False, None, {}))
++                raise SenderFailure("HTTP child has an unconfirmed result; retain unsafe guard", receipt)
++            return receipt
++        except SenderFailure:
++            raise
++        except BaseException as error:
++            if process.pid is not None:
++                try:
++                    _drain_child(process)
++                    _trace_transport(transport, "child-joined", pid=process.pid, exitcode=process.exitcode)
++                except OwnershipLost as drain_error:
++                    receipt, _ = self._receipt(transport, reason="shutdown_unverified")
++                    raise SenderFailure(str(drain_error), receipt) from error
++            receipt, _ = self._receipt(transport, reason="sender_unverified")
++            raise SenderFailure("HTTP supervisor could not confirm its child outcome: "+str(error), receipt) from error
++        finally:
++            reader.close()
++            writer.close()
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/state.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/state.py
+index 9dbf305..2205b81 100644
+--- a/packages/sec-edgar-ingest/src/sec_edgar_ingest/state.py
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/state.py
+@@ -4,6 +4,7 @@ from __future__ import annotations
+ import hashlib
+ from datetime import datetime, timezone
+ 
++from .config import HTTP_ATTEMPT_LIMIT
+ from .models import Binding, BodyReceipt, CommandResult, Error, Permit, RunContext, Snapshot, Source, Versioned, canonical_json, require_number, require_text, require_utc
+ from .storage.contracts import AlreadyExists, CAS_ATTEMPTS, Conflict, StateStore
+ 
+@@ -176,16 +177,110 @@ class AcquisitionState:
+                 value["acquisition_status"] = "failed"
+         self._update_source(source, change)
+ 
+-    def request_attempt(self, context: RunContext, receipt: BodyReceipt, permit: Permit, ordinal: int) -> None:
++    def request_history(self, context: RunContext, url: str) -> tuple[Versioned, ...]:
++        rows = tuple(self.store.scan("TransportAttempt", {"attempt_key": attempt_key(context), "url": url}))
++        for row in rows:
++            if row.to_mapping()["value"]["context"] != context.to_mapping():
++                raise Conflict("request history has conflicting command provenance")
++        return tuple(sorted(rows, key=lambda row: row.value["ordinal"]))
++
++    def begin_request(self, context: RunContext, url: str, source_id: str | None, request_id: str, ordinal: int) -> None:
++        require_text(url, "request URL")
++        require_text(request_id, "request_id")
++        require_number(ordinal, "request ordinal", positive=True, integer=True)
++        if ordinal > HTTP_ATTEMPT_LIMIT:
++            raise ValueError("request ordinal exceeds five total attempts")
++        self.begin_attempt(context)
++        rows = self.request_history(context, url)
++        if [row.value["ordinal"] for row in rows] != list(range(1, ordinal)):
++            raise Conflict("request ordinal must follow every accounted durable attempt")
++        prior = {}
++        for row in self.store.scan("TransportAttempt", {"url": url}):
++            old = row.value["context"]
++            budget = old.get("effective_config", {}).get("http", {}).get("max_attempts", HTTP_ATTEMPT_LIMIT)
++            exhausted = row.value["outcome"] == "exhausted" or row.value["ordinal"] >= budget
++            if exhausted and old["run_id"] == context.run_id and row.value["attempt_key"] != attempt_key(context):
++                prior[row.value["attempt_key"]] = {name: old[name] for name in ("run_id", "execution_id", "command", "attempt_id")}
++        value = {"attempt_key": attempt_key(context), "context": context.to_mapping(), "request_id": request_id,
++                 "ordinal": ordinal, "url": url, "source_id": source_id, "begun_at": self._now().isoformat(),
++                 "ended_at": None, "outcome": "uncertain", "receipt": None, "permit": None,
++                 "status": None, "byte_count": None, "ownership_epoch": None, "next_allowed_at": None,
++                 "permit_next_allowed_at": None, "error": None, "retry": {},
++                 "prior_exhaustion": [prior[key] for key in sorted(prior)]}
++        key = _request_key(context, url, ordinal)
++        try:
++            self.store.insert("TransportAttempt", key, value)
++        except AlreadyExists as error:
++            raise Conflict("request ordinal was already consumed before dispatch") from error
++
++    def request_attempt(self, context: RunContext, receipt: BodyReceipt, permit: Permit, ordinal: int, *,
++                        outcome: str = "received", error: Error | None = None,
++                        retry: dict[str, object] | None = None, next_allowed_at: datetime | None = None) -> None:
+         require_number(ordinal, "request ordinal", positive=True, integer=True)
+-        if ordinal > 5:
++        if ordinal > HTTP_ATTEMPT_LIMIT:
+             raise ValueError("request ordinal exceeds five total attempts")
+-        next_allowed_at = getattr(permit, "next_allowed_at", None)
+-        if next_allowed_at is not None:
+-            require_utc(next_allowed_at, "next_allowed_at")
+-        value = {"attempt_key": attempt_key(context), "context": context.to_mapping(), "request_id": permit.request_id,
+-                 "ordinal": ordinal, "url": receipt.url, "status": receipt.status, "byte_count": receipt.byte_count,
+-                 "ownership_epoch": permit.epoch, "next_allowed_at": next_allowed_at.isoformat() if next_allowed_at is not None else None,
+-                 "receipt": receipt.to_mapping(), "permit": permit.to_mapping()}
+-        key = hashlib.sha256(canonical_json([attempt_key(context), permit.request_id, ordinal])).hexdigest()
+-        self._insert_immutable("TransportAttempt", key, value)
++        require_text(outcome, "request outcome")
++        permit_next = permit.next_allowed_at
++        next_allowed = next_allowed_at if next_allowed_at is not None else permit_next
++        if next_allowed is not None:
++            require_utc(next_allowed, "next_allowed_at")
++        key = _request_key(context, receipt.url, ordinal)
++        for _ in range(CAS_ATTEMPTS):
++            row = self.store.get("TransportAttempt", key)
++            if row is not None:
++                value = row.to_mapping()["value"]
++                if value["context"] != context.to_mapping() or value["request_id"] != permit.request_id:
++                    raise Conflict("receipt differs from the request's durable reservation")
++            else:
++                # Preserve Task 3's direct, immutable receipt audit API for existing callers.
++                value = {"attempt_key": attempt_key(context), "context": context.to_mapping(),
++                         "request_id": permit.request_id, "ordinal": ordinal, "url": receipt.url,
++                         "source_id": None, "begun_at": receipt.received_at.isoformat(), "ended_at": None,
++                         "receipt": None, "prior_exhaustion": []}
++            final = {**value, "status": receipt.status, "byte_count": receipt.byte_count,
++                     "ownership_epoch": permit.epoch, "next_allowed_at": next_allowed.isoformat() if next_allowed is not None else None,
++                     "permit_next_allowed_at": permit_next.isoformat() if permit_next is not None else None,
++                     "receipt": receipt.to_mapping(), "permit": permit.to_mapping(), "outcome": outcome,
++                     "error": (error or receipt.error).to_mapping() if error or receipt.error else None,
++                     "retry": dict(retry or {}), "ended_at": value.get("ended_at") or self._now().isoformat()}
++            if value["receipt"] is not None:
++                if value != final:
++                    raise Conflict("finished request receipt and outcome cannot be replaced")
++                return
++            try:
++                if row is None:
++                    self.store.insert("TransportAttempt", key, final)
++                else:
++                    self.store.replace("TransportAttempt", key, final, row.version)
++                return
++            except (AlreadyExists, Conflict):
++                continue
++        raise Conflict("request finish exhausted conditional races")
++
++    def halt_run(self, context: RunContext, error: Error) -> None:
++        provenance = _run_provenance(context)
++        value = {"provenance": provenance, "context": context.to_mapping(), "error": error.to_mapping(),
++                 "halted_at": self._now().isoformat()}
++        key = hashlib.sha256(canonical_json(context.run_id)).hexdigest()
++        try:
++            self.store.insert("RunHalt", key, value)
++        except AlreadyExists:
++            self.run_halt(context)
++
++    def run_halt(self, context: RunContext) -> Error | None:
++        key = hashlib.sha256(canonical_json(context.run_id)).hexdigest()
++        row = self.store.get("RunHalt", key)
++        if row is None:
++            return None
++        value = row.to_mapping()["value"]
++        if value["provenance"] != _run_provenance(context):
++            raise Conflict("run halt has conflicting immutable run provenance")
++        return Error.from_mapping(value["error"])
++
++
++def _request_key(context: RunContext, url: str, ordinal: int) -> str:
++    return hashlib.sha256(canonical_json([attempt_key(context), url, ordinal])).hexdigest()
++
++
++def _run_provenance(context: RunContext) -> dict[str, str]:
++    return {name: getattr(context, name) for name in ("run_id", "image_digest", "parser_version", "schema_version", "config_sha256")}
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/validation.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/validation.py
+new file mode 100644
+index 0000000..b404024
+--- /dev/null
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/validation.py
+@@ -0,0 +1,236 @@
++"""Validate selected acquisition envelopes while retaining the original entity bytes."""
++from __future__ import annotations
++
++import hashlib
++import re
++import stat
++import struct
++import zipfile
++import zlib
++
++from .config import Settings
++from .models import BodyReceipt, DAILY_ENVELOPE_VERSION, QUARTERLY_ENVELOPE_VERSION, Source, ValidatedBody
++
++STREAM_BYTES = 65536
++LOCAL_FILE_HEADER = struct.Struct("<4s5H3I2H")
++DAILY_HEADER = b"CIK|Company Name|Form Type|Date Filed|File Name"
++QUARTERLY_HEADER = b"CIK|Company Name|Form Type|Date Filed|Filename"
++DENIAL_MARKERS = (b"your request originates from an undeclared automated tool",
++                  b"request rate threshold exceeded", b"access denied")
++NON_ASCII = re.compile(rb"[\x80-\xff]")
++INVALID_CONTROL = re.compile(rb"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
++
++
++class ValidationError(ValueError):
++    def __init__(self, code: str, receipt: BodyReceipt):
++        self.code, self.receipt = code, receipt
++        super().__init__(code)
++
++
++def header_value(headers, name: str) -> str | None:
++    values = [value for key, value in headers.items() if key.lower() == name.lower()]
++    if len(set(values)) > 1:
++        raise ValueError("conflicting response header values")
++    return values[0] if values else None
++
++
++def advertised_length(headers) -> int | None:
++    value = header_value(headers, "Content-Length")
++    if value is None:
++        return None
++    if re.fullmatch(r"[0-9]+", value.strip()) is None:
++        raise ValueError("invalid Content-Length")
++    return int(value.strip())
++
++
++def is_denial(receipt: BodyReceipt) -> bool:
++    if receipt.status == 403:
++        return True
++    with receipt.temporary_path.open("rb") as stream:
++        prefix = stream.read(STREAM_BYTES).lower()
++    return b"<" in prefix and any(marker in prefix for marker in DENIAL_MARKERS)
++
++
++class _TextEnvelope:
++    """Remember envelope facts, never accumulate or normalize row contents."""
++    def __init__(self, kind: str, receipt: BodyReceipt):
++        self.kind, self.receipt = kind, receipt
++        self.header = QUARTERLY_HEADER if kind == "quarterly" else DAILY_HEADER
++        self.header_seen = self.data_seen = False
++        self._reset_line()
++
++    def _reset_line(self):
++        self.prefix = bytearray()
++        self.line_length = 0
++        self.has_content = False
++        self.only_separator = True
++        self.pending_cr = False
++
++    def feed(self, body: bytes) -> None:
++        if NON_ASCII.search(body):
++            raise ValidationError("non_ascii", self.receipt)
++        if INVALID_CONTROL.search(body):
++            raise ValidationError("invalid_text_control", self.receipt)
++        pieces = body.split(b"\n")
++        for ordinal, piece in enumerate(pieces):
++            ended = ordinal < len(pieces)-1
++            if self.pending_cr and piece:
++                raise ValidationError("invalid_line_endings", self.receipt)
++            if b"\r" in piece:
++                if self.kind == "daily" or not piece.endswith(b"\r") or piece.count(b"\r") != 1:
++                    raise ValidationError("invalid_line_endings", self.receipt)
++                piece = piece[:-1]
++                self.pending_cr = True
++            self.prefix.extend(piece[:max(0, len(self.header)+1-len(self.prefix))])
++            self.line_length += len(piece)
++            self.has_content |= bool(piece.strip(b" \t"))
++            self.only_separator &= not bool(piece.strip(b"- \t"))
++            if ended:
++                if self.kind == "quarterly" and not self.pending_cr:
++                    raise ValidationError("invalid_line_endings", self.receipt)
++                self._finish_line()
++
++    def _finish_line(self):
++        if self.line_length == len(self.header) and self.prefix == self.header:
++            if self.header_seen:
++                raise ValidationError("duplicate_header", self.receipt)
++            self.header_seen = True
++        elif self.header_seen and self.has_content and not self.only_separator:
++            self.data_seen = True
++        self._reset_line()
++
++    def finish(self):
++        if self.pending_cr:
++            raise ValidationError("invalid_line_endings", self.receipt)
++        if self.line_length:
++            self._finish_line()
++        if not self.header_seen:
++            raise ValidationError("missing_header", self.receipt)
++        if not self.data_seen:
++            raise ValidationError("header_without_data", self.receipt)
++
++
++def _check_transport(receipt: BodyReceipt, settings: Settings, kind: str) -> None:
++    if receipt.status != 200 or not receipt.complete or receipt.error is not None:
++        raise ValidationError("incomplete_transport", receipt)
++    if receipt.byte_count == 0:
++        raise ValidationError("empty_body", receipt)
++    try:
++        encoding = header_value(receipt.headers, "Content-Encoding")
++        length = advertised_length(receipt.headers)
++        transfer = header_value(receipt.headers, "Transfer-Encoding")
++        content_type = header_value(receipt.headers, "Content-Type")
++    except ValueError as error:
++        raise ValidationError("invalid_content_length" if "Content-Length" in str(error) else "conflicting_headers", receipt) from error
++    if encoding and encoding.strip().lower() != "identity":
++        raise ValidationError("unsupported_content_encoding", receipt)
++    if transfer and transfer.strip().lower() != "chunked":
++        raise ValidationError("unsupported_transfer_encoding", receipt)
++    if transfer and length is not None:
++        raise ValidationError("ambiguous_transfer_framing", receipt)
++    allowed_types = {"application/octet-stream", "application/zip", "application/x-zip-compressed"} if kind == "quarterly" else {"application/octet-stream", "text/plain"}
++    if content_type:
++        media_type, *parameters = content_type.lower().split(";")
++        if media_type.strip() not in allowed_types or any(parameter.strip() not in ("charset=us-ascii", "charset=ascii") for parameter in parameters):
++            raise ValidationError("unsupported_content_type", receipt)
++    if receipt.byte_count > settings.http.max_received_bytes or (length is not None and length > settings.http.max_received_bytes):
++        raise ValidationError("received_limit", receipt)
++    count, digest = 0, hashlib.sha256()
++    with receipt.temporary_path.open("rb") as stream:
++        prefix = stream.read(STREAM_BYTES)
++        chunk = prefix
++        while chunk:
++            count += len(chunk)
++            if count > settings.http.max_received_bytes:
++                raise ValidationError("received_limit", receipt)
++            digest.update(chunk)
++            chunk = stream.read(STREAM_BYTES)
++    if count != receipt.byte_count or digest.hexdigest() != receipt.sha256:
++        raise ValidationError("receipt_mismatch", receipt)
++    if length is not None and length != count:
++        raise ValidationError("content_length_mismatch", receipt)
++    lowered = prefix.lstrip().lower()
++    if lowered.startswith((b"<!doctype", b"<html", b"<?xml")) or is_denial(receipt):
++        raise ValidationError("unexpected_page", receipt)
++
++
++def _scan_text(stream, source: Source, receipt: BodyReceipt, limit: int) -> int:
++    scanner, count = _TextEnvelope(source.kind, receipt), 0
++    while body := stream.read(min(STREAM_BYTES, limit-count+1)):
++        count += len(body)
++        if count > limit:
++            raise ValidationError("expanded_limit", receipt)
++        scanner.feed(body)
++    scanner.finish()
++    return count
++
++
++def _scan_zip_member(archive, member, source: Source, receipt: BodyReceipt, limit: int) -> int:
++    # ZipExtFile truncates at the advertised expanded size, so it cannot prove full DEFLATE EOF/CRC.
++    with archive.open(member):
++        pass  # Retain stdlib local-name, unsupported-flag and overlapping-member checks.
++    scanner = _TextEnvelope(source.kind, receipt)
++    decoder, count, checksum = zlib.decompressobj(-zlib.MAX_WBITS), 0, 0
++    with receipt.temporary_path.open("rb") as stream:
++        stream.seek(member.header_offset)
++        header = stream.read(LOCAL_FILE_HEADER.size)
++        if len(header) != LOCAL_FILE_HEADER.size:
++            raise ValidationError("invalid_archive", receipt)
++        (signature, _version, flags, method, _dos_time, _dos_date, _crc,
++         _compressed, _expanded, name_size, extra_size) = LOCAL_FILE_HEADER.unpack(header)
++        if signature != b"PK\x03\x04" or method != member.compress_type or flags != member.flag_bits:
++            raise ValidationError("invalid_archive", receipt)
++        stream.seek(name_size+extra_size, 1)
++        if stream.tell()+member.compress_size > receipt.byte_count:
++            raise ValidationError("invalid_archive", receipt)
++        remaining, tail = member.compress_size, b""
++        while True:
++            chunk = tail
++            if not chunk and remaining:
++                chunk = stream.read(min(STREAM_BYTES, remaining))
++                if not chunk:
++                    raise ValidationError("invalid_archive", receipt)
++                remaining -= len(chunk)
++            body = decoder.decompress(chunk, min(STREAM_BYTES, limit-count+1))
++            count += len(body)
++            if count > limit:
++                raise ValidationError("expanded_limit", receipt)
++            checksum = zlib.crc32(body, checksum)
++            scanner.feed(body)
++            tail = decoder.unconsumed_tail
++            if decoder.eof:
++                if remaining or tail or decoder.unused_data:
++                    raise ValidationError("invalid_archive", receipt)
++                break
++            if not chunk and not body:
++                raise ValidationError("invalid_archive", receipt)
++    if count != member.file_size or checksum != member.CRC:
++        raise ValidationError("invalid_archive", receipt)
++    scanner.finish()
++    return count
++
++
++def validate_envelope(source: Source, receipt: BodyReceipt, settings: Settings) -> ValidatedBody:
++    if receipt.url != source.canonical_url:
++        raise ValidationError("source_url_mismatch", receipt)
++    _check_transport(receipt, settings, source.kind)
++    if source.representation == "idx":
++        with receipt.temporary_path.open("rb") as stream:
++            count = _scan_text(stream, source, receipt, settings.http.max_expanded_bytes)
++        return ValidatedBody(receipt, "idx", DAILY_ENVELOPE_VERSION, count)
++    try:
++        with zipfile.ZipFile(receipt.temporary_path) as archive:
++            members = archive.infolist()
++            if len(members) != 1:
++                raise ValidationError("unsupported_archive", receipt)
++            member = members[0]
++            mode = stat.S_IFMT(member.external_attr >> 16)
++            if (member.filename != "master.idx" or member.orig_filename != "master.idx" or member.is_dir() or member.flag_bits & 1
++                    or member.compress_type != zipfile.ZIP_DEFLATED or mode not in (0, stat.S_IFREG)):
++                raise ValidationError("unsupported_archive", receipt)
++            if member.file_size > settings.http.max_expanded_bytes:
++                raise ValidationError("expanded_limit", receipt)
++            count = _scan_zip_member(archive, member, source, receipt, settings.http.max_expanded_bytes)
++    except (zipfile.BadZipFile, zlib.error, EOFError, NotImplementedError, RuntimeError, OSError) as error:
++        raise ValidationError("invalid_archive", receipt) from error
++    return ValidatedBody(receipt, "zip", QUARTERLY_ENVELOPE_VERSION, count)
+diff --git a/packages/sec-edgar-ingest/tests/fixtures/raw/daily.idx b/packages/sec-edgar-ingest/tests/fixtures/raw/daily.idx
+new file mode 100644
+index 0000000..7412546
+--- /dev/null
++++ b/packages/sec-edgar-ingest/tests/fixtures/raw/daily.idx
+@@ -0,0 +1,2 @@
++CIK|Company Name|Form Type|Date Filed|File Name
++1|Fixture Company|10-K|2026-10-01|edgar/data/1/a.txt
+diff --git a/packages/sec-edgar-ingest/tests/fixtures/raw/denial.html b/packages/sec-edgar-ingest/tests/fixtures/raw/denial.html
+new file mode 100644
+index 0000000..ea015f4
+--- /dev/null
++++ b/packages/sec-edgar-ingest/tests/fixtures/raw/denial.html
+@@ -0,0 +1 @@
++<html><title>Your Request Originates from an Undeclared Automated Tool</title><body>Access Denied</body></html>
+\ No newline at end of file
+diff --git a/packages/sec-edgar-ingest/tests/fixtures/raw/quarterly.idx b/packages/sec-edgar-ingest/tests/fixtures/raw/quarterly.idx
+new file mode 100644
+index 0000000..8819b01
+--- /dev/null
++++ b/packages/sec-edgar-ingest/tests/fixtures/raw/quarterly.idx
+@@ -0,0 +1,2 @@
++CIK|Company Name|Form Type|Date Filed|Filename
++1|Fixture Company|10-K|2015-01-02|edgar/data/1/a.txt
+diff --git a/packages/sec-edgar-ingest/tests/support.py b/packages/sec-edgar-ingest/tests/support.py
+index aadfb5c..e0f6efc 100644
+--- a/packages/sec-edgar-ingest/tests/support.py
++++ b/packages/sec-edgar-ingest/tests/support.py
+@@ -514,3 +514,331 @@ def constructor_process_probe(root):
+                 process.join(10)
+         queue.close()
+         queue.join_thread()
++
++
++# Task 5 controls retain entity bytes; ZIP fixtures are synthetic, never SEC receipts.
++def zip_bytes(body: bytes) -> bytes:
++    import io
++    import zipfile
++    stream = io.BytesIO()
++    with zipfile.ZipFile(stream, "w", compression=zipfile.ZIP_DEFLATED) as archive:
++        member = zipfile.ZipInfo("master.idx", date_time=(2015, 1, 1, 0, 0, 0))
++        member.compress_type = zipfile.ZIP_DEFLATED
++        archive.writestr(member, body)
++    return stream.getvalue()
++
++
++def body_receipt(root, body, *, status=200, headers=None, complete=True, error=None):
++    import hashlib
++    import uuid
++    from sec_edgar_ingest.models import BodyReceipt
++    path = Path(root) / ("entity-"+uuid.uuid4().hex)
++    path.write_bytes(body)
++    return BodyReceipt(fixture_source().canonical_url, status, headers or {}, path,
++                       fixture_context().started_at, len(body), hashlib.sha256(body).hexdigest(), complete, error)
++
++
++class DownloadHarness:
++    def __init__(self, responses, *, settings=None, context=None, root=None):
++        import tempfile
++        from sec_edgar_ingest.coordination import Coordinator
++        from sec_edgar_ingest.download import RequestClient, ResponseSpec, ScriptedSender
++        from sec_edgar_ingest.state import AcquisitionState
++        self.directory = tempfile.TemporaryDirectory() if root is None else None
++        self.root = Path(self.directory.name) if root is None else Path(root)
++        self.clock = fixture_clock()
++        self.settings = settings or fixture_settings()
++        self.context = context or fixture_context()
++        self.store, self.objects, self.leases = store_bundle(self.root, clock=self.clock)
++        self.state = AcquisitionState(self.store, clock=self.clock)
++        self.coordinator = Coordinator(self.settings, self.store, self.leases, self.clock)
++        self.events = []
++        self.coordinator.observer = self.events.append
++        specs = [item if isinstance(item, ResponseSpec) else ResponseSpec(*item) for item in responses]
++        self.sender = ScriptedSender(specs)
++        self.sender.clock = self.clock
++        self.client = RequestClient(self.settings, self.coordinator, self.sender, self.state, self.clock)
++        self.client.jitter = lambda: 1.0
++
++    def fetch(self, source):
++        return self.client.fetch(source.canonical_url, self.context, source)
++
++    def fetch_response_only(self, url=None):
++        return self.client.fetch(url or "https://www.sec.gov/Archives/edgar/full-index/2015/QTR1/index.json", self.context)
++
++    @property
++    def starts(self):
++        return self.sender.starts
++
++    @property
++    def attempt_count(self):
++        return len(self.starts)
++
++    @property
++    def maximum_active(self):
++        return self.sender.maximum_active
++
++    def close(self):
++        for row in self.store.scan("TransportAttempt", {}):
++            value = row.to_mapping()["value"]
++            if value["receipt"] is not None and value["outcome"] != "received":
++                from sec_edgar_ingest.models import BodyReceipt
++                receipt = BodyReceipt.from_mapping(value["receipt"])
++                code = value["error"]["code"] if value.get("error") else value["outcome"]
++                retain_download_evidence("ledger-"+value["request_id"], receipt, code)
++        self.store.close()
++        self.leases.close()
++        self.sender.close()
++        if self.directory is not None:
++            self.directory.cleanup()
++
++
++def download_harness(responses):
++    return DownloadHarness(responses)
++
++
++def retain_download_evidence(name, receipt, code):
++    import os
++    import shutil
++    destination = os.environ.get("SEC_EDGAR_TASK5_TRACE_DIR")
++    if destination:
++        target = Path(destination) / "invalid"
++        target.mkdir(parents=True, exist_ok=True)
++        path = target / (name+".body")
++        shutil.copyfile(receipt.temporary_path, path)
++        path.with_suffix(".json").write_text(json.dumps({"reason": code, "receipt": receipt.to_mapping()}, indent=2, sort_keys=True)+"\n")
++
++
++class LoopbackServer:
++    """Exactly one explicitly fixture-only HTTP peer records accepted sockets and closure."""
++    def __init__(self, body=b"fixture prefix", *, mode="complete", status=200, headers=None):
++        import socket
++        import threading
++        import time
++        self.body, self.mode, self.status, self.headers = body, mode, status, dict(headers or {})
++        self.events, self.requests, self.sent = [], [], 0
++        self.connected, self.prefix_sent, self.closed, self.stopped = (threading.Event() for _ in range(4))
++        self.socket = socket.socket()
++        self.socket.bind(("127.0.0.1", 0))
++        self.socket.listen(2)
++        self.socket.settimeout(0.05)
++        self.origin = f"http://127.0.0.1:{self.socket.getsockname()[1]}"
++        self.url = self.origin+"/fixture"
++        self.thread = threading.Thread(target=self._serve, name="bounded-loopback-fixture", daemon=True)
++        self.thread.start()
++
++    def record(self, event, **details):
++        import time
++        self.events.append({"event": event, "monotonic": time.monotonic(), **details})
++
++    def _serve(self):
++        import select
++        import socket
++        try:
++            while not self.stopped.is_set():
++                try:
++                    peer, _ = self.socket.accept()
++                    break
++                except socket.timeout:
++                    continue
++            else:
++                return
++            with peer:
++                self.record("socket-accepted")
++                self.connected.set()
++                peer.settimeout(1)
++                request = b""
++                while b"\r\n\r\n" not in request:
++                    chunk = peer.recv(4096)
++                    if not chunk:
++                        return
++                    request += chunk
++                self.requests.append(request.decode("ascii"))
++                self.record("request-received")
++                headers = {"Content-Length": str(len(self.body)), "Connection": "close", **self.headers}
++                if self.mode == "trickle":
++                    headers["Content-Length"] = "1000000"
++                elif self.mode == "truncated":
++                    headers["Content-Length"] = str(len(self.body)+10)
++                elif self.mode == "unadvertised":
++                    headers.pop("Content-Length")
++                response = (f"HTTP/1.1 {self.status} Fixture\r\n"+"".join(f"{key}: {value}\r\n" for key,value in headers.items())+"\r\n").encode("ascii")
++                if self.mode == "headers":
++                    for byte in response:
++                        peer.sendall(bytes([byte]))
++                        if self.stopped.wait(0.02):
++                            return
++                elif self.mode == "blocked-headers":
++                    peer.sendall(b"HTTP/1.1 200 Fixture\r\nX-Fixture: ")
++                    self.record("blocked-headers-sent")
++                else:
++                    peer.sendall(response)
++                    self.record("headers-sent")
++                    if self.mode == "trickle":
++                        while not self.stopped.is_set():
++                            if select.select([peer], [], [], 0)[0] and peer.recv(1) == b"":
++                                return
++                            peer.sendall(self.body)
++                            self.sent += len(self.body)
++                            self.record("entity-sent", byte_count=self.sent)
++                            self.prefix_sent.set()
++                            if self.stopped.wait(0.02):
++                                return
++                    else:
++                        peer.sendall(self.body)
++                        self.sent = len(self.body)
++                        self.record("entity-sent", byte_count=self.sent)
++                        self.prefix_sent.set()
++                        if self.mode == "truncated":
++                            return
++                while not self.stopped.is_set():
++                    if select.select([peer], [], [], 0.05)[0] and peer.recv(1) == b"":
++                        return
++        except (BrokenPipeError, ConnectionResetError):
++            self.record("peer-disconnected")
++        except OSError as error:
++            if not self.stopped.is_set():
++                self.record("server-error", message=str(error))
++        finally:
++            self.record("socket-closed")
++            self.closed.set()
++
++    def close(self):
++        self.stopped.set()
++        self.socket.close()
++        self.thread.join(2)
++        if self.thread.is_alive():
++            raise AssertionError("fixture server did not drain")
++
++
++def loopback_sender(settings, clock, origin, *, target=None, spool=None):
++    from sec_edgar_ingest.download import BoundedSender
++    from urllib.parse import urlsplit
++    class FixtureLoopbackSender(BoundedSender):
++        def _validated_origin(self, url):
++            if self.settings.storage.backend != "local-fixture" or "fixture" not in self.settings.worker.provenance:
++                raise ValueError("loopback exception is expressly fixture-only")
++            parsed = urlsplit(url)
++            if parsed.scheme != "http" or parsed.hostname != "127.0.0.1" or parsed.username or parsed.password or parsed.fragment or urlsplit(origin).netloc != parsed.netloc:
++                raise ValueError("fixture sender can contact only its one selected loopback origin")
++            return origin
++        def _child_target(self):
++            return target or super()._child_target()
++        def _spool_directory(self):
++            if spool is None:
++                return super()._spool_directory()
++            root = Path(spool)
++            root.mkdir(parents=True, exist_ok=True)
++            return root
++    return FixtureLoopbackSender(settings, clock)
++
++
++def real_permit(clock, seconds=0.4, *, start_seconds=1/3):
++    from sec_edgar_ingest.models import Permit
++    now, mono = clock.now(), clock.monotonic()
++    start = min(start_seconds, seconds)
++    return Permit("fixture-real-owner", 1, "fixture-real-request", now+timedelta(seconds=start),
++                  now+timedelta(seconds=seconds), now+timedelta(seconds=seconds+2),
++                  mono+start, mono+seconds, now+timedelta(seconds=start+1/3))
++
++
++def real_context(clock, settings):
++    from dataclasses import replace
++    now = clock.now()
++    return replace(fixture_context(), started_at=now, deadline=now+timedelta(seconds=10),
++                   config_sha256=settings.config_sha256, effective_config=settings.to_mapping())
++
++
++def timer_failure_child(transport, cancellation, channel):
++    import sec_edgar_ingest.download as download
++    def fail_timer(_):
++        raise download.HardTimerUnavailable("fixture OS timer installation failed")
++    download.arm_child_deadline = fail_timer
++    download._child_exchange(transport, cancellation, channel)
++
++
++def stale_start_child(transport, cancellation, channel):
++    import time
++    import sec_edgar_ingest.download as download
++    time.sleep(max(0, transport.start_before_mono-time.monotonic()+0.01))
++    download._child_exchange(transport, cancellation, channel)
++
++
++def ipc_loss_child(transport, cancellation, channel):
++    import sec_edgar_ingest.download as download
++    channel.close()
++    download._child_exchange(transport, cancellation, channel)
++
++
++def crash_supervisor(root, url, origin, cancellation):
++    import os
++    from sec_edgar_ingest.coordination import Clock, Coordinator
++    import gc
++    clock = Clock()
++    settings = fixture_settings(http={"exchange_deadline_seconds": 0.4}, coordination={"lease_seconds": 2, "renew_every_seconds": 1})
++    store, _, leases = store_bundle(Path(root) / "state", clock=clock)
++    coordinator = Coordinator(settings, store, leases, clock)
++    sender = loopback_sender(settings, clock, origin, spool=Path(root) / "sender")
++    context = real_context(clock, settings)
++    with coordinator.turn("crashing-fixture-supervisor", "backfill", context.deadline) as turn:
++        # The surviving fixture parent owns semaphore cleanup even when this supervisor is killed.
++        turn.cancelled = cancellation
++        gc.collect()
++        permit = turn.reserve("crashing-fixture-request")
++        turn.assert_current(permit)
++        sender.send(url, context, permit, cancellation=cancellation)
++        turn.complete(permit, drained=True)
++    os._exit(2)
++
++
++def retain_process_evidence(name, spool, server, extra=None):
++    import os
++    import shutil
++    destination = os.environ.get("SEC_EDGAR_TASK5_TRACE_DIR")
++    if destination:
++        target = Path(destination) / "process" / name
++        target.mkdir(parents=True, exist_ok=True)
++        if spool is not None and Path(spool).exists():
++            shutil.copytree(spool, target / "sender", dirs_exist_ok=True)
++        (target / "server.json").write_text(json.dumps({"events": server.events, "sent_bytes": server.sent, "requests": server.requests, "extra": extra or {}}, indent=2, sort_keys=True)+"\n")
++
++
++def malformed_metadata_child(transport, cancellation, channel):
++    import sec_edgar_ingest.download as download
++    download._child_exchange(transport, cancellation, channel)
++    (Path(transport.spool)/"receipt.json").write_text("[]")
++
++
++def unexpected_failure_child(transport, cancellation, channel):
++    import sec_edgar_ingest.download as download
++    def fail_exchange(*args):
++        raise RuntimeError("fixture unexpected transport exception")
++    download._read_http_entity = fail_exchange
++    download._child_exchange(transport, cancellation, channel)
++
++
++def stale_preparation_child(transport, cancellation, channel):
++    import time
++    import requests
++    import sec_edgar_ingest.download as download
++    prepare = requests.Session.prepare_request
++    def delayed_prepare(session, request):
++        prepared = prepare(session, request)
++        time.sleep(max(0, transport.start_before_mono-time.monotonic()+0.01))
++        return prepared
++    requests.Session.prepare_request = delayed_prepare
++    download._child_exchange(transport, cancellation, channel)
++
++
++def delayed_adapter_child(transport, cancellation, channel):
++    import time
++    import requests
++    import sec_edgar_ingest.download as download
++    send = requests.adapters.HTTPAdapter.send
++    def delayed_send(adapter, request, **kwargs):
++        download._trace_transport(transport, "adapter-delay-begin")
++        time.sleep(0.55)
++        download._trace_transport(transport, "adapter-delay-end")
++        return send(adapter, request, **kwargs)
++    requests.adapters.HTTPAdapter.send = delayed_send
++    download._child_exchange(transport, cancellation, channel)
+diff --git a/packages/sec-edgar-ingest/tests/test_download.py b/packages/sec-edgar-ingest/tests/test_download.py
+new file mode 100644
+index 0000000..9dc579f
+--- /dev/null
++++ b/packages/sec-edgar-ingest/tests/test_download.py
+@@ -0,0 +1,631 @@
++import hashlib
++import importlib
++import importlib.util
++import tempfile
++import unittest
++from dataclasses import replace
++from datetime import timedelta
++from email.utils import format_datetime
++from pathlib import Path
++
++from support import DownloadHarness, body_receipt, download_harness, fixture_context, fixture_settings, fixture_source, store_bundle, zip_bytes
++
++
++class DownloadTests(unittest.TestCase):
++    def setUp(self):
++        self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.download"),
++                             "Task 5 requires a bounded sender and durable transport retry client")
++        self.download = importlib.import_module("sec_edgar_ingest.download")
++
++    def harness(self, responses, **options):
++        harness = DownloadHarness(responses, **options)
++        self.addCleanup(harness.close)
++        return harness
++
++    def test_archive_original_is_not_replaced_by_decoded_idx(self):
++        original = zip_bytes((Path(__file__).parent / "fixtures/raw/quarterly.idx").read_bytes())
++        h = self.harness([(200, original, {"Content-Length": str(len(original))})])
++        receipt = h.fetch(fixture_source())
++        self.assertEqual(receipt.temporary_path.read_bytes(), original)
++        self.assertEqual(receipt.sha256, hashlib.sha256(original).hexdigest())
++        history = h.state.request_history(h.context, receipt.url)
++        self.assertEqual(history[0].value["ordinal"], 1)
++        self.assertEqual(history[0].value["outcome"], "received")
++        self.assertIsNotNone(history[0].value["permit_next_allowed_at"])
++
++    def test_retry_after_longer_than_local_cap_is_never_shortened(self):
++        h = self.harness([(429, b"", {"Retry-After": "180"}), (200, b"valid fixture", {})])
++        h.fetch_response_only()
++        self.assertGreaterEqual(h.starts[1] - h.starts[0], 180)
++        self.assertEqual(h.attempt_count, 2)
++        self.assertEqual(h.maximum_active, 1)
++        rows = h.state.request_history(h.context, "https://www.sec.gov/Archives/edgar/full-index/2015/QTR1/index.json")
++        self.assertEqual(rows[0].value["retry"]["server_delay_seconds"], 180)
++        self.assertEqual(rows[0].value["next_allowed_at"], rows[0].value["retry"]["not_before"])
++        self.assertTrue(any(event["event"] == "cooldown" for event in h.events))
++
++    def test_retry_after_date_and_invalid_header_are_diagnosed(self):
++        now = fixture_context().started_at
++        self.assertEqual(self.download.retry_after(format_datetime(now+timedelta(seconds=180), usegmt=True), now), 180)
++        for value in (None, "nonsense", "-1", "1.5", "NaN", ""):
++            with self.subTest(value=value):
++                self.assertIsNone(self.download.retry_after(value, now))
++        self.assertEqual(self.download.retry_after("0", now), 0)
++        h = self.harness([(503, b"", {"Retry-After": "invalid"}), (200, b"listing", {})])
++        h.fetch_response_only()
++        row = h.state.request_history(h.context, "https://www.sec.gov/Archives/edgar/full-index/2015/QTR1/index.json")[0]
++        self.assertFalse(row.value["retry"]["retry_after_valid"])
++        self.assertEqual(row.value["retry"]["retry_after_value"], "invalid")
++
++    def test_retry_delay_jitter_boundaries_preserve_long_server_delay(self):
++        settings = fixture_settings()
++        self.assertEqual(self.download.retry_delay(1, None, settings, 0), 0)
++        self.assertEqual(self.download.retry_delay(5, None, settings, 1), 32)
++        self.assertEqual(self.download.retry_delay(5, 180, settings, 0.1), 180)
++        for jitter in (-0.01, 1.01, float("nan"), True):
++            with self.subTest(jitter=jitter), self.assertRaises(ValueError):
++                self.download.retry_delay(1, None, settings, jitter)
++
++    def test_fifth_failure_is_terminal_and_restart_cannot_send_a_sixth(self):
++        h = self.harness([(503, b"failure", {}) for _ in range(5)] + [(200, b"sixth", {})])
++        for invocation in range(2):
++            with self.subTest(invocation=invocation), self.assertRaises(self.download.FetchError) as raised:
++                h.fetch_response_only()
++            self.assertEqual(raised.exception.error.code, "attempts_exhausted")
++            self.assertEqual(h.attempt_count, 5)
++        self.assertEqual([row.value["ordinal"] for row in h.state.request_history(h.context, raised.exception.receipt.url)], [1, 2, 3, 4, 5])
++
++    def test_pre_dispatch_crash_consumes_ordinal_after_reopen(self):
++        from sec_edgar_ingest.state import AcquisitionState
++        h = self.harness([(200, b"listing", {})])
++        url = "https://www.sec.gov/Archives/edgar/full-index/2015/QTR1/index.json"
++        h.state.begin_attempt(h.context)
++        h.state.begin_request(h.context, url, None, "uncertain-crash", 1)
++        h.store.close()
++        h.leases.close()
++        h.store, h.objects, h.leases = store_bundle(h.root, clock=h.clock)
++        h.state = AcquisitionState(h.store, clock=h.clock)
++        h.client.state = h.state
++        h.coordinator.store, h.coordinator.leases = h.store, h.leases
++        h.fetch_response_only()
++        rows = h.state.request_history(h.context, url)
++        self.assertEqual([row.value["ordinal"] for row in rows], [1, 2])
++        self.assertIsNone(rows[0].value["receipt"])
++        self.assertEqual(rows[0].value["outcome"], "uncertain")
++
++    def test_five_uncertain_crashes_exhaust_budget_and_new_attempt_audits_them(self):
++        h = self.harness([(200, b"listing", {})])
++        url = "https://www.sec.gov/Archives/edgar/full-index/2015/QTR1/index.json"
++        old = h.context
++        for ordinal in range(1, 6):
++            h.state.begin_request(old, url, None, f"crash-{ordinal}", ordinal)
++        with self.assertRaises(self.download.FetchError) as exhausted:
++            h.fetch_response_only()
++        self.assertEqual(exhausted.exception.error.code, "attempts_exhausted")
++        self.assertEqual(h.attempt_count, 0)
++        h.context = replace(old, attempt_id="explicit-after-five-crashes")
++        receipt = h.fetch_response_only()
++        row, = h.state.request_history(h.context, receipt.url)
++        self.assertTrue(row.value["prior_exhaustion"], "five uncertain pre-dispatch rows are an exhausted prior budget")
++        self.assertEqual(row.value["prior_exhaustion"][0]["attempt_id"], old.attempt_id)
++
++    def test_html_200_fetch_reports_quarantine_outcome_and_preserves_original(self):
++        h = self.harness([(200, b"<html>unexpected ordinary page</html>", {})])
++        with self.assertRaises(self.download.FetchError) as quarantined:
++            h.fetch(fixture_source())
++        self.assertEqual(quarantined.exception.error.code, "unexpected_page")
++        self.assertEqual(quarantined.exception.error.details.get("outcome"), "quarantined")
++        self.assertEqual(quarantined.exception.receipt.temporary_path.read_bytes(), b"<html>unexpected ordinary page</html>")
++        row, = h.state.request_history(h.context, fixture_source().canonical_url)
++        self.assertEqual(row.value["outcome"], "quarantined")
++
++    def test_new_command_attempt_is_separate_and_audits_prior_exhaustion(self):
++        h = self.harness([(503, b"failure", {}) for _ in range(5)]+[(200, b"listing", {})])
++        with self.assertRaises(self.download.FetchError):
++            h.fetch_response_only()
++        old = h.context
++        h.context = replace(old, attempt_id="deliberately-new-attempt")
++        receipt = h.fetch_response_only()
++        row = h.state.request_history(h.context, receipt.url)[0]
++        self.assertEqual(row.value["ordinal"], 1)
++        self.assertEqual(row.value["prior_exhaustion"][0]["attempt_id"], old.attempt_id)
++        self.assertEqual(len(h.state.request_history(old, receipt.url)), 5)
++
++    def test_ordinal_is_durable_before_sender_dispatch(self):
++        h = self.harness([(200, b"listing", {})])
++        real_send = h.sender.send
++        def inspect(url, context, permit, *, cancellation):
++            row, = h.state.request_history(context, url)
++            self.assertEqual(row.value["request_id"], permit.request_id)
++            self.assertIsNone(row.value["receipt"])
++            return real_send(url, context, permit, cancellation=cancellation)
++        h.sender.send = inspect
++        h.fetch_response_only()
++
++    def test_timeout_retry_still_consumes_owner_rate_budget(self):
++        h = self.harness([self.download.ResponseSpec(0, b"prefix", {}, "timeout"), (200, b"listing", {})])
++        h.client.jitter = lambda: 0.0
++        h.fetch_response_only()
++        self.assertGreaterEqual(h.starts[1]-h.starts[0], 1/3)
++        self.assertEqual(h.maximum_active, 1)
++        self.assertEqual(len([event for event in h.events if event["event"] == "reserve"]), 2)
++
++    def test_denial_halts_next_source_and_new_attempt_in_same_run(self):
++        denial = (Path(__file__).parent / "fixtures/raw/denial.html").read_bytes()
++        for status, body in ((403, b"denied"), (200, denial)):
++            with self.subTest(status=status):
++                h = self.harness([(status, body, {}), (200, b"unreachable", {})])
++                with self.assertRaises(self.download.FetchError) as raised:
++                    h.fetch(fixture_source())
++                self.assertEqual(raised.exception.error.code, "access_denied")
++                h.context = replace(h.context, attempt_id="cannot-evade-denial")
++                with self.assertRaises(self.download.FetchError) as stopped:
++                    h.fetch(fixture_source("2015Q2"))
++                self.assertEqual(stopped.exception.error.code, "run_halted")
++                self.assertEqual(h.attempt_count, 1)
++                self.assertEqual(h.state.run_halt(h.context).code, "access_denied")
++
++    def test_listed_not_found_is_pending_and_redirect_is_refused(self):
++        for status, code in ((404, "listed_missing"), (302, "redirect_refused")):
++            with self.subTest(status=status):
++                h = self.harness([(status, b"retained body", {"Location": "https://example.com/elsewhere"})])
++                with self.assertRaises(self.download.FetchError) as raised:
++                    h.fetch(fixture_source())
++                self.assertEqual(raised.exception.error.code, code)
++                self.assertEqual(raised.exception.receipt.temporary_path.read_bytes(), b"retained body")
++                self.assertEqual(h.attempt_count, 1)
++                row, = h.state.request_history(h.context, fixture_source().canonical_url)
++                self.assertEqual(row.value["outcome"], "pending" if status == 404 else "failed")
++
++    def test_server_delay_past_command_deadline_is_durably_deferred(self):
++        context = replace(fixture_context(), deadline=fixture_context().started_at+timedelta(seconds=100))
++        h = self.harness([(429, b"", {"Retry-After": "180"}), (200, b"unreachable", {})], context=context)
++        with self.assertRaises(self.download.FetchError) as raised:
++            h.fetch_response_only()
++        self.assertEqual(raised.exception.error.code, "deferred")
++        self.assertEqual(h.attempt_count, 1)
++        row, = h.state.request_history(context, raised.exception.receipt.url)
++        self.assertEqual(row.value["outcome"], "deferred")
++        self.assertEqual(row.value["retry"]["server_delay_seconds"], 180)
++        self.assertEqual(row.value["next_allowed_at"], row.value["retry"]["not_before"])
++        h.sender.responses = [self.download.ResponseSpec(200, b"listing", {})]
++        h.context = replace(fixture_context(), execution_id="another-command", attempt_id="fresh", deadline=fixture_context().started_at+timedelta(seconds=1000))
++        h.fetch_response_only()
++        self.assertGreaterEqual(h.starts[1]-h.starts[0], 180)
++
++    def test_server_clock_offset_cannot_sleep_past_command_deadline(self):
++        context = replace(fixture_context(), deadline=fixture_context().started_at+timedelta(seconds=100))
++        h = self.harness([(429, b"", {"Retry-After": "180"}), (200, b"unreachable", {})], context=context)
++        class OffsetServerClock:
++            precision_seconds = 0
++            def now(self):
++                return h.clock.now()-timedelta(seconds=120)
++            def monotonic(self):
++                return h.clock.monotonic()
++        h.leases.clock = OffsetServerClock()
++        with self.assertRaises(self.download.FetchError) as raised:
++            h.fetch_response_only()
++        self.assertEqual(raised.exception.error.code, "deferred")
++        self.assertEqual(h.attempt_count, 1)
++        self.assertLess(h.clock.monotonic(), 100, "server UTC offset must not extend the host command lifetime")
++        row, = h.state.request_history(context, raised.exception.receipt.url)
++        self.assertEqual(row.value["outcome"], "deferred")
++        self.assertEqual(row.value["retry"]["server_delay_seconds"], 180)
++
++    def test_final_failed_attempt_retains_server_cooldown(self):
++        h = self.harness([(503, b"failure", {}) for _ in range(4)] + [(429, b"", {"Retry-After": "180"})])
++        with self.assertRaises(self.download.FetchError) as raised:
++            h.fetch_response_only()
++        last = h.state.request_history(h.context, raised.exception.receipt.url)[-1]
++        self.assertEqual(last.value["outcome"], "exhausted")
++        self.assertEqual(last.value["retry"]["server_delay_seconds"], 180)
++        self.assertEqual(last.value["next_allowed_at"], last.value["retry"]["not_before"])
++
++    def test_retry_sleep_has_no_active_ownership(self):
++        h = self.harness([(503, b"", {}), (200, b"listing", {})])
++        original_sleep = h.clock.sleep
++        sleeps = []
++        def inspect(seconds):
++            if seconds >= 2:
++                sleeps.append(h.coordinator._active)
++            original_sleep(seconds)
++        h.clock.sleep = inspect
++        h.fetch_response_only()
++        self.assertTrue(sleeps)
++        self.assertTrue(all(turn is None for turn in sleeps))
++
++    def test_fetch_rejects_untrusted_origin_before_attempt_or_dispatch(self):
++        h = self.harness([(200, b"listing", {})])
++        with self.assertRaises(ValueError):
++            h.fetch_response_only("http://127.0.0.1:1234/index.json")
++        self.assertEqual(h.attempt_count, 0)
++        self.assertEqual(tuple(h.store.scan("TransportAttempt", {})), ())
++
++    def test_missing_server_time_bounds_never_uses_host_utc_for_retry(self):
++        h = self.harness([(429, b"", {"Retry-After": "180"})])
++        real_send = h.sender.send
++        def remove_bounds(url, context, permit, *, cancellation):
++            receipt = real_send(url, context, permit, cancellation=cancellation)
++            h.client._retry_time_bounds = lambda: None
++            return receipt
++        h.sender.send = remove_bounds
++        with self.assertRaises(self.download.FetchError) as raised:
++            h.fetch_response_only()
++        self.assertEqual(raised.exception.error.code, "clock_uncertain")
++        self.assertEqual(h.attempt_count, 1)
++
++
++class BoundedProcessTests(unittest.TestCase):
++    def setUp(self):
++        self.download = importlib.import_module("sec_edgar_ingest.download")
++        self.assertTrue(hasattr(self.download, "BoundedSender"),
++                        "a supervised spawn child and independent fatal timer must bound actual transport")
++        from sec_edgar_ingest.coordination import Clock
++        self.clock = Clock()
++        self.settings = fixture_settings(http={"exchange_deadline_seconds": 0.4})
++        self.directory = tempfile.TemporaryDirectory()
++        self.addCleanup(self.directory.cleanup)
++        self.root = Path(self.directory.name)
++
++    def server(self, *args, **kwargs):
++        from support import LoopbackServer
++        server = LoopbackServer(*args, **kwargs)
++        self.addCleanup(server.close)
++        return server
++
++    def send(self, server, *, target=None, cancellation=None, seconds=0.4):
++        import multiprocessing
++        from support import loopback_sender, real_context, real_permit
++        sender = loopback_sender(self.settings, self.clock, server.origin, target=target, spool=self.root/"sender")
++        permit = real_permit(self.clock, seconds)
++        cancellation = cancellation or multiprocessing.get_context("spawn").Event()
++        from support import retain_process_evidence
++        try:
++            return sender.send(server.url, real_context(self.clock, self.settings), permit, cancellation=cancellation)
++        finally:
++            retain_process_evidence(self._testMethodName+("-"+target.__name__ if target else ""), self.root/"sender", server)
++
++    def assert_drained(self, receipt):
++        import json
++        import os
++        events = [json.loads(line) for line in (receipt.temporary_path.parent/"transport.jsonl").read_text().splitlines()]
++        joined = [event for event in events if event["event"] == "child-joined"]
++        self.assertEqual(len(joined), 1)
++        self.assertIsNotNone(joined[0]["exitcode"])
++        with self.assertRaises(ProcessLookupError):
++            os.kill(joined[0]["pid"], 0)
++        self.assertEqual(receipt.sha256, hashlib.sha256(receipt.temporary_path.read_bytes()).hexdigest())
++        return events
++
++    def test_real_trickle_is_cancelled_by_total_lifetime_with_partial_socket_evidence(self):
++        import time
++        from sec_edgar_ingest.coordination import Coordinator
++        from support import loopback_sender, real_context, retain_process_evidence
++        server = self.server(b"fixture-entity-prefix", mode="trickle")
++        store, _, leases = store_bundle(self.root/"state", clock=self.clock)
++        self.addCleanup(store.close)
++        self.addCleanup(leases.close)
++        coordinator = Coordinator(self.settings, store, leases, self.clock)
++        sender = loopback_sender(self.settings, self.clock, server.origin, spool=self.root/"sender")
++        started = time.monotonic()
++        receipt = coordinator.exchange(real_context(self.clock, self.settings), server.url, sender)
++        elapsed = time.monotonic()-started
++        self.assertFalse(receipt.complete)
++        self.assertLess(elapsed, 1.2)
++        self.assertTrue(server.closed.wait(1), "terminated child must close its actual socket")
++        self.assertGreater(server.sent, 0)
++        self.assertGreater(receipt.byte_count, 0, "trickle bytes sent before timeout must survive the original-byte spool")
++        self.assertLessEqual(receipt.byte_count, server.sent)
++        events = self.assert_drained(receipt)
++        child_start = next(event for event in events if event["event"] == "socket-start")
++        reserved = next(event for event in events if event["event"] == "supervisor-start")
++        self.assertLess(child_start["monotonic"], reserved["start_before_mono"])
++        self.assertLessEqual(next(event for event in events if event["event"] == "child-joined")["monotonic"], reserved["deadline_mono"]+0.1)
++        retain_process_evidence("trickle-total-lifetime", receipt.temporary_path.parent, server, {"elapsed": elapsed, "receipt": receipt.to_mapping()})
++
++    def test_next_actual_get_waits_for_drain_spacing_after_in_adapter_delay(self):
++        from sec_edgar_ingest.coordination import Coordinator
++        from support import delayed_adapter_child, loopback_sender, real_context, retain_process_evidence
++        self.settings = fixture_settings(http={"exchange_deadline_seconds": 1.0})
++        first = self.server(b"first bounded response")
++        second = self.server(b"second bounded response")
++        store, _, leases = store_bundle(self.root/"state", clock=self.clock)
++        self.addCleanup(store.close)
++        self.addCleanup(leases.close)
++        coordinator = Coordinator(self.settings, store, leases, self.clock)
++        context = real_context(self.clock, self.settings)
++        first_sender = loopback_sender(self.settings, self.clock, first.origin, target=delayed_adapter_child, spool=self.root/"first")
++        second_sender = loopback_sender(self.settings, self.clock, second.origin, spool=self.root/"second")
++        try:
++            first_receipt = coordinator.exchange(context, first.url, first_sender)
++            second_receipt = coordinator.exchange(context, second.url, second_sender)
++            self.assertTrue(first_receipt.complete, first_receipt.to_mapping())
++            self.assertTrue(second_receipt.complete, second_receipt.to_mapping())
++            first_get = next(event["monotonic"] for event in first.events if event["event"] == "request-received")
++            second_get = next(event["monotonic"] for event in second.events if event["event"] == "request-received")
++            self.assertGreaterEqual(second_get-first_get, 1/3, "actual GET timestamps must keep the one owner-wide no-burst budget after DNS/connect/adapter delay")
++            self.assertTrue(first.closed.wait(1))
++            self.assertTrue(second.closed.wait(1))
++            self.assert_drained(first_receipt)
++            self.assert_drained(second_receipt)
++        finally:
++            retain_process_evidence("delayed-adapter-first", self.root/"first", first)
++            retain_process_evidence("delayed-adapter-second", self.root/"second", second)
++
++    def test_slow_headers_are_bounded_even_without_inactivity_timeout(self):
++        import time
++        from support import retain_process_evidence
++        server = self.server(mode="headers")
++        started = time.monotonic()
++        receipt = self.send(server)
++        self.assertFalse(receipt.complete)
++        self.assertLess(time.monotonic()-started, 1.2)
++        self.assertTrue(server.closed.wait(1))
++        self.assert_drained(receipt)
++        retain_process_evidence("slow-headers", receipt.temporary_path.parent, server, {"receipt": receipt.to_mapping()})
++
++    def test_spawn_uses_original_identity_bytes_no_proxy_auth_retry_or_redirect(self):
++        import os
++        from unittest.mock import patch
++        from support import retain_process_evidence
++        server = self.server(b"original bytes", status=302, headers={"Location": "http://127.0.0.1:1/must-not-follow", "ETag": "fixture-validator"})
++        with patch.dict(os.environ, {"HTTP_PROXY": "http://127.0.0.1:1", "HTTPS_PROXY": "http://127.0.0.1:1", "REQUESTS_CA_BUNDLE": "/fixture/nonexistent", "AWS_ACCESS_KEY_ID": "synthetic-fixture-only"}):
++            receipt = self.send(server)
++        self.assertTrue(receipt.complete, receipt.to_mapping())
++        self.assertEqual(receipt.status, 302)
++        self.assertEqual(receipt.temporary_path.read_bytes(), b"original bytes")
++        self.assertEqual(receipt.headers["ETag"], "fixture-validator")
++        self.assertEqual(len(server.requests), 1)
++        self.assertIn("User-Agent: Lowell Mason sec-edgar-ingest mason.lowell@mac.com", server.requests[0])
++        self.assertIn("Accept-Encoding: identity", server.requests[0])
++        self.assertNotIn("Authorization:", server.requests[0])
++        events = self.assert_drained(receipt)
++        cleared = next(event for event in events if event["event"] == "child-environment-cleared")
++        self.assertEqual(cleared["remaining_environment_keys"], 0)
++        retain_process_evidence("identity-no-ambient-transport", receipt.temporary_path.parent, server, {"receipt": receipt.to_mapping()})
++
++    def test_content_encoding_is_refused_without_decoding_original_entity(self):
++        import gzip
++        body = gzip.compress(b"original encoded entity", mtime=0)
++        server = self.server(body, headers={"Content-Encoding": "gzip"})
++        receipt = self.send(server)
++        self.assertFalse(receipt.complete)
++        self.assertEqual(receipt.error.code, "unsupported_content_encoding")
++        self.assertEqual(receipt.temporary_path.read_bytes(), body)
++        self.assert_drained(receipt)
++
++    def test_content_length_mismatch_preserves_actual_partial_prefix(self):
++        from support import retain_process_evidence
++        server = self.server(b"actual original partial", mode="truncated")
++        receipt = self.send(server)
++        self.assertFalse(receipt.complete)
++        self.assertEqual(receipt.temporary_path.read_bytes(), server.body)
++        self.assertIn(receipt.error.code, ("incomplete_body", "content_length_mismatch"))
++        self.assert_drained(receipt)
++        retain_process_evidence("truncated-original-prefix", receipt.temporary_path.parent, server, {"receipt": receipt.to_mapping()})
++
++    def test_received_cap_refuses_extra_byte_before_spool_write(self):
++        self.settings = fixture_settings(http={"exchange_deadline_seconds": 0.4, "max_received_bytes": 4})
++        for mode in ("complete", "unadvertised"):
++            with self.subTest(mode=mode):
++                server = self.server(b"12345", mode=mode)
++                receipt = self.send(server)
++                self.assertFalse(receipt.complete)
++                self.assertEqual(receipt.error.code, "received_limit")
++                self.assertLessEqual(receipt.byte_count, 4)
++                if mode == "unadvertised":
++                    self.assertEqual(receipt.temporary_path.read_bytes(), b"1234")
++                self.assert_drained(receipt)
++                (self.root/"sender/transport.jsonl").unlink()
++
++    def test_timer_installation_failure_and_stale_child_start_send_zero_requests(self):
++        from support import timer_failure_child, stale_start_child, stale_preparation_child, retain_process_evidence
++        for name, target, code in (("timer-installation-failure", timer_failure_child, "hard_timer_unavailable"), ("stale-spawn-start", stale_start_child, "permit_expired"), ("stale-prepared-request", stale_preparation_child, "permit_expired")):
++            with self.subTest(name=name):
++                server = self.server()
++                receipt = self.send(server, target=target)
++                self.assertFalse(receipt.complete)
++                self.assertEqual(receipt.error.code, code)
++                self.assertFalse(server.connected.is_set())
++                self.assertEqual(server.requests, [])
++                self.assert_drained(receipt)
++                retain_process_evidence(name, receipt.temporary_path.parent, server, {"receipt": receipt.to_mapping()})
++                (self.root/"sender/transport.jsonl").unlink()
++
++    def test_cancelled_sender_returns_only_after_child_join_and_socket_close(self):
++        import multiprocessing
++        import threading
++        from support import retain_process_evidence
++        server = self.server(b"prefix", mode="trickle")
++        cancellation = multiprocessing.get_context("spawn").Event()
++        def cancel_after_prefix():
++            if server.prefix_sent.wait(1):
++                cancellation.wait(0.04)
++                cancellation.set()
++        thread = threading.Thread(target=cancel_after_prefix)
++        thread.start()
++        receipt = self.send(server, cancellation=cancellation)
++        thread.join(1)
++        self.assertFalse(receipt.complete)
++        self.assertEqual(receipt.error.code, "cancelled")
++        self.assertTrue(server.closed.wait(1))
++        self.assert_drained(receipt)
++        retain_process_evidence("lease-cancellation", receipt.temporary_path.parent, server, {"receipt": receipt.to_mapping()})
++
++    def test_unknown_ipc_failure_stops_ownership_and_retains_unsafe_guard(self):
++        from sec_edgar_ingest.coordination import Coordinator
++        from support import ipc_loss_child, loopback_sender, real_context, retain_process_evidence
++        server = self.server(b"retained after IPC loss")
++        store, _, leases = store_bundle(self.root/"state", clock=self.clock)
++        self.addCleanup(store.close)
++        self.addCleanup(leases.close)
++        coordinator = Coordinator(self.settings, store, leases, self.clock)
++        events = []
++        coordinator.observer = events.append
++        sender = loopback_sender(self.settings, self.clock, server.origin, target=ipc_loss_child, spool=self.root/"sender")
++        with self.assertRaises(self.download.SenderFailure) as raised:
++            coordinator.exchange(real_context(self.clock, self.settings), server.url, sender)
++        receipt = raised.exception.receipt
++        self.assertEqual(receipt.temporary_path.read_bytes(), server.body)
++        self.assertTrue(server.closed.wait(1))
++        self.assert_drained(receipt)
++        self.assertTrue(any(event["event"] == "loss" for event in events))
++        self.assertFalse(any(event["event"] == "release" for event in events))
++        retain_process_evidence("unconfirmed-ipc-unsafe-guard", receipt.temporary_path.parent, server, {"coordination": events, "receipt": receipt.to_mapping()})
++
++    def test_malformed_result_and_unexpected_child_exception_retain_partial_failure(self):
++        from support import malformed_metadata_child, unexpected_failure_child, retain_process_evidence
++        for name, target, expected_code in (("malformed-metadata", malformed_metadata_child, "sender_protocol"), ("unexpected-child-exception", unexpected_failure_child, "sender_internal")):
++            with self.subTest(name=name):
++                server = self.server(b"original even with malformed metadata")
++                try:
++                    self.send(server, target=target)
++                except Exception as error:
++                    self.assertIsInstance(error, self.download.SenderFailure, "an invalid child result must still expose its retained receipt")
++                    self.assertEqual(error.receipt.error.code, expected_code)
++                    self.assertFalse(error.receipt.complete)
++                    self.assert_drained(error.receipt)
++                    if name == "malformed-metadata":
++                        self.assertEqual(error.receipt.temporary_path.read_bytes(), server.body)
++                else:
++                    self.fail("unknown child result must stop ownership")
++                finally:
++                    retain_process_evidence(name, self.root/"sender", server)
++                    trace = self.root/"sender/transport.jsonl"
++                    if trace.exists():
++                        trace.unlink()
++
++    def test_production_sender_refuses_loopback_and_logical_clocks(self):
++        import multiprocessing
++        from sec_edgar_ingest.coordination import ManualClock
++        from support import real_context, real_permit
++        sender = self.download.BoundedSender(self.settings, self.clock)
++        with self.assertRaises(ValueError):
++            sender.send("http://127.0.0.1:1234/fixture", real_context(self.clock, self.settings), real_permit(self.clock), cancellation=multiprocessing.get_context("spawn").Event())
++        with self.assertRaises(ValueError):
++            self.download.BoundedSender(self.settings, ManualClock(fixture_context().started_at))
++
++    def test_independent_fatal_timer_survives_supervisor_death_during_blocking_headers(self):
++        import json
++        import multiprocessing
++        import subprocess
++        import time
++        from support import crash_supervisor, loopback_sender, real_context, retain_process_evidence
++        from sec_edgar_ingest.coordination import Coordinator
++        self.settings = fixture_settings(http={"exchange_deadline_seconds": 0.4}, coordination={"lease_seconds": 2, "renew_every_seconds": 1})
++        server = self.server(mode="blocked-headers")
++        spawn = multiprocessing.get_context("spawn")
++        cancellation = spawn.Event()
++        process = spawn.Process(target=crash_supervisor, args=(str(self.root), server.url, server.origin, cancellation))
++        process.start()
++        try:
++            self.assertTrue(server.connected.wait(2), "spawn child must reach the selected loopback before supervisor crash")
++            process.terminate()
++            process.join(1)
++            self.assertFalse(process.is_alive())
++            killed_at = time.monotonic()
++            self.assertTrue(server.closed.wait(1), "orphan child must close the blocked socket under its independent OS timer")
++            events = [json.loads(line) for line in (self.root/"sender/transport.jsonl").read_text().splitlines()]
++            armed = next(event for event in events if event["event"] == "alarm-armed")
++            self.assertEqual(armed["alarm_disposition"], "default-fatal")
++            self.assertFalse(armed["alarm_blocked"])
++            self.assertFalse(any(event["event"] == "child-completed" for event in events))
++            closed_at = next(event["monotonic"] for event in server.events if event["event"] == "socket-closed")
++            self.assertLessEqual(closed_at, armed["deadline_mono"]+0.1)
++            observation = subprocess.run(["ps", "-o", "stat=", "-p", str(armed["pid"])], capture_output=True, text=True, timeout=1)
++            self.assertTrue(observation.returncode == 1 or not observation.stdout.strip() or observation.stdout.strip().startswith("Z"), observation.stdout)
++            successor = self.server(b"successor bounded response")
++            store, _, leases = store_bundle(self.root/"state", clock=self.clock)
++            self.addCleanup(store.close)
++            self.addCleanup(leases.close)
++            coordinator = Coordinator(self.settings, store, leases, self.clock)
++            coordination_events = []
++            coordinator.observer = coordination_events.append
++            sender = loopback_sender(self.settings, self.clock, successor.origin, spool=self.root/"successor")
++            context = replace(real_context(self.clock, self.settings), priority="daily")
++            receipt = coordinator.exchange(context, successor.url, sender)
++            self.assertTrue(receipt.complete, receipt.to_mapping())
++            self.assert_drained(receipt)
++            successor_get = next(event["monotonic"] for event in successor.events if event["event"] == "request-received")
++            self.assertGreaterEqual(successor_get, armed["deadline_mono"])
++            self.assertGreater(successor_get, closed_at)
++            reserve = next(event for event in coordination_events if event["event"] == "reserve")
++            self.assertEqual(reserve["epoch"], 2)
++            retain_process_evidence("supervisor-crash-independent-timer", self.root/"sender", server, {"supervisor_pid": process.pid, "supervisor_exitcode": process.exitcode, "killed_at": killed_at, "orphan_state": observation.stdout.strip(), "successor": coordination_events})
++            retain_process_evidence("supervisor-crash-successor", self.root/"successor", successor, {"receipt": receipt.to_mapping()})
++        finally:
++            if process.is_alive():
++                process.terminate()
++                process.join(1)
++            retain_process_evidence("supervisor-crash-independent-timer", self.root/"sender", server,
++                                    {"supervisor_pid": process.pid, "supervisor_exitcode": process.exitcode,
++                                     "killed_at": locals().get("killed_at"),
++                                     "orphan_state": locals().get("observation").stdout.strip() if "observation" in locals() else None,
++                                     "successor": locals().get("coordination_events", [])})
++
++
++class PartialExceptionTests(unittest.TestCase):
++    def test_nested_incomplete_read_partial_is_preserved_exactly_once(self):
++        import http.client
++        import requests
++        from urllib3.exceptions import ProtocolError
++        download = importlib.import_module("sec_edgar_ingest.download")
++        self.assertTrue(hasattr(download, "incomplete_read_bytes"), "nested transport exceptions must retain their original partial bytes")
++        partial = http.client.IncompleteRead(b"original nested partial", 10)
++        nested = requests.ConnectionError(ProtocolError("nested interruption", partial))
++        nested.__cause__ = partial
++        self.assertEqual(download.incomplete_read_bytes(nested), b"original nested partial")
++
++
++class DurableRequestAuditTests(unittest.TestCase):
++    def test_two_independent_state_clients_cannot_consume_the_same_ordinal(self):
++        import threading
++        from sec_edgar_ingest.state import AcquisitionState
++        from sec_edgar_ingest.storage.contracts import Conflict
++        from support import fixture_clock
++        with tempfile.TemporaryDirectory() as directory:
++            root, clock, barrier = Path(directory), fixture_clock(), threading.Barrier(2)
++            stores = [store_bundle(root, clock=clock)[0] for _ in range(2)]
++            class RacingStore:
++                def __init__(self, store):
++                    self.store = store
++                def __getattr__(self, name):
++                    return getattr(self.store, name)
++                def insert(self, kind, key, value):
++                    if kind == "TransportAttempt":
++                        barrier.wait(2)
++                    return self.store.insert(kind, key, value)
++            states = [AcquisitionState(RacingStore(store), clock=clock) for store in stores]
++            context, url, results = fixture_context(), fixture_source().canonical_url, []
++            def begin(state, identifier):
++                try:
++                    state.begin_request(context, url, None, identifier, 1)
++                    results.append("inserted")
++                except Conflict:
++                    results.append("consumed")
++            threads = [threading.Thread(target=begin, args=(state, f"racer-{ordinal}")) for ordinal,state in enumerate(states)]
++            try:
++                for thread in threads:
++                    thread.start()
++                for thread in threads:
++                    thread.join(3)
++                    self.assertFalse(thread.is_alive())
++                self.assertCountEqual(results, ["inserted", "consumed"])
++                row, = states[0].request_history(context, url)
++                self.assertEqual(row.value["ordinal"], 1)
++                self.assertIsNone(row.value["receipt"])
++            finally:
++                for store in stores:
++                    store.close()
++
++    def test_scripted_azure_routes_transport_to_attempts_and_run_halt_to_source_state(self):
++        from test_azure_contracts import AzureContractTests, response
++        fixture = AzureContractTests()
++        fixture.setUp()
++        self.addCleanup(fixture.doCleanups)
++        store, transport = fixture.tables([response(204), response(204)])
++        store.insert("TransportAttempt", "ordinal", {"outcome": "uncertain"})
++        store.insert("RunHalt", "run", {"outcome": "halted"})
++        self.assertIn("/Attempts", transport.requests[0].url)
++        self.assertIn("/SourceState", transport.requests[1].url)
++        self.assertTrue(all(request.method == "POST" for request in transport.requests))
+diff --git a/packages/sec-edgar-ingest/tests/test_validation.py b/packages/sec-edgar-ingest/tests/test_validation.py
+new file mode 100644
+index 0000000..212be3e
+--- /dev/null
++++ b/packages/sec-edgar-ingest/tests/test_validation.py
+@@ -0,0 +1,218 @@
++import hashlib
++import importlib
++import importlib.util
++import io
++import json
++import tempfile
++import unittest
++import zipfile
++from dataclasses import replace
++from pathlib import Path
++
++from support import body_receipt, fixture_settings, fixture_source, retain_download_evidence, zip_bytes
++
++RAW = Path(__file__).parent / "fixtures/raw"
++REPO = Path(__file__).resolve().parents[3]
++
++
++class ValidationTests(unittest.TestCase):
++    def setUp(self):
++        self.assertIsNotNone(importlib.util.find_spec("sec_edgar_ingest.validation"),
++                             "Task 5 requires strict original-byte acquisition envelopes")
++        self.validation = importlib.import_module("sec_edgar_ingest.validation")
++        self.directory = tempfile.TemporaryDirectory()
++        self.addCleanup(self.directory.cleanup)
++        self.root = Path(self.directory.name)
++        self.settings = fixture_settings()
++
++    def validate(self, body, *, kind="quarterly", headers=None, complete=True, error=None, settings=None):
++        source = fixture_source() if kind == "quarterly" else fixture_source("2026-10-01", "daily")
++        receipt = replace(body_receipt(self.root, body, headers=headers, complete=complete, error=error), url=source.canonical_url)
++        return self.validation.validate_envelope(source, receipt, settings or self.settings)
++
++    def invalid(self, name, body, code, *, kind="quarterly", **options):
++        try:
++            self.validate(body, kind=kind, **options)
++        except Exception as error:
++            self.assertIsInstance(error, self.validation.ValidationError, "invalid envelopes must expose their original receipt")
++            self.assertEqual(error.code, code)
++            self.assertEqual(error.receipt.temporary_path.read_bytes(), body)
++            self.assertEqual(error.receipt.sha256, hashlib.sha256(body).hexdigest())
++            retain_download_evidence(name, error.receipt, code)
++        else:
++            self.fail("invalid envelope was accepted: "+name)
++
++    def test_synthetic_daily_and_archive_original_bytes_validate(self):
++        for final_newline in (True, False):
++            for kind in ("quarterly", "daily"):
++                with self.subTest(kind=kind, final_newline=final_newline):
++                    text = (RAW / (kind+".idx")).read_bytes()
++                    if not final_newline:
++                        text = text.rstrip(b"\r\n")
++                    body = zip_bytes(text) if kind == "quarterly" else text
++                    valid = self.validate(body, kind=kind, headers={"Content-Length": str(len(body))})
++                    self.assertEqual(valid.receipt.temporary_path.read_bytes(), body)
++                    self.assertEqual(valid.expanded_byte_count, len(text))
++                    self.assertEqual(valid.envelope_version, "sec-"+kind+"-envelope-v1")
++
++    def test_all_ten_hash_checked_retained_originals_validate(self):
++        evidence = REPO / "specs/evidence/sec-filing-index-ingestion/stage-1"
++        audit = json.loads((REPO / ".sdd/2-sec-filing-index-ingestion-stage-2-spec/retained-fixture-audit.json").read_text())
++        expected = {item["path"]: item for item in audit["records"]}
++        matrix_path = evidence / "specimens/matrix.json"
++        original = matrix_path.read_bytes()
++        self.assertEqual(hashlib.sha256(original).hexdigest(), expected[str(matrix_path.relative_to(REPO))]["sha256"])
++        matrix = json.loads(original)
++        retained_hashes = {}
++        def find_hashes(value):
++            if isinstance(value, dict):
++                if "receipt_id" in value and "body_sha256" in value:
++                    retained_hashes[value["receipt_id"]] = value["body_sha256"]
++                for child in value.values():
++                    find_hashes(child)
++            elif isinstance(value, list):
++                for child in value:
++                    find_hashes(child)
++        find_hashes(matrix)
++        for ordinal in range(141, 151):
++            receipt_id = f"SEC-{ordinal:04d}"
++            with self.subTest(receipt_id=receipt_id):
++                path = evidence / f"listings/{receipt_id}.body"
++                body = path.read_bytes()
++                digest = hashlib.sha256(body).hexdigest()
++                accepted = expected[str(path.relative_to(REPO))]
++                self.assertEqual(digest, accepted["sha256"])
++                self.assertEqual(len(body), accepted["bytes"])
++                self.assertIn(digest, original.decode(), "matrix must name each exact original hash")
++                headers_path = evidence / f"listings/{receipt_id}.headers.json"
++                headers_bytes = headers_path.read_bytes()
++                self.assertEqual(hashlib.sha256(headers_bytes).hexdigest(), expected[str(headers_path.relative_to(REPO))]["sha256"])
++                sidecar = json.loads(headers_bytes)
++                headers = dict(sidecar["response_headers"] if "response_headers" in sidecar else sidecar["headers"])
++                kind = "quarterly" if ordinal <= 145 else "daily"
++                valid = self.validate(body, kind=kind, headers=headers)
++                self.assertEqual(valid.receipt.sha256, digest)
++                self.assertEqual(valid.receipt.temporary_path.read_bytes(), body)
++
++    def test_nonempty_complete_entity_and_length_are_required(self):
++        text = (RAW / "daily.idx").read_bytes()
++        self.invalid("empty", b"", "empty_body", kind="daily")
++        self.invalid("incomplete", text[:-4], "incomplete_transport", kind="daily", complete=False)
++        self.invalid("length-mismatch", text, "content_length_mismatch", kind="daily", headers={"Content-Length": str(len(text)+1)})
++        self.invalid("length-invalid", text, "invalid_content_length", kind="daily", headers={"Content-Length": "-1"})
++        self.invalid("unsupported-encoding", text, "unsupported_content_encoding", kind="daily", headers={"Content-Encoding": "gzip"})
++        self.invalid("ambiguous-framing", text, "ambiguous_transfer_framing", kind="daily", headers={"Content-Length": str(len(text)), "Transfer-Encoding": "chunked"})
++
++    def test_html_denial_and_error_pages_never_validate_as_index(self):
++        for name, body in (("denial", (RAW / "denial.html").read_bytes()), ("html", b"<html>not an index</html>"), ("error", b"Error: unavailable")):
++            with self.subTest(name=name):
++                self.invalid(name, body, "unexpected_page" if name != "error" else "missing_header", kind="daily")
++        self.invalid("html-content-type", (RAW / "daily.idx").read_bytes(), "unsupported_content_type", kind="daily", headers={"Content-Type": "text/html"})
++
++    def test_selected_header_ascii_and_line_endings_are_exact(self):
++        daily = (RAW / "daily.idx").read_bytes()
++        quarterly = (RAW / "quarterly.idx").read_bytes()
++        cases = [
++            ("daily-wrong-header", daily.replace(b"File Name", b"Filename"), "missing_header", "daily"),
++            ("quarter-wrong-header", zip_bytes(quarterly.replace(b"Filename", b"File Name")), "missing_header", "quarterly"),
++            ("daily-crlf", daily.replace(b"\n", b"\r\n"), "invalid_line_endings", "daily"),
++            ("quarter-lf", zip_bytes(quarterly.replace(b"\r\n", b"\n")), "invalid_line_endings", "quarterly"),
++            ("daily-nonascii", daily+b"\xff", "non_ascii", "daily"),
++            ("quarter-nul", zip_bytes(quarterly+b"\x00"), "invalid_text_control", "quarterly"),
++            ("header-only", daily.split(b"\n")[0], "header_without_data", "daily"),
++            ("header-separator-only", daily.split(b"\n")[0]+b"\n--------\n", "header_without_data", "daily"),
++        ]
++        for name, body, code, kind in cases:
++            with self.subTest(name=name):
++                self.invalid(name, body, code, kind=kind)
++
++    def test_row_syntax_is_left_for_later_parser(self):
++        body = b"CIK|Company Name|Form Type|Date Filed|File Name\nthis is not a normalized row"
++        self.assertEqual(self.validate(body, kind="daily").expanded_byte_count, len(body))
++
++    def test_archive_shapes_truncation_and_crc_failure_are_retained(self):
++        text = (RAW / "quarterly.idx").read_bytes()
++        original = zip_bytes(text)
++        self.invalid("zip-truncated", original[:-20], "invalid_archive")
++        stream = io.BytesIO()
++        with zipfile.ZipFile(stream, "w") as archive:
++            archive.writestr("master.idx", text)
++        self.invalid("zip-stored", stream.getvalue(), "unsupported_archive")
++        for name in ("../master.idx", "nested/master.idx", "other.idx"):
++            stream = io.BytesIO()
++            with zipfile.ZipFile(stream, "w", compression=zipfile.ZIP_DEFLATED) as archive:
++                archive.writestr(name, text)
++            self.invalid("zip-name-"+name.replace("/", "-"), stream.getvalue(), "unsupported_archive")
++        stream = io.BytesIO()
++        with zipfile.ZipFile(stream, "w", compression=zipfile.ZIP_DEFLATED) as archive:
++            archive.writestr("master.idx", text)
++            archive.writestr("extra.idx", text)
++        self.invalid("zip-extra-member", stream.getvalue(), "unsupported_archive")
++        corrupted = bytearray(original)
++        central = corrupted.index(b"PK\x01\x02")
++        corrupted[central+16] ^= 1
++        self.invalid("zip-bad-crc", bytes(corrupted), "invalid_archive")
++        invalid_deflate = bytearray(original)
++        with zipfile.ZipFile(io.BytesIO(original)) as archive:
++            member = archive.infolist()[0]
++            compressed_start = member.header_offset+30+len(member.filename.encode())+len(member.extra)
++        invalid_deflate[compressed_start] = 255
++        self.invalid("zip-bad-deflate", bytes(invalid_deflate), "invalid_archive")
++        encrypted = bytearray(original)
++        encrypted[6] |= 1
++        encrypted[central+8] |= 1
++        self.invalid("zip-encrypted", bytes(encrypted), "unsupported_archive")
++
++    def test_forged_expanded_size_and_prefix_crc_cannot_hide_deflate_suffix(self):
++        import zlib
++        text = (RAW / "quarterly.idx").read_bytes()
++        archive = bytearray(zip_bytes(text+b"hidden expanded suffix"*100))
++        central = archive.index(b"PK\x01\x02")
++        checksum = zlib.crc32(text).to_bytes(4, "little")
++        archive[14:18] = checksum
++        archive[22:26] = len(text).to_bytes(4, "little")
++        archive[central+16:central+20] = checksum
++        archive[central+24:central+28] = len(text).to_bytes(4, "little")
++        self.invalid("zip-forged-prefix-crc", bytes(archive), "invalid_archive")
++
++    def test_full_deflate_end_marker_is_required_even_with_matching_size_and_crc(self):
++        text = (RAW / "quarterly.idx").read_bytes()
++        original = zip_bytes(text)
++        with zipfile.ZipFile(io.BytesIO(original)) as archive:
++            member = archive.infolist()[0]
++            start = member.header_offset+30+len(member.filename.encode())+len(member.extra)
++        truncated = bytearray(original)
++        del truncated[start+member.compress_size-1]
++        central = truncated.index(b"PK\x01\x02")
++        truncated[18:22] = (member.compress_size-1).to_bytes(4, "little")
++        truncated[central+20:central+24] = (member.compress_size-1).to_bytes(4, "little")
++        end = truncated.index(b"PK\x05\x06")
++        truncated[end+16:end+20] = central.to_bytes(4, "little")
++        self.invalid("zip-missing-deflate-eof", bytes(truncated), "invalid_archive")
++
++    def test_received_and_expanded_caps_refuse_one_byte_past_guard(self):
++        daily = (RAW / "daily.idx").read_bytes()
++        settings = fixture_settings(http={"max_received_bytes": len(daily)})
++        self.assertEqual(self.validate(daily, kind="daily", settings=settings).expanded_byte_count, len(daily))
++        self.invalid("received-cap-plus-one", daily+b"x", "received_limit", kind="daily", settings=settings)
++        quarterly = (RAW / "quarterly.idx").read_bytes()
++        settings = fixture_settings(http={"max_expanded_bytes": len(quarterly)})
++        self.assertEqual(self.validate(zip_bytes(quarterly), settings=settings).expanded_byte_count, len(quarterly))
++        self.invalid("expanded-cap-plus-one", zip_bytes(quarterly+b"x"), "expanded_limit", settings=settings)
++
++    def test_accepted_guard_values_refuse_advertised_limit_plus_one(self):
++        daily = (RAW / "daily.idx").read_bytes()
++        self.invalid("advertised-64mib-plus-one", daily, "received_limit", kind="daily", headers={"Content-Length": "67108865"})
++        archive = bytearray(zip_bytes((RAW / "quarterly.idx").read_bytes()))
++        central = archive.index(b"PK\x01\x02")
++        archive[central+24:central+28] = (536870913).to_bytes(4, "little")
++        self.invalid("declared-expanded-512mib-plus-one", bytes(archive), "expanded_limit")
++
++    def test_receipt_hash_and_file_count_are_checked(self):
++        source = fixture_source("2026-10-01", "daily")
++        receipt = replace(body_receipt(self.root, (RAW / "daily.idx").read_bytes()), url=source.canonical_url)
++        for changed in (replace(receipt, sha256="0"*64), replace(receipt, byte_count=receipt.byte_count+1)):
++            with self.subTest(receipt=changed), self.assertRaises(self.validation.ValidationError) as raised:
++                self.validation.validate_envelope(source, changed, self.settings)
++            self.assertEqual(raised.exception.code, "receipt_mismatch")
++            retain_download_evidence("receipt-mismatch-"+("hash" if changed.sha256 != receipt.sha256 else "count"), raised.exception.receipt, "receipt_mismatch")

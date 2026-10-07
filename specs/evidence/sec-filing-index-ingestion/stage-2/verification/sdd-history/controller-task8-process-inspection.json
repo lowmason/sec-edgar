@@ -1,0 +1,40 @@
+{
+  "scope": "read-only consistency inspection of historical focused proof; does not replace finalcheck or reviews",
+  "files": {
+    "task-8-process-green-traces/three-collector-race.json": "7dad2305980088471cbc324bf932719f9ac3281aa5201cc02ff3ed28a673a1c4",
+    "task-8-process-green-traces/stale-dispatch.json": "22c1aa71c2709dd5e41bb8023065eb1eb692bc97a522be97fa9ebad9650a046b",
+    "task-8-boundary-green-traces/independent-child-deadline.json": "255aed0f3ebdcb4fd0816fdb37394a3f9306e9300b559a23d31a65a9fc28995e",
+    "task-8-process-green-traces/integrated-takeover.json": "525ec61194746989088acd625cb6eb3b42b71d904c96087dc9d8982081000d0b"
+  },
+  "race": {
+    "pids": [
+      51899,
+      51900,
+      51901
+    ],
+    "insert_attempts": 3,
+    "winner_inserts": 1,
+    "conflicts": 2
+  },
+  "stale_server_requests": 0,
+  "independent_child": {
+    "exit": -14,
+    "prefix_bytes": 105,
+    "sha256": "bea50eaaa49535ab454d20ee6fae3819783c7ce62d24ebdbdc6627c74ad4a7d6"
+  },
+  "takeover": {
+    "parent_exit": -15,
+    "zero_request_observations": 92,
+    "unsafe_until_mono": 2756020.6724102083,
+    "first_successor_wire_start": 2756020.800310958,
+    "minimum_wire_spacing_seconds": 0.6928812088444829,
+    "ordered_priorities": [
+      "daily",
+      "daily",
+      "daily",
+      "backfill"
+    ],
+    "old_child_drained": true
+  },
+  "stage2_complete": false
+}

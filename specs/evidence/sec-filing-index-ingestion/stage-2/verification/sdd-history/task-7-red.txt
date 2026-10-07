@@ -1,0 +1,239 @@
+command=["/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/.venv/bin/python", "-m", "unittest", "discover", "-s", "packages/sec-edgar-ingest/tests", "-p", "test_collection.py", "-v"]
+stdout:
+
+stderr:
+test_access_denial_and_policy_block_stop_remaining_members (test_collection.CollectionTests.test_access_denial_and_policy_block_stop_remaining_members) ... FAIL
+test_bad_envelope_continues_safe_independent_member (test_collection.CollectionTests.test_bad_envelope_continues_safe_independent_member) ... FAIL
+test_collector_current_context_and_snapshot_workset_origin_are_distinct (test_collection.CollectionTests.test_collector_current_context_and_snapshot_workset_origin_are_distinct) ... FAIL
+test_each_durable_boundary_forced_process_exit_recovers_without_sender (test_collection.CollectionTests.test_each_durable_boundary_forced_process_exit_recovers_without_sender) ... FAIL
+test_incomplete_discovery_retains_successful_member_without_snapshot_workset (test_collection.CollectionTests.test_incomplete_discovery_retains_successful_member_without_snapshot_workset) ... FAIL
+test_invalid_source_workset_digest_and_retained_path_are_refused (test_collection.CollectionTests.test_invalid_source_workset_digest_and_retained_path_are_refused) ... FAIL
+test_mismatched_config_parser_image_or_client_refuses_before_request (test_collection.CollectionTests.test_mismatched_config_parser_image_or_client_refuses_before_request) ... FAIL
+test_new_workset_reuses_accepted_and_explicit_refresh_fetches_new_original (test_collection.CollectionTests.test_new_workset_reuses_accepted_and_explicit_refresh_fetches_new_original) ... FAIL
+test_partial_success_404_then_only_unresolved_member_fetches (test_collection.CollectionTests.test_partial_success_404_then_only_unresolved_member_fetches) ... FAIL
+test_pinned_missing_or_corrupt_raw_refuses_repair_and_fetch (test_collection.CollectionTests.test_pinned_missing_or_corrupt_raw_refuses_repair_and_fetch) ... FAIL
+test_quarantine_retains_original_receipt_and_partial_bytes (test_collection.CollectionTests.test_quarantine_retains_original_receipt_and_partial_bytes) ... FAIL
+test_real_discover_to_collect_verifies_approved_source_path_and_digest (test_collection.CollectionTests.test_real_discover_to_collect_verifies_approved_source_path_and_digest) ... FAIL
+test_refresh_same_hash_retains_first_receipt_metadata (test_collection.CollectionTests.test_refresh_same_hash_retains_first_receipt_metadata) ... FAIL
+test_retry_preserves_first_member_pin (test_collection.CollectionTests.test_retry_preserves_first_member_pin) ... FAIL
+test_snapshot_assembly_checks_actual_source_period (test_collection.CollectionTests.test_snapshot_assembly_checks_actual_source_period) ... FAIL
+test_snapshot_workset_immutable_collision_returns_failure (test_collection.CollectionTests.test_snapshot_workset_immutable_collision_returns_failure) ... FAIL
+test_stage_receipt_without_reservation_fails_closed (test_collection.CollectionTests.test_stage_receipt_without_reservation_fails_closed) ... FAIL
+test_successful_empty_and_failed_empty_have_distinct_results (test_collection.CollectionTests.test_successful_empty_and_failed_empty_have_distinct_results) ... FAIL
+test_two_independent_collectors_race_changed_originals_and_adopt_one_pin (test_collection.CollectionTests.test_two_independent_collectors_race_changed_originals_and_adopt_one_pin) ... FAIL
+
+======================================================================
+FAIL: test_access_denial_and_policy_block_stop_remaining_members (test_collection.CollectionTests.test_access_denial_and_policy_block_stop_remaining_members)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 24, in setUp
+    self.assertIsNotNone(importlib.util.find_spec('sec_edgar_ingest.collection'),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         'Collection must durably promote and pin exact immutable inputs')
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Collection must durably promote and pin exact immutable inputs
+
+======================================================================
+FAIL: test_bad_envelope_continues_safe_independent_member (test_collection.CollectionTests.test_bad_envelope_continues_safe_independent_member)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 24, in setUp
+    self.assertIsNotNone(importlib.util.find_spec('sec_edgar_ingest.collection'),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         'Collection must durably promote and pin exact immutable inputs')
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Collection must durably promote and pin exact immutable inputs
+
+======================================================================
+FAIL: test_collector_current_context_and_snapshot_workset_origin_are_distinct (test_collection.CollectionTests.test_collector_current_context_and_snapshot_workset_origin_are_distinct)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 24, in setUp
+    self.assertIsNotNone(importlib.util.find_spec('sec_edgar_ingest.collection'),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         'Collection must durably promote and pin exact immutable inputs')
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Collection must durably promote and pin exact immutable inputs
+
+======================================================================
+FAIL: test_each_durable_boundary_forced_process_exit_recovers_without_sender (test_collection.CollectionTests.test_each_durable_boundary_forced_process_exit_recovers_without_sender)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 24, in setUp
+    self.assertIsNotNone(importlib.util.find_spec('sec_edgar_ingest.collection'),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         'Collection must durably promote and pin exact immutable inputs')
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Collection must durably promote and pin exact immutable inputs
+
+======================================================================
+FAIL: test_incomplete_discovery_retains_successful_member_without_snapshot_workset (test_collection.CollectionTests.test_incomplete_discovery_retains_successful_member_without_snapshot_workset)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 24, in setUp
+    self.assertIsNotNone(importlib.util.find_spec('sec_edgar_ingest.collection'),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         'Collection must durably promote and pin exact immutable inputs')
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Collection must durably promote and pin exact immutable inputs
+
+======================================================================
+FAIL: test_invalid_source_workset_digest_and_retained_path_are_refused (test_collection.CollectionTests.test_invalid_source_workset_digest_and_retained_path_are_refused)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 24, in setUp
+    self.assertIsNotNone(importlib.util.find_spec('sec_edgar_ingest.collection'),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         'Collection must durably promote and pin exact immutable inputs')
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Collection must durably promote and pin exact immutable inputs
+
+======================================================================
+FAIL: test_mismatched_config_parser_image_or_client_refuses_before_request (test_collection.CollectionTests.test_mismatched_config_parser_image_or_client_refuses_before_request)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 24, in setUp
+    self.assertIsNotNone(importlib.util.find_spec('sec_edgar_ingest.collection'),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         'Collection must durably promote and pin exact immutable inputs')
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Collection must durably promote and pin exact immutable inputs
+
+======================================================================
+FAIL: test_new_workset_reuses_accepted_and_explicit_refresh_fetches_new_original (test_collection.CollectionTests.test_new_workset_reuses_accepted_and_explicit_refresh_fetches_new_original)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 24, in setUp
+    self.assertIsNotNone(importlib.util.find_spec('sec_edgar_ingest.collection'),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         'Collection must durably promote and pin exact immutable inputs')
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Collection must durably promote and pin exact immutable inputs
+
+======================================================================
+FAIL: test_partial_success_404_then_only_unresolved_member_fetches (test_collection.CollectionTests.test_partial_success_404_then_only_unresolved_member_fetches)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 24, in setUp
+    self.assertIsNotNone(importlib.util.find_spec('sec_edgar_ingest.collection'),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         'Collection must durably promote and pin exact immutable inputs')
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Collection must durably promote and pin exact immutable inputs
+
+======================================================================
+FAIL: test_pinned_missing_or_corrupt_raw_refuses_repair_and_fetch (test_collection.CollectionTests.test_pinned_missing_or_corrupt_raw_refuses_repair_and_fetch)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 24, in setUp
+    self.assertIsNotNone(importlib.util.find_spec('sec_edgar_ingest.collection'),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         'Collection must durably promote and pin exact immutable inputs')
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Collection must durably promote and pin exact immutable inputs
+
+======================================================================
+FAIL: test_quarantine_retains_original_receipt_and_partial_bytes (test_collection.CollectionTests.test_quarantine_retains_original_receipt_and_partial_bytes)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 24, in setUp
+    self.assertIsNotNone(importlib.util.find_spec('sec_edgar_ingest.collection'),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         'Collection must durably promote and pin exact immutable inputs')
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Collection must durably promote and pin exact immutable inputs
+
+======================================================================
+FAIL: test_real_discover_to_collect_verifies_approved_source_path_and_digest (test_collection.CollectionTests.test_real_discover_to_collect_verifies_approved_source_path_and_digest)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 24, in setUp
+    self.assertIsNotNone(importlib.util.find_spec('sec_edgar_ingest.collection'),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         'Collection must durably promote and pin exact immutable inputs')
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Collection must durably promote and pin exact immutable inputs
+
+======================================================================
+FAIL: test_refresh_same_hash_retains_first_receipt_metadata (test_collection.CollectionTests.test_refresh_same_hash_retains_first_receipt_metadata)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 24, in setUp
+    self.assertIsNotNone(importlib.util.find_spec('sec_edgar_ingest.collection'),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         'Collection must durably promote and pin exact immutable inputs')
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Collection must durably promote and pin exact immutable inputs
+
+======================================================================
+FAIL: test_retry_preserves_first_member_pin (test_collection.CollectionTests.test_retry_preserves_first_member_pin)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 24, in setUp
+    self.assertIsNotNone(importlib.util.find_spec('sec_edgar_ingest.collection'),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         'Collection must durably promote and pin exact immutable inputs')
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Collection must durably promote and pin exact immutable inputs
+
+======================================================================
+FAIL: test_snapshot_assembly_checks_actual_source_period (test_collection.CollectionTests.test_snapshot_assembly_checks_actual_source_period)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 24, in setUp
+    self.assertIsNotNone(importlib.util.find_spec('sec_edgar_ingest.collection'),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         'Collection must durably promote and pin exact immutable inputs')
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Collection must durably promote and pin exact immutable inputs
+
+======================================================================
+FAIL: test_snapshot_workset_immutable_collision_returns_failure (test_collection.CollectionTests.test_snapshot_workset_immutable_collision_returns_failure)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 24, in setUp
+    self.assertIsNotNone(importlib.util.find_spec('sec_edgar_ingest.collection'),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         'Collection must durably promote and pin exact immutable inputs')
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Collection must durably promote and pin exact immutable inputs
+
+======================================================================
+FAIL: test_stage_receipt_without_reservation_fails_closed (test_collection.CollectionTests.test_stage_receipt_without_reservation_fails_closed)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 24, in setUp
+    self.assertIsNotNone(importlib.util.find_spec('sec_edgar_ingest.collection'),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         'Collection must durably promote and pin exact immutable inputs')
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Collection must durably promote and pin exact immutable inputs
+
+======================================================================
+FAIL: test_successful_empty_and_failed_empty_have_distinct_results (test_collection.CollectionTests.test_successful_empty_and_failed_empty_have_distinct_results)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 24, in setUp
+    self.assertIsNotNone(importlib.util.find_spec('sec_edgar_ingest.collection'),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         'Collection must durably promote and pin exact immutable inputs')
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Collection must durably promote and pin exact immutable inputs
+
+======================================================================
+FAIL: test_two_independent_collectors_race_changed_originals_and_adopt_one_pin (test_collection.CollectionTests.test_two_independent_collectors_race_changed_originals_and_adopt_one_pin)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_collection.py", line 24, in setUp
+    self.assertIsNotNone(importlib.util.find_spec('sec_edgar_ingest.collection'),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         'Collection must durably promote and pin exact immutable inputs')
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unexpectedly None : Collection must durably promote and pin exact immutable inputs
+
+----------------------------------------------------------------------
+Ran 19 tests in 0.002s
+
+FAILED (failures=19)
+
+exit_code=1

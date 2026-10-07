@@ -1,0 +1,245 @@
+# Review package: c51fe3b3350d71195ed94880359304ab3634aca9..4cbc9d8afcc793aa8d8402321019807e5ea3e526
+
+## Commits
+4cbc9d8 fix: enforce discovery workset paths and receipt provenance
+
+## Files changed
+ .../src/sec_edgar_ingest/discovery.py              | 22 ++++++-
+ packages/sec-edgar-ingest/tests/support.py         |  2 +-
+ packages/sec-edgar-ingest/tests/test_discovery.py  | 68 ++++++++++++++++++++++
+ 3 files changed, 88 insertions(+), 4 deletions(-)
+
+## Diff
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/discovery.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/discovery.py
+index 7a06a71..cd80863 100644
+--- a/packages/sec-edgar-ingest/src/sec_edgar_ingest/discovery.py
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/discovery.py
+@@ -215,28 +215,44 @@ def _persist_receipt(objects: ObjectStore, receipt: BodyReceipt, context: RunCon
+     objects.verify(body_path, digest, len(body))
+     metadata = canonical_json({'receipt': receipt.to_mapping(), 'context': context.to_mapping(), 'body_path': body_path})
+     metadata_hash = hashlib.sha256(metadata).hexdigest()
+     receipt_path = f'{namespace}/receipts/sha256={metadata_hash}.json'
+     objects.put_once(receipt_path, metadata)
+     objects.verify(receipt_path, metadata_hash, len(metadata))
+     return {'body_path': body_path, 'sha256': digest, 'byte_count': len(body),
+             'receipt_path': receipt_path, 'receipt_sha256': metadata_hash, 'receipt_byte_count': len(metadata)}
+ 
+ 
+-def _reopen_listing(objects: ObjectStore, value: dict, unit: dict):
++def _verify_receipt_context(value: object, frozen_context: RunContext) -> None:
++    try:
++        transport_context = RunContext.from_mapping(value)
++        settings = Settings.from_mapping(transport_context.to_mapping()['effective_config'])
++        if transport_context.pinned_on is None:
++            raise ValueError('receipt transport context requires its actual pinning date')
++        pin_context(settings, transport_context, transport_context.pinned_on)
++    except ValueError as error:
++        raise Conflict('cached listing receipt has invalid transport context') from error
++    provenance_fields = ('run_id', 'command', 'config_sha256', 'image_digest', 'parser_version', 'schema_version')
++    if (any(getattr(transport_context, field) != getattr(frozen_context, field) for field in provenance_fields)
++            or transport_context.effective_config != frozen_context.effective_config):
++        raise Conflict('cached listing receipt has conflicting frozen transport provenance')
++
++
++def _reopen_listing(objects: ObjectStore, value: dict, unit: dict, frozen_context: RunContext):
+     outcome = DirectoryOutcome.from_mapping(value['outcome'])
+     if outcome.url != unit['url'] or outcome.period != unit['period']:
+         raise Conflict('cached directory progress differs from the requested directory metadata')
+     evidence = value['evidence']
+     objects.verify(evidence['body_path'], evidence['sha256'], evidence['byte_count'])
+     objects.verify(evidence['receipt_path'], evidence['receipt_sha256'], evidence['receipt_byte_count'])
+     metadata = parse_json(objects.read(evidence['receipt_path']))
++    _verify_receipt_context(metadata.get('context'), frozen_context)
+     receipt = BodyReceipt.from_mapping(metadata['receipt'])
+     if (not receipt.complete or receipt.status != HTTP_OK or receipt.error is not None or receipt.url != unit['url']
+             or receipt.sha256 != outcome.listing_sha256 or receipt.byte_count != evidence['byte_count']
+             or metadata['body_path'] != evidence['body_path'] or outcome.listing_sha256 != evidence['sha256']):
+         raise Conflict('successful directory progress lacks its exact original receipt')
+     entries = parse_listing(unit['url'], objects.read(evidence['body_path']))
+     members, selection = _select(unit['url'], unit['period'], unit['role'], entries, bridge_period=unit.get('bridge_period'))
+     if ([member.to_mapping() for member in members] != value['members'] or selection != value['selection']
+             or outcome.source_ids != tuple(sorted(member.source_id for member in members))):
+         raise Conflict('directory progress differs from its validated immediate listing children')
+@@ -275,21 +291,21 @@ def discover(settings: Settings, context: RunContext, mode: Literal['quarterly',
+     frozen = session['frozen']
+     pinned_context = RunContext.from_mapping(frozen['context'])
+     outcomes, members, listings = {}, {}, {}
+     # Root, then year, then quarter: every actual request must be authorized by its parent.
+     units = sorted(frozen['units'], key=lambda unit: (unit['url'].count('/'), unit['url']))
+     for unit in units:
+         url, role = unit['url'], unit['role']
+         cached = state.directory_progress(discovery_id, url)
+         if cached is not None and cached.value['outcome']['outcome'] != 'discovery_failed':
+             saved = cached.to_mapping()['value']
+-            outcome, selected, entries, discovered_at = _reopen_listing(objects, saved, unit)
++            outcome, selected, entries, discovered_at = _reopen_listing(objects, saved, unit, pinned_context)
+             state.record_directory(discovery_id, outcome, selected, evidence=saved['evidence'],
+                                    selection=saved['selection'], expected_gap=saved['observed_gap_token'])
+         else:
+             parent_url = url.rsplit('/', 2)[0] + '/index.json'
+             if role != 'root':
+                 parent = outcomes[parent_url]
+                 wanted_name = url.rsplit('/', 2)[1]
+                 entry = next((entry for entry in listings.get(parent_url, ())
+                               if entry.name == wanted_name and entry.kind == 'dir'), None)
+                 if parent.outcome == 'discovery_failed' or entry is None:
+@@ -325,17 +341,17 @@ def discover(settings: Settings, context: RunContext, mode: Literal['quarterly',
+                                        receipt.sha256, tuple(source.source_id for source in selected), None)
+             state.record_directory(discovery_id, outcome, selected, evidence=evidence,
+                                    selection=selection, expected_gap=expected_gap)
+         outcomes[url], listings[url] = outcome, entries
+         for source in selected:
+             state.observe(source, discovered_at, 'available')
+             members[source.source_id] = source
+     directories = tuple(outcomes.values())
+     workset = make_source_workset(pinned_context, frozen['end'], discovery_id, tuple(members.values()), directories,
+                                   date.fromisoformat(frozen['overlap_from']), acquisition_mode=frozen['acquisition_mode'])
+-    objects.put_once(f'worksets/source/{workset.workset_id}.json', encode_workset(workset))
++    objects.put_once(f'worksets/sec/source/sha256={workset.workset_id}/workset.json', encode_workset(workset))
+     state.finish_discovery(discovery_id, workset.workset_id, request_context)
+     if frozen['mode'] == 'daily':
+         candidate = advance_daily_boundary(state.daily_boundary(), date.fromisoformat(frozen['today']), directories)
+         if candidate is not None and workset.discovery_complete:
+             state.advance_boundary(date.fromisoformat(frozen['today']), discovery_id, directories)
+     return workset
+diff --git a/packages/sec-edgar-ingest/tests/support.py b/packages/sec-edgar-ingest/tests/support.py
+index c67ad37..a1d24ef 100644
+--- a/packages/sec-edgar-ingest/tests/support.py
++++ b/packages/sec-edgar-ingest/tests/support.py
+@@ -933,21 +933,21 @@ class DiscoveryHarness:
+         return self.state.daily_boundary()
+ 
+     def seed_boundary(self, day: date) -> None:
+         self.store.insert('DiscoveryBoundary', 'daily', {'day': day.isoformat(), 'gaps': {}})
+ 
+     def add_pending(self, source: "Source") -> None:
+         self.state.observe(source, self.clock.now(), 'available')
+ 
+     @staticmethod
+     def workset_path(workset):
+-        return f'worksets/source/{workset.workset_id}.json'
++        return f'worksets/sec/source/sha256={workset.workset_id}/workset.json'
+ 
+     def run(self, mode: str, today: date, discovery_id: str, *, refresh: bool = False) -> "SourceWorkset":
+         from dataclasses import replace
+         from sec_edgar_ingest.discovery import discover
+         from sec_edgar_ingest.config import pin_context
+         self.family = 'daily-index' if mode == 'daily' else 'full-index'
+         self.invocations += 1
+         context = replace(fixture_context(command='discover', priority='daily' if mode == 'daily' else 'backfill'),
+                           attempt_id=f'discover-{self.invocations}', execution_id=f'discover-{today}',
+                           config_sha256=self.settings.config_sha256, pinned_on=None)
+diff --git a/packages/sec-edgar-ingest/tests/test_discovery.py b/packages/sec-edgar-ingest/tests/test_discovery.py
+index b8f2908..61b86e0 100644
+--- a/packages/sec-edgar-ingest/tests/test_discovery.py
++++ b/packages/sec-edgar-ingest/tests/test_discovery.py
+@@ -265,20 +265,35 @@ class DiscoveryTests(unittest.TestCase):
+         self.assertEqual(root['outcome']['source_ids'], ())
+         self.assertIsNone(h.boundary)
+ 
+     def test_refresh_is_frozen_in_immutable_workset(self):
+         from sec_edgar_ingest.worksets import decode_source_workset
+         h = self.harness({})
+         result = h.run('daily', date(2026, 10, 6), 'refresh', refresh=True)
+         self.assertEqual(result.acquisition_mode, 'refresh')
+         self.assertEqual(decode_source_workset(h.objects.read(h.workset_path(result))), result)
+ 
++    def test_source_workset_uses_approved_path_with_independent_digest_identity(self):
++        from sec_edgar_ingest.models import canonical_json
++        from sec_edgar_ingest.worksets import decode_source_workset, encode_workset
++        h = self.harness({'2026Q4': [listing_response('2026Q4', ['master.20261001.idx'])]})
++        result = h.run('daily', date(2026, 10, 6), 'approved-source-path')
++        path = f'worksets/sec/source/sha256={result.workset_id}/workset.json'
++        self.assertTrue((h.objects.directory/path).is_file(), path)
++        body = h.objects.read(path)
++        payload = json.loads(body)
++        identity = payload.pop('workset_id')
++        self.assertEqual(hashlib.sha256(canonical_json(payload)).hexdigest(), identity)
++        self.assertEqual(identity, result.workset_id)
++        self.assertEqual(decode_source_workset(body), result)
++        self.assertEqual(body, encode_workset(result))
++
+     def test_historical_closed_quarter_does_not_register_root_bridge_as_coverage(self):
+         from support import fixture_settings
+         h = self.harness({'full-index': [listing_response('full-index', ['2015/', 'master.zip'])],
+                           '2015Q1': [listing_response('2015Q1', ['master.zip'], family='full-index')]})
+         h.settings = fixture_settings(backfill={'start_quarter': '2015Q1', 'end_quarter': '2015Q1'},
+                                       fixture={'allow_clock_override': True})
+         h.coordinator.settings = h.client.settings = h.settings
+         workset = h.run('quarterly', date(2026, 10, 6), 'historical')
+         self.assertEqual(len(workset.members), 1)
+         root = h.state.directory_progress('historical', h.url('full-index')).value
+@@ -458,20 +473,73 @@ class DiscoveryTests(unittest.TestCase):
+         h = self.harness({})
+         h.run('daily', date(2026, 10, 6), 'metadata-integrity')
+         url = h.url('daily-index')
+         row = h.state.directory_progress('metadata-integrity', url)
+         value = row.to_mapping()['value']; value['outcome']['period'] = 'wrong-family'
+         key = hashlib.sha256(json.dumps(['metadata-integrity', url], sort_keys=True, separators=(',', ':')).encode()).hexdigest()
+         h.store.replace('DirectoryProgress', key, value, row.version)
+         with self.assertRaises(Conflict):
+             h.run('daily', date(2026, 10, 6), 'metadata-integrity')
+ 
++    def test_cached_receipt_rejects_conflicting_or_invalid_transport_context(self):
++        from sec_edgar_ingest.models import canonical_json
++        from sec_edgar_ingest.storage.contracts import Conflict
++        cases = (
++            ('run_id', 'another-run'), ('command', 'collect'),
++            ('config_sha256', 'b'*64), ('image_digest', 'sha256:'+'b'*64),
++            ('parser_version', 'another-parser'), ('schema_version', 'sec-index-v2'),
++            ('effective_config', {}), ('pinned_on', None),
++            ('pinned_on', '2014-01-01'), (None, None),
++        )
++        for field, replacement in cases:
++            with self.subTest(field=field, replacement=replacement):
++                h = self.harness({})
++                discovery_id = 'receipt-provenance'
++                first = h.run('daily', date(2026, 10, 6), discovery_id)
++                url = h.url('daily-index')
++                row = h.state.directory_progress(discovery_id, url)
++                value = row.to_mapping()['value']
++                metadata = json.loads(h.objects.read(value['evidence']['receipt_path']))
++                if field is None:
++                    metadata['context'] = replacement
++                else:
++                    metadata['context'][field] = replacement
++                changed = canonical_json(metadata)
++                digest = hashlib.sha256(changed).hexdigest()
++                path = f'worksets/discovery/listings/receipts/sha256={digest}.json'
++                h.objects.put_once(path, changed)
++                value['evidence'].update(receipt_path=path, receipt_sha256=digest, receipt_byte_count=len(changed))
++                key = hashlib.sha256(canonical_json([discovery_id, url])).hexdigest()
++                h.store.replace('DirectoryProgress', key, value, row.version)
++                before = len(h.attempted_urls)
++                with self.assertRaisesRegex(Conflict, 'receipt.*context|receipt.*provenance'):
++                    h.run('daily', date(2026, 10, 7), discovery_id)
++                self.assertEqual(len(h.attempted_urls), before)
++                self.assertEqual(h.state.discovery_session(discovery_id).value['workset_id'], first.workset_id)
++                self.assertEqual(h.boundary, date(2026, 10, 6))
++
++    def test_cached_receipt_accepts_actual_resumed_execution_and_attempt_context(self):
++        h = self.harness({'2026Q4': [failed_response(503)]})
++        first = h.run('daily', date(2026, 10, 6), 'transport-resume')
++        h.responses['2026Q4'] = [listing_response('2026Q4', ['master.20261001.idx'])]
++        completed = h.run('daily', date(2026, 10, 7), 'transport-resume')
++        value = h.state.directory_progress('transport-resume', h.url('2026Q4')).to_mapping()['value']
++        transport = json.loads(h.objects.read(value['evidence']['receipt_path']))['context']
++        self.assertNotEqual(transport['execution_id'], first.context.execution_id)
++        self.assertNotEqual(transport['attempt_id'], first.context.attempt_id)
++        self.assertEqual(transport['pinned_on'], '2026-10-07')
++        before = len(h.attempted_urls)
++        reopened = h.run('daily', date(2026, 10, 8), 'transport-resume')
++        self.assertEqual(reopened, completed)
++        self.assertEqual(completed.context, first.context)
++        self.assertEqual(len(h.attempted_urls), before)
++
+     def test_retained_root_year_and_quarter_select_exact_actual_zip_child(self):
+         from support import fixture_settings
+         from sec_edgar_ingest.download import ResponseSpec
+         root = Path(__file__).resolve().parents[3]
+         manifest = json.loads((Path(__file__).parent/'fixtures/retained-manifest.json').read_bytes())
+         records = {item['path']: item for item in manifest['records']}
+         for entry in manifest['provenance'].values():
+             self.assertEqual(hashlib.sha256((root/entry['path']).read_bytes()).hexdigest(), entry['sha256'])
+         responses, hashes = {}, {}
+         for number in (1, 2, 3):

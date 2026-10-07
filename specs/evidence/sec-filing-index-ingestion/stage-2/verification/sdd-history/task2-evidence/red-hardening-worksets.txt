@@ -1,0 +1,95 @@
+COMMAND: uv run --offline --frozen --package sec-edgar-ingest python -m unittest discover -s packages/sec-edgar-ingest/tests -p test_worksets.py -v
+EXIT: 1
+test_body_receipt_and_snapshot_envelopes_are_explicit (test_worksets.WorksetTests.test_body_receipt_and_snapshot_envelopes_are_explicit) ... 
+  test_body_receipt_and_snapshot_envelopes_are_explicit (test_worksets.WorksetTests.test_body_receipt_and_snapshot_envelopes_are_explicit) (name='unknown envelope') ... FAIL
+  test_body_receipt_and_snapshot_envelopes_are_explicit (test_worksets.WorksetTests.test_body_receipt_and_snapshot_envelopes_are_explicit) (name='wrong representation envelope') ... FAIL
+test_body_receipt_and_snapshot_envelopes_are_explicit (test_worksets.WorksetTests.test_body_receipt_and_snapshot_envelopes_are_explicit) ... FAIL
+test_changed_context_or_content_changes_identity (test_worksets.WorksetTests.test_changed_context_or_content_changes_identity) ... ok
+test_common_records_have_complete_detached_mapping_round_trips (test_worksets.WorksetTests.test_common_records_have_complete_detached_mapping_round_trips) ... ok
+test_common_records_reject_mutable_wrong_typed_fields (test_worksets.WorksetTests.test_common_records_reject_mutable_wrong_typed_fields) ... 
+  test_common_records_reject_mutable_wrong_typed_fields (test_worksets.WorksetTests.test_common_records_reject_mutable_wrong_typed_fields) (name='context mapping') ... FAIL
+  test_common_records_reject_mutable_wrong_typed_fields (test_worksets.WorksetTests.test_common_records_reject_mutable_wrong_typed_fields) (name='mutable members') ... FAIL
+  test_common_records_reject_mutable_wrong_typed_fields (test_worksets.WorksetTests.test_common_records_reject_mutable_wrong_typed_fields) (name='mutable errors') ... FAIL
+  test_common_records_reject_mutable_wrong_typed_fields (test_worksets.WorksetTests.test_common_records_reject_mutable_wrong_typed_fields) (name='wrong receipt') ... ERROR
+test_decoder_rejects_versions_unknown_fields_timestamps_and_hashes (test_worksets.WorksetTests.test_decoder_rejects_versions_unknown_fields_timestamps_and_hashes) ... ok
+test_detached_serializers_and_deep_immutability (test_worksets.WorksetTests.test_detached_serializers_and_deep_immutability) ... ok
+test_duplicate_sources_and_directory_identity_are_refused (test_worksets.WorksetTests.test_duplicate_sources_and_directory_identity_are_refused) ... ok
+test_empty_complete_requires_successful_directory_evidence (test_worksets.WorksetTests.test_empty_complete_requires_successful_directory_evidence) ... ok
+test_member_order_does_not_change_workset_identity (test_worksets.WorksetTests.test_member_order_does_not_change_workset_identity) ... ok
+test_snapshot_requires_exact_members_and_immutable_raw_reference (test_worksets.WorksetTests.test_snapshot_requires_exact_members_and_immutable_raw_reference) ... ok
+test_version_and_directory_content_are_part_of_identity (test_worksets.WorksetTests.test_version_and_directory_content_are_part_of_identity) ... ok
+
+======================================================================
+ERROR: test_common_records_reject_mutable_wrong_typed_fields (test_worksets.WorksetTests.test_common_records_reject_mutable_wrong_typed_fields) (name='wrong receipt')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_worksets.py", line 183, in test_common_records_reject_mutable_wrong_typed_fields
+    constructor()
+    ~~~~~~~~~~~^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_worksets.py", line 179, in <lambda>
+    ("wrong receipt", lambda: self.models.ValidatedBody({"complete": True}, "zip", "sec-quarterly-envelope-v1", 1)),
+                              ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<string>", line 7, in __init__
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py", line 523, in __post_init__
+    if not self.receipt.complete or self.receipt.error is not None:
+           ^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'dict' object has no attribute 'complete'
+
+======================================================================
+FAIL: test_body_receipt_and_snapshot_envelopes_are_explicit (test_worksets.WorksetTests.test_body_receipt_and_snapshot_envelopes_are_explicit) (name='unknown envelope')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_worksets.py", line 211, in test_body_receipt_and_snapshot_envelopes_are_explicit
+    with self.subTest(name=name), self.assertRaises(ValueError):
+                                  ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_body_receipt_and_snapshot_envelopes_are_explicit (test_worksets.WorksetTests.test_body_receipt_and_snapshot_envelopes_are_explicit) (name='wrong representation envelope')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_worksets.py", line 211, in test_body_receipt_and_snapshot_envelopes_are_explicit
+    with self.subTest(name=name), self.assertRaises(ValueError):
+                                  ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_body_receipt_and_snapshot_envelopes_are_explicit (test_worksets.WorksetTests.test_body_receipt_and_snapshot_envelopes_are_explicit)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_worksets.py", line 214, in test_body_receipt_and_snapshot_envelopes_are_explicit
+    with self.assertRaises(ValueError):
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_common_records_reject_mutable_wrong_typed_fields (test_worksets.WorksetTests.test_common_records_reject_mutable_wrong_typed_fields) (name='context mapping')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_worksets.py", line 182, in test_common_records_reject_mutable_wrong_typed_fields
+    with self.subTest(name=name), self.assertRaises(ValueError):
+                                  ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_common_records_reject_mutable_wrong_typed_fields (test_worksets.WorksetTests.test_common_records_reject_mutable_wrong_typed_fields) (name='mutable members')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_worksets.py", line 182, in test_common_records_reject_mutable_wrong_typed_fields
+    with self.subTest(name=name), self.assertRaises(ValueError):
+                                  ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_common_records_reject_mutable_wrong_typed_fields (test_worksets.WorksetTests.test_common_records_reject_mutable_wrong_typed_fields) (name='mutable errors')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage-2/sec-edgar/packages/sec-edgar-ingest/tests/test_worksets.py", line 182, in test_common_records_reject_mutable_wrong_typed_fields
+    with self.subTest(name=name), self.assertRaises(ValueError):
+                                  ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+----------------------------------------------------------------------
+Ran 11 tests in 0.054s
+
+FAILED (failures=6, errors=1)
