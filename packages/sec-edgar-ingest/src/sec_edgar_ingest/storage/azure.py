@@ -20,12 +20,11 @@ from ..config import ACCOUNT_NAME, LOCK_BLOB, Settings
 from ..models import Versioned, parse_json, require_hash, require_number, require_text, require_utc, safe_relative_path
 from .contracts import (AlreadyExists, BoundaryObserver, ClockUncertain, Conflict, FILE_CHUNK_BYTES,
                         LeaseHandle, ObjectStore, OwnershipLost, TimeBounds, REGISTRY_PATH, deployment_binding, exact_version,
-                        identity, observe, payload_bytes, table_for, validate_raw_address)
+                        blob_address, identity, observe, payload_bytes, table_for, validate_raw_address)
 
 RETRY_OPTIONS = dict(retry_total=0, retry_connect=0, retry_read=0, retry_status=0)
 STORAGE_CONNECTION_TIMEOUT_SECONDS = 5
 STORAGE_READ_TIMEOUT_SECONDS = 10
-CONTAINERS = frozenset({"raw", "worksets", "quarantine", "locks"})
 TABLE_STRING_BYTES = 64 * 1024
 TABLE_ENTITY_BYTES = 1024 * 1024
 TABLE_KEY_CHARACTERS = 1024
@@ -76,7 +75,13 @@ def _etag(version: str | None) -> str:
 
 class AzureStateStore:
     def __init__(self, source_client: TableClient, attempt_client: TableClient, *,
-                 objects: ObjectStore | None = None, observer: BoundaryObserver | None = None):
+                 objects: ObjectStore | None = None, observer: BoundaryObserver | None = None,
+                 active_client: TableClient | None = None):
+        if active_client is not None:
+            _check_endpoint(active_client.url, "table")
+            if active_client.table_name != "ActivePointers":
+                raise ValueError("Table client must use the accepted ActivePointers binding")
+        self.active_client = active_client
         for client, name in ((source_client, "SourceState"), (attempt_client, "Attempts")):
             _check_endpoint(client.url, "table")
             if client.table_name != name:
@@ -89,11 +94,19 @@ class AzureStateStore:
     def close(self) -> None:
         self.source_client.close()
         self.attempt_client.close()
+        if self.active_client is not None:
+            self.active_client.close()
 
     def _client(self, kind: str) -> TableClient:
-        return self.attempt_client if table_for(kind) == "Attempts" else self.source_client
+        table = table_for(kind)
+        if table == "ActivePointers":
+            if self.active_client is None:
+                raise ValueError("quarter pointer operations require the ActivePointers client")
+            return self.active_client
+        return self.attempt_client if table == "Attempts" else self.source_client
 
     def _write_payload_entity(self, kind: str, key: str, value: dict[str, object]) -> dict[str, object]:
+        self._client(kind)
         partition, key = identity(kind, key)
         entity = {"PartitionKey": partition, "RowKey": _row_key(key), "StableKey": key}
         _check_table_entity(entity)
@@ -222,10 +235,8 @@ class AzureObjectStore:
         self.service.close()
 
     def _blob(self, path: str):
-        segments = safe_relative_path(path, "object path").split("/", 1)
-        if len(segments) != 2 or segments[0] not in CONTAINERS:
-            raise ValueError("object path must name an accepted Blob container")
-        return self.service.get_blob_client(container=segments[0], blob=segments[1])
+        container, key = blob_address(path)
+        return self.service.get_blob_client(container=container, blob=key)
 
     def _upload(self, path: str, stream, sha256: str, byte_count: int) -> str:
         blob = self._blob(path)
@@ -249,6 +260,20 @@ class AzureObjectStore:
             return self._blob(path).download_blob(max_concurrency=1).readall()
         except ResourceNotFoundError as error:
             if error.status_code == 404:
+                raise FileNotFoundError(path) from error
+            raise
+
+    def materialize(self, path: str, target: Path) -> None:
+        blob = self._blob(path)
+        target = Path(target)
+        destination = target.open('xb')
+        try:
+            with destination:
+                for chunk in blob.download_blob(max_concurrency=1).chunks():
+                    destination.write(chunk)
+        except BaseException as error:
+            target.unlink()
+            if isinstance(error, ResourceNotFoundError) and error.status_code == 404:
                 raise FileNotFoundError(path) from error
             raise
 
@@ -491,7 +516,7 @@ def open_azure_stores(settings: Settings, *, observer: BoundaryObserver | None =
     tables = TableServiceClient(endpoint=storage.table_endpoint, credential=credential,
                                api_version=storage.table_api_version, **options)
     state = AzureStateStore(tables.get_table_client(storage.source_table), tables.get_table_client(storage.attempt_table),
-                            objects=objects, observer=observer)
+                            objects=objects, observer=observer, active_client=tables.get_table_client("ActivePointers"))
     leases = AzureLeaseStore(blob_service, lease_seconds=int(validated.coordination.lease_seconds),
                              uncertainty_seconds=validated.coordination.clock_uncertainty_seconds, observer=observer)
     return state, objects, leases
