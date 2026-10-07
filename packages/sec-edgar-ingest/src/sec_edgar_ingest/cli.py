@@ -14,8 +14,12 @@ from .collection import collect
 from .config import Settings, load_config, pin_context
 from .coordination import Clock, Coordinator
 from .discovery import discover
+from .etl.commands import read_etl_result, run_transform, run_publish, write_etl_result, validate_workset_ref
+from .etl.parser import supported_parser, SCHEMA_VERSION
+from .etl.publication import repair_publication
+from .etl.state import EtlState
 from .download import BoundedSender, FixturePack, RequestClient
-from .models import CommandResult, Error, RunContext, canonical_json, quarter_for, safe_relative_path
+from .models import CommandResult, Error, RunContext, canonical_json, parse_json, quarter_for, safe_relative_path
 from .results import exit_code, log_event, read_result, result_path, write_result
 from .state import AcquisitionState, attempt_key
 from .storage import open_stores
@@ -57,18 +61,22 @@ def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog='sec-edgar-ingest')
     parser.add_argument('--version', action='version', version=__version__)
     commands = parser.add_subparsers(dest='command')
-    for command in ('discover', 'collect'):
+    for command in ('discover', 'collect', 'transform', 'publish'):
         sub = commands.add_parser(command)
         for name in ('config', 'run-id', 'execution-id', 'attempt-id', 'deadline'):
             sub.add_argument('--' + name, required=True)
-        for name in ('fixture-pack', 'state-dir', 'today'):
+        for name in ('state-dir', 'today'):
             sub.add_argument('--' + name)
+        if command in ('discover', 'collect'):
+            sub.add_argument('--fixture-pack')
         if command == 'discover':
             sub.add_argument('--mode', required=True, choices=('quarterly', 'daily'))
             sub.add_argument('--discovery-id', required=True)
             sub.add_argument('--refresh', action='store_true')
         else:
             sub.add_argument('--workset', required=True)
+        if command == 'transform':
+            sub.add_argument('--force', action='store_true')
     return parser
 
 
@@ -82,9 +90,16 @@ def _validate(args) -> tuple[Settings, date | None, datetime, FixturePack | None
         _segment(getattr(args, name), name)
     if args.command == 'discover':
         _segment(args.discovery_id, 'discovery_id')
+    elif args.command in ('transform', 'publish'):
+        validate_workset_ref(args.workset, 'snapshot' if args.command == 'transform' else 'transformed')
     elif SOURCE_REF.fullmatch(args.workset) is None:
         raise ValueError('workset must name the exact immutable source-workset object path')
     settings = load_config(Path(args.config))
+    etl = args.command in ('transform', 'publish')
+    if etl:
+        supported_parser(settings.etl.parser_version, fixture=settings.storage.backend == 'local-fixture')
+        if settings.etl.schema_version != SCHEMA_VERSION:
+            raise ValueError('unsupported ETL schema version')
     if not settings.coordination.lease_seconds.is_integer():
         raise ValueError('coordination requires whole finite lease seconds')
     deadline = datetime.fromisoformat(args.deadline.replace('Z', '+00:00'))
@@ -94,16 +109,16 @@ def _validate(args) -> tuple[Settings, date | None, datetime, FixturePack | None
     if args.today and today.isoformat() != args.today:
         raise ValueError('today must be a canonical ISO date')
     if settings.storage.backend == 'azure':
-        if args.fixture_pack or args.state_dir or args.today:
+        if getattr(args, 'fixture_pack', None) or args.state_dir or args.today:
             raise ValueError('fixture pack, state directory and date override are fixture-only')
         pack = None
     else:
-        if not args.fixture_pack:
+        if not etl and not args.fixture_pack:
             raise ValueError('local-fixture commands require an explicit fixture pack')
         if not settings.fixture or (args.today and not settings.fixture.allow_clock_override):
             if args.today:
                 raise ValueError('today requires the explicit fixture clock override marker')
-        pack = FixturePack.load(Path(args.fixture_pack))
+        pack = None if etl else FixturePack.load(Path(args.fixture_pack))
     # A completed result may outlive its deadline; only its saved context can authorize replay.
     now = Clock().now()
     if deadline > now:
@@ -124,6 +139,9 @@ def _new_context(args, settings, deadline, today, started) -> RunContext:
 
 
 def _intent(args, pack) -> dict[str, object]:
+    if args.command in ('transform', 'publish'):
+        return {'command': args.command, 'today': args.today, 'workset': args.workset,
+                'force': args.force if args.command == 'transform' else None}
     return {'command': args.command, 'today': args.today,
             'fixture_sha256': pack.manifest_sha256 if pack is not None else None,
             'mode': args.mode if args.command == 'discover' else None,
@@ -167,6 +185,51 @@ def _existing_context(current, state, objects, intent, explicit_today):
     return context, None
 
 
+def _existing_etl_context(current, state, objects, intent, explicit_today):
+    path = result_path(current)
+    intent_path = path.rsplit('/', 1)[0] + '/command.json'
+    try:
+        saved = read_etl_result(path, objects)
+    except FileNotFoundError:
+        saved = None
+    try:
+        frozen_body = objects.read(intent_path)
+    except FileNotFoundError:
+        frozen_body = None
+    if frozen_body is not None:
+        frozen = parse_json(frozen_body)
+        if (not isinstance(frozen, dict) or set(frozen) != {'context', 'intent'}
+                or canonical_json(frozen) != frozen_body or frozen['intent'] != intent):
+            raise Conflict('ETL command differs from its frozen invocation')
+        prior = RunContext.from_mapping(frozen['context'])
+    else:
+        if saved is not None:
+            raise Conflict('completed ETL result has no command intent')
+        # Attempt keys include image/execution, while immutable command paths do not.
+        # Find an interrupted begin even if the caller now supplies a different key.
+        matching = [RunContext.from_mapping(row.to_mapping()['value']['context'])
+                    for row in state.store.scan('Attempt', {})
+                    if all(row.value['context'][name] == getattr(current, name)
+                           for name in ('run_id', 'command', 'attempt_id'))]
+        if len(matching) > 1:
+            raise Conflict('multiple attempts claim the same command path')
+        prior = matching[0] if matching else current
+    context = _matching_context(prior, current, explicit_today=explicit_today)
+    if saved is not None and saved.context != context:
+        raise Conflict('ETL result differs from its frozen command context')
+    frozen = canonical_json({'context': context.to_mapping(), 'intent': intent})
+    if frozen_body is not None and frozen != frozen_body:
+        raise Conflict('ETL intent context differs from its exact canonical context')
+    state.begin_attempt(context)
+    objects.put_once(intent_path, frozen)
+    if saved is not None:
+        for quarter in saved.quarters:
+            if quarter.outcome in ('published', 'unchanged'):
+                repair_publication(quarter.quarter, objects, EtlState(state.store))
+        state.finish_attempt(saved)
+    return context, saved
+
+
 def _discover_result(workset, context, clock):
     gaps = tuple(directory.error for directory in workset.directories if directory.error is not None)
     outcome = 'discovery_failed' if not workset.discovery_complete else ('success' if workset.members else 'no_new_sources')
@@ -206,6 +269,10 @@ def _retain_error(state, context, outcome, error):
 
 
 def _stdout(result, reference):
+    if result.context.command in ('transform', 'publish'):
+        sys.stdout.write(canonical_json({'outcome': result.outcome, 'result_ref': reference,
+            'input_ref': result.input_ref, 'transformed_workset_ref': result.transformed_workset_ref}).decode() + '\n')
+        return exit_code(result.outcome)
     sys.stdout.write(canonical_json({'outcome': result.outcome, 'result_ref': reference,
         'source_workset_ref': result.source_workset_ref, 'snapshot_workset_ref': result.snapshot_workset_ref}).decode() + '\n')
     return exit_code(result.outcome)
@@ -231,7 +298,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         state = AcquisitionState(store, clock=clock)
         path = f'runs/sec/{args.run_id}/{args.command}/{args.attempt_id}/result.json'
         try:
-            prior = read_result(path, objects)
+            prior = (read_etl_result if args.command in ('transform', 'publish') else read_result)(path, objects)
         except FileNotFoundError:
             prior = None
         if prior is None and deadline <= clock.now():
@@ -249,10 +316,22 @@ def main(argv: Sequence[str] | None = None) -> int:
             if args.workset != f'worksets/sec/source/sha256={workset.workset_id}/workset.json':
                 raise Conflict('workset object path differs from its content identity')
             context = replace(context, priority=workset.context.priority)
-        context, saved = _existing_context(context, state, objects, _intent(args, pack), bool(args.today))
+        if args.command in ('transform', 'publish'):
+            context, saved = _existing_etl_context(context, state, objects, _intent(args, pack), bool(args.today))
+        else:
+            context, saved = _existing_context(context, state, objects, _intent(args, pack), bool(args.today))
         if saved is not None:
             log_event(context, 'result_replayed', {'result_ref': result_path(context)})
             return _stdout(saved, result_path(context))
+        if args.command in ('transform', 'publish'):
+            log_event(context, 'command_started', {'command': args.command, 'input_ref': args.workset})
+            result = (run_transform(args.workset, context, settings, objects, store, force=args.force)
+                      if args.command == 'transform' else run_publish(args.workset, context, settings, objects, store))
+            reference = write_etl_result(result, objects, state)
+            log_event(context, 'command_finished', {'outcome': result.outcome, 'result_ref': reference,
+                      'counters': {name: getattr(result, name) for name in
+                          ('transformed', 'published', 'unchanged', 'quarantined', 'awaiting_approval', 'failed')}})
+            return _stdout(result, reference)
         coordinator = Coordinator(settings, store, leases, clock)
         sender = _CheckedSender(pack.sender(store) if pack is not None else BoundedSender(settings, clock))
         client = RequestClient(settings, coordinator, sender, state, clock)

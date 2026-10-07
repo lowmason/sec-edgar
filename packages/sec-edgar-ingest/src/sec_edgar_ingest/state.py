@@ -1,6 +1,11 @@
 """Durable source observations, accepted receipts, first pins and attempt audit."""
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .etl.contracts import EtlResult
+
 import hashlib
 import uuid
 from collections.abc import Callable
@@ -382,7 +387,7 @@ class AcquisitionState:
             raise Conflict("attempt identity has conflicting provenance")
         self.active_context = context
 
-    def finish_attempt(self, result: CommandResult) -> None:
+    def finish_attempt(self, result: CommandResult | EtlResult) -> None:
         key = attempt_key(result.context)
         for _ in range(CAS_ATTEMPTS):
             existing = self.store.get("Attempt", key)

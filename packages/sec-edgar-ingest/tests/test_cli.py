@@ -129,7 +129,7 @@ class CliTests(unittest.TestCase):
         self.assertEqual(h.invoke('discover', ['--mode', 'quarterly', '--discovery-id', 'd', '--execution-id', 'e', '--attempt-id', 'a'], common=common).returncode, 2)
         self.assertEqual(h.external_client_constructions, 0)
 
-    def test_valid_empty_and_help_do_not_offer_unimplemented_stages(self):
+    def test_valid_empty_and_help_offer_all_four_commands(self):
         h = self.harness('valid-empty')
         done = h.discover()
         self.assertEqual(done.returncode, 0, done.stderr)
@@ -139,8 +139,8 @@ class CliTests(unittest.TestCase):
             self.assertEqual(main([]), 0)
         self.assertIn('discover', output.getvalue())
         self.assertIn('collect', output.getvalue())
-        self.assertNotIn('transform', output.getvalue())
-        self.assertNotIn('publish', output.getvalue())
+        self.assertIn('transform', output.getvalue())
+        self.assertIn('publish', output.getvalue())
 
     def test_collection_outcomes_are_named_and_non_success(self):
         expected = {'pending': (4, 'pending'), 'retry-exhausted': (5, 'retry_exhausted'),
