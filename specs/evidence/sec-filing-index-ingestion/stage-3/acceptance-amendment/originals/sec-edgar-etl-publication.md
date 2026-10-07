@@ -5,14 +5,11 @@ store. `publish` reads one exact transformed workset. Both bypass collection and
 SEC transport. The native offline proof exercises these commands, actual local
 CAS races, forced process exits and recovery from an installed wheel.
 
-The owner amended Stage 3 acceptance on 2026-10-07 America/New_York to allow the
-exact documented SEC-0141, SEC-0142 and SEC-0143 quarantines while retaining strict
-whole-source refusal for their 21, 24 and 6 conflicting observations. The
-[verification record](../../specs/evidence/sec-filing-index-ingestion/stage-3/verification.md)
-binds the complete raw SHA256/lengths and the separate fresh acceptance result.
-No source or duplicate winner is approved; other invalid retained rows and missing
-offline dependencies remain blockers. No history-wide range or deployed capacity
-is established; all 22 Stage 7 integrated checks remain reserved.
+Stage 3 acceptance remains **blocked**: complete retained SEC-0141, SEC-0142 and
+SEC-0143 contain 21, 24 and 6 conflicting observations under the approved logical
+key. Their raw bytes, physical rows and refusal reasons are retained in the
+[verification record](../../specs/evidence/sec-filing-index-ingestion/stage-3/verification.md).
+No history-wide range or deployed capacity is established.
 
 ## Select the exact stored input
 
@@ -167,8 +164,8 @@ uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-i
 uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/etl_proof.py installed --output /absolute/new/installed
 ```
 
-The original specimen acceptance result remains historical exit 1 for the
-documented source conflicts; the owner amendment has a separate acceptance verifier. The sequence proof records actual CLI logs, saved contexts, unchanged
+The specimen acceptance result currently exits 1 for the documented source
+conflicts. The sequence proof records actual CLI logs, saved contexts, unchanged
 raw hashes, reader captures, process PIDs, CAS versions and forced-exit recovery.
 The installed proof uses the exact built wheel, hash-bearing frozen lock export,
 retained Stage 2 wheels and cached PyArrow, a temporary native Python venv, no

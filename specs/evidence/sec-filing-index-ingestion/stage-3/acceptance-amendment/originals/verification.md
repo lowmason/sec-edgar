@@ -1,27 +1,10 @@
-# Stage 3 offline capability verification — owner-amended acceptance
+# Stage 3 offline capability verification — acceptance blocked
 
-The owner explicitly amended Stage 3 acceptance on 2026-10-07 America/New_York
-(no owner-supplied time of day) to allow the documented quarantines while retaining
-strict refusal. The [exact owner receipt](acceptance-amendment/owner-amendment.json)
-limits this documentary exception to SEC-0141 (2010Q1), SEC-0142 (2015Q1) and
-SEC-0143 (2026Q3), bound by complete raw SHA256/length and retained row/conflict counts.
-Those three quarantines no longer block this amended Stage 3 acceptance gate.
-Other invalid retained rows and offline cached dependency absence remain blockers.
-
-A canonical `(cik, archive_path)` conflict still invalidates the whole source.
-The retained actual transform proof remains quarantined with no accepted Processing,
-ObservationRef or pointer mutation. No source or duplicate winner is approved, and
-no parser tolerance, normalization or production policy changes. The retained
-970,622-row scan and 51 conflicts (45 form_type-only, six company_name-only) remain
-historical specimen **exit 1**. The [fresh amendment report](acceptance-amendment/report.json)
-records the separate acceptance verifier result; it does not turn the original
-source failure into successful source acceptance. Observed syntax/family/refusal
-coverage establishes no successful catalog/range or deployed capacity.
-
-The [preserved original record](acceptance-amendment/originals/verification.md)
-and [historical resolution map](acceptance-amendment/historical-resolution.json)
-keep the unchanged delivery snapshot independently verifiable. This record does
-not stamp completion or retirement. `all22_stage7_checks: reserved`.
+Task 7 delivers passing native capability proofs. **Stage 3 acceptance remains
+blocked** by 51 conflicting duplicate observations in complete retained receipts
+SEC-0141, SEC-0142 and SEC-0143. Their refusal follows the approved CIK/archive-path
+logical key. No duplicate winner was selected and no original was edited. This
+record does not stamp completion or retirement. `all22_stage7_checks: reserved`.
 
 ## Whole-branch repair round 1: current proof
 
@@ -44,7 +27,7 @@ The existing `verification/` tree remains byte-for-byte frozen:7525 records and
 inventory SHA `4554adb90acdda3e44bffac01bb878d3391d4ae523e0c4439aa4e1ab2c612b6b`.
 The442-test/full-wheel evidence described below is historical HEAD `3c868351`,
 not the current implementation. The original specimen acceptance exit1 and51
-conflicts remain independent and unchanged; the documentary acceptance exception is separate. No specimen rescan,
+conflicts remain independent, unchanged and unsuperseded; no specimen rescan,
 completion stamp or reserved Stage7 capacity check occurred.
 
 ## Review repair round 1
@@ -193,5 +176,5 @@ explains exact-reference reads, replay, no-op, gates and safe repair.
 All 22 integrated checks remain reserved for later roadmap Stage 7, including
 actual Linux amd64/Python 3.14.8 worker memory/runtime/scratch, ADLS/HNS,
 identity and real Azure ETag behavior. Mocked SDK and native local proofs do not
-establish those capacities. The owner-amended documentary exception covers only the exact three retained sources;
-all other completion gates and controller review remain required.
+establish those capacities. Owner policy reconciliation of the retained-source
+conflicts is required before any Stage 3 completion decision.

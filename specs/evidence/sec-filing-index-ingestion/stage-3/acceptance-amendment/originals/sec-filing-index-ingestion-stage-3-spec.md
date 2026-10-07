@@ -137,17 +137,7 @@ Plan 3 implements the following matrix; no assertion here means those new tests 
 | Applicable §§5–6 | Named nonzero quarantine/conflict/approval outcomes, result/Attempt crash repair, versioned outputs and durable per-quarter progress | 3, 5–7 |
 | Accepted bindings and compatibility | Mocked pinned-SDK paths/ETags; existing v1 config/workset/registry byte identity; streaming outputs and Table size checks; full acquisition regressions | 1, 5, 7 |
 
-Exit requires covering red/green tests, prescribed offline full build/test/CLI check, fresh installed-wheel transform/publish/read proof, retained source/proof hashes and resolved task/whole-branch reviews. Documentation explains replay, pointer readers, gates and repair. All 22 Stage 7 integrated checks remain reserved. Other invalid retained rows or cached dependency absence remain reported blockers and cannot be bypassed to stamp completion.
-
-The owner explicitly amended Stage 3 acceptance on 2026-10-07 America/New_York (no owner-supplied time of day) to allow the documented quarantines while retaining strict refusal. This narrow documentary exception applies only to the exact raw bytes bound in the [owner amendment receipt](evidence/sec-filing-index-ingestion/stage-3/acceptance-amendment/owner-amendment.json):
-
-| Receipt / quarter | Raw SHA256 | Bytes | Parsed rows | Conflicts | First conflict line |
-|---|---|---:|---:|---:|---:|
-| SEC-0141 / 2010Q1 | `aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de` | 3,729,148 | 300,561 | 21 | 6,580 |
-| SEC-0142 / 2015Q1 | `984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728` | 3,901,000 | 318,647 | 24 | 87,808 |
-| SEC-0143 / 2026Q3 | `393a535f84b71ed34845f67aa5e5275ecc86afeb1a6558ad5623b0d7d0babe71` | 3,502,663 | 302,315 | 6 | 40,292 |
-
-The retained complete scan covers 970,622 rows across ten receipts and 51 conflicts (45 form_type-only and six company_name-only); its original specimen exit 1 remains an exact historical failure. A conflicting duplicate under canonical `(cik, archive_path)` still invalidates the whole source. The retained actual transform proof must remain quarantined, with no accepted Processing or ObservationRef and no pointer mutation. This exception approves no source, duplicate winner, parser tolerance, byte normalization or identity/publication policy change. These receipts establish observed syntax/family/refusal coverage; they establish no successful catalog/range or deployed capacity. The [fresh offline acceptance verifier](evidence/sec-filing-index-ingestion/stage-3/acceptance-amendment/verify.py) validates this amended gate separately from the preserved historical failure and leaves all live access and later-stage authorization closed.
+Exit requires covering red/green tests, prescribed offline full build/test/CLI check, fresh installed-wheel transform/publish/read proof, retained source/proof hashes and resolved task/whole-branch reviews. Documentation explains replay, pointer readers, gates and repair. All Stage 7 integrated checks remain reserved. Invalid retained rows or cached dependency absence are reported blockers and cannot be bypassed to stamp completion.
 
 ## 9. Rollout note
 

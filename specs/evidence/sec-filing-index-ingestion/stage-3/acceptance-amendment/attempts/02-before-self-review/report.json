@@ -1,0 +1,306 @@
+{
+  "acceptance": "PASS: exact documented quarantines allowed; strict whole-source refusal retained",
+  "all22_stage7_checks": "reserved",
+  "argv": [
+    "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/acceptance-amendment/verify.py",
+    "--output",
+    "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-3/acceptance-amendment/report.json"
+  ],
+  "classification": {
+    "company_name_only": 6,
+    "form_type_only": 45
+  },
+  "conflicts": 51,
+  "cwd": "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar",
+  "dependencies": {
+    "azure-data-tables": "12.7.0",
+    "azure-identity": "1.26.0",
+    "azure-storage-blob": "12.31.0",
+    "pyarrow": "25.0.1",
+    "requests": "2.34.2"
+  },
+  "deployed_capacity_established": false,
+  "executable": "/Users/lowell/.codex/worktrees/sec-edgar-stage-3/sec-edgar/.venv/bin/python",
+  "exit": 0,
+  "full_scan_rows": 970622,
+  "guard_denied_dns": true,
+  "immutable_inventories": {
+    "delivery-sha256.json": {
+      "inventory": {
+        "bytes": 3014055,
+        "sha256": "a2efc7405ed0050f71f9fb2df06783b8444ab5ab56fb8839155428ea1c1a770b"
+      },
+      "payload_bytes": 91115378,
+      "records": 9618
+    },
+    "final-review-fix1/sha256.json": {
+      "inventory": {
+        "bytes": 597921,
+        "sha256": "606a2ea013e7695d8fbf6029a00f30016c23dc2829ec882d218a29a11a10be14"
+      },
+      "payload_bytes": 15471496,
+      "records": 2070
+    },
+    "review-checkpoint/sha256.json": {
+      "inventory": {
+        "bytes": 2104,
+        "sha256": "55180356113b83bbb6aef097371930c558941f037ec67d4a82fa220a47e0114c"
+      },
+      "payload_bytes": 93841,
+      "records": 15
+    },
+    "verification/sha256.json": {
+      "inventory": {
+        "bytes": 2277373,
+        "sha256": "4554adb90acdda3e44bffac01bb878d3391d4ae523e0c4439aa4e1ab2c612b6b"
+      },
+      "payload_bytes": 72546066,
+      "records": 7525
+    },
+    "verification/specimens/sha256.json": {
+      "inventory": {
+        "bytes": 1632,
+        "sha256": "cf9879c99eafcee8e62d93d704ada310652771e01c25dfc3846afda408ebc3f9"
+      },
+      "payload_bytes": 211927,
+      "records": 13
+    }
+  },
+  "implementation": {
+    "historical_full_check_exit": 0,
+    "historical_full_tests": 452,
+    "historical_installed_exit": 0,
+    "reviewed_commit": "2343f39f0e21adc2ad401a9346a8c9ffa0509040",
+    "unchanged_audited_files": 62,
+    "unchanged_git_domains": [
+      "packages/sec-edgar-ingest",
+      "conf",
+      "tests",
+      "fixtures",
+      "scripts",
+      "README.md",
+      "pyproject.toml",
+      "uv.lock",
+      ".python-version"
+    ],
+    "wheel": {
+      "bytes": 111195,
+      "sha256": "eb8bb3b318b3b1a4fe1983291efb92161e22fac998f86230b5f2b7f3cf15c3ab"
+    }
+  },
+  "input_hashes": {
+    "docs/runbooks/sec-edgar-etl-publication.md": {
+      "bytes": 10515,
+      "sha256": "0a08e6a2fc70ca721f2e7a62d96421b0260bff4500aed1ad865ee82394f4bf4e"
+    },
+    "specs/evidence/sec-filing-index-ingestion/stage-3/acceptance-amendment/historical-resolution.json": {
+      "bytes": 410,
+      "sha256": "85859cb305822a18fa065e9b3961364b8a20e0cb7fd3f518134b7d9f9fb43508"
+    },
+    "specs/evidence/sec-filing-index-ingestion/stage-3/acceptance-amendment/owner-amendment.json": {
+      "bytes": 4434,
+      "sha256": "3f901b6a69f8b6f6f30869aaff5b74305a2f6fdb302d7c59b351734801936a6c"
+    },
+    "specs/evidence/sec-filing-index-ingestion/stage-3/delivery-sha256.json": {
+      "bytes": 3014055,
+      "sha256": "a2efc7405ed0050f71f9fb2df06783b8444ab5ab56fb8839155428ea1c1a770b"
+    },
+    "specs/evidence/sec-filing-index-ingestion/stage-3/final-review-fix1/audit.json": {
+      "bytes": 12241,
+      "sha256": "7f6bb21f6dade0f8b6e26d840c689c2aedfdc7f0c7c8fdde9ad88f130017f0cd"
+    },
+    "specs/evidence/sec-filing-index-ingestion/stage-3/final-review-fix1/full-check/command.json": {
+      "bytes": 675,
+      "sha256": "e381bacbbdc60be3773fc504669fb413b473d64fd69ab86de2ed70fe594556d6"
+    },
+    "specs/evidence/sec-filing-index-ingestion/stage-3/final-review-fix1/installed/report.json": {
+      "bytes": 5332,
+      "sha256": "a47527473034d5c01c4e6f05df518c1b56587c7e91a205a726c343ec4da4aa81"
+    },
+    "specs/evidence/sec-filing-index-ingestion/stage-3/final-review-fix1/sha256.json": {
+      "bytes": 597921,
+      "sha256": "606a2ea013e7695d8fbf6029a00f30016c23dc2829ec882d218a29a11a10be14"
+    },
+    "specs/evidence/sec-filing-index-ingestion/stage-3/review-checkpoint/sha256.json": {
+      "bytes": 2104,
+      "sha256": "55180356113b83bbb6aef097371930c558941f037ec67d4a82fa220a47e0114c"
+    },
+    "specs/evidence/sec-filing-index-ingestion/stage-3/verification.md": {
+      "bytes": 13973,
+      "sha256": "5be4130d802ac08b1b34784f144ec31b691fb881cccde31438fd9e96ff3fe556"
+    },
+    "specs/evidence/sec-filing-index-ingestion/stage-3/verification/sdd-history/retained-parser-preflight/conflict-classification.json": {
+      "bytes": 1220,
+      "sha256": "61be6bc32cdd92243ef0e896507d12bea30e2669b5f7096474670810bb0fa82e"
+    },
+    "specs/evidence/sec-filing-index-ingestion/stage-3/verification/sdd-history/retained-parser-preflight/report.json": {
+      "bytes": 114924,
+      "sha256": "91d71fb8aa8bec6dcf147cb04615e56eacc5a0afc20a4c5840d6ff0c318669fe"
+    },
+    "specs/evidence/sec-filing-index-ingestion/stage-3/verification/sdd-history/retained-parser-preflight/transform-refusal/SEC-0141/objects/quarantine/sec/fixture-run/37bd3d884d57defd651a1c8456a183c9f53ecb215c847a642de36b260c76d24c/transform/sec-0141/error.json": {
+      "bytes": 408,
+      "sha256": "cf7fabda4f6952569a4fc985c0210cc5a6b008ec4abfc04d6c66369109dc81ff"
+    },
+    "specs/evidence/sec-filing-index-ingestion/stage-3/verification/sdd-history/retained-parser-preflight/transform-refusal/SEC-0142/objects/quarantine/sec/fixture-run/f06d1de08e84905a6381309ab6406ca12d99de5ce7d28d09a4f7456fc82ef998/transform/sec-0142/error.json": {
+      "bytes": 410,
+      "sha256": "8defffc810fbf4b43cc831933011ad9c836afae8489852a80c0dcb27c867e410"
+    },
+    "specs/evidence/sec-filing-index-ingestion/stage-3/verification/sdd-history/retained-parser-preflight/transform-refusal/SEC-0143/objects/quarantine/sec/fixture-run/5005901a1e8132207ea0cf7a0d4bec1d7b9ca3a6f0371b9e45c9eb2863045086/transform/sec-0143/error.json": {
+      "bytes": 410,
+      "sha256": "3ff65e7db180101246e003a11fd227051627d29060effa0a026a2b9aed0f0371"
+    },
+    "specs/evidence/sec-filing-index-ingestion/stage-3/verification/sdd-history/retained-parser-preflight/transform-refusal/report.json": {
+      "bytes": 20572,
+      "sha256": "6f16618b2a2a3ee6888bd288284764e032c19acf5881655425b38c666f02d900"
+    },
+    "specs/evidence/sec-filing-index-ingestion/stage-3/verification/sha256.json": {
+      "bytes": 2277373,
+      "sha256": "4554adb90acdda3e44bffac01bb878d3391d4ae523e0c4439aa4e1ab2c612b6b"
+    },
+    "specs/evidence/sec-filing-index-ingestion/stage-3/verification/specimens/SEC-0141.json": {
+      "bytes": 33295,
+      "sha256": "e4805039d56de2508feb8e4569698327a8d05375fe34fe6df77caf1012fe8382"
+    },
+    "specs/evidence/sec-filing-index-ingestion/stage-3/verification/specimens/SEC-0142.json": {
+      "bytes": 37131,
+      "sha256": "d42ae92c9995d6e51001acd32d858c4c3ab524e9ea0d38e2f1bedde845e709de"
+    },
+    "specs/evidence/sec-filing-index-ingestion/stage-3/verification/specimens/SEC-0143.json": {
+      "bytes": 12000,
+      "sha256": "8457100307a5cb79ee47bf40959d4c1d67a0774562cb24ac3b2ec7e00e69faba"
+    },
+    "specs/evidence/sec-filing-index-ingestion/stage-3/verification/specimens/SEC-0144.json": {
+      "bytes": 2518,
+      "sha256": "4b2097069b0371e706e2920d965a5280d8cf3f447855344453dfb853f434f231"
+    },
+    "specs/evidence/sec-filing-index-ingestion/stage-3/verification/specimens/SEC-0145.json": {
+      "bytes": 2517,
+      "sha256": "1cce5b4d40fc7643e3f7d86e01a1be616c4a8cc3cff430dfb993ee10dbdbdbdb"
+    },
+    "specs/evidence/sec-filing-index-ingestion/stage-3/verification/specimens/SEC-0146.json": {
+      "bytes": 2613,
+      "sha256": "7e0ff324ca27dbe34883ff8cb51fd368f236e98c700dafffa884a5127a319be5"
+    },
+    "specs/evidence/sec-filing-index-ingestion/stage-3/verification/specimens/SEC-0147.json": {
+      "bytes": 2557,
+      "sha256": "8a56a052fe3383aa1005a5a27b78e0f9db22fd6ac08b072a95038330d08ad3ac"
+    },
+    "specs/evidence/sec-filing-index-ingestion/stage-3/verification/specimens/SEC-0148.json": {
+      "bytes": 2542,
+      "sha256": "5eaf71f13db415a936eba66e64d0dfd3978d9b5f2850593e1322bad3470d257a"
+    },
+    "specs/evidence/sec-filing-index-ingestion/stage-3/verification/specimens/SEC-0149.json": {
+      "bytes": 2587,
+      "sha256": "a8b9a7ea5d82eea9b21de77ea5b17a36298cbd58593b33020ad36a33faeaf4aa"
+    },
+    "specs/evidence/sec-filing-index-ingestion/stage-3/verification/specimens/SEC-0150.json": {
+      "bytes": 2550,
+      "sha256": "238b19ed91e7f59253bb9795af743d5b23bc7fdf0c677d9f7ba3f0b14fd4649d"
+    },
+    "specs/evidence/sec-filing-index-ingestion/stage-3/verification/specimens/report.json": {
+      "bytes": 111617,
+      "sha256": "2d43e4d808b43ee23763cc999e10dacea868d9ebebb52b1c15dfbdc76baf5809"
+    },
+    "specs/evidence/sec-filing-index-ingestion/stage-3/verification/specimens/sha256.json": {
+      "bytes": 1632,
+      "sha256": "cf9879c99eafcee8e62d93d704ada310652771e01c25dfc3846afda408ebc3f9"
+    },
+    "specs/sec-filing-index-ingestion-stage-3-spec.md": {
+      "bytes": 26630,
+      "sha256": "1d55e0c32c9d1c2b765be5410483a2cb703fc1046de38cc19a9eab1a93fac573"
+    }
+  },
+  "live_access": "closed",
+  "negative_cases_rejected": [
+    "additional source",
+    "changed raw hash",
+    "changed raw length",
+    "changed row count",
+    "changed conflict count",
+    "changed first conflict line",
+    "winner selection",
+    "accepted processing",
+    "accepted observation",
+    "pointer mutation",
+    "live access",
+    "removed invalid-row blocker",
+    "removed cache blocker"
+  ],
+  "network_guard": true,
+  "original_specimen_exit": 1,
+  "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+  "python": "3.14.7 (main, Aug  5 2026, 10:29:49) [Clang 21.0.0 (clang-2100.1.1.101)]",
+  "runtime_seconds": 2.5307120829820633,
+  "sources": [
+    {
+      "bytes": 3729148,
+      "conflicts": 21,
+      "first_conflict_line": 6580,
+      "observation_ref_absent": true,
+      "original_source_relative": "specs/evidence/sec-filing-index-ingestion/stage-1/specimens/aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de.zip",
+      "outcome": "quarantined whole source",
+      "period": "2010Q1",
+      "processing_absent": true,
+      "published_pointer_absent": true,
+      "quarantine_error": {
+        "bytes": 408,
+        "sha256": "cf7fabda4f6952569a4fc985c0210cc5a6b008ec4abfc04d6c66369109dc81ff"
+      },
+      "raw_original_verified": true,
+      "receipt_id": "SEC-0141",
+      "retained_sqlite": {
+        "bytes": 20480,
+        "sha256": "8fd19f01cb400a9c62ae48a1e7e5eb1405e255cdeee126eb565d31882b6b1b95"
+      },
+      "rows": 300561,
+      "sha256": "aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de"
+    },
+    {
+      "bytes": 3901000,
+      "conflicts": 24,
+      "first_conflict_line": 87808,
+      "observation_ref_absent": true,
+      "original_source_relative": "specs/evidence/sec-filing-index-ingestion/stage-1/specimens/984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728.zip",
+      "outcome": "quarantined whole source",
+      "period": "2015Q1",
+      "processing_absent": true,
+      "published_pointer_absent": true,
+      "quarantine_error": {
+        "bytes": 410,
+        "sha256": "8defffc810fbf4b43cc831933011ad9c836afae8489852a80c0dcb27c867e410"
+      },
+      "raw_original_verified": true,
+      "receipt_id": "SEC-0142",
+      "retained_sqlite": {
+        "bytes": 20480,
+        "sha256": "79f104ff69ba9eb084b605a5e6fe4617070e89e2f30eca47eab456b3fe4eccd0"
+      },
+      "rows": 318647,
+      "sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728"
+    },
+    {
+      "bytes": 3502663,
+      "conflicts": 6,
+      "first_conflict_line": 40292,
+      "observation_ref_absent": true,
+      "original_source_relative": "specs/evidence/sec-filing-index-ingestion/stage-1/specimens/393a535f84b71ed34845f67aa5e5275ecc86afeb1a6558ad5623b0d7d0babe71.zip",
+      "outcome": "quarantined whole source",
+      "period": "2026Q3",
+      "processing_absent": true,
+      "published_pointer_absent": true,
+      "quarantine_error": {
+        "bytes": 410,
+        "sha256": "3ff65e7db180101246e003a11fd227051627d29060effa0a026a2b9aed0f0371"
+      },
+      "raw_original_verified": true,
+      "receipt_id": "SEC-0143",
+      "retained_sqlite": {
+        "bytes": 20480,
+        "sha256": "d463c207dde316c1747e622a2c1eccdfb3132971df4a571180d21a24b1eecc75"
+      },
+      "rows": 302315,
+      "sha256": "393a535f84b71ed34845f67aa5e5275ecc86afeb1a6558ad5623b0d7d0babe71"
+    }
+  ],
+  "successful_catalog_range_established": false
+}
