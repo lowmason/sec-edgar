@@ -359,6 +359,160 @@ class EtlCliTests(unittest.TestCase):
         self.assertEqual(code, 0, self.calls[-1])
         self.assertEqual({quarter.quarter for quarter in self.read_output(output).quarters}, {'2026Q3', '2026Q4'})
 
+    def _assert_unreceipted_revision_visits_both_quarters(self, kind, *, corruption=None):
+        from support import Faults, CollectionCrash
+        from support_etl import seed_observation
+        from sec_edgar_ingest.etl.commands import run_publish
+        from sec_edgar_ingest.etl.manifest import read_manifest
+        from sec_edgar_ingest.etl.reader import capture_quarter, read_quarter
+        from sec_edgar_ingest.etl.state import EtlState
+        state = EtlState(self.store)
+        period = '2026Q3' if kind == 'quarterly' else '2026-10-02'
+        rows = b'123456|A|10-K|2026-07-01|edgar/data/123456/a.txt\n'
+        old = seed_observation(self.objects, state, self.context, self.settings,
+                               period=period, kind=kind, rows=rows)
+        faults = Faults()
+        def crash(): raise CollectionCrash()
+        faults.at('publication.after_pointer', crash)
+        def publisher(*args): return run_publish(*args, observer=faults)
+        old_argv = self.argv('publish', self.observation_workset((old,), 'old-unreceipted'), 'old-unreceipted')
+        with patch('sec_edgar_ingest.cli.run_publish', side_effect=publisher), self.assertRaises(CollectionCrash):
+            self.invoke(old_argv)
+        previous = state.pointer('2026Q3')
+        self.assertIsNotNone(previous)
+        self.assertFalse(list(self.store.scan('PublicationReceipt', {})))
+        if corruption:
+            capture = capture_quarter('2026Q3', self.objects, state)
+            manifest = read_manifest(capture, self.objects)
+            if corruption == 'fingerprint':
+                value = previous.to_mapping()['value']
+                value['source_fingerprint'] = 'f' * 64
+                self.store.replace('QuarterPublication', '2026Q3', value, previous.version)
+            else:
+                path = capture.manifest_ref if corruption == 'manifest' else manifest.files[0].path
+                target = self.root / '.fixture-state/objects' / path
+                target.write_bytes(target.read_bytes() + b'corruption')
+        self.checkpoint('unreceipted-before-revision')
+        new = seed_observation(self.objects, state, self.context, self.settings, period=period, kind=kind,
+                               rows=rows.replace(b'2026-07-01', b'2026-10-01'), seconds=1)
+        code, output = self.invoke(self.argv('publish', self.observation_workset((new,), 'moved'), 'moved'))
+        self.checkpoint('unreceipted-after-revision')
+        if corruption:
+            self.assertEqual(code, 9, self.calls[-1])
+            self.assertIsNone(output['result_ref'])
+            self.assertIsNone(state.pointer('2026Q4'))
+            self.assertEqual(state.pointer('2026Q3').value['generation_id'], previous.value['generation_id'])
+            return
+        result = self.read_output(output)
+        self.assertEqual({quarter.quarter for quarter in result.quarters}, {'2026Q3', '2026Q4'})
+        outcomes = {quarter.quarter: quarter.outcome for quarter in result.quarters}
+        self.assertEqual(outcomes['2026Q4'], 'published')
+        capture = capture_quarter('2026Q3', self.objects, state)
+        self.assertEqual(len(list(read_quarter(capture, self.objects))), 1)
+        if kind == 'quarterly':
+            self.assertEqual(code, 7, self.calls[-1])
+            self.assertEqual(outcomes['2026Q3'], 'invalid_source')
+            self.assertEqual(state.pointer('2026Q3'), previous)
+        else:
+            self.assertEqual(code, 0, self.calls[-1])
+            self.assertEqual(outcomes['2026Q3'], 'published')
+            manifest = read_manifest(capture, self.objects)
+            self.assertEqual((manifest.withdrawn, manifest.unresolved_absence), (0, 1))
+            self.assertEqual(manifest.sources, (new,))
+
+    def test_unreceipted_daily_revision_reconciles_old_and_new_quarters(self):
+        self._assert_unreceipted_revision_visits_both_quarters('daily')
+
+    def test_unreceipted_quarterly_revision_refuses_empty_own_membership(self):
+        self._assert_unreceipted_revision_visits_both_quarters('quarterly')
+
+    def test_prior_quarter_discovery_rejects_corrupt_manifest(self):
+        self._assert_unreceipted_revision_visits_both_quarters('daily', corruption='manifest')
+
+    def test_prior_quarter_discovery_rejects_corrupt_data(self):
+        self._assert_unreceipted_revision_visits_both_quarters('daily', corruption='data')
+
+    def test_prior_quarter_discovery_rejects_pointer_fingerprint_mismatch(self):
+        self._assert_unreceipted_revision_visits_both_quarters('daily', corruption='fingerprint')
+
+    def _assert_repair_exception_resumes_exact_command(self, stage, *, unchanged=False):
+        from support_etl import seed_observation
+        from sec_edgar_ingest.etl.state import EtlState
+        from sec_edgar_ingest.storage.contracts import Conflict
+        state = EtlState(self.store)
+        rows = (b'123456|A|10-K|2026-07-01|edgar/data/123456/a.txt\n'
+                b'123456|B|10-K|2026-10-01|edgar/data/123456/b.txt\n')
+        observation = seed_observation(self.objects, state, self.context, self.settings,
+                                       period='2026-10-02', kind='daily', rows=rows)
+        ref = self.observation_workset((observation,), 'repair-exception')
+        if unchanged:
+            self.assertEqual(self.invoke(self.argv('publish', ref, 'base'))[0], 0)
+        argv = self.argv('publish', ref, 'repair-exception')
+        original = None if stage.startswith('publication.') else getattr(EtlState, stage)
+        injected = []
+        def fail_once(instance, *args):
+            is_receipt = stage == '_record_membership' or args[0] == 'PublicationReceipt'
+            if is_receipt and not injected:
+                injected.append(True)
+                self.assertIsNotNone(instance.pointer('2026Q3'))
+                raise Conflict('one-shot ancillary repair failure')
+            return original(instance, *args)
+        with contextlib.ExitStack() as patches:
+            if stage.startswith('publication.'):
+                from support import Faults
+                from sec_edgar_ingest.etl.commands import run_publish
+                faults = Faults()
+                def fail_boundary():
+                    injected.append(True)
+                    self.assertIsNotNone(state.pointer('2026Q3'))
+                    raise OSError('one-shot post-commit boundary failure')
+                faults.at(stage, fail_boundary)
+                def publisher(*args): return run_publish(*args, observer=faults)
+                patches.enter_context(patch('sec_edgar_ingest.cli.run_publish', side_effect=publisher))
+            else:
+                patches.enter_context(patch.object(EtlState, stage, fail_once))
+            code, output = self.invoke(argv)
+        self.assertEqual(code, 9, self.calls[-1])
+        self.assertEqual(injected, [True])
+        pointers = [row.to_mapping() for row in self.store.scan('QuarterPublication', {})]
+        self.assertEqual(len(pointers), 2)
+        attempt = next(row for row in self.store.scan('Attempt', {})
+                       if row.value['context']['attempt_id'] == 'repair-exception')
+        frozen_context = attempt.to_mapping()['value']['context']
+        self.checkpoint('ordinary-repair-before-retry')
+        self.assertIsNone(output['result_ref'])
+        self.assertIsNone(attempt.value['result'])
+        progress = attempt.value['structured_errors'][0]['details']['quarters']
+        self.assertEqual({quarter['quarter'] for quarter in progress}, {'2026Q3', '2026Q4'})
+        self.assertTrue(all(quarter['generation_id'] for quarter in progress))
+        code, output = self.invoke(argv)
+        self.assertEqual(code, 0, self.calls[-1])
+        result = self.read_output(output)
+        self.assertEqual(result.context.to_mapping(), frozen_context)
+        self.assertEqual(result.unchanged, 2)
+        self.assertEqual([row.to_mapping() for row in self.store.scan('QuarterPublication', {})], pointers)
+        self.assertEqual(len(list(self.store.scan('PublicationReceipt', {}))), 2)
+        self.assertTrue(state.processing(observation).value['published'])
+        frozen_result = self.objects.read(output['result_ref'])
+        self.assertEqual(self.invoke(argv), (0, output))
+        self.assertEqual(self.objects.read(output['result_ref']), frozen_result)
+        self.checkpoint('ordinary-repair-after-retry')
+
+    def test_receipt_exception_after_commit_remains_resumable(self):
+        self._assert_repair_exception_resumes_exact_command('_immutable')
+
+    def test_membership_exception_after_commit_remains_resumable(self):
+        self._assert_repair_exception_resumes_exact_command('_record_membership')
+
+    def test_unchanged_capture_repair_exception_remains_resumable(self):
+        self._assert_repair_exception_resumes_exact_command('_record_membership', unchanged=True)
+
+    def test_after_pointer_exception_remains_resumable(self):
+        self._assert_repair_exception_resumes_exact_command('publication.after_pointer')
+
+    def test_after_repair_exception_remains_resumable(self):
+        self._assert_repair_exception_resumes_exact_command('publication.after_repair')
+
     def test_pointer_crash_resumes_without_another_advance_and_repairs_receipts(self):
         from sec_edgar_ingest.etl.commands import run_publish
         from support import Faults, CollectionCrash

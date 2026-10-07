@@ -14,7 +14,8 @@ from .collection import collect
 from .config import Settings, load_config, pin_context
 from .coordination import Clock, Coordinator
 from .discovery import discover
-from .etl.commands import read_etl_result, run_transform, run_publish, write_etl_result, validate_workset_ref
+from .etl.commands import (PublicationRepairPending, read_etl_result, run_transform, run_publish,
+                           write_etl_result, validate_workset_ref)
 from .etl.parser import supported_parser, SCHEMA_VERSION
 from .etl.publication import repair_publication
 from .etl.state import EtlState
@@ -350,7 +351,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _stdout(result, reference)
     except Exception as exception:
         outcome = 'configuration' if isinstance(exception, _ExpiredAttempt) else 'ownership_lost' if isinstance(exception, (OwnershipLost, ClockUncertain)) else ('state_conflict' if isinstance(exception, (Conflict, ValueError, OSError, KeyError)) else 'internal_error')
-        error = Error(outcome, str(exception), False, None, {'type': type(exception).__name__})
+        details = {'type': type(exception).__name__}
+        repair_pending = isinstance(exception, PublicationRepairPending)
+        if repair_pending:
+            details.update(exception.details)
+        error = Error(outcome, str(exception), repair_pending, None, details)
         if state is not None and context is not None:
             try:
                 _retain_error(state, context, outcome, error)

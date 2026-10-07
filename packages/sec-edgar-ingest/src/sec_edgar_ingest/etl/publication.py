@@ -14,6 +14,15 @@ from .state import EtlState
 from .transform import _read_manifest, _validate_context
 
 
+class PublicationRepairError(RuntimeError):
+    """Ancillary work failed after this exact publication was already committed."""
+
+    def __init__(self, result: PublicationResult, error: Exception):
+        super().__init__(f'committed quarter {result.quarter} repair incomplete: {error}')
+        self.result = result
+        self.error = error
+
+
 def _now() -> datetime:
     """Patchable UTC clock; production uses the context's real bounded deadline."""
     return datetime.now(timezone.utc)
@@ -78,8 +87,12 @@ def publish_quarter(quarter: str, incoming: tuple[ObservationRef, ...], context:
         if existing and existing.source_fingerprint != current.value['source_fingerprint']:
             raise Conflict('pointer source fingerprint differs from captured manifest')
         if unchanged_inputs(quarter, existing, incoming, context):
-            state.record_publication(existing)
-            return PublicationResult(quarter, 'unchanged', previous.generation_id, previous.manifest_ref, None, conflicts)
+            result = PublicationResult(quarter, 'unchanged', previous.generation_id, previous.manifest_ref, None, conflicts)
+            try:
+                state.record_publication(existing)
+            except Exception as error:
+                raise PublicationRepairError(result, error) from error
+            return result
         try:
             candidate = build_candidate(quarter, previous, incoming, context, settings, objects, state, observer=observer)
         except TimeoutError:
@@ -98,8 +111,12 @@ def publish_quarter(quarter: str, incoming: tuple[ObservationRef, ...], context:
         except (AlreadyExists, Conflict):
             observe(observer, 'publication.cas_lost')
             continue
-        observe(observer, 'publication.after_pointer')
-        state.record_publication(candidate.manifest)
-        observe(observer, 'publication.after_repair')
-        return PublicationResult(quarter, 'published', candidate.manifest.generation_id, candidate.manifest_ref, None, conflicts)
+        result = PublicationResult(quarter, 'published', candidate.manifest.generation_id, candidate.manifest_ref, None, conflicts)
+        try:
+            observe(observer, 'publication.after_pointer')
+            state.record_publication(candidate.manifest)
+            observe(observer, 'publication.after_repair')
+        except Exception as error:
+            raise PublicationRepairError(result, error) from error
+        return result
     return _conflict_result(quarter, CAS_ATTEMPTS, candidate)

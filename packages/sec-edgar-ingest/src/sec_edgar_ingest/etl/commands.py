@@ -11,9 +11,10 @@ from ..results import log_event, result_path
 from ..state import AcquisitionState, attempt_key
 from ..worksets import decode_snapshot_workset, encode_workset
 from ..storage.contracts import BoundaryObserver, CAS_ATTEMPTS, Conflict, ObjectStore, StateStore, observe
-from .contracts import (EtlResult, ObservationRef, PublicationResult, decode_transformed,
+from .contracts import (EtlResult, PublicationResult, decode_transformed,
                         processing_key, transformed_ref)
-from .publication import publish_quarter
+from .publication import PublicationRepairError, publish_quarter
+from .reader import capture_from_pointer, validated_manifest
 from .parser import supported_parser, SCHEMA_VERSION
 from .state import EtlState
 from .transform import transform_workset
@@ -184,17 +185,28 @@ def run_transform(snapshot_ref: str, context: RunContext, settings: Settings, ob
                      workset.failures, context.started_at, max(context.started_at, datetime.now(timezone.utc)))
 
 
-def _affected_quarters(observations, store):
+class PublicationRepairPending(RuntimeError):
+    """Keep the exact command resumable while retaining every quarter outcome."""
+
+    def __init__(self, quarters, gaps, repair_errors):
+        super().__init__('committed publication requires ancillary repair; retry the exact invocation')
+        self.details = {'quarters': [quarter.to_mapping() for quarter in quarters],
+                        'gaps': [gap.to_mapping() for gap in gaps],
+                        'repair_errors': repair_errors}
+
+
+def _affected_quarters(observations, objects, store):
     quarters = {quarter for ref in observations for quarter in ref.quarter_counts}
     sources = {ref.source.source_id for ref in observations}
-    prior_keys = set()
-    for row in store.scan('Processing', {}):
-        ref = ObservationRef.from_mapping(row.to_mapping()['value']['observation'])
-        if ref.source.source_id in sources:
-            prior_keys.add(row.value['processing_key'])
-    for receipt in store.scan('PublicationReceipt', {}):
-        if receipt.value['processing_key'] in prior_keys:
-            quarters.add(receipt.value['quarter'])
+    if sources:
+        # Receipts can be absent after a committed pointer, so discovery uses authority.
+        for pointer in store.scan('QuarterPublication', {}):
+            capture = capture_from_pointer(pointer)
+            manifest = validated_manifest(capture, objects)
+            if manifest.source_fingerprint != pointer.value['source_fingerprint']:
+                raise Conflict('pointer source fingerprint differs from captured manifest')
+            if any(ref.source.source_id in sources for ref in manifest.sources):
+                quarters.add(capture.quarter)
     return sorted(quarters)
 
 
@@ -213,15 +225,19 @@ def run_publish(transformed_workset_ref: str, context: RunContext, settings: Set
         raise Conflict('transformed workset path differs from payload identity')
     if (workset.context.parser_version, workset.context.schema_version) != (context.parser_version, context.schema_version):
         raise Conflict('publish versions differ from the immutable transformed workset')
-    quarters, gaps = [], []
+    quarters, gaps, repair_errors = [], [], []
     if not workset.complete:
         gaps.append(Error('incomplete', 'partial transformed workset is not publishable', False, None,
                           {'workset_ref': transformed_workset_ref, 'failures': [gap.to_mapping() for gap in workset.failures]}))
     else:
         state = EtlState(store)
-        for quarter in _affected_quarters(workset.observations, store):
+        for quarter in _affected_quarters(workset.observations, objects, store):
             try:
                 result = publish_quarter(quarter, workset.observations, context, settings, objects, state, observer=observer)
+            except PublicationRepairError as error:
+                result = error.result
+                repair_errors.append({'quarter': quarter, 'type': type(error.error).__name__,
+                                      'message': str(error.error)})
             except Exception as error:
                 outcome = ('state_conflict' if isinstance(error, (Conflict, OSError)) else
                            'invalid_source' if isinstance(error, ValueError) else 'internal_error')
@@ -234,6 +250,8 @@ def run_publish(transformed_workset_ref: str, context: RunContext, settings: Set
                                        'attempted_manifest_ref': result.manifest_ref}))
             quarters.append(result)
             log_event(context, 'quarter_publication', result.to_mapping())
+    if repair_errors:
+        raise PublicationRepairPending(quarters, gaps, repair_errors)
     counts = Counter(result.outcome for result in quarters)
     outcome = _aggregate([result.outcome for result in quarters] + [gap.code for gap in gaps], changed=bool(counts['published']))
     return EtlResult(context, outcome, transformed_workset_ref, transformed_workset_ref, 0,
