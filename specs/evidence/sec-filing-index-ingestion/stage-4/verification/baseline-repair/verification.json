@@ -1,0 +1,32 @@
+{
+  "schema": "sec-stage4-baseline-repair-v1",
+  "started_at_utc": "2026-10-07 22:57:28 UTC",
+  "recorded_at_utc": "2026-10-07 23:02:00 UTC",
+  "command": "uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/network_guard.py discover -s packages/sec-edgar-ingest/tests -p 'test_*.py' -v",
+  "cwd": "/Users/lowell/.codex/worktrees/sec-edgar-stage-4/sec-edgar",
+  "exit": 0,
+  "tests": 452,
+  "elapsed_seconds": 158.483,
+  "output_format": "combined tool stdout/stderr",
+  "initial_baseline": {
+    "exit": 1,
+    "tests": 452,
+    "elapsed_seconds": 185.831,
+    "error": "collector race: _queue.Empty after checkpoint/binding barriers"
+  },
+  "repair": "Test-only fetch-entry barrier after recovery download choice; no production change.",
+  "focused_green": {
+    "exit": 0,
+    "tests": 1,
+    "elapsed_seconds": 1.69
+  },
+  "review": {
+    "agent": "baseline_review",
+    "model": "gpt-6.1-sol",
+    "spec": "approved",
+    "quality": "approved",
+    "findings": []
+  },
+  "live_access_authorizations": "closed",
+  "all22_stage7_integrated_checks": "reserved/not_run"
+}

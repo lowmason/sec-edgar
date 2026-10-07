@@ -1498,6 +1498,15 @@ def acquisition_race_entry(root, company, request_barrier, staged_barrier, bindi
         details = dict(event)
         trace(details.pop('event'), **details)
     h.coordinator.observer = observe
+    original_fetch = h.client.fetch
+    def fetch(*args, **kwargs):
+        # All collectors must choose download before any can checkpoint a receipt.
+        # Wait before fetch acquires coordinator ownership so requests remain serialized.
+        trace('request_barrier_ready')
+        request_barrier.wait(timeout=20)
+        trace('request_barrier_released')
+        return original_fetch(*args, **kwargs)
+    h.client.fetch = fetch
     def staged():
         trace('receipt_checkpoint')
         staged_barrier.wait(timeout=20)
@@ -1505,9 +1514,6 @@ def acquisition_race_entry(root, company, request_barrier, staged_barrier, bindi
     h.source_state.store = CollectionRaceStore(h.store, binding_barrier, trace)
     workset = decode_source_workset((root / 'input-workset.json').read_bytes())
     try:
-        trace('request_barrier_ready')
-        request_barrier.wait(timeout=20)
-        trace('request_barrier_released')
         result = collect(workset, h.context, h.settings, h.client, h.source_state, h.objects, h.faults)
         reference = write_result(result, h.objects, h.source_state)
         trace('result_written', result_ref=reference)
