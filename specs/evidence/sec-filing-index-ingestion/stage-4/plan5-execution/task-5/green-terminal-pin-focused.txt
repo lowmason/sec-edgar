@@ -1,0 +1,37 @@
+test_receipt_context_and_index_correlation_are_authoritative (test_workflow_processing.ProcessingTests.test_receipt_context_and_index_correlation_are_authoritative) ... ok
+test_unfinished_terminal_error_binds_original_attempt_and_replays_receipt (test_workflow_processing.ProcessingTests.test_unfinished_terminal_error_binds_original_attempt_and_replays_receipt) ... 
+  test_unfinished_terminal_error_binds_original_attempt_and_replays_receipt (test_workflow_processing.ProcessingTests.test_unfinished_terminal_error_binds_original_attempt_and_replays_receipt) (field='outcome') ... FAIL
+  test_unfinished_terminal_error_binds_original_attempt_and_replays_receipt (test_workflow_processing.ProcessingTests.test_unfinished_terminal_error_binds_original_attempt_and_replays_receipt) (field='gaps') ... FAIL
+  test_unfinished_terminal_error_binds_original_attempt_and_replays_receipt (test_workflow_processing.ProcessingTests.test_unfinished_terminal_error_binds_original_attempt_and_replays_receipt) (field='call') ... FAIL
+
+======================================================================
+FAIL: test_unfinished_terminal_error_binds_original_attempt_and_replays_receipt (test_workflow_processing.ProcessingTests.test_unfinished_terminal_error_binds_original_attempt_and_replays_receipt) (field='outcome')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_processing.py", line 417, in test_unfinished_terminal_error_binds_original_attempt_and_replays_receipt
+    with self.subTest(field=field), self.assertRaises((Conflict, ValueError, KeyError)):
+                                    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: (<class 'sec_edgar_ingest.storage.contracts.Conflict'>, <class 'ValueError'>, <class 'KeyError'>) not raised
+
+======================================================================
+FAIL: test_unfinished_terminal_error_binds_original_attempt_and_replays_receipt (test_workflow_processing.ProcessingTests.test_unfinished_terminal_error_binds_original_attempt_and_replays_receipt) (field='gaps')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_processing.py", line 417, in test_unfinished_terminal_error_binds_original_attempt_and_replays_receipt
+    with self.subTest(field=field), self.assertRaises((Conflict, ValueError, KeyError)):
+                                    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: (<class 'sec_edgar_ingest.storage.contracts.Conflict'>, <class 'ValueError'>, <class 'KeyError'>) not raised
+
+======================================================================
+FAIL: test_unfinished_terminal_error_binds_original_attempt_and_replays_receipt (test_workflow_processing.ProcessingTests.test_unfinished_terminal_error_binds_original_attempt_and_replays_receipt) (field='call')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_processing.py", line 417, in test_unfinished_terminal_error_binds_original_attempt_and_replays_receipt
+    with self.subTest(field=field), self.assertRaises((Conflict, ValueError, KeyError)):
+                                    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: (<class 'sec_edgar_ingest.storage.contracts.Conflict'>, <class 'ValueError'>, <class 'KeyError'>) not raised
+
+----------------------------------------------------------------------
+Ran 2 tests in 6.357s
+
+FAILED (failures=3)

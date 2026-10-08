@@ -1,0 +1,44 @@
+test_expired_original_is_repaired_fresh_without_pointer_advance (test_workflow_processing.ProcessingTests.test_expired_original_is_repaired_fresh_without_pointer_advance) ... ok
+test_fatal_collection_stops_before_etl_and_retains_all_child_gaps (test_workflow_processing.ProcessingTests.test_fatal_collection_stops_before_etl_and_retains_all_child_gaps) ... ERROR
+test_genuine_conflicting_source_has_no_accepted_processing (test_workflow_processing.ProcessingTests.test_genuine_conflicting_source_has_no_accepted_processing) ... ok
+test_malformed_source_has_no_accepted_observation_or_pointer (test_workflow_processing.ProcessingTests.test_malformed_source_has_no_accepted_observation_or_pointer) ... ok
+test_member_evidence_rejects_forged_version_ref_quarter_and_outcome (test_workflow_processing.ProcessingTests.test_member_evidence_rejects_forged_version_ref_quarter_and_outcome) ... ok
+test_member_receipt_is_content_first_and_replays_identically (test_workflow_processing.ProcessingTests.test_member_receipt_is_content_first_and_replays_identically) ... ok
+test_origin_acquisition_and_current_parser_replay_do_not_borrow_versions (test_workflow_processing.ProcessingTests.test_origin_acquisition_and_current_parser_replay_do_not_borrow_versions) ... ok
+test_partial_q3_q4_and_gate_preserve_exact_child_outcomes (test_workflow_processing.ProcessingTests.test_partial_q3_q4_and_gate_preserve_exact_child_outcomes) ... ok
+test_receipt_context_and_index_correlation_are_authoritative (test_workflow_processing.ProcessingTests.test_receipt_context_and_index_correlation_are_authoritative) ... ERROR
+test_receipt_replay_repairs_missing_index_without_dispatch (test_workflow_processing.ProcessingTests.test_receipt_replay_repairs_missing_index_without_dispatch) ... ok
+test_refusal_retains_exact_line_and_raw_details (test_workflow_processing.ProcessingTests.test_refusal_retains_exact_line_and_raw_details) ... ok
+test_retry_prefix_is_retained_without_source_quarantine (test_workflow_processing.ProcessingTests.test_retry_prefix_is_retained_without_source_quarantine) ... ok
+test_tampering_refuses_before_record (test_workflow_processing.ProcessingTests.test_tampering_refuses_before_record) ... ok
+test_unfinished_terminal_error_binds_original_attempt_and_replays_receipt (test_workflow_processing.ProcessingTests.test_unfinished_terminal_error_binds_original_attempt_and_replays_receipt) ... ok
+
+======================================================================
+ERROR: test_fatal_collection_stops_before_etl_and_retains_all_child_gaps (test_workflow_processing.ProcessingTests.test_fatal_collection_stops_before_etl_and_retains_all_child_gaps)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_processing.py", line 312, in test_fatal_collection_stops_before_etl_and_retains_all_child_gaps
+    registry.record(processed.result, context, evidence)
+                                               ^^^^^^^^
+NameError: name 'evidence' is not defined
+
+======================================================================
+ERROR: test_receipt_context_and_index_correlation_are_authoritative (test_workflow_processing.ProcessingTests.test_receipt_context_and_index_correlation_are_authoritative)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_processing.py", line 214, in test_receipt_context_and_index_correlation_are_authoritative
+    registry.record(processed.result, replace(context, config_sha256='0' * 64), processed.evidence)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/members.py", line 92, in record
+    from .processing import validate_member_evidence
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/members.py", line 72, in _validate_context
+    settings = Settings.from_mapping(context.to_mapping()['effective_config'])
+                                ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/config.py", line 271, in pin_context
+    raise ValueError(f"context {label} does not match the effective configuration")
+ValueError: context config_sha256 does not match the effective configuration
+
+----------------------------------------------------------------------
+Ran 14 tests in 63.512s
+
+FAILED (errors=2)

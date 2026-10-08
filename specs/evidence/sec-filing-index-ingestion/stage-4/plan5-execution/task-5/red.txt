@@ -1,0 +1,25 @@
+test_workflow_processing (unittest.loader._FailedTest.test_workflow_processing) ... ERROR
+
+======================================================================
+ERROR: test_workflow_processing (unittest.loader._FailedTest.test_workflow_processing)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_workflow_processing
+Traceback (most recent call last):
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/unittest/loader.py", line 426, in _find_test_path
+    module = self._get_module_from_name(name)
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/unittest/loader.py", line 367, in _get_module_from_name
+    __import__(name)
+    ~~~~~~~~~~^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/network_guard.py", line 48, in _guarded_import
+    module = _IMPORT(name, *args, **kwargs)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_processing.py", line 13, in <module>
+    from sec_edgar_ingest.workflows.processing import process_member
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/network_guard.py", line 48, in _guarded_import
+    module = _IMPORT(name, *args, **kwargs)
+ModuleNotFoundError: No module named 'sec_edgar_ingest.workflows.processing'
+
+
+----------------------------------------------------------------------
+Ran 1 test in 0.000s
+
+FAILED (errors=1)

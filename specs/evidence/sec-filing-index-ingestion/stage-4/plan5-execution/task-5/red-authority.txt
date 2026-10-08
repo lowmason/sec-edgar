@@ -1,0 +1,41 @@
+test_genuine_conflicting_source_has_no_accepted_processing (test_workflow_processing.ProcessingTests.test_genuine_conflicting_source_has_no_accepted_processing) ... ok
+test_member_evidence_rejects_forged_version_ref_quarter_and_outcome (test_workflow_processing.ProcessingTests.test_member_evidence_rejects_forged_version_ref_quarter_and_outcome) ... ok
+test_member_receipt_is_content_first_and_replays_identically (test_workflow_processing.ProcessingTests.test_member_receipt_is_content_first_and_replays_identically) ... ok
+test_receipt_context_and_index_correlation_are_authoritative (test_workflow_processing.ProcessingTests.test_receipt_context_and_index_correlation_are_authoritative) ... FAIL
+test_receipt_replay_repairs_missing_index_without_dispatch (test_workflow_processing.ProcessingTests.test_receipt_replay_repairs_missing_index_without_dispatch) ... FAIL
+test_refusal_retains_exact_line_and_raw_details (test_workflow_processing.ProcessingTests.test_refusal_retains_exact_line_and_raw_details) ... ok
+test_retry_prefix_is_retained_without_source_quarantine (test_workflow_processing.ProcessingTests.test_retry_prefix_is_retained_without_source_quarantine) ... ok
+test_tampering_refuses_before_record (test_workflow_processing.ProcessingTests.test_tampering_refuses_before_record) ... ok
+
+======================================================================
+FAIL: test_receipt_context_and_index_correlation_are_authoritative (test_workflow_processing.ProcessingTests.test_receipt_context_and_index_correlation_are_authoritative)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_processing.py", line 208, in test_receipt_context_and_index_correlation_are_authoritative
+    with self.assertRaises(Conflict):
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+AssertionError: Conflict not raised
+
+======================================================================
+FAIL: test_receipt_replay_repairs_missing_index_without_dispatch (test_workflow_processing.ProcessingTests.test_receipt_replay_repairs_missing_index_without_dispatch)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_processing.py", line 191, in test_receipt_replay_repairs_missing_index_without_dispatch
+    replay = process_member(value, context, dispatcher, h.store, h.objects)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/processing.py", line 40, in process_member
+    collected = dispatcher.execute('collect', 'collect-' + value['member_id'], origin,
+                                   ('--workset', value['member_ref']))
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/unittest/mock.py", line 1175, in __call__
+    return self._mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/unittest/mock.py", line 1179, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/unittest/mock.py", line 1234, in _execute_mock_call
+    raise effect
+AssertionError: receipt replay dispatched
+
+----------------------------------------------------------------------
+Ran 8 tests in 29.289s
+
+FAILED (failures=2)

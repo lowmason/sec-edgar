@@ -1,0 +1,851 @@
+# Review package: e0690e2a9b2eadd7cea7c35c120352edd60fc8df..4bd46760cc9d929e1e3ecbf0e2198c7ff2cd7442
+
+## Commits
+4bd46760 feat: process exact workflow source units through checked commands
+
+## Files changed
+ .../src/sec_edgar_ingest/workflows/members.py      | 125 +++++-
+ .../src/sec_edgar_ingest/workflows/processing.py   | 251 ++++++++++++
+ .../tests/test_workflow_processing.py              | 424 +++++++++++++++++++++
+ 3 files changed, 797 insertions(+), 3 deletions(-)
+
+## Diff
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/members.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/members.py
+index 624cd523..77ec6750 100644
+--- a/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/members.py
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/members.py
+@@ -1,14 +1,17 @@
+-from ..models import to_mapping_value
++import hashlib
++from collections.abc import Mapping
++
++from ..models import RunContext, canonical_json, parse_json, to_mapping_value
+ from ..storage.contracts import Conflict
+-from ..models import canonical_json
+-from .provenance import project_member, projection, read_member, read_parent, read_source, source_ref
++from .contracts import COMPLETE, CompletionEvaluation, MemberResult, workflow_path
++from .provenance import immutable, project_member, projection, read_member, read_parent, read_source, source_ref
+ 
+ class WorkflowMembers:
+     def __init__(self, store, objects):
+         self.store, self.objects = store, objects
+ 
+     def inventory(self):
+         from ..models import Error
+         valid, gaps = [], []
+         for row in self.store.scan('WorkflowMember', {}):
+             value = row.to_mapping()['value']
+@@ -30,10 +33,126 @@ class WorkflowMembers:
+ 
+     def register(self, parent_ref, member_ref):
+         selected = read_source(member_ref, self.objects)
+         if len(selected.members) != 1:
+             raise Conflict('registry requires singleton member')
+         parent = read_parent(parent_ref, self.store, self.objects)
+         expected = projection(parent, selected.members[0].source_id)
+         if selected != expected or source_ref(expected) != member_ref:
+             raise Conflict('registered member differs from exact projection')
+         return project_member(parent_ref, selected.members[0].source_id, self.store, self.objects)
++
++    def _path(self, member_id, context):
++        return workflow_path(context).rsplit('/', 1)[0] + '/members/' + member_id + '/result.json'
++
++    def _descriptor(self, result, context, body):
++        return {'ref': self._path(result.member_id, context),
++                'sha256': hashlib.sha256(body).hexdigest(), 'bytes': len(body),
++                'member_id': result.member_id, 'parser_version': result.parser_version,
++                'schema_version': result.schema_version}
++
++    def _read_receipt(self, path):
++        from .processing import validate_member_evidence
++        body = self.objects.read(path)
++        receipt = parse_json(body)
++        if (not isinstance(receipt, dict) or set(receipt) != {'format_version', 'context', 'result', 'evidence'}
++                or canonical_json(to_mapping_value(receipt)) != body
++                or receipt['format_version'] != 'sec-workflow-member-receipt-v1'):
++            raise Conflict('member receipt canonical bytes/schema differ')
++        result = MemberResult.from_mapping(receipt['result'])
++        context = RunContext.from_mapping(receipt['context'])
++        if path != self._path(result.member_id, context):
++            raise Conflict('member receipt path differs from context/member')
++        self._validate_context(result, context, receipt['evidence'])
++        validate_member_evidence(result, receipt['evidence'], self.objects)
++        return result, context, receipt['evidence'], body
++
++    def _validate_context(self, result, context, evidence):
++        from ..config import Settings, pin_context
++        try:
++            settings = Settings.from_mapping(context.to_mapping()['effective_config'])
++            pinned = pin_context(settings, context, context.pinned_on)[0]
++        except (ValueError, TypeError) as error:
++            raise Conflict('member receipt workflow context cannot reproduce its original pin') from error
++        if pinned != context:
++            raise Conflict('member receipt workflow context changes its original pin')
++        if (result.parser_version, result.schema_version) != (context.parser_version, context.schema_version):
++            raise Conflict('member result versions differ from workflow context')
++        for call in evidence['calls']:
++            child = RunContext.from_mapping(call['context'])
++            if (child.run_id, call['workflow_command'], call['workflow_attempt_id'], child.execution_id,
++                    child.started_at, child.deadline, child.pinned_on) != (
++                    context.run_id, context.command, context.attempt_id, context.execution_id,
++                    context.started_at, context.deadline, context.pinned_on):
++                raise Conflict('member child differs from original workflow namespace/context')
++            if not call['step_id'].startswith('repair-') and child.command != 'collect':
++                if child.effective_config != context.effective_config or child.image_digest != context.image_digest:
++                    raise Conflict('member child differs from current workflow settings')
++
++    def record(self, result, context, evidence) -> Mapping:
++        from .processing import validate_member_evidence
++        from .checked import unfinished_child
++        evidence = to_mapping_value(evidence)
++        read_member(evidence['member'], self.store, self.objects)
++        self._validate_context(result, context, evidence)
++        validate_member_evidence(result, evidence, self.objects)
++        terminal = evidence['terminal_error']
++        if terminal is not None:
++            actual, gaps = unfinished_child(terminal['call'], self.store)
++            retained = parse_json(self.objects.read(terminal['call']['result_ref'].rsplit('/', 1)[0] + '/terminal.json'))
++            if actual.to_mapping() != retained['context'] or [g.to_mapping() for g in gaps] != terminal['gaps']:
++                raise Conflict('member terminal capture differs from persisted Attempt')
++        path = self._path(result.member_id, context)
++        receipt = {'format_version': 'sec-workflow-member-receipt-v1', 'context': context.to_mapping(),
++                   'result': result.to_mapping(), 'evidence': evidence}
++        body = canonical_json(to_mapping_value(receipt))
++        self.objects.put_once(path, body)
++        index = self._descriptor(result, context, body)
++        self.objects.verify(path, index['sha256'], index['bytes'])
++        key = hashlib.sha256(canonical_json(to_mapping_value([context.run_id, context.command, context.attempt_id,
++            result.member_id, result.parser_version, result.schema_version]))).hexdigest()
++        immutable(self.store, 'WorkflowMemberResult', key, index)
++        return index
++
++    def replay(self, value, context):
++        path = self._path(value['member_id'], context)
++        try:
++            self.objects.read(path)
++        except FileNotFoundError:
++            return None
++        result, saved_context, evidence, body = self._read_receipt(path)
++        if saved_context != context or evidence['member'] != to_mapping_value(value):
++            raise Conflict('exact member replay changes frozen context/projection')
++        self.record(result, saved_context, evidence)
++        return result, evidence
++
++    def completed(self, value, parser_version, schema_version) -> Mapping | None:
++        from .completion import outstanding_repairs, validate_capture
++        from ..state import AcquisitionState
++        value = to_mapping_value(value)
++        read_member(value, self.store, self.objects)
++        if outstanding_repairs(value, self.store, self.objects):
++            return None
++        candidates = []
++        for row in self.store.scan('WorkflowMemberResult', {'member_id': value['member_id'],
++                'parser_version': parser_version, 'schema_version': schema_version}):
++            descriptor = row.to_mapping()['value']
++            if set(descriptor) != {'ref', 'sha256', 'bytes', 'member_id', 'parser_version', 'schema_version'}:
++                raise Conflict('member receipt descriptor fields differ')
++            self.objects.verify(descriptor['ref'], descriptor['sha256'], descriptor['bytes'])
++            result, context, evidence, body = self._read_receipt(descriptor['ref'])
++            if descriptor != self._descriptor(result, context, body) or evidence['member'] != value:
++                raise Conflict('member receipt descriptor/projection correlation differs')
++            if (result.parser_version, result.schema_version) != (parser_version, schema_version):
++                raise Conflict('receipt version lookup differs from decoded versions')
++            if result.outcome not in COMPLETE:
++                continue
++            capture = evidence['completion']
++            binding = AcquisitionState(self.store).binding(value['member_id'], value['source']['source_id'])
++            if binding is None or binding.to_mapping() != capture['binding']:
++                raise Conflict('historical completed receipt changes immutable raw pin')
++            validate_capture(capture, self.objects)
++            candidates.append(capture)
++        if not candidates:
++            return None
++        capture = sorted(candidates, key=lambda item: canonical_json(to_mapping_value(item)))[0]
++        return CompletionEvaluation(True, capture, (), ()).capture
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/processing.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/processing.py
+new file mode 100644
+index 00000000..b0389a31
+--- /dev/null
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/processing.py
+@@ -0,0 +1,251 @@
++from collections.abc import Mapping
++from dataclasses import dataclass
++from ..config import Settings
++from ..models import Record, RunContext, canonical_json, parse_json, validate_record_fields, to_mapping_value
++from ..storage.contracts import Conflict, observe
++from ..worksets import decode_snapshot_workset
++from .contracts import COMPLETE, MemberResult
++from .checked import ChildUnfinished, read_child_capture, _authority, _context_matches, unfinished_child
++from .completion import evaluate_member, resolve_repair, validate_capture, validate_resolution_capture
++from .provenance import read_member, read_source, projection, transfer_binding
++
++@dataclass(frozen=True, slots=True)
++class ProcessedMember(Record):
++    result: MemberResult
++    evidence: Mapping[str, object]
++    def __post_init__(self):
++        validate_record_fields(self)
++
++def process_member(value, context, dispatcher, store, objects, observer=None) -> ProcessedMember:
++    value = to_mapping_value(value)
++    member = read_member(value, store, objects)
++    from .members import WorkflowMembers
++    replay = WorkflowMembers(store, objects).replay(value, context)
++    if replay is not None:
++        return ProcessedMember(replay[0], replay[1])
++    source = member.members[0]
++    origin = Settings.from_mapping(member.context.to_mapping()['effective_config'])
++    initial = evaluate_member(value, context.parser_version, context.schema_version, store, objects)
++    resolutions, calls, gaps, quarters = [], [], [], ()
++    for obligation in initial.obligations:
++        objects.verify(obligation['ref'], obligation['sha256'], obligation['bytes'])
++        saved = parse_json(objects.read(obligation['ref']))
++        old = saved['call']['context']
++        settings = Settings.from_mapping(old['effective_config'])
++        repaired = dispatcher.execute('publish', 'repair-' + obligation['sha256'], settings,
++                                      ('--workset', saved['transformed_ref']))
++        calls.append(dict(repaired.call))
++        resolutions.append(resolve_repair(obligation, repaired.call, store, objects))
++    child_refs, snapshot_ref, transformed_ref = [], None, None
++    downloaded = transformed = quarantined = False
++    terminal_error = None
++    try:
++        collected = dispatcher.execute('collect', 'collect-' + value['member_id'], origin,
++                                       ('--workset', value['member_ref']))
++        calls.append(dict(collected.call))
++        child_refs.append(collected.result_ref)
++        raw = collected.result
++        gaps.extend(raw.gaps)
++        outcome, snapshot_ref = raw.outcome, raw.snapshot_workset_ref
++        quarantined = raw.outcome == 'quarantined' and snapshot_ref is None
++        downloaded = snapshot_ref is not None
++        if snapshot_ref is not None:
++            snapshots = decode_snapshot_workset(objects.read(snapshot_ref))
++            if snapshots.source_workset_id != member.workset_id or len(snapshots.snapshots) != 1:
++                raise Conflict('collection changed exact singleton source workset')
++            transfer_binding(value, snapshots.snapshots[0], store, objects)
++        # Collection.quarantined counts failed body retention, not source refusal.
++        if snapshot_ref is not None and outcome in COMPLETE:
++            parsed = dispatcher.execute('transform', 'transform-' + value['member_id'], dispatcher.settings,
++                                        ('--workset', snapshot_ref))
++            calls.append(dict(parsed.call))
++            child_refs.append(parsed.result_ref)
++            etl = parsed.result
++            gaps.extend(etl.gaps)
++            outcome, transformed_ref = etl.outcome, etl.transformed_workset_ref
++            transformed = bool(etl.transformed or etl.unchanged)
++            quarantined = bool(etl.quarantined) and outcome not in COMPLETE and not transformed
++            if quarantined:
++                outcome = 'quarantined'
++            if outcome in COMPLETE:
++                published = dispatcher.execute('publish', 'publish-' + value['member_id'], dispatcher.settings,
++                                               ('--workset', transformed_ref))
++                calls.append(dict(published.call))
++                child_refs.append(published.result_ref)
++                outcome, quarters = published.result.outcome, published.result.quarters
++                gaps.extend(published.result.gaps)
++    except ChildUnfinished as error:
++        if error.resumable:
++            raise  # No member completion/workflow report while publication repair is unfinished.
++        calls.append(dict(error.call))
++        outcome = error.outcome
++        gaps.extend(error.gaps)
++        terminal_error = to_mapping_value(error.details)
++        actual, retained_gaps = unfinished_child(error.call, store)
++        if retained_gaps != error.gaps:
++            raise Conflict('terminal error differs from persisted unfinished Attempt')
++        retained = {'context': actual.to_mapping(), 'terminal_error': terminal_error}
++        objects.put_once(error.call['result_ref'].rsplit('/', 1)[0] + '/terminal.json',
++                         canonical_json(to_mapping_value(retained)))
++    result = MemberResult(value['member_id'], source, value['parent_ref'], snapshot_ref,
++        transformed_ref, tuple(child_refs), outcome, downloaded, transformed, quarantined,
++        tuple(quarters), tuple(gaps), context.parser_version, context.schema_version)
++    evaluated = evaluate_member(value, context.parser_version, context.schema_version, store, objects)
++    if result.outcome in COMPLETE and not evaluated.complete:
++        raise Conflict('child completion lacks all affected quarter/repair evidence')
++    evidence = {'format_version': 'sec-workflow-member-evidence-v1', 'member': dict(value),
++        'calls': calls, 'completion': evaluated.capture if result.outcome in COMPLETE else None,
++        'resolutions': resolutions, 'terminal_error': terminal_error}
++    validate_member_evidence(result, evidence, objects)
++    observe(observer, 'workflow.after_member_processing')
++    return ProcessedMember(result, evidence)
++
++def _member_outcome(child):
++    refused = (child.context.command == 'transform' and child.quarantined
++               and not (child.transformed or child.unchanged))
++    return 'quarantined' if refused else child.outcome
++
++
++def validate_member_evidence(result, evidence, objects) -> None:
++    evidence = to_mapping_value(evidence)
++    from .contracts import member_status
++    from ..results import exit_code
++    fields = {'format_version', 'member', 'calls', 'completion', 'resolutions', 'terminal_error'}
++    if set(evidence) != fields or evidence['format_version'] != 'sec-workflow-member-evidence-v1':
++        raise Conflict('member evidence schema differs')
++    value = evidence['member']
++    if (result.member_id, result.source.to_mapping(), result.parent_ref) != (
++            value['member_id'], value['source'], value['parent_ref']):
++        raise Conflict('receipt changes registered member/source/parent')
++    if set(value) != {'member_id', 'source', 'parent_ref', 'member_ref'}:
++        raise Conflict('member projection fields differ')
++    parent = read_source(value['parent_ref'], objects)
++    projected = read_source(value['member_ref'], objects)
++    if projected != projection(parent, result.source.source_id) or projected.workset_id != result.member_id:
++        raise Conflict('member differs from immutable original projection')
++    checked, repair_calls, missing_calls = [], [], []
++    namespace = None
++    for call in evidence['calls']:
++        call, template = _authority(call, None, objects)
++        correlation = (template.run_id, call['workflow_command'], call['workflow_attempt_id'])
++        if namespace is not None and namespace != correlation:
++            raise Conflict('member calls change workflow namespace')
++        namespace = correlation
++        if call['step_id'].startswith('repair-'):
++            repaired = read_child_capture(call, objects)
++            if repaired.context.command != 'publish' or repaired.outcome not in COMPLETE:
++                raise Conflict('repair prefix is not successful checked publication')
++            if checked or missing_calls:
++                raise Conflict('repair calls must precede source sequence')
++            repair_calls.append(call)
++            continue
++        try:
++            child = read_child_capture(call, objects)
++        except FileNotFoundError:
++            terminal = evidence['terminal_error']
++            if terminal is None or terminal['call'] != call or result.outcome in COMPLETE:
++                raise Conflict('missing result cannot authorize completed member')
++            missing_calls.append(call)
++            retained_body = objects.read(call['result_ref'].rsplit('/', 1)[0] + '/terminal.json')
++            retained = parse_json(retained_body)
++            actual = RunContext.from_mapping(retained['context'])
++            _context_matches(template, actual)
++            if retained_body != canonical_json(to_mapping_value(retained)) or retained['terminal_error'] != terminal:
++                raise Conflict('terminal error differs from retained unfinished Attempt capture')
++            intent = {'context': actual.to_mapping(), 'intent': call['intent']} if actual.command in ('transform', 'publish') else call['intent']
++            if objects.read(call['result_ref'].rsplit('/', 1)[0] + '/command.json') != canonical_json(to_mapping_value(intent)):
++                raise Conflict('terminal command differs from unfinished context')
++            continue
++        if missing_calls:
++            raise Conflict('terminal unfinished child cannot precede successful child')
++        if call['step_id'] != child.context.command + '-' + value['member_id']:
++            raise Conflict('member child step differs from exact member namespace')
++        checked.append((call, child))
++    if tuple(call['result_ref'] for call, child in checked) != result.child_refs:
++        raise Conflict('receipt child result references differ')
++    commands = tuple(child.context.command for call, child in checked)
++    if commands not in ((), ('collect',), ('collect', 'transform'), ('collect', 'transform', 'publish')):
++        raise Conflict('member child order differs')
++    expected_gaps = [g.to_mapping() for call, child in checked for g in child.gaps]
++    terminal = evidence['terminal_error']
++    if terminal is not None:
++        if len(missing_calls) != 1 or terminal['call'] != missing_calls[0]:
++            raise Conflict('terminal error lacks exact unfinished child')
++        expected_command = ('collect', 'transform', 'publish')[len(checked)] if len(checked) < 3 else None
++        if missing_calls[0]['context']['command'] != expected_command or missing_calls[0]['step_id'] != expected_command + '-' + value['member_id']:
++            raise Conflict('terminal child breaks member chain')
++        expected_input = value['member_ref'] if not checked else result.snapshot_ref if len(checked) == 1 else result.transformed_ref
++        if missing_calls[0]['input_ref'] != expected_input or terminal['resumable'] or terminal['repair_pending']:
++            raise Conflict('resumable or unrelated unfinished child cannot create receipt')
++        if terminal['exit'] != exit_code(terminal['outcome']):
++            raise Conflict('terminal exit differs from registered outcome')
++        expected_gaps.extend(terminal['gaps'])
++        exit_code(terminal['outcome'])
++        if result.outcome != terminal['outcome']:
++            raise Conflict('terminal source outcome differs from exact child failure')
++    elif checked and result.outcome != _member_outcome(checked[-1][1]):
++        raise Conflict('member outcome differs from final checked child')
++    if [g.to_mapping() for g in result.gaps] != expected_gaps:
++        raise Conflict('member omitted or invented child gaps')
++    if not checked and terminal is None:
++        raise Conflict('member has no checked source operation')
++    raw = checked[0][1] if checked else None
++    parsed = checked[1][1] if len(checked) >= 2 else None
++    published = checked[2][1] if len(checked) >= 3 else None
++    if raw is not None and (checked[0][0]['input_ref'] != value['member_ref'] or
++            result.snapshot_ref != raw.snapshot_workset_ref or result.downloaded != (raw.snapshot_workset_ref is not None)):
++        raise Conflict('member collection/snapshot identity differs')
++    if raw is None and (result.snapshot_ref is not None or result.downloaded):
++        raise Conflict('member invents collection progress')
++    if parsed is None and (result.transformed_ref is not None or result.transformed):
++        raise Conflict('member invents transform progress')
++    if parsed is not None and (parsed.input_ref != result.snapshot_ref or
++            parsed.transformed_workset_ref != result.transformed_ref or
++            result.transformed != bool(parsed.transformed or parsed.unchanged)):
++        raise Conflict('member transform identity/progress differs')
++    if parsed is not None and raw.outcome not in COMPLETE or published is not None and parsed.outcome not in COMPLETE:
++        raise Conflict('member continued after non-complete child')
++    for child in (parsed, published):
++        if child is not None and (child.context.parser_version, child.context.schema_version) != (result.parser_version, result.schema_version):
++            raise Conflict('member processing versions differ from exact child context')
++    expected_quarantine = bool(parsed and parsed.quarantined and not result.transformed)
++    if raw is not None and raw.outcome == 'quarantined' and raw.snapshot_workset_ref is None:
++        expected_quarantine = True
++    if result.quarantined != expected_quarantine:
++        raise Conflict('transport body retention cannot create source quarantine')
++    if published is not None and (published.input_ref != result.transformed_ref or published.quarters != result.quarters):
++        raise Conflict('member publication input/quarter outcomes differ')
++    if published is None and result.quarters:
++        raise Conflict('member invents publication outcomes')
++    complete = evidence['completion']
++    if member_status(result.outcome) == 'complete':
++        if complete is None or complete['member'] != value:
++            raise Conflict('complete member lacks exact captured evidence')
++        validate_capture(complete, objects)
++        if (complete['observation']['parser_version'], complete['observation']['schema_version']) != (result.parser_version, result.schema_version):
++            raise Conflict('member capture processing versions differ')
++        from ..models import Snapshot
++        from ..worksets import make_snapshot_workset, decode_source_workset
++        source_projection = decode_source_workset(objects.read(value['member_ref']))
++        exact = make_snapshot_workset(source_projection, (Snapshot.from_mapping(complete['snapshot']),))
++        actual = decode_snapshot_workset(objects.read(result.snapshot_ref))
++        if exact != actual:
++            raise Conflict('member capture differs from exact pinned snapshot workset')
++        captures = {c['quarter']: c for c in complete['quarters']}
++        if set(captures) != {q.quarter for q in result.quarters}:
++            raise Conflict('member omitted affected publication quarter')
++        for quarter in result.quarters:
++            captured = captures[quarter.quarter]
++            if (quarter.generation_id, quarter.manifest_ref) != (captured['generation_id'], captured['manifest_ref']):
++                raise Conflict('member quarter differs from immutable capture')
++    elif complete is not None:
++        raise Conflict('unresolved member invents complete capture')
++    if len(evidence['resolutions']) != len(repair_calls):
++        raise Conflict('repair prefix lacks exact resolution')
++    resolution_calls = []
++    for resolution in evidence['resolutions']:
++        validate_resolution_capture(resolution, objects)
++        objects.verify(resolution['ref'], resolution['sha256'], resolution['bytes'])
++        resolution_calls.append(parse_json(objects.read(resolution['ref']))['call'])
++    if resolution_calls != repair_calls:
++        raise Conflict('repair resolution belongs to another checked prefix')
+diff --git a/packages/sec-edgar-ingest/tests/test_workflow_processing.py b/packages/sec-edgar-ingest/tests/test_workflow_processing.py
+new file mode 100644
+index 00000000..a9af3194
+--- /dev/null
++++ b/packages/sec-edgar-ingest/tests/test_workflow_processing.py
+@@ -0,0 +1,424 @@
++from network_guard import install
++install()
++from sec_edgar_ingest.models import to_mapping_value
++import hashlib, json, tempfile, unittest
++from datetime import date, datetime, timedelta, timezone
++from pathlib import Path
++from support_workflows import BASE, CommandHarness, simple_pack
++from sec_edgar_ingest.config import pin_context
++from sec_edgar_ingest.models import RunContext, canonical_json
++from sec_edgar_ingest.worksets import decode_source_workset
++from sec_edgar_ingest.workflows.checked import Dispatcher
++from sec_edgar_ingest.workflows.provenance import project_member
++from sec_edgar_ingest.workflows.processing import process_member
++
++class ProcessingTests(unittest.TestCase):
++    def test_retry_prefix_is_retained_without_source_quarantine(self):
++        with tempfile.TemporaryDirectory() as tmp:
++            root = Path(tmp)
++            pack = simple_pack(root / 'pack')
++            manifest = json.loads(pack.read_text())
++            url = BASE + 'daily-index/2026/QTR4/master.20261001.idx'
++            prefix = b'retained truncated prefix'
++            sha = hashlib.sha256(prefix).hexdigest()
++            (pack.parent / 'bodies' / (sha + '.body')).write_bytes(prefix)
++            manifest['responses'][url].insert(0, {
++                'status': 200, 'headers': {'X-Fixture': 'partial'}, 'fault': 'read_timeout',
++                'body_path': 'bodies/' + sha + '.body', 'body_sha256': sha})
++            pack.write_bytes(canonical_json(to_mapping_value(manifest)))
++            h = CommandHarness(root, pack)
++            try:
++                now = datetime.now(timezone.utc)
++                context = RunContext('processing', 'manual', 'daily', 'a',
++                    h.settings.worker.image_digest, h.settings.etl.parser_version,
++                    h.settings.etl.schema_version, h.settings.config_sha256,
++                    now, now + timedelta(seconds=1800), 'daily')
++                context = pin_context(h.settings, context, date(2026, 10, 7))[0]
++                dispatcher = Dispatcher(context, h.settings, pack, root, h.store, h.objects)
++                discovered = dispatcher.execute('discover', 'discover', h.settings,
++                    ('--mode', 'daily', '--discovery-id', 'processing-daily'))
++                parent = decode_source_workset(h.objects.read(discovered.result.source_workset_ref))
++                value = project_member(discovered.result.source_workset_ref,
++                    parent.members[0].source_id, h.store, h.objects)
++                processed = process_member(value, context, dispatcher, h.store, h.objects)
++                self.assertFalse(processed.result.quarantined)
++                self.assertEqual(processed.result.outcome, 'success')
++                self.assertTrue(processed.result.transformed)
++                self.assertEqual(len(processed.result.child_refs), 3)
++                self.assertTrue(any(p.read_bytes() == prefix for p in
++                    (root / '.fixture-state/objects/quarantine/sec').rglob('body')))
++                capture, rows = h.capture('2026Q4')
++                self.assertEqual(len(rows), 1)
++            finally:
++                h.close()
++    def prepare(self, root, *, conflicting=False, pack_edit=None):
++        pack = simple_pack(root / 'pack', conflicting=conflicting)
++        if pack_edit is not None:
++            pack_edit(pack)
++        h = CommandHarness(root, pack)
++        now = datetime.now(timezone.utc)
++        context = RunContext('processing', 'manual', 'daily', 'a',
++            h.settings.worker.image_digest, h.settings.etl.parser_version,
++            h.settings.etl.schema_version, h.settings.config_sha256,
++            now, now + timedelta(seconds=1800), 'daily')
++        context = pin_context(h.settings, context, date(2026, 10, 7))[0]
++        dispatcher = Dispatcher(context, h.settings, h.pack, root, h.store, h.objects)
++        found = dispatcher.execute('discover', 'discover', h.settings,
++            ('--mode', 'daily', '--discovery-id', 'processing-daily'))
++        parent = decode_source_workset(h.objects.read(found.result.source_workset_ref))
++        value = project_member(found.result.source_workset_ref, parent.members[0].source_id, h.store, h.objects)
++        return h, context, dispatcher, value
++
++    def test_genuine_conflicting_source_has_no_accepted_processing(self):
++        with tempfile.TemporaryDirectory() as tmp:
++            h, context, dispatcher, value = self.prepare(Path(tmp), conflicting=True)
++            try:
++                processed = process_member(value, context, dispatcher, h.store, h.objects)
++                self.assertTrue(processed.result.quarantined)
++                self.assertFalse(processed.result.transformed)
++                self.assertEqual(processed.result.outcome, 'quarantined')
++                self.assertEqual(tuple(h.store.scan('Processing', {})), ())
++                self.assertEqual(tuple(h.store.scan('QuarterPublication', {})), ())
++                self.assertTrue(any(g.details for g in processed.result.gaps))
++            finally:
++                h.close()
++
++    def test_member_evidence_rejects_forged_version_ref_quarter_and_outcome(self):
++        from dataclasses import replace
++        from sec_edgar_ingest.storage.contracts import Conflict
++        from sec_edgar_ingest.workflows.processing import validate_member_evidence
++        with tempfile.TemporaryDirectory() as tmp:
++            h, context, dispatcher, value = self.prepare(Path(tmp))
++            try:
++                processed = process_member(value, context, dispatcher, h.store, h.objects)
++                result = processed.result
++                variants = (replace(result, parser_version='fixture-index-parser-v2'),
++                            replace(result, snapshot_ref='worksets/sec/snapshot/sha256=' + '0' * 64 + '/workset.json'),
++                            replace(result, quarters=()), replace(result, outcome='unchanged'))
++                for changed in variants:
++                    with self.subTest(changed=changed):
++                        with self.assertRaises((Conflict, ValueError, OSError, KeyError)):
++                            validate_member_evidence(changed, processed.evidence, h.objects)
++            finally:
++                h.close()
++
++    def test_member_receipt_is_content_first_and_replays_identically(self):
++        from sec_edgar_ingest.workflows.members import WorkflowMembers
++        with tempfile.TemporaryDirectory() as tmp:
++            h, context, dispatcher, value = self.prepare(Path(tmp))
++            try:
++                processed = process_member(value, context, dispatcher, h.store, h.objects)
++                registry = WorkflowMembers(h.store, h.objects)
++                first = registry.record(processed.result, context, processed.evidence)
++                retained = h.objects.read(first['ref'])
++                self.assertEqual(registry.record(processed.result, context, processed.evidence), first)
++                self.assertEqual(h.objects.read(first['ref']), retained)
++                self.assertEqual(registry.completed(value, context.parser_version, context.schema_version),
++                                 processed.evidence['completion'])
++            finally:
++                h.close()
++
++    def test_refusal_retains_exact_line_and_raw_details(self):
++        from sec_edgar_ingest.workflows.checked import read_child_capture
++        with tempfile.TemporaryDirectory() as tmp:
++            h, context, dispatcher, value = self.prepare(Path(tmp), conflicting=True)
++            try:
++                processed = process_member(value, context, dispatcher, h.store, h.objects)
++                child = read_child_capture(processed.evidence['calls'][-1], h.objects)
++                self.assertEqual(child.outcome, 'invalid_source')
++                self.assertEqual(child.quarantined, 1)
++                self.assertEqual(child.transformed, 0)
++                self.assertEqual(child.gaps, processed.result.gaps)
++                self.assertEqual(child.gaps[0].details['line_number'], 4)
++                self.assertEqual(child.gaps[0].details['reason'], 'conflicting duplicate logical key')
++                self.assertEqual(len(child.gaps[0].details['raw_sha256']), 64)
++                self.assertEqual(tuple(h.store.scan('Processing', {})), ())
++                self.assertEqual(tuple(h.store.scan('QuarterPublication', {})), ())
++                self.assertFalse(any((Path(tmp) / '.fixture-state/objects/observations').rglob('*.parquet')))
++            finally:
++                h.close()
++
++    def test_tampering_refuses_before_record(self):
++        from dataclasses import replace
++        from copy import deepcopy
++        from sec_edgar_ingest.storage.contracts import Conflict
++        from sec_edgar_ingest.workflows.members import WorkflowMembers
++        with tempfile.TemporaryDirectory() as tmp:
++            h, context, dispatcher, value = self.prepare(Path(tmp))
++            try:
++                processed = process_member(value, context, dispatcher, h.store, h.objects)
++                result = processed.result
++                variants = []
++                for path, changed in (
++                    (('calls', 0, 'result_ref'), result.child_refs[-1]),
++                    (('completion', 'snapshot', 'sha256'), '0' * 64),
++                    (('completion', 'quarters', 0, 'manifest_sha256'), '0' * 64),
++                    (('calls', 1, 'context', 'parser_version'), 'fixture-index-parser-v2'),
++                    (('calls', 0, 'step_id'), 'collect-other'),
++                    (('terminal_error',), {'call': {}, 'outcome': 'internal_error', 'gaps': []}),
++                ):
++                    evidence = deepcopy(to_mapping_value(processed.evidence))
++                    target = evidence
++                    for key in path[:-1]:
++                        target = target[key]
++                    target[path[-1]] = changed
++                    variants.append((result, evidence))
++                for changed in (replace(result, downloaded=False),
++                                replace(result, quarantined=False, transformed=False),
++                                replace(result, child_refs=result.child_refs[1:]),
++                                replace(result, quarters=())):
++                    variants.append((changed, processed.evidence))
++                registry = WorkflowMembers(h.store, h.objects)
++                for changed, evidence in variants:
++                    with self.subTest(changed=changed, evidence=evidence):
++                        with self.assertRaises((Conflict, ValueError, OSError, KeyError, TypeError)):
++                            registry.record(changed, context, evidence)
++                self.assertEqual(tuple(h.store.scan('WorkflowMemberResult', {})), ())
++            finally:
++                h.close()
++
++    def test_receipt_replay_repairs_missing_index_without_dispatch(self):
++        from unittest.mock import patch
++        from sec_edgar_ingest.workflows.members import WorkflowMembers
++        from sec_edgar_ingest.storage.contracts import Conflict
++        with tempfile.TemporaryDirectory() as tmp:
++            h, context, dispatcher, value = self.prepare(Path(tmp))
++            try:
++                processed = process_member(value, context, dispatcher, h.store, h.objects)
++                registry = WorkflowMembers(h.store, h.objects)
++                with patch('sec_edgar_ingest.workflows.members.immutable', side_effect=Conflict('index interruption')):
++                    with self.assertRaises(Conflict):
++                        registry.record(processed.result, context, processed.evidence)
++                self.assertEqual(tuple(h.store.scan('WorkflowMemberResult', {})), ())
++                with patch.object(dispatcher, 'execute', side_effect=AssertionError('receipt replay dispatched')):
++                    replay = process_member(value, context, dispatcher, h.store, h.objects)
++                self.assertEqual(replay, processed)
++                self.assertEqual(len(tuple(h.store.scan('WorkflowMemberResult', {}))), 1)
++                self.assertEqual(registry.completed(value, context.parser_version, context.schema_version),
++                                 processed.evidence['completion'])
++            finally:
++                h.close()
++
++    def test_receipt_context_and_index_correlation_are_authoritative(self):
++        from dataclasses import replace
++        from sec_edgar_ingest.workflows.members import WorkflowMembers
++        from sec_edgar_ingest.storage.contracts import Conflict
++        with tempfile.TemporaryDirectory() as tmp:
++            h, context, dispatcher, value = self.prepare(Path(tmp))
++            try:
++                processed = process_member(value, context, dispatcher, h.store, h.objects)
++                registry = WorkflowMembers(h.store, h.objects)
++                with self.assertRaises(Conflict):
++                    registry.record(processed.result, replace(context, attempt_id='foreign'), processed.evidence)
++                with self.assertRaises(Conflict):
++                    registry.record(processed.result, replace(context, config_sha256='0' * 64), processed.evidence)
++                first = registry.record(processed.result, context, processed.evidence)
++                row = next(h.store.scan('WorkflowMemberResult', {}))
++                corrupted = dict(first, bytes=first['bytes'] + 1)
++                import hashlib
++                key = hashlib.sha256(canonical_json(to_mapping_value([context.run_id, context.command,
++                    context.attempt_id, value['member_id'], context.parser_version, context.schema_version]))).hexdigest()
++                h.store.replace('WorkflowMemberResult', key, corrupted, row.version)
++                with self.assertRaises((Conflict, OSError, ValueError)):
++                    registry.completed(value, context.parser_version, context.schema_version)
++                with self.assertRaises(Conflict):
++                    registry.record(processed.result, context, processed.evidence)
++            finally:
++                h.close()
++
++    def test_origin_acquisition_and_current_parser_replay_do_not_borrow_versions(self):
++        from dataclasses import replace
++        from sec_edgar_ingest.config import Settings
++        from sec_edgar_ingest.workflows.checked import read_child_capture
++        from sec_edgar_ingest.workflows.members import WorkflowMembers
++        with tempfile.TemporaryDirectory() as tmp:
++            h, context, dispatcher, value = self.prepare(Path(tmp))
++            try:
++                first = process_member(value, context, dispatcher, h.store, h.objects)
++                registry = WorkflowMembers(h.store, h.objects)
++                registry.record(first.result, context, first.evidence)
++                settings = Settings.from_mapping({**h.settings.to_mapping(), 'etl': {
++                    **h.settings.to_mapping()['etl'], 'parser_version': 'fixture-index-parser-v2'}})
++                current = pin_context(settings, replace(context, attempt_id='v2',
++                    parser_version=settings.etl.parser_version, config_sha256=settings.config_sha256,
++                    effective_config={}, pinned_on=None), date(2026, 10, 7))[0]
++                fresh = Dispatcher(current, settings, h.pack, Path(tmp), h.store, h.objects)
++                self.assertIsNone(registry.completed(value, current.parser_version, current.schema_version))
++                second = process_member(value, current, fresh, h.store, h.objects)
++                self.assertEqual(second.result.outcome, 'success')
++                self.assertEqual(read_child_capture(second.evidence['calls'][0], h.objects).context.parser_version,
++                                 'fixture-index-parser-v1')
++                self.assertEqual(read_child_capture(second.evidence['calls'][1], h.objects).context.parser_version,
++                                 'fixture-index-parser-v2')
++                self.assertEqual(second.result.snapshot_ref, first.result.snapshot_ref)
++                self.assertNotEqual(second.result.transformed_ref, first.result.transformed_ref)
++                registry.record(second.result, current, second.evidence)
++                self.assertEqual(registry.completed(value, current.parser_version, current.schema_version),
++                                 second.evidence['completion'])
++                found = fresh.execute('discover', 'fresh-discovery', settings,
++                                     ('--mode', 'daily', '--discovery-id', 'fresh-parent', '--refresh'))
++                new_value = project_member(found.result.source_workset_ref, value['source']['source_id'],
++                                           h.store, h.objects)
++                self.assertNotEqual(new_value['member_id'], value['member_id'])
++                self.assertIsNone(registry.completed(new_value, current.parser_version, current.schema_version))
++                self.assertEqual(registry.completed(value, context.parser_version, context.schema_version),
++                                 first.evidence['completion'])
++            finally:
++                h.close()
++
++    def test_malformed_source_has_no_accepted_observation_or_pointer(self):
++        def malformed(pack):
++            manifest = json.loads(pack.read_text())
++            url = BASE + 'daily-index/2026/QTR4/master.20261001.idx'
++            body = (pack.parent / manifest['responses'][url][0]['body_path']).read_bytes()
++            body = body.replace(b'123456|Example', b'invalid|Example')
++            sha = hashlib.sha256(body).hexdigest()
++            relative = 'bodies/' + sha + '.body'
++            (pack.parent / relative).write_bytes(body)
++            manifest['responses'][url] = [dict(manifest['responses'][url][0],
++                body_path=relative, body_sha256=sha, headers={'Content-Length': str(len(body))})] * 8
++            pack.write_bytes(canonical_json(to_mapping_value(manifest)))
++        with tempfile.TemporaryDirectory() as tmp:
++            h, context, dispatcher, value = self.prepare(Path(tmp), pack_edit=malformed)
++            try:
++                result = process_member(value, context, dispatcher, h.store, h.objects).result
++                self.assertEqual(result.outcome, 'quarantined')
++                self.assertTrue(result.quarantined)
++                self.assertFalse(result.transformed)
++                self.assertEqual(result.gaps[0].details['line_number'], 3)
++                self.assertEqual(tuple(h.store.scan('Processing', {})), ())
++                self.assertEqual(tuple(h.store.scan('QuarterPublication', {})), ())
++            finally:
++                h.close()
++
++    def test_fatal_collection_stops_before_etl_and_retains_all_child_gaps(self):
++        def blocked(pack):
++            manifest = json.loads(pack.read_text())
++            url = BASE + 'daily-index/2026/QTR4/master.20261001.idx'
++            manifest['responses'][url] = [dict(manifest['responses'][url][0], status=403)] * 8
++            pack.write_bytes(canonical_json(to_mapping_value(manifest)))
++        from sec_edgar_ingest.workflows.members import WorkflowMembers
++        with tempfile.TemporaryDirectory() as tmp:
++            h, context, dispatcher, value = self.prepare(Path(tmp), pack_edit=blocked)
++            try:
++                processed = process_member(value, context, dispatcher, h.store, h.objects)
++                self.assertEqual(processed.result.outcome, 'access_blocked')
++                self.assertFalse(processed.result.transformed)
++                self.assertFalse(processed.result.quarantined)
++                self.assertEqual(len(processed.evidence['calls']), 1)
++                self.assertTrue(processed.result.gaps)
++                self.assertEqual(tuple(h.store.scan('Processing', {})), ())
++                registry = WorkflowMembers(h.store, h.objects)
++                registry.record(processed.result, context, processed.evidence)
++                self.assertIsNone(registry.completed(value, context.parser_version, context.schema_version))
++            finally:
++                h.close()
++
++    def test_partial_q3_q4_and_gate_preserve_exact_child_outcomes(self):
++        from support_workflow_evidence import EvidenceFixture, quarterly_bytes
++        from sec_edgar_ingest.etl.state import EtlState
++        from sec_edgar_ingest.workflows.checked import read_child_capture
++        from sec_edgar_ingest.workflows.members import WorkflowMembers
++        for gate in (False, True):
++            with self.subTest(gate=gate), tempfile.TemporaryDirectory() as tmp:
++                f = EvidenceFixture(Path(tmp) / '.fixture-state')
++                try:
++                    old = quarterly_bytes('2026-07-01')
++                    if gate:
++                        from support_workflows import idx
++                        old = idx((('123456', 'A', '10-K', '2026-07-01', 'edgar/data/123456/a.txt'),
++                                   ('123456', 'B', '10-K', '2026-07-02', 'edgar/data/123456/b.txt')), 'quarterly')
++                    snap = f.snapshot_input(old)
++                    _, _, transformed = f.invoke('transform', snap)
++                    self.assertEqual(f.invoke('publish', transformed.transformed_workset_ref)[0], 0)
++                    prior = EtlState(f.store).pointer('2026Q3')
++                    f.revised_member()
++                    f.snapshot_input(quarterly_bytes('2026-07-01' if gate else '2026-10-01'), seconds=1)
++                    dispatcher = Dispatcher(f.workflow, f.settings, f.pack, f.root.parent, f.store, f.objects)
++                    processed = process_member(f.value, f.workflow, dispatcher, f.store, f.objects)
++                    child = read_child_capture(processed.evidence['calls'][-1], f.objects)
++                    self.assertEqual(processed.result.quarters, child.quarters)
++                    self.assertEqual(processed.result.gaps, child.gaps)
++                    self.assertEqual(processed.result.outcome, 'awaiting_approval' if gate else 'invalid_source')
++                    self.assertEqual([q.outcome for q in child.quarters],
++                                     ['awaiting_approval'] if gate else ['invalid_source', 'published'])
++                    self.assertEqual(EtlState(f.store).pointer('2026Q3'), prior)
++                    self.assertIsNone(processed.evidence['completion'])
++                    registry = WorkflowMembers(f.store, f.objects)
++                    registry.record(processed.result, f.workflow, processed.evidence)
++                    self.assertIsNone(registry.completed(f.value, f.workflow.parser_version, f.workflow.schema_version))
++                finally:
++                    f.close()
++
++    def test_expired_original_is_repaired_fresh_without_pointer_advance(self):
++        from dataclasses import replace
++        from unittest.mock import patch
++        from support_workflow_evidence import EvidenceFixture, quarterly_bytes
++        from sec_edgar_ingest.etl.state import EtlState
++        from sec_edgar_ingest.models import RunContext
++        from sec_edgar_ingest.state import attempt_key
++        from sec_edgar_ingest.workflows.completion import evaluate_member, outstanding_repairs
++        with tempfile.TemporaryDirectory() as tmp:
++            f = EvidenceFixture(Path(tmp) / '.fixture-state')
++            try:
++                _, _, transformed = f.invoke('transform', f.snapshot_input(quarterly_bytes('2026-07-01')))
++                with patch.object(EtlState, '_record_membership', side_effect=__import__(
++                        'sec_edgar_ingest.storage.contracts', fromlist=['Conflict']).Conflict('ancillary')):
++                    code, original_call, result = f.invoke('publish', transformed.transformed_workset_ref)
++                self.assertEqual(code, 9)
++                self.assertIsNone(result)
++                self.assertEqual(len(evaluate_member(f.value, f.workflow.parser_version,
++                    f.workflow.schema_version, f.store, f.objects).obligations), 1)
++                key = attempt_key(RunContext.from_mapping(original_call['context']))
++                original_attempt = f.store.get('Attempt', key).to_mapping()
++                command = original_call['result_ref'].rsplit('/', 1)[0] + '/command.json'
++                command_bytes = f.objects.read(command)
++                pointers = [r.to_mapping() for r in f.store.scan('QuarterPublication', {})]
++                clock = f.workflow.deadline + timedelta(seconds=1)
++                fresh = replace(f.workflow, attempt_id='fresh-repair', started_at=clock,
++                                deadline=clock + timedelta(seconds=3600))
++                dispatcher = Dispatcher(fresh, f.settings, f.pack, f.root.parent, f.store, f.objects)
++                with patch('sec_edgar_ingest.cli.Clock.now', return_value=clock):
++                    processed = process_member(f.value, fresh, dispatcher, f.store, f.objects)
++                self.assertIn(processed.result.outcome, ('success', 'unchanged'))
++                self.assertEqual(len(processed.evidence['resolutions']), 1)
++                self.assertEqual(f.objects.read(command), command_bytes)
++                self.assertEqual(f.store.get('Attempt', key).to_mapping(), original_attempt)
++                with self.assertRaises(FileNotFoundError):
++                    f.objects.read(original_call['result_ref'])
++                self.assertEqual([r.to_mapping() for r in f.store.scan('QuarterPublication', {})], pointers)
++                self.assertTrue(tuple(f.store.scan('PublicationReceipt', {})))
++                self.assertEqual(outstanding_repairs(f.value, f.store, f.objects), ())
++            finally:
++                f.close()
++
++    def test_unfinished_terminal_error_binds_original_attempt_and_replays_receipt(self):
++        from unittest.mock import patch
++        from copy import deepcopy
++        from sec_edgar_ingest.storage.contracts import Conflict
++        from sec_edgar_ingest.workflows.members import WorkflowMembers
++        with tempfile.TemporaryDirectory() as tmp:
++            h, context, dispatcher, value = self.prepare(Path(tmp))
++            try:
++                with patch('sec_edgar_ingest.cli.collect', side_effect=RuntimeError('retained execution failure')):
++                    processed = process_member(value, context, dispatcher, h.store, h.objects)
++                self.assertEqual(processed.result.outcome, 'internal_error')
++                self.assertFalse(processed.result.downloaded)
++                self.assertEqual(processed.result.child_refs, ())
++                terminal = processed.evidence['terminal_error']
++                self.assertIsNotNone(terminal)
++                self.assertEqual(terminal['call'], processed.evidence['calls'][0])
++                self.assertEqual(tuple(g.to_mapping() for g in processed.result.gaps),
++                                 tuple(to_mapping_value(g) for g in terminal['gaps']))
++                registry = WorkflowMembers(h.store, h.objects)
++                for field, altered in (('outcome', 'access_blocked'), ('gaps', []), ('call', {})):
++                    evidence = deepcopy(to_mapping_value(processed.evidence))
++                    evidence['terminal_error'][field] = altered
++                    with self.subTest(field=field), self.assertRaises((Conflict, ValueError, KeyError)):
++                        registry.record(processed.result, context, evidence)
++                registry.record(processed.result, context, processed.evidence)
++                with patch.object(dispatcher, 'execute', side_effect=AssertionError('completed terminal replay dispatched')):
++                    self.assertEqual(process_member(value, context, dispatcher, h.store, h.objects), processed)
++                self.assertIsNone(registry.completed(value, context.parser_version, context.schema_version))
++            finally:
++                h.close()

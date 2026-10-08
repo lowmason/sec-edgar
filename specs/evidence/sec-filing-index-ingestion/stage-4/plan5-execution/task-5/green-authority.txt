@@ -1,0 +1,125 @@
+test_genuine_conflicting_source_has_no_accepted_processing (test_workflow_processing.ProcessingTests.test_genuine_conflicting_source_has_no_accepted_processing) ... ERROR
+test_member_evidence_rejects_forged_version_ref_quarter_and_outcome (test_workflow_processing.ProcessingTests.test_member_evidence_rejects_forged_version_ref_quarter_and_outcome) ... ERROR
+test_member_receipt_is_content_first_and_replays_identically (test_workflow_processing.ProcessingTests.test_member_receipt_is_content_first_and_replays_identically) ... ERROR
+test_receipt_context_and_index_correlation_are_authoritative (test_workflow_processing.ProcessingTests.test_receipt_context_and_index_correlation_are_authoritative) ... ERROR
+test_receipt_replay_repairs_missing_index_without_dispatch (test_workflow_processing.ProcessingTests.test_receipt_replay_repairs_missing_index_without_dispatch) ... ERROR
+test_refusal_retains_exact_line_and_raw_details (test_workflow_processing.ProcessingTests.test_refusal_retains_exact_line_and_raw_details) ... ERROR
+test_retry_prefix_is_retained_without_source_quarantine (test_workflow_processing.ProcessingTests.test_retry_prefix_is_retained_without_source_quarantine) ... ERROR
+test_tampering_refuses_before_record (test_workflow_processing.ProcessingTests.test_tampering_refuses_before_record) ... ERROR
+
+======================================================================
+ERROR: test_genuine_conflicting_source_has_no_accepted_processing (test_workflow_processing.ProcessingTests.test_genuine_conflicting_source_has_no_accepted_processing)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_processing.py", line 73, in test_genuine_conflicting_source_has_no_accepted_processing
+    processed = process_member(value, context, dispatcher, h.store, h.objects)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/processing.py", line 96, in process_member
+    validate_member_evidence(result, evidence, objects)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/processing.py", line 115, in validate_member_evidence
+    if projected != projection(parent, result.source.source_id) or projected.workset_id != result.member_id:
+                    ^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'projection' where it is not associated with a value
+
+======================================================================
+ERROR: test_member_evidence_rejects_forged_version_ref_quarter_and_outcome (test_workflow_processing.ProcessingTests.test_member_evidence_rejects_forged_version_ref_quarter_and_outcome)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_processing.py", line 90, in test_member_evidence_rejects_forged_version_ref_quarter_and_outcome
+    processed = process_member(value, context, dispatcher, h.store, h.objects)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/processing.py", line 96, in process_member
+    validate_member_evidence(result, evidence, objects)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/processing.py", line 115, in validate_member_evidence
+    if projected != projection(parent, result.source.source_id) or projected.workset_id != result.member_id:
+                    ^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'projection' where it is not associated with a value
+
+======================================================================
+ERROR: test_member_receipt_is_content_first_and_replays_identically (test_workflow_processing.ProcessingTests.test_member_receipt_is_content_first_and_replays_identically)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_processing.py", line 107, in test_member_receipt_is_content_first_and_replays_identically
+    processed = process_member(value, context, dispatcher, h.store, h.objects)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/processing.py", line 96, in process_member
+    validate_member_evidence(result, evidence, objects)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/processing.py", line 115, in validate_member_evidence
+    if projected != projection(parent, result.source.source_id) or projected.workset_id != result.member_id:
+                    ^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'projection' where it is not associated with a value
+
+======================================================================
+ERROR: test_receipt_context_and_index_correlation_are_authoritative (test_workflow_processing.ProcessingTests.test_receipt_context_and_index_correlation_are_authoritative)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_processing.py", line 206, in test_receipt_context_and_index_correlation_are_authoritative
+    processed = process_member(value, context, dispatcher, h.store, h.objects)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/processing.py", line 96, in process_member
+    validate_member_evidence(result, evidence, objects)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/processing.py", line 115, in validate_member_evidence
+    if projected != projection(parent, result.source.source_id) or projected.workset_id != result.member_id:
+                    ^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'projection' where it is not associated with a value
+
+======================================================================
+ERROR: test_receipt_replay_repairs_missing_index_without_dispatch (test_workflow_processing.ProcessingTests.test_receipt_replay_repairs_missing_index_without_dispatch)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_processing.py", line 184, in test_receipt_replay_repairs_missing_index_without_dispatch
+    processed = process_member(value, context, dispatcher, h.store, h.objects)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/processing.py", line 96, in process_member
+    validate_member_evidence(result, evidence, objects)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/processing.py", line 115, in validate_member_evidence
+    if projected != projection(parent, result.source.source_id) or projected.workset_id != result.member_id:
+                    ^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'projection' where it is not associated with a value
+
+======================================================================
+ERROR: test_refusal_retains_exact_line_and_raw_details (test_workflow_processing.ProcessingTests.test_refusal_retains_exact_line_and_raw_details)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_processing.py", line 123, in test_refusal_retains_exact_line_and_raw_details
+    processed = process_member(value, context, dispatcher, h.store, h.objects)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/processing.py", line 96, in process_member
+    validate_member_evidence(result, evidence, objects)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/processing.py", line 115, in validate_member_evidence
+    if projected != projection(parent, result.source.source_id) or projected.workset_id != result.member_id:
+                    ^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'projection' where it is not associated with a value
+
+======================================================================
+ERROR: test_retry_prefix_is_retained_without_source_quarantine (test_workflow_processing.ProcessingTests.test_retry_prefix_is_retained_without_source_quarantine)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_processing.py", line 43, in test_retry_prefix_is_retained_without_source_quarantine
+    processed = process_member(value, context, dispatcher, h.store, h.objects)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/processing.py", line 96, in process_member
+    validate_member_evidence(result, evidence, objects)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/processing.py", line 115, in validate_member_evidence
+    if projected != projection(parent, result.source.source_id) or projected.workset_id != result.member_id:
+                    ^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'projection' where it is not associated with a value
+
+======================================================================
+ERROR: test_tampering_refuses_before_record (test_workflow_processing.ProcessingTests.test_tampering_refuses_before_record)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_processing.py", line 146, in test_tampering_refuses_before_record
+    processed = process_member(value, context, dispatcher, h.store, h.objects)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/processing.py", line 96, in process_member
+    validate_member_evidence(result, evidence, objects)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/processing.py", line 115, in validate_member_evidence
+    if projected != projection(parent, result.source.source_id) or projected.workset_id != result.member_id:
+                    ^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'projection' where it is not associated with a value
+
+----------------------------------------------------------------------
+Ran 8 tests in 26.857s
+
+FAILED (errors=8)
