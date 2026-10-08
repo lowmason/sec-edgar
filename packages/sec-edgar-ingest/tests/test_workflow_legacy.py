@@ -359,3 +359,50 @@ class LegacyTests(unittest.TestCase):
                                      for row in h.store.scan('WorkflowMember', {})))
             finally:
                 h.close()
+
+    def test_malformed_frozen_unit_is_isolated_from_valid_sibling(self):
+        from copy import deepcopy
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            h = CommandHarness(root, simple_pack(root / 'pack'))
+            original_put = LocalObjectStore.put_once
+            def stop_parent(objects, path, body):
+                if path.startswith('worksets/sec/source/'):
+                    raise Crash('before malformed original parent write')
+                return original_put(objects, path, body)
+            try:
+                with patch.object(LocalObjectStore, 'put_once', stop_parent):
+                    with self.assertRaises(Crash):
+                        h.invoke('discover', ('--mode', 'daily', '--discovery-id', 'malformed'), run='malformed')
+                code, valid = h.invoke('discover', ('--mode', 'daily', '--discovery-id', 'valid-sibling'), run='valid-sibling')
+                self.assertEqual(code, 0)
+                key = hashlib.sha256(b'malformed').hexdigest()
+                original = h.store.get('DiscoverySession', key).to_mapping()['value']
+                variants = []
+                for url in (123, None, [], {}):
+                    changed = deepcopy(original)
+                    changed['frozen']['units'][0]['url'] = url
+                    variants.append(changed)
+                changed = deepcopy(original)
+                changed['frozen']['units'][0] = None
+                variants.append(changed)
+                changed = deepcopy(original)
+                changed['frozen']['units'] = {'url': 'invalid-ledger-shape'}
+                variants.append(changed)
+                for changed in variants:
+                    with self.subTest(units=changed['frozen']['units']):
+                        row = h.store.get('DiscoverySession', key)
+                        h.store.replace('DiscoverySession', key, changed, row.version)
+                        before = canonical_json(to_mapping_value(h.store.get('DiscoverySession', key).to_mapping()))
+                        gaps = bootstrap_legacy(h.store, h.objects)
+                        self.assertTrue(any(g.code == 'legacy_member_unresolved' and
+                            g.details['record_kind'] == 'DiscoverySession' and
+                            g.details['record_sha256'] == hashlib.sha256(canonical_json(to_mapping_value(changed))).hexdigest()
+                            for g in gaps))
+                        values = tuple(row.to_mapping()['value'] for row in h.store.scan('WorkflowMember', {}))
+                        self.assertEqual(len(values), 1)
+                        self.assertEqual(values[0]['parent_ref'], valid['source_workset_ref'])
+                        read_member(values[0], h.store, h.objects)
+                        self.assertEqual(canonical_json(to_mapping_value(h.store.get('DiscoverySession', key).to_mapping())), before)
+            finally:
+                h.close()

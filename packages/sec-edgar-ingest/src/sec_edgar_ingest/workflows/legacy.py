@@ -1,6 +1,7 @@
 from ..models import to_mapping_value
 import hashlib
-from ..models import Error, RunContext, Source, canonical_json, parse_json
+from collections.abc import Mapping
+from ..models import Error, RunContext, Source, canonical_json, parse_json, require_text
 from ..state import AcquisitionState, attempt_key
 from ..storage.contracts import Conflict
 from ..worksets import encode_workset, decode_snapshot_workset
@@ -13,10 +14,30 @@ from .provenance import (RECOVERY_FORMAT, immutable, source_ref, read_parent, re
 LEGACY_ERRORS = (ValueError, OSError, Conflict, KeyError, TypeError)
 
 
+def _validated_frozen_units(session):
+    frozen = session['frozen']
+    if not isinstance(frozen, Mapping):
+        raise ValueError('legacy frozen discovery must be a mapping')
+    units = frozen['units']
+    if not isinstance(units, (list, tuple)) or not units:
+        raise ValueError('legacy frozen units must be a nonempty array')
+    for unit in units:
+        if not isinstance(unit, Mapping) or set(unit) not in (
+                {'url', 'period', 'role'}, {'url', 'period', 'role', 'bridge_period'}):
+            raise ValueError('legacy frozen unit fields differ')
+        for field in ('url', 'period', 'role'):
+            require_text(unit[field], 'legacy frozen unit ' + field)
+        if unit['role'] not in ('root', 'year', 'quarter'):
+            raise ValueError('legacy frozen unit role differs')
+        if 'bridge_period' in unit:
+            require_text(unit['bridge_period'], 'legacy frozen unit bridge_period')
+    return units
+
+
 def reconstruct_parent(session, store, objects):
     acquisition = AcquisitionState(store)
     progress = []
-    for unit in sorted(session['frozen']['units'], key=lambda u: (u['url'].count('/'), u['url'])):
+    for unit in sorted(_validated_frozen_units(session), key=lambda u: (u['url'].count('/'), u['url'])):
         row = acquisition.directory_progress(session['discovery_id'], unit['url'])
         progress.append({'unit': unit, 'value': None if row is None else row.to_mapping()['value']})
     parent = rebuild_recovered_parent(session, progress, objects)
@@ -74,6 +95,7 @@ def bootstrap_legacy(store, objects):
     for row in store.scan('DiscoverySession', {}):
         session = row.to_mapping()['value']
         try:
+            _validated_frozen_units(session)
             revisions = [session.get('workset_id'), session.get('predecessor_workset_id')]
             for historical in session.get('history', ()):
                 try:
