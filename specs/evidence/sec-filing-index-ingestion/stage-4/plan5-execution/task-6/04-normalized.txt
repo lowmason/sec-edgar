@@ -1,0 +1,35 @@
+argv: ["uv", "run", "--offline", "--frozen", "--package", "sec-edgar-ingest", "python", "packages/sec-edgar-ingest/tests/network_guard.py", "discover", "-s", "packages/sec-edgar-ingest/tests", "-p", "test_workflow_results.py", "-v"]
+test_empty_leaf_roles_bridge_and_listing_evidence_cannot_be_substituted (test_workflow_results.WorkflowResultTests.test_empty_leaf_roles_bridge_and_listing_evidence_cannot_be_substituted) ... ok
+test_exact_replay_after_deadline_and_changed_invocation_refusal (test_workflow_results.WorkflowResultTests.test_exact_replay_after_deadline_and_changed_invocation_refusal) ... ok
+test_existing_conflicting_report_index_refuses (test_workflow_results.WorkflowResultTests.test_existing_conflicting_report_index_refuses) ... ok
+test_fatal_discovery_without_result_preserves_frozen_prior_jobs (test_workflow_results.WorkflowResultTests.test_fatal_discovery_without_result_preserves_frozen_prior_jobs) ... ok
+test_historical_report_reads_original_capture_after_pointer_advance (test_workflow_results.WorkflowResultTests.test_historical_report_reads_original_capture_after_pointer_advance) ... ok
+test_missing_workflow_and_child_indexes_recover_from_immutable_authority (test_workflow_results.WorkflowResultTests.test_missing_workflow_and_child_indexes_recover_from_immutable_authority) ... /Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py:124: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x10a46f1f0>
+  if any(not isinstance(key, str) for key in value):
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py:124: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x10a46ce50>
+  if any(not isinstance(key, str) for key in value):
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py:124: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x10a46da80>
+  if any(not isinstance(key, str) for key in value):
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py:124: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x10a46e2f0>
+  if any(not isinstance(key, str) for key in value):
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py:124: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x10a46d210>
+  if any(not isinstance(key, str) for key in value):
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_parent_capture_retains_full_empty_discovery_authority (test_workflow_results.WorkflowResultTests.test_parent_capture_retains_full_empty_discovery_authority) ... ok
+test_report_object_crash_reopens_and_repairs_exact_index (test_workflow_results.WorkflowResultTests.test_report_object_crash_reopens_and_repairs_exact_index) ... ok
+test_selection_substitution_and_missing_evidence_refuse (test_workflow_results.WorkflowResultTests.test_selection_substitution_and_missing_evidence_refuse) ... ok
+test_skipped_before_dispatch_capture_is_required_and_counted_once (test_workflow_results.WorkflowResultTests.test_skipped_before_dispatch_capture_is_required_and_counted_once) ... ok
+test_unfinished_discovery_retains_actual_frozen_session_ledger (test_workflow_results.WorkflowResultTests.test_unfinished_discovery_retains_actual_frozen_session_ledger) ... ok
+test_valid_old_capture_cannot_discharge_current_parser_backlog (test_workflow_results.WorkflowResultTests.test_valid_old_capture_cannot_discharge_current_parser_backlog) ... ok
+
+----------------------------------------------------------------------
+Ran 12 tests in 47.427s
+
+OK
+
+exit: 0

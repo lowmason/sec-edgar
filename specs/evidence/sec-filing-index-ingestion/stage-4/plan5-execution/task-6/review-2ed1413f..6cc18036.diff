@@ -1,0 +1,217 @@
+# Review package: 2ed1413fb234686c353200534aa31a1c19400c64..6cc18036480ead01247b52aff5348d2c27a5ac1f
+
+## Commits
+6cc18036 fix: bind workflow reports and selections to original authority
+
+## Files changed
+ .../src/sec_edgar_ingest/workflows/results.py      | 41 ++++++++++++------
+ .../tests/test_workflow_results.py                 | 48 ++++++++++++++++++++++
+ 2 files changed, 76 insertions(+), 13 deletions(-)
+
+## Diff
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/results.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/results.py
+index 2e2c4383..5dd401fe 100644
+--- a/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/results.py
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/results.py
+@@ -196,20 +196,30 @@ def _validate_selection(selection, context, invocation, store, objects):
+             raise Conflict('selection parent lacks checked discovery and complete captured provenance')
+         parent = validate_parent_provenance(proof, objects)
+         if proof['parent_ref'] != parent_ref or proof['discovery']['session'] != session:
+             raise Conflict('selection parent/session capture differs from exact discovery authority')
+         if parent.discovery_id != call['intent']['discovery_id'] or parent.context.pinned_on != context.pinned_on or parent.pinned_end_quarter != invocation['pinned_end_quarter']:
+             raise Conflict('selection parent changes discovery identity/current date/endpoint')
+         if [d.to_mapping() for d in parent.directories] != selection['directories']:
+             raise Conflict('selection directory outcomes differ from exact captured parent')
+         if {unit['url'] for unit in units} != {d.url for d in parent.directories}:
+             raise Conflict('selection omits a frozen required directory')
++        from .provenance import projection, source_ref
++        accounted = members + [capture['member'] for capture in completed]
++        for source in parent.members:
++            projected = projection(parent, source.source_id)
++            expected = {'member_id': projected.workset_id, 'source': source.to_mapping(),
++                        'parent_ref': parent_ref, 'member_ref': source_ref(projected)}
++            if expected not in accounted:
++                raise Conflict('selection omitted an exact discovered member projection')
++        if selection['discovered_sources'] != len(parent.members):
++            raise Conflict('selection discovered-source count differs from immutable parent')
+     settings = Settings.from_mapping(context.to_mapping()['effective_config'])
+     expected_requested = ([] if context.command == 'daily'
+                           else list(quarter_span(settings.backfill.start_quarter, invocation['pinned_end_quarter'])))
+     if selection['requested_quarters'] != expected_requested:
+         raise Conflict('selection requested baseline units differ from pinned inclusive endpoints')
+     for name in ('discovered_sources', 'unresolved_before'):
+         if type(selection[name]) is not int or selection[name] < 0:
+             raise Conflict('selection source-unit count is invalid')
+ 
+ 
+@@ -236,20 +246,32 @@ def _repair_index_descriptor(context, field, descriptor, store):
+ 
+ 
+ def freeze_selection(context, selection, store, objects):
+     invocation, _ = _read(_sibling(context, 'intent.json'), objects)
+     if invocation['context'] != context.to_mapping():
+         raise Conflict('selection has no exact begun workflow intent')
+     _index(context, invocation['intent'], store, objects)
+     selection = _plain(selection)
+     _validate_selection(selection, context, invocation['intent'], store, objects)
+     path = _sibling(context, 'selection.json')
++    try:
++        _read(path, objects)
++    except FileNotFoundError:
++        from ..state import AcquisitionState
++        call = selection['discovery_call']
++        discovery_id = (call['intent']['discovery_id'] if call is not None
++                        else 'workflow-' + context.command + '-' + context.run_id)
++        actual = AcquisitionState(store).discovery_session(discovery_id)
++        if actual is not None:
++            captured = actual.to_mapping()['value']
++            if selection['discovery_session'] != captured or selection['required_units'] != captured['frozen']['units']:
++                raise Conflict('initial selection omitted or changed actual discovery session/required units')
+     body = canonical_json(to_mapping_value(selection))
+     objects.put_once(path, body)
+     objects.verify(path, hashlib.sha256(body).hexdigest(), len(body))
+     if objects.read(path) != body:
+         raise Conflict('frozen selection differs from exact proposed selection')
+     _repair_index_descriptor(context, 'selection_ref', _descriptor(path, body), store)
+     return _plain(selection)
+ 
+ 
+ def _validate_report(result, store, objects):
+@@ -297,43 +319,36 @@ def _validate_report(result, store, objects):
+     expected_capture_ids = complete_ids | {c['member']['member_id'] for c in completed}
+     if len(by_member) != len(captures) or set(by_member) != expected_capture_ids:
+         raise Conflict('report contains orphan/duplicate completion captures')
+     selected = {v['member_id']: v for v in selection['members']}
+     if [m.member_id for m in result.members] != list(selected):
+         raise Conflict('report does not account for every frozen selected member')
+     receipts = intent['member_receipts']
+     if len(receipts) != len(result.members):
+         raise Conflict('report member receipt coverage differs')
+     allowed_unfinished, receipt_calls, receipt_completions, receipt_resolutions = [], [], [], []
+-    from .processing import validate_member_evidence
++    from .members import WorkflowMembers
++    receipts_reader = WorkflowMembers(store, objects)
+     from .contracts import PENDING
+     for member, descriptor in zip(result.members, receipts):
+         if descriptor is None:
+             if member.child_refs or member.outcome not in PENDING:
+                 raise Conflict('only undispatched pending member may lack receipt')
+             continue
+         if set(descriptor) != {'ref', 'sha256', 'bytes', 'member_id', 'parser_version', 'schema_version'}:
+             raise Conflict('report member receipt descriptor fields differ')
+         objects.verify(descriptor['ref'], descriptor['sha256'], descriptor['bytes'])
+-        receipt, receipt_body = _read(descriptor['ref'], objects)
+-        expected_path = _sibling(context, 'members/' + member.member_id + '/result.json')
+-        if (set(receipt) != {'format_version', 'context', 'result', 'evidence'}
+-                or receipt['format_version'] != 'sec-workflow-member-receipt-v1'
+-                or descriptor['ref'] != expected_path or receipt['context'] != context.to_mapping()
+-                or receipt['result'] != member.to_mapping()
+-                or descriptor['member_id'] != member.member_id
+-                or descriptor['parser_version'] != member.parser_version
+-                or descriptor['schema_version'] != member.schema_version
+-                or receipt['evidence']['member'] != selected[member.member_id]):
++        saved_member, saved_context, evidence, receipt_body = receipts_reader._read_receipt(descriptor['ref'])
++        if (saved_member != member or saved_context != context
++                or descriptor != receipts_reader._descriptor(member, context, receipt_body)
++                or evidence['member'] != selected[member.member_id]):
+             raise Conflict('report member receipt identity/context differs')
+-        evidence = receipt['evidence']
+-        validate_member_evidence(member, evidence, objects)
+         receipt_calls.extend(evidence['calls'])
+         if evidence['completion'] is not None:
+             receipt_completions.append(evidence['completion'])
+         receipt_resolutions.extend(evidence['resolutions'])
+         terminal = evidence['terminal_error']
+         if terminal is not None:
+             if terminal.get('repair_pending') or terminal['call']['context']['command'] == 'publish':
+                 raise Conflict('workflow report cannot finalize unfinished publication repair')
+             allowed_unfinished.append(terminal['call'])
+     expected_calls = receipt_calls + ([] if selection['discovery_call'] is None else [selection['discovery_call']])
+diff --git a/packages/sec-edgar-ingest/tests/test_workflow_results.py b/packages/sec-edgar-ingest/tests/test_workflow_results.py
+index 84de923f..39a89b50 100644
+--- a/packages/sec-edgar-ingest/tests/test_workflow_results.py
++++ b/packages/sec-edgar-ingest/tests/test_workflow_results.py
+@@ -384,24 +384,30 @@ class WorkflowResultTests(unittest.TestCase):
+         self.assertTrue(session['registered'])
+         self.assertIsNone(session['workset_id'])
+         self.assertTrue(session['frozen']['units'])
+         error = Error(failed.exception.outcome, 'discovery has no durable source result',
+                       False, None, failed.exception.details)
+         selection = self.selection()
+         selection.update(discovery_call=failed.exception.call, discovery_error=error.to_mapping(),
+             parent_ref=None, parent_provenance=None, discovery_session=session,
+             required_units=session['frozen']['units'], directories=[], halted=True,
+             gaps=[error.to_mapping()], discovered_sources=0, unresolved_before=1)
++        omitted_both = {**selection, 'discovery_session': None, 'required_units': []}
++        with self.assertRaises(Conflict):
++            freeze_selection(self.context, omitted_both, self.f.store, self.f.objects)
+         frozen = freeze_selection(self.context, selection, self.f.store, self.f.objects)
+         self.assertEqual(frozen['required_units'], session['frozen']['units'])
+         self.assertIsNone(frozen['parent_ref'])
+         self.assertTrue(frozen['halted'])
++        self.delete_index('DiscoverySession', hashlib.sha256('begun-fatal-session'.encode()).hexdigest())
++        self.assertIsNone(AcquisitionState(self.f.store).discovery_session('begun-fatal-session'))
++        self.assertEqual(freeze_selection(self.context, selection, self.f.store, self.f.objects), frozen)
+         from copy import deepcopy
+         omitted = deepcopy(selection); omitted['required_units'] = []
+         with self.assertRaises(Conflict):
+             freeze_selection(self.context, omitted, self.f.store, self.f.objects)
+ 
+     def test_valid_old_capture_cannot_discharge_current_parser_backlog(self):
+         from support_workflows import simple_pack
+         from sec_edgar_ingest.config import Settings, pin_context
+         from sec_edgar_ingest.models import parse_json, to_mapping_value
+         from sec_edgar_ingest.workflows.completion import capture_parent_provenance
+@@ -553,10 +559,52 @@ class WorkflowResultTests(unittest.TestCase):
+         call_sha = hashlib.sha256(canonical_json(to_mapping_value(original_call))).hexdigest()
+         anchor_ref = 'worksets/sec/workflow-repair-authority/call-sha256=' + call_sha + '/obligation.json'
+         target = self.f.root / 'objects' / anchor_ref
+         original = target.read_bytes()
+         target.write_bytes(original + b' ')
+         try:
+             with self.assertRaises((Conflict, ValueError)):
+                 read_workflow_result(result_ref, self.f.store, self.f.objects)
+         finally:
+             target.write_bytes(original)
++
++    def test_discovered_parent_members_cannot_be_coherently_omitted(self):
++        selection = self.selection()
++        self.assertEqual(len(decode_source_workset(self.f.objects.read(self.f.parent_ref)).members), 1)
++        selection.update(members=[], jobs=[], member_provenance=[], already_complete=[])
++        with self.assertRaises(Conflict):
++            freeze_selection(self.context, selection, self.f.store, self.f.objects)
++
++    def test_discovered_count_must_match_actual_parent(self):
++        selection = self.selection()
++        selection['discovered_sources'] = 999
++        with self.assertRaises(Conflict):
++            freeze_selection(self.context, selection, self.f.store, self.f.objects)
++
++    def test_transplanted_receipt_cannot_borrow_original_child_namespace(self):
++        from sec_edgar_ingest.models import parse_json
++        original = self.report()
++        old_descriptor = original.to_mapping()['intent']['member_receipts'][0]
++        receipt = parse_json(self.f.objects.read(old_descriptor['ref']))
++        context = replace(self.context, attempt_id='transplanted-receipt')
++        freeze_workflow(context, self.invocation, self.f.store, self.f.objects)
++        selection = self.selection()
++        selection.update(context=context.to_mapping(), discovery_call=None,
++            discovery_error=Error('internal_error', 'discovery stopped', False, None, {}).to_mapping(),
++            parent_ref=None, parent_provenance=None, discovery_session=None, required_units=[],
++            directories=[], halted=True, discovered_sources=0)
++        freeze_selection(context, selection, self.f.store, self.f.objects)
++        receipt['context'] = context.to_mapping()
++        receipt_ref = workflow_path(context).rsplit('/', 1)[0] + '/members/' + original.members[0].member_id + '/result.json'
++        body = canonical_json(receipt)
++        self.f.objects.put_once(receipt_ref, body)
++        descriptor = {**old_descriptor, 'ref': receipt_ref, 'sha256': hashlib.sha256(body).hexdigest(), 'bytes': len(body)}
++        selection_ref = workflow_path(context).rsplit('/', 1)[0] + '/selection.json'
++        selection_body = self.f.objects.read(selection_ref)
++        intent = original.to_mapping()['intent']
++        intent.update(selection={'ref': selection_ref, 'sha256': hashlib.sha256(selection_body).hexdigest(), 'bytes': len(selection_body)},
++            member_receipts=[descriptor], child_calls=receipt['evidence']['calls'], discovered_sources=0)
++        outcome, counts = summarize(original.members, original.gaps, 0, 0, context.command, ())
++        transplanted = replace(original, context=context, intent=intent, source_workset_ref=None,
++                               directories=(), outcome=outcome, counts=counts)
++        with self.assertRaises(Conflict):
++            write_workflow_result(transplanted, self.f.store, self.f.objects)
