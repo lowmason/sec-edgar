@@ -1,0 +1,17 @@
+[
+  {
+    "command": "ps -ax -o pid,ppid,etime,command | rg 'sec-plan5-final-preservation-audit|cat-file blob|python3 -'",
+    "cwd": "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar",
+    "exit": 1,
+    "stdout": "",
+    "stderr": "zsh:1: operation not permitted: ps\n",
+    "action": "No retry/escalation; read-only progress inspection only."
+  },
+  {
+    "command": "python3 - heredoc report-generation with nested triple-single quotes",
+    "exit": 1,
+    "stdout": "",
+    "stderr": "  File \"<stdin>\", line 46\n    138,438 records match: 138,432 regular files by complete byte size and SHA-256, and six literal symlink targets. Every root has zero added, missing, changed or special-file records. All original 30,007 primary records match and all 71 recovery additions remain preserved. The complete after inventories and baseline SHA-256s are retained in results/audit.json and results/*-after.json.\n                                                                                                                                                                                                          ^^\nSyntaxError: leading zeros in decimal integer literals are not permitted; use an 0o prefix for octal integers\n",
+    "action": "Parse failure before writes; corrected with direct report-generation invocation."
+  }
+]
