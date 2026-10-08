@@ -1,0 +1,28 @@
+{
+  "argv": [
+    "uv",
+    "run",
+    "--offline",
+    "--frozen",
+    "--package",
+    "sec-edgar-ingest",
+    "python",
+    "packages/sec-edgar-ingest/tests/network_guard.py",
+    "discover",
+    "-s",
+    "packages/sec-edgar-ingest/tests",
+    "-p",
+    "test_workflow_installed_lock.py",
+    "-v"
+  ],
+  "cwd": "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar",
+  "environment_overrides": {
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PYTHONPATH": null,
+    "UV_PYTHON_DOWNLOADS": "never"
+  },
+  "exit": 0,
+  "runtime_seconds": 0.21355050010606647,
+  "stderr": "test_complete_accepted_graph_rejects_wrong_transitive_with_direct_pins_intact (test_workflow_installed_lock.InstalledLockTests.test_complete_accepted_graph_rejects_wrong_transitive_with_direct_pins_intact) ... ok\ntest_exact_set_rejects_missing_and_extra_distribution (test_workflow_installed_lock.InstalledLockTests.test_exact_set_rejects_missing_and_extra_distribution) ... ok\ntest_frozen_export_hash_or_transitive_omission_refuses (test_workflow_installed_lock.InstalledLockTests.test_frozen_export_hash_or_transitive_omission_refuses) ... ok\ntest_inventory_checks_exact_files_and_bytes (test_workflow_installed_lock.InstalledLockTests.test_inventory_checks_exact_files_and_bytes) ... ok\ntest_marker_exclusion_does_not_drop_other_transitives (test_workflow_installed_lock.InstalledLockTests.test_marker_exclusion_does_not_drop_other_transitives) ... ok\ntest_package_inventory_includes_py_typed_and_all_data_and_excludes_caches (test_workflow_installed_lock.InstalledLockTests.test_package_inventory_includes_py_typed_and_all_data_and_excludes_caches) ... ok\n\n----------------------------------------------------------------------\nRan 6 tests in 0.017s\n\nOK\n",
+  "stdout": ""
+}
