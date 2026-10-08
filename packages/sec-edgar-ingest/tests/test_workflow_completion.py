@@ -354,3 +354,224 @@ class CompletionTests(unittest.TestCase):
         proof = capture_member_provenance(self.f.value, self.f.store, self.f.objects)
         self.assertEqual(validate_member_provenance(proof, self.f.objects),
                          read_member(self.f.value, self.f.store, self.f.objects))
+
+    def test_foreign_valid_resolution_cannot_discharge_another_original_call(self):
+        import hashlib
+        from sec_edgar_ingest.models import canonical_json, parse_json, to_mapping_value
+        transformed = self.transform(quarterly_bytes('2026-07-01'))
+        with patch.object(EtlState, '_record_membership', side_effect=Conflict('ancillary')):
+            self.assertEqual(self.f.invoke('publish', transformed)[0], 9)
+            self.assertEqual(self.f.invoke('publish', transformed)[0], 9)
+        obligations = self.evaluate().obligations
+        self.assertEqual(len(obligations), 2)
+        originals = [r.to_mapping() for r in self.f.store.scan('Attempt', {})]
+        self.assertEqual(self.f.invoke('publish', transformed)[0], 0)
+        resolution = resolve_repair(obligations[0], self.f.calls[-1], self.f.store, self.f.objects)
+        self.assertEqual(len(self.evaluate().obligations), 1)
+        second = parse_json(self.f.objects.read(obligations[1]['ref']))
+        key = hashlib.sha256(canonical_json(to_mapping_value(second['call']))).hexdigest()
+        self.f.store.insert('WorkflowRepairResolution', key, resolution)
+        evaluation = self.evaluate()
+        self.assertFalse(evaluation.complete)
+        self.assertTrue(evaluation.gaps)
+        for old in originals:
+            from sec_edgar_ingest.models import RunContext
+            from sec_edgar_ingest.state import attempt_key
+            self.assertEqual(self.f.store.get('Attempt', attempt_key(
+                RunContext.from_mapping(old['value']['context']))).to_mapping(), old)
+
+    def test_corrupt_begun_checked_call_blocks_completion(self):
+        from sec_edgar_ingest.models import RunContext
+        from sec_edgar_ingest.state import attempt_key
+        transformed = self.transform(quarterly_bytes('2026-07-01'))
+        with patch.object(EtlState, '_record_membership', side_effect=Conflict('ancillary')):
+            code, call, _ = self.f.invoke('publish', transformed)
+        self.assertEqual(code, 9)
+        self.assertEqual(self.f.invoke('publish', transformed)[0], 0)
+        command = call['result_ref'].rsplit('/', 1)[0] + '/command.json'
+        attempt = self.f.store.get('Attempt', attempt_key(RunContext.from_mapping(call['context'])))
+        for path in (command, transformed):
+            target = self.f.objects.directory / path
+            body = target.read_bytes()
+            target.unlink()
+            try:
+                with self.subTest(path=path):
+                    evaluated = self.evaluate()
+                    self.assertFalse(evaluated.complete)
+                    self.assertTrue(evaluated.gaps)
+            finally:
+                target.write_bytes(body)
+        from sec_edgar_ingest.storage.contracts import identity, table_for
+        original_key = attempt_key(RunContext.from_mapping(call['context']))
+        partition, row_key = identity('Attempt', original_key)
+        with self.f.store._connection() as connection:
+            connection.execute('DELETE FROM records WHERE table_name=? AND partition=? AND key=?',
+                               (table_for('Attempt'), partition, row_key))
+            connection.commit()
+        missing_attempt = self.evaluate()
+        self.assertFalse(missing_attempt.complete)
+        self.assertTrue(missing_attempt.gaps)
+        restored = self.f.store.insert('Attempt', original_key, attempt.to_mapping()['value'])
+        altered = attempt.to_mapping()['value']
+        altered['context']['execution_id'] = 'corrupt-begun-execution'
+        self.f.store.replace('Attempt', original_key, altered, restored.version)
+        self.assertFalse(self.evaluate().complete)
+        self.assertTrue(self.evaluate().gaps)
+
+    def test_corrupt_begun_ordinary_call_blocks_completion(self):
+        import contextlib
+        import io
+        from sec_edgar_ingest.cli import main
+        from sec_edgar_ingest.models import RunContext
+        from sec_edgar_ingest.results import result_path
+        transformed = self.transform(quarterly_bytes('2026-07-01'))
+        arguments = ['publish', '--config', str(self.f.config),
+            '--run-id', 'corrupt-ordinary-run', '--execution-id', 'corrupt-ordinary-execution',
+            '--attempt-id', 'corrupt-ordinary-attempt', '--deadline', self.f.workflow.deadline.isoformat(),
+            '--state-dir', str(self.f.root.parent), '--today', '2026-10-06', '--workset', transformed]
+        with (patch.object(EtlState, '_record_membership', side_effect=Conflict('ancillary')),
+              contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO())):
+            self.assertEqual(main(arguments), 9)
+        self.assertEqual(self.f.invoke('publish', transformed)[0], 0)
+        row = next(r for r in self.f.store.scan('Attempt', {})
+                   if r.value['context']['run_id'] == 'corrupt-ordinary-run')
+        context = RunContext.from_mapping(row.to_mapping()['value']['context'])
+        command = result_path(context).rsplit('/', 1)[0] + '/command.json'
+        (self.f.objects.directory / command).unlink()
+        evaluated = self.evaluate()
+        self.assertFalse(evaluated.complete)
+        self.assertTrue(evaluated.gaps)
+
+    def test_valid_checked_call_before_begin_has_no_repair_obligation(self):
+        from sec_edgar_ingest.workflows.checked import Dispatcher
+        transformed = self.transform(quarterly_bytes('2026-07-01'))
+        self.assertEqual(self.f.invoke('publish', transformed)[0], 0)
+        def before_begin(point):
+            if point == 'workflow_child.after_call':
+                raise Conflict('retained valid call before begin')
+        dispatcher = Dispatcher(self.f.workflow, self.f.settings, self.f.pack,
+                                self.f.root.parent, self.f.store, self.f.objects,
+                                observer=before_begin)
+        with self.assertRaises(Conflict):
+            dispatcher.execute('publish', 'not-begun', self.f.settings, ('--workset', transformed))
+        evaluated = self.evaluate()
+        self.assertTrue(evaluated.complete)
+        self.assertEqual(evaluated.obligations, ())
+        self.assertEqual(evaluated.gaps, ())
+
+    def test_copied_obligation_cannot_drop_only_formerly_affected_quarter(self):
+        import hashlib
+        import io
+        import zipfile
+        from copy import deepcopy
+        from sec_edgar_ingest.models import canonical_json, parse_json, to_mapping_value
+        from sec_edgar_ingest.workflows.completion import validate_resolution_capture
+        with zipfile.ZipFile(io.BytesIO(quarterly_bytes('2026-07-01'))) as archive:
+            body = archive.read('master.idx')
+        body += b'123456|Former|10-K|2026-10-01|edgar/data/123456/b.txt\r\n'
+        target = io.BytesIO()
+        with zipfile.ZipFile(target, 'w', compression=zipfile.ZIP_DEFLATED) as archive:
+            archive.writestr('master.idx', body)
+        initial = self.transform(target.getvalue())
+        self.assertEqual(self.f.invoke('publish', initial)[0], 0)
+        self.f.revised_member()
+        replacement = self.transform(quarterly_bytes('2026-07-01', 'Changed'), seconds=1)
+        with patch.object(EtlState, '_record_membership', side_effect=Conflict('ancillary')):
+            self.assertEqual(self.f.invoke('publish', replacement)[0], 9)
+        obligation = self.evaluate().obligations[0]
+        original = parse_json(self.f.objects.read(obligation['ref']))
+        self.assertEqual(original['affected_quarters'], ['2026Q3', '2026Q4'])
+        self.assertEqual(set(original['sources'][0]['quarter_counts']), {'2026Q3'})
+        self.assertEqual(self.f.invoke('publish', replacement)[0], 0)
+        fresh_call = self.f.calls[-1]
+        copied = deepcopy(original)
+        copied['affected_quarters'] = ['2026Q3']
+        encoded = canonical_json(to_mapping_value(copied))
+        digest = hashlib.sha256(encoded).hexdigest()
+        path = f'worksets/sec/workflow-repairs/sha256={digest}/evidence.json'
+        self.f.objects.put_once(path, encoded)
+        forged = {'ref': path, 'sha256': digest, 'bytes': len(encoded),
+                  'format_version': 'sec-workflow-repair-obligation-v1'}
+        before = [r.to_mapping() for r in self.f.store.scan('WorkflowRepairResolution', {})]
+        with self.assertRaises((Conflict, ValueError)):
+            resolve_repair(forged, fresh_call, self.f.store, self.f.objects)
+        self.assertEqual([r.to_mapping() for r in self.f.store.scan('WorkflowRepairResolution', {})], before)
+        resolution = resolve_repair(obligation, fresh_call, self.f.store, self.f.objects)
+        validate_resolution_capture(resolution, self.f.objects)
+
+    def test_missing_obligation_index_recovers_original_immutable_anchor(self):
+        import hashlib
+        from sec_edgar_ingest.models import canonical_json, parse_json, to_mapping_value
+        from sec_edgar_ingest.storage.contracts import identity, table_for
+        from sec_edgar_ingest.workflows.completion import outstanding_repairs
+        transformed = self.transform(quarterly_bytes('2026-07-01'))
+        with patch.object(EtlState, '_record_membership', side_effect=Conflict('ancillary')):
+            self.assertEqual(self.f.invoke('publish', transformed)[0], 9)
+        obligation = self.evaluate().obligations[0]
+        original = parse_json(self.f.objects.read(obligation['ref']))
+        self.f.revised_member()
+        advanced = self.transform(quarterly_bytes('2026-07-01', 'Advanced'), seconds=1)
+        self.assertEqual(self.f.invoke('publish', advanced)[0], 0)
+        key = hashlib.sha256(canonical_json(to_mapping_value(original['call']))).hexdigest()
+        partition, row_key = identity('WorkflowRepairObligation', key)
+        with self.f.store._connection() as connection:
+            connection.execute('DELETE FROM records WHERE table_name=? AND partition=? AND key=?',
+                               (table_for('WorkflowRepairObligation'), partition, row_key))
+            connection.commit()
+        with patch('sec_edgar_ingest.workflows.completion._affected_quarters',
+                   side_effect=AssertionError('must recover immutable original quarter set')):
+            recovered = outstanding_repairs(self.f.value, self.f.store, self.f.objects)
+            self.assertEqual(canonical_json(to_mapping_value(recovered)),
+                             canonical_json(to_mapping_value((obligation,))))
+        indexed = self.f.store.get('WorkflowRepairObligation', key).to_mapping()['value']['descriptor']
+        self.assertEqual(canonical_json(to_mapping_value(indexed)),
+                         canonical_json(to_mapping_value(obligation)))
+
+    def test_original_anchor_precedes_index_and_corruption_cannot_redefine_it(self):
+        import hashlib
+        from sec_edgar_ingest.models import canonical_json, parse_json, to_mapping_value
+        transformed = self.transform(quarterly_bytes('2026-07-01'))
+        with patch.object(EtlState, '_record_membership', side_effect=Conflict('ancillary')):
+            code, call, _ = self.f.invoke('publish', transformed)
+        self.assertEqual(code, 9)
+        key = hashlib.sha256(canonical_json(to_mapping_value(call))).hexdigest()
+        path = f'worksets/sec/workflow-repair-authority/call-sha256={key}/obligation.json'
+        insert = self.f.store.insert
+        checked = []
+        def anchor_before_index(kind, row_key, value):
+            if kind == 'WorkflowRepairObligation':
+                authority = parse_json(self.f.objects.read(path))
+                self.assertEqual(authority, {'format_version': 'sec-workflow-repair-authority-v1',
+                    'call_sha256': key, 'descriptor': value['descriptor']})
+                checked.append(True)
+            return insert(kind, row_key, value)
+        with patch.object(self.f.store, 'insert', side_effect=anchor_before_index):
+            obligation = self.evaluate().obligations[0]
+        self.assertEqual(checked, [True])
+        row = self.f.store.get('WorkflowRepairObligation', key)
+        before = row.to_mapping()
+        target = self.f.objects.directory / path
+        original = target.read_bytes()
+        target.unlink()
+        try:
+            self.assertFalse(self.evaluate().complete)
+            self.assertTrue(self.evaluate().gaps)
+            self.assertEqual(self.f.store.get('WorkflowRepairObligation', key).to_mapping(), before)
+        finally:
+            target.write_bytes(original)
+        altered = row.to_mapping()['value']
+        altered['descriptor'] = {**obligation, 'sha256': 'f' * 64}
+        changed = self.f.store.replace('WorkflowRepairObligation', key, altered, row.version)
+        evaluated = self.evaluate()
+        self.assertFalse(evaluated.complete)
+        self.assertTrue(evaluated.gaps)
+        self.assertEqual(self.f.store.get('WorkflowRepairObligation', key), changed)
+        self.assertEqual(target.read_bytes(), original)
+
+        malformed = {**altered, 'descriptor': None}
+        corrupted = self.f.store.replace('WorkflowRepairObligation', key, malformed, changed.version)
+        evaluated = self.evaluate()
+        self.assertFalse(evaluated.complete)
+        self.assertTrue(evaluated.gaps)
+        self.assertEqual(self.f.store.get('WorkflowRepairObligation', key), corrupted)
+        self.assertEqual(target.read_bytes(), original)

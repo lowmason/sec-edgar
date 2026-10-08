@@ -145,10 +145,45 @@ def _document(value, format_version, namespace, objects):
 
 
 
+REPAIR_AUTHORITY_FORMAT = 'sec-workflow-repair-authority-v1'
+
+
+def _repair_authority_ref(call_sha256):
+    require_hash(call_sha256, 'original repair call digest')
+    return f'worksets/sec/workflow-repair-authority/call-sha256={call_sha256}/obligation.json'
+
+
+def _read_repair_authority(call_sha256, objects):
+    try:
+        body = objects.read(_repair_authority_ref(call_sha256))
+    except FileNotFoundError:
+        return None
+    value = parse_json(body)
+    if (not isinstance(value, dict)
+            or set(value) != {'format_version', 'call_sha256', 'descriptor'}
+            or value['format_version'] != REPAIR_AUTHORITY_FORMAT
+            or value['call_sha256'] != call_sha256
+            or canonical_json(to_mapping_value(value)) != body):
+        raise Conflict('original repair obligation authority bytes or identity differ')
+    if not isinstance(value['descriptor'], dict):
+        raise Conflict('original repair obligation authority descriptor differs')
+    return value['descriptor']
+
+
+def _write_repair_authority(call_sha256, descriptor, objects):
+    value = {'format_version': REPAIR_AUTHORITY_FORMAT,
+             'call_sha256': call_sha256, 'descriptor': _plain(descriptor)}
+    body = canonical_json(to_mapping_value(value))
+    path = _repair_authority_ref(call_sha256)
+    objects.put_once(path, body)
+    if objects.read(path) != body:
+        raise Conflict('original repair obligation authority differs')
+
+
 def _read_document(descriptor, format_version, objects):
     if format_version not in (OBLIGATION_FORMAT, RESOLUTION_FORMAT):
         raise Conflict('unsupported repair document format')
-    if set(descriptor) != {'ref', 'sha256', 'bytes', 'format_version'}:
+    if not isinstance(descriptor, Mapping) or set(descriptor) != {'ref', 'sha256', 'bytes', 'format_version'}:
         raise Conflict('repair document descriptor fields differ')
     require_hash(descriptor['sha256'], 'repair document digest')
     require_number(descriptor['bytes'], 'repair document bytes', integer=True)
@@ -202,6 +237,10 @@ def _read_document(descriptor, format_version, objects):
     observed = {quarter for ref in transformed.observations for quarter in ref.quarter_counts}
     if not observed <= set(affected):
         raise Conflict('repair obligation omits an observation output quarter')
+    call_sha256 = hashlib.sha256(canonical_json(to_mapping_value(original_call))).hexdigest()
+    anchored = _read_repair_authority(call_sha256, objects)
+    if anchored is None or anchored != _plain(descriptor):
+        raise Conflict('repair obligation differs from original immutable call authority')
     return value
 
 def _read_set(path, objects):
@@ -432,6 +471,13 @@ def _call_context(call, store, objects):
     template = RunContext.from_mapping(call['context'])
     row = store.get('Attempt', attempt_key(template))
     if row is None:
+        command_path = call['result_ref'].rsplit('/', 1)[0] + '/command.json'
+        for path in (command_path, call['result_ref']):
+            try:
+                objects.read(path)
+            except FileNotFoundError:
+                continue
+            raise Conflict('begun publication immutable evidence lacks its Attempt index')
         return None
     value = row.to_mapping()['value']
     actual = RunContext.from_mapping(value['context'])
@@ -458,15 +504,13 @@ def _publish_calls(store, objects):
             call, template = _authority(value, None, objects)
             if template.command != 'publish':
                 continue
-            _transformed_input(call['input_ref'], None, objects)
             attempt = _call_context(call, store, objects)
             if attempt is None:
                 continue  # Before begin/command commit, this call cannot have reached CAS.
+            _transformed_input(call['input_ref'], None, objects)
             checked.append(call); checked_paths.add(call['result_ref'])
-        except (ValueError, OSError, Conflict, KeyError, TypeError):
-            # T7 records corrupt command/Attempt evidence as a retained workflow gap.
-            # Such a record supplies no source completion and cannot authorize a repair.
-            continue
+        except (ValueError, OSError, Conflict, KeyError, TypeError) as error:
+            raise Conflict(f'checked publication authority inventory uncertain: {error}') from error
     legacy = []
     for row in store.scan('Attempt', {}):
         value = row.to_mapping()['value']
@@ -477,11 +521,12 @@ def _publish_calls(store, objects):
             call = _legacy_publish_call(context, objects)
             _transformed_input(call['input_ref'], None, objects)
             call_key = hashlib.sha256(canonical_json(to_mapping_value(call))).hexdigest()
-            if value['result'] is None or store.get('WorkflowRepairObligation', call_key) is not None:
+            if (value['result'] is None
+                    or store.get('WorkflowRepairObligation', call_key) is not None
+                    or _read_repair_authority(call_key, objects) is not None):
                 legacy.append(call)
-        except (ValueError, OSError, Conflict, KeyError, TypeError):
-            # Inventory uncertainty is isolated by T7 rather than becoming false success.
-            continue
+        except (ValueError, OSError, Conflict, KeyError, TypeError) as error:
+            raise Conflict(f'ordinary publication authority inventory uncertain: {error}') from error
     calls = checked + legacy
     if len({canonical_json(to_mapping_value(call)) for call in calls}) != len(calls):
         raise Conflict('duplicate original publication call authority')
@@ -496,36 +541,40 @@ def _obligations(source, store, objects):
         call_key = hashlib.sha256(canonical_json(to_mapping_value(call))).hexdigest()
         saved = store.get('WorkflowRepairObligation', call_key)
         if saved is None:
-            try:
-                _read_publish_call(call, store, objects)
-            except FileNotFoundError:
-                attempt = _call_context(call, store, objects)
-                if attempt is None:
+            descriptor = _read_repair_authority(call_key, objects)
+            if descriptor is None:
+                try:
+                    _read_publish_call(call, store, objects)
+                except FileNotFoundError:
+                    attempt = _call_context(call, store, objects)
+                    if attempt is None:
+                        continue
+                    if attempt['result'] is not None:
+                        raise Conflict('finished Attempt lacks its immutable child result')
+                else:
                     continue
-                if attempt['result'] is not None:
-                    raise Conflict('finished Attempt lacks its immutable child result')
-            else:
-                continue
-            recorded = [q['quarter'] for error in attempt['structured_errors']
-                        for q in error.get('details', {}).get('quarters', ())]
-            quarters = sorted(set(recorded) | set(_affected_quarters(workset.observations, objects, store)))
-            payload = {'format_version': OBLIGATION_FORMAT, 'call': call,
-                       'context': attempt['context'], 'transformed_ref': call['input_ref'],
-                       'sources': [ref.to_mapping() for ref in workset.observations],
-                       'affected_quarters': quarters}
-            descriptor = _document(payload, OBLIGATION_FORMAT, 'workflow-repairs', objects)
-            _read_document(descriptor, OBLIGATION_FORMAT, objects)
-            _immutable('WorkflowRepairObligation', call_key,
-                       {'call_sha256': call_key, 'descriptor': descriptor}, store)
+                recorded = [q['quarter'] for error in attempt['structured_errors']
+                            for q in error.get('details', {}).get('quarters', ())]
+                quarters = sorted(set(recorded) | set(_affected_quarters(workset.observations, objects, store)))
+                payload = {'format_version': OBLIGATION_FORMAT, 'call': call,
+                           'context': attempt['context'], 'transformed_ref': call['input_ref'],
+                           'sources': [ref.to_mapping() for ref in workset.observations],
+                           'affected_quarters': quarters}
+                descriptor = _document(payload, OBLIGATION_FORMAT, 'workflow-repairs', objects)
+                # The original capture wins before a recoverable index is written.
+                _write_repair_authority(call_key, descriptor, objects)
         else:
             indexed = saved.to_mapping()['value']
             if indexed['call_sha256'] != call_key:
                 raise Conflict('repair obligation call identity differs')
             descriptor = indexed['descriptor']
-            payload = _read_document(descriptor, OBLIGATION_FORMAT, objects)
-            if (payload['call'] != call or payload['transformed_ref'] != call['input_ref']
-                    or payload['sources'] != [r.to_mapping() for r in workset.observations]):
-                raise Conflict('repair obligation immutable input differs')
+        payload = _read_document(descriptor, OBLIGATION_FORMAT, objects)
+        if (payload['call'] != call or payload['transformed_ref'] != call['input_ref']
+                or payload['sources'] != [r.to_mapping() for r in workset.observations]):
+            raise Conflict('repair obligation immutable input differs')
+        if saved is None:
+            _immutable('WorkflowRepairObligation', call_key,
+                       {'call_sha256': call_key, 'descriptor': descriptor}, store)
         resolution_row = store.get('WorkflowRepairResolution', call_key)
         if resolution_row is None:
             try:
@@ -543,7 +592,11 @@ def _obligations(source, store, objects):
                         resolve_repair(descriptor, call, store, objects)
                     resolution_row = store.get('WorkflowRepairResolution', call_key)
         if resolution_row is not None:
-            validate_resolution_capture(resolution_row.to_mapping()['value'], objects)
+            resolution = resolution_row.to_mapping()['value']
+            resolved = _read_document(resolution, RESOLUTION_FORMAT, objects)
+            if resolved['obligation'] != _plain(descriptor):
+                raise Conflict('repair resolution index names another original obligation')
+            validate_resolution_capture(resolution, objects)
         else:
             found.append(descriptor)
     return tuple(found)
@@ -622,6 +675,7 @@ def _write_resolution(obligation, call, result, captures, artifacts, store, obje
 
 
 def resolve_repair(obligation, successful_publish_call, store, objects) -> Mapping:
+    _read_document(obligation, OBLIGATION_FORMAT, objects)
     call = _plain(successful_publish_call)
     result = _read_publish_call(call, store, objects)
     captures, artifacts = _publication_captures(result, store, objects)
