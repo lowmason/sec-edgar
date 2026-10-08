@@ -1,0 +1,20 @@
+{
+  "argv": [
+    "uv",
+    "run",
+    "--offline",
+    "--frozen",
+    "--package",
+    "sec-edgar-ingest",
+    "python",
+    "packages/sec-edgar-ingest/tests/network_guard.py",
+    "discover",
+    "-s",
+    "packages/sec-edgar-ingest/tests",
+    "-p",
+    "test_workflow_runner.py",
+    "-v"
+  ],
+  "output": "test_all_refused_retains_baseline_gaps_and_quarantine_exit (test_workflow_runner.RunnerTests.test_all_refused_retains_baseline_gaps_and_quarantine_exit) ... ok\ntest_bounded_inclusive_backfill_captures_both_quarters (test_workflow_runner.RunnerTests.test_bounded_inclusive_backfill_captures_both_quarters) ... ok\ntest_corrupt_retained_registry_and_receipt_do_not_block_valid_siblings (test_workflow_runner.RunnerTests.test_corrupt_retained_registry_and_receipt_do_not_block_valid_siblings) ... ok\ntest_deadline_after_selection_records_undispatched_units_without_child_work (test_workflow_runner.RunnerTests.test_deadline_after_selection_records_undispatched_units_without_child_work) ... ok\ntest_empty_quarter_is_independent_missing_unit (test_workflow_runner.RunnerTests.test_empty_quarter_is_independent_missing_unit) ... ok\ntest_refusal_and_valid_progress_are_incomplete (test_workflow_runner.RunnerTests.test_refusal_and_valid_progress_are_incomplete) ... FAIL\n\n======================================================================\nFAIL: test_refusal_and_valid_progress_are_incomplete (test_workflow_runner.RunnerTests.test_refusal_and_valid_progress_are_incomplete)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_runner.py\", line 148, in test_refusal_and_valid_progress_are_incomplete\n    self.assertEqual(report.outcome, 'incomplete')\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: 'quarantined' != 'incomplete'\n- quarantined\n+ incomplete\n\n\n----------------------------------------------------------------------\nRan 6 tests in 40.531s\n\nFAILED (failures=1)\n",
+  "exit": 1
+}

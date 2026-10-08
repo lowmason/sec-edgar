@@ -1,0 +1,22 @@
+{
+  "argv": [
+    "uv",
+    "run",
+    "--offline",
+    "--frozen",
+    "--package",
+    "sec-edgar-ingest",
+    "python",
+    "packages/sec-edgar-ingest/tests/network_guard.py",
+    "discover",
+    "-s",
+    "packages/sec-edgar-ingest/tests",
+    "-p",
+    "test_workflow_runner.py",
+    "-k",
+    "test_fresh_backfill_counts",
+    "-v"
+  ],
+  "output": "test_fresh_backfill_counts_every_original_parent_and_replay_dispatches_nothing (test_workflow_runner.RunnerTests.test_fresh_backfill_counts_every_original_parent_and_replay_dispatches_nothing) ... ERROR\n\n======================================================================\nERROR: test_fresh_backfill_counts_every_original_parent_and_replay_dispatches_nothing (test_workflow_runner.RunnerTests.test_fresh_backfill_counts_every_original_parent_and_replay_dispatches_nothing)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/runner.py\", line 65, in run_workflow\n    selection = parse_json(objects.read(selection_path))\n                           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^\n  File \"/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py\", line 112, in read\n    with self._open(path) as stream:\n         ~~~~~~~~~~^^^^^^\n  File \"/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/contextlib.py\", line 141, in __enter__\n    return next(self.gen)\n  File \"/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py\", line 68, in _open\n    descriptor = os.open(name, FILE_FLAGS, dir_fd=parent)\nFileNotFoundError: [Errno 2] No such file or directory: 'selection.json'\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_runner.py\", line 200, in test_fresh_backfill_counts_every_original_parent_and_replay_dispatches_nothing\n    second = self.run_parent(h, run='fresh')\n  File \"/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_runner.py\", line 29, in run_parent\n    report = run_workflow(context, h.settings, intent, dispatcher, h.store, h.objects)\n  File \"/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/runner.py\", line 69, in run_workflow\n    selection = freeze_selection(context, selection, store, objects)\n  File \"/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/results.py\", line 254, in freeze_selection\n    _validate_selection(selection, context, invocation['intent'], store, objects)\n    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/results.py\", line 215, in _validate_selection\n    raise Conflict('selection discovered-source count differs from immutable parent')\nsec_edgar_ingest.storage.contracts.Conflict: selection discovered-source count differs from immutable parent\n\n----------------------------------------------------------------------\nRan 1 test in 10.129s\n\nFAILED (errors=1)\n",
+  "exit": 1
+}
