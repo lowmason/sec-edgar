@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "uv",
+    "run",
+    "--offline",
+    "--frozen",
+    "--package",
+    "sec-edgar-ingest",
+    "python",
+    "-c",
+    "import sys\nsys.path.insert(0, 'packages/sec-edgar-ingest/tests')\nfrom network_guard import install\ninstall()\nimport io,json,tempfile\nfrom pathlib import Path\nfrom contextlib import redirect_stdout,redirect_stderr\nfrom unittest.mock import patch\nfrom support_checked import workflow_fixture,dispatch_chain\nfrom sec_edgar_ingest.workflows.checked import Dispatcher\nfrom sec_edgar_ingest import cli\nactual=cli.main\ncalls=[]\ndef captured(argv):\n    stdout,stderr=io.StringIO(),io.StringIO()\n    with redirect_stdout(stdout),redirect_stderr(stderr):\n        code=actual(argv)\n    calls.append(dict(argv=argv,exit=code,stdout=stdout.getvalue(),stderr=stderr.getvalue()))\n    sys.stdout.write(stdout.getvalue())\n    sys.stderr.write(stderr.getvalue())\n    return code\nwith tempfile.TemporaryDirectory() as temporary:\n    root=Path(temporary)\n    settings,context,pack,store,objects=workflow_fixture(root,prefix=True)\n    try:\n        dispatcher=Dispatcher(context,settings,pack,root,store,objects)\n        with patch.object(cli,'main',captured):\n            children=dispatch_chain(dispatcher,settings)\n        assert all(child.result.outcome=='success' for child in children)\n        assert children[1].result.quarantined==1\n    finally:\n        store.close()\nPath('specs/evidence/sec-filing-index-ingestion/stage-4/plan5-execution/task-3/06-child-cli-captures.json').write_text(json.dumps(calls,indent=2))\nprint('Captured four actual child CLI calls; all exits 0; collection retained one retry prefix.')\n"
+  ],
+  "exit": 0,
+  "stdout": "Captured four actual child CLI calls; all exits 0; collection retained one retry prefix.\n",
+  "stderr": ""
+}

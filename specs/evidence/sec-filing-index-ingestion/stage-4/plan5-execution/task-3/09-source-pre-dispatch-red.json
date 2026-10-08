@@ -1,0 +1,23 @@
+{
+  "argv": [
+    "uv",
+    "run",
+    "--offline",
+    "--frozen",
+    "--package",
+    "sec-edgar-ingest",
+    "python",
+    "packages/sec-edgar-ingest/tests/network_guard.py",
+    "discover",
+    "-s",
+    "packages/sec-edgar-ingest/tests",
+    "-p",
+    "test_workflow_checked.py",
+    "-k",
+    "test_snapshot_chain_refuses_noncanonical_retained_source_bytes",
+    "-v"
+  ],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "test_snapshot_chain_refuses_noncanonical_retained_source_bytes (test_workflow_checked.CheckedWorkflowTests.test_snapshot_chain_refuses_noncanonical_retained_source_bytes) ... FAIL\n\n======================================================================\nFAIL: test_snapshot_chain_refuses_noncanonical_retained_source_bytes (test_workflow_checked.CheckedWorkflowTests.test_snapshot_chain_refuses_noncanonical_retained_source_bytes)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_checked.py\", line 287, in test_snapshot_chain_refuses_noncanonical_retained_source_bytes\n    self.dispatcher.execute('transform', 'tampered-source-transform', self.settings,\n    ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n        ('--workset', collected.result.snapshot_workset_ref))\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/checked.py\", line 464, in execute\n    code = main(argv)\n  File \"/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/unittest/mock.py\", line 1175, in __call__\n    return self._mock_call(*args, **kwargs)\n           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/unittest/mock.py\", line 1179, in _mock_call\n    return self._execute_mock_call(*args, **kwargs)\n           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/unittest/mock.py\", line 1234, in _execute_mock_call\n    raise effect\nAssertionError: changed source reached CLI\n\n----------------------------------------------------------------------\nRan 1 test in 2.494s\n\nFAILED (failures=1)\n"
+}
