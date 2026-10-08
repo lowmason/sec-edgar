@@ -319,6 +319,25 @@ class CoverageTests(unittest.TestCase):
                 self.assertEqual(summarize((refused,), (derived, fatal), 1,
                                            command='backfill')[0], code)
 
+    def test_constructor_refuses_quarantine_for_every_pending_outcome(self):
+        for outcome in ('pending', 'deferred', 'throttled', 'awaiting_approval'):
+            with self.subTest(outcome=outcome):
+                pending = replace(self.member(outcome), transformed=False)
+                fields = {name: getattr(pending, name) for name in pending.to_mapping()}
+                fields['quarantined'] = True
+                with self.assertRaises(ValueError):
+                    MemberResult(**fields)
+
+    def test_workflow_decoder_refuses_pending_quarantine_with_matching_counts(self):
+        for outcome in ('pending', 'deferred', 'throttled', 'awaiting_approval'):
+            with self.subTest(outcome=outcome):
+                pending = replace(self.member(outcome), transformed=False)
+                wrong = self.workflow(members=(pending,)).to_mapping()
+                wrong['members'][0]['quarantined'] = True
+                wrong['counts']['quarantined_sources'] = 1
+                with self.assertRaises(ValueError):
+                    WorkflowResult.from_mapping(wrong)
+
     def test_workflow_path_requires_supported_command_and_single_segment_ids(self):
         for command in ('daily', 'backfill'):
             context = fixture_context(command=command)

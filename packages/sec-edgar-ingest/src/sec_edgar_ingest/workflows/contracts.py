@@ -65,8 +65,8 @@ class MemberResult(Record):
             or any(quarter.outcome not in ('published', 'unchanged') for quarter in self.quarters)
         ):
             raise ValueError('complete member lacks successful ETL/publication captures')
-        if self.quarantined and (self.transformed or self.outcome in COMPLETE):
-            raise ValueError('quarantined member cannot claim accepted transform')
+        if self.quarantined and (self.transformed or member_status(self.outcome) != 'failed'):
+            raise ValueError('quarantined member requires failed status and no accepted transform')
 
 
 @dataclass(frozen=True, slots=True)
