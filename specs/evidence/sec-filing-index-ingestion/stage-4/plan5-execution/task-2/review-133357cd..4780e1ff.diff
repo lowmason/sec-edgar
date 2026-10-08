@@ -1,0 +1,841 @@
+# Review package: 133357cd140bc571ce72935989820fdc8bae5d7c..4780e1ffaa65f3d33bf1c68cf01256e868018b66
+
+## Commits
+4780e1ff feat: retain verified original workflow member provenance
+
+## Files changed
+ .../src/sec_edgar_ingest/discovery.py              |   4 +-
+ .../src/sec_edgar_ingest/workflows/members.py      |  38 +++
+ .../src/sec_edgar_ingest/workflows/provenance.py   | 220 ++++++++++++
+ .../sec-edgar-ingest/tests/support_workflows.py    | 116 +++++++
+ .../tests/test_workflow_provenance.py              | 379 +++++++++++++++++++++
+ 5 files changed, 755 insertions(+), 2 deletions(-)
+
+## Diff
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/discovery.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/discovery.py
+index cd80863e..7f22d18f 100644
+--- a/packages/sec-edgar-ingest/src/sec_edgar_ingest/discovery.py
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/discovery.py
+@@ -230,21 +230,21 @@ def _verify_receipt_context(value: object, frozen_context: RunContext) -> None:
+             raise ValueError('receipt transport context requires its actual pinning date')
+         pin_context(settings, transport_context, transport_context.pinned_on)
+     except ValueError as error:
+         raise Conflict('cached listing receipt has invalid transport context') from error
+     provenance_fields = ('run_id', 'command', 'config_sha256', 'image_digest', 'parser_version', 'schema_version')
+     if (any(getattr(transport_context, field) != getattr(frozen_context, field) for field in provenance_fields)
+             or transport_context.effective_config != frozen_context.effective_config):
+         raise Conflict('cached listing receipt has conflicting frozen transport provenance')
+ 
+ 
+-def _reopen_listing(objects: ObjectStore, value: dict, unit: dict, frozen_context: RunContext):
++def reopen_listing(objects: ObjectStore, value: dict, unit: dict, frozen_context: RunContext):
+     outcome = DirectoryOutcome.from_mapping(value['outcome'])
+     if outcome.url != unit['url'] or outcome.period != unit['period']:
+         raise Conflict('cached directory progress differs from the requested directory metadata')
+     evidence = value['evidence']
+     objects.verify(evidence['body_path'], evidence['sha256'], evidence['byte_count'])
+     objects.verify(evidence['receipt_path'], evidence['receipt_sha256'], evidence['receipt_byte_count'])
+     metadata = parse_json(objects.read(evidence['receipt_path']))
+     _verify_receipt_context(metadata.get('context'), frozen_context)
+     receipt = BodyReceipt.from_mapping(metadata['receipt'])
+     if (not receipt.complete or receipt.status != HTTP_OK or receipt.error is not None or receipt.url != unit['url']
+@@ -291,21 +291,21 @@ def discover(settings: Settings, context: RunContext, mode: Literal['quarterly',
+     frozen = session['frozen']
+     pinned_context = RunContext.from_mapping(frozen['context'])
+     outcomes, members, listings = {}, {}, {}
+     # Root, then year, then quarter: every actual request must be authorized by its parent.
+     units = sorted(frozen['units'], key=lambda unit: (unit['url'].count('/'), unit['url']))
+     for unit in units:
+         url, role = unit['url'], unit['role']
+         cached = state.directory_progress(discovery_id, url)
+         if cached is not None and cached.value['outcome']['outcome'] != 'discovery_failed':
+             saved = cached.to_mapping()['value']
+-            outcome, selected, entries, discovered_at = _reopen_listing(objects, saved, unit, pinned_context)
++            outcome, selected, entries, discovered_at = reopen_listing(objects, saved, unit, pinned_context)
+             state.record_directory(discovery_id, outcome, selected, evidence=saved['evidence'],
+                                    selection=saved['selection'], expected_gap=saved['observed_gap_token'])
+         else:
+             parent_url = url.rsplit('/', 2)[0] + '/index.json'
+             if role != 'root':
+                 parent = outcomes[parent_url]
+                 wanted_name = url.rsplit('/', 2)[1]
+                 entry = next((entry for entry in listings.get(parent_url, ())
+                               if entry.name == wanted_name and entry.kind == 'dir'), None)
+                 if parent.outcome == 'discovery_failed' or entry is None:
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/members.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/members.py
+new file mode 100644
+index 00000000..45750ecf
+--- /dev/null
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/members.py
+@@ -0,0 +1,38 @@
++from ..models import to_mapping_value
++from ..storage.contracts import Conflict
++from ..models import canonical_json
++from .provenance import project_member, read_member, read_source
++
++class WorkflowMembers:
++    def __init__(self, store, objects):
++        self.store, self.objects = store, objects
++
++    def inventory(self):
++        from ..models import Error
++        valid, gaps = [], []
++        for row in self.store.scan('WorkflowMember', {}):
++            value = row.to_mapping()['value']
++            try:
++                read_member(value, self.store, self.objects)
++                valid.append(value)
++            except (ValueError, OSError, Conflict, KeyError, TypeError) as error:
++                identity = value.get('member_id') if isinstance(value, dict) else None
++                gaps.append(Error('legacy_member_unresolved', str(error), False, None,
++                    {'record_kind': 'WorkflowMember', 'member_id': identity,
++                     'record_sha256': __import__('hashlib').sha256(canonical_json(to_mapping_value(value))).hexdigest()}))
++        return tuple(sorted(valid, key=lambda v: (v['source']['period'], v['source']['source_id'], v['member_id']))), tuple(gaps)
++
++    def all(self):
++        values, gaps = self.inventory()
++        if gaps:
++            raise Conflict('registry contains unresolved corrupt members')
++        return values
++
++    def register(self, parent_ref, member_ref):
++        selected = read_source(member_ref, self.objects)
++        if len(selected.members) != 1:
++            raise Conflict('registry requires singleton member')
++        value = project_member(parent_ref, selected.members[0].source_id, self.store, self.objects)
++        if value['member_ref'] != member_ref:
++            raise Conflict('registered member differs from exact projection')
++        return value
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/provenance.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/provenance.py
+new file mode 100644
+index 00000000..cf3724cb
+--- /dev/null
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/provenance.py
+@@ -0,0 +1,220 @@
++from ..models import to_mapping_value
++import hashlib
++from dataclasses import replace
++from ..models import Binding, RunContext, canonical_json
++from ..state import AcquisitionState
++from ..storage.contracts import AlreadyExists, Conflict
++from ..worksets import decode_source_workset, encode_workset, make_source_workset
++from ..discovery import reopen_listing
++from ..urls import child_url
++
++def immutable(store, kind, key, value):
++    try:
++        store.insert(kind, key, value)
++    except AlreadyExists:
++        row = store.get(kind, key)
++        if row is None or canonical_json(to_mapping_value(row.to_mapping()['value'])) != canonical_json(to_mapping_value(value)):
++            raise Conflict(kind + ' immutable identity differs')
++
++def source_ref(workset):
++    return f'worksets/sec/source/sha256={workset.workset_id}/workset.json'
++
++def read_source(ref, objects):
++    body = objects.read(ref)
++    workset = decode_source_workset(body)
++    if source_ref(workset) != ref or encode_workset(workset) != body:
++        raise Conflict('source reference or canonical bytes differ')
++    return workset
++
++RECOVERY_FORMAT = 'sec-workflow-parent-recovery-v1'
++
++def rebuild_recovered_parent(session, progress, objects):
++    from datetime import date
++    from ..models import DirectoryOutcome, Error
++    frozen = session['frozen']
++    if session['discovery_id'] == '' or set(frozen) != {
++            'context', 'today', 'end', 'mode', 'acquisition_mode', 'units', 'overlap_from'}:
++        raise Conflict('recovery frozen discovery fields differ')
++    origin = RunContext.from_mapping(frozen['context'])
++    if origin.command != 'discover' or frozen['mode'] not in ('daily', 'quarterly'):
++        raise Conflict('recovery is not original discovery provenance')
++    if origin.pinned_on is None or origin.pinned_on.isoformat() != frozen['today']:
++        raise Conflict('recovery changes original discovery date')
++    units = frozen['units']
++    if not units or len({unit['url'] for unit in units}) != len(units):
++        raise Conflict('recovery requires unique frozen required units')
++    expected = sorted(units, key=lambda unit: (unit['url'].count('/'), unit['url']))
++    if len(progress) != len(expected) or [p['unit'] for p in progress] != expected:
++        raise Conflict('recovery omits or reorders required units')
++    entries, members, outcomes = {}, {}, []
++    for captured in progress:
++        if set(captured) != {'unit', 'value'}:
++            raise Conflict('recovery progress fields differ')
++        unit, value = captured['unit'], captured['value']
++        if set(unit) not in ({'url', 'period', 'role'}, {'url', 'period', 'role', 'bridge_period'}):
++            raise Conflict('recovery unit fields differ')
++        if unit['role'] not in ('root', 'year', 'quarter'):
++            raise Conflict('recovery unit role differs')
++        if value is None:
++            outcome = DirectoryOutcome(unit['url'], unit['period'], 'discovery_failed', None, (),
++                Error('discovery_pending', 'original required unit has no retained completion', True, None, {}))
++            outcomes.append(outcome)
++            continue
++        if set(value) != {'discovery_id', 'outcome', 'members', 'evidence', 'selection', 'observed_gap_token'}:
++            raise Conflict('recovery directory progress fields differ')
++        if value['discovery_id'] != session['discovery_id']:
++            raise Conflict('recovery directory belongs to another original session')
++        outcome = DirectoryOutcome.from_mapping(value['outcome'])
++        if (outcome.url, outcome.period) != (unit['url'], unit['period']):
++            raise Conflict('recovery directory metadata differs from frozen unit')
++        if outcome.outcome == 'discovery_failed':
++            if value['members'] or value['evidence'] is not None:
++                raise Conflict('failed discovery progress introduces accepted evidence')
++            outcomes.append(outcome)
++            continue
++        if unit['role'] != 'root':
++            ancestor = unit['url'].rsplit('/', 2)[0] + '/index.json'
++            name = unit['url'].rsplit('/', 2)[1]
++            authorized = next((entry for entry in entries.get(ancestor, ())
++                               if entry.name == name and entry.kind == 'dir'), None)
++            if authorized is None or child_url(ancestor, authorized.href, authorized.name, True) + 'index.json' != unit['url']:
++                raise Conflict('recovered successful child lacks actual successful ancestor')
++        outcome, selected, children, received = reopen_listing(objects, value, unit, origin)
++        entries[unit['url']] = children
++        for source in selected:
++            if source.source_id in members:
++                raise Conflict('recovery duplicates source across required units')
++            members[source.source_id] = source
++        outcomes.append(outcome)
++    return make_source_workset(origin, frozen['end'], session['discovery_id'],
++        tuple(members.values()), tuple(outcomes), date.fromisoformat(frozen['overlap_from']),
++        acquisition_mode=frozen['acquisition_mode'])
++
++
++def validate_parent_recovery(parent_ref, descriptor, objects):
++    from ..models import parse_json, require_hash
++    if set(descriptor) != {'ref', 'sha256', 'bytes'}:
++        raise Conflict('recovery descriptor fields differ')
++    require_hash(descriptor['sha256'], 'recovery digest')
++    expected_path = 'worksets/sec/workflow-parent-recovery/sha256=' + descriptor['sha256'] + '/recovery.json'
++    if descriptor['ref'] != expected_path:
++        raise Conflict('recovery descriptor address differs')
++    objects.verify(descriptor['ref'], descriptor['sha256'], descriptor['bytes'])
++    body = objects.read(descriptor['ref'])
++    saved = parse_json(body)
++    if canonical_json(to_mapping_value(saved)) != body or set(saved) != {'format_version', 'parent_ref', 'parent', 'session', 'progress'}:
++        raise Conflict('recovery bytes/schema differ')
++    if saved['format_version'] != RECOVERY_FORMAT or saved['parent_ref'] != parent_ref:
++        raise Conflict('recovery version/original parent differs')
++    parent = read_source(parent_ref, objects)
++    rebuilt = rebuild_recovered_parent(saved['session'], saved['progress'], objects)
++    if rebuilt != parent or saved['parent'] != parent.to_mapping():
++        raise Conflict('recovery changes exact reconstructed original parent')
++    return {'session': saved['session'], 'progress': saved['progress']}
++
++
++def read_parent(ref, store, objects):
++    parent = read_source(ref, objects)
++    acquisition = AcquisitionState(store)
++    row = acquisition.discovery_session(parent.discovery_id)
++    if row is None:
++        raise Conflict('original discovery session absent')
++    saved = row.to_mapping()['value']
++    frozen = saved['frozen']
++    origin = RunContext.from_mapping(frozen['context'])
++    identities = {saved.get('workset_id'), saved.get('predecessor_workset_id')}
++    identities.update(item['workset_id'] for item in saved.get('history', ()))
++    if parent.workset_id not in identities:
++        recovery = store.get('WorkflowParentRecovery', parent.workset_id)
++        if recovery is None:
++            raise Conflict('parent is neither retained discovery revision nor validated recovery')
++        snapshot = validate_parent_recovery(ref, recovery.to_mapping()['value'], objects)
++        if (snapshot['session']['discovery_id'] != parent.discovery_id or
++                canonical_json(to_mapping_value(snapshot['session']['frozen'])) != canonical_json(to_mapping_value(frozen))):
++            raise Conflict('recovery changes original frozen discovery session')
++        return parent
++    if (origin != parent.context or frozen['end'] != parent.pinned_end_quarter or
++            frozen['overlap_from'] != parent.overlap_from.isoformat() or
++            frozen['acquisition_mode'] != parent.acquisition_mode):
++        raise Conflict('parent changes frozen origin')
++    units = {unit['url']: unit for unit in frozen['units']}
++    if len(units) != len(frozen['units']) or set(units) != {d.url for d in parent.directories}:
++        raise Conflict('parent omits or changes required discovery units')
++    entries, reopened = {}, {}
++    for unit in sorted(units.values(), key=lambda u: (u['url'].count('/'), u['url'])):
++        directory = next(d for d in parent.directories if d.url == unit['url'])
++        if directory.outcome == 'discovery_failed':
++            if directory.error is None:
++                raise Conflict('failed required unit lacks retained error')
++            continue
++        if unit['role'] != 'root':
++            ancestor = unit['url'].rsplit('/', 2)[0] + '/index.json'
++            name = unit['url'].rsplit('/', 2)[1]
++            entry = next((e for e in entries.get(ancestor, ()) if e.name == name and e.kind == 'dir'), None)
++            if entry is None or child_url(ancestor, entry.href, entry.name, True) + 'index.json' != unit['url']:
++                raise Conflict('successful unit lacks actual successful parent child')
++        progress = acquisition.directory_progress(parent.discovery_id, unit['url'])
++        if progress is None:
++            raise Conflict('successful listing progress absent')
++        outcome, sources, children, received = reopen_listing(objects, progress.to_mapping()['value'], unit, origin)
++        if outcome != directory:
++            raise Conflict('parent outcome differs from original listing receipt')
++        entries[unit['url']] = children
++        reopened.update((source.source_id, source) for source in sources)
++    if tuple(sorted(reopened)) != tuple(source.source_id for source in parent.members):
++        raise Conflict('parent source set differs from successful listings')
++    if any(reopened[source.source_id] != source for source in parent.members):
++        raise Conflict('parent relabels original source')
++    return parent
++
++def projection(parent, source_id):
++    selected = tuple(source for source in parent.members if source.source_id == source_id)
++    directories = tuple(d for d in parent.directories if source_id in d.source_ids)
++    if len(selected) != 1 or len(directories) != 1 or directories[0].outcome == 'discovery_failed':
++        raise Conflict('projection needs exact successful immediate member')
++    directory = replace(directories[0], source_ids=(source_id,))
++    unit = hashlib.sha256(canonical_json(to_mapping_value([parent.workset_id, source_id]))).hexdigest()
++    return make_source_workset(parent.context, parent.pinned_end_quarter, 'member-' + unit,
++                               selected, (directory,), parent.overlap_from,
++                               acquisition_mode=parent.acquisition_mode)
++
++def project_member(parent_ref, source_id, store, objects):
++    if any(row.value['member_ref'] == parent_ref for row in store.scan('WorkflowMember', {})):
++        raise Conflict('a registered projection cannot become an original parent')
++    parent = read_parent(parent_ref, store, objects)
++    member = projection(parent, source_id)
++    body = encode_workset(member)
++    ref = source_ref(member)
++    objects.put_once(ref, body)
++    objects.verify(ref, hashlib.sha256(body).hexdigest(), len(body))
++    value = {'member_id': member.workset_id, 'source': member.members[0].to_mapping(),
++             'parent_ref': parent_ref, 'member_ref': ref}
++    immutable(store, 'WorkflowMember', member.workset_id, value)
++    return value
++
++def read_member(value, store, objects):
++    if set(value) != {'member_id', 'source', 'parent_ref', 'member_ref'}:
++        raise Conflict('member record fields differ')
++    row = store.get('WorkflowMember', value['member_id'])
++    if row is None or canonical_json(to_mapping_value(row.to_mapping()['value'])) != canonical_json(to_mapping_value(dict(value))):
++        raise Conflict('member record lacks exact registry binding')
++    parent = read_parent(value['parent_ref'], store, objects)
++    expected = projection(parent, value['source']['source_id'])
++    actual = read_source(value['member_ref'], objects)
++    if (actual != expected or actual.workset_id != value['member_id'] or
++            actual.members[0].to_mapping() != value['source']):
++        raise Conflict('member changes exact original projection')
++    return actual
++
++def transfer_binding(value, snapshot, store, objects):
++    member = read_member(value, store, objects)
++    acquisition = AcquisitionState(store)
++    remembered = acquisition.snapshot(snapshot.source_id, snapshot.sha256)
++    if remembered != snapshot or snapshot.source_id != member.members[0].source_id:
++        raise Conflict('binding snapshot metadata differs')
++    objects.verify(snapshot.raw_path, snapshot.sha256, snapshot.byte_count)
++    requested = Binding(member.workset_id, snapshot.source_id, snapshot.sha256)
++    winner = acquisition.bind_once(requested)
++    if winner != requested:
++        raise Conflict('existing binding winner differs; immutable pin preserved')
++    return winner
+diff --git a/packages/sec-edgar-ingest/tests/support_workflows.py b/packages/sec-edgar-ingest/tests/support_workflows.py
+new file mode 100644
+index 00000000..cced15a8
+--- /dev/null
++++ b/packages/sec-edgar-ingest/tests/support_workflows.py
+@@ -0,0 +1,116 @@
++from network_guard import install
++install()
++from sec_edgar_ingest.models import to_mapping_value
++import hashlib, io, zipfile
++from pathlib import Path
++from sec_edgar_ingest.models import canonical_json
++BASE = 'https://www.sec.gov/Archives/edgar/'
++
++def listing(url, children):
++    return canonical_json(to_mapping_value({'directory': {'name': url[len(BASE):-len('index.json')],
++        'parent-dir': '../', 'item': [
++            {'name': name, 'href': name + ('/' if kind == 'dir' else ''), 'type': kind,
++             'size': '1', 'last-modified': 'synthetic'} for name, kind in children]}}))
++
++def idx(rows, kind):
++    ending, title = ('\r\n', 'Filename') if kind == 'quarterly' else ('\n', 'File Name')
++    body = ('CIK|Company Name|Form Type|Date Filed|' + title + ending + '-----' + ending +
++            ending.join('|'.join(row) for row in rows) + ending).encode('ascii')
++    if kind == 'daily':
++        return body
++    output = io.BytesIO()
++    with zipfile.ZipFile(output, 'w') as archive:
++        info = zipfile.ZipInfo('master.idx', (2026, 1, 1, 0, 0, 0))
++        info.compress_type = zipfile.ZIP_DEFLATED
++        archive.writestr(info, body)
++    return output.getvalue()
++
++def build_pack(root, listings, bodies, overrides=None, repeats=8):
++    root = Path(root)
++    root.mkdir(parents=True, exist_ok=False)
++    (root / 'bodies').mkdir()
++    merged = {url: listing(url, children) for url, children in listings.items()}
++    merged.update(bodies)
++    responses = {}
++    for url, body in sorted(merged.items()):
++        digest = hashlib.sha256(body).hexdigest()
++        relative = 'bodies/' + digest + '.body'
++        target = root / relative
++        if not target.exists():
++            target.write_bytes(body)
++        spec = {'status': 200, 'headers': {'Content-Length': str(len(body)), 'X-Fixture': 'synthetic'},
++                'body_path': relative, 'body_sha256': digest}
++        responses[url] = [dict(spec) for _ in range(repeats)]
++    responses.update(overrides or {})
++    path = root / 'manifest.json'
++    path.write_bytes(canonical_json(to_mapping_value({'fixture_version': 'sec-acquisition-fixture-v1',
++                                    'provenance': 'synthetic', 'responses': responses})))
++    return path
++
++from sec_edgar_ingest.models import to_mapping_value
++import contextlib, io, json
++from datetime import datetime, timedelta, timezone
++from support import fixture_settings
++from sec_edgar_ingest.cli import main
++from sec_edgar_ingest.storage import open_stores
++from sec_edgar_ingest.etl.reader import capture_quarter, read_quarter
++from sec_edgar_ingest.etl.state import EtlState
++
++class CommandHarness:
++    def __init__(self, root, pack, settings=None):
++        self.root, self.pack = Path(root), Path(pack)
++        self.settings = settings or fixture_settings(
++            backfill={'start_quarter': '2026Q3', 'end_quarter': 'open'},
++            etl={'parser_version': 'fixture-index-parser-v1'},
++            fixture={'allow_clock_override': True, 'allow_deadline_override': False})
++        self.config = self.root / 'config.json'
++        self.config.write_bytes(canonical_json(to_mapping_value(self.settings.to_mapping())))
++        self.deadline = datetime.now(timezone.utc) + timedelta(seconds=1800)
++        self.opened = open_stores(self.settings, base_path=self.root)
++        self.store, self.objects, self.leases = self.opened
++        self.calls = []
++
++    def invoke(self, command, flags=(), run='r', attempt='a', today='2026-10-07', deadline=None):
++        argv = [command, '--config', str(self.config), '--run-id', run, '--execution-id', 'manual',
++                '--attempt-id', attempt, '--deadline', (deadline or self.deadline).isoformat(),
++                '--state-dir', str(self.root), '--today', today, *flags]
++        if command in ('discover', 'collect', 'backfill', 'daily'):
++            argv += ['--fixture-pack', str(self.pack)]
++        stdout, stderr = io.StringIO(), io.StringIO()
++        with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
++            code = main(argv)
++        message = json.loads(stdout.getvalue())
++        self.calls.append({'argv': argv, 'exit': code, 'stdout': message, 'stderr': stderr.getvalue()})
++        return code, message
++
++    def capture(self, quarter):
++        value = capture_quarter(quarter, self.objects, EtlState(self.store))
++        if value is None:
++            raise AssertionError('expected published quarter ' + quarter)
++        return value, tuple(row.to_mapping() for row in read_quarter(value, self.objects))
++
++    def close(self):
++        for resource in reversed(self.opened):
++            if hasattr(resource, 'close'):
++                resource.close()
++
++def simple_pack(root, *, empty=False, conflicting=False):
++    listings, bodies = {}, {}
++    for family in ('full-index', 'daily-index'):
++        base = BASE + family + '/'
++        listings[base + 'index.json'] = [('2026', 'dir')]
++        listings[base + '2026/index.json'] = [('QTR3', 'dir'), ('QTR4', 'dir')]
++        for quarter in (3, 4):
++            leaf = base + f'2026/QTR{quarter}/'
++            listings[leaf + 'index.json'] = []
++            if empty or (family == 'daily-index' and quarter == 3):
++                continue
++            kind = 'quarterly' if family == 'full-index' else 'daily'
++            filename = 'master.zip' if kind == 'quarterly' else 'master.20261001.idx'
++            listings[leaf + 'index.json'] = [(filename, 'file')]
++            filed = ('2026-09-30' if quarter == 3 else '2026-10-01') if kind == 'quarterly' else '20261001'
++            path = f'edgar/data/123456/0000123456-26-00000{quarter}.txt'
++            row = ('123456', 'Example', '10-K', filed, path)
++            rows = (row, ('123456', 'Changed', '10-K', filed, path)) if conflicting else (row,)
++            bodies[leaf + filename] = idx(rows, kind)
++    return build_pack(root, listings, bodies)
+diff --git a/packages/sec-edgar-ingest/tests/test_workflow_provenance.py b/packages/sec-edgar-ingest/tests/test_workflow_provenance.py
+new file mode 100644
+index 00000000..7a6eeac1
+--- /dev/null
++++ b/packages/sec-edgar-ingest/tests/test_workflow_provenance.py
+@@ -0,0 +1,379 @@
++from network_guard import install
++install()
++from sec_edgar_ingest.models import to_mapping_value
++import tempfile, unittest
++from datetime import date
++from pathlib import Path
++from support import discovery_harness, listing_response, failed_response
++from sec_edgar_ingest.models import canonical_json
++from sec_edgar_ingest.storage.contracts import Conflict
++from sec_edgar_ingest.workflows.provenance import project_member, read_member
++
++class ProvenanceTests(unittest.TestCase):
++    def test_valid_member_of_failed_parent_retains_original_listing(self):
++        with tempfile.TemporaryDirectory() as directory:
++            h = discovery_harness(Path(directory), {
++                '2026Q3': [failed_response(404)],
++                '2026Q4': [listing_response('2026Q4', ['master.20261001.idx'])],
++            })
++            try:
++                parent = h.run('daily', date(2026, 10, 7), 'provenance')
++                self.assertFalse(parent.discovery_complete)
++                parent_ref = h.workset_path(parent)
++                parent_bytes = h.objects.read(parent_ref)
++                value = project_member(parent_ref, parent.members[0].source_id, h.store, h.objects)
++                child = read_member(value, h.store, h.objects)
++                self.assertTrue(child.discovery_complete)
++                self.assertEqual(child.members, (parent.members[0],))
++                self.assertEqual(child.context, parent.context)
++                self.assertEqual(h.objects.read(parent_ref), parent_bytes)
++                self.assertEqual(value['parent_ref'], parent_ref)
++                self.assertEqual(project_member(parent_ref, parent.members[0].source_id,
++                                               h.store, h.objects), value)
++                self.assertEqual(len(tuple(h.store.scan('WorkflowMember', {}))), 1)
++                progress = h.state.directory_progress('provenance', child.directories[0].url)
++                body_path = progress.value['evidence']['body_path']
++                target = h.root / 'objects' / body_path
++                retained = target.read_bytes()
++                target.write_bytes(retained + b' ')
++                try:
++                    with self.assertRaises((Conflict, ValueError, OSError)):
++                        read_member(value, h.store, h.objects)
++                finally:
++                    target.write_bytes(retained)
++            finally:
++                h.close()
++    def test_corrupt_registry_is_reported_without_hiding_valid_sibling(self):
++        from sec_edgar_ingest.workflows.members import WorkflowMembers
++        with tempfile.TemporaryDirectory() as directory:
++            h = discovery_harness(Path(directory), {
++                '2026Q4': [listing_response('2026Q4', ['master.20261001.idx', 'master.20261002.idx'])]})
++            try:
++                parent = h.run('daily', date(2026, 10, 7), 'two-members')
++                values = [project_member(h.workset_path(parent), source.source_id, h.store, h.objects)
++                          for source in parent.members]
++                self.assertEqual(len(values), 2)
++                row = h.store.get('WorkflowMember', values[0]['member_id'])
++                altered = row.to_mapping()['value']; altered['source']['period'] = '2026-10-03'
++                h.store.replace('WorkflowMember', values[0]['member_id'], altered, row.version)
++                valid, gaps = WorkflowMembers(h.store, h.objects).inventory()
++                self.assertEqual(valid, (values[1],))
++                self.assertEqual(len(gaps), 1)
++                self.assertEqual(gaps[0].code, 'legacy_member_unresolved')
++            finally:
++                h.close()
++
++    def test_retained_parent_and_member_tampering_refuses(self):
++        from copy import deepcopy
++        with tempfile.TemporaryDirectory() as directory:
++            h = discovery_harness(Path(directory), {
++                '2026Q4': [listing_response('2026Q4', ['master.20261001.idx'])]})
++            try:
++                parent = h.run('daily', date(2026, 10, 7), 'tamper-member')
++                value = project_member(h.workset_path(parent), parent.members[0].source_id, h.store, h.objects)
++                variants = []
++                for key in ('member_id', 'parent_ref', 'member_ref'):
++                    altered = deepcopy(value)
++                    altered[key] = '0' * 64 if key == 'member_id' else value[key].replace('sha256=', 'sha256=0')
++                    variants.append(altered)
++                altered = deepcopy(value); altered['source']['period'] = '2026-10-02'; variants.append(altered)
++                altered = deepcopy(value); altered['source']['canonical_url'] += '.other'; variants.append(altered)
++                for altered in variants:
++                    with self.subTest(altered=altered):
++                        with self.assertRaises((Conflict, ValueError, OSError, KeyError)):
++                            read_member(altered, h.store, h.objects)
++                progress = h.state.directory_progress(parent.discovery_id, parent.directories[0].url)
++                saved = progress.to_mapping()['value']
++                altered = deepcopy(saved); altered['evidence']['byte_count'] += 1
++                # Select a real successful required unit; its checked receipt bytes must agree.
++                h.store.replace('DirectoryProgress', __import__('hashlib').sha256(
++                    canonical_json(to_mapping_value([parent.discovery_id, parent.directories[0].url]))).hexdigest(), altered, progress.version)
++                with self.assertRaises((Conflict, ValueError, OSError, KeyError)):
++                    read_member(value, h.store, h.objects)
++            finally:
++                h.close()
++
++    def test_divergent_binding_winner_stays_unchanged(self):
++        from sec_edgar_ingest.models import Binding
++        from sec_edgar_ingest.state import AcquisitionState
++        from support import fixture_snapshot
++        from sec_edgar_ingest.workflows.provenance import transfer_binding
++        with tempfile.TemporaryDirectory() as directory:
++            h = discovery_harness(Path(directory), {
++                '2026Q4': [listing_response('2026Q4', ['master.20261001.idx'])]})
++            try:
++                parent = h.run('daily', date(2026, 10, 7), 'binding-winner')
++                value = project_member(h.workset_path(parent), parent.members[0].source_id, h.store, h.objects)
++                state = AcquisitionState(h.store); source = parent.members[0]
++                first = fixture_snapshot(source, b'first immutable raw bytes')
++                second = fixture_snapshot(source, b'second immutable raw bytes')
++                for snapshot, body in ((first, b'first immutable raw bytes'), (second, b'second immutable raw bytes')):
++                    h.objects.put_once(snapshot.raw_path, body); state.remember_snapshot(snapshot)
++                winner = state.bind_once(Binding(value['member_id'], source.source_id, first.sha256))
++                binding_key = value['member_id'] + ':' + source.source_id
++                before = canonical_json(to_mapping_value(h.store.get('Binding', binding_key).to_mapping()))
++                with self.assertRaises(Conflict):
++                    transfer_binding(value, second, h.store, h.objects)
++                self.assertEqual(state.binding(value['member_id'], source.source_id), winner)
++                self.assertEqual(canonical_json(to_mapping_value(h.store.get('Binding', binding_key).to_mapping())), before)
++            finally:
++                h.close()
++
++    def test_original_frozen_metadata_changes_refuse(self):
++        from copy import deepcopy
++        for field, changed in (('end', '2026Q3'), ('acquisition_mode', 'refresh'),
++                               ('overlap_from', '2026-09-02')):
++            with self.subTest(field=field), tempfile.TemporaryDirectory() as directory:
++                h = discovery_harness(Path(directory), {'2026Q4': [listing_response('2026Q4', ['master.20261001.idx'])]})
++                try:
++                    parent = h.run('daily', date(2026, 10, 7), 'frozen-'+field)
++                    value = project_member(h.workset_path(parent), parent.members[0].source_id, h.store, h.objects)
++                    row = h.state.discovery_session(parent.discovery_id)
++                    original = row.to_mapping()['value']
++                    altered = deepcopy(original); altered['frozen'][field] = changed
++                    h.store.replace('DiscoverySession', __import__('hashlib').sha256(parent.discovery_id.encode()).hexdigest(), altered, row.version)
++                    before = h.objects.read(value['parent_ref'])
++                    with self.assertRaises((Conflict, ValueError)):
++                        read_member(value, h.store, h.objects)
++                    self.assertEqual(h.objects.read(value['parent_ref']), before)
++                finally:
++                    h.close()
++
++    def test_missing_or_changed_required_ancestors_refuse(self):
++        from copy import deepcopy
++        for role in ('root', 'year'):
++            with self.subTest(role=role), tempfile.TemporaryDirectory() as directory:
++                h = discovery_harness(Path(directory), {'2026Q4': [listing_response('2026Q4', ['master.20261001.idx'])]})
++                try:
++                    parent = h.run('daily', date(2026, 10, 7), 'units-'+role)
++                    value = project_member(h.workset_path(parent), parent.members[0].source_id, h.store, h.objects)
++                    row = h.state.discovery_session(parent.discovery_id)
++                    altered = deepcopy(row.to_mapping()['value'])
++                    altered['frozen']['units'] = [u for u in altered['frozen']['units'] if u['role'] != role]
++                    h.store.replace('DiscoverySession', __import__('hashlib').sha256(parent.discovery_id.encode()).hexdigest(), altered, row.version)
++                    with self.assertRaises(Conflict):
++                        read_member(value, h.store, h.objects)
++                finally:
++                    h.close()
++
++    def test_missing_successful_receipt_and_wrong_context_refuse(self):
++        from copy import deepcopy
++        import hashlib
++        from sec_edgar_ingest.models import parse_json
++        for mutation in ('missing', 'context', 'sha', 'length'):
++            with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as directory:
++                h = discovery_harness(Path(directory), {'2026Q4': [listing_response('2026Q4', ['master.20261001.idx'])]})
++                try:
++                    parent = h.run('daily', date(2026, 10, 7), 'receipt-'+mutation)
++                    value = project_member(h.workset_path(parent), parent.members[0].source_id, h.store, h.objects)
++                    unit = next(d for d in parent.directories if d.source_ids)
++                    row = h.state.directory_progress(parent.discovery_id, unit.url)
++                    altered = deepcopy(row.to_mapping()['value']); evidence = altered['evidence']
++                    if mutation == 'missing':
++                        target = h.root / 'objects' / evidence['receipt_path']
++                        retained = target.read_bytes(); target.unlink()
++                    elif mutation == 'context':
++                        receipt = parse_json(h.objects.read(evidence['receipt_path']))
++                        receipt['context']['run_id'] = 'different-origin'
++                        body = canonical_json(to_mapping_value(receipt))
++                        evidence['receipt_path'] += '.wrong-context'
++                        h.objects.put_once(evidence['receipt_path'], body)
++                        evidence['receipt_sha256'] = hashlib.sha256(body).hexdigest()
++                        evidence['receipt_byte_count'] = len(body)
++                    elif mutation == 'sha':
++                        evidence['sha256'] = '0' * 64
++                    else:
++                        evidence['byte_count'] += 1
++                    if mutation != 'missing':
++                        key = hashlib.sha256(canonical_json(to_mapping_value([parent.discovery_id, unit.url]))).hexdigest()
++                        h.store.replace('DirectoryProgress', key, altered, row.version)
++                    before = h.objects.read(value['member_ref'])
++                    with self.assertRaises((Conflict, ValueError, OSError)):
++                        read_member(value, h.store, h.objects)
++                    self.assertEqual(h.objects.read(value['member_ref']), before)
++                    if mutation == 'missing':
++                        target.write_bytes(retained)
++                finally:
++                    h.close()
++
++    def test_parent_and_member_canonical_bytes_tampering_refuses(self):
++        for name in ('parent_ref', 'member_ref'):
++            with self.subTest(name=name), tempfile.TemporaryDirectory() as directory:
++                h = discovery_harness(Path(directory), {'2026Q4': [listing_response('2026Q4', ['master.20261001.idx'])]})
++                try:
++                    parent = h.run('daily', date(2026, 10, 7), 'bytes-'+name)
++                    value = project_member(h.workset_path(parent), parent.members[0].source_id, h.store, h.objects)
++                    target = h.root / 'objects' / value[name]
++                    retained = target.read_bytes(); target.write_bytes(retained + b' ')
++                    try:
++                        with self.assertRaises((Conflict, ValueError)):
++                            read_member(value, h.store, h.objects)
++                    finally:
++                        target.write_bytes(retained)
++                    self.assertEqual(target.read_bytes(), retained)
++                    self.assertEqual(read_member(value, h.store, h.objects).members, (parent.members[0],))
++                finally:
++                    h.close()
++
++    def test_registry_survives_sqlite_close_reopen_and_register(self):
++        from sec_edgar_ingest.storage.local import LocalStateStore
++        from sec_edgar_ingest.workflows.members import WorkflowMembers
++        with tempfile.TemporaryDirectory() as directory:
++            h = discovery_harness(Path(directory), {'2026Q4': [listing_response('2026Q4', ['master.20261001.idx'])]})
++            try:
++                parent = h.run('daily', date(2026, 10, 7), 'durable-member')
++                value = project_member(h.workset_path(parent), parent.members[0].source_id, h.store, h.objects)
++                original = canonical_json(to_mapping_value(h.store.get('WorkflowMember', value['member_id']).to_mapping()['value']))
++                h.store.close(); h.store = LocalStateStore(h.root)
++                registry = WorkflowMembers(h.store, h.objects)
++                self.assertEqual(registry.all(), (value,))
++                self.assertEqual(registry.register(value['parent_ref'], value['member_ref']), value)
++                after = canonical_json(to_mapping_value(h.store.get('WorkflowMember', value['member_id']).to_mapping()['value']))
++                self.assertEqual(after, original)
++                self.assertEqual(read_member(value, h.store, h.objects).members[0], parent.members[0])
++                with self.assertRaises(Conflict):
++                    project_member(value['member_ref'], parent.members[0].source_id, h.store, h.objects)
++            finally:
++                h.close()
++
++    def test_recovered_parent_requires_exact_ordered_authorized_units(self):
++        from copy import deepcopy
++        from sec_edgar_ingest.workflows.provenance import rebuild_recovered_parent
++        with tempfile.TemporaryDirectory() as directory:
++            h = discovery_harness(Path(directory), {'2026Q4': [listing_response('2026Q4', ['master.20261001.idx'])]})
++            try:
++                parent = h.run('daily', date(2026, 10, 7), 'pure-recovery')
++                session = h.state.discovery_session(parent.discovery_id).to_mapping()['value']
++                progress = [{'unit': u, 'value': h.state.directory_progress(parent.discovery_id, u['url']).to_mapping()['value']}
++                            for u in sorted(session['frozen']['units'], key=lambda u: (u['url'].count('/'), u['url']))]
++                before = h.objects.read(h.workset_path(parent))
++                self.assertEqual(rebuild_recovered_parent(session, progress, h.objects), parent)
++                for captured in (progress[1:], list(reversed(progress))):
++                    with self.assertRaises(Conflict):
++                        rebuild_recovered_parent(session, captured, h.objects)
++                altered = deepcopy(progress)
++                altered[0]['value']['outcome']['outcome'] = 'discovery_failed'
++                altered[0]['value']['outcome']['listing_sha256'] = None
++                altered[0]['value']['outcome']['source_ids'] = []
++                altered[0]['value']['outcome']['error'] = {'code': 'missing', 'message': 'failed root', 'retryable': True, 'source_id': None, 'details': {}}
++                altered[0]['value']['members'] = []; altered[0]['value']['evidence'] = None
++                with self.assertRaisesRegex(Conflict, 'actual successful ancestor'):
++                    rebuild_recovered_parent(session, altered, h.objects)
++                self.assertEqual(h.objects.read(h.workset_path(parent)), before)
++            finally:
++                h.close()
++
++    def test_successful_child_must_be_advertised_by_actual_parent_listing(self):
++        from copy import deepcopy
++        from dataclasses import replace
++        import hashlib
++        from sec_edgar_ingest.models import parse_json
++        from sec_edgar_ingest.worksets import make_source_workset, encode_workset
++        from sec_edgar_ingest.workflows.provenance import read_parent, source_ref
++        with tempfile.TemporaryDirectory() as directory:
++            h = discovery_harness(Path(directory), {'2026Q4': [listing_response('2026Q4', ['master.20261001.idx'])]})
++            try:
++                parent = h.run('daily', date(2026, 10, 7), 'not-advertised')
++                session = h.state.discovery_session(parent.discovery_id)
++                saved = session.to_mapping()['value']
++                root = next(u for u in saved['frozen']['units'] if u['role'] == 'root')
++                progress = h.state.directory_progress(parent.discovery_id, root['url'])
++                altered = deepcopy(progress.to_mapping()['value']); evidence = altered['evidence']
++                listing = parse_json(h.objects.read(evidence['body_path']))
++                listing['directory']['item'] = [i for i in listing['directory']['item'] if i['name'] != '2026']
++                body = canonical_json(to_mapping_value(listing)); digest = hashlib.sha256(body).hexdigest()
++                evidence['body_path'] += '.unadvertised'
++                h.objects.put_once(evidence['body_path'], body)
++                evidence['sha256'], evidence['byte_count'] = digest, len(body)
++                receipt = parse_json(h.objects.read(evidence['receipt_path']))
++                receipt['body_path'] = evidence['body_path']
++                receipt['receipt']['sha256'], receipt['receipt']['byte_count'] = digest, len(body)
++                receipt_body = canonical_json(to_mapping_value(receipt))
++                evidence['receipt_path'] += '.unadvertised'
++                h.objects.put_once(evidence['receipt_path'], receipt_body)
++                evidence['receipt_sha256'] = hashlib.sha256(receipt_body).hexdigest()
++                evidence['receipt_byte_count'] = len(receipt_body)
++                altered['outcome']['listing_sha256'] = digest
++                key = hashlib.sha256(canonical_json(to_mapping_value([parent.discovery_id, root['url']]))).hexdigest()
++                h.store.replace('DirectoryProgress', key, altered, progress.version)
++                directories = tuple(replace(d, listing_sha256=digest) if d.url == root['url'] else d for d in parent.directories)
++                counterfeit = make_source_workset(parent.context, parent.pinned_end_quarter, parent.discovery_id,
++                    parent.members, directories, parent.overlap_from, acquisition_mode=parent.acquisition_mode)
++                h.objects.put_once(source_ref(counterfeit), encode_workset(counterfeit))
++                saved['workset_id'] = counterfeit.workset_id
++                h.store.replace('DiscoverySession', hashlib.sha256(parent.discovery_id.encode()).hexdigest(), saved, session.version)
++                before = h.objects.read(h.workset_path(parent))
++                with self.assertRaisesRegex(Conflict, 'actual successful parent child'):
++                    read_parent(source_ref(counterfeit), h.store, h.objects)
++                self.assertEqual(h.objects.read(h.workset_path(parent)), before)
++            finally:
++                h.close()
++
++    def test_recovery_descriptor_checks_exact_bytes_before_parent_adoption(self):
++        from copy import deepcopy
++        import hashlib
++        from sec_edgar_ingest.workflows.provenance import RECOVERY_FORMAT, validate_parent_recovery, read_parent
++        with tempfile.TemporaryDirectory() as directory:
++            h = discovery_harness(Path(directory), {'2026Q4': [listing_response('2026Q4', ['master.20261001.idx'])]})
++            try:
++                parent = h.run('daily', date(2026, 10, 7), 'descriptor')
++                session_row = h.state.discovery_session(parent.discovery_id)
++                session = session_row.to_mapping()['value']
++                progress = [{'unit': u, 'value': h.state.directory_progress(parent.discovery_id, u['url']).to_mapping()['value']}
++                            for u in sorted(session['frozen']['units'], key=lambda u: (u['url'].count('/'), u['url']))]
++                ref = h.workset_path(parent)
++                retained = {'format_version': RECOVERY_FORMAT, 'parent_ref': ref, 'parent': parent.to_mapping(),
++                            'session': session, 'progress': progress}
++                body = canonical_json(to_mapping_value(retained)); digest = hashlib.sha256(body).hexdigest()
++                descriptor = {'ref': 'worksets/sec/workflow-parent-recovery/sha256='+digest+'/recovery.json',
++                              'sha256': digest, 'bytes': len(body)}
++                h.objects.put_once(descriptor['ref'], body)
++                self.assertEqual(validate_parent_recovery(ref, descriptor, h.objects), {'session': session, 'progress': progress})
++                absent = deepcopy(session); absent['workset_id'] = None; absent['predecessor_workset_id'] = None; absent['history'] = []
++                h.store.replace('DiscoverySession', hashlib.sha256(parent.discovery_id.encode()).hexdigest(), absent, session_row.version)
++                with self.assertRaises(Conflict):
++                    read_parent(ref, h.store, h.objects)
++                h.store.insert('WorkflowParentRecovery', parent.workset_id, descriptor)
++                self.assertEqual(read_parent(ref, h.store, h.objects), parent)
++                for field, changed in (('bytes', len(body)+1), ('sha256', '0'*64), ('ref', descriptor['ref']+'.other')):
++                    altered = deepcopy(descriptor); altered[field] = changed
++                    with self.subTest(field=field), self.assertRaises((Conflict, ValueError, OSError)):
++                        validate_parent_recovery(ref, altered, h.objects)
++                self.assertEqual(h.objects.read(ref), __import__('sec_edgar_ingest.worksets', fromlist=['encode_workset']).encode_workset(parent))
++            finally:
++                h.close()
++
++    def test_verified_snapshot_transfer_is_idempotent(self):
++        from sec_edgar_ingest.state import AcquisitionState
++        from sec_edgar_ingest.workflows.provenance import transfer_binding
++        from support import fixture_snapshot
++        with tempfile.TemporaryDirectory() as directory:
++            h = discovery_harness(Path(directory), {'2026Q4': [listing_response('2026Q4', ['master.20261001.idx'])]})
++            try:
++                parent = h.run('daily', date(2026, 10, 7), 'transfer-success')
++                value = project_member(h.workset_path(parent), parent.members[0].source_id, h.store, h.objects)
++                body = b'accepted original bytes'; snapshot = fixture_snapshot(parent.members[0], body)
++                h.objects.put_once(snapshot.raw_path, body); AcquisitionState(h.store).remember_snapshot(snapshot)
++                winner = transfer_binding(value, snapshot, h.store, h.objects)
++                self.assertEqual(transfer_binding(value, snapshot, h.store, h.objects), winner)
++                self.assertEqual(winner.snapshot_sha256, snapshot.sha256)
++                self.assertEqual(h.objects.read(snapshot.raw_path), body)
++            finally:
++                h.close()
++
++    def test_support_original_rows_are_nonempty_parser_compatible(self):
++        from sec_edgar_ingest.etl.parser import iter_observations
++        from support import fixture_source, fixture_snapshot
++        from support_workflows import idx
++        for kind in ('daily', 'quarterly'):
++            with self.subTest(kind=kind), tempfile.TemporaryDirectory() as directory:
++                source = fixture_source('2026-10-01', 'daily') if kind == 'daily' else fixture_source()
++                filed = '20261001' if kind == 'daily' else '2026-09-30'
++                fields = ('123456', 'Example', '10-K', filed, 'edgar/data/123456/0000123456-26-000001.txt')
++                body = idx((fields,), kind)
++                target = Path(directory) / 'original'; target.write_bytes(body)
++                observations = tuple(iter_observations(target, source, fixture_snapshot(source, body),
++                    parser_version='fixture-index-parser-v1', schema_version='sec-index-v1'))
++                self.assertEqual(len(observations), 1)
++                self.assertEqual(observations[0].original_fields, fields)
++                self.assertEqual(target.read_bytes(), body)
