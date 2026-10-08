@@ -1,0 +1,17 @@
+# Stage 4 Plan 5 completion record
+
+**Status: COMPLETE (2026-10-08)** — executed via subagent-driven-development; nothing deferred.
+
+Stage 4: COMPLETE (2026-10-08) — implemented by plan 5 (specs/plans/completed/5-sec-filing-index-ingestion-stage-4-spec.md).
+
+The owner’s direct “Approved” response accepted final actual offline coverage and acceptance of the independently verified checkpoint and retained evidence as preserved planning input. [The immutable receipt](owner-approval.json) binds the exact approval context and source hashes. The former planning checkout remains absent; no physical restoration or complete planning ignored-tree preservation is claimed. The earlier stopped-checkout baseline disposition remains separate.
+
+All eleven tasks passed independent task review. Whole-branch review found two report authority defects; fixes at runtime commit `6528a4e7596ed55078cbe31892f448b3075773b3` passed independent scoped re-review. The refreshed full suite passed 620 unique tests in 883.125 seconds. Build/help/version/compile/whitespace, fresh native and isolated installed proofs passed. Twelve actual process deaths exited 91 with successful reopen; 39 production files matched reviewed source/wheel/installed bytes; the complete 21-dependency CPython and synthetic 19-dependency PyPy graphs and real transitive-version refusal passed. Independent final evidence review accepted the exact 1360-file bundle. [Verification](../final-verification-refresh/refresh-report.md), [independent proof review](../final-verification-refresh-review/report.md), and [fix review](../whole-branch-fix-1/review.md) retain the concrete evidence.
+
+Primary plus seven retained roots matched 138438 exact records and 28873 independent checkpoint blobs. Approved source/snapshot bytes, primary HEAD/index/status/legacy absences and protected refs remain unchanged. [Preservation refresh](../final-preservation-refresh/report.md) retains the audit, including its historical failure solely for the then-unresolved planning disposition; this later receipt resolves the owner decision, not the physical absence.
+
+The executed Plan 5 is retired as a completed copy. Its original hash-bound source and snapshots retain exact bytes at their established locations. Original Plan 4 is superseded by this record and is retained unchanged; the shared Stage 4 specification therefore remains in place with its approved historical text. This completion record is the supplemental authoritative Stage 4 stamp. The execution roadmap ticks only Stage 4 and revalidates unchanged Stage 5–8 boundaries. All 22 Stage 7 checks remain reserved/not_run. No historical production coverage, deployed resource fit or schedule activation is claimed.
+
+No plan work or review findings remain deferred. No deferred backlog exists; the statistics command reports “nothing deferred.” The available local Python runs the read-only statistics helper to preserve offline operation. The SDD ledger/review workspace remains retained under the handoff’s preservation requirement rather than being deleted by generic cleanup.
+
+Finishing decision: keep `codex/sec-edgar-stage4-plan5` and its managed worktree at `/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar`. Reviewed runtime/evidence commits are named above and in the receipt. Integration, push, merge and worktree cleanup remain later deliberate owner decisions. No next stage is started by completion.
