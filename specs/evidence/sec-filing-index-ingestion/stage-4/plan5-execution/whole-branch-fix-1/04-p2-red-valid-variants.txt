@@ -1,0 +1,46 @@
+argv: ["uv", "run", "--offline", "--frozen", "--package", "sec-edgar-ingest", "python", "packages/sec-edgar-ingest/tests/network_guard.py", "discover", "-s", "packages/sec-edgar-ingest/tests", "-p", "test_workflow_runner.py", "-k", "deadline_after_selection", "-v"]
+exit: 1
+test_deadline_after_selection_records_undispatched_units_without_child_work (test_workflow_runner.RunnerTests.test_deadline_after_selection_records_undispatched_units_without_child_work) ... 
+  test_deadline_after_selection_records_undispatched_units_without_child_work (test_workflow_runner.RunnerTests.test_deadline_after_selection_records_undispatched_units_without_child_work) (change={'downloaded': True}) ... FAIL
+test_deadline_after_selection_records_undispatched_units_without_child_work (test_workflow_runner.RunnerTests.test_deadline_after_selection_records_undispatched_units_without_child_work) ... ERROR
+
+======================================================================
+ERROR: test_deadline_after_selection_records_undispatched_units_without_child_work (test_workflow_runner.RunnerTests.test_deadline_after_selection_records_undispatched_units_without_child_work)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py", line 95, in _write_once
+    os.link(temporary, name, src_dir_fd=parent, dst_dir_fd=parent, follow_symlinks=False)
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileExistsError: [Errno 17] File exists: '.pending-6566fdc904404d19a1705323cbbb09bc' -> 'result.json'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_runner.py", line 83, in test_deadline_after_selection_records_undispatched_units_without_child_work
+    path = write_workflow_result(report, h.store, h.objects)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/results.py", line 523, in write_workflow_result
+    objects.put_once(path, body)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py", line 109, in put_once
+    return self._write_once(path, io.BytesIO(body))
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py", line 97, in _write_once
+    self.verify(path, digest.hexdigest(), byte_count)
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py", line 139, in verify
+    raise Conflict("immutable object differs from expected hash or length")
+sec_edgar_ingest.storage.contracts.Conflict: immutable object differs from expected hash or length
+
+======================================================================
+FAIL: test_deadline_after_selection_records_undispatched_units_without_child_work (test_workflow_runner.RunnerTests.test_deadline_after_selection_records_undispatched_units_without_child_work) (change={'downloaded': True})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_runner.py", line 81, in test_deadline_after_selection_records_undispatched_units_without_child_work
+    with self.subTest(change=change), self.assertRaises(Conflict):
+                                      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+AssertionError: Conflict not raised
+
+----------------------------------------------------------------------
+Ran 1 test in 3.120s
+
+FAILED (failures=1, errors=1)

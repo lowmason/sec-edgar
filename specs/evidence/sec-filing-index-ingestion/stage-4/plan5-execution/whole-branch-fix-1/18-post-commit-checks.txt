@@ -1,0 +1,20 @@
+argv: ["git", "rev-parse", "HEAD"]
+exit: 0
+6528a4e7596ed55078cbe31892f448b3075773b3
+
+argv: ["git", "show", "--stat", "--oneline", "HEAD"]
+exit: 0
+6528a4e7 fix: bind workflow reports to discovery and pending authority
+ .../src/sec_edgar_ingest/workflows/results.py      |  93 +++++++++++++++--
+ .../src/sec_edgar_ingest/workflows/runner.py       |   1 +
+ .../tests/test_workflow_results.py                 |  25 +++--
+ .../sec-edgar-ingest/tests/test_workflow_runner.py | 116 +++++++++++++++++++++
+ 4 files changed, 216 insertions(+), 19 deletions(-)
+
+argv: ["git", "diff", "--check"]
+exit: 0
+
+argv: ["git", "status", "--short"]
+exit: 0
+?? specs/evidence/sec-filing-index-ingestion/stage-4/plan5-execution/whole-branch-fix-1/
+?? specs/evidence/sec-filing-index-ingestion/stage-4/plan5-execution/whole-branch-review/

@@ -1,0 +1,13 @@
+argv: ["uv", "run", "--offline", "--frozen", "--package", "sec-edgar-ingest", "python", "packages/sec-edgar-ingest/tests/network_guard.py", "discover", "-s", "packages/sec-edgar-ingest/tests", "-p", "test_workflow_cli.py", "-v"]
+exit: 0
+test_changed_exact_invocation_is_conflict_and_report_stays_immutable (test_workflow_cli.WorkflowCliTests.test_changed_exact_invocation_is_conflict_and_report_stays_immutable) ... ok
+test_completed_exact_replay_after_deadline_constructs_no_dispatcher (test_workflow_cli.WorkflowCliTests.test_completed_exact_replay_after_deadline_constructs_no_dispatcher) ... ok
+test_failure_closes_all_opened_resources_and_writes_no_report (test_workflow_cli.WorkflowCliTests.test_failure_closes_all_opened_resources_and_writes_no_report) ... ok
+test_invalid_input_precedes_backend_construction_and_child_flags_stay_private (test_workflow_cli.WorkflowCliTests.test_invalid_input_precedes_backend_construction_and_child_flags_stay_private) ... ok
+test_omitted_today_reopens_saved_pin_before_next_day_validation (test_workflow_cli.WorkflowCliTests.test_omitted_today_reopens_saved_pin_before_next_day_validation) ... ok
+test_public_commands_inclusive_baseline_and_daily_reader (test_workflow_cli.WorkflowCliTests.test_public_commands_inclusive_baseline_and_daily_reader) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 44.493s
+
+OK

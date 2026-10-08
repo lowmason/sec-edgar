@@ -1,0 +1,19 @@
+argv: ["git", "diff", "--check"]
+exit: 0
+
+argv: ["git", "diff", "--stat"]
+exit: 0
+ .../src/sec_edgar_ingest/workflows/results.py      |  93 +++++++++++++++--
+ .../src/sec_edgar_ingest/workflows/runner.py       |   1 +
+ .../tests/test_workflow_results.py                 |  25 +++--
+ .../sec-edgar-ingest/tests/test_workflow_runner.py | 116 +++++++++++++++++++++
+ 4 files changed, 216 insertions(+), 19 deletions(-)
+
+argv: ["git", "status", "--short"]
+exit: 0
+ M packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/results.py
+ M packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/runner.py
+ M packages/sec-edgar-ingest/tests/test_workflow_results.py
+ M packages/sec-edgar-ingest/tests/test_workflow_runner.py
+?? specs/evidence/sec-filing-index-ingestion/stage-4/plan5-execution/whole-branch-fix-1/
+?? specs/evidence/sec-filing-index-ingestion/stage-4/plan5-execution/whole-branch-review/
