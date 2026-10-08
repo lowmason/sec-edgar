@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "uv",
+    "run",
+    "--offline",
+    "--frozen",
+    "--package",
+    "sec-edgar-ingest",
+    "python",
+    "-c",
+    "import sys; sys.path.insert(0,\"packages/sec-edgar-ingest/tests\"); from workflow_proof import write_proof_fixtures,FIXTURE_ROOT; write_proof_fixtures(FIXTURE_ROOT)"
+  ],
+  "exit": 0,
+  "stdout": "",
+  "stderr": ""
+}

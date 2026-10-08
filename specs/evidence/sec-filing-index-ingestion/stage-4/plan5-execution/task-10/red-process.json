@@ -1,0 +1,21 @@
+{
+  "argv": [
+    "uv",
+    "run",
+    "--offline",
+    "--frozen",
+    "--package",
+    "sec-edgar-ingest",
+    "python",
+    "packages/sec-edgar-ingest/tests/network_guard.py",
+    "discover",
+    "-s",
+    "packages/sec-edgar-ingest/tests",
+    "-p",
+    "test_workflow_process.py",
+    "-v"
+  ],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "test_public_native_sequence_uses_explicit_test_only_inventory (test_workflow_process.WorkflowProcessTests.test_public_native_sequence_uses_explicit_test_only_inventory) ... ERROR\ntest_real_process_death_reopens_each_durable_boundary (test_workflow_process.WorkflowProcessTests.test_real_process_death_reopens_each_durable_boundary) ... ok\n\n======================================================================\nERROR: test_public_native_sequence_uses_explicit_test_only_inventory (test_workflow_process.WorkflowProcessTests.test_public_native_sequence_uses_explicit_test_only_inventory)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_process.py\", line 10, in test_public_native_sequence_uses_explicit_test_only_inventory\n    report = sequence(Path(tmp))\n  File \"/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/workflow_proof.py\", line 98, in sequence\n    expected = json.loads((FIXTURE_ROOT / 'expected.json').read_text())\n                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^\n  File \"/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/pathlib/__init__.py\", line 792, in read_text\n    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:\n         ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/pathlib/__init__.py\", line 776, in open\n    return io.open(self, mode, buffering, encoding, errors, newline)\n           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nFileNotFoundError: [Errno 2] No such file or directory: '/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/fixtures/workflows/proof/expected.json'\n\n----------------------------------------------------------------------\nRan 2 tests in 55.020s\n\nFAILED (errors=1)\n"
+}

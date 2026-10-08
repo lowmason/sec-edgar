@@ -1,0 +1,21 @@
+{
+  "argv": [
+    "uv",
+    "run",
+    "--offline",
+    "--frozen",
+    "--package",
+    "sec-edgar-ingest",
+    "python",
+    "packages/sec-edgar-ingest/tests/network_guard.py",
+    "discover",
+    "-s",
+    "packages/sec-edgar-ingest/tests",
+    "-p",
+    "test_etl_contracts.py",
+    "-v"
+  ],
+  "exit": 0,
+  "stdout": "retained-workset workset.json aee51809276870393e90d9ede0399baacfe2f96798a6ae9c2ed26c4aba01bb98 68ecdcd9c4f1034b7d81ac989d9edbcfafde46f72397028c8850a8b0e560ee03 4579\nretained-workset workset.json b6388dacb7dd1743eeb58d05c4dff7a4cdef255ac5c24ceefd96542a06efaec5 9e1706ceb0f9148b7674c2a973fdcd82b7def738b501a6ce177b001e20afbe95 3704\nretained-workset workset.json 2d51330ddb11231aa5331f83a835b647913f79b3e902f04620b9493781f2622c 3ebc1529bd24507416f5866825752e7c59778efe25dafd2ace6c4e0c7538a00f 3885\nretained-workset workset.json f9885e59487ca8fc3adb228658c4829f7c4bf39e668b477527e2dd5c7132ea4d f40f6275b5bd04ce86929143abfa392185698fc6c977575e13beea8e7754bf45 3325\nretained-registry 14ea024fdafb0377c529edcdda6431bf5d7332caf321ba669b808efc31161d56 937\n",
+  "stderr": "test_canonical_field_types_and_nullability (test_etl_contracts.EtlContractTests.test_canonical_field_types_and_nullability) ... ok\ntest_change_schema_embeds_nullable_full_rows (test_etl_contracts.EtlContractTests.test_change_schema_embeds_nullable_full_rows) ... ok\ntest_observation_schema_preserves_original_fields (test_etl_contracts.EtlContractTests.test_observation_schema_preserves_original_fields) ... ok\ntest_processing_identity_includes_both_versions (test_etl_contracts.EtlContractTests.test_processing_identity_includes_both_versions) ... ok\ntest_retained_stage2_worksets_and_registry_remain_byte_identical (test_etl_contracts.EtlContractTests.test_retained_stage2_worksets_and_registry_remain_byte_identical) ... ok\ntest_row_mapping_and_strict_validation (test_etl_contracts.EtlContractTests.test_row_mapping_and_strict_validation) ... ok\ntest_transformed_codec_is_canonical_and_strict (test_etl_contracts.EtlContractTests.test_transformed_codec_is_canonical_and_strict) ... ok\ntest_all_records_are_strict_immutable_and_round_trip (test_etl_contracts.EtlRecordTests.test_all_records_are_strict_immutable_and_round_trip) ... ok\ntest_closed_daily_only_manifest_has_no_withdrawal_authority (test_etl_contracts.EtlRecordTests.test_closed_daily_only_manifest_has_no_withdrawal_authority) ... ok\ntest_quarter_counts_include_retained_identical_duplicates (test_etl_contracts.EtlRecordTests.test_quarter_counts_include_retained_identical_duplicates) ... ok\ntest_rows_follow_parser_padded_cik_and_safe_legacy_path_contract (test_etl_contracts.EtlRecordTests.test_rows_follow_parser_padded_cik_and_safe_legacy_path_contract) ... ok\n\n----------------------------------------------------------------------\nRan 11 tests in 0.040s\n\nOK\n"
+}

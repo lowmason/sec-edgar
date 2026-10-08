@@ -1,0 +1,21 @@
+{
+  "argv": [
+    "uv",
+    "run",
+    "--offline",
+    "--frozen",
+    "--package",
+    "sec-edgar-ingest",
+    "python",
+    "packages/sec-edgar-ingest/tests/network_guard.py",
+    "discover",
+    "-s",
+    "packages/sec-edgar-ingest/tests",
+    "-p",
+    "test_etl_storage.py",
+    "-v"
+  ],
+  "exit": 0,
+  "stdout": "pointer-wire POST https://secedgardevb8617.table.core.windows.net/ActivePointers None\npointer-wire PUT https://secedgardevb8617.table.core.windows.net/ActivePointers(PartitionKey='sec-owner-lowell-mason%3AQuarterPublication',RowKey='2026Q4') W/\"first\"\npointer-wire PUT https://secedgardevb8617.table.core.windows.net/ActivePointers(PartitionKey='sec-owner-lowell-mason%3AQuarterPublication',RowKey='2026Q4') W/\"first\"\nmapped-wire PUT https://secedgardevb8617.blob.core.windows.net/results/runs/sec/r/result.json *\nmapped-wire GET https://secedgardevb8617.blob.core.windows.net/results/runs/sec/r/result.json None\nmapped-wire PUT https://secedgardevb8617.blob.core.windows.net/manifests/curated/sec/g/manifest.json *\nmapped-wire GET https://secedgardevb8617.blob.core.windows.net/manifests/curated/sec/g/manifest.json None\nmapped-wire PUT https://secedgardevb8617.blob.core.windows.net/generations/observations/sec/s/rows.parquet *\nmapped-wire GET https://secedgardevb8617.blob.core.windows.net/generations/observations/sec/s/rows.parquet None\nmapped-wire PUT https://secedgardevb8617.blob.core.windows.net/raw/staging/sec/temp *\nmapped-wire GET https://secedgardevb8617.blob.core.windows.net/raw/staging/sec/temp None\nlarge-pointer-descriptor {'PartitionKey': 'sec-owner-lowell-mason:QuarterPublication', 'PartitionKey@odata.type': 'Edm.String', 'RowKey': '2026Q4', 'RowKey@odata.type': 'Edm.String', 'StableKey': '2026Q4', 'StableKey@odata.type': 'Edm.String', 'PayloadFormat': 'sec-state-blob-v1', 'PayloadFormat@odata.type': 'Edm.String', 'PayloadSha256': '141263faac84ba40957edd369756206fb53e92765588f7a6eced09d136ea78ff', 'PayloadSha256@odata.type': 'Edm.String', 'PayloadByteCount': 71822} etag W/\"service-1\"\n",
+  "stderr": "test_active_pointer_real_sdk_insert_replace_and_conflict (test_etl_storage.EtlStorageTests.test_active_pointer_real_sdk_insert_replace_and_conflict) ... ok\ntest_azure_logical_writes_and_streamed_materialization_use_mapped_paths (test_etl_storage.EtlStorageTests.test_azure_logical_writes_and_streamed_materialization_use_mapped_paths) ... ok\ntest_conflicting_transform_cannot_leave_a_publication_receipt (test_etl_storage.EtlStorageTests.test_conflicting_transform_cannot_leave_a_publication_receipt) ... ok\ntest_large_active_pointer_record_uses_verified_content_first_descriptor (test_etl_storage.EtlStorageTests.test_large_active_pointer_record_uses_verified_content_first_descriptor) ... ok\ntest_local_materialize_is_exclusive_and_cleans_failed_copy (test_etl_storage.EtlStorageTests.test_local_materialize_is_exclusive_and_cleans_failed_copy) ... ok\ntest_logical_paths_use_accepted_containers (test_etl_storage.EtlStorageTests.test_logical_paths_use_accepted_containers) ... ok\ntest_materialize_close_failure_removes_its_created_scratch (test_etl_storage.EtlStorageTests.test_materialize_close_failure_removes_its_created_scratch) ... ok\ntest_missing_active_client_refuses_large_write_before_content_upload (test_etl_storage.EtlStorageTests.test_missing_active_client_refuses_large_write_before_content_upload) ... ok\ntest_pointer_commit_uses_actual_revision_and_propagates_conflict (test_etl_storage.EtlStorageTests.test_pointer_commit_uses_actual_revision_and_propagates_conflict) ... ok\ntest_publication_membership_is_monotonic_and_cas_is_bounded (test_etl_storage.EtlStorageTests.test_publication_membership_is_monotonic_and_cas_is_bounded) ... ok\ntest_stream_failure_deletes_only_created_scratch (test_etl_storage.EtlStorageTests.test_stream_failure_deletes_only_created_scratch) ... ok\ntest_transform_acceptance_and_publication_receipts_are_idempotent (test_etl_storage.EtlStorageTests.test_transform_acceptance_and_publication_receipts_are_idempotent) ... ok\n\n----------------------------------------------------------------------\nRan 12 tests in 0.149s\n\nOK\n"
+}

@@ -1,0 +1,24 @@
+{
+  "argv": [
+    "uv",
+    "run",
+    "--offline",
+    "--frozen",
+    "--package",
+    "sec-edgar-ingest",
+    "python",
+    "packages/sec-edgar-ingest/tests/network_guard.py",
+    "discover",
+    "-s",
+    "packages/sec-edgar-ingest/tests",
+    "-p",
+    "test_workflow_acceptance.py",
+    "-v"
+  ],
+  "env": {
+    "SEC_EDGAR_TASK10_ACCEPTANCE_EVIDENCE": "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-4/plan5-execution/task-10/acceptance-cases"
+  },
+  "exit": 0,
+  "stdout": "",
+  "stderr": "test_F1_moved_quarter_remains_backlog_after_Q4_publishes (test_workflow_acceptance.WorkflowAcceptanceTests.test_F1_moved_quarter_remains_backlog_after_Q4_publishes) ... ok\ntest_F2_retry_prefix_survives_without_terminal_source_quarantine (test_workflow_acceptance.WorkflowAcceptanceTests.test_F2_retry_prefix_survives_without_terminal_source_quarantine) ... ok\ntest_F3_ordinary_post_CAS_failure_has_no_report_then_fresh_checked_repair (test_workflow_acceptance.WorkflowAcceptanceTests.test_F3_ordinary_post_CAS_failure_has_no_report_then_fresh_checked_repair) ... ok\ntest_F4_parent_command_namespace_and_exact_completed_replay (test_workflow_acceptance.WorkflowAcceptanceTests.test_F4_parent_command_namespace_and_exact_completed_replay) ... ok\ntest_F5_all_conflicting_baseline_is_quarantined_with_gaps_and_no_pointer (test_workflow_acceptance.WorkflowAcceptanceTests.test_F5_all_conflicting_baseline_is_quarantined_with_gaps_and_no_pointer) ... ok\ntest_R1_empty_quarter_is_unresolved_and_preserves_valid_quarter (test_workflow_acceptance.WorkflowAcceptanceTests.test_R1_empty_quarter_is_unresolved_and_preserves_valid_quarter) ... ok\ntest_R1_mixed_valid_and_refused_members_preserves_good_pointer (test_workflow_acceptance.WorkflowAcceptanceTests.test_R1_mixed_valid_and_refused_members_preserves_good_pointer) ... ok\ntest_R2_Q4_Q1_transition_uses_both_required_quarters (test_workflow_acceptance.WorkflowAcceptanceTests.test_R2_Q4_Q1_transition_uses_both_required_quarters) ... ok\ntest_R2_failed_outage_directory_holds_boundary_with_independent_progress (test_workflow_acceptance.WorkflowAcceptanceTests.test_R2_failed_outage_directory_holds_boundary_with_independent_progress) ... ok\ntest_R2_older_nonempty_closed_withdrawal_gate_remains_pending (test_workflow_acceptance.WorkflowAcceptanceTests.test_R2_older_nonempty_closed_withdrawal_gate_remains_pending) ... ok\ntest_R2_outage_spans_Q4_Q1_Q2_and_keeps_older_pending (test_workflow_acceptance.WorkflowAcceptanceTests.test_R2_outage_spans_Q4_Q1_Q2_and_keeps_older_pending) ... ok\n\n----------------------------------------------------------------------\nRan 11 tests in 140.477s\n\nOK\n"
+}

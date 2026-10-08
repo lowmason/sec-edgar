@@ -1,0 +1,21 @@
+{
+  "argv": [
+    "uv",
+    "run",
+    "--offline",
+    "--frozen",
+    "--package",
+    "sec-edgar-ingest",
+    "python",
+    "packages/sec-edgar-ingest/tests/network_guard.py",
+    "discover",
+    "-s",
+    "packages/sec-edgar-ingest/tests",
+    "-p",
+    "test_etl_transform.py",
+    "-v"
+  ],
+  "exit": 0,
+  "stdout": "",
+  "stderr": "test_binding_mismatch_and_source_workset_mismatch_reject_input (test_etl_transform.EtlTransformTests.test_binding_mismatch_and_source_workset_mismatch_reject_input) ... ok\ntest_binding_must_match_all_identity_fields (test_etl_transform.EtlTransformTests.test_binding_must_match_all_identity_fields) ... ok\ntest_concurrent_transform_adopts_one_immutable_manifest (test_etl_transform.EtlTransformTests.test_concurrent_transform_adopts_one_immutable_manifest) ... ok\ntest_conflicting_last_duplicate_after_full_batch_quarantines_source (test_etl_transform.EtlTransformTests.test_conflicting_last_duplicate_after_full_batch_quarantines_source) ... ok\ntest_corrupt_raw_and_accepted_data_fail_closed (test_etl_transform.EtlTransformTests.test_corrupt_raw_and_accepted_data_fail_closed) ... ok\ntest_deadline_uses_injected_clock_without_expired_fixture (test_etl_transform.EtlTransformTests.test_deadline_uses_injected_clock_without_expired_fixture) ... ok\ntest_duplicates_and_cross_quarter_counts_are_retained (test_etl_transform.EtlTransformTests.test_duplicates_and_cross_quarter_counts_are_retained) ... ok\ntest_empty_complete_workset_and_incomplete_snapshot_membership (test_etl_transform.EtlTransformTests.test_empty_complete_workset_and_incomplete_snapshot_membership) ... ok\ntest_force_reparses_and_verifies_immutable_output (test_etl_transform.EtlTransformTests.test_force_reparses_and_verifies_immutable_output) ... ok\ntest_image_change_adopts_original_producer_manifest_even_when_forced (test_etl_transform.EtlTransformTests.test_image_change_adopts_original_producer_manifest_even_when_forced) ... ok\ntest_interrupt_each_durability_boundary_and_repair (test_etl_transform.EtlTransformTests.test_interrupt_each_durability_boundary_and_repair) ... ok\ntest_malformed_and_invalid_envelope_sources_never_accept (test_etl_transform.EtlTransformTests.test_malformed_and_invalid_envelope_sources_never_accept) ... ok\ntest_manifest_repair_after_real_preprocessing_crash (test_etl_transform.EtlTransformTests.test_manifest_repair_after_real_preprocessing_crash) ... ok\ntest_new_process_reuses_accepted_output_with_guard_before_imports (test_etl_transform.EtlTransformTests.test_new_process_reuses_accepted_output_with_guard_before_imports) ... ok\ntest_no_transport_constructors (test_etl_transform.EtlTransformTests.test_no_transport_constructors) ... ok\ntest_parser_replay_keeps_raw_origin_and_changes_processing_identity (test_etl_transform.EtlTransformTests.test_parser_replay_keeps_raw_origin_and_changes_processing_identity) ... ok\ntest_partial_members_recover_using_successful_processing (test_etl_transform.EtlTransformTests.test_partial_members_recover_using_successful_processing) ... ok\ntest_quarterly_zip_validation_and_crc_rejection (test_etl_transform.EtlTransformTests.test_quarterly_zip_validation_and_crc_rejection) ... ok\ntest_raw_length_drift_missing_accepted_output_and_force_collision (test_etl_transform.EtlTransformTests.test_raw_length_drift_missing_accepted_output_and_force_collision) ... ok\ntest_readback_counts_and_scratch_iterator_lifetime (test_etl_transform.EtlTransformTests.test_readback_counts_and_scratch_iterator_lifetime) ... ok\ntest_uploaded_data_is_read_back_before_accepting_checkpoint (test_etl_transform.EtlTransformTests.test_uploaded_data_is_read_back_before_accepting_checkpoint) ... ok\n\n----------------------------------------------------------------------\nRan 21 tests in 2.547s\n\nOK\n"
+}

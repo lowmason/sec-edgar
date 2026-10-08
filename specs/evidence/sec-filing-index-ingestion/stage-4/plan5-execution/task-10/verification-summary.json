@@ -1,0 +1,387 @@
+{
+  "commands": {
+    "diff-check.json": {
+      "exit": 0,
+      "tests": null,
+      "argv": [
+        "git",
+        "-c",
+        "core.whitespace=cr-at-eol",
+        "diff",
+        "--check"
+      ]
+    },
+    "fixture-generation.json": {
+      "exit": 0,
+      "tests": null,
+      "argv": [
+        "uv",
+        "run",
+        "--offline",
+        "--frozen",
+        "--package",
+        "sec-edgar-ingest",
+        "python",
+        "-c",
+        "import sys; sys.path.insert(0,\"packages/sec-edgar-ingest/tests\"); from workflow_proof import write_proof_fixtures,FIXTURE_ROOT; write_proof_fixtures(FIXTURE_ROOT)"
+      ]
+    },
+    "green-acceptance-retained.json": {
+      "exit": 0,
+      "tests": 11,
+      "argv": [
+        "uv",
+        "run",
+        "--offline",
+        "--frozen",
+        "--package",
+        "sec-edgar-ingest",
+        "python",
+        "packages/sec-edgar-ingest/tests/network_guard.py",
+        "discover",
+        "-s",
+        "packages/sec-edgar-ingest/tests",
+        "-p",
+        "test_workflow_acceptance.py",
+        "-v"
+      ]
+    },
+    "green-acceptance.json": {
+      "exit": 0,
+      "tests": 11,
+      "argv": [
+        "uv",
+        "run",
+        "--offline",
+        "--frozen",
+        "--package",
+        "sec-edgar-ingest",
+        "python",
+        "packages/sec-edgar-ingest/tests/network_guard.py",
+        "discover",
+        "-s",
+        "packages/sec-edgar-ingest/tests",
+        "-p",
+        "test_workflow_acceptance.py",
+        "-v"
+      ]
+    },
+    "green-process.json": {
+      "exit": 0,
+      "tests": 2,
+      "argv": [
+        "uv",
+        "run",
+        "--offline",
+        "--frozen",
+        "--package",
+        "sec-edgar-ingest",
+        "python",
+        "packages/sec-edgar-ingest/tests/network_guard.py",
+        "discover",
+        "-s",
+        "packages/sec-edgar-ingest/tests",
+        "-p",
+        "test_workflow_process.py",
+        "-v"
+      ]
+    },
+    "native-proof-command.json": {
+      "exit": 0,
+      "tests": null,
+      "argv": [
+        "uv",
+        "run",
+        "--offline",
+        "--frozen",
+        "--package",
+        "sec-edgar-ingest",
+        "python",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-4/plan5-execution/task-10/native-driver.py",
+        "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-4/plan5-execution/task-10/native-proof"
+      ]
+    },
+    "red-acceptance.json": {
+      "exit": 1,
+      "tests": 11,
+      "argv": [
+        "uv",
+        "run",
+        "--offline",
+        "--frozen",
+        "--package",
+        "sec-edgar-ingest",
+        "python",
+        "packages/sec-edgar-ingest/tests/network_guard.py",
+        "discover",
+        "-s",
+        "packages/sec-edgar-ingest/tests",
+        "-p",
+        "test_workflow_acceptance.py",
+        "-v"
+      ]
+    },
+    "red-process.json": {
+      "exit": 1,
+      "tests": 2,
+      "argv": [
+        "uv",
+        "run",
+        "--offline",
+        "--frozen",
+        "--package",
+        "sec-edgar-ingest",
+        "python",
+        "packages/sec-edgar-ingest/tests/network_guard.py",
+        "discover",
+        "-s",
+        "packages/sec-edgar-ingest/tests",
+        "-p",
+        "test_workflow_process.py",
+        "-v"
+      ]
+    },
+    "regression-test_etl_catalog.py.json": {
+      "exit": 0,
+      "tests": 31,
+      "argv": [
+        "uv",
+        "run",
+        "--offline",
+        "--frozen",
+        "--package",
+        "sec-edgar-ingest",
+        "python",
+        "packages/sec-edgar-ingest/tests/network_guard.py",
+        "discover",
+        "-s",
+        "packages/sec-edgar-ingest/tests",
+        "-p",
+        "test_etl_catalog.py",
+        "-v"
+      ]
+    },
+    "regression-test_etl_cli.py.json": {
+      "exit": 0,
+      "tests": 38,
+      "argv": [
+        "uv",
+        "run",
+        "--offline",
+        "--frozen",
+        "--package",
+        "sec-edgar-ingest",
+        "python",
+        "packages/sec-edgar-ingest/tests/network_guard.py",
+        "discover",
+        "-s",
+        "packages/sec-edgar-ingest/tests",
+        "-p",
+        "test_etl_cli.py",
+        "-v"
+      ]
+    },
+    "regression-test_etl_contracts.py.json": {
+      "exit": 0,
+      "tests": 11,
+      "argv": [
+        "uv",
+        "run",
+        "--offline",
+        "--frozen",
+        "--package",
+        "sec-edgar-ingest",
+        "python",
+        "packages/sec-edgar-ingest/tests/network_guard.py",
+        "discover",
+        "-s",
+        "packages/sec-edgar-ingest/tests",
+        "-p",
+        "test_etl_contracts.py",
+        "-v"
+      ]
+    },
+    "regression-test_etl_parser.py.json": {
+      "exit": 0,
+      "tests": 7,
+      "argv": [
+        "uv",
+        "run",
+        "--offline",
+        "--frozen",
+        "--package",
+        "sec-edgar-ingest",
+        "python",
+        "packages/sec-edgar-ingest/tests/network_guard.py",
+        "discover",
+        "-s",
+        "packages/sec-edgar-ingest/tests",
+        "-p",
+        "test_etl_parser.py",
+        "-v"
+      ]
+    },
+    "regression-test_etl_processes.py.json": {
+      "exit": 0,
+      "tests": 6,
+      "argv": [
+        "uv",
+        "run",
+        "--offline",
+        "--frozen",
+        "--package",
+        "sec-edgar-ingest",
+        "python",
+        "packages/sec-edgar-ingest/tests/network_guard.py",
+        "discover",
+        "-s",
+        "packages/sec-edgar-ingest/tests",
+        "-p",
+        "test_etl_processes.py",
+        "-v"
+      ]
+    },
+    "regression-test_etl_publication.py.json": {
+      "exit": 0,
+      "tests": 24,
+      "argv": [
+        "uv",
+        "run",
+        "--offline",
+        "--frozen",
+        "--package",
+        "sec-edgar-ingest",
+        "python",
+        "packages/sec-edgar-ingest/tests/network_guard.py",
+        "discover",
+        "-s",
+        "packages/sec-edgar-ingest/tests",
+        "-p",
+        "test_etl_publication.py",
+        "-v"
+      ]
+    },
+    "regression-test_etl_storage.py.json": {
+      "exit": 0,
+      "tests": 12,
+      "argv": [
+        "uv",
+        "run",
+        "--offline",
+        "--frozen",
+        "--package",
+        "sec-edgar-ingest",
+        "python",
+        "packages/sec-edgar-ingest/tests/network_guard.py",
+        "discover",
+        "-s",
+        "packages/sec-edgar-ingest/tests",
+        "-p",
+        "test_etl_storage.py",
+        "-v"
+      ]
+    },
+    "regression-test_etl_transform.py.json": {
+      "exit": 0,
+      "tests": 21,
+      "argv": [
+        "uv",
+        "run",
+        "--offline",
+        "--frozen",
+        "--package",
+        "sec-edgar-ingest",
+        "python",
+        "packages/sec-edgar-ingest/tests/network_guard.py",
+        "discover",
+        "-s",
+        "packages/sec-edgar-ingest/tests",
+        "-p",
+        "test_etl_transform.py",
+        "-v"
+      ]
+    }
+  },
+  "acceptance_retained_cases": 11,
+  "native_process_boundaries": [
+    {
+      "exit": 0,
+      "point": "workflow.after_attempt_begin",
+      "report": "runs/sec/process/backfill/a/result.json",
+      "worker_exit": 91
+    },
+    {
+      "exit": 0,
+      "point": "workflow_child.after_call",
+      "report": "runs/sec/process/backfill/a/result.json",
+      "worker_exit": 91
+    },
+    {
+      "exit": 0,
+      "point": "collection.after_binding",
+      "report": "runs/sec/process/backfill/a/result.json",
+      "worker_exit": 91
+    },
+    {
+      "exit": 0,
+      "point": "workflow_child.after_result",
+      "report": "runs/sec/process/backfill/a/result.json",
+      "worker_exit": 91
+    },
+    {
+      "exit": 0,
+      "point": "workflow.after_selection",
+      "report": "runs/sec/process/backfill/a/result.json",
+      "worker_exit": 91
+    },
+    {
+      "exit": 0,
+      "point": "publication.after_pointer",
+      "report": "runs/sec/process/backfill/a/result.json",
+      "worker_exit": 91
+    },
+    {
+      "exit": 0,
+      "point": "publication.after_repair",
+      "report": "runs/sec/process/backfill/a/result.json",
+      "worker_exit": 91
+    },
+    {
+      "exit": 0,
+      "point": "etl_result.after_object",
+      "report": "runs/sec/process/backfill/a/result.json",
+      "worker_exit": 91
+    },
+    {
+      "exit": 0,
+      "point": "workflow.after_member_processing",
+      "report": "runs/sec/process/backfill/a/result.json",
+      "worker_exit": 91
+    },
+    {
+      "exit": 0,
+      "point": "workflow.after_member_receipt",
+      "report": "runs/sec/process/backfill/a/result.json",
+      "worker_exit": 91
+    },
+    {
+      "exit": 0,
+      "point": "workflow.after_report_object",
+      "report": "runs/sec/process/backfill/a/result.json",
+      "worker_exit": 91
+    },
+    {
+      "exit": 0,
+      "point": "workflow.after_attempt_finish",
+      "report": "runs/sec/process/backfill/a/result.json",
+      "worker_exit": 91
+    }
+  ],
+  "repair_authority_paths": [
+    "native-proof/process-publication-after_repair/.fixture-state/objects/worksets/sec/workflow-repair-authority/call-sha256=b189c97d85d7b41a05d3e9eda444bcb83ae73eb4b5c3712da71f6e2ec83b6283/obligation.json",
+    "native-proof/process-publication-after_pointer/.fixture-state/objects/worksets/sec/workflow-repair-authority/call-sha256=762a2dc7107d0ca6fb1c4de5dd43c6a4d627515119555963b722ef0f7470201f/obligation.json",
+    "acceptance-cases/test_F3_ordinary_post_CAS_failure_has_no_report_then_fresh_checked_repair/.fixture-state/objects/worksets/sec/workflow-repair-authority/call-sha256=e22654450cd8233b3997614bb5da8ccc22a1100e76683b9233d572f0b01e3b47/obligation.json"
+  ],
+  "terminal_error_paths": [],
+  "all22_stage7_checks": "reserved/not_run"
+}

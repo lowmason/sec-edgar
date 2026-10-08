@@ -1,0 +1,21 @@
+{
+  "argv": [
+    "uv",
+    "run",
+    "--offline",
+    "--frozen",
+    "--package",
+    "sec-edgar-ingest",
+    "python",
+    "packages/sec-edgar-ingest/tests/network_guard.py",
+    "discover",
+    "-s",
+    "packages/sec-edgar-ingest/tests",
+    "-p",
+    "test_etl_processes.py",
+    "-v"
+  ],
+  "exit": 0,
+  "stdout": "",
+  "stderr": "test_aligned_insert_replace_and_gate_races (test_etl_processes.ProcessProofTests.test_aligned_insert_replace_and_gate_races) ... ok\ntest_driver_exposes_real_process_proof (test_etl_processes.ProcessProofTests.test_driver_exposes_real_process_proof) ... ok\ntest_each_command_help_and_required_proof_output (test_etl_processes.ProcessProofTests.test_each_command_help_and_required_proof_output) ... ok\ntest_first_timeout_reaps_all_real_children_with_kill_fallback (test_etl_processes.ProofTimeoutTests.test_first_timeout_reaps_all_real_children_with_kill_fallback) ... ok\ntest_partial_race_start_reaps_already_started_child (test_etl_processes.ProofTimeoutTests.test_partial_race_start_reaps_already_started_child) ... ok\ntest_real_subprocess_timeout_retains_partial_output_bytes (test_etl_processes.ProofTimeoutTests.test_real_subprocess_timeout_retains_partial_output_bytes) ... ok\n\n----------------------------------------------------------------------\nRan 6 tests in 6.856s\n\nOK\n"
+}
