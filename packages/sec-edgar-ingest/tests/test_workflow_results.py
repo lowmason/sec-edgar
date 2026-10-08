@@ -262,22 +262,25 @@ class WorkflowResultTests(unittest.TestCase):
         selection.update(discovery_call=failed.exception.call, discovery_error=error.to_mapping(),
                          parent_ref=None, parent_provenance=None, discovery_session=None,
                          required_units=[], directories=[], halted=True,
-                         gaps=[error.to_mapping()], discovered_sources=0, unresolved_before=1)
+                         gaps=[error.to_mapping()] + [gap.to_mapping() for gap in failed.exception.gaps],
+                         discovered_sources=0, unresolved_before=1)
         freeze_selection(self.context, selection, self.f.store, self.f.objects)
         path = workflow_path(self.context).rsplit('/', 1)[0] + '/selection.json'
         body = self.f.objects.read(path)
         descriptor = {'ref': path, 'sha256': hashlib.sha256(body).hexdigest(), 'bytes': len(body)}
         member = MemberResult(self.f.value['member_id'], self.f.source, self.f.value['parent_ref'],
-                              None, None, (), 'pending', False, False, False, (), (),
-                              self.context.parser_version, self.context.schema_version)
-        outcome, counts = summarize((member,), (error,), 0, 1, 'backfill', ())
+                              None, None, (), 'pending', False, False, False, (),
+                              (Error('workflow_deferred', 'halt/deadline left source undispatched', True,
+                                     self.f.source.source_id, {}),), self.context.parser_version, self.context.schema_version)
+        gaps = tuple(Error.from_mapping(value) for value in selection['gaps']) + member.gaps
+        outcome, counts = summarize((member,), gaps, 0, 1, 'backfill', ())
         intent = {'invocation': self.invocation, 'selection': descriptor,
                   'member_receipts': [None],
                   'child_calls': [failed.exception.call], 'completion_captures': [],
                   'repair_resolutions': [], 'already_complete_sources': [],
                   'discovered_sources': 0, 'unresolved_before': 1}
         result = WorkflowResult(FORMAT_VERSION, self.context, intent, None,
-            ('2026Q3', '2026Q4'), (), (member,), (error,), None, None,
+            ('2026Q3', '2026Q4'), (), (member,), gaps, None, None,
             outcome, counts, self.published.ended_at.isoformat())
         result_path = write_workflow_result(result, self.f.store, self.f.objects)
         self.assertEqual(read_workflow_result(result_path, self.f.store, self.f.objects), result)
@@ -390,7 +393,8 @@ class WorkflowResultTests(unittest.TestCase):
         selection.update(discovery_call=failed.exception.call, discovery_error=error.to_mapping(),
             parent_ref=None, parent_provenance=None, discovery_session=session,
             required_units=session['frozen']['units'], directories=[], halted=True,
-            gaps=[error.to_mapping()], discovered_sources=0, unresolved_before=1)
+            gaps=[error.to_mapping()] + [gap.to_mapping() for gap in failed.exception.gaps],
+            discovered_sources=0, unresolved_before=1)
         omitted_both = {**selection, 'discovery_session': None, 'required_units': []}
         with self.assertRaises(Conflict):
             freeze_selection(self.context, omitted_both, self.f.store, self.f.objects)
@@ -495,6 +499,7 @@ class WorkflowResultTests(unittest.TestCase):
             'internal_error', 'discovery stopped before dispatch', False, None, {}).to_mapping(),
             parent_ref=None, parent_provenance=None, discovery_session=None,
             required_units=[], directories=[], halted=True)
+        selection['gaps'].append(selection['discovery_error'])
         frozen = freeze_selection(context, selection, self.f.store, self.f.objects)
         dispatcher = Dispatcher(context, self.f.settings, self.f.pack, self.f.root.parent, self.f.store, self.f.objects)
         with patch('sec_edgar_ingest.cli.collect', side_effect=RuntimeError('retained original collection failure')):
@@ -502,7 +507,7 @@ class WorkflowResultTests(unittest.TestCase):
         receipt = WorkflowMembers(self.f.store, self.f.objects).record(processed.result, context, processed.evidence)
         path = workflow_path(context).rsplit('/', 1)[0] + '/selection.json'
         body = self.f.objects.read(path)
-        gaps = (self.baseline_gap,) + processed.result.gaps
+        gaps = tuple(Error.from_mapping(value) for value in selection['gaps']) + processed.result.gaps
         outcome, counts = summarize((processed.result,), gaps, 1, 0, context.command, ())
         evidence = to_mapping_value(processed.evidence)
         intent = {'invocation': self.invocation, 'selection': {'ref': path, 'sha256': hashlib.sha256(body).hexdigest(), 'bytes': len(body)},
@@ -592,6 +597,7 @@ class WorkflowResultTests(unittest.TestCase):
             discovery_error=Error('internal_error', 'discovery stopped', False, None, {}).to_mapping(),
             parent_ref=None, parent_provenance=None, discovery_session=None, required_units=[],
             directories=[], halted=True, discovered_sources=0)
+        selection['gaps'].append(selection['discovery_error'])
         freeze_selection(context, selection, self.f.store, self.f.objects)
         receipt['context'] = context.to_mapping()
         receipt_ref = workflow_path(context).rsplit('/', 1)[0] + '/members/' + original.members[0].member_id + '/result.json'
@@ -603,8 +609,9 @@ class WorkflowResultTests(unittest.TestCase):
         intent = original.to_mapping()['intent']
         intent.update(selection={'ref': selection_ref, 'sha256': hashlib.sha256(selection_body).hexdigest(), 'bytes': len(selection_body)},
             member_receipts=[descriptor], child_calls=receipt['evidence']['calls'], discovered_sources=0)
-        outcome, counts = summarize(original.members, original.gaps, 0, 0, context.command, ())
+        gaps = tuple(Error.from_mapping(value) for value in selection['gaps'])
+        outcome, counts = summarize(original.members, gaps, 0, 0, context.command, ())
         transplanted = replace(original, context=context, intent=intent, source_workset_ref=None,
-                               directories=(), outcome=outcome, counts=counts)
+                               directories=(), gaps=gaps, outcome=outcome, counts=counts)
         with self.assertRaises(Conflict):
             write_workflow_result(transplanted, self.f.store, self.f.objects)

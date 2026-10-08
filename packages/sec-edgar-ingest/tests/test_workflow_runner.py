@@ -59,6 +59,28 @@ class RunnerTests(unittest.TestCase):
                     clock.now.return_value = expired
                     accounting_clock.now.return_value = expired
                     report = run_workflow(context, h.settings, intent, dispatcher, h.store, h.objects)
+                    from dataclasses import replace
+                    from sec_edgar_ingest.etl.contracts import PublicationResult
+                    from sec_edgar_ingest.models import Error
+                    from sec_edgar_ingest.storage.contracts import Conflict
+                    from sec_edgar_ingest.workflows.contracts import summarize
+                    from sec_edgar_ingest.workflows.results import _validate_report
+                    changes = ({'downloaded': True}, {'downloaded': True, 'transformed': True},
+                        {'transformed_ref': 'worksets/sec/transformed/sha256=' + 'a' * 64 + '/workset.json'},
+                        {'quarters': (PublicationResult('2026Q3', 'published', 'a' * 64,
+                            'fabricated/manifest.json', None, 0),)},
+                        {'outcome': 'deferred'}, {'gaps': ()},
+                        {'gaps': (Error('workflow_deferred', 'fabricated reason', True,
+                            report.members[0].source.source_id, {}),)})
+                    for change in changes:
+                        altered = replace(report.members[0], **change)
+                        members = (altered,) + report.members[1:]
+                        gaps = tuple(gap for member in members for gap in member.gaps)
+                        outcome, counts = summarize(members, gaps, report.intent['discovered_sources'],
+                            report.intent['unresolved_before'], context.command, ())
+                        bad = replace(report, members=members, gaps=gaps, outcome=outcome, counts=counts)
+                        with self.subTest(change=change), self.assertRaises(Conflict):
+                            _validate_report(bad, h.store, h.objects)
                     path = write_workflow_result(report, h.store, h.objects)
                     self.assertEqual(read_workflow_result(path, h.store, h.objects), report)
                 self.assertEqual(report.counts['pending_sources'], 2)
@@ -363,6 +385,100 @@ class RunnerTests(unittest.TestCase):
                     self.assertEqual(read_workflow_result(path, h.store, h.objects), report)
                 finally:
                     h.close()
+
+    def test_missing_result_discovery_gap_omission_refuses(self):
+        from unittest.mock import patch
+        from sec_edgar_ingest.state import AcquisitionState
+        from sec_edgar_ingest.storage.contracts import Conflict
+        from sec_edgar_ingest.workflows.runner import select_work
+        from sec_edgar_ingest.workflows.results import freeze_selection
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            h = CommandHarness(root, simple_pack(root / 'pack', empty=True))
+            try:
+                context, intent, dispatcher = self.prepared(h, run='missing-empty-discovery', command='daily')
+                with patch.object(AcquisitionState, 'finish_discovery', side_effect=RuntimeError('original discovery failure')):
+                    selected = select_work(context, h.settings, intent, dispatcher, h.store, h.objects)
+                self.assertIsNone(selected['parent_ref'])
+                self.assertEqual(selected['members'], [])
+                self.assertTrue(selected['halted'])
+                self.assertEqual(selected['discovery_error']['code'], 'internal_error')
+                self.assertTrue(selected['gaps'])
+                with self.assertRaises(Conflict):
+                    freeze_selection(context, {**selected, 'gaps': []}, h.store, h.objects)
+                from copy import deepcopy
+                altered = deepcopy(selected)
+                original_gap = altered['discovery_error']['details']['gaps'][0]
+                fabricated_gap = {**original_gap, 'message': 'fabricated original failure'}
+                altered['discovery_error']['details']['gaps'][0] = fabricated_gap
+                altered['gaps'] = [fabricated_gap if gap == original_gap else
+                    altered['discovery_error'] if gap == selected['discovery_error'] else gap
+                    for gap in altered['gaps']]
+                with self.assertRaisesRegex(Conflict, 'persisted Attempt'):
+                    freeze_selection(context, altered, h.store, h.objects)
+                transplanted = deepcopy(selected)
+                transplanted['discovery_error']['details']['call']['step_id'] = 'another-discovery'
+                with self.assertRaises(Conflict):
+                    freeze_selection(context, transplanted, h.store, h.objects)
+                freeze_selection(context, selected, h.store, h.objects)
+                report = run_workflow(context, h.settings, intent, dispatcher, h.store, h.objects)
+                self.assertEqual(report.outcome, 'internal_error')
+                result_path = write_workflow_result(report, h.store, h.objects)
+                before = h.objects.read(result_path)
+                repaired = dispatcher.execute('discover', 'discover', h.settings,
+                    ('--mode', 'daily', '--discovery-id', 'workflow-daily-' + context.run_id))
+                self.assertIsNotNone(repaired.result.source_workset_ref)
+                self.assertEqual(read_workflow_result(result_path, h.store, h.objects), report)
+                import sqlite3
+                from contextlib import closing
+                from sec_edgar_ingest.storage.contracts import table_for
+                with closing(sqlite3.connect(h.store.database)) as database:
+                    for kind in ('Attempt', 'DiscoverySession', 'WorkflowChildCall', 'WorkflowAttempt'):
+                        database.execute('DELETE FROM records WHERE table_name=?', (table_for(kind),))
+                    database.commit()
+                self.assertEqual(tuple(h.store.scan('Attempt', {})), ())
+                self.assertEqual(tuple(h.store.scan('DiscoverySession', {})), ())
+                self.assertEqual(read_workflow_result(result_path, h.store, h.objects), report)
+                self.assertEqual(h.objects.read(result_path), before)
+                self.assertEqual(freeze_selection(context, selected, h.store, h.objects), selected)
+                terminal_ref = selected['discovery_call']['result_ref'].rsplit('/', 1)[0] + '/terminal.json'
+                retained = h.objects.read(terminal_ref)
+                self.assertEqual(json.loads(retained)['terminal_error'], selected['discovery_error']['details'])
+            finally:
+                h.close()
+
+    def test_failed_empty_daily_directory_gap_omission_refuses(self):
+        from sec_edgar_ingest.storage.contracts import Conflict
+        from sec_edgar_ingest.workflows.runner import select_work
+        from sec_edgar_ingest.workflows.results import freeze_selection
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            pack = simple_pack(root / 'pack', empty=True)
+            manifest = json.loads(pack.read_text())
+            for response in manifest['responses'][BASE + 'daily-index/2026/QTR4/index.json']:
+                response['status'] = 404
+            pack.write_bytes(canonical_json(to_mapping_value(manifest)))
+            h = CommandHarness(root, pack)
+            try:
+                context, intent, dispatcher = self.prepared(h, run='failed-empty-discovery', command='daily')
+                selected = select_work(context, h.settings, intent, dispatcher, h.store, h.objects)
+                self.assertIsNotNone(selected['parent_ref'])
+                self.assertEqual(selected['members'], [])
+                self.assertTrue(any(d['outcome'] == 'discovery_failed' for d in selected['directories']))
+                self.assertTrue(selected['gaps'])
+                with self.assertRaises(Conflict):
+                    freeze_selection(context, {**selected, 'gaps': []}, h.store, h.objects)
+                with self.assertRaisesRegex(Conflict, 'failure classification'):
+                    freeze_selection(context, {**selected, 'halted': True}, h.store, h.objects)
+                with self.assertRaises(Conflict):
+                    freeze_selection(context, {**selected, 'discovery_error': selected['gaps'][0]}, h.store, h.objects)
+                freeze_selection(context, selected, h.store, h.objects)
+                report = run_workflow(context, h.settings, intent, dispatcher, h.store, h.objects)
+                self.assertEqual(report.outcome, 'incomplete')
+                result_path = write_workflow_result(report, h.store, h.objects)
+                self.assertEqual(read_workflow_result(result_path, h.store, h.objects), report)
+            finally:
+                h.close()
 
     def test_no_result_discovery_keeps_required_ledger_and_older_pending_jobs(self):
         from unittest.mock import patch

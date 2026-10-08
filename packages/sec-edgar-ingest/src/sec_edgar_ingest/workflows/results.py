@@ -105,6 +105,42 @@ def freeze_workflow(current, intent, store, objects) -> RunContext:
     return saved
 
 
+def _capture_or_validate_discovery_failure(selection, call, template, objects, store=None):
+    from ..models import Error
+    from .checked import _context_matches, unfinished_child
+    error = selection['discovery_error']
+    if error is None or error not in selection['gaps']:
+        raise Conflict('failed discovery lacks its original error gap')
+    terminal = error['details']
+    fields = {'call', 'outcome', 'exit', 'stdout', 'stderr', 'gaps', 'repair_pending', 'resumable'}
+    if (set(terminal) != fields or terminal['call'] != call
+            or terminal['outcome'] != error['code']
+            or type(terminal['exit']) is not int
+            or not isinstance(terminal['stdout'], str) or not isinstance(terminal['stderr'], str)
+            or terminal['repair_pending'] is not False or terminal['resumable'] is not False):
+        raise Conflict('failed discovery terminal details differ from original child')
+    gaps = tuple(Error.from_mapping(value) for value in terminal['gaps'])
+    if error['code'] != next((gap.code for gap in gaps), 'internal_error'):
+        raise Conflict('failed discovery classification differs from original errors')
+    if any(gap.to_mapping() not in selection['gaps'] for gap in gaps):
+        raise Conflict('selection omitted an original unfinished discovery gap')
+    path = call['result_ref'].rsplit('/', 1)[0] + '/terminal.json'
+    if store is not None:
+        actual, saved_gaps = unfinished_child(call, store)
+        if saved_gaps != gaps:
+            raise Conflict('discovery terminal capture differs from persisted Attempt')
+        retained = {'context': actual.to_mapping(), 'terminal_error': terminal}
+        objects.put_once(path, canonical_json(to_mapping_value(retained)))
+    retained, _ = _read(path, objects)
+    if set(retained) != {'context', 'terminal_error'} or retained['terminal_error'] != terminal:
+        raise Conflict('failed discovery differs from immutable terminal capture')
+    actual = RunContext.from_mapping(retained['context'])
+    _context_matches(template, actual)
+    command = objects.read(call['result_ref'].rsplit('/', 1)[0] + '/command.json')
+    if command != canonical_json(to_mapping_value(call['intent'])):
+        raise Conflict('failed discovery command differs from original checked intent')
+
+
 def _validate_selection(selection, context, invocation, store, objects):
     from ..models import DirectoryOutcome, Error
     from ..discovery import quarter_span
@@ -154,10 +190,25 @@ def _validate_selection(selection, context, invocation, store, objects):
         call, template = _authority(call, None, objects)
         if template.command != 'discover' or call['workflow_command'] != context.command or call['workflow_attempt_id'] != context.attempt_id or template.run_id != context.run_id:
             raise Conflict('selection discovery call belongs to another workflow')
-        try:
-            discovery = read_child_capture(call, objects)
-        except FileNotFoundError:
-            pass
+        if error is not None:
+            _capture_or_validate_discovery_failure(selection, call, template, objects)
+        else:
+            try:
+                discovery = read_child_capture(call, objects)
+            except FileNotFoundError as missing:
+                raise Conflict('missing discovery requires original terminal failure capture') from missing
+            from ..collection import HALTING_OUTCOMES
+            from .contracts import FATAL, COMPLETE
+            expected_halt = (discovery.outcome in FATAL
+                             or any(gap.code in HALTING_OUTCOMES for gap in discovery.gaps))
+            if selection['halted'] != expected_halt:
+                raise Conflict('selection discovery failure classification differs from checked result')
+            if any(gap.to_mapping() not in selection['gaps'] for gap in discovery.gaps):
+                raise Conflict('selection omitted an original checked discovery gap')
+            if discovery.outcome not in COMPLETE and not selection['gaps']:
+                raise Conflict('non-successful discovery lacks failure gaps')
+    elif error is not None and error not in selection['gaps']:
+        raise Conflict('undispatched discovery lacks its original error gap')
     session = selection['discovery_session']
     units = selection['required_units']
     if not isinstance(units, list) or len({unit['url'] for unit in units}) != len(units):
@@ -251,11 +302,18 @@ def freeze_selection(context, selection, store, objects):
         raise Conflict('selection has no exact begun workflow intent')
     _index(context, invocation['intent'], store, objects)
     selection = _plain(selection)
-    _validate_selection(selection, context, invocation['intent'], store, objects)
     path = _sibling(context, 'selection.json')
     try:
         _read(path, objects)
     except FileNotFoundError:
+        from .checked import _authority
+        call = selection['discovery_call']
+        if call is not None:
+            call, template = _authority(call, None, objects)
+            if selection['discovery_error'] is not None:
+                _capture_or_validate_discovery_failure(selection, call, template, objects, store)
+            else:
+                read_child_capture(call, objects)
         from ..state import AcquisitionState
         call = selection['discovery_call']
         discovery_id = (call['intent']['discovery_id'] if call is not None
@@ -265,6 +323,7 @@ def freeze_selection(context, selection, store, objects):
             captured = actual.to_mapping()['value']
             if selection['discovery_session'] != captured or selection['required_units'] != captured['frozen']['units']:
                 raise Conflict('initial selection omitted or changed actual discovery session/required units')
+    _validate_selection(selection, context, invocation['intent'], store, objects)
     body = canonical_json(to_mapping_value(selection))
     objects.put_once(path, body)
     objects.verify(path, hashlib.sha256(body).hexdigest(), len(body))
@@ -288,6 +347,13 @@ def _validate_report(result, store, objects):
         raise Conflict('report differs from immutable invocation/context')
     selection, selection_body = _read(_sibling(context, 'selection.json'), objects)
     _validate_selection(selection, context, frozen['intent'], store, objects)
+    from .contracts import COMPLETE
+    if result.outcome in COMPLETE:
+        proof = selection['parent_provenance']
+        if (selection['halted'] or proof is None
+                or not decode_source_workset(objects.read(selection['parent_ref'])).discovery_complete
+                or any(value['outcome'] not in ('available', 'no_new_sources') for value in selection['directories'])):
+            raise Conflict('successful workflow requires complete successful discovery listings')
     expected_descriptor = _descriptor(_sibling(context, 'selection.json'), selection_body)
     if _plain(intent['selection']) != expected_descriptor:
         raise Conflict('report frozen-selection descriptor differs')
@@ -328,11 +394,17 @@ def _validate_report(result, store, objects):
     allowed_unfinished, receipt_calls, receipt_completions, receipt_resolutions = [], [], [], []
     from .members import WorkflowMembers
     receipts_reader = WorkflowMembers(store, objects)
-    from .contracts import PENDING
+    from ..models import Error, Source
+    from .contracts import MemberResult
     for member, descriptor in zip(result.members, receipts):
         if descriptor is None:
-            if member.child_refs or member.outcome not in PENDING:
-                raise Conflict('only undispatched pending member may lack receipt')
+            value = selected[member.member_id]
+            pending = MemberResult(value['member_id'], Source.from_mapping(value['source']), value['parent_ref'],
+                None, None, (), 'pending', False, False, False, (),
+                (Error('workflow_deferred', 'halt/deadline left source undispatched', True,
+                       value['source']['source_id'], {}),), context.parser_version, context.schema_version)
+            if member != pending:
+                raise Conflict('receipt-less member differs from canonical undispatched pending work')
             continue
         if set(descriptor) != {'ref', 'sha256', 'bytes', 'member_id', 'parser_version', 'schema_version'}:
             raise Conflict('report member receipt descriptor fields differ')
@@ -363,11 +435,12 @@ def _validate_report(result, store, objects):
         raise Conflict('report contains duplicate child calls')
     durable = {}
     for ref, call in calls.items():
+        if call == selection['discovery_call'] and selection['discovery_error'] is not None:
+            continue
         try:
             durable[ref] = read_child_capture(call, objects)
         except FileNotFoundError:
-            failed_discovery = call == selection['discovery_call'] and selection['halted'] and selection['discovery_error'] is not None
-            if not failed_discovery and call not in allowed_unfinished:
+            if call not in allowed_unfinished:
                 raise Conflict('report contains unaccounted unfinished child')
     if selection['discovery_call'] is not None and selection['discovery_call'] not in list(calls.values()):
         raise Conflict('report omitted frozen discovery child')

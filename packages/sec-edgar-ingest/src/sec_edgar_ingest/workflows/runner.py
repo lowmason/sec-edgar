@@ -174,6 +174,7 @@ def select_work(context: RunContext, settings: Settings, intent: Mapping, dispat
         discovery_call = dict(error.call)
         discovery_error = Error(error.outcome, 'discovery has no durable source result', False, None, error.details)
         gaps.extend(error.gaps)
+        gaps.append(discovery_error)
         halted = True
     current = []
     if parent is not None:
