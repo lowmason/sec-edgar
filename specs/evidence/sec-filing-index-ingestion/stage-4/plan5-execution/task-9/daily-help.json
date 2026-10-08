@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "uv",
+    "run",
+    "--offline",
+    "--frozen",
+    "--package",
+    "sec-edgar-ingest",
+    "python",
+    "-c",
+    "import sys; sys.path.insert(0, 'packages/sec-edgar-ingest/tests'); from network_guard import install; install(); from sec_edgar_ingest.cli import main; main(['daily', '--help'])"
+  ],
+  "exit_code": 0,
+  "stdout": "usage: sec-edgar-ingest daily [-h] --config CONFIG --run-id RUN_ID\n                              --execution-id EXECUTION_ID\n                              --attempt-id ATTEMPT_ID --deadline DEADLINE\n                              [--state-dir STATE_DIR] [--today TODAY]\n                              [--fixture-pack FIXTURE_PACK]\n\noptions:\n  -h, --help            show this help message and exit\n  --config CONFIG\n  --run-id RUN_ID\n  --execution-id EXECUTION_ID\n  --attempt-id ATTEMPT_ID\n  --deadline DEADLINE\n  --state-dir STATE_DIR\n  --today TODAY\n  --fixture-pack FIXTURE_PACK\n",
+  "stderr": ""
+}

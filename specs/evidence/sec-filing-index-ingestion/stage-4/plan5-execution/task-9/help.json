@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "uv",
+    "run",
+    "--offline",
+    "--frozen",
+    "--package",
+    "sec-edgar-ingest",
+    "python",
+    "-c",
+    "import sys; sys.path.insert(0, 'packages/sec-edgar-ingest/tests'); from network_guard import install; install(); from sec_edgar_ingest.cli import main; main(['--help'])"
+  ],
+  "exit_code": 0,
+  "stdout": "usage: sec-edgar-ingest [-h] [--version]\n                        {discover,collect,transform,publish,backfill,daily} ...\n\npositional arguments:\n  {discover,collect,transform,publish,backfill,daily}\n\noptions:\n  -h, --help            show this help message and exit\n  --version             show program's version number and exit\n",
+  "stderr": ""
+}

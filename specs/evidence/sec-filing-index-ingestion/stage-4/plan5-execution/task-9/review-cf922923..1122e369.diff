@@ -1,0 +1,607 @@
+# Review package: cf92292317c77cdeca07c235d9ecb7158c40cc00..1122e3697903017d64a28570597db4d31f19c213
+
+## Commits
+1122e369 feat: expose checked backfill and daily workflow commands
+
+## Files changed
+ docs/runbooks/sec-edgar-etl-publication.md         |   4 +
+ docs/runbooks/sec-edgar-ingest-acquisition.md      |  45 ++++++
+ packages/sec-edgar-ingest/README.md                |  51 ++++++-
+ .../sec-edgar-ingest/src/sec_edgar_ingest/cli.py   | 164 ++++++++++++++++++++-
+ .../sec-edgar-ingest/tests/test_workflow_cli.py    | 128 ++++++++++++++++
+ 5 files changed, 383 insertions(+), 9 deletions(-)
+
+## Diff
+diff --git a/docs/runbooks/sec-edgar-etl-publication.md b/docs/runbooks/sec-edgar-etl-publication.md
+index 1cc55204..da3dcad4 100644
+--- a/docs/runbooks/sec-edgar-etl-publication.md
++++ b/docs/runbooks/sec-edgar-etl-publication.md
+@@ -148,20 +148,24 @@ advance the pointer again. For an explicit application-level repair:
+ from sec_edgar_ingest.etl.publication import repair_publication
+ repair_publication('2026Q4', objects, EtlState(store))
+ ```
+ 
+ Run that while the selected stores above are open. Per-source published flags
+ are recoverable indexes and become true only when all receipt-backed output
+ quarters are covered. Unreferenced losing candidate objects remain retained.
+ Expired incomplete attempts need a new authorized attempt against the exact
+ workset; they cannot silently change the frozen deadline or intent.
+ 
++Public `backfill`/`daily` workflows use these same transform/publish and captured-reader
++boundaries; their source counters, frozen invocation and unresolved post-CAS repair are
++described in [acquisition recovery](sec-edgar-ingest-acquisition.md).
++
+ ## Repeat the offline proof
+ 
+ Use new output directories for every run; existing outputs are refused to keep
+ failures and intermediate evidence intact.
+ 
+ ```sh
+ scripts/check-sec-edgar-ingest.sh
+ uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/etl_proof.py specimens --output /absolute/new/specimens
+ uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/etl_proof.py sequence --output /absolute/new/sequence
+ uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/etl_proof.py installed --output /absolute/new/installed
+diff --git a/docs/runbooks/sec-edgar-ingest-acquisition.md b/docs/runbooks/sec-edgar-ingest-acquisition.md
+index 4b373771..9f00991d 100644
+--- a/docs/runbooks/sec-edgar-ingest-acquisition.md
++++ b/docs/runbooks/sec-edgar-ingest-acquisition.md
+@@ -113,20 +113,65 @@ under an explicitly fixture-only record keyed by manifest hash and URL. Changing
+ a manifest changes that script identity. This cursor is not production acquisition
+ state or live permission. A daily command needs a valid current-quarter endpoint;
+ closed `2015Q1` cannot contain October 2026 sources. The approved fixture workflow
+ uses separate quarterly `start_quarter = end_quarter = 2015Q1` and daily
+ `end_quarter = open` configs. The [owner Yes receipt](../../specs/evidence/sec-filing-index-ingestion/stage-2/verification/task-8-i1-checkpoint/sdd/task-8-daily-endpoint-owner-answer.json)
+ and [retained combined sequence](../../specs/evidence/sec-filing-index-ingestion/stage-2/verification/sec-edgar-stage-2-k8g11etz/sequence-summary.json)
+ record approval and execution of archived-quarter acquisition/replay, handoff daily,
+ delayed 404 recovery and final pin reuse. Both configs use the same durable state
+ root, owner namespace and request budget.
+ 
++
++`backfill` and `daily` run the existing discover, collect, transform and publish commands through checked durable child results. Backfill takes inclusive endpoints from `backfill.start_quarter` and `backfill.end_quarter`; `open` resolves once when the invocation is pinned. Daily starts at the accepted `2026-10-01` handoff, discovers current/preceding and outage-spanning quarters, and retries every retained unresolved exact member. A missing newer listing does not withdraw an older source.
++
++Example fixture invocation: `sec-edgar-ingest backfill --config /absolute/local.json
++--run-id baseline-2026 --execution-id manual-1 --attempt-id attempt-1 --deadline
++2026-10-08T13:00:00Z --state-dir /absolute/fixture-state --fixture-pack
++/absolute/manifest.json --today 2026-10-08`. Use `daily` with the same argument shape
++for handoff/catch-up. The config/fixture/date/state overrides are explicit fixture
++controls; the Azure backend refuses fixture overrides. Live identities, storage access,
++deployment and schedules require their later-stage authorization.
++
++Keep every correlation ID, config byte identity, image/parser/schema version, deadline,
++fixture manifest hash and supplied date unchanged for an exact retry. A completed report
++can replay after its deadline and returns its original captured generations. An
++unfinished expired invocation requires a new valid attempt; its original evidence stays
++immutable. Reports live at
++`runs/sec/<run-id>/<backfill|daily>/<attempt-id>/result.json`. The immutable report
++precedes its repairable index.
++
++Source counts and quarter operations have different labels: `complete_sources`,
++`pending_sources`, `failed_sources`, `quarantined_sources`, `published_quarters`,
++`unchanged_quarters`, and `awaiting_approval_quarters`. A valid empty quarterly
++directory is an unresolved baseline unit. Daily returns `no_new_sources` only with
++successful required listings and no unresolved work. Quarantine is a terminal
++whole-source refusal; retained failed retry prefixes remain transport evidence when a
++later body succeeds. Gated or partially published sources remain pending/failed until
++every affected quarter is complete. Closed-quarter removal needs Stage 5 approval; there
++is no workflow force bypass.
++
++Exit codes remain: 0 success/no-new/unchanged; 2 invalid inputs or unfinished expired
++deadline; 3 incomplete/discovery failure; 4 pending; 5 retry/deferred/throttled; 6
++access blocked; 7 whole-source quarantine/invalid source; 8 lost ownership; 9
++state/internal/publication conflict; 10 awaiting approval. A publish crash after pointer
++CAS remains an explicit repair obligation. Retry through the checked command boundary; a
++pointer alone does not prove member completion, and repair must not advance the pointer
++twice. Use `capture_quarter` then `read_quarter` to read the captured validated
++generation rather than globbing files or selecting a mutable latest snapshot.
++
++Offline native and installed-wheel workflow proofs remain the next verification gate.
++They will cover these fixture workflows and immutable evidence, without establishing
++historical production coverage, deployed integration or complete-worker resource fit.
++All 22 Stage 7 checks remain reserved/not_run. Stage 5 owns reconciliation/approval,
++Stage 6 owns the worker/IaC/disabled schedules, Stage 7 owns integrated checks, and
++Stage 8 owns production activation/coverage.
++
+ Every result contains counters and structured gaps. The stdout result reference is
+ `runs/sec/<run-id>/<command>/<attempt-id>/result.json`; stderr logs carry the full
+ pinned current context. Result bytes are written immutable before Attempt
+ completion. If a process dies after writing a result, replaying its exact inputs
+ checks that result, restores its original start/context, and repairs the matching
+ Attempt. A conflicting or corrupt result is refused. Unexpected command errors
+ retain an Attempt error and return 9 without inventing a completed result.
+ 
+ | Exit | Outcome | Operator meaning |
+ | --- | --- | --- |
+diff --git a/packages/sec-edgar-ingest/README.md b/packages/sec-edgar-ingest/README.md
+index 72515865..659948e0 100644
+--- a/packages/sec-edgar-ingest/README.md
++++ b/packages/sec-edgar-ingest/README.md
+@@ -119,20 +119,65 @@ into `sec-index-v1`; local fixture aliases support deterministic replay proof.
+ Stdout is one JSON object with outcome, result reference, and source/snapshot
+ workset references. Stderr is structured command logging. Durable results live at
+ `runs/sec/<run-id>/<command>/<attempt-id>/result.json`. Exactly matching completed
+ attempts replay that result without HTTP; a new attempt continues terminal
+ incomplete work using the existing frozen workset. See the
+ [runbook](../../docs/runbooks/sec-edgar-ingest-acquisition.md) for exit codes,
+ quarantine/pending work, result repair, stopped ownership, and the conservative
+ Azure clean-release guard.
+ 
+ 
++`backfill` and `daily` run the existing discover, collect, transform and publish commands through checked durable child results. Backfill takes inclusive endpoints from `backfill.start_quarter` and `backfill.end_quarter`; `open` resolves once when the invocation is pinned. Daily starts at the accepted `2026-10-01` handoff, discovers current/preceding and outage-spanning quarters, and retries every retained unresolved exact member. A missing newer listing does not withdraw an older source.
++
++Example fixture invocation: `sec-edgar-ingest backfill --config /absolute/local.json
++--run-id baseline-2026 --execution-id manual-1 --attempt-id attempt-1 --deadline
++2026-10-08T13:00:00Z --state-dir /absolute/fixture-state --fixture-pack
++/absolute/manifest.json --today 2026-10-08`. Use `daily` with the same argument shape
++for handoff/catch-up. The config/fixture/date/state overrides are explicit fixture
++controls; the Azure backend refuses fixture overrides. Live identities, storage access,
++deployment and schedules require their later-stage authorization.
++
++Keep every correlation ID, config byte identity, image/parser/schema version, deadline,
++fixture manifest hash and supplied date unchanged for an exact retry. A completed report
++can replay after its deadline and returns its original captured generations. An
++unfinished expired invocation requires a new valid attempt; its original evidence stays
++immutable. Reports live at
++`runs/sec/<run-id>/<backfill|daily>/<attempt-id>/result.json`. The immutable report
++precedes its repairable index.
++
++Source counts and quarter operations have different labels: `complete_sources`,
++`pending_sources`, `failed_sources`, `quarantined_sources`, `published_quarters`,
++`unchanged_quarters`, and `awaiting_approval_quarters`. A valid empty quarterly
++directory is an unresolved baseline unit. Daily returns `no_new_sources` only with
++successful required listings and no unresolved work. Quarantine is a terminal
++whole-source refusal; retained failed retry prefixes remain transport evidence when a
++later body succeeds. Gated or partially published sources remain pending/failed until
++every affected quarter is complete. Closed-quarter removal needs Stage 5 approval; there
++is no workflow force bypass.
++
++Exit codes remain: 0 success/no-new/unchanged; 2 invalid inputs or unfinished expired
++deadline; 3 incomplete/discovery failure; 4 pending; 5 retry/deferred/throttled; 6
++access blocked; 7 whole-source quarantine/invalid source; 8 lost ownership; 9
++state/internal/publication conflict; 10 awaiting approval. A publish crash after pointer
++CAS remains an explicit repair obligation. Retry through the checked command boundary; a
++pointer alone does not prove member completion, and repair must not advance the pointer
++twice. Use `capture_quarter` then `read_quarter` to read the captured validated
++generation rather than globbing files or selecting a mutable latest snapshot.
++
++Offline native and installed-wheel workflow proofs remain the next verification gate.
++They will cover these fixture workflows and immutable evidence, without establishing
++historical production coverage, deployed integration or complete-worker resource fit.
++All 22 Stage 7 checks remain reserved/not_run. Stage 5 owns reconciliation/approval,
++Stage 6 owns the worker/IaC/disabled schedules, Stage 7 owns integrated checks, and
++Stage 8 owns production activation/coverage.
++
++
+ For local ETL, pass `--config conf/sec-edgar-etl-fixture.yaml` from the repository
+ root. This separate [configuration](../../conf/sec-edgar-etl-fixture.yaml) selects
+ `fixture-index-parser-v1` and preserves the acquisition store binding. Leave
+ `conf/sec-edgar-ingest.yaml` unchanged: its `fixture-envelope-v1` value records
+ acquisition provenance and is not an accepted ETL row parser. First populate the
+ store with a raw snapshot workset through acquisition or explicit offline fixture
+ seeding, then use its exact reference below.
+ 
+ `transform --workset worksets/sec/snapshot/sha256=<id>/workset.json` freezes
+ observation outputs and returns an exact transformed workset. `publish --workset
+@@ -140,25 +185,21 @@ worksets/sec/transformed/sha256=<id>/workset.json` builds and validates candidat
+ then commits each quarter independently by conditional pointer update. Readers
+ capture the exact manifest and validate files before exposing rows. Repeated
+ unchanged input is a no-op; raw replay under a supported parser version retains
+ original acquisition provenance and filing identity. A closed withdrawal gate
+ returns `awaiting_approval` (exit 10), with no current-pointer change.
+ 
+ See the [ETL runbook](../../docs/runbooks/sec-edgar-etl-publication.md) for exact
+ commands, immutable reference shapes, captured Python reads and interruption
+ recovery. The [Stage 3 evidence](../../specs/evidence/sec-filing-index-ingestion/stage-3/verification.md)
+ includes actual spawn CAS races, forced exits, raw-only replay and an isolated
+-installed-wheel proof on native Python 3.14.0/macOS arm64. Complete retained
+-specimens SEC-0141–0143 contain 51 conflicting observations and are correctly
+-refused: Stage 3 source acceptance and completion remain blocked. All 22 later
+-integrated checks, Linux worker capacity and live Azure/authentication remain
+-reserved.
++installed-wheel proof on native Python 3.14.0/macOS arm64. The owner amended Stage 3 acceptance on 2026-10-07 to allow exactly the documented SEC-0141, SEC-0142 and SEC-0143 whole-source quarantines for 21, 24 and 6 conflicting observations. No source, duplicate winner or zero-row parser exception is approved. Other invalid retained rows or missing offline dependencies remain blockers; all 22 later integrated checks remain reserved/not_run.
+ 
+ The installed ETL proof extends the Stage 2 installation above: export the exact
+ updated lock, install its hash-bearing PyArrow entry from the existing offline
+ uv cache, and install the other hash-bearing entries from the retained Stage 2
+ wheel directory. The executable driver automates this separation, installs the
+ exact built wheel and checks site-packages source equality outside the checkout:
+ 
+ ```sh
+ uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/etl_proof.py installed --output /absolute/new/installed-proof
+ ```
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/cli.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/cli.py
+index 493af090..229ee6cc 100644
+--- a/packages/sec-edgar-ingest/src/sec_edgar_ingest/cli.py
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/cli.py
+@@ -1,37 +1,42 @@
+ """Validate acquisition intent before constructing the explicitly selected backend."""
+ from __future__ import annotations
+ 
+ import argparse
++import hashlib
+ import re
+ import sys
+ from collections.abc import Sequence
+ from dataclasses import replace
+ from datetime import date, datetime, timezone
+ from pathlib import Path
+ 
+ from . import __version__
+ from .collection import collect
+ from .config import Settings, load_config, pin_context
+ from .coordination import Clock, Coordinator
+ from .discovery import discover
+ from .etl.commands import (PublicationRepairPending, read_etl_result, run_transform, run_publish,
+                            write_etl_result, validate_workset_ref)
+ from .etl.parser import supported_parser, SCHEMA_VERSION
+ from .etl.publication import repair_publication
+ from .etl.state import EtlState
+ from .download import BoundedSender, FixturePack, RequestClient
+-from .models import CommandResult, Error, RunContext, canonical_json, parse_json, quarter_for, safe_relative_path
++from .models import CommandResult, Error, RunContext, canonical_json, parse_json, quarter_for, safe_relative_path, to_mapping_value
+ from .results import exit_code, log_event, read_result, result_path, write_result
+ from .state import AcquisitionState, attempt_key
+ from .storage import open_stores
+ from .storage.contracts import CAS_ATTEMPTS, ClockUncertain, Conflict, OwnershipLost
++from .workflows.checked import Dispatcher as WorkflowDispatcher, ChildUnfinished
++from .workflows.contracts import workflow_path
++from .workflows.results import freeze_workflow, read_workflow_result, write_workflow_result
++from .workflows.runner import run_workflow
+ from .worksets import decode_source_workset
+ 
+ SOURCE_REF = re.compile(r'worksets/sec/source/sha256=[0-9a-f]{64}/workset\.json\Z')
+ 
+ 
+ class _ExpiredAttempt(ValueError):
+     pass
+ 
+ 
+ class _NoFaults:
+@@ -55,33 +60,33 @@ class _CheckedSender:
+ 
+     def close(self):
+         if hasattr(self.sender, 'close'):
+             self.sender.close()
+ 
+ 
+ def _parser() -> argparse.ArgumentParser:
+     parser = argparse.ArgumentParser(prog='sec-edgar-ingest')
+     parser.add_argument('--version', action='version', version=__version__)
+     commands = parser.add_subparsers(dest='command')
+-    for command in ('discover', 'collect', 'transform', 'publish'):
++    for command in ('discover', 'collect', 'transform', 'publish', 'backfill', 'daily'):
+         sub = commands.add_parser(command)
+         for name in ('config', 'run-id', 'execution-id', 'attempt-id', 'deadline'):
+             sub.add_argument('--' + name, required=True)
+         for name in ('state-dir', 'today'):
+             sub.add_argument('--' + name)
+-        if command in ('discover', 'collect'):
++        if command in ('discover', 'collect', 'backfill', 'daily'):
+             sub.add_argument('--fixture-pack')
+         if command == 'discover':
+             sub.add_argument('--mode', required=True, choices=('quarterly', 'daily'))
+             sub.add_argument('--discovery-id', required=True)
+             sub.add_argument('--refresh', action='store_true')
+-        else:
++        elif command in ('collect', 'transform', 'publish'):
+             sub.add_argument('--workset', required=True)
+         if command == 'transform':
+             sub.add_argument('--force', action='store_true')
+     return parser
+ 
+ 
+ def _segment(value: str, name: str) -> None:
+     if '/' in safe_relative_path(value, name):
+         raise ValueError(name + ' must be a single path segment')
+ 
+@@ -272,26 +277,177 @@ def _retain_error(state, context, outcome, error):
+ def _stdout(result, reference):
+     if result.context.command in ('transform', 'publish'):
+         sys.stdout.write(canonical_json({'outcome': result.outcome, 'result_ref': reference,
+             'input_ref': result.input_ref, 'transformed_workset_ref': result.transformed_workset_ref}).decode() + '\n')
+         return exit_code(result.outcome)
+     sys.stdout.write(canonical_json({'outcome': result.outcome, 'result_ref': reference,
+         'source_workset_ref': result.source_workset_ref, 'snapshot_workset_ref': result.snapshot_workset_ref}).decode() + '\n')
+     return exit_code(result.outcome)
+ 
+ 
++def _validate_workflow(args):
++    for name in ('run_id', 'execution_id', 'attempt_id'):
++        _segment(getattr(args, name), name)
++    settings = load_config(Path(args.config))
++    supported_parser(settings.etl.parser_version,
++                     fixture=settings.storage.backend == 'local-fixture')
++    if settings.etl.schema_version != SCHEMA_VERSION:
++        raise ValueError('unsupported ETL schema version')
++    if not settings.coordination.lease_seconds.is_integer():
++        raise ValueError('coordination requires whole finite lease seconds')
++    deadline = datetime.fromisoformat(args.deadline.replace('Z', '+00:00'))
++    if deadline.utcoffset() != timezone.utc.utcoffset(deadline):
++        raise ValueError('deadline must be timezone-aware UTC')
++    today = date.fromisoformat(args.today) if args.today else None
++    if args.today and today.isoformat() != args.today:
++        raise ValueError('today must be a canonical ISO date')
++    if settings.storage.backend == 'azure':
++        if args.fixture_pack or args.state_dir or args.today:
++            raise ValueError('fixture pack, state directory and date override are fixture-only')
++        pack = None
++    else:
++        if not args.fixture_pack:
++            raise ValueError('local-fixture workflow requires an explicit fixture pack')
++        if args.today and (not settings.fixture or not settings.fixture.allow_clock_override):
++            raise ValueError('today requires the explicit fixture clock override marker')
++        pack = FixturePack.load(Path(args.fixture_pack))
++    # Do not construct a fresh context here: the immutable saved pin must be read first.
++    return settings, today, deadline, pack
++
++
++def _workflow_frozen(path, objects):
++    try:
++        body = objects.read(path)
++    except FileNotFoundError:
++        return None
++    value = parse_json(body)
++    if (not isinstance(value, dict) or set(value) != {'context', 'intent'}
++            or canonical_json(to_mapping_value(value)) != body):
++        raise Conflict('workflow intent is not exact canonical context/intent')
++    RunContext.from_mapping(value['context'])
++    if (not isinstance(value['intent'], dict)
++            or set(value['intent']) != {'command', 'today', 'fixture_sha256', 'pinned_end_quarter'}):
++        raise Conflict('workflow invocation fields differ')
++    return value
++
++
++def _workflow_saved(args, store, objects):
++    path = f'runs/sec/{args.run_id}/{args.command}/{args.attempt_id}/intent.json'
++    frozen = _workflow_frozen(path, objects)
++    if frozen is not None: return frozen
++    # T6 begins its conditional index before writing intent bytes. Reopen that
++    # actual durable start/pin if a process died between those two writes.
++    key = hashlib.sha256(canonical_json(to_mapping_value([args.run_id, args.command, args.attempt_id]))).hexdigest()
++    row = store.get('WorkflowAttempt', key)
++    if row is None: return None
++    value = row.to_mapping()['value']
++    if set(value) != {'context', 'intent', 'selection_ref', 'result_ref'}:
++        raise Conflict('workflow begun index fields differ')
++    saved = RunContext.from_mapping(value['context'])
++    if (saved.run_id, saved.command, saved.attempt_id) != (args.run_id, args.command, args.attempt_id):
++        raise Conflict('workflow begun index correlation differs')
++    if not isinstance(value['intent'], dict) or set(value['intent']) != {
++            'command', 'today', 'fixture_sha256', 'pinned_end_quarter'}:
++        raise Conflict('workflow begun invocation fields differ')
++    return {'context': value['context'], 'intent': value['intent']}
++
++
++def _workflow_context(args, settings, today, deadline, started, pinned):
++    context = RunContext(args.run_id, args.execution_id, args.command, args.attempt_id,
++        settings.worker.image_digest, settings.etl.parser_version, settings.etl.schema_version,
++        settings.config_sha256, started, deadline, args.command)
++    return pin_context(settings, context, today or pinned or started.date())
++
++
++def _workflow_stdout(result, reference):
++    sys.stdout.write(canonical_json(to_mapping_value({'outcome': result.outcome, 'result_ref': reference,
++        'source_workset_ref': result.source_workset_ref,
++        'counts': result.to_mapping()['counts']})).decode() + '\n')
++    return exit_code(result.outcome)
++
++
++def _workflow_main(args):
++    try:
++        settings, today, deadline, pack = _validate_workflow(args)
++    except (ValueError, OSError, TypeError) as error:
++        sys.stderr.write(canonical_json(to_mapping_value({'outcome': 'configuration', 'error': str(error)})).decode() + '\n')
++        return 2
++    opened, context = (), None
++    try:
++        opened = open_stores(settings, base_path=Path(args.state_dir) if args.state_dir else None)
++        store, objects, leases = opened
++        frozen = _workflow_saved(args, store, objects)
++        saved = None if frozen is None else RunContext.from_mapping(frozen['context'])
++        started = saved.started_at if saved is not None else Clock().now()
++        pinned = saved.pinned_on if saved is not None else None
++        # Exact supplied correlation/config/image/versions/deadline is compared by T6.
++        # An omitted date reuses the saved pin, even after the calendar changes.
++        if saved is None and deadline <= Clock().now():
++            raise _ExpiredAttempt('an expired deadline permits only exact completed-result replay')
++        try:
++            context, end = _workflow_context(args, settings, today, deadline, started, pinned)
++        except ValueError as error:
++            if saved is None: raise _ExpiredAttempt(str(error)) from error
++            raise
++        intent = {'command': args.command, 'today': args.today,
++            'fixture_sha256': pack.manifest_sha256 if pack is not None else None,
++            'pinned_end_quarter': end}
++        context = freeze_workflow(context, intent, store, objects)
++        try:
++            completed = read_workflow_result(workflow_path(context), store, objects)
++        except FileNotFoundError:
++            completed = None
++        if completed is not None:
++            log_event(context, 'result_replayed', {'result_ref': workflow_path(context)})
++            return _workflow_stdout(completed, workflow_path(context))
++        # Adapters belonging to children are constructed only inside their public CLI paths.
++        dispatcher = WorkflowDispatcher(context, settings,
++            Path(args.fixture_pack) if args.fixture_pack else None,
++            Path(args.state_dir) if args.state_dir else None, store, objects)
++        log_event(context, 'command_started', {'command': args.command})
++        result = run_workflow(context, settings, intent, dispatcher, store, objects)
++        reference = write_workflow_result(result, store, objects)
++        log_event(context, 'command_finished', {'outcome': result.outcome,
++            'result_ref': reference, 'counters': result.to_mapping()['counts']})
++        return _workflow_stdout(result, reference)
++    except Exception as exception:
++        outcome = ('configuration' if isinstance(exception, (_ExpiredAttempt, TimeoutError)) else
++            'ownership_lost' if isinstance(exception, (OwnershipLost, ClockUncertain)) else
++            'state_conflict' if isinstance(exception, (Conflict, ValueError, OSError, KeyError)) else
++            'internal_error')
++        details = {'type': type(exception).__name__}
++        if isinstance(exception, ChildUnfinished):
++            outcome = exception.outcome
++            details.update(exception.details)
++        error = Error(outcome, str(exception),
++            isinstance(exception, ChildUnfinished) and exception.resumable, None, details)
++        if context is not None:
++            log_event(context, 'command_error', {'outcome': outcome, 'error': error.to_mapping()})
++        else:
++            sys.stderr.write(canonical_json(to_mapping_value({'outcome': outcome, 'error': error.to_mapping()})).decode() + '\n')
++        sys.stdout.write(canonical_json(to_mapping_value({'outcome': outcome, 'result_ref': None,
++            'source_workset_ref': None, 'counts': None})).decode() + '\n')
++        return exit_code(outcome)
++    finally:
++        for resource in reversed(opened):
++            if hasattr(resource, 'close'):
++                resource.close()
++
++
+ def main(argv: Sequence[str] | None = None) -> int:
+     parser = _parser()
+     args = parser.parse_args(argv)
+     if args.command is None:
+         parser.print_help()
+         return 0
++    if args.command in ('backfill', 'daily'):
++        return _workflow_main(args)
+     try:
+         settings, today, deadline, pack = _validate(args)
+     except (ValueError, OSError, TypeError) as error:
+         sys.stderr.write(canonical_json({'outcome': 'configuration', 'error': str(error)}).decode() + '\n')
+         return 2
+     state = context = sender = None
+     opened = ()
+     try:
+         clock = Clock()
+         opened = open_stores(settings, base_path=Path(args.state_dir) if args.state_dir else None)
+diff --git a/packages/sec-edgar-ingest/tests/test_workflow_cli.py b/packages/sec-edgar-ingest/tests/test_workflow_cli.py
+new file mode 100644
+index 00000000..ebf3daf5
+--- /dev/null
++++ b/packages/sec-edgar-ingest/tests/test_workflow_cli.py
+@@ -0,0 +1,128 @@
++from network_guard import install
++install()
++from sec_edgar_ingest.models import to_mapping_value
++import contextlib, io, json, tempfile, time, unittest
++from datetime import datetime, timedelta, timezone
++from pathlib import Path
++from unittest.mock import patch
++from support import fixture_settings
++from support_workflows import CommandHarness, simple_pack
++from sec_edgar_ingest.cli import main
++from sec_edgar_ingest.models import canonical_json
++from sec_edgar_ingest.storage.contracts import Conflict
++from sec_edgar_ingest.workflows.results import read_workflow_result
++
++
++def cli_call(argv):
++    out, err = io.StringIO(), io.StringIO()
++    with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
++        code = main(argv)
++    return code, json.loads(out.getvalue()) if out.getvalue() else None, err.getvalue()
++
++
++class WorkflowCliTests(unittest.TestCase):
++    def setUp(self):
++        self.temp = tempfile.TemporaryDirectory()
++        self.addCleanup(self.temp.cleanup)
++        self.root = Path(self.temp.name)
++        self.h = CommandHarness(self.root, simple_pack(self.root / 'pack'))
++        self.addCleanup(self.h.close)
++
++    def report(self, message):
++        return read_workflow_result(message['result_ref'], self.h.store, self.h.objects)
++
++    def test_public_commands_inclusive_baseline_and_daily_reader(self):
++        code, message = self.h.invoke('backfill', run='baseline')
++        self.assertEqual(code, 0, self.h.calls[-1])
++        report = self.report(message)
++        self.assertEqual(report.requested_quarters, ('2026Q3', '2026Q4'))
++        self.assertEqual(report.counts['complete_sources'], 2)
++        self.assertEqual(report.counts['quarantined_sources'], 0)
++        self.assertEqual(len(self.h.capture('2026Q3')[1]), 1)
++        self.assertEqual(len(self.h.capture('2026Q4')[1]), 1)
++        code, daily = self.h.invoke('daily', run='overlap')
++        self.assertEqual(code, 0, self.h.calls[-1])
++        self.assertEqual(self.report(daily).counts['complete_sources'], 1)
++        self.assertEqual(len(self.h.capture('2026Q4')[1]), 1)
++
++    def test_completed_exact_replay_after_deadline_constructs_no_dispatcher(self):
++        code, message = self.h.invoke('backfill')
++        self.assertEqual(code, 0)
++        saved = self.report(message)
++        body = self.h.objects.read(message['result_ref'])
++        cursors = tuple(r.to_mapping() for r in self.h.store.scan('FixtureResponseCursor', {}))
++        with patch('sec_edgar_ingest.cli.Clock.now', return_value=saved.context.deadline + timedelta(days=1)), \
++             patch('sec_edgar_ingest.cli.WorkflowDispatcher', side_effect=AssertionError('replay dispatched')):
++            code, replay, _ = cli_call(self.h.calls[0]['argv'])
++        self.assertEqual((code, replay), (0, message))
++        self.assertEqual(self.h.objects.read(message['result_ref']), body)
++        self.assertEqual(tuple(r.to_mapping() for r in self.h.store.scan('FixtureResponseCursor', {})), cursors)
++
++    def test_changed_exact_invocation_is_conflict_and_report_stays_immutable(self):
++        self.h.invoke('backfill')
++        argv = self.h.calls[0]['argv']
++        original = self.h.objects.read(self.h.calls[0]['stdout']['result_ref'])
++        for flag, value in (('--execution-id', 'other'), ('--today', '2026-10-08'),
++                            ('--deadline', (self.h.deadline + timedelta(seconds=1)).isoformat())):
++            changed = list(argv)
++            changed[changed.index(flag) + 1] = value
++            code, message, _ = cli_call(changed)
++            self.assertEqual(code, 9, message)
++            self.assertIsNone(message['result_ref'])
++        self.assertEqual(self.h.objects.read(self.h.calls[0]['stdout']['result_ref']), original)
++
++    def test_omitted_today_reopens_saved_pin_before_next_day_validation(self):
++        self.h.settings = fixture_settings(
++            backfill={'start_quarter': '2026Q3', 'end_quarter': 'open'},
++            etl={'parser_version': 'fixture-index-parser-v1'},
++            fixture={'allow_clock_override': True, 'allow_deadline_override': True})
++        self.h.config.write_bytes(canonical_json(to_mapping_value(self.h.settings.to_mapping())))
++        self.h.invoke('backfill', run='template')
++        argv = list(self.h.calls[-1]['argv'])
++        argv[argv.index('--run-id') + 1] = 'implicit-date'
++        index = argv.index('--today')
++        del argv[index:index + 2]
++        first = datetime(2026, 10, 7, 12, tzinfo=timezone.utc)
++        mono_origin = time.monotonic()
++        # Keep wall and monotonic elapsed time aligned during real fixture pacing.
++        with patch('sec_edgar_ingest.cli.Clock.now',
++                   side_effect=lambda: first + timedelta(seconds=time.monotonic() - mono_origin)):
++            code, message, _ = cli_call(argv)
++        self.assertEqual(code, 0)
++        saved = self.report(message)
++        with patch('sec_edgar_ingest.cli.Clock.now', return_value=first + timedelta(days=1)), \
++             patch('sec_edgar_ingest.cli.WorkflowDispatcher', side_effect=AssertionError('replay dispatched')):
++            code, again, _ = cli_call(argv)
++        self.assertEqual((code, again), (0, message))
++        self.assertEqual(saved.context.pinned_on.isoformat(), '2026-10-07')
++
++    def test_invalid_input_precedes_backend_construction_and_child_flags_stay_private(self):
++        self.h.invoke('backfill')
++        argv = list(self.h.calls[0]['argv'])
++        argv[argv.index('--run-id') + 1] = '../escape'
++        with patch('sec_edgar_ingest.cli.open_stores', side_effect=AssertionError('invalid input opened stores')):
++            self.assertEqual(cli_call(argv)[0], 2)
++        for flags in (('--force',), ('--refresh',), ('--workset', 'x'), ('--mode', 'daily')):
++            with self.assertRaises(SystemExit) as caught, contextlib.redirect_stderr(io.StringIO()):
++                main([*self.h.calls[0]['argv'], *flags])
++            self.assertEqual(caught.exception.code, 2)
++
++    def test_failure_closes_all_opened_resources_and_writes_no_report(self):
++        import sec_edgar_ingest.cli as cli
++        original, closed = cli.open_stores, []
++        class ClosingProxy:
++            def __init__(self, resource): self.resource = resource
++            def __getattr__(self, name): return getattr(self.resource, name)
++            def close(self):
++                closed.append(type(self.resource).__name__)
++                if hasattr(self.resource, 'close'): self.resource.close()
++        def open_checked(*args, **kwargs):
++            return tuple(ClosingProxy(r) for r in original(*args, **kwargs))
++        with patch.object(cli, 'open_stores', side_effect=open_checked), \
++             patch.object(cli, 'run_workflow', side_effect=Conflict('retained state conflict')):
++            code, message = self.h.invoke('daily', run='conflict')
++        self.assertEqual(code, 9)
++        self.assertIsNone(message['result_ref'])
++        self.assertEqual(len(closed), 3)
++        with self.assertRaises(FileNotFoundError):
++            self.h.objects.read('runs/sec/conflict/daily/a/result.json')
