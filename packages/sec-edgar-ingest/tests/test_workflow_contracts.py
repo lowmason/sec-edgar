@@ -16,6 +16,42 @@ from sec_edgar_ingest.workflows.contracts import (
 )
 
 
+class CompletionRecordTests(unittest.TestCase):
+    def test_incomplete_capture_cannot_claim_completion(self):
+        from sec_edgar_ingest.workflows.contracts import CompletionEvaluation
+        from sec_edgar_ingest.models import Error
+        gap = Error('publication_missing', 'not committed', True, None, {})
+        with self.assertRaises(ValueError):
+            CompletionEvaluation(True, None, (), ())
+        with self.assertRaises(ValueError):
+            CompletionEvaluation(True, {'member_id': 'a' * 64}, (), (gap,))
+        with self.assertRaises(ValueError):
+            CompletionEvaluation(True, {'member_id': 'a' * 64}, ({'id': 'b' * 64},), ())
+        value = CompletionEvaluation(False, None, (), (gap,))
+        self.assertEqual(CompletionEvaluation.from_mapping(value.to_mapping()), value)
+
+
+class SkippedSourceTests(unittest.TestCase):
+    def test_complete_source_participates_in_quarantine_precedence(self):
+        from sec_edgar_ingest.models import Source, Error
+        from sec_edgar_ingest.workflows.contracts import MemberResult, summarize
+        from sec_edgar_ingest.urls import source_id
+        url = 'https://www.sec.gov/Archives/edgar/daily-index/2026/QTR4/master.20261001.idx'
+        source = Source(source_id(url), url, 'daily', '2026-10-01', 'idx')
+        refused = MemberResult('b' * 64, source,
+            'worksets/sec/source/sha256=' + 'c' * 64 + '/workset.json',
+            None, None, (), 'quarantined', False, False, True, (), (),
+            'fixture-index-parser-v1', 'sec-index-v1')
+        outcome, counts = summarize((refused,), (), 1, 0, 'backfill', ('d' * 64,))
+        self.assertEqual(outcome, 'incomplete')
+        self.assertEqual((counts['complete_sources'], counts['failed_sources'],
+                          counts['quarantined_sources']), (1, 1, 1))
+        with self.assertRaises(ValueError):
+            summarize((refused,), (), 1, 0, 'backfill', (source.source_id,))
+        with self.assertRaises(ValueError):
+            summarize((), (), 0, 0, 'daily', ('d' * 64, 'd' * 64))
+
+
 class CoverageTests(unittest.TestCase):
     def member(self, outcome='success', quarters=()):
         return MemberResult(
@@ -242,6 +278,20 @@ class CoverageTests(unittest.TestCase):
         for identities in (['f' * 64, 'f' * 64], [fixture_source().source_id], ['bad']):
             with self.subTest(identities=identities), self.assertRaises(ValueError):
                 replace(result, intent={**intent, 'already_complete_sources': identities})
+
+    def test_workflow_skipped_completion_prevents_pure_quarantine(self):
+        refused = replace(self.member('invalid_source'), transformed=False, quarantined=True)
+        result = self.workflow(members=(refused,))
+        intent = {**result.to_mapping()['intent'], 'already_complete_sources': ['f' * 64]}
+        counts = {**result.to_mapping()['counts'], 'complete_sources': 1}
+        accepted = replace(result, intent=intent, counts=counts, outcome='incomplete')
+        self.assertEqual(WorkflowResult.from_mapping(accepted.to_mapping()), accepted)
+        with self.assertRaises(ValueError):
+            replace(accepted, outcome='quarantined')
+
+    def test_empty_daily_with_discovery_or_backlog_is_unchanged(self):
+        self.assertEqual(summarize((), (), 1)[0], 'unchanged')
+        self.assertEqual(summarize((), (), 0, 1)[0], 'unchanged')
 
     def quarantine_gap(self, *sources):
         return Error(

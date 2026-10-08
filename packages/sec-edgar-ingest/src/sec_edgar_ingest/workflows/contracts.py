@@ -27,6 +27,19 @@ CHILD_RESULT_REF = re.compile(r'runs/sec/[^/]+/(collect|transform|publish)/[^/]+
 
 
 @dataclass(frozen=True, slots=True)
+class CompletionEvaluation(Record):
+    complete: bool
+    capture: Mapping[str, object] | None
+    obligations: tuple[Mapping[str, object], ...]
+    gaps: tuple[Error, ...]
+
+    def __post_init__(self):
+        validate_record_fields(self)
+        if self.complete and (self.capture is None or self.obligations or self.gaps):
+            raise ValueError('completion requires capture and no unresolved obligations/gaps')
+
+
+@dataclass(frozen=True, slots=True)
 class MemberResult(Record):
     member_id: str
     source: Source
@@ -102,18 +115,13 @@ class WorkflowResult(Record):
             if key not in self.intent:
                 raise ValueError(f'workflow intent lacks {key}')
             require_number(self.intent[key], key, integer=True)
-        outcome, counts = summarize(
-            self.members, self.gaps, self.intent['discovered_sources'],
-            self.intent['unresolved_before'], self.context.command,
-        )
         already = self.intent.get('already_complete_sources', ())
         if not isinstance(already, tuple):
             raise ValueError('already-complete sources must be an array')
-        for identity in already:
-            require_hash(identity, 'already_complete_source')
-        if len(set(already)) != len(already) or set(already) & {member.source.source_id for member in self.members}:
-            raise ValueError('already-complete source set overlaps or duplicates selected results')
-        counts['complete_sources'] += len(already)
+        outcome, counts = summarize(
+            self.members, self.gaps, self.intent['discovered_sources'],
+            self.intent['unresolved_before'], self.context.command, already,
+        )
         if self.outcome != outcome or self.to_mapping()['counts'] != counts:
             raise ValueError('workflow counters/outcome disagree with exact members/gaps')
         ordered = tuple(sorted(self.requested_quarters, key=quarter_value))
@@ -145,8 +153,13 @@ def _gap_derived_from_quarantine(gap: Error, quarantined_ids: set[str]) -> bool:
 def summarize(
     members: tuple[MemberResult, ...], gaps: tuple[Error, ...], discovered_new: int,
     unresolved_before: int = 0, command: str = 'daily',
+    already_complete_sources: tuple[str, ...] = (),
 ) -> tuple[str, dict[str, int]]:
-    grouped = {}
+    for identity in already_complete_sources:
+        require_hash(identity, 'already_complete_source')
+    if len(set(already_complete_sources)) != len(already_complete_sources) or set(already_complete_sources) & {member.source.source_id for member in members}:
+        raise ValueError('already-complete identities overlap or duplicate selected sources')
+    grouped = {identity: 'complete' for identity in already_complete_sources}
     rank = {'complete': 0, 'pending': 1, 'failed': 2}
     for member in members:
         identity = member.source.source_id
@@ -171,7 +184,7 @@ def summarize(
     fatal = next((outcome for outcome in FATAL if outcome in outcomes), None)
     if fatal:
         return fatal, counts
-    all_quarantined = bool(members) and all(
+    all_quarantined = bool(members) and not already_complete_sources and all(
         member.quarantined and member_status(member.outcome) == 'failed' for member in members
     )
     # Retained baseline gaps may derive solely from checked whole-source refusals.
@@ -184,7 +197,7 @@ def summarize(
     if states['pending']:
         return ('awaiting_approval' if outcomes == {'awaiting_approval'} else 'pending'), counts
     if not members:
-        return ('no_new_sources' if command == 'daily' else 'unchanged'), counts
+        return ('no_new_sources' if command == 'daily' and not discovered_new and not unresolved_before else 'unchanged'), counts
     if command == 'daily' and not discovered_new and not unresolved_before and not counts['published_quarters']:
         return 'no_new_sources', counts
     return ('success' if counts['published_quarters'] else 'unchanged'), counts
