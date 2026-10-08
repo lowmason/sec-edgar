@@ -114,3 +114,71 @@ def simple_pack(root, *, empty=False, conflicting=False):
             rows = (row, ('123456', 'Changed', '10-K', filed, path)) if conflicting else (row,)
             bodies[leaf + filename] = idx(rows, kind)
     return build_pack(root, listings, bodies)
+
+def quarter_pack(root, periods, *, empty_daily=False, failed_daily=(), moved=None, conflicting=()):
+    periods = tuple(sorted(set(periods)))
+    listings, bodies = {}, {}
+    for family in ('full-index', 'daily-index'):
+        base = BASE + family + '/'
+        years = sorted({period[:4] for period in periods})
+        listings[base + 'index.json'] = [(year, 'dir') for year in years]
+        for year in years:
+            listings[base + year + '/index.json'] = [
+                ('QTR' + period[-1], 'dir') for period in periods if period.startswith(year)]
+        for period in periods:
+            year, quarter = period.split('Q')
+            leaf = base + year + '/QTR' + quarter + '/'
+            month = (int(quarter) - 1) * 3 + 1
+            day = year + f'-{month:02d}-01'
+            # Q4 must remain inside the overlap following a seed boundary of October 2.
+            if period == '2026Q4': day = '2026-12-31'
+            filename = 'master.zip' if family == 'full-index' else 'master.' + day.replace('-', '') + '.idx'
+            listings[leaf + 'index.json'] = [] if family == 'daily-index' and empty_daily else [(filename, 'file')]
+            filed = (moved or {}).get(period, day) if family == 'full-index' else day.replace('-', '')
+            archive = 'edgar/data/123456/0000123456-' + year[-2:] + '-00000' + quarter + '.txt'
+            row = ('123456', 'Example', '10-K', filed, archive)
+            rows = (row, ('123456', 'Conflict', '10-K', filed, archive)) if period in conflicting else (row,)
+            bodies[leaf + filename] = idx(rows, 'quarterly' if family == 'full-index' else 'daily')
+    pack = build_pack(root, listings, bodies, repeats=16)
+    if failed_daily:
+        manifest = json.loads(pack.read_text())
+        failure = b'fixture missing required directory'
+        digest = hashlib.sha256(failure).hexdigest()
+        (pack.parent / 'bodies' / (digest + '.body')).write_bytes(failure)
+        for period in failed_daily:
+            year, quarter = period.split('Q')
+            url = BASE + 'daily-index/' + year + '/QTR' + quarter + '/index.json'
+            response = {'status': 404, 'headers': {'Content-Length': str(len(failure))},
+                        'body_path': 'bodies/' + digest + '.body', 'body_sha256': digest}
+            manifest['responses'][url] = [dict(response) for _ in range(16)]
+        pack.write_bytes(canonical_json(to_mapping_value(manifest)))
+    return pack
+
+
+def set_harness_settings(harness, settings):
+    harness.settings = settings
+    harness.config.write_bytes(canonical_json(to_mapping_value(settings.to_mapping())))
+
+
+def prefix_response(pack, url, body=b'retained truncated retry prefix'):
+    pack = Path(pack)
+    manifest = json.loads(pack.read_text())
+    digest = hashlib.sha256(body).hexdigest()
+    (pack.parent / 'bodies' / (digest + '.body')).write_bytes(body)
+    manifest['responses'][url].insert(0, {'status': 200,
+        'headers': {'X-Fixture': 'partial'}, 'fault': 'read_timeout',
+        'body_path': 'bodies/' + digest + '.body', 'body_sha256': digest})
+    pack.write_bytes(canonical_json(to_mapping_value(manifest)))
+    return body
+
+
+def replace_pack_body(pack, url, body):
+    pack = Path(pack)
+    manifest = json.loads(pack.read_text())
+    digest = hashlib.sha256(body).hexdigest()
+    target = pack.parent / 'bodies' / (digest + '.body')
+    if not target.exists(): target.write_bytes(body)
+    response = {'status': 200, 'headers': {'Content-Length': str(len(body)), 'X-Fixture': 'synthetic'},
+                'body_path': 'bodies/' + digest + '.body', 'body_sha256': digest}
+    manifest['responses'][url] = [dict(response) for _ in range(16)]
+    pack.write_bytes(canonical_json(to_mapping_value(manifest)))
