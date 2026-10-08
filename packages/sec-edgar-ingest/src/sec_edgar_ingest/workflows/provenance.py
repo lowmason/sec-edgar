@@ -179,7 +179,7 @@ def projection(parent, source_id):
                                acquisition_mode=parent.acquisition_mode)
 
 def project_member(parent_ref, source_id, store, objects):
-    if any(row.value['member_ref'] == parent_ref for row in store.scan('WorkflowMember', {})):
+    if any(row.value.get('member_ref') == parent_ref for row in store.scan('WorkflowMember', {})):
         raise Conflict('a registered projection cannot become an original parent')
     parent = read_parent(parent_ref, store, objects)
     member = projection(parent, source_id)

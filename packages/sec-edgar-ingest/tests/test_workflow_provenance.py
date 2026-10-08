@@ -377,3 +377,52 @@ class ProvenanceTests(unittest.TestCase):
                 self.assertEqual(len(observations), 1)
                 self.assertEqual(observations[0].original_fields, fields)
                 self.assertEqual(target.read_bytes(), body)
+
+    def test_malformed_unrelated_registry_row_does_not_block_valid_projection(self):
+        from sec_edgar_ingest.workflows.members import WorkflowMembers
+        with tempfile.TemporaryDirectory() as directory:
+            h = discovery_harness(Path(directory), {'2026Q4': [listing_response('2026Q4', ['master.20261001.idx'])]})
+            try:
+                parent = h.run('daily', date(2026, 10, 7), 'isolated-corrupt-registry')
+                corrupt_id = 'f' * 64
+                h.store.insert('WorkflowMember', corrupt_id, {'member_id': corrupt_id})
+                corrupt_before = h.store.get('WorkflowMember', corrupt_id).to_mapping()
+                value = project_member(h.workset_path(parent), parent.members[0].source_id, h.store, h.objects)
+                valid, gaps = WorkflowMembers(h.store, h.objects).inventory()
+                self.assertEqual(valid, (value,))
+                self.assertEqual(len(gaps), 1)
+                self.assertEqual(gaps[0].code, 'legacy_member_unresolved')
+                self.assertEqual(gaps[0].details['member_id'], corrupt_id)
+                self.assertEqual(h.store.get('WorkflowMember', corrupt_id).to_mapping(), corrupt_before)
+                with self.assertRaisesRegex(Conflict, 'registered projection'):
+                    project_member(value['member_ref'], parent.members[0].source_id, h.store, h.objects)
+            finally:
+                h.close()
+
+    def test_refused_wrong_context_registration_changes_no_registry_or_objects(self):
+        from dataclasses import replace
+        from sec_edgar_ingest.workflows.members import WorkflowMembers
+        from sec_edgar_ingest.workflows.provenance import projection, source_ref
+        from sec_edgar_ingest.worksets import make_source_workset, encode_workset
+        with tempfile.TemporaryDirectory() as directory:
+            h = discovery_harness(Path(directory), {'2026Q4': [listing_response('2026Q4', ['master.20261001.idx'])]})
+            try:
+                parent = h.run('daily', date(2026, 10, 7), 'refusal-before-admission')
+                expected = projection(parent, parent.members[0].source_id)
+                wrong_context = replace(expected.context, attempt_id='other-origin')
+                supplied = make_source_workset(wrong_context, expected.pinned_end_quarter,
+                    expected.discovery_id, expected.members, expected.directories, expected.overlap_from,
+                    acquisition_mode=expected.acquisition_mode)
+                supplied_ref = source_ref(supplied)
+                h.objects.put_once(supplied_ref, encode_workset(supplied))
+                registry_before = tuple(row.to_mapping() for row in h.store.scan('WorkflowMember', {}))
+                object_root = h.root / 'objects'
+                objects_before = {str(path.relative_to(object_root)): path.read_bytes()
+                                  for path in object_root.rglob('*') if path.is_file()}
+                with self.assertRaisesRegex(Conflict, 'exact projection'):
+                    WorkflowMembers(h.store, h.objects).register(h.workset_path(parent), supplied_ref)
+                self.assertEqual(tuple(row.to_mapping() for row in h.store.scan('WorkflowMember', {})), registry_before)
+                self.assertEqual({str(path.relative_to(object_root)): path.read_bytes()
+                                  for path in object_root.rglob('*') if path.is_file()}, objects_before)
+            finally:
+                h.close()
