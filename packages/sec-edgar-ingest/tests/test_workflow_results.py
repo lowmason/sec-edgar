@@ -391,10 +391,16 @@ class WorkflowResultTests(unittest.TestCase):
             parent_ref=None, parent_provenance=None, discovery_session=session,
             required_units=session['frozen']['units'], directories=[], halted=True,
             gaps=[error.to_mapping()], discovered_sources=0, unresolved_before=1)
+        omitted_both = {**selection, 'discovery_session': None, 'required_units': []}
+        with self.assertRaises(Conflict):
+            freeze_selection(self.context, omitted_both, self.f.store, self.f.objects)
         frozen = freeze_selection(self.context, selection, self.f.store, self.f.objects)
         self.assertEqual(frozen['required_units'], session['frozen']['units'])
         self.assertIsNone(frozen['parent_ref'])
         self.assertTrue(frozen['halted'])
+        self.delete_index('DiscoverySession', hashlib.sha256('begun-fatal-session'.encode()).hexdigest())
+        self.assertIsNone(AcquisitionState(self.f.store).discovery_session('begun-fatal-session'))
+        self.assertEqual(freeze_selection(self.context, selection, self.f.store, self.f.objects), frozen)
         from copy import deepcopy
         omitted = deepcopy(selection); omitted['required_units'] = []
         with self.assertRaises(Conflict):
@@ -560,3 +566,45 @@ class WorkflowResultTests(unittest.TestCase):
                 read_workflow_result(result_ref, self.f.store, self.f.objects)
         finally:
             target.write_bytes(original)
+
+    def test_discovered_parent_members_cannot_be_coherently_omitted(self):
+        selection = self.selection()
+        self.assertEqual(len(decode_source_workset(self.f.objects.read(self.f.parent_ref)).members), 1)
+        selection.update(members=[], jobs=[], member_provenance=[], already_complete=[])
+        with self.assertRaises(Conflict):
+            freeze_selection(self.context, selection, self.f.store, self.f.objects)
+
+    def test_discovered_count_must_match_actual_parent(self):
+        selection = self.selection()
+        selection['discovered_sources'] = 999
+        with self.assertRaises(Conflict):
+            freeze_selection(self.context, selection, self.f.store, self.f.objects)
+
+    def test_transplanted_receipt_cannot_borrow_original_child_namespace(self):
+        from sec_edgar_ingest.models import parse_json
+        original = self.report()
+        old_descriptor = original.to_mapping()['intent']['member_receipts'][0]
+        receipt = parse_json(self.f.objects.read(old_descriptor['ref']))
+        context = replace(self.context, attempt_id='transplanted-receipt')
+        freeze_workflow(context, self.invocation, self.f.store, self.f.objects)
+        selection = self.selection()
+        selection.update(context=context.to_mapping(), discovery_call=None,
+            discovery_error=Error('internal_error', 'discovery stopped', False, None, {}).to_mapping(),
+            parent_ref=None, parent_provenance=None, discovery_session=None, required_units=[],
+            directories=[], halted=True, discovered_sources=0)
+        freeze_selection(context, selection, self.f.store, self.f.objects)
+        receipt['context'] = context.to_mapping()
+        receipt_ref = workflow_path(context).rsplit('/', 1)[0] + '/members/' + original.members[0].member_id + '/result.json'
+        body = canonical_json(receipt)
+        self.f.objects.put_once(receipt_ref, body)
+        descriptor = {**old_descriptor, 'ref': receipt_ref, 'sha256': hashlib.sha256(body).hexdigest(), 'bytes': len(body)}
+        selection_ref = workflow_path(context).rsplit('/', 1)[0] + '/selection.json'
+        selection_body = self.f.objects.read(selection_ref)
+        intent = original.to_mapping()['intent']
+        intent.update(selection={'ref': selection_ref, 'sha256': hashlib.sha256(selection_body).hexdigest(), 'bytes': len(selection_body)},
+            member_receipts=[descriptor], child_calls=receipt['evidence']['calls'], discovered_sources=0)
+        outcome, counts = summarize(original.members, original.gaps, 0, 0, context.command, ())
+        transplanted = replace(original, context=context, intent=intent, source_workset_ref=None,
+                               directories=(), outcome=outcome, counts=counts)
+        with self.assertRaises(Conflict):
+            write_workflow_result(transplanted, self.f.store, self.f.objects)

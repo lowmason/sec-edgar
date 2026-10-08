@@ -203,6 +203,16 @@ def _validate_selection(selection, context, invocation, store, objects):
             raise Conflict('selection directory outcomes differ from exact captured parent')
         if {unit['url'] for unit in units} != {d.url for d in parent.directories}:
             raise Conflict('selection omits a frozen required directory')
+        from .provenance import projection, source_ref
+        accounted = members + [capture['member'] for capture in completed]
+        for source in parent.members:
+            projected = projection(parent, source.source_id)
+            expected = {'member_id': projected.workset_id, 'source': source.to_mapping(),
+                        'parent_ref': parent_ref, 'member_ref': source_ref(projected)}
+            if expected not in accounted:
+                raise Conflict('selection omitted an exact discovered member projection')
+        if selection['discovered_sources'] != len(parent.members):
+            raise Conflict('selection discovered-source count differs from immutable parent')
     settings = Settings.from_mapping(context.to_mapping()['effective_config'])
     expected_requested = ([] if context.command == 'daily'
                           else list(quarter_span(settings.backfill.start_quarter, invocation['pinned_end_quarter'])))
@@ -243,6 +253,18 @@ def freeze_selection(context, selection, store, objects):
     selection = _plain(selection)
     _validate_selection(selection, context, invocation['intent'], store, objects)
     path = _sibling(context, 'selection.json')
+    try:
+        _read(path, objects)
+    except FileNotFoundError:
+        from ..state import AcquisitionState
+        call = selection['discovery_call']
+        discovery_id = (call['intent']['discovery_id'] if call is not None
+                        else 'workflow-' + context.command + '-' + context.run_id)
+        actual = AcquisitionState(store).discovery_session(discovery_id)
+        if actual is not None:
+            captured = actual.to_mapping()['value']
+            if selection['discovery_session'] != captured or selection['required_units'] != captured['frozen']['units']:
+                raise Conflict('initial selection omitted or changed actual discovery session/required units')
     body = canonical_json(to_mapping_value(selection))
     objects.put_once(path, body)
     objects.verify(path, hashlib.sha256(body).hexdigest(), len(body))
@@ -304,7 +326,8 @@ def _validate_report(result, store, objects):
     if len(receipts) != len(result.members):
         raise Conflict('report member receipt coverage differs')
     allowed_unfinished, receipt_calls, receipt_completions, receipt_resolutions = [], [], [], []
-    from .processing import validate_member_evidence
+    from .members import WorkflowMembers
+    receipts_reader = WorkflowMembers(store, objects)
     from .contracts import PENDING
     for member, descriptor in zip(result.members, receipts):
         if descriptor is None:
@@ -314,19 +337,11 @@ def _validate_report(result, store, objects):
         if set(descriptor) != {'ref', 'sha256', 'bytes', 'member_id', 'parser_version', 'schema_version'}:
             raise Conflict('report member receipt descriptor fields differ')
         objects.verify(descriptor['ref'], descriptor['sha256'], descriptor['bytes'])
-        receipt, receipt_body = _read(descriptor['ref'], objects)
-        expected_path = _sibling(context, 'members/' + member.member_id + '/result.json')
-        if (set(receipt) != {'format_version', 'context', 'result', 'evidence'}
-                or receipt['format_version'] != 'sec-workflow-member-receipt-v1'
-                or descriptor['ref'] != expected_path or receipt['context'] != context.to_mapping()
-                or receipt['result'] != member.to_mapping()
-                or descriptor['member_id'] != member.member_id
-                or descriptor['parser_version'] != member.parser_version
-                or descriptor['schema_version'] != member.schema_version
-                or receipt['evidence']['member'] != selected[member.member_id]):
+        saved_member, saved_context, evidence, receipt_body = receipts_reader._read_receipt(descriptor['ref'])
+        if (saved_member != member or saved_context != context
+                or descriptor != receipts_reader._descriptor(member, context, receipt_body)
+                or evidence['member'] != selected[member.member_id]):
             raise Conflict('report member receipt identity/context differs')
-        evidence = receipt['evidence']
-        validate_member_evidence(member, evidence, objects)
         receipt_calls.extend(evidence['calls'])
         if evidence['completion'] is not None:
             receipt_completions.append(evidence['completion'])
