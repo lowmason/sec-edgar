@@ -1,0 +1,636 @@
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/__init__.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/__init__.py
+new file mode 100644
+index 00000000..746ec81f
+--- /dev/null
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/__init__.py
+@@ -0,0 +1 @@
++"""Source workflow orchestration and durable result contracts."""
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/contracts.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/contracts.py
+new file mode 100644
+index 00000000..faa4bb3f
+--- /dev/null
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/contracts.py
+@@ -0,0 +1,212 @@
++"""Strict workflow captures and source-level coverage reduction."""
++from __future__ import annotations
++
++import re
++from collections import Counter
++from collections.abc import Mapping
++from dataclasses import dataclass
++from datetime import date, datetime
++
++from ..etl.commands import validate_workset_ref
++from ..etl.contracts import PublicationResult
++from ..models import (
++    Error, Record, RunContext, Source, quarter_value, require_hash,
++    require_number, require_utc, safe_relative_path, validate_record_fields,
++)
++from ..results import exit_code
++
++COMPLETE = frozenset(('success', 'unchanged', 'no_new_sources'))
++PENDING = frozenset(('pending', 'deferred', 'throttled', 'awaiting_approval'))
++FATAL = ('access_blocked', 'ownership_lost', 'state_conflict', 'internal_error')
++FORMAT_VERSION = 'sec-workflow-result-v1'
++SUPPORTED_PARSERS = frozenset((
++    'sec-index-parser-v1', 'fixture-index-parser-v1', 'fixture-index-parser-v2',
++))
++SOURCE_WORKSET_REF = re.compile(r'worksets/sec/source/sha256=[0-9a-f]{64}/workset\.json\Z')
++CHILD_RESULT_REF = re.compile(r'runs/sec/[^/]+/(collect|transform|publish)/[^/]+/result\.json\Z')
++
++
++@dataclass(frozen=True, slots=True)
++class CompletionEvaluation(Record):
++    complete: bool
++    capture: Mapping[str, object] | None
++    obligations: tuple[Mapping[str, object], ...]
++    gaps: tuple[Error, ...]
++
++    def __post_init__(self):
++        validate_record_fields(self)
++        if self.complete and (self.capture is None or self.obligations or self.gaps):
++            raise ValueError('completion requires capture and no unresolved obligations/gaps')
++
++
++@dataclass(frozen=True, slots=True)
++class MemberResult(Record):
++    member_id: str
++    source: Source
++    parent_ref: str
++    snapshot_ref: str | None
++    transformed_ref: str | None
++    child_refs: tuple[str, ...]
++    outcome: str
++    downloaded: bool
++    transformed: bool
++    quarantined: bool
++    quarters: tuple[PublicationResult, ...]
++    gaps: tuple[Error, ...]
++    parser_version: str
++    schema_version: str
++
++    def __post_init__(self):
++        validate_record_fields(self)
++        require_hash(self.member_id, 'member_id')
++        member_status(self.outcome)
++        if SOURCE_WORKSET_REF.fullmatch(self.parent_ref) is None:
++            raise ValueError('invalid member parent reference')
++        for ref, kind in ((self.snapshot_ref, 'snapshot'), (self.transformed_ref, 'transformed')):
++            if ref is not None:
++                validate_workset_ref(ref, kind)
++        for ref in self.child_refs:
++            if CHILD_RESULT_REF.fullmatch(ref) is None:
++                raise ValueError('invalid child result reference')
++            safe_relative_path(ref, 'child_ref')
++        if self.schema_version != 'sec-index-v1' or self.parser_version not in SUPPORTED_PARSERS:
++            raise ValueError('unsupported member processing versions')
++        if len({quarter.quarter for quarter in self.quarters}) != len(self.quarters):
++            raise ValueError('duplicate member quarter results')
++        if self.outcome in COMPLETE and (
++            not self.snapshot_ref or not self.transformed_ref
++            or any(quarter.outcome not in ('published', 'unchanged') for quarter in self.quarters)
++        ):
++            raise ValueError('complete member lacks successful ETL/publication captures')
++        if self.quarantined and (self.transformed or member_status(self.outcome) != 'failed'):
++            raise ValueError('quarantined member requires failed status and no accepted transform')
++
++
++@dataclass(frozen=True, slots=True)
++class WorkflowResult(Record):
++    format_version: str
++    context: RunContext
++    intent: Mapping[str, object]
++    source_workset_ref: str | None
++    requested_quarters: tuple[str, ...]
++    directories: tuple[Mapping[str, object], ...]
++    members: tuple[MemberResult, ...]
++    gaps: tuple[Error, ...]
++    boundary_before: str | None
++    boundary_after: str | None
++    outcome: str
++    counts: Mapping[str, int]
++    ended_at: str
++
++    def __post_init__(self):
++        validate_record_fields(self)
++        if self.format_version != FORMAT_VERSION:
++            raise ValueError('unsupported workflow result version')
++        workflow_path(self.context)
++        ended = datetime.fromisoformat(self.ended_at)
++        require_utc(ended, 'ended_at')
++        if ended < self.context.started_at:
++            raise ValueError('workflow ended before start')
++        if len({member.member_id for member in self.members}) != len(self.members):
++            raise ValueError('duplicate workflow member IDs')
++        if self.source_workset_ref is not None and SOURCE_WORKSET_REF.fullmatch(self.source_workset_ref) is None:
++            raise ValueError('invalid workflow discovery reference')
++        for key in ('discovered_sources', 'unresolved_before'):
++            if key not in self.intent:
++                raise ValueError(f'workflow intent lacks {key}')
++            require_number(self.intent[key], key, integer=True)
++        already = self.intent.get('already_complete_sources', ())
++        if not isinstance(already, tuple):
++            raise ValueError('already-complete sources must be an array')
++        outcome, counts = summarize(
++            self.members, self.gaps, self.intent['discovered_sources'],
++            self.intent['unresolved_before'], self.context.command, already,
++        )
++        if self.outcome != outcome or self.to_mapping()['counts'] != counts:
++            raise ValueError('workflow counters/outcome disagree with exact members/gaps')
++        ordered = tuple(sorted(self.requested_quarters, key=quarter_value))
++        if ordered != self.requested_quarters or len(set(ordered)) != len(ordered):
++            raise ValueError('invalid requested quarter ordering')
++        for value in (self.boundary_before, self.boundary_after):
++            if value is not None and date.fromisoformat(value).isoformat() != value:
++                raise ValueError('invalid discovery boundary date')
++
++
++def member_status(outcome: str) -> str:
++    exit_code(outcome)
++    return 'complete' if outcome in COMPLETE else 'pending' if outcome in PENDING else 'failed'
++
++
++def _gap_derived_from_quarantine(gap: Error, quarantined_ids: set[str]) -> bool:
++    if gap.code != 'baseline_publication_missing' or gap.details.get('coverage_cause') != 'selected_source_quarantine':
++        return False
++    identities = gap.details.get('source_ids')
++    if not isinstance(identities, tuple) or not identities or any(not isinstance(identity, str) for identity in identities):
++        return False
++    attributed = set(identities)
++    return (
++        len(attributed) == len(identities) and attributed <= quarantined_ids
++        and (gap.source_id is None or gap.source_id in attributed)
++    )
++
++
++def summarize(
++    members: tuple[MemberResult, ...], gaps: tuple[Error, ...], discovered_new: int,
++    unresolved_before: int = 0, command: str = 'daily',
++    already_complete_sources: tuple[str, ...] = (),
++) -> tuple[str, dict[str, int]]:
++    for identity in already_complete_sources:
++        require_hash(identity, 'already_complete_source')
++    if len(set(already_complete_sources)) != len(already_complete_sources) or set(already_complete_sources) & {member.source.source_id for member in members}:
++        raise ValueError('already-complete identities overlap or duplicate selected sources')
++    grouped = {identity: 'complete' for identity in already_complete_sources}
++    rank = {'complete': 0, 'pending': 1, 'failed': 2}
++    for member in members:
++        identity = member.source.source_id
++        status = member_status(member.outcome)
++        if identity not in grouped or rank[status] > rank[grouped[identity]]:
++            grouped[identity] = status
++    states = Counter(grouped.values())
++    counts = {name + '_sources': states[name] for name in ('complete', 'pending', 'failed')}
++    quarantined_ids = {member.source.source_id for member in members if member.quarantined}
++    counts.update(
++        discovered_sources=discovered_new,
++        downloaded_sources=len({member.source.source_id for member in members if member.downloaded}),
++        transformed_sources=len({member.source.source_id for member in members if member.transformed}),
++        quarantined_sources=len(quarantined_ids),
++    )
++    quarters = Counter(quarter.outcome for member in members for quarter in member.quarters)
++    counts.update(
++        published_quarters=quarters['published'], unchanged_quarters=quarters['unchanged'],
++        awaiting_approval_quarters=quarters['awaiting_approval'],
++    )
++    outcomes = {member.outcome for member in members} | {gap.code for gap in gaps}
++    fatal = next((outcome for outcome in FATAL if outcome in outcomes), None)
++    if fatal:
++        return fatal, counts
++    all_quarantined = bool(members) and not already_complete_sources and all(
++        member.quarantined and member_status(member.outcome) == 'failed' for member in members
++    )
++    # Retained baseline gaps may derive solely from checked whole-source refusals.
++    if all_quarantined and all(_gap_derived_from_quarantine(gap, quarantined_ids) for gap in gaps):
++        return 'quarantined', counts
++    if gaps or (states['complete'] and (states['failed'] or states['pending'])):
++        return 'incomplete', counts
++    if states['failed']:
++        return 'incomplete', counts
++    if states['pending']:
++        return ('awaiting_approval' if outcomes == {'awaiting_approval'} else 'pending'), counts
++    if not members:
++        return ('no_new_sources' if command == 'daily' and not discovered_new and not unresolved_before else 'unchanged'), counts
++    if command == 'daily' and not discovered_new and not unresolved_before and not counts['published_quarters']:
++        return 'no_new_sources', counts
++    return ('success' if counts['published_quarters'] else 'unchanged'), counts
++
++
++def workflow_path(context: RunContext) -> str:
++    if context.command not in ('backfill', 'daily'):
++        raise ValueError('workflow command required')
++    for name in ('run_id', 'execution_id', 'attempt_id'):
++        if '/' in safe_relative_path(getattr(context, name), name):
++            raise ValueError('workflow IDs require one segment')
++    return f'runs/sec/{context.run_id}/{context.command}/{context.attempt_id}/result.json'
+diff --git a/packages/sec-edgar-ingest/tests/test_workflow_contracts.py b/packages/sec-edgar-ingest/tests/test_workflow_contracts.py
+new file mode 100644
+index 00000000..b3337e0a
+--- /dev/null
++++ b/packages/sec-edgar-ingest/tests/test_workflow_contracts.py
+@@ -0,0 +1,405 @@
++"""Offline workflow coverage and strict result contracts."""
++from network_guard import install
++
++install()
++
++import unittest
++from dataclasses import replace
++from datetime import timedelta
++
++from support import fixture_context, fixture_source, fixture_workset
++from sec_edgar_ingest.etl.contracts import PublicationResult
++from sec_edgar_ingest.models import Error
++from sec_edgar_ingest.results import EXIT_CODES
++from sec_edgar_ingest.workflows.contracts import (
++    MemberResult, WorkflowResult, member_status, summarize, workflow_path,
++)
++
++
++class CompletionRecordTests(unittest.TestCase):
++    def test_incomplete_capture_cannot_claim_completion(self):
++        from sec_edgar_ingest.workflows.contracts import CompletionEvaluation
++        from sec_edgar_ingest.models import Error
++        gap = Error('publication_missing', 'not committed', True, None, {})
++        with self.assertRaises(ValueError):
++            CompletionEvaluation(True, None, (), ())
++        with self.assertRaises(ValueError):
++            CompletionEvaluation(True, {'member_id': 'a' * 64}, (), (gap,))
++        with self.assertRaises(ValueError):
++            CompletionEvaluation(True, {'member_id': 'a' * 64}, ({'id': 'b' * 64},), ())
++        value = CompletionEvaluation(False, None, (), (gap,))
++        self.assertEqual(CompletionEvaluation.from_mapping(value.to_mapping()), value)
++
++
++class SkippedSourceTests(unittest.TestCase):
++    def test_complete_source_participates_in_quarantine_precedence(self):
++        from sec_edgar_ingest.models import Source, Error
++        from sec_edgar_ingest.workflows.contracts import MemberResult, summarize
++        from sec_edgar_ingest.urls import source_id
++        url = 'https://www.sec.gov/Archives/edgar/daily-index/2026/QTR4/master.20261001.idx'
++        source = Source(source_id(url), url, 'daily', '2026-10-01', 'idx')
++        refused = MemberResult('b' * 64, source,
++            'worksets/sec/source/sha256=' + 'c' * 64 + '/workset.json',
++            None, None, (), 'quarantined', False, False, True, (), (),
++            'fixture-index-parser-v1', 'sec-index-v1')
++        outcome, counts = summarize((refused,), (), 1, 0, 'backfill', ('d' * 64,))
++        self.assertEqual(outcome, 'incomplete')
++        self.assertEqual((counts['complete_sources'], counts['failed_sources'],
++                          counts['quarantined_sources']), (1, 1, 1))
++        with self.assertRaises(ValueError):
++            summarize((refused,), (), 1, 0, 'backfill', (source.source_id,))
++        with self.assertRaises(ValueError):
++            summarize((), (), 0, 0, 'daily', ('d' * 64, 'd' * 64))
++
++
++class CoverageTests(unittest.TestCase):
++    def member(self, outcome='success', quarters=()):
++        return MemberResult(
++            'a' * 64, fixture_source(),
++            'worksets/sec/source/sha256=' + 'b' * 64 + '/workset.json',
++            'worksets/sec/snapshot/sha256=' + 'c' * 64 + '/workset.json',
++            'worksets/sec/transformed/sha256=' + 'd' * 64 + '/workset.json',
++            ('runs/sec/r/collect/a/result.json',), outcome, True, True, False,
++            quarters, (), 'fixture-index-parser-v1', 'sec-index-v1',
++        )
++
++    def publication(self, outcome='published', quarter='2015Q1'):
++        return PublicationResult(
++            quarter, outcome, 'e' * 64, 'curated/sec/g/manifest.json', None, 0,
++        )
++
++    def workflow(self, members=None, gaps=(), **overrides):
++        context = fixture_context(command='daily')
++        members = (self.member(),) if members is None else members
++        outcome, counts = summarize(members, gaps, 1, 0, context.command)
++        directory = fixture_workset((fixture_source(),)).directories[0]
++        values = dict(
++            format_version='sec-workflow-result-v1', context=context,
++            intent={'invocation': {'start_quarter': '2015Q1', 'end_quarter': '2015Q2'},
++                    'discovered_sources': 1, 'unresolved_before': 0,
++                    'already_complete_sources': []},
++            source_workset_ref='worksets/sec/source/sha256=' + 'b' * 64 + '/workset.json',
++            requested_quarters=('2015Q1', '2015Q2'), directories=(directory.to_mapping(),),
++            members=members, gaps=gaps, boundary_before='2026-10-01',
++            boundary_after='2026-10-06', outcome=outcome, counts=counts,
++            ended_at=(context.started_at + timedelta(seconds=1)).isoformat(),
++        )
++        values.update(overrides)
++        return WorkflowResult(**values)
++
++    def test_empty_daily_is_not_failure_or_old_backlog(self):
++        self.assertEqual(summarize((), (), 0)[0], 'no_new_sources')
++        gap = Error('discovery_failed', 'failed', True, None, {})
++        self.assertEqual(summarize((), (gap,), 0)[0], 'incomplete')
++        pending = replace(self.member(), outcome='pending', transformed=False)
++        self.assertEqual(summarize((pending,), (), 0)[0], 'pending')
++
++    def test_valid_progress_does_not_erase_invalid_member(self):
++        bad = replace(self.member(), member_id='b' * 64,
++                      source=fixture_source('2015Q2'), outcome='invalid_source',
++                      transformed=False, quarantined=True)
++        outcome, counts = summarize((self.member(), bad), (), 2)
++        self.assertEqual(outcome, 'incomplete')
++        self.assertEqual((counts['complete_sources'], counts['failed_sources'],
++                          counts['quarantined_sources']), (1, 1, 1))
++        self.assertEqual(summarize((bad,), (), 1)[0], 'quarantined')
++
++    def test_all_exit_outcomes_have_explicit_member_and_coverage_status(self):
++        expected = {
++            'success': ('complete', 'unchanged'),
++            'no_new_sources': ('complete', 'unchanged'),
++            'unchanged': ('complete', 'unchanged'),
++            'configuration': ('failed', 'incomplete'),
++            'discovery_failed': ('failed', 'incomplete'),
++            'incomplete': ('failed', 'incomplete'),
++            'pending': ('pending', 'pending'),
++            'retry_exhausted': ('failed', 'incomplete'),
++            'deferred': ('pending', 'pending'),
++            'throttled': ('pending', 'pending'),
++            'access_blocked': ('failed', 'access_blocked'),
++            'quarantined': ('failed', 'incomplete'),
++            'invalid_source': ('failed', 'incomplete'),
++            'ownership_lost': ('failed', 'ownership_lost'),
++            'state_conflict': ('failed', 'state_conflict'),
++            'internal_error': ('failed', 'internal_error'),
++            'publication_conflict': ('failed', 'incomplete'),
++            'awaiting_approval': ('pending', 'awaiting_approval'),
++        }
++        self.assertEqual(set(expected), set(EXIT_CODES))
++        for outcome, (status, coverage) in expected.items():
++            with self.subTest(outcome=outcome):
++                member = self.member(outcome)
++                self.assertEqual(member_status(outcome), status)
++                actual, counts = summarize((member,), (), 1)
++                self.assertEqual(actual, coverage)
++                self.assertEqual(counts[status + '_sources'], 1)
++
++    def test_unknown_outcome_is_refused(self):
++        with self.assertRaises(KeyError):
++            member_status('invented_success')
++        with self.assertRaises(KeyError):
++            self.member('invented_success')
++
++    def test_source_identity_uses_worst_status_and_distinct_progress_counts(self):
++        pending = replace(self.member(), member_id='b' * 64, outcome='pending', transformed=False)
++        failed = replace(pending, member_id='c' * 64, outcome='invalid_source', quarantined=True)
++        outcome, counts = summarize((self.member(), pending, failed), (), 1)
++        self.assertEqual(outcome, 'incomplete')
++        self.assertEqual(counts, {
++            'complete_sources': 0, 'pending_sources': 0, 'failed_sources': 1,
++            'discovered_sources': 1, 'downloaded_sources': 1, 'transformed_sources': 1,
++            'quarantined_sources': 1, 'published_quarters': 0,
++            'unchanged_quarters': 0, 'awaiting_approval_quarters': 0,
++        })
++
++    def test_pending_member_prevents_complete_coverage(self):
++        pending = replace(self.member('deferred'), member_id='b' * 64, source=fixture_source('2015Q2'))
++        self.assertEqual(summarize((self.member(), pending), (), 1)[0], 'incomplete')
++        self.assertEqual(summarize((self.member('awaiting_approval'), pending), (), 0)[0], 'pending')
++
++    def test_fatal_precedence_includes_discovery_gaps(self):
++        for outcome in ('access_blocked', 'ownership_lost', 'state_conflict', 'internal_error'):
++            with self.subTest(outcome=outcome):
++                gap = Error(outcome, 'failed', False, None, {})
++                self.assertEqual(summarize((self.member(),), (gap,), 1)[0], outcome)
++        gaps = tuple(Error(code, 'failed', False, None, {}) for code in
++                     ('internal_error', 'state_conflict', 'ownership_lost', 'access_blocked'))
++        self.assertEqual(summarize((), gaps, 0)[0], 'access_blocked')
++
++    def test_quarter_counts_and_approval(self):
++        quarters = (self.publication(), self.publication('unchanged', '2015Q2'))
++        outcome, counts = summarize((self.member(quarters=quarters),), (), 1)
++        self.assertEqual((outcome, counts['published_quarters'], counts['unchanged_quarters']),
++                         ('success', 1, 1))
++        awaiting = self.member('awaiting_approval', (self.publication('awaiting_approval'),))
++        outcome, counts = summarize((awaiting,), (), 0)
++        self.assertEqual((outcome, counts['awaiting_approval_quarters']), ('awaiting_approval', 1))
++
++    def test_zero_output_and_old_backlog(self):
++        self.assertEqual(summarize((self.member(),), (), 0)[0], 'no_new_sources')
++        self.assertEqual(summarize((self.member(),), (), 0, 1)[0], 'unchanged')
++        self.assertEqual(summarize((self.member(),), (), 0, command='backfill')[0], 'unchanged')
++        self.assertEqual(summarize((), (), 0, command='backfill')[0], 'unchanged')
++        published = self.member(quarters=(self.publication(),))
++        self.assertEqual(summarize((published,), (), 0)[0], 'success')
++
++    def test_member_rejects_invalid_references_and_versions(self):
++        member = self.member()
++        cases = (
++            {'member_id': 'not-a-hash'}, {'parent_ref': member.snapshot_ref},
++            {'snapshot_ref': member.transformed_ref}, {'transformed_ref': member.snapshot_ref},
++            {'child_refs': ('runs/sec/r/daily/a/result.json',)},
++            {'child_refs': ('runs/sec/../collect/a/result.json',)},
++            {'child_refs': ('runs/sec/r/collect/a%20/result.json',)},
++            {'parser_version': 'unsupported'}, {'schema_version': 'unsupported'},
++        )
++        for fields in cases:
++            with self.subTest(fields=fields), self.assertRaises(ValueError):
++                replace(member, **fields)
++
++    def test_member_rejects_invented_etl_and_duplicate_quarters(self):
++        member = self.member()
++        cases = (
++            {'snapshot_ref': None}, {'transformed_ref': None},
++            {'quarters': (self.publication('awaiting_approval'),)},
++            {'quarters': (self.publication(), self.publication())},
++            {'quarantined': True},
++            {'outcome': 'invalid_source', 'quarantined': True},
++        )
++        for fields in cases:
++            with self.subTest(fields=fields), self.assertRaises(ValueError):
++                replace(member, **fields)
++        accepted = replace(member, outcome='invalid_source', quarantined=True, transformed=False)
++        self.assertTrue(accepted.quarantined)
++
++    def test_workflow_mapping_roundtrip_and_counter_refusal(self):
++        result = self.workflow(members=(self.member(quarters=(self.publication(),)),))
++        self.assertEqual(WorkflowResult.from_mapping(result.to_mapping()), result)
++        self.assertEqual(result.directories[0]['source_ids'], (fixture_source().source_id,))
++        self.assertEqual(result.intent['invocation']['start_quarter'], '2015Q1')
++        wrong = result.to_mapping()
++        wrong['counts']['complete_sources'] = 2
++        with self.assertRaises(ValueError):
++            WorkflowResult.from_mapping(wrong)
++
++    def test_workflow_nested_fields_are_immutable_and_detached(self):
++        result = self.workflow()
++        with self.assertRaises(TypeError):
++            result.intent['invocation']['start_quarter'] = '2026Q4'
++        detached = result.to_mapping()
++        detached['directories'][0]['source_ids'].append('f' * 64)
++        self.assertEqual(len(result.directories[0]['source_ids']), 1)
++        self.assertEqual(WorkflowResult.from_mapping(result.to_mapping()), result)
++
++    def test_nested_record_decoder_refuses_unknown_keys_and_wrong_types(self):
++        result = self.workflow()
++        for field, value in (('downloaded', 1), ('source', {}), ('unexpected', True)):
++            with self.subTest(field=field):
++                wrong = result.to_mapping()
++                wrong['members'][0][field] = value
++                with self.assertRaises(ValueError):
++                    WorkflowResult.from_mapping(wrong)
++        wrong = result.to_mapping()
++        wrong['counts']['complete_sources'] = True
++        with self.assertRaises(ValueError):
++            WorkflowResult.from_mapping(wrong)
++
++    def test_workflow_rejects_invalid_identity_time_ordering_and_outcome(self):
++        result = self.workflow()
++        cases = (
++            {'format_version': 'unsupported'}, {'members': result.members * 2},
++            {'source_workset_ref': result.members[0].snapshot_ref}, {'outcome': 'success'},
++            {'ended_at': '2026-10-06T00:00:01'},
++            {'ended_at': '2026-10-06T00:00:01+01:00'},
++            {'ended_at': (result.context.started_at - timedelta(seconds=1)).isoformat()},
++            {'requested_quarters': ('2015Q2', '2015Q1')},
++            {'requested_quarters': ('2015Q1', '2015Q1')},
++            {'requested_quarters': ('2015Q5',)},
++            {'boundary_before': '20261001'}, {'boundary_after': '2026-02-30'},
++        )
++        for fields in cases:
++            with self.subTest(fields=fields), self.assertRaises(ValueError):
++                replace(result, **fields)
++
++    def test_workflow_intent_counters_are_nonnegative_integers(self):
++        result = self.workflow()
++        for key in ('discovered_sources', 'unresolved_before'):
++            for value in (True, -1, 1.0):
++                with self.subTest(key=key, value=value), self.assertRaises(ValueError):
++                    replace(result, intent={**result.to_mapping()['intent'], key: value})
++
++    def test_already_complete_sources_add_coverage_without_duplicate_selection(self):
++        result = self.workflow()
++        intent = {**result.to_mapping()['intent'], 'already_complete_sources': ['f' * 64]}
++        counts = {**result.to_mapping()['counts'], 'complete_sources': 2}
++        accepted = replace(result, intent=intent, counts=counts)
++        self.assertEqual(accepted.counts['complete_sources'], 2)
++        self.assertEqual(WorkflowResult.from_mapping(accepted.to_mapping()), accepted)
++        for identities in (['f' * 64, 'f' * 64], [fixture_source().source_id], ['bad']):
++            with self.subTest(identities=identities), self.assertRaises(ValueError):
++                replace(result, intent={**intent, 'already_complete_sources': identities})
++
++    def test_workflow_skipped_completion_prevents_pure_quarantine(self):
++        refused = replace(self.member('invalid_source'), transformed=False, quarantined=True)
++        result = self.workflow(members=(refused,))
++        intent = {**result.to_mapping()['intent'], 'already_complete_sources': ['f' * 64]}
++        counts = {**result.to_mapping()['counts'], 'complete_sources': 1}
++        accepted = replace(result, intent=intent, counts=counts, outcome='incomplete')
++        self.assertEqual(WorkflowResult.from_mapping(accepted.to_mapping()), accepted)
++        with self.assertRaises(ValueError):
++            replace(accepted, outcome='quarantined')
++
++    def test_empty_daily_with_discovery_or_backlog_is_unchanged(self):
++        self.assertEqual(summarize((), (), 1)[0], 'unchanged')
++        self.assertEqual(summarize((), (), 0, 1)[0], 'unchanged')
++
++    def quarantine_gap(self, *sources):
++        return Error(
++            'baseline_publication_missing', 'selected sources have no accepted publication',
++            False, None,
++            {'coverage_cause': 'selected_source_quarantine',
++             'source_ids': sorted(source.source_id for source in sources)},
++        )
++
++    def test_all_quarantined_retains_attributed_baseline_publication_gaps(self):
++        first = replace(self.member('invalid_source'), transformed=False, quarantined=True)
++        second = replace(first, member_id='b' * 64, source=fixture_source('2015Q2'))
++        gaps = (self.quarantine_gap(first.source), self.quarantine_gap(second.source))
++        outcome, counts = summarize((first, second), gaps, 2, command='backfill')
++        self.assertEqual(outcome, 'quarantined')
++        self.assertEqual(EXIT_CODES[outcome], 7)
++        self.assertEqual((counts['complete_sources'], counts['failed_sources'],
++                          counts['quarantined_sources']), (0, 2, 2))
++        result = self.workflow(
++            members=(first, second), gaps=gaps,
++            context=fixture_context(command='backfill'),
++            intent={'invocation': {}, 'discovered_sources': 2, 'unresolved_before': 0,
++                    'already_complete_sources': []}, outcome=outcome, counts=counts,
++        )
++        self.assertEqual(result.gaps, gaps)
++        self.assertEqual(WorkflowResult.from_mapping(result.to_mapping()), result)
++
++    def test_independent_missing_source_or_directory_gap_prevents_pure_quarantine(self):
++        refused = replace(self.member('invalid_source'), transformed=False, quarantined=True)
++        derived = self.quarantine_gap(refused.source)
++        independent = (
++            Error('baseline_publication_missing', 'missing source', False, None,
++                  {'source_ids': [fixture_source('2015Q2').source_id]}),
++            Error('discovery_failed', 'directory failed', True, None, {}),
++        )
++        for gap in independent:
++            with self.subTest(code=gap.code):
++                self.assertEqual(summarize((refused,), (derived, gap), 1,
++                                           command='backfill')[0], 'incomplete')
++
++    def test_baseline_gap_attribution_requires_exact_selected_refused_source_ids(self):
++        refused = replace(self.member('invalid_source'), transformed=False, quarantined=True)
++        gap = self.quarantine_gap(refused.source)
++        malformed = (
++            {}, {'coverage_cause': 'selected_source_quarantine'},
++            {**gap.to_mapping()['details'], 'source_ids': []},
++            {**gap.to_mapping()['details'], 'source_ids': [refused.source.source_id] * 2},
++            {**gap.to_mapping()['details'], 'source_ids': [fixture_source('2015Q2').source_id]},
++            {**gap.to_mapping()['details'], 'source_ids': [123]},
++            {**gap.to_mapping()['details'], 'source_ids': refused.source.source_id},
++        )
++        for details in malformed:
++            with self.subTest(details=details):
++                independent = replace(gap, details=details)
++                self.assertEqual(summarize((refused,), (independent,), 1,
++                                           command='backfill')[0], 'incomplete')
++        unrelated = replace(gap, code='discovery_failed')
++        self.assertEqual(summarize((refused,), (unrelated,), 1)[0], 'incomplete')
++        misattributed = replace(gap, source_id=fixture_source('2015Q2').source_id)
++        self.assertEqual(summarize((refused,), (misattributed,), 1)[0], 'incomplete')
++
++    def test_attributed_quarantine_gaps_do_not_erase_valid_progress(self):
++        refused = replace(self.member('invalid_source'), member_id='b' * 64,
++                          source=fixture_source('2015Q2'), transformed=False, quarantined=True)
++        gap = self.quarantine_gap(refused.source)
++        self.assertEqual(summarize((self.member(), refused), (gap,), 2,
++                                   command='backfill')[0], 'incomplete')
++
++    def test_fatal_gap_precedes_attributed_all_quarantined_outcome(self):
++        refused = replace(self.member('invalid_source'), transformed=False, quarantined=True)
++        derived = self.quarantine_gap(refused.source)
++        for code in ('access_blocked', 'ownership_lost', 'state_conflict', 'internal_error'):
++            with self.subTest(code=code):
++                fatal = Error(code, 'fatal failure', False, None, {})
++                self.assertEqual(summarize((refused,), (derived, fatal), 1,
++                                           command='backfill')[0], code)
++
++    def test_constructor_refuses_quarantine_for_every_pending_outcome(self):
++        for outcome in ('pending', 'deferred', 'throttled', 'awaiting_approval'):
++            with self.subTest(outcome=outcome):
++                pending = replace(self.member(outcome), transformed=False)
++                fields = {name: getattr(pending, name) for name in pending.to_mapping()}
++                fields['quarantined'] = True
++                with self.assertRaises(ValueError):
++                    MemberResult(**fields)
++
++    def test_workflow_decoder_refuses_pending_quarantine_with_matching_counts(self):
++        for outcome in ('pending', 'deferred', 'throttled', 'awaiting_approval'):
++            with self.subTest(outcome=outcome):
++                pending = replace(self.member(outcome), transformed=False)
++                wrong = self.workflow(members=(pending,)).to_mapping()
++                wrong['members'][0]['quarantined'] = True
++                wrong['counts']['quarantined_sources'] = 1
++                with self.assertRaises(ValueError):
++                    WorkflowResult.from_mapping(wrong)
++
++    def test_workflow_path_requires_supported_command_and_single_segment_ids(self):
++        for command in ('daily', 'backfill'):
++            context = fixture_context(command=command)
++            self.assertEqual(workflow_path(context),
++                             f'runs/sec/fixture-run/{command}/fixture-attempt/result.json')
++        with self.assertRaises(ValueError):
++            workflow_path(fixture_context())
++        for name in ('run_id', 'execution_id', 'attempt_id'):
++            for value in ('nested/id', '..', 'escaped%20id'):
++                with self.subTest(name=name, value=value), self.assertRaises(ValueError):
++                    workflow_path(replace(fixture_context(command='daily'), **{name: value}))
++
++
++if __name__ == '__main__':
++    unittest.main()

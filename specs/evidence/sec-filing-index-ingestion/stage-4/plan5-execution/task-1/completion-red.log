@@ -1,0 +1,39 @@
+test_incomplete_capture_cannot_claim_completion (test_workflow_contracts.CompletionRecordTests.test_incomplete_capture_cannot_claim_completion) ... ERROR
+test_all_exit_outcomes_have_explicit_member_and_coverage_status (test_workflow_contracts.CoverageTests.test_all_exit_outcomes_have_explicit_member_and_coverage_status) ... ok
+test_all_quarantined_retains_attributed_baseline_publication_gaps (test_workflow_contracts.CoverageTests.test_all_quarantined_retains_attributed_baseline_publication_gaps) ... ok
+test_already_complete_sources_add_coverage_without_duplicate_selection (test_workflow_contracts.CoverageTests.test_already_complete_sources_add_coverage_without_duplicate_selection) ... ok
+test_attributed_quarantine_gaps_do_not_erase_valid_progress (test_workflow_contracts.CoverageTests.test_attributed_quarantine_gaps_do_not_erase_valid_progress) ... ok
+test_baseline_gap_attribution_requires_exact_selected_refused_source_ids (test_workflow_contracts.CoverageTests.test_baseline_gap_attribution_requires_exact_selected_refused_source_ids) ... ok
+test_constructor_refuses_quarantine_for_every_pending_outcome (test_workflow_contracts.CoverageTests.test_constructor_refuses_quarantine_for_every_pending_outcome) ... ok
+test_empty_daily_is_not_failure_or_old_backlog (test_workflow_contracts.CoverageTests.test_empty_daily_is_not_failure_or_old_backlog) ... ok
+test_fatal_gap_precedes_attributed_all_quarantined_outcome (test_workflow_contracts.CoverageTests.test_fatal_gap_precedes_attributed_all_quarantined_outcome) ... ok
+test_fatal_precedence_includes_discovery_gaps (test_workflow_contracts.CoverageTests.test_fatal_precedence_includes_discovery_gaps) ... ok
+test_independent_missing_source_or_directory_gap_prevents_pure_quarantine (test_workflow_contracts.CoverageTests.test_independent_missing_source_or_directory_gap_prevents_pure_quarantine) ... ok
+test_member_rejects_invalid_references_and_versions (test_workflow_contracts.CoverageTests.test_member_rejects_invalid_references_and_versions) ... ok
+test_member_rejects_invented_etl_and_duplicate_quarters (test_workflow_contracts.CoverageTests.test_member_rejects_invented_etl_and_duplicate_quarters) ... ok
+test_nested_record_decoder_refuses_unknown_keys_and_wrong_types (test_workflow_contracts.CoverageTests.test_nested_record_decoder_refuses_unknown_keys_and_wrong_types) ... ok
+test_pending_member_prevents_complete_coverage (test_workflow_contracts.CoverageTests.test_pending_member_prevents_complete_coverage) ... ok
+test_quarter_counts_and_approval (test_workflow_contracts.CoverageTests.test_quarter_counts_and_approval) ... ok
+test_source_identity_uses_worst_status_and_distinct_progress_counts (test_workflow_contracts.CoverageTests.test_source_identity_uses_worst_status_and_distinct_progress_counts) ... ok
+test_unknown_outcome_is_refused (test_workflow_contracts.CoverageTests.test_unknown_outcome_is_refused) ... ok
+test_valid_progress_does_not_erase_invalid_member (test_workflow_contracts.CoverageTests.test_valid_progress_does_not_erase_invalid_member) ... ok
+test_workflow_decoder_refuses_pending_quarantine_with_matching_counts (test_workflow_contracts.CoverageTests.test_workflow_decoder_refuses_pending_quarantine_with_matching_counts) ... ok
+test_workflow_intent_counters_are_nonnegative_integers (test_workflow_contracts.CoverageTests.test_workflow_intent_counters_are_nonnegative_integers) ... ok
+test_workflow_mapping_roundtrip_and_counter_refusal (test_workflow_contracts.CoverageTests.test_workflow_mapping_roundtrip_and_counter_refusal) ... ok
+test_workflow_nested_fields_are_immutable_and_detached (test_workflow_contracts.CoverageTests.test_workflow_nested_fields_are_immutable_and_detached) ... ok
+test_workflow_path_requires_supported_command_and_single_segment_ids (test_workflow_contracts.CoverageTests.test_workflow_path_requires_supported_command_and_single_segment_ids) ... ok
+test_workflow_rejects_invalid_identity_time_ordering_and_outcome (test_workflow_contracts.CoverageTests.test_workflow_rejects_invalid_identity_time_ordering_and_outcome) ... ok
+test_zero_output_and_old_backlog (test_workflow_contracts.CoverageTests.test_zero_output_and_old_backlog) ... ok
+
+======================================================================
+ERROR: test_incomplete_capture_cannot_claim_completion (test_workflow_contracts.CompletionRecordTests.test_incomplete_capture_cannot_claim_completion)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_contracts.py", line 21, in test_incomplete_capture_cannot_claim_completion
+    from sec_edgar_ingest.workflows.contracts import CompletionEvaluation
+ImportError: cannot import name 'CompletionEvaluation' from 'sec_edgar_ingest.workflows.contracts' (/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/contracts.py)
+
+----------------------------------------------------------------------
+Ran 26 tests in 0.082s
+
+FAILED (errors=1)
