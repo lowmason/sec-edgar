@@ -1,0 +1,18 @@
+argv: ["uv", "run", "--offline", "--frozen", "--package", "sec-edgar-ingest", "python", "packages/sec-edgar-ingest/tests/network_guard.py", "discover", "-s", "packages/sec-edgar-ingest/tests", "-p", "test_workflow_legacy.py", "-v"]
+test_corrupt_parent_is_isolated_from_valid_sibling_and_never_recursive (test_workflow_legacy.LegacyTests.test_corrupt_parent_is_isolated_from_valid_sibling_and_never_recursive) ... ok
+test_corrupt_projection_is_never_adopted_as_original_parent (test_workflow_legacy.LegacyTests.test_corrupt_projection_is_never_adopted_as_original_parent) ... ok
+test_corrupt_source_and_processing_do_not_hide_valid_parent (test_workflow_legacy.LegacyTests.test_corrupt_source_and_processing_do_not_hide_valid_parent) ... ok
+test_crash_before_parent_write_recovers_all_original_units (test_workflow_legacy.LegacyTests.test_crash_before_parent_write_recovers_all_original_units) ... ok
+test_divergent_binding_winner_refuses_and_preserves_original_bytes (test_workflow_legacy.LegacyTests.test_divergent_binding_winner_refuses_and_preserves_original_bytes) ... ok
+test_legacy_registry_and_capture_survive_close_reopen (test_workflow_legacy.LegacyTests.test_legacy_registry_and_capture_survive_close_reopen) ... ok
+test_malformed_frozen_unit_is_isolated_from_valid_sibling (test_workflow_legacy.LegacyTests.test_malformed_frozen_unit_is_isolated_from_valid_sibling) ... ok
+test_missing_progress_is_failed_and_does_not_invent_source (test_workflow_legacy.LegacyTests.test_missing_progress_is_failed_and_does_not_invent_source) ... ok
+test_old_downloaded_unit_keeps_parent_and_exact_pin (test_workflow_legacy.LegacyTests.test_old_downloaded_unit_keeps_parent_and_exact_pin) ... ok
+test_recovery_capture_tampering_refuses (test_workflow_legacy.LegacyTests.test_recovery_capture_tampering_refuses) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 34.139s
+
+OK
+
+exit: 0
