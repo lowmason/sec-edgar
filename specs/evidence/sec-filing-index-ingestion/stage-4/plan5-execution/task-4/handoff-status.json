@@ -1,0 +1,33 @@
+[
+  {
+    "argv": [
+      "git",
+      "show",
+      "--stat",
+      "--oneline",
+      "HEAD"
+    ],
+    "exit": 0,
+    "output": "75682afe feat: validate workflow completion and durable repair evidence\n .../src/sec_edgar_ingest/workflows/completion.py   | 741 +++++++++++++++++++++\n .../tests/support_workflow_evidence.py             | 152 +++++\n .../tests/test_workflow_completion.py              | 356 ++++++++++\n 3 files changed, 1249 insertions(+)\n"
+  },
+  {
+    "argv": [
+      "git",
+      "status",
+      "--short"
+    ],
+    "exit": 0,
+    "output": "?? specs/evidence/sec-filing-index-ingestion/stage-4/plan5-execution/task-4/\n"
+  },
+  {
+    "argv": [
+      "git",
+      "-c",
+      "core.whitespace=cr-at-eol",
+      "diff",
+      "--check"
+    ],
+    "exit": 0,
+    "output": ""
+  }
+]

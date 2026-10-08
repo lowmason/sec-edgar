@@ -1,0 +1,105 @@
+test_completion_capture_rejects_corrupt_session (test_workflow_completion.CompletionTests.test_completion_capture_rejects_corrupt_session) ... ok
+test_copied_obligation_cannot_drop_only_formerly_affected_quarter (test_workflow_completion.CompletionTests.test_copied_obligation_cannot_drop_only_formerly_affected_quarter) ... FAIL
+test_copied_obligation_must_bind_original_command_and_exact_input (test_workflow_completion.CompletionTests.test_copied_obligation_must_bind_original_command_and_exact_input) ... ok
+test_corrupt_begun_checked_call_blocks_completion (test_workflow_completion.CompletionTests.test_corrupt_begun_checked_call_blocks_completion) ... 
+  test_corrupt_begun_checked_call_blocks_completion (test_workflow_completion.CompletionTests.test_corrupt_begun_checked_call_blocks_completion) (path='runs/sec/completion-workflow/publish/wf-4219fe9f53ddbeabd96d87d4c7acd3d5637919ba/command.json') ... FAIL
+  test_corrupt_begun_checked_call_blocks_completion (test_workflow_completion.CompletionTests.test_corrupt_begun_checked_call_blocks_completion) (path='worksets/sec/transformed/sha256=0ce67d3b2fd662df9936df49d315e882ff6122eb2a68591af1fd1dbb9604f40d/workset.json') ... FAIL
+test_corrupt_begun_checked_call_blocks_completion (test_workflow_completion.CompletionTests.test_corrupt_begun_checked_call_blocks_completion) ... FAIL
+test_corrupt_begun_ordinary_call_blocks_completion (test_workflow_completion.CompletionTests.test_corrupt_begun_ordinary_call_blocks_completion) ... FAIL
+test_current_index_identity_is_decoded_not_assumed (test_workflow_completion.CompletionTests.test_current_index_identity_is_decoded_not_assumed) ... ok
+test_divergent_binding_winner_is_preserved_during_evaluation (test_workflow_completion.CompletionTests.test_divergent_binding_winner_is_preserved_during_evaluation) ... ok
+test_foreign_valid_resolution_cannot_discharge_another_original_call (test_workflow_completion.CompletionTests.test_foreign_valid_resolution_cannot_discharge_another_original_call) ... FAIL
+test_formerly_affected_quarter_stays_unresolved (test_workflow_completion.CompletionTests.test_formerly_affected_quarter_stays_unresolved) ... ok
+test_fresh_attempt_resolves_repair_without_rewriting_original_attempt (test_workflow_completion.CompletionTests.test_fresh_attempt_resolves_repair_without_rewriting_original_attempt) ... ok
+test_historical_capture_requires_every_immutable_file (test_workflow_completion.CompletionTests.test_historical_capture_requires_every_immutable_file) ... ok
+test_historical_capture_survives_pointer_advance (test_workflow_completion.CompletionTests.test_historical_capture_survives_pointer_advance) ... ok
+test_historical_provenance_rejects_session_and_registry_corruption (test_workflow_completion.CompletionTests.test_historical_provenance_rejects_session_and_registry_corruption) ... ok
+test_missing_obligation_index_recovers_original_immutable_anchor (test_workflow_completion.CompletionTests.test_missing_obligation_index_recovers_original_immutable_anchor) ... FAIL
+test_missing_result_after_deadline_requires_fresh_attempt (test_workflow_completion.CompletionTests.test_missing_result_after_deadline_requires_fresh_attempt) ... ok
+test_old_failed_parent_remains_valid_after_same_session_directory_repair (test_workflow_completion.CompletionTests.test_old_failed_parent_remains_valid_after_same_session_directory_repair) ... ok
+test_ordinary_public_publish_failure_is_pending_in_fresh_workflow (test_workflow_completion.CompletionTests.test_ordinary_public_publish_failure_is_pending_in_fresh_workflow) ... ok
+test_valid_checked_call_before_begin_has_no_repair_obligation (test_workflow_completion.CompletionTests.test_valid_checked_call_before_begin_has_no_repair_obligation) ... ok
+test_validated_member_provenance_returns_exact_projection (test_workflow_completion.CompletionTests.test_validated_member_provenance_returns_exact_projection) ... ok
+
+======================================================================
+FAIL: test_copied_obligation_cannot_drop_only_formerly_affected_quarter (test_workflow_completion.CompletionTests.test_copied_obligation_cannot_drop_only_formerly_affected_quarter)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_completion.py", line 465, in test_copied_obligation_cannot_drop_only_formerly_affected_quarter
+    initial = self.transform(target.getvalue())
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_completion.py", line 34, in transform
+    self.assertEqual(code, 0)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^
+AssertionError: 7 != 0
+
+======================================================================
+FAIL: test_corrupt_begun_checked_call_blocks_completion (test_workflow_completion.CompletionTests.test_corrupt_begun_checked_call_blocks_completion) (path='runs/sec/completion-workflow/publish/wf-4219fe9f53ddbeabd96d87d4c7acd3d5637919ba/command.json')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_completion.py", line 400, in test_corrupt_begun_checked_call_blocks_completion
+    self.assertFalse(evaluated.complete)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+AssertionError: True is not false
+
+======================================================================
+FAIL: test_corrupt_begun_checked_call_blocks_completion (test_workflow_completion.CompletionTests.test_corrupt_begun_checked_call_blocks_completion) (path='worksets/sec/transformed/sha256=0ce67d3b2fd662df9936df49d315e882ff6122eb2a68591af1fd1dbb9604f40d/workset.json')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_completion.py", line 400, in test_corrupt_begun_checked_call_blocks_completion
+    self.assertFalse(evaluated.complete)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+AssertionError: True is not false
+
+======================================================================
+FAIL: test_corrupt_begun_checked_call_blocks_completion (test_workflow_completion.CompletionTests.test_corrupt_begun_checked_call_blocks_completion)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_completion.py", line 408, in test_corrupt_begun_checked_call_blocks_completion
+    self.assertFalse(self.evaluate().complete)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: True is not false
+
+======================================================================
+FAIL: test_corrupt_begun_ordinary_call_blocks_completion (test_workflow_completion.CompletionTests.test_corrupt_begun_ordinary_call_blocks_completion)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_completion.py", line 432, in test_corrupt_begun_ordinary_call_blocks_completion
+    self.assertFalse(evaluated.complete)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+AssertionError: True is not false
+
+======================================================================
+FAIL: test_foreign_valid_resolution_cannot_discharge_another_original_call (test_workflow_completion.CompletionTests.test_foreign_valid_resolution_cannot_discharge_another_original_call)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_completion.py", line 375, in test_foreign_valid_resolution_cannot_discharge_another_original_call
+    self.assertFalse(evaluation.complete)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+AssertionError: True is not false
+
+======================================================================
+FAIL: test_missing_obligation_index_recovers_original_immutable_anchor (test_workflow_completion.CompletionTests.test_missing_obligation_index_recovers_original_immutable_anchor)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_completion.py", line 513, in test_missing_obligation_index_recovers_original_immutable_anchor
+    self.assertEqual(outstanding_repairs(self.f.value, self.f.store, self.f.objects), (obligation,))
+                     ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/completion.py", line 553, in outstanding_repairs
+    return _obligations(Source.from_mapping(value['source']), store, objects)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/completion.py", line 511, in _obligations
+    quarters = sorted(set(recorded) | set(_affected_quarters(workset.observations, objects, store)))
+                                          ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/unittest/mock.py", line 1175, in __call__
+    return self._mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/unittest/mock.py", line 1179, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/unittest/mock.py", line 1234, in _execute_mock_call
+    raise effect
+AssertionError: must recover immutable original quarter set
+
+----------------------------------------------------------------------
+Ran 19 tests in 64.753s
+
+FAILED (failures=7)

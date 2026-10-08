@@ -1,0 +1,36 @@
+[
+  {
+    "argv": [
+      "git",
+      "-c",
+      "core.whitespace=cr-at-eol",
+      "diff",
+      "--check"
+    ],
+    "exit": 0,
+    "output": ""
+  },
+  {
+    "argv": [
+      "git",
+      "add",
+      "packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/completion.py",
+      "packages/sec-edgar-ingest/tests/support_workflow_evidence.py",
+      "packages/sec-edgar-ingest/tests/test_workflow_completion.py"
+    ],
+    "exit": 0,
+    "output": ""
+  },
+  {
+    "argv": [
+      "git",
+      "-c",
+      "core.whitespace=cr-at-eol",
+      "diff",
+      "--cached",
+      "--check"
+    ],
+    "exit": 2,
+    "output": "packages/sec-edgar-ingest/tests/support_workflow_evidence.py:153: new blank line at EOF.\n"
+  }
+]

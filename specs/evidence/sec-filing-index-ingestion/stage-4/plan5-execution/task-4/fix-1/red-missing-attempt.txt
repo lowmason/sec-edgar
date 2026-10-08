@@ -1,0 +1,15 @@
+test_corrupt_begun_checked_call_blocks_completion (test_workflow_completion.CompletionTests.test_corrupt_begun_checked_call_blocks_completion) ... FAIL
+
+======================================================================
+FAIL: test_corrupt_begun_checked_call_blocks_completion (test_workflow_completion.CompletionTests.test_corrupt_begun_checked_call_blocks_completion)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_completion.py", line 412, in test_corrupt_begun_checked_call_blocks_completion
+    self.assertFalse(missing_attempt.complete)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: True is not false
+
+----------------------------------------------------------------------
+Ran 1 test in 2.864s
+
+FAILED (failures=1)

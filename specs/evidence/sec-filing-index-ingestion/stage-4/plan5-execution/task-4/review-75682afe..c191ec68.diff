@@ -1,0 +1,535 @@
+# Review package: 75682afe7fe88d11dc1b08a1578d602e856d5c67..c191ec685a775f69e1307d2707a3a01aba0d3b21
+
+## Commits
+c191ec68 fix: bind workflow repair evidence to original publication calls
+
+## Files changed
+ .../src/sec_edgar_ingest/workflows/completion.py   | 124 ++++++++----
+ .../tests/test_workflow_completion.py              | 221 +++++++++++++++++++++
+ 2 files changed, 310 insertions(+), 35 deletions(-)
+
+## Diff
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/completion.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/completion.py
+index 562d7908..536605cd 100644
+--- a/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/completion.py
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/completion.py
+@@ -138,24 +138,59 @@ def _immutable(kind, key, value, store):
+ def _document(value, format_version, namespace, objects):
+     value = _plain(value)
+     body = canonical_json(to_mapping_value(value))
+     identity = hashlib.sha256(body).hexdigest()
+     path = f'worksets/sec/{namespace}/sha256={identity}/evidence.json'
+     objects.put_once(path, body)
+     return {'ref': path, 'sha256': identity, 'bytes': len(body), 'format_version': format_version}
+ 
+ 
+ 
++REPAIR_AUTHORITY_FORMAT = 'sec-workflow-repair-authority-v1'
++
++
++def _repair_authority_ref(call_sha256):
++    require_hash(call_sha256, 'original repair call digest')
++    return f'worksets/sec/workflow-repair-authority/call-sha256={call_sha256}/obligation.json'
++
++
++def _read_repair_authority(call_sha256, objects):
++    try:
++        body = objects.read(_repair_authority_ref(call_sha256))
++    except FileNotFoundError:
++        return None
++    value = parse_json(body)
++    if (not isinstance(value, dict)
++            or set(value) != {'format_version', 'call_sha256', 'descriptor'}
++            or value['format_version'] != REPAIR_AUTHORITY_FORMAT
++            or value['call_sha256'] != call_sha256
++            or canonical_json(to_mapping_value(value)) != body):
++        raise Conflict('original repair obligation authority bytes or identity differ')
++    if not isinstance(value['descriptor'], dict):
++        raise Conflict('original repair obligation authority descriptor differs')
++    return value['descriptor']
++
++
++def _write_repair_authority(call_sha256, descriptor, objects):
++    value = {'format_version': REPAIR_AUTHORITY_FORMAT,
++             'call_sha256': call_sha256, 'descriptor': _plain(descriptor)}
++    body = canonical_json(to_mapping_value(value))
++    path = _repair_authority_ref(call_sha256)
++    objects.put_once(path, body)
++    if objects.read(path) != body:
++        raise Conflict('original repair obligation authority differs')
++
++
+ def _read_document(descriptor, format_version, objects):
+     if format_version not in (OBLIGATION_FORMAT, RESOLUTION_FORMAT):
+         raise Conflict('unsupported repair document format')
+-    if set(descriptor) != {'ref', 'sha256', 'bytes', 'format_version'}:
++    if not isinstance(descriptor, Mapping) or set(descriptor) != {'ref', 'sha256', 'bytes', 'format_version'}:
+         raise Conflict('repair document descriptor fields differ')
+     require_hash(descriptor['sha256'], 'repair document digest')
+     require_number(descriptor['bytes'], 'repair document bytes', integer=True)
+     safe_relative_path(descriptor['ref'], 'repair document ref')
+     namespace = ('workflow-repairs' if format_version == OBLIGATION_FORMAT
+                  else 'workflow-repair-resolutions')
+     expected_path = f"worksets/sec/{namespace}/sha256={descriptor['sha256']}/evidence.json"
+     if descriptor['ref'] != expected_path or descriptor['format_version'] != format_version:
+         raise Conflict('repair document address or version differs')
+     objects.verify(descriptor['ref'], descriptor['sha256'], descriptor['bytes'])
+@@ -195,20 +230,24 @@ def _read_document(descriptor, format_version, objects):
+     if value['sources'] != [ref.to_mapping() for ref in transformed.observations]:
+         raise Conflict('repair obligation sources differ from exact decoded input')
+     affected = value['affected_quarters']
+     if not isinstance(affected, list) or affected != sorted(set(affected)):
+         raise Conflict('repair obligation affected quarters duplicate or reorder units')
+     for quarter in affected:
+         quarter_value(quarter)
+     observed = {quarter for ref in transformed.observations for quarter in ref.quarter_counts}
+     if not observed <= set(affected):
+         raise Conflict('repair obligation omits an observation output quarter')
++    call_sha256 = hashlib.sha256(canonical_json(to_mapping_value(original_call))).hexdigest()
++    anchored = _read_repair_authority(call_sha256, objects)
++    if anchored is None or anchored != _plain(descriptor):
++        raise Conflict('repair obligation differs from original immutable call authority')
+     return value
+ 
+ def _read_set(path, objects):
+     body = objects.read(path)
+     result = decode_source_workset(body)
+     if path != f'worksets/sec/source/sha256={result.workset_id}/workset.json' or encode_workset(result) != body:
+         raise Conflict('source workset path or canonical bytes differ')
+     return result
+ 
+ 
+@@ -425,20 +464,27 @@ def read_legacy_publish(call, store, objects):
+ def _read_publish_call(call, store, objects):
+     if call.get('format_version') == LEGACY_PUBLISH_FORMAT:
+         return read_legacy_publish(call, store, objects)
+     return read_child(call, store, objects)
+ 
+ 
+ def _call_context(call, store, objects):
+     template = RunContext.from_mapping(call['context'])
+     row = store.get('Attempt', attempt_key(template))
+     if row is None:
++        command_path = call['result_ref'].rsplit('/', 1)[0] + '/command.json'
++        for path in (command_path, call['result_ref']):
++            try:
++                objects.read(path)
++            except FileNotFoundError:
++                continue
++            raise Conflict('begun publication immutable evidence lacks its Attempt index')
+         return None
+     value = row.to_mapping()['value']
+     actual = RunContext.from_mapping(value['context'])
+     if call.get('format_version') == LEGACY_PUBLISH_FORMAT:
+         if actual != template or _legacy_publish_call(actual, objects) != _plain(call):
+             raise Conflict('legacy unfinished publication differs from exact canonical Attempt')
+     else:
+         expected = template.to_mapping()
+         expected['started_at'] = actual.started_at.isoformat()
+         if expected != actual.to_mapping() or actual.started_at < template.started_at or actual.started_at >= actual.deadline:
+@@ -451,106 +497,113 @@ def _call_context(call, store, objects):
+ 
+ 
+ def _publish_calls(store, objects):
+     checked, checked_paths = [], set()
+     for row in store.scan('WorkflowChildCall', {}):
+         value = row.to_mapping()['value']
+         try:
+             call, template = _authority(value, None, objects)
+             if template.command != 'publish':
+                 continue
+-            _transformed_input(call['input_ref'], None, objects)
+             attempt = _call_context(call, store, objects)
+             if attempt is None:
+                 continue  # Before begin/command commit, this call cannot have reached CAS.
++            _transformed_input(call['input_ref'], None, objects)
+             checked.append(call); checked_paths.add(call['result_ref'])
+-        except (ValueError, OSError, Conflict, KeyError, TypeError):
+-            # T7 records corrupt command/Attempt evidence as a retained workflow gap.
+-            # Such a record supplies no source completion and cannot authorize a repair.
+-            continue
++        except (ValueError, OSError, Conflict, KeyError, TypeError) as error:
++            raise Conflict(f'checked publication authority inventory uncertain: {error}') from error
+     legacy = []
+     for row in store.scan('Attempt', {}):
+         value = row.to_mapping()['value']
+         try:
+             context = RunContext.from_mapping(value['context'])
+             if context.command != 'publish' or result_path(context) in checked_paths:
+                 continue
+             call = _legacy_publish_call(context, objects)
+             _transformed_input(call['input_ref'], None, objects)
+             call_key = hashlib.sha256(canonical_json(to_mapping_value(call))).hexdigest()
+-            if value['result'] is None or store.get('WorkflowRepairObligation', call_key) is not None:
++            if (value['result'] is None
++                    or store.get('WorkflowRepairObligation', call_key) is not None
++                    or _read_repair_authority(call_key, objects) is not None):
+                 legacy.append(call)
+-        except (ValueError, OSError, Conflict, KeyError, TypeError):
+-            # Inventory uncertainty is isolated by T7 rather than becoming false success.
+-            continue
++        except (ValueError, OSError, Conflict, KeyError, TypeError) as error:
++            raise Conflict(f'ordinary publication authority inventory uncertain: {error}') from error
+     calls = checked + legacy
+     if len({canonical_json(to_mapping_value(call)) for call in calls}) != len(calls):
+         raise Conflict('duplicate original publication call authority')
+     return tuple(calls)
+ 
+ def _obligations(source, store, objects):
+     found = []
+     for call in _publish_calls(store, objects):
+         workset = decode_transformed(objects.read(call['input_ref']))
+         if not any(ref.source == source for ref in workset.observations):
+             continue
+         call_key = hashlib.sha256(canonical_json(to_mapping_value(call))).hexdigest()
+         saved = store.get('WorkflowRepairObligation', call_key)
+         if saved is None:
+-            try:
+-                _read_publish_call(call, store, objects)
+-            except FileNotFoundError:
+-                attempt = _call_context(call, store, objects)
+-                if attempt is None:
++            descriptor = _read_repair_authority(call_key, objects)
++            if descriptor is None:
++                try:
++                    _read_publish_call(call, store, objects)
++                except FileNotFoundError:
++                    attempt = _call_context(call, store, objects)
++                    if attempt is None:
++                        continue
++                    if attempt['result'] is not None:
++                        raise Conflict('finished Attempt lacks its immutable child result')
++                else:
+                     continue
+-                if attempt['result'] is not None:
+-                    raise Conflict('finished Attempt lacks its immutable child result')
+-            else:
+-                continue
+-            recorded = [q['quarter'] for error in attempt['structured_errors']
+-                        for q in error.get('details', {}).get('quarters', ())]
+-            quarters = sorted(set(recorded) | set(_affected_quarters(workset.observations, objects, store)))
+-            payload = {'format_version': OBLIGATION_FORMAT, 'call': call,
+-                       'context': attempt['context'], 'transformed_ref': call['input_ref'],
+-                       'sources': [ref.to_mapping() for ref in workset.observations],
+-                       'affected_quarters': quarters}
+-            descriptor = _document(payload, OBLIGATION_FORMAT, 'workflow-repairs', objects)
+-            _read_document(descriptor, OBLIGATION_FORMAT, objects)
+-            _immutable('WorkflowRepairObligation', call_key,
+-                       {'call_sha256': call_key, 'descriptor': descriptor}, store)
++                recorded = [q['quarter'] for error in attempt['structured_errors']
++                            for q in error.get('details', {}).get('quarters', ())]
++                quarters = sorted(set(recorded) | set(_affected_quarters(workset.observations, objects, store)))
++                payload = {'format_version': OBLIGATION_FORMAT, 'call': call,
++                           'context': attempt['context'], 'transformed_ref': call['input_ref'],
++                           'sources': [ref.to_mapping() for ref in workset.observations],
++                           'affected_quarters': quarters}
++                descriptor = _document(payload, OBLIGATION_FORMAT, 'workflow-repairs', objects)
++                # The original capture wins before a recoverable index is written.
++                _write_repair_authority(call_key, descriptor, objects)
+         else:
+             indexed = saved.to_mapping()['value']
+             if indexed['call_sha256'] != call_key:
+                 raise Conflict('repair obligation call identity differs')
+             descriptor = indexed['descriptor']
+-            payload = _read_document(descriptor, OBLIGATION_FORMAT, objects)
+-            if (payload['call'] != call or payload['transformed_ref'] != call['input_ref']
+-                    or payload['sources'] != [r.to_mapping() for r in workset.observations]):
+-                raise Conflict('repair obligation immutable input differs')
++        payload = _read_document(descriptor, OBLIGATION_FORMAT, objects)
++        if (payload['call'] != call or payload['transformed_ref'] != call['input_ref']
++                or payload['sources'] != [r.to_mapping() for r in workset.observations]):
++            raise Conflict('repair obligation immutable input differs')
++        if saved is None:
++            _immutable('WorkflowRepairObligation', call_key,
++                       {'call_sha256': call_key, 'descriptor': descriptor}, store)
+         resolution_row = store.get('WorkflowRepairResolution', call_key)
+         if resolution_row is None:
+             try:
+                 repaired = _read_publish_call(call, store, objects)
+             except FileNotFoundError:
+                 pass
+             else:
+                 if repaired.outcome in ('success', 'unchanged'):
+                     if call.get('format_version') == LEGACY_PUBLISH_FORMAT:
+                         # Exact original public retry may finish its own index. Its
+                         # immutable result discharges this obligation directly.
+                         captures, artifacts = _publication_captures(repaired, store, objects)
+                         _write_resolution(descriptor, call, repaired, captures, artifacts, store, objects)
+                     else:
+                         resolve_repair(descriptor, call, store, objects)
+                     resolution_row = store.get('WorkflowRepairResolution', call_key)
+         if resolution_row is not None:
+-            validate_resolution_capture(resolution_row.to_mapping()['value'], objects)
++            resolution = resolution_row.to_mapping()['value']
++            resolved = _read_document(resolution, RESOLUTION_FORMAT, objects)
++            if resolved['obligation'] != _plain(descriptor):
++                raise Conflict('repair resolution index names another original obligation')
++            validate_resolution_capture(resolution, objects)
+         else:
+             found.append(descriptor)
+     return tuple(found)
+ 
+ def outstanding_repairs(value, store, objects) -> tuple[Mapping, ...]:
+     read_member(value, store, objects)
+     return _obligations(Source.from_mapping(value['source']), store, objects)
+ 
+ 
+ def read_repair_obligation(path, objects):
+@@ -615,20 +668,21 @@ def _write_resolution(obligation, call, result, captures, artifacts, store, obje
+     payload = {'format_version': RESOLUTION_FORMAT, 'obligation': _plain(obligation),
+                'call': _plain(call), 'result': result.to_mapping(),
+                'quarters': captures, 'repair_artifacts': artifacts}
+     descriptor = _document(payload, RESOLUTION_FORMAT, 'workflow-repair-resolutions', objects)
+     call_key = hashlib.sha256(canonical_json(to_mapping_value(original['call']))).hexdigest()
+     _immutable('WorkflowRepairResolution', call_key, descriptor, store)
+     return descriptor
+ 
+ 
+ def resolve_repair(obligation, successful_publish_call, store, objects) -> Mapping:
++    _read_document(obligation, OBLIGATION_FORMAT, objects)
+     call = _plain(successful_publish_call)
+     result = _read_publish_call(call, store, objects)
+     captures, artifacts = _publication_captures(result, store, objects)
+     return _write_resolution(obligation, call, result, captures, artifacts, store, objects)
+ 
+ 
+ def _expected_artifacts(manifest):
+     expected = []
+     for ref in manifest.sources:
+         if not ref.quarter_counts.get(manifest.quarter):
+diff --git a/packages/sec-edgar-ingest/tests/test_workflow_completion.py b/packages/sec-edgar-ingest/tests/test_workflow_completion.py
+index 0ea6c275..4bfa43c2 100644
+--- a/packages/sec-edgar-ingest/tests/test_workflow_completion.py
++++ b/packages/sec-edgar-ingest/tests/test_workflow_completion.py
+@@ -347,10 +347,231 @@ class CompletionTests(unittest.TestCase):
+                 target.write_bytes(original)
+ 
+     def test_validated_member_provenance_returns_exact_projection(self):
+         from sec_edgar_ingest.workflows.completion import (
+             capture_member_provenance, validate_member_provenance,
+         )
+         from sec_edgar_ingest.workflows.provenance import read_member
+         proof = capture_member_provenance(self.f.value, self.f.store, self.f.objects)
+         self.assertEqual(validate_member_provenance(proof, self.f.objects),
+                          read_member(self.f.value, self.f.store, self.f.objects))
++
++    def test_foreign_valid_resolution_cannot_discharge_another_original_call(self):
++        import hashlib
++        from sec_edgar_ingest.models import canonical_json, parse_json, to_mapping_value
++        transformed = self.transform(quarterly_bytes('2026-07-01'))
++        with patch.object(EtlState, '_record_membership', side_effect=Conflict('ancillary')):
++            self.assertEqual(self.f.invoke('publish', transformed)[0], 9)
++            self.assertEqual(self.f.invoke('publish', transformed)[0], 9)
++        obligations = self.evaluate().obligations
++        self.assertEqual(len(obligations), 2)
++        originals = [r.to_mapping() for r in self.f.store.scan('Attempt', {})]
++        self.assertEqual(self.f.invoke('publish', transformed)[0], 0)
++        resolution = resolve_repair(obligations[0], self.f.calls[-1], self.f.store, self.f.objects)
++        self.assertEqual(len(self.evaluate().obligations), 1)
++        second = parse_json(self.f.objects.read(obligations[1]['ref']))
++        key = hashlib.sha256(canonical_json(to_mapping_value(second['call']))).hexdigest()
++        self.f.store.insert('WorkflowRepairResolution', key, resolution)
++        evaluation = self.evaluate()
++        self.assertFalse(evaluation.complete)
++        self.assertTrue(evaluation.gaps)
++        for old in originals:
++            from sec_edgar_ingest.models import RunContext
++            from sec_edgar_ingest.state import attempt_key
++            self.assertEqual(self.f.store.get('Attempt', attempt_key(
++                RunContext.from_mapping(old['value']['context']))).to_mapping(), old)
++
++    def test_corrupt_begun_checked_call_blocks_completion(self):
++        from sec_edgar_ingest.models import RunContext
++        from sec_edgar_ingest.state import attempt_key
++        transformed = self.transform(quarterly_bytes('2026-07-01'))
++        with patch.object(EtlState, '_record_membership', side_effect=Conflict('ancillary')):
++            code, call, _ = self.f.invoke('publish', transformed)
++        self.assertEqual(code, 9)
++        self.assertEqual(self.f.invoke('publish', transformed)[0], 0)
++        command = call['result_ref'].rsplit('/', 1)[0] + '/command.json'
++        attempt = self.f.store.get('Attempt', attempt_key(RunContext.from_mapping(call['context'])))
++        for path in (command, transformed):
++            target = self.f.objects.directory / path
++            body = target.read_bytes()
++            target.unlink()
++            try:
++                with self.subTest(path=path):
++                    evaluated = self.evaluate()
++                    self.assertFalse(evaluated.complete)
++                    self.assertTrue(evaluated.gaps)
++            finally:
++                target.write_bytes(body)
++        from sec_edgar_ingest.storage.contracts import identity, table_for
++        original_key = attempt_key(RunContext.from_mapping(call['context']))
++        partition, row_key = identity('Attempt', original_key)
++        with self.f.store._connection() as connection:
++            connection.execute('DELETE FROM records WHERE table_name=? AND partition=? AND key=?',
++                               (table_for('Attempt'), partition, row_key))
++            connection.commit()
++        missing_attempt = self.evaluate()
++        self.assertFalse(missing_attempt.complete)
++        self.assertTrue(missing_attempt.gaps)
++        restored = self.f.store.insert('Attempt', original_key, attempt.to_mapping()['value'])
++        altered = attempt.to_mapping()['value']
++        altered['context']['execution_id'] = 'corrupt-begun-execution'
++        self.f.store.replace('Attempt', original_key, altered, restored.version)
++        self.assertFalse(self.evaluate().complete)
++        self.assertTrue(self.evaluate().gaps)
++
++    def test_corrupt_begun_ordinary_call_blocks_completion(self):
++        import contextlib
++        import io
++        from sec_edgar_ingest.cli import main
++        from sec_edgar_ingest.models import RunContext
++        from sec_edgar_ingest.results import result_path
++        transformed = self.transform(quarterly_bytes('2026-07-01'))
++        arguments = ['publish', '--config', str(self.f.config),
++            '--run-id', 'corrupt-ordinary-run', '--execution-id', 'corrupt-ordinary-execution',
++            '--attempt-id', 'corrupt-ordinary-attempt', '--deadline', self.f.workflow.deadline.isoformat(),
++            '--state-dir', str(self.f.root.parent), '--today', '2026-10-06', '--workset', transformed]
++        with (patch.object(EtlState, '_record_membership', side_effect=Conflict('ancillary')),
++              contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO())):
++            self.assertEqual(main(arguments), 9)
++        self.assertEqual(self.f.invoke('publish', transformed)[0], 0)
++        row = next(r for r in self.f.store.scan('Attempt', {})
++                   if r.value['context']['run_id'] == 'corrupt-ordinary-run')
++        context = RunContext.from_mapping(row.to_mapping()['value']['context'])
++        command = result_path(context).rsplit('/', 1)[0] + '/command.json'
++        (self.f.objects.directory / command).unlink()
++        evaluated = self.evaluate()
++        self.assertFalse(evaluated.complete)
++        self.assertTrue(evaluated.gaps)
++
++    def test_valid_checked_call_before_begin_has_no_repair_obligation(self):
++        from sec_edgar_ingest.workflows.checked import Dispatcher
++        transformed = self.transform(quarterly_bytes('2026-07-01'))
++        self.assertEqual(self.f.invoke('publish', transformed)[0], 0)
++        def before_begin(point):
++            if point == 'workflow_child.after_call':
++                raise Conflict('retained valid call before begin')
++        dispatcher = Dispatcher(self.f.workflow, self.f.settings, self.f.pack,
++                                self.f.root.parent, self.f.store, self.f.objects,
++                                observer=before_begin)
++        with self.assertRaises(Conflict):
++            dispatcher.execute('publish', 'not-begun', self.f.settings, ('--workset', transformed))
++        evaluated = self.evaluate()
++        self.assertTrue(evaluated.complete)
++        self.assertEqual(evaluated.obligations, ())
++        self.assertEqual(evaluated.gaps, ())
++
++    def test_copied_obligation_cannot_drop_only_formerly_affected_quarter(self):
++        import hashlib
++        import io
++        import zipfile
++        from copy import deepcopy
++        from sec_edgar_ingest.models import canonical_json, parse_json, to_mapping_value
++        from sec_edgar_ingest.workflows.completion import validate_resolution_capture
++        with zipfile.ZipFile(io.BytesIO(quarterly_bytes('2026-07-01'))) as archive:
++            body = archive.read('master.idx')
++        body += b'123456|Former|10-K|2026-10-01|edgar/data/123456/b.txt\r\n'
++        target = io.BytesIO()
++        with zipfile.ZipFile(target, 'w', compression=zipfile.ZIP_DEFLATED) as archive:
++            archive.writestr('master.idx', body)
++        initial = self.transform(target.getvalue())
++        self.assertEqual(self.f.invoke('publish', initial)[0], 0)
++        self.f.revised_member()
++        replacement = self.transform(quarterly_bytes('2026-07-01', 'Changed'), seconds=1)
++        with patch.object(EtlState, '_record_membership', side_effect=Conflict('ancillary')):
++            self.assertEqual(self.f.invoke('publish', replacement)[0], 9)
++        obligation = self.evaluate().obligations[0]
++        original = parse_json(self.f.objects.read(obligation['ref']))
++        self.assertEqual(original['affected_quarters'], ['2026Q3', '2026Q4'])
++        self.assertEqual(set(original['sources'][0]['quarter_counts']), {'2026Q3'})
++        self.assertEqual(self.f.invoke('publish', replacement)[0], 0)
++        fresh_call = self.f.calls[-1]
++        copied = deepcopy(original)
++        copied['affected_quarters'] = ['2026Q3']
++        encoded = canonical_json(to_mapping_value(copied))
++        digest = hashlib.sha256(encoded).hexdigest()
++        path = f'worksets/sec/workflow-repairs/sha256={digest}/evidence.json'
++        self.f.objects.put_once(path, encoded)
++        forged = {'ref': path, 'sha256': digest, 'bytes': len(encoded),
++                  'format_version': 'sec-workflow-repair-obligation-v1'}
++        before = [r.to_mapping() for r in self.f.store.scan('WorkflowRepairResolution', {})]
++        with self.assertRaises((Conflict, ValueError)):
++            resolve_repair(forged, fresh_call, self.f.store, self.f.objects)
++        self.assertEqual([r.to_mapping() for r in self.f.store.scan('WorkflowRepairResolution', {})], before)
++        resolution = resolve_repair(obligation, fresh_call, self.f.store, self.f.objects)
++        validate_resolution_capture(resolution, self.f.objects)
++
++    def test_missing_obligation_index_recovers_original_immutable_anchor(self):
++        import hashlib
++        from sec_edgar_ingest.models import canonical_json, parse_json, to_mapping_value
++        from sec_edgar_ingest.storage.contracts import identity, table_for
++        from sec_edgar_ingest.workflows.completion import outstanding_repairs
++        transformed = self.transform(quarterly_bytes('2026-07-01'))
++        with patch.object(EtlState, '_record_membership', side_effect=Conflict('ancillary')):
++            self.assertEqual(self.f.invoke('publish', transformed)[0], 9)
++        obligation = self.evaluate().obligations[0]
++        original = parse_json(self.f.objects.read(obligation['ref']))
++        self.f.revised_member()
++        advanced = self.transform(quarterly_bytes('2026-07-01', 'Advanced'), seconds=1)
++        self.assertEqual(self.f.invoke('publish', advanced)[0], 0)
++        key = hashlib.sha256(canonical_json(to_mapping_value(original['call']))).hexdigest()
++        partition, row_key = identity('WorkflowRepairObligation', key)
++        with self.f.store._connection() as connection:
++            connection.execute('DELETE FROM records WHERE table_name=? AND partition=? AND key=?',
++                               (table_for('WorkflowRepairObligation'), partition, row_key))
++            connection.commit()
++        with patch('sec_edgar_ingest.workflows.completion._affected_quarters',
++                   side_effect=AssertionError('must recover immutable original quarter set')):
++            recovered = outstanding_repairs(self.f.value, self.f.store, self.f.objects)
++            self.assertEqual(canonical_json(to_mapping_value(recovered)),
++                             canonical_json(to_mapping_value((obligation,))))
++        indexed = self.f.store.get('WorkflowRepairObligation', key).to_mapping()['value']['descriptor']
++        self.assertEqual(canonical_json(to_mapping_value(indexed)),
++                         canonical_json(to_mapping_value(obligation)))
++
++    def test_original_anchor_precedes_index_and_corruption_cannot_redefine_it(self):
++        import hashlib
++        from sec_edgar_ingest.models import canonical_json, parse_json, to_mapping_value
++        transformed = self.transform(quarterly_bytes('2026-07-01'))
++        with patch.object(EtlState, '_record_membership', side_effect=Conflict('ancillary')):
++            code, call, _ = self.f.invoke('publish', transformed)
++        self.assertEqual(code, 9)
++        key = hashlib.sha256(canonical_json(to_mapping_value(call))).hexdigest()
++        path = f'worksets/sec/workflow-repair-authority/call-sha256={key}/obligation.json'
++        insert = self.f.store.insert
++        checked = []
++        def anchor_before_index(kind, row_key, value):
++            if kind == 'WorkflowRepairObligation':
++                authority = parse_json(self.f.objects.read(path))
++                self.assertEqual(authority, {'format_version': 'sec-workflow-repair-authority-v1',
++                    'call_sha256': key, 'descriptor': value['descriptor']})
++                checked.append(True)
++            return insert(kind, row_key, value)
++        with patch.object(self.f.store, 'insert', side_effect=anchor_before_index):
++            obligation = self.evaluate().obligations[0]
++        self.assertEqual(checked, [True])
++        row = self.f.store.get('WorkflowRepairObligation', key)
++        before = row.to_mapping()
++        target = self.f.objects.directory / path
++        original = target.read_bytes()
++        target.unlink()
++        try:
++            self.assertFalse(self.evaluate().complete)
++            self.assertTrue(self.evaluate().gaps)
++            self.assertEqual(self.f.store.get('WorkflowRepairObligation', key).to_mapping(), before)
++        finally:
++            target.write_bytes(original)
++        altered = row.to_mapping()['value']
++        altered['descriptor'] = {**obligation, 'sha256': 'f' * 64}
++        changed = self.f.store.replace('WorkflowRepairObligation', key, altered, row.version)
++        evaluated = self.evaluate()
++        self.assertFalse(evaluated.complete)
++        self.assertTrue(evaluated.gaps)
++        self.assertEqual(self.f.store.get('WorkflowRepairObligation', key), changed)
++        self.assertEqual(target.read_bytes(), original)
++
++        malformed = {**altered, 'descriptor': None}
++        corrupted = self.f.store.replace('WorkflowRepairObligation', key, malformed, changed.version)
++        evaluated = self.evaluate()
++        self.assertFalse(evaluated.complete)
++        self.assertTrue(evaluated.gaps)
++        self.assertEqual(self.f.store.get('WorkflowRepairObligation', key), corrupted)
++        self.assertEqual(target.read_bytes(), original)

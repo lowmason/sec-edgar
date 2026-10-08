@@ -1,0 +1,30 @@
+test_publication_and_reader_interfaces_exist (test_etl_publication.EtlPublicationTests.test_publication_and_reader_interfaces_exist) ... ok
+test_stale_pointer_version_cannot_replace_winner (test_etl_publication.EtlPublicationTests.test_stale_pointer_version_cannot_replace_winner) ... ok
+test_awaiting_approval_pointer_is_refused_by_capture_and_repair (test_etl_publication.PublicationIntegrationTests.test_awaiting_approval_pointer_is_refused_by_capture_and_repair) ... ok
+test_cas_retry_reevaluates_withdrawal_gate (test_etl_publication.PublicationIntegrationTests.test_cas_retry_reevaluates_withdrawal_gate) ... ok
+test_corruption_or_missing_files_cannot_leak_first_row_or_repair (test_etl_publication.PublicationIntegrationTests.test_corruption_or_missing_files_cannot_leak_first_row_or_repair) ... ok
+test_deadline_after_loss_retains_attempted_manifest_without_commit_claim (test_etl_publication.PublicationIntegrationTests.test_deadline_after_loss_retains_attempted_manifest_without_commit_claim) ... ok
+test_deadline_expires_at_commit_boundary (test_etl_publication.PublicationIntegrationTests.test_deadline_expires_at_commit_boundary) ... ok
+test_deadline_expiry_inside_candidate_build_returns_conflict (test_etl_publication.PublicationIntegrationTests.test_deadline_expiry_inside_candidate_build_returns_conflict) ... ok
+test_five_conflicts_and_expired_deadline_have_no_commit (test_etl_publication.PublicationIntegrationTests.test_five_conflicts_and_expired_deadline_have_no_commit) ... ok
+test_late_spool_failure_exposes_no_row_after_successful_validation (test_etl_publication.PublicationIntegrationTests.test_late_spool_failure_exposes_no_row_after_successful_validation) ... ok
+test_missing_pointer_insert_race_rebuilds_union (test_etl_publication.PublicationIntegrationTests.test_missing_pointer_insert_race_rebuilds_union) ... ok
+test_mocked_sdk_actual_etags_412_and_large_candidate_descriptor (test_etl_publication.PublicationIntegrationTests.test_mocked_sdk_actual_etags_412_and_large_candidate_descriptor) ... ok
+test_named_crash_boundaries_preserve_old_or_new_and_repair (test_etl_publication.PublicationIntegrationTests.test_named_crash_boundaries_preserve_old_or_new_and_repair) ... ok
+test_no_receipt_for_source_without_rows_in_committed_quarter (test_etl_publication.PublicationIntegrationTests.test_no_receipt_for_source_without_rows_in_committed_quarter) ... ok
+test_noop_still_refuses_forged_incoming_observation_reference (test_etl_publication.PublicationIntegrationTests.test_noop_still_refuses_forged_incoming_observation_reference) ... ok
+test_open_retained_basis_noop_and_version_replay (test_etl_publication.PublicationIntegrationTests.test_open_retained_basis_noop_and_version_replay) ... ok
+test_pointer_shape_address_hash_and_fingerprint_are_checked (test_etl_publication.PublicationIntegrationTests.test_pointer_shape_address_hash_and_fingerprint_are_checked) ... ok
+test_publish_noop_force_replay_and_pinned_old_capture (test_etl_publication.PublicationIntegrationTests.test_publish_noop_force_replay_and_pinned_old_capture) ... ok
+test_reader_checks_semantics_and_late_counts_before_first_row (test_etl_publication.PublicationIntegrationTests.test_reader_checks_semantics_and_late_counts_before_first_row) ... ok
+test_repair_interruption_multiquarter_and_monotonic_memberships (test_etl_publication.PublicationIntegrationTests.test_repair_interruption_multiquarter_and_monotonic_memberships) ... ok
+test_repair_membership_cas_preserves_competing_quarter_receipt (test_etl_publication.PublicationIntegrationTests.test_repair_membership_cas_preserves_competing_quarter_receipt) ... ok
+test_retained_publication_proof (test_etl_publication.PublicationIntegrationTests.test_retained_publication_proof) ... ok
+test_stale_replace_race_rebuilds_union_and_updated_winner_fields (test_etl_publication.PublicationIntegrationTests.test_stale_replace_race_rebuilds_union_and_updated_winner_fields) ... ok
+test_unreferenced_candidate_data_is_never_read (test_etl_publication.PublicationIntegrationTests.test_unreferenced_candidate_data_is_never_read) ... ok
+
+----------------------------------------------------------------------
+Ran 24 tests in 6.615s
+
+OK
+task5-sdk-proof {"conditional_etags": ["W/\"service-2\"", "W/\"service-2\""], "descriptor": {"PartitionKey": "sec-owner-lowell-mason:Candidate", "PartitionKey@odata.type": "Edm.String", "PayloadByteCount": 73739, "PayloadFormat": "sec-state-blob-v1", "PayloadFormat@odata.type": "Edm.String", "PayloadSha256": "748a81b55c5d6f1182f9eac2283e14b52cced0ff12126e86da9cdb248dfaf171", "PayloadSha256@odata.type": "Edm.String", "RowKey": "14da8efe8219b129261d9a52c85f14bbf816ccdcb560d78f8e62c823e1c9dc6b", "RowKey@odata.type": "Edm.String", "StableKey": "14da8efe8219b129261d9a52c85f14bbf816ccdcb560d78f8e62c823e1c9dc6b", "StableKey@odata.type": "Edm.String"}, "pointer": {"value": {"generation_id": "14da8efe8219b129261d9a52c85f14bbf816ccdcb560d78f8e62c823e1c9dc6b", "manifest_bytes": 73278, "manifest_ref": "curated/sec/filing_index/year=2026/quarter=4/generation=14da8efe8219b129261d9a52c85f14bbf816ccdcb560d78f8e62c823e1c9dc6b/manifest.json", "manifest_sha256": "4b1b39602b53c3769a6d043564647dab327508e5991eacb9d41a1efa8867a588", "quarter": "2026Q4", "source_fingerprint": "3fc832e93a8a9695ce97f08d1f1f30c65d31602549586137ec886ad3c463d575"}, "version": "W/\"service-3\""}}

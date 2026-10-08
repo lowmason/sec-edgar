@@ -1,0 +1,33 @@
+[
+  {
+    "argv": [
+      "git",
+      "show",
+      "--stat",
+      "--oneline",
+      "HEAD"
+    ],
+    "exit": 0,
+    "output": "c191ec68 fix: bind workflow repair evidence to original publication calls\n .../src/sec_edgar_ingest/workflows/completion.py   | 124 ++++++++----\n .../tests/test_workflow_completion.py              | 221 +++++++++++++++++++++\n 2 files changed, 310 insertions(+), 35 deletions(-)\n"
+  },
+  {
+    "argv": [
+      "git",
+      "status",
+      "--short"
+    ],
+    "exit": 0,
+    "output": "?? specs/evidence/sec-filing-index-ingestion/stage-4/plan5-execution/task-4/\n"
+  },
+  {
+    "argv": [
+      "git",
+      "-c",
+      "core.whitespace=cr-at-eol",
+      "diff",
+      "--check"
+    ],
+    "exit": 0,
+    "output": ""
+  }
+]

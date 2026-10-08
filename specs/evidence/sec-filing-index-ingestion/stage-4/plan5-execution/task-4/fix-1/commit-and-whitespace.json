@@ -1,0 +1,45 @@
+[
+  {
+    "argv": [
+      "git",
+      "-c",
+      "core.whitespace=cr-at-eol",
+      "diff",
+      "--check"
+    ],
+    "exit": 0,
+    "output": ""
+  },
+  {
+    "argv": [
+      "git",
+      "add",
+      "packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/completion.py",
+      "packages/sec-edgar-ingest/tests/test_workflow_completion.py"
+    ],
+    "exit": 0,
+    "output": ""
+  },
+  {
+    "argv": [
+      "git",
+      "-c",
+      "core.whitespace=cr-at-eol",
+      "diff",
+      "--cached",
+      "--check"
+    ],
+    "exit": 0,
+    "output": ""
+  },
+  {
+    "argv": [
+      "git",
+      "commit",
+      "-m",
+      "fix: bind workflow repair evidence to original publication calls"
+    ],
+    "exit": 0,
+    "output": "[codex/sec-edgar-stage4-plan5 c191ec68] fix: bind workflow repair evidence to original publication calls\n 2 files changed, 310 insertions(+), 35 deletions(-)\n"
+  }
+]

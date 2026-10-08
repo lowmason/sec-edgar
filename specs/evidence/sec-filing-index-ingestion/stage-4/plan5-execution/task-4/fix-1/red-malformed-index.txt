@@ -1,0 +1,24 @@
+test_original_anchor_precedes_index_and_corruption_cannot_redefine_it (test_workflow_completion.CompletionTests.test_original_anchor_precedes_index_and_corruption_cannot_redefine_it) ... ERROR
+
+======================================================================
+ERROR: test_original_anchor_precedes_index_and_corruption_cannot_redefine_it (test_workflow_completion.CompletionTests.test_original_anchor_precedes_index_and_corruption_cannot_redefine_it)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_completion.py", line 573, in test_original_anchor_precedes_index_and_corruption_cannot_redefine_it
+    evaluated = self.evaluate()
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_completion.py", line 29, in evaluate
+    return evaluate_member(self.f.value, self.parser, self.schema,
+                           self.f.store, self.f.objects)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/completion.py", line 742, in evaluate_member
+    obligations = _obligations(source, store, objects)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/completion.py", line 562, in _obligations
+    payload = _read_document(descriptor, OBLIGATION_FORMAT, objects)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/completion.py", line 184, in _read_document
+    if set(descriptor) != {'ref', 'sha256', 'bytes', 'format_version'}:
+       ~~~^^^^^^^^^^^^
+TypeError: 'NoneType' object is not iterable
+
+----------------------------------------------------------------------
+Ran 1 test in 2.822s
+
+FAILED (errors=1)
