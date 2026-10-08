@@ -1,0 +1,9 @@
+# Task11 independent review
+
+Reviewer /root/task11_review rangef2a7e054..ca2c953e. Speccompliant, qualityApproved. Critical/Important/Minor none.
+
+Completeapplicabletransitivegraph strictmarkers/exportversions/artifacthashsets, exactinstalledinventoryinclrevieweddistro, explicitwheelmetadata and39productionfileequalityinclpytyped, copiedtestharness -I externalvenv noPYTHONPATH and offlinehash/copyinstall, liveurllib3metadatawrongtransitiverefusalwithdirectpinsintact, createonlyabsoluteCLI, exactfilemembership/bytes inventories allverified.
+
+Reviewerindependentlyrefusedunknownmarkernames/in/ordering/calls/unknownintrueor, recomputedactual21CPython/19PyPyexcludingcffi+pycparser, rehashed39source/wheel files and native878/installed240/specimens13/outer1174inventorywithzeromismatches. Actualimportsitepackages/isolatedcommands/cachecopysafety checked. Native12workerexit91/recovery0. WholeSEC0141/0142/0143refusals/rawbytes/quarantinedetails/noProcessingObservationPointer preserved; hashes/21/24/6independentlychecked; scanexit1expectedblocked.
+
+Readexpectedmissingmodulered/unchanged6green/full618PASS884.423s/buildhelpversioncompilewhitespace0/nativeinstalled0. Nogreenfullbuild warnings/deprecations/tracebacks. Namedunchangedsupport actualcli/reader checks. Readonlynobroadsuitereruns/edits/network/subagents. Wholebranch/finalownercoverage/preservation/staging remaincontrollergates; Stage7notauthorized.

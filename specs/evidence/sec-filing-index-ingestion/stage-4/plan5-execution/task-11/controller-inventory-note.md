@@ -1,0 +1,3 @@
+# Controller evidence inventory
+
+Independent Task11 review verified the original 1174-file worker inventory, SHA256 485d628d233475cb7528a2e1dd8544bafef4630eaf9360bc90748c0eecd48556. Its exact original bytes are preserved as worker-sha256.json. Controller subsequently appended implementation report, scoped diff, independent review and this note; sha256.json now binds every retained file in this enlarged evidence directory except itself. The native, installed and specimen proof directories and their inventories remain unchanged. The implementation report's original outer inventory hash refers to worker-sha256.json after this preservation step.
