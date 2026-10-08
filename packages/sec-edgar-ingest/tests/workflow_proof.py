@@ -57,7 +57,7 @@ def write_proof_fixtures(destination):
 def harness_files() -> tuple[Path, ...]:
     root = Path(__file__).resolve().parent
     fixed = ('support_workflows.py', 'workflow_proof.py', 'network_guard.py',
-             'support.py', 'support_etl.py', 'fixtures/config/local.json')
+             'support.py', 'support_etl.py', 'locked_proof.py', 'fixtures/config/local.json')
     values = tuple(root / name for name in fixed) + tuple(
         FIXTURE_ROOT / name for name in ('manifest.json', 'expected.json', *BODY_FILES))
     if any(not path.is_file() for path in values):
@@ -306,3 +306,275 @@ def native(output: Path) -> Mapping[str, object]:
     put_json(output / 'process-recovery.json', recovered)
     return {'exit': 0, 'sequence': result, 'process_recovery': recovered,
             'all22_stage7_checks': 'reserved/not_run'}
+
+
+import argparse
+import hashlib
+import json
+import os
+import shutil
+import subprocess
+import sys
+import tempfile
+import time
+import traceback
+import zipfile
+import tomllib
+from pathlib import Path
+
+from locked_proof import digest, inventory, requirement_blocks, verify_inventory, package_inventory
+
+
+def _json_once(path, value):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open('x') as stream:
+        json.dump(value, stream, sort_keys=True, indent=2)
+        stream.write('\n')
+
+
+def _logged(argv, cwd, output, label, environment, *, timeout=300):
+    started = time.monotonic()
+    record = {'argv': [str(value) for value in argv], 'cwd': str(cwd),
+        'timeout_seconds': timeout, 'pythonpath_present': 'PYTHONPATH' in environment,
+        'uv_python_downloads': environment.get('UV_PYTHON_DOWNLOADS')}
+    try:
+        completed = subprocess.run(argv, cwd=cwd, env=environment, capture_output=True,
+                                   text=True, timeout=timeout)
+    except subprocess.TimeoutExpired as error:
+        record.update(exit=None, outcome='timeout', runtime_seconds=time.monotonic() - started)
+        for name, value in (('stdout', error.stdout), ('stderr', error.stderr)):
+            if isinstance(value, bytes):
+                raw = output / (label + '.' + name + '.bin')
+                with raw.open('xb') as stream:
+                    stream.write(value)
+                record[name + '_raw'] = {'path': raw.name, **digest(raw)}
+                record[name] = value.decode('utf-8', errors='backslashreplace')
+            else:
+                record[name] = value or ''
+        _json_once(output / (label + '.json'), record)
+        raise
+    record.update(exit=completed.returncode, outcome='completed', stdout=completed.stdout,
+        stderr=completed.stderr, runtime_seconds=time.monotonic() - started)
+    _json_once(output / (label + '.json'), record)
+    if completed.returncode:
+        raise RuntimeError('offline installed command failed: ' + label)
+    return record
+
+
+def _isolated_script(python, harness, script_name, *arguments):
+    script = str(harness / script_name)
+    bootstrap = ('import runpy,sys; sys.path.insert(0,' + repr(str(harness)) + '); '
+                 'sys.argv=[' + repr(script) + ',*sys.argv[1:]]; '
+                 'runpy.run_path(' + repr(script) + ',run_name="__main__")')
+    return [str(python), '-I', '-c', bootstrap, *map(str, arguments)]
+
+
+def installed(output, wheel, reviewed_source):
+    tests_root = Path(__file__).resolve().parent
+    repo = tests_root.parents[2]
+    wheel, reviewed_source = wheel.resolve(), reviewed_source.resolve()
+    if not wheel.is_file() or not (reviewed_source / 'sec_edgar_ingest').is_dir():
+        raise ValueError('installed proof requires explicit reviewed wheel/source artifacts')
+    lock_body = (repo / 'uv.lock').read_bytes()
+    expected_sources = package_inventory(reviewed_source)
+    with zipfile.ZipFile(wheel) as archive:
+        wheel_sources = {name for name in archive.namelist()
+                         if name.startswith('sec_edgar_ingest/') and not name.endswith('/')}
+        if wheel_sources != set(expected_sources):
+            raise ValueError('wheel source inventory differs from reviewed source')
+        for name, expected in expected_sources.items():
+            body = archive.read(name)
+            if {'bytes': len(body), 'sha256': hashlib.sha256(body).hexdigest()} != expected:
+                raise ValueError('wheel source bytes differ from reviewed source')
+        metadata_files = [name for name in archive.namelist() if name.endswith('.dist-info/METADATA')]
+        if len(metadata_files) != 1:
+            raise ValueError('wheel must contain one distribution metadata file')
+        from email.parser import Parser
+        metadata = Parser().parsestr(archive.read(metadata_files[0]).decode('utf-8'))
+        if metadata['Name'] != 'sec-edgar-ingest':
+            raise ValueError('wheel distribution identity differs')
+        distribution_version = metadata['Version']
+        locked_distribution = next(package for package in tomllib.loads(lock_body.decode())['package']
+                                   if package['name'] == 'sec-edgar-ingest')
+        if distribution_version != locked_distribution['version']:
+            raise ValueError('reviewed wheel version differs from accepted workspace lock')
+    wheel_copy = output / wheel.name
+    shutil.copy2(wheel, wheel_copy)
+    (output / 'accepted-uv.lock').write_bytes(lock_body)
+    _json_once(output / 'reviewed-sources.json', expected_sources)
+    environment = {name: value for name, value in os.environ.items() if name != 'PYTHONPATH'}
+    environment.update(UV_PYTHON_DOWNLOADS='never', PYTHONDONTWRITEBYTECODE='1')
+    with tempfile.TemporaryDirectory(prefix='sec-workflow-installed-') as directory:
+        outside = Path(directory)
+        venv = outside / 'venv'
+        _logged(['uv', 'venv', '--offline', '--python', sys.executable, str(venv)],
+                outside, output, 'venv', environment)
+        python = venv / 'bin/python'
+        exported = _logged(['uv', 'export', '--offline', '--frozen', '--package', 'sec-edgar-ingest',
+            '--no-emit-workspace', '--format', 'requirements-txt'], repo, output, 'lock-export', environment)
+        requirements = outside / 'requirements.txt'
+        requirements.write_text(exported['stdout'])
+        shutil.copy2(requirements, output / 'requirements.txt')
+        harness = outside / 'harness'
+        harness.mkdir()
+        files = tuple(harness_files()) + (tests_root / 'locked_proof.py',)
+        seen = set()
+        for source in files:
+            source = Path(source).resolve()
+            if not source.is_relative_to(tests_root) or not source.is_file():
+                raise ValueError('installed harness must be explicit test-only files')
+            relative = source.relative_to(tests_root)
+            if relative in seen:
+                continue
+            seen.add(relative)
+            destination = harness / relative
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source, destination)
+        shutil.copy2(requirements, harness / 'requirements.txt')
+        (harness / 'accepted-uv.lock').write_bytes(lock_body)
+        _json_once(harness / 'expected-sources.json', expected_sources)
+        _json_once(harness / 'expected-distribution.json', {'version': distribution_version})
+        verifier = '''import json, pathlib, sys
+from locked_proof import marker_environment, locked_requirements
+root=pathlib.Path(__file__).parent
+environment=marker_environment()
+expected=locked_requirements((root/'accepted-uv.lock').read_bytes(),
+    (root/'requirements.txt').read_text(), environment)
+print(json.dumps({'environment':environment,'dependencies':expected},sort_keys=True))
+'''
+        (harness / 'verify_export.py').write_text(verifier)
+        lock_report = _logged(_isolated_script(python, harness, 'verify_export.py'), outside,
+                             output, 'verify-export', environment)
+        expected_lock = json.loads(lock_report['stdout'])
+        _json_once(output / 'applicable-lock.json', expected_lock)
+        blocks = requirement_blocks(exported['stdout'])
+        arrow, others = outside / 'arrow.txt', outside / 'others.txt'
+        arrow.write_text(''.join(block for name, block in blocks if name == 'pyarrow'))
+        others.write_text(''.join(block for name, block in blocks if name != 'pyarrow'))
+        if not arrow.read_text().startswith('pyarrow==25.0.1'):
+            raise ValueError('export must preserve accepted PyArrow pin')
+        shutil.copy2(arrow, output / 'arrow-requirements.txt')
+        shutil.copy2(others, output / 'other-requirements.txt')
+        cached_wheels = repo / 'specs/evidence/sec-filing-index-ingestion/stage-2/' \
+            'verification/sdd-history/task1-evidence/wheels'
+        _logged(['uv', 'pip', 'install', '--offline', '--no-deps', '--require-hashes', '--link-mode', 'copy',
+                 '--python', str(python), '-r', str(arrow)], outside, output, 'install-arrow', environment)
+        _logged(['uv', 'pip', 'install', '--offline', '--no-index', '--link-mode', 'copy', '--find-links', str(cached_wheels),
+                 '--require-hashes', '--python', str(python), '-r', str(others)],
+                outside, output, 'install-dependencies', environment)
+        _logged(['uv', 'pip', 'install', '--offline', '--no-index', '--no-deps', '--link-mode', 'copy', '--python',
+                 str(python), str(wheel_copy)], outside, output, 'install-reviewed-wheel', environment)
+        runner = '''from network_guard import install
+install()
+import json,pathlib,hashlib,sys
+from locked_proof import marker_environment,locked_requirements,installed_inventory,assert_inventory,inventory,package_inventory
+root=pathlib.Path(__file__).parent
+expected=locked_requirements((root/'accepted-uv.lock').read_bytes(),
+    (root/'requirements.txt').read_text(), marker_environment())
+version=json.loads((root/'expected-distribution.json').read_text())['version']
+actual=installed_inventory()
+assert_inventory(expected,actual,version)
+import sec_edgar_ingest
+if sec_edgar_ingest.__version__ != version: raise ValueError('installed module version differs from reviewed distribution')
+base=pathlib.Path(sec_edgar_ingest.__file__).resolve().parent.parent
+if 'site-packages' not in base.parts: raise ValueError('production import escaped isolated site-packages')
+sources=json.loads((root/'expected-sources.json').read_text())
+actual_sources=package_inventory(base)
+if set(actual_sources)!=set(sources): raise ValueError('installed source inventory differs')
+if actual_sources!=sources: raise ValueError('installed source bytes differ')
+from workflow_proof import sequence
+output=pathlib.Path(sys.argv[1]); output.mkdir(exist_ok=False)
+report=sequence(output)
+print(json.dumps({'import_root':str(base),'dependencies':actual,
+    'applicable_lock':expected,'source_equality':sources,'sequence':report},sort_keys=True))
+'''
+        (harness / 'installed_runner.py').write_text(runner)
+        retained_harness = output / 'installed-harness'
+        shutil.copytree(harness, retained_harness)
+        proof = _logged(_isolated_script(python, harness, 'installed_runner.py', output / 'installed-sequence'),
+                        outside, output, 'installed-proof', environment, timeout=600)
+        details = json.loads(proof['stdout'])
+        _json_once(output / 'installed-dependencies.json', details['dependencies'])
+        # Perform a live isolated-interpreter rejection after successful installation.
+        # Copy installation isolates this disposable venv from cached wheel artifacts.
+        negative = '''import json,pathlib
+import importlib.metadata
+from locked_proof import marker_environment,locked_requirements,installed_inventory,assert_inventory
+root=pathlib.Path(__file__).parent
+expected=locked_requirements((root/'accepted-uv.lock').read_bytes(),
+    (root/'requirements.txt').read_text(),marker_environment())
+distribution=importlib.metadata.distribution('urllib3')
+metadata_files=[path for path in distribution.files if str(path).endswith('.dist-info/METADATA')]
+if len(metadata_files)!=1: raise ValueError('urllib3 metadata file not unique')
+metadata=pathlib.Path(distribution.locate_file(metadata_files[0]))
+body=metadata.read_text()
+old='Version: '+expected['urllib3']+'\\n'
+if body.count(old)!=1: raise ValueError('urllib3 metadata does not have exact original version')
+metadata.write_text(body.replace(old,'Version: 2.7.0\\n'))
+actual=installed_inventory()
+for name in ('pyarrow','requests','azure-identity','azure-storage-blob','azure-data-tables'):
+    if actual[name]!=expected[name]: raise ValueError('negative test changed a direct pin')
+version=json.loads((root/'expected-distribution.json').read_text())['version']
+try: assert_inventory(expected,actual,version)
+except ValueError as error: print(json.dumps({'transitive_mismatch_refused':True,'error':str(error)}))
+else: raise AssertionError('wrong transitive version accepted')
+'''
+        (harness / 'transitive_refusal.py').write_text(negative)
+        refusal = _logged(_isolated_script(python, harness, 'transitive_refusal.py'), outside,
+                          output, 'transitive-mismatch-refusal', environment)
+        # Retain the final negative script too; exact inventory must include it.
+        shutil.copy2(harness / 'transitive_refusal.py', retained_harness / 'transitive_refusal.py')
+        for command in ('backfill', 'daily'):
+            help_script = ('from network_guard import install; install(); '
+                           'from sec_edgar_ingest.cli import main; '
+                           f'raise SystemExit(main(["{command}","--help"]))')
+            _logged([str(python), '-I', '-c', 'import sys; sys.path.insert(0,' + repr(str(harness)) + '); ' + help_script],
+                    outside, output, command + '-help', environment)
+        _logged([str(python), '-I', '-c', 'import sys; sys.path.insert(0,' + repr(str(harness)) + '); '
+            'from network_guard import install; install(); from sec_edgar_ingest.cli import main; '
+            'raise SystemExit(main(["--version"]))'], outside, output, 'version', environment)
+    if (repo / 'uv.lock').read_bytes() != lock_body:
+        raise ValueError('accepted lock changed during proof')
+    return {'exit': 0, 'wheel_name': wheel.name, 'wheel': digest(wheel_copy),
+        'accepted_lock': digest(output / 'accepted-uv.lock'),
+        'requirements': digest(output / 'requirements.txt'),
+        'applicable_lock': expected_lock, 'installed': details,
+        'transitive_mismatch_refusal': json.loads(refusal['stdout']),
+        'source_equality': expected_sources, 'all22_stage7_checks': 'reserved/not_run'}
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description='Offline workflow process and installed proof')
+    parser.add_argument('mode', choices=('native', 'installed'))
+    parser.add_argument('--output', required=True, type=Path)
+    parser.add_argument('--wheel', type=Path)
+    parser.add_argument('--reviewed-source', type=Path)
+    args = parser.parse_args(argv)
+    if not args.output.is_absolute():
+        parser.error('output must be an explicit absolute path')
+    if args.mode == 'installed':
+        if (args.wheel is None or args.reviewed_source is None or
+                not args.wheel.is_absolute() or not args.reviewed_source.is_absolute()):
+            parser.error('installed requires absolute reviewed wheel and source paths')
+    elif args.wheel is not None or args.reviewed_source is not None:
+        parser.error('native does not accept installed-artifact arguments')
+    output = args.output.resolve()
+    output.mkdir(parents=True, exist_ok=False)
+    started = time.monotonic()
+    report = {'mode': args.mode, 'exit': 0, 'all22_stage7_checks': 'reserved/not_run'}
+    try:
+        report.update(installed(output, args.wheel, args.reviewed_source)
+                      if args.mode == 'installed' else native(output))
+    except BaseException:
+        report.update(exit=1, traceback=traceback.format_exc())
+    report['runtime_seconds'] = time.monotonic() - started
+    _json_once(output / 'report.json', report)
+    _json_once(output / 'sha256.json', inventory(output))
+    verify_inventory(output)
+    print(json.dumps({'exit': report['exit'], 'report': str(output / 'report.json'),
+                      'all22_stage7_checks': 'reserved/not_run'}))
+    return report['exit']
+
+
+if __name__ == '__main__':
+    raise SystemExit(main())
