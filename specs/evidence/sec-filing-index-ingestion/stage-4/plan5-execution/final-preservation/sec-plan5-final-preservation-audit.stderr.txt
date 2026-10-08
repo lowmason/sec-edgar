@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "/private/tmp/sec-plan5-final-preservation-audit.py", line 51, in <module>
+    report['planning']['index_sha256']=sha(pi)
+                                       ~~~^^^^
+  File "/private/tmp/sec-plan5-final-preservation-audit.py", line 9, in sha
+    with p.open('rb') as f:
+         ~~~~~~^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.7/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 771, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/Users/lowell/.codex/worktrees/sec-edgar-stage-4-replan/sec-edgar'

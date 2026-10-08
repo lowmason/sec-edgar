@@ -158,9 +158,9 @@ pointer alone does not prove member completion, and repair must not advance the 
 twice. Use `capture_quarter` then `read_quarter` to read the captured validated
 generation rather than globbing files or selecting a mutable latest snapshot.
 
-Offline native and installed-wheel workflow proofs remain the next verification gate.
-They will cover these fixture workflows and immutable evidence, without establishing
-historical production coverage, deployed integration or complete-worker resource fit.
+Offline native and isolated installed-wheel workflow proofs passed for these synthetic
+fixture workflows and immutable evidence. They do not establish historical production
+coverage, deployed integration or complete-worker resource fit.
 All 22 Stage 7 checks remain reserved/not_run. Stage 5 owns reconciliation/approval,
 Stage 6 owns the worker/IaC/disabled schedules, Stage 7 owns integrated checks, and
 Stage 8 owns production activation/coverage.
