@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import re
 import sys
 from collections.abc import Sequence
@@ -20,11 +21,15 @@ from .etl.parser import supported_parser, SCHEMA_VERSION
 from .etl.publication import repair_publication
 from .etl.state import EtlState
 from .download import BoundedSender, FixturePack, RequestClient
-from .models import CommandResult, Error, RunContext, canonical_json, parse_json, quarter_for, safe_relative_path
+from .models import CommandResult, Error, RunContext, canonical_json, parse_json, quarter_for, safe_relative_path, to_mapping_value
 from .results import exit_code, log_event, read_result, result_path, write_result
 from .state import AcquisitionState, attempt_key
 from .storage import open_stores
 from .storage.contracts import CAS_ATTEMPTS, ClockUncertain, Conflict, OwnershipLost
+from .workflows.checked import Dispatcher as WorkflowDispatcher, ChildUnfinished
+from .workflows.contracts import workflow_path
+from .workflows.results import freeze_workflow, read_workflow_result, write_workflow_result
+from .workflows.runner import run_workflow
 from .worksets import decode_source_workset
 
 SOURCE_REF = re.compile(r'worksets/sec/source/sha256=[0-9a-f]{64}/workset\.json\Z')
@@ -62,19 +67,19 @@ def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog='sec-edgar-ingest')
     parser.add_argument('--version', action='version', version=__version__)
     commands = parser.add_subparsers(dest='command')
-    for command in ('discover', 'collect', 'transform', 'publish'):
+    for command in ('discover', 'collect', 'transform', 'publish', 'backfill', 'daily'):
         sub = commands.add_parser(command)
         for name in ('config', 'run-id', 'execution-id', 'attempt-id', 'deadline'):
             sub.add_argument('--' + name, required=True)
         for name in ('state-dir', 'today'):
             sub.add_argument('--' + name)
-        if command in ('discover', 'collect'):
+        if command in ('discover', 'collect', 'backfill', 'daily'):
             sub.add_argument('--fixture-pack')
         if command == 'discover':
             sub.add_argument('--mode', required=True, choices=('quarterly', 'daily'))
             sub.add_argument('--discovery-id', required=True)
             sub.add_argument('--refresh', action='store_true')
-        else:
+        elif command in ('collect', 'transform', 'publish'):
             sub.add_argument('--workset', required=True)
         if command == 'transform':
             sub.add_argument('--force', action='store_true')
@@ -279,12 +284,163 @@ def _stdout(result, reference):
     return exit_code(result.outcome)
 
 
+def _validate_workflow(args):
+    for name in ('run_id', 'execution_id', 'attempt_id'):
+        _segment(getattr(args, name), name)
+    settings = load_config(Path(args.config))
+    supported_parser(settings.etl.parser_version,
+                     fixture=settings.storage.backend == 'local-fixture')
+    if settings.etl.schema_version != SCHEMA_VERSION:
+        raise ValueError('unsupported ETL schema version')
+    if not settings.coordination.lease_seconds.is_integer():
+        raise ValueError('coordination requires whole finite lease seconds')
+    deadline = datetime.fromisoformat(args.deadline.replace('Z', '+00:00'))
+    if deadline.utcoffset() != timezone.utc.utcoffset(deadline):
+        raise ValueError('deadline must be timezone-aware UTC')
+    today = date.fromisoformat(args.today) if args.today else None
+    if args.today and today.isoformat() != args.today:
+        raise ValueError('today must be a canonical ISO date')
+    if settings.storage.backend == 'azure':
+        if args.fixture_pack or args.state_dir or args.today:
+            raise ValueError('fixture pack, state directory and date override are fixture-only')
+        pack = None
+    else:
+        if not args.fixture_pack:
+            raise ValueError('local-fixture workflow requires an explicit fixture pack')
+        if args.today and (not settings.fixture or not settings.fixture.allow_clock_override):
+            raise ValueError('today requires the explicit fixture clock override marker')
+        pack = FixturePack.load(Path(args.fixture_pack))
+    # Do not construct a fresh context here: the immutable saved pin must be read first.
+    return settings, today, deadline, pack
+
+
+def _workflow_frozen(path, objects):
+    try:
+        body = objects.read(path)
+    except FileNotFoundError:
+        return None
+    value = parse_json(body)
+    if (not isinstance(value, dict) or set(value) != {'context', 'intent'}
+            or canonical_json(to_mapping_value(value)) != body):
+        raise Conflict('workflow intent is not exact canonical context/intent')
+    RunContext.from_mapping(value['context'])
+    if (not isinstance(value['intent'], dict)
+            or set(value['intent']) != {'command', 'today', 'fixture_sha256', 'pinned_end_quarter'}):
+        raise Conflict('workflow invocation fields differ')
+    return value
+
+
+def _workflow_saved(args, store, objects):
+    path = f'runs/sec/{args.run_id}/{args.command}/{args.attempt_id}/intent.json'
+    frozen = _workflow_frozen(path, objects)
+    if frozen is not None: return frozen
+    # T6 begins its conditional index before writing intent bytes. Reopen that
+    # actual durable start/pin if a process died between those two writes.
+    key = hashlib.sha256(canonical_json(to_mapping_value([args.run_id, args.command, args.attempt_id]))).hexdigest()
+    row = store.get('WorkflowAttempt', key)
+    if row is None: return None
+    value = row.to_mapping()['value']
+    if set(value) != {'context', 'intent', 'selection_ref', 'result_ref'}:
+        raise Conflict('workflow begun index fields differ')
+    saved = RunContext.from_mapping(value['context'])
+    if (saved.run_id, saved.command, saved.attempt_id) != (args.run_id, args.command, args.attempt_id):
+        raise Conflict('workflow begun index correlation differs')
+    if not isinstance(value['intent'], dict) or set(value['intent']) != {
+            'command', 'today', 'fixture_sha256', 'pinned_end_quarter'}:
+        raise Conflict('workflow begun invocation fields differ')
+    return {'context': value['context'], 'intent': value['intent']}
+
+
+def _workflow_context(args, settings, today, deadline, started, pinned):
+    context = RunContext(args.run_id, args.execution_id, args.command, args.attempt_id,
+        settings.worker.image_digest, settings.etl.parser_version, settings.etl.schema_version,
+        settings.config_sha256, started, deadline, args.command)
+    return pin_context(settings, context, today or pinned or started.date())
+
+
+def _workflow_stdout(result, reference):
+    sys.stdout.write(canonical_json(to_mapping_value({'outcome': result.outcome, 'result_ref': reference,
+        'source_workset_ref': result.source_workset_ref,
+        'counts': result.to_mapping()['counts']})).decode() + '\n')
+    return exit_code(result.outcome)
+
+
+def _workflow_main(args):
+    try:
+        settings, today, deadline, pack = _validate_workflow(args)
+    except (ValueError, OSError, TypeError) as error:
+        sys.stderr.write(canonical_json(to_mapping_value({'outcome': 'configuration', 'error': str(error)})).decode() + '\n')
+        return 2
+    opened, context = (), None
+    try:
+        opened = open_stores(settings, base_path=Path(args.state_dir) if args.state_dir else None)
+        store, objects, leases = opened
+        frozen = _workflow_saved(args, store, objects)
+        saved = None if frozen is None else RunContext.from_mapping(frozen['context'])
+        started = saved.started_at if saved is not None else Clock().now()
+        pinned = saved.pinned_on if saved is not None else None
+        # Exact supplied correlation/config/image/versions/deadline is compared by T6.
+        # An omitted date reuses the saved pin, even after the calendar changes.
+        if saved is None and deadline <= Clock().now():
+            raise _ExpiredAttempt('an expired deadline permits only exact completed-result replay')
+        try:
+            context, end = _workflow_context(args, settings, today, deadline, started, pinned)
+        except ValueError as error:
+            if saved is None: raise _ExpiredAttempt(str(error)) from error
+            raise
+        intent = {'command': args.command, 'today': args.today,
+            'fixture_sha256': pack.manifest_sha256 if pack is not None else None,
+            'pinned_end_quarter': end}
+        context = freeze_workflow(context, intent, store, objects)
+        try:
+            completed = read_workflow_result(workflow_path(context), store, objects)
+        except FileNotFoundError:
+            completed = None
+        if completed is not None:
+            log_event(context, 'result_replayed', {'result_ref': workflow_path(context)})
+            return _workflow_stdout(completed, workflow_path(context))
+        # Adapters belonging to children are constructed only inside their public CLI paths.
+        dispatcher = WorkflowDispatcher(context, settings,
+            Path(args.fixture_pack) if args.fixture_pack else None,
+            Path(args.state_dir) if args.state_dir else None, store, objects)
+        log_event(context, 'command_started', {'command': args.command})
+        result = run_workflow(context, settings, intent, dispatcher, store, objects)
+        reference = write_workflow_result(result, store, objects)
+        log_event(context, 'command_finished', {'outcome': result.outcome,
+            'result_ref': reference, 'counters': result.to_mapping()['counts']})
+        return _workflow_stdout(result, reference)
+    except Exception as exception:
+        outcome = ('configuration' if isinstance(exception, (_ExpiredAttempt, TimeoutError)) else
+            'ownership_lost' if isinstance(exception, (OwnershipLost, ClockUncertain)) else
+            'state_conflict' if isinstance(exception, (Conflict, ValueError, OSError, KeyError)) else
+            'internal_error')
+        details = {'type': type(exception).__name__}
+        if isinstance(exception, ChildUnfinished):
+            outcome = exception.outcome
+            details.update(exception.details)
+        error = Error(outcome, str(exception),
+            isinstance(exception, ChildUnfinished) and exception.resumable, None, details)
+        if context is not None:
+            log_event(context, 'command_error', {'outcome': outcome, 'error': error.to_mapping()})
+        else:
+            sys.stderr.write(canonical_json(to_mapping_value({'outcome': outcome, 'error': error.to_mapping()})).decode() + '\n')
+        sys.stdout.write(canonical_json(to_mapping_value({'outcome': outcome, 'result_ref': None,
+            'source_workset_ref': None, 'counts': None})).decode() + '\n')
+        return exit_code(outcome)
+    finally:
+        for resource in reversed(opened):
+            if hasattr(resource, 'close'):
+                resource.close()
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = _parser()
     args = parser.parse_args(argv)
     if args.command is None:
         parser.print_help()
         return 0
+    if args.command in ('backfill', 'daily'):
+        return _workflow_main(args)
     try:
         settings, today, deadline, pack = _validate(args)
     except (ValueError, OSError, TypeError) as error:

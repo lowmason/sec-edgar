@@ -120,6 +120,51 @@ record approval and execution of archived-quarter acquisition/replay, handoff da
 delayed 404 recovery and final pin reuse. Both configs use the same durable state
 root, owner namespace and request budget.
 
+
+`backfill` and `daily` run the existing discover, collect, transform and publish commands through checked durable child results. Backfill takes inclusive endpoints from `backfill.start_quarter` and `backfill.end_quarter`; `open` resolves once when the invocation is pinned. Daily starts at the accepted `2026-10-01` handoff, discovers current/preceding and outage-spanning quarters, and retries every retained unresolved exact member. A missing newer listing does not withdraw an older source.
+
+Example fixture invocation: `sec-edgar-ingest backfill --config /absolute/local.json
+--run-id baseline-2026 --execution-id manual-1 --attempt-id attempt-1 --deadline
+2026-10-08T13:00:00Z --state-dir /absolute/fixture-state --fixture-pack
+/absolute/manifest.json --today 2026-10-08`. Use `daily` with the same argument shape
+for handoff/catch-up. The config/fixture/date/state overrides are explicit fixture
+controls; the Azure backend refuses fixture overrides. Live identities, storage access,
+deployment and schedules require their later-stage authorization.
+
+Keep every correlation ID, config byte identity, image/parser/schema version, deadline,
+fixture manifest hash and supplied date unchanged for an exact retry. A completed report
+can replay after its deadline and returns its original captured generations. An
+unfinished expired invocation requires a new valid attempt; its original evidence stays
+immutable. Reports live at
+`runs/sec/<run-id>/<backfill|daily>/<attempt-id>/result.json`. The immutable report
+precedes its repairable index.
+
+Source counts and quarter operations have different labels: `complete_sources`,
+`pending_sources`, `failed_sources`, `quarantined_sources`, `published_quarters`,
+`unchanged_quarters`, and `awaiting_approval_quarters`. A valid empty quarterly
+directory is an unresolved baseline unit. Daily returns `no_new_sources` only with
+successful required listings and no unresolved work. Quarantine is a terminal
+whole-source refusal; retained failed retry prefixes remain transport evidence when a
+later body succeeds. Gated or partially published sources remain pending/failed until
+every affected quarter is complete. Closed-quarter removal needs Stage 5 approval; there
+is no workflow force bypass.
+
+Exit codes remain: 0 success/no-new/unchanged; 2 invalid inputs or unfinished expired
+deadline; 3 incomplete/discovery failure; 4 pending; 5 retry/deferred/throttled; 6
+access blocked; 7 whole-source quarantine/invalid source; 8 lost ownership; 9
+state/internal/publication conflict; 10 awaiting approval. A publish crash after pointer
+CAS remains an explicit repair obligation. Retry through the checked command boundary; a
+pointer alone does not prove member completion, and repair must not advance the pointer
+twice. Use `capture_quarter` then `read_quarter` to read the captured validated
+generation rather than globbing files or selecting a mutable latest snapshot.
+
+Offline native and installed-wheel workflow proofs remain the next verification gate.
+They will cover these fixture workflows and immutable evidence, without establishing
+historical production coverage, deployed integration or complete-worker resource fit.
+All 22 Stage 7 checks remain reserved/not_run. Stage 5 owns reconciliation/approval,
+Stage 6 owns the worker/IaC/disabled schedules, Stage 7 owns integrated checks, and
+Stage 8 owns production activation/coverage.
+
 Every result contains counters and structured gaps. The stdout result reference is
 `runs/sec/<run-id>/<command>/<attempt-id>/result.json`; stderr logs carry the full
 pinned current context. Result bytes are written immutable before Attempt
