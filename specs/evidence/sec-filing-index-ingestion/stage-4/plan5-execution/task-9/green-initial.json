@@ -1,0 +1,21 @@
+{
+  "argv": [
+    "uv",
+    "run",
+    "--offline",
+    "--frozen",
+    "--package",
+    "sec-edgar-ingest",
+    "python",
+    "packages/sec-edgar-ingest/tests/network_guard.py",
+    "discover",
+    "-s",
+    "packages/sec-edgar-ingest/tests",
+    "-p",
+    "test_workflow_cli.py",
+    "-v"
+  ],
+  "exit_code": 1,
+  "stdout": "",
+  "stderr": "test_changed_exact_invocation_is_conflict_and_report_stays_immutable (test_workflow_cli.WorkflowCliTests.test_changed_exact_invocation_is_conflict_and_report_stays_immutable) ... ok\ntest_completed_exact_replay_after_deadline_constructs_no_dispatcher (test_workflow_cli.WorkflowCliTests.test_completed_exact_replay_after_deadline_constructs_no_dispatcher) ... ok\ntest_failure_closes_all_opened_resources_and_writes_no_report (test_workflow_cli.WorkflowCliTests.test_failure_closes_all_opened_resources_and_writes_no_report) ... ok\ntest_invalid_input_precedes_backend_construction_and_child_flags_stay_private (test_workflow_cli.WorkflowCliTests.test_invalid_input_precedes_backend_construction_and_child_flags_stay_private) ... ok\ntest_omitted_today_reopens_saved_pin_before_next_day_validation (test_workflow_cli.WorkflowCliTests.test_omitted_today_reopens_saved_pin_before_next_day_validation) ... FAIL\ntest_public_commands_inclusive_baseline_and_daily_reader (test_workflow_cli.WorkflowCliTests.test_public_commands_inclusive_baseline_and_daily_reader) ... ok\n\n======================================================================\nFAIL: test_omitted_today_reopens_saved_pin_before_next_day_validation (test_workflow_cli.WorkflowCliTests.test_omitted_today_reopens_saved_pin_before_next_day_validation)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_cli.py\", line 88, in test_omitted_today_reopens_saved_pin_before_next_day_validation\n    self.assertEqual(code, 0)\n    ~~~~~~~~~~~~~~~~^^^^^^^^^\nAssertionError: 8 != 0\n\n----------------------------------------------------------------------\nRan 6 tests in 42.165s\n\nFAILED (failures=1)\n"
+}

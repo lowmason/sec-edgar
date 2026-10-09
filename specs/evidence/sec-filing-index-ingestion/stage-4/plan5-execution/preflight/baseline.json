@@ -1,0 +1,21 @@
+{
+  "command": [
+    "uv",
+    "run",
+    "--offline",
+    "--frozen",
+    "--package",
+    "sec-edgar-ingest",
+    "python",
+    "packages/sec-edgar-ingest/tests/network_guard.py",
+    "discover",
+    "-s",
+    "packages/sec-edgar-ingest/tests",
+    "-p",
+    "test_*.py",
+    "-v"
+  ],
+  "exit": 0,
+  "runtime_seconds": 167.64950537495315,
+  "log": "/private/tmp/sec-stage4-plan5-execution-preflight-ppvtmxns/baseline.log"
+}

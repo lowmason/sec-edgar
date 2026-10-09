@@ -1,0 +1,17 @@
+{
+  "argv": [
+    "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-workflow-installed-9q_zwlbn/venv/bin/python",
+    "-I",
+    "-c",
+    "import sys; sys.path.insert(0,'/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-workflow-installed-9q_zwlbn/harness'); from network_guard import install; install(); from sec_edgar_ingest.cli import main; raise SystemExit(main([\"backfill\",\"--help\"]))"
+  ],
+  "cwd": "/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/sec-workflow-installed-9q_zwlbn",
+  "exit": 0,
+  "outcome": "completed",
+  "pythonpath_present": false,
+  "runtime_seconds": 0.17718750005587935,
+  "stderr": "",
+  "stdout": "usage: sec-edgar-ingest backfill [-h] --config CONFIG --run-id RUN_ID\n                                 --execution-id EXECUTION_ID\n                                 --attempt-id ATTEMPT_ID --deadline DEADLINE\n                                 [--state-dir STATE_DIR] [--today TODAY]\n                                 [--fixture-pack FIXTURE_PACK]\n\noptions:\n  -h, --help            show this help message and exit\n  --config CONFIG\n  --run-id RUN_ID\n  --execution-id EXECUTION_ID\n  --attempt-id ATTEMPT_ID\n  --deadline DEADLINE\n  --state-dir STATE_DIR\n  --today TODAY\n  --fixture-pack FIXTURE_PACK\n",
+  "timeout_seconds": 300,
+  "uv_python_downloads": "never"
+}

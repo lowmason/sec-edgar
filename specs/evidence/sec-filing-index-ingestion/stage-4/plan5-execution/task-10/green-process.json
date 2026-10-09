@@ -1,0 +1,21 @@
+{
+  "argv": [
+    "uv",
+    "run",
+    "--offline",
+    "--frozen",
+    "--package",
+    "sec-edgar-ingest",
+    "python",
+    "packages/sec-edgar-ingest/tests/network_guard.py",
+    "discover",
+    "-s",
+    "packages/sec-edgar-ingest/tests",
+    "-p",
+    "test_workflow_process.py",
+    "-v"
+  ],
+  "exit": 0,
+  "stdout": "",
+  "stderr": "test_public_native_sequence_uses_explicit_test_only_inventory (test_workflow_process.WorkflowProcessTests.test_public_native_sequence_uses_explicit_test_only_inventory) ... ok\ntest_real_process_death_reopens_each_durable_boundary (test_workflow_process.WorkflowProcessTests.test_real_process_death_reopens_each_durable_boundary) ... ok\n\n----------------------------------------------------------------------\nRan 2 tests in 86.669s\n\nOK\n"
+}

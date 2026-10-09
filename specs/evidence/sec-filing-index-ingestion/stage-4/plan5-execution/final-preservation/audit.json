@@ -1,0 +1,484 @@
+{
+  "created_utc": "2026-10-08T22:14:44.116593+00:00",
+  "method": "Read-only stdlib os.walk without following symlinks; exclude entries named .git; compare all path membership, regular byte sizes and SHA-256 hashes, literal symlink targets. Git uses --no-optional-locks and GIT_OPTIONAL_LOCKS=0; no project imports/tests/build/network/mutations. Directory modes, mtime, permissions and volatile .git metadata are outside record inventory.",
+  "primary_inventory": {
+    "root": "/Users/lowell/Projects/sec-edgar",
+    "baseline": "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-4/plan5-execution/preflight/primary-before.json",
+    "baseline_sha256": "e2534f8f24d35ae74283b7b8e79a72281aa3ab416d938ea58b3556d790348d23",
+    "before_records": 30078,
+    "after_records": 30078,
+    "regular_records": 30075,
+    "symlink_records": 3,
+    "exact_matching_records": 30078,
+    "missing": [],
+    "added": [],
+    "changed": [],
+    "special_files": [],
+    "passed": true
+  },
+  "retained_inventories": [
+    {
+      "root": "/private/tmp/sec-edgar-stage3-merged-closeout-hhgufen8",
+      "baseline": "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-4/plan5-execution/preflight/retained-0-before.json",
+      "baseline_sha256": "cdbf22e204e2bf846fba0d7a07308b2037ec3f1cdcf153ca2fec278664ba79ac",
+      "before_records": 6,
+      "after_records": 6,
+      "regular_records": 6,
+      "symlink_records": 0,
+      "exact_matching_records": 6,
+      "missing": [],
+      "added": [],
+      "changed": [],
+      "special_files": [],
+      "passed": true
+    },
+    {
+      "root": "/private/tmp/sec-edgar-stage4-reconcile-9mbg9qog",
+      "baseline": "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-4/plan5-execution/preflight/retained-1-before.json",
+      "baseline_sha256": "92f2a9aebcb1dec0ae23ac2a28be418f1657a8d82e1e29682229daeee4304e15",
+      "before_records": 19098,
+      "after_records": 19098,
+      "regular_records": 19098,
+      "symlink_records": 0,
+      "exact_matching_records": 19098,
+      "missing": [],
+      "added": [],
+      "changed": [],
+      "special_files": [],
+      "passed": true
+    },
+    {
+      "root": "/private/tmp/sec-edgar-primary-reconcile-1t9zru9x",
+      "baseline": "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-4/plan5-execution/preflight/retained-2-before.json",
+      "baseline_sha256": "fd7a04932608b1f75dca3f09ce12b3a4d4aad6e706a05934f3cb602bf39a82ba",
+      "before_records": 28804,
+      "after_records": 28804,
+      "regular_records": 28804,
+      "symlink_records": 0,
+      "exact_matching_records": 28804,
+      "missing": [],
+      "added": [],
+      "changed": [],
+      "special_files": [],
+      "passed": true
+    },
+    {
+      "root": "/private/tmp/sec-edgar-stage4-execution-preservation-bm3tc33_",
+      "baseline": "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-4/plan5-execution/preflight/retained-3-before.json",
+      "baseline_sha256": "cca6d605bd1b39c2469c706bfbcb83e9491a196589873cee5084ce1784374f5d",
+      "before_records": 30017,
+      "after_records": 30017,
+      "regular_records": 30017,
+      "symlink_records": 0,
+      "exact_matching_records": 30017,
+      "missing": [],
+      "added": [],
+      "changed": [],
+      "special_files": [],
+      "passed": true
+    },
+    {
+      "root": "/private/tmp/sec-edgar-stage4-replanning-ubszs55d",
+      "baseline": "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-4/plan5-execution/preflight/retained-4-before.json",
+      "baseline_sha256": "e38dcf804058e00305bbc60814ec4037bc6e039ea244d74681f17d5002c4e80c",
+      "before_records": 3,
+      "after_records": 3,
+      "regular_records": 3,
+      "symlink_records": 0,
+      "exact_matching_records": 3,
+      "missing": [],
+      "added": [],
+      "changed": [],
+      "special_files": [],
+      "passed": true
+    },
+    {
+      "root": "/private/tmp/sec-stage4-ignored-recovery-phpsldej",
+      "baseline": "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-4/plan5-execution/preflight/retained-5-before.json",
+      "baseline_sha256": "84a33877484016bf399f1133adebeee9a268dc4b0c5ea3ed9ac68d2aaffd789c",
+      "before_records": 1556,
+      "after_records": 1556,
+      "regular_records": 1553,
+      "symlink_records": 3,
+      "exact_matching_records": 1556,
+      "missing": [],
+      "added": [],
+      "changed": [],
+      "special_files": [],
+      "passed": true
+    },
+    {
+      "root": "/private/tmp/sec-stage4-plan5-independent-th0wqyvh",
+      "baseline": "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/specs/evidence/sec-filing-index-ingestion/stage-4/plan5-execution/preflight/retained-6-before.json",
+      "baseline_sha256": "66654e833eb0d3c68102491fc5e8a53d7c32b8daa84fa21fe6efccec873a09b8",
+      "before_records": 28876,
+      "after_records": 28876,
+      "regular_records": 28876,
+      "symlink_records": 0,
+      "exact_matching_records": 28876,
+      "missing": [],
+      "added": [],
+      "changed": [],
+      "special_files": [],
+      "passed": true
+    }
+  ],
+  "primary_git": {
+    "head": "fe95642bddf006f3d2d6cb3ccc57e595d75dc4cd",
+    "origin_main": "fe95642bddf006f3d2d6cb3ccc57e595d75dc4cd",
+    "status": "D packages/sec-edgar-index-ingest/README.md\n D packages/sec-edgar-index-ingest/pyproject.toml\n D packages/sec-edgar-index-ingest/src/sec_edgar_index_ingest/__init__.py\n D packages/sec-edgar-index-ingest/src/sec_edgar_index_ingest/py.typed\n?? specs/evidence/sec-filing-index-ingestion/stage-4/\n?? specs/plans/3-sec-filing-index-ingestion-stage-3-spec.md\n?? specs/plans/4-sec-filing-index-ingestion-stage-4-spec.md\n?? specs/sec-filing-index-ingestion-stage-3-spec.md\n?? specs/sec-filing-index-ingestion-stage-4-spec.md",
+    "index_sha256": "739086e5194794b7845942dfe0699994f0845f7a28bdb2518e8f8318f5f52f60",
+    "required_absences": {
+      "packages/sec-edgar-index-ingest/README.md": true,
+      "packages/sec-edgar-index-ingest/pyproject.toml": true,
+      "packages/sec-edgar-index-ingest/src/sec_edgar_index_ingest/__init__.py": true,
+      "packages/sec-edgar-index-ingest/src/sec_edgar_index_ingest/py.typed": true
+    },
+    "passed": true
+  },
+  "preserved_refs": [
+    {
+      "ref": "refs/heads/codex/sec-edgar-stage-4",
+      "expected": "e870a7318d47699c0e4a76ab59fba72781b0debe",
+      "actual": "e870a7318d47699c0e4a76ab59fba72781b0debe",
+      "passed": true
+    },
+    {
+      "ref": "refs/codex/snapshots/44e1d887f038bc90b963848b95a277c13f57f9d9",
+      "expected": "e870a7318d47699c0e4a76ab59fba72781b0debe",
+      "actual": "e870a7318d47699c0e4a76ab59fba72781b0debe",
+      "passed": true
+    },
+    {
+      "ref": "refs/heads/codex/sec-edgar-stage-4-replan",
+      "expected": "b788b44a84d077817a4a3cb24378157c0e1b163c",
+      "actual": "b788b44a84d077817a4a3cb24378157c0e1b163c",
+      "passed": true
+    }
+  ],
+  "planning": {
+    "root": "/Users/lowell/.codex/worktrees/sec-edgar-stage-4-replan/sec-edgar",
+    "head": "",
+    "branch": "",
+    "status": "",
+    "index_path": "",
+    "path_exists": false,
+    "index_sha256": null,
+    "tracked_comparison_root": "/private/tmp/sec-stage4-plan5-independent-th0wqyvh/checkpoint",
+    "tracked_records_compared": 28873,
+    "tracked_mismatches": [],
+    "passed": false
+  },
+  "stopped_original_path_absent": true,
+  "ignored_recovery_receipt": {
+    "path": "/private/tmp/sec-stage4-ignored-recovery-phpsldej/receipt.json",
+    "sha256": "a1ccf73e2032ed2dd18f9f441c96f365d08f8f94496010d34f4c6c2f306a3597",
+    "passed": true
+  },
+  "authority_checks": [
+    {
+      "root": "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar",
+      "path": "specs/sec-filing-index-ingestion-stage-4-spec.md",
+      "expected": "5b822a4113eaa18c53a18ae71f244d6b69d2abd9e533381a69644e4b88cd1b0a",
+      "actual": "5b822a4113eaa18c53a18ae71f244d6b69d2abd9e533381a69644e4b88cd1b0a",
+      "passed": true
+    },
+    {
+      "root": "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar",
+      "path": "specs/plans/4-sec-filing-index-ingestion-stage-4-spec.md",
+      "expected": "d23d62c965f51a4af9a89edd615cc77ed267b58601875f06bcd27cc339c2508c",
+      "actual": "d23d62c965f51a4af9a89edd615cc77ed267b58601875f06bcd27cc339c2508c",
+      "passed": true
+    },
+    {
+      "root": "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar",
+      "path": "specs/evidence/sec-filing-index-ingestion/stage-4/approval/owner-approval.json",
+      "expected": "1a4beabfe15f8d39bb710ba7f92fb9ac1ea60eafc926a8f28905ad6c2ea176bc",
+      "actual": "1a4beabfe15f8d39bb710ba7f92fb9ac1ea60eafc926a8f28905ad6c2ea176bc",
+      "passed": true
+    },
+    {
+      "root": "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar",
+      "path": "specs/evidence/sec-filing-index-ingestion/stage-4/approval/approved-plan-4.md",
+      "expected": "d23d62c965f51a4af9a89edd615cc77ed267b58601875f06bcd27cc339c2508c",
+      "actual": "d23d62c965f51a4af9a89edd615cc77ed267b58601875f06bcd27cc339c2508c",
+      "passed": true
+    },
+    {
+      "root": "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar",
+      "path": "specs/evidence/sec-filing-index-ingestion/stage-4/approval/approved-stage-4-spec.md",
+      "expected": "5b822a4113eaa18c53a18ae71f244d6b69d2abd9e533381a69644e4b88cd1b0a",
+      "actual": "5b822a4113eaa18c53a18ae71f244d6b69d2abd9e533381a69644e4b88cd1b0a",
+      "passed": true
+    },
+    {
+      "root": "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar",
+      "path": "specs/evidence/sec-filing-index-ingestion/stage-4/approval/roadmap-at-approval.md",
+      "expected": "0101934eadf0ca3241b03a458c80ec300012430875c44522410836ab6c0ecc03",
+      "actual": "0101934eadf0ca3241b03a458c80ec300012430875c44522410836ab6c0ecc03",
+      "passed": true
+    },
+    {
+      "root": "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar",
+      "path": "specs/plans/5-sec-filing-index-ingestion-stage-4-spec.md",
+      "expected": "87f9108735a13a9699086e5f50f1d4ce082c740d7f58eb47d37fdd775da67b45",
+      "actual": "87f9108735a13a9699086e5f50f1d4ce082c740d7f58eb47d37fdd775da67b45",
+      "passed": true
+    },
+    {
+      "root": "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar",
+      "path": "specs/evidence/sec-filing-index-ingestion/stage-4/replanning/approval/approved-plan-5.md",
+      "expected": "87f9108735a13a9699086e5f50f1d4ce082c740d7f58eb47d37fdd775da67b45",
+      "actual": "87f9108735a13a9699086e5f50f1d4ce082c740d7f58eb47d37fdd775da67b45",
+      "passed": true
+    },
+    {
+      "root": "/Users/lowell/.codex/worktrees/sec-edgar-stage-4-replan/sec-edgar",
+      "path": "specs/sec-filing-index-ingestion-stage-4-spec.md",
+      "expected": "5b822a4113eaa18c53a18ae71f244d6b69d2abd9e533381a69644e4b88cd1b0a",
+      "actual": null,
+      "passed": false
+    },
+    {
+      "root": "/Users/lowell/.codex/worktrees/sec-edgar-stage-4-replan/sec-edgar",
+      "path": "specs/plans/4-sec-filing-index-ingestion-stage-4-spec.md",
+      "expected": "d23d62c965f51a4af9a89edd615cc77ed267b58601875f06bcd27cc339c2508c",
+      "actual": null,
+      "passed": false
+    },
+    {
+      "root": "/Users/lowell/.codex/worktrees/sec-edgar-stage-4-replan/sec-edgar",
+      "path": "specs/evidence/sec-filing-index-ingestion/stage-4/approval/owner-approval.json",
+      "expected": "1a4beabfe15f8d39bb710ba7f92fb9ac1ea60eafc926a8f28905ad6c2ea176bc",
+      "actual": null,
+      "passed": false
+    },
+    {
+      "root": "/Users/lowell/.codex/worktrees/sec-edgar-stage-4-replan/sec-edgar",
+      "path": "specs/evidence/sec-filing-index-ingestion/stage-4/approval/approved-plan-4.md",
+      "expected": "d23d62c965f51a4af9a89edd615cc77ed267b58601875f06bcd27cc339c2508c",
+      "actual": null,
+      "passed": false
+    },
+    {
+      "root": "/Users/lowell/.codex/worktrees/sec-edgar-stage-4-replan/sec-edgar",
+      "path": "specs/evidence/sec-filing-index-ingestion/stage-4/approval/approved-stage-4-spec.md",
+      "expected": "5b822a4113eaa18c53a18ae71f244d6b69d2abd9e533381a69644e4b88cd1b0a",
+      "actual": null,
+      "passed": false
+    },
+    {
+      "root": "/Users/lowell/.codex/worktrees/sec-edgar-stage-4-replan/sec-edgar",
+      "path": "specs/evidence/sec-filing-index-ingestion/stage-4/approval/roadmap-at-approval.md",
+      "expected": "0101934eadf0ca3241b03a458c80ec300012430875c44522410836ab6c0ecc03",
+      "actual": null,
+      "passed": false
+    },
+    {
+      "root": "/Users/lowell/.codex/worktrees/sec-edgar-stage-4-replan/sec-edgar",
+      "path": "specs/plans/5-sec-filing-index-ingestion-stage-4-spec.md",
+      "expected": "87f9108735a13a9699086e5f50f1d4ce082c740d7f58eb47d37fdd775da67b45",
+      "actual": null,
+      "passed": false
+    },
+    {
+      "root": "/Users/lowell/.codex/worktrees/sec-edgar-stage-4-replan/sec-edgar",
+      "path": "specs/evidence/sec-filing-index-ingestion/stage-4/replanning/approval/approved-plan-5.md",
+      "expected": "87f9108735a13a9699086e5f50f1d4ce082c740d7f58eb47d37fdd775da67b45",
+      "actual": null,
+      "passed": false
+    },
+    {
+      "root": "/private/tmp/sec-stage4-plan5-independent-th0wqyvh/checkpoint",
+      "path": "specs/sec-filing-index-ingestion-stage-4-spec.md",
+      "expected": "5b822a4113eaa18c53a18ae71f244d6b69d2abd9e533381a69644e4b88cd1b0a",
+      "actual": "5b822a4113eaa18c53a18ae71f244d6b69d2abd9e533381a69644e4b88cd1b0a",
+      "passed": true
+    },
+    {
+      "root": "/private/tmp/sec-stage4-plan5-independent-th0wqyvh/checkpoint",
+      "path": "specs/plans/4-sec-filing-index-ingestion-stage-4-spec.md",
+      "expected": "d23d62c965f51a4af9a89edd615cc77ed267b58601875f06bcd27cc339c2508c",
+      "actual": "d23d62c965f51a4af9a89edd615cc77ed267b58601875f06bcd27cc339c2508c",
+      "passed": true
+    },
+    {
+      "root": "/private/tmp/sec-stage4-plan5-independent-th0wqyvh/checkpoint",
+      "path": "specs/evidence/sec-filing-index-ingestion/stage-4/approval/owner-approval.json",
+      "expected": "1a4beabfe15f8d39bb710ba7f92fb9ac1ea60eafc926a8f28905ad6c2ea176bc",
+      "actual": "1a4beabfe15f8d39bb710ba7f92fb9ac1ea60eafc926a8f28905ad6c2ea176bc",
+      "passed": true
+    },
+    {
+      "root": "/private/tmp/sec-stage4-plan5-independent-th0wqyvh/checkpoint",
+      "path": "specs/evidence/sec-filing-index-ingestion/stage-4/approval/approved-plan-4.md",
+      "expected": "d23d62c965f51a4af9a89edd615cc77ed267b58601875f06bcd27cc339c2508c",
+      "actual": "d23d62c965f51a4af9a89edd615cc77ed267b58601875f06bcd27cc339c2508c",
+      "passed": true
+    },
+    {
+      "root": "/private/tmp/sec-stage4-plan5-independent-th0wqyvh/checkpoint",
+      "path": "specs/evidence/sec-filing-index-ingestion/stage-4/approval/approved-stage-4-spec.md",
+      "expected": "5b822a4113eaa18c53a18ae71f244d6b69d2abd9e533381a69644e4b88cd1b0a",
+      "actual": "5b822a4113eaa18c53a18ae71f244d6b69d2abd9e533381a69644e4b88cd1b0a",
+      "passed": true
+    },
+    {
+      "root": "/private/tmp/sec-stage4-plan5-independent-th0wqyvh/checkpoint",
+      "path": "specs/evidence/sec-filing-index-ingestion/stage-4/approval/roadmap-at-approval.md",
+      "expected": "0101934eadf0ca3241b03a458c80ec300012430875c44522410836ab6c0ecc03",
+      "actual": "0101934eadf0ca3241b03a458c80ec300012430875c44522410836ab6c0ecc03",
+      "passed": true
+    },
+    {
+      "root": "/private/tmp/sec-stage4-plan5-independent-th0wqyvh/checkpoint",
+      "path": "specs/plans/5-sec-filing-index-ingestion-stage-4-spec.md",
+      "expected": "87f9108735a13a9699086e5f50f1d4ce082c740d7f58eb47d37fdd775da67b45",
+      "actual": "87f9108735a13a9699086e5f50f1d4ce082c740d7f58eb47d37fdd775da67b45",
+      "passed": true
+    },
+    {
+      "root": "/private/tmp/sec-stage4-plan5-independent-th0wqyvh/checkpoint",
+      "path": "specs/evidence/sec-filing-index-ingestion/stage-4/replanning/approval/approved-plan-5.md",
+      "expected": "87f9108735a13a9699086e5f50f1d4ce082c740d7f58eb47d37fdd775da67b45",
+      "actual": "87f9108735a13a9699086e5f50f1d4ce082c740d7f58eb47d37fdd775da67b45",
+      "passed": true
+    }
+  ],
+  "limitations": [
+    "Planning checkout absent at final audit. Its status/index/working tree cannot be verified; independent retained checkpoint tracked tree compared to preserved b788b44 commit instead. No complete planning ignored-file or index baseline supplied; no claim of planning worktree preservation/restoration.",
+    "No mode/mtime/directory membership audit; exact record membership means regular files and symlinks. .git metadata intentionally excluded except explicit HEAD/index/status/refs checks.",
+    "433 original stopped runtime/bytecode records remain covered by owner-approved offline regeneration disposition; absent original checkout is not represented as restored.",
+    "Point-in-time final preservation audit only; no implementation review or tests."
+  ],
+  "errors": [
+    {
+      "git": [
+        "rev-parse",
+        "HEAD"
+      ],
+      "root": "/Users/lowell/.codex/worktrees/sec-edgar-stage-4-replan/sec-edgar",
+      "exit": 128,
+      "stderr": "fatal: cannot change to '/Users/lowell/.codex/worktrees/sec-edgar-stage-4-replan/sec-edgar': No such file or directory\n"
+    },
+    {
+      "git": [
+        "branch",
+        "--show-current"
+      ],
+      "root": "/Users/lowell/.codex/worktrees/sec-edgar-stage-4-replan/sec-edgar",
+      "exit": 128,
+      "stderr": "fatal: cannot change to '/Users/lowell/.codex/worktrees/sec-edgar-stage-4-replan/sec-edgar': No such file or directory\n"
+    },
+    {
+      "git": [
+        "status",
+        "--porcelain"
+      ],
+      "root": "/Users/lowell/.codex/worktrees/sec-edgar-stage-4-replan/sec-edgar",
+      "exit": 128,
+      "stderr": "fatal: cannot change to '/Users/lowell/.codex/worktrees/sec-edgar-stage-4-replan/sec-edgar': No such file or directory\n"
+    },
+    {
+      "git": [
+        "rev-parse",
+        "--git-path",
+        "index"
+      ],
+      "root": "/Users/lowell/.codex/worktrees/sec-edgar-stage-4-replan/sec-edgar",
+      "exit": 128,
+      "stderr": "fatal: cannot change to '/Users/lowell/.codex/worktrees/sec-edgar-stage-4-replan/sec-edgar': No such file or directory\n"
+    },
+    {
+      "planning_checkout_absent": "/Users/lowell/.codex/worktrees/sec-edgar-stage-4-replan/sec-edgar"
+    },
+    {
+      "planning": {
+        "root": "/Users/lowell/.codex/worktrees/sec-edgar-stage-4-replan/sec-edgar",
+        "head": "",
+        "branch": "",
+        "status": "",
+        "index_path": "",
+        "path_exists": false,
+        "index_sha256": null,
+        "tracked_comparison_root": "/private/tmp/sec-stage4-plan5-independent-th0wqyvh/checkpoint",
+        "tracked_records_compared": 28873,
+        "tracked_mismatches": [],
+        "passed": false
+      }
+    },
+    {
+      "authority": {
+        "root": "/Users/lowell/.codex/worktrees/sec-edgar-stage-4-replan/sec-edgar",
+        "path": "specs/sec-filing-index-ingestion-stage-4-spec.md",
+        "expected": "5b822a4113eaa18c53a18ae71f244d6b69d2abd9e533381a69644e4b88cd1b0a",
+        "actual": null,
+        "passed": false
+      }
+    },
+    {
+      "authority": {
+        "root": "/Users/lowell/.codex/worktrees/sec-edgar-stage-4-replan/sec-edgar",
+        "path": "specs/plans/4-sec-filing-index-ingestion-stage-4-spec.md",
+        "expected": "d23d62c965f51a4af9a89edd615cc77ed267b58601875f06bcd27cc339c2508c",
+        "actual": null,
+        "passed": false
+      }
+    },
+    {
+      "authority": {
+        "root": "/Users/lowell/.codex/worktrees/sec-edgar-stage-4-replan/sec-edgar",
+        "path": "specs/evidence/sec-filing-index-ingestion/stage-4/approval/owner-approval.json",
+        "expected": "1a4beabfe15f8d39bb710ba7f92fb9ac1ea60eafc926a8f28905ad6c2ea176bc",
+        "actual": null,
+        "passed": false
+      }
+    },
+    {
+      "authority": {
+        "root": "/Users/lowell/.codex/worktrees/sec-edgar-stage-4-replan/sec-edgar",
+        "path": "specs/evidence/sec-filing-index-ingestion/stage-4/approval/approved-plan-4.md",
+        "expected": "d23d62c965f51a4af9a89edd615cc77ed267b58601875f06bcd27cc339c2508c",
+        "actual": null,
+        "passed": false
+      }
+    },
+    {
+      "authority": {
+        "root": "/Users/lowell/.codex/worktrees/sec-edgar-stage-4-replan/sec-edgar",
+        "path": "specs/evidence/sec-filing-index-ingestion/stage-4/approval/approved-stage-4-spec.md",
+        "expected": "5b822a4113eaa18c53a18ae71f244d6b69d2abd9e533381a69644e4b88cd1b0a",
+        "actual": null,
+        "passed": false
+      }
+    },
+    {
+      "authority": {
+        "root": "/Users/lowell/.codex/worktrees/sec-edgar-stage-4-replan/sec-edgar",
+        "path": "specs/evidence/sec-filing-index-ingestion/stage-4/approval/roadmap-at-approval.md",
+        "expected": "0101934eadf0ca3241b03a458c80ec300012430875c44522410836ab6c0ecc03",
+        "actual": null,
+        "passed": false
+      }
+    },
+    {
+      "authority": {
+        "root": "/Users/lowell/.codex/worktrees/sec-edgar-stage-4-replan/sec-edgar",
+        "path": "specs/plans/5-sec-filing-index-ingestion-stage-4-spec.md",
+        "expected": "87f9108735a13a9699086e5f50f1d4ce082c740d7f58eb47d37fdd775da67b45",
+        "actual": null,
+        "passed": false
+      }
+    },
+    {
+      "authority": {
+        "root": "/Users/lowell/.codex/worktrees/sec-edgar-stage-4-replan/sec-edgar",
+        "path": "specs/evidence/sec-filing-index-ingestion/stage-4/replanning/approval/approved-plan-5.md",
+        "expected": "87f9108735a13a9699086e5f50f1d4ce082c740d7f58eb47d37fdd775da67b45",
+        "actual": null,
+        "passed": false
+      }
+    }
+  ],
+  "passed": false
+}

@@ -1,0 +1,20 @@
+{
+  "argv": [
+    "uv",
+    "run",
+    "--offline",
+    "--frozen",
+    "--package",
+    "sec-edgar-ingest",
+    "python",
+    "packages/sec-edgar-ingest/tests/network_guard.py",
+    "discover",
+    "-s",
+    "packages/sec-edgar-ingest/tests",
+    "-p",
+    "test_workflow_runner.py",
+    "-v"
+  ],
+  "output": "test_workflow_runner (unittest.loader._FailedTest.test_workflow_runner) ... ERROR\n\n======================================================================\nERROR: test_workflow_runner (unittest.loader._FailedTest.test_workflow_runner)\n----------------------------------------------------------------------\nImportError: Failed to import test module: test_workflow_runner\nTraceback (most recent call last):\n  File \"/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/unittest/loader.py\", line 426, in _find_test_path\n    module = self._get_module_from_name(name)\n  File \"/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/unittest/loader.py\", line 367, in _get_module_from_name\n    __import__(name)\n    ~~~~~~~~~~^^^^^^\n  File \"/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/network_guard.py\", line 48, in _guarded_import\n    module = _IMPORT(name, *args, **kwargs)\n  File \"/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_runner.py\", line 13, in <module>\n    from sec_edgar_ingest.workflows.runner import run_workflow\n  File \"/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/network_guard.py\", line 48, in _guarded_import\n    module = _IMPORT(name, *args, **kwargs)\nModuleNotFoundError: No module named 'sec_edgar_ingest.workflows.runner'\n\n\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nFAILED (errors=1)\n",
+  "exit": 1
+}

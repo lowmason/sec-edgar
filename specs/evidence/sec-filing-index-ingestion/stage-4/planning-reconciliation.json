@@ -1,0 +1,106 @@
+{
+  "schema": "sec-stage4-planning-reconciliation-v1",
+  "date": "2026-10-07",
+  "timezone": "America/New_York",
+  "baseline_commit": "fe95642bddf006f3d2d6cb3ccc57e595d75dc4cd",
+  "preservation_directory": "/private/tmp/sec-edgar-stage4-reconcile-9mbg9qog",
+  "prior_inventory_drift": [],
+  "new_retained_files": [
+    {
+      "path": "dist/sec_edgar_ingest-0.1.0-py3-none-any.whl",
+      "bytes": 79085,
+      "sha256": "349b9524fca4963de4a2ffdf3fb96f28708c01dba49564594a92944cc3ee5d28"
+    },
+    {
+      "path": "dist/.gitignore",
+      "bytes": 1,
+      "sha256": "684888c0ebb17f374298b65ee2807526c066094c701bcc7ebbe1c1095f494fc1"
+    },
+    {
+      "path": "dist/sec_edgar_ingest-0.1.0.tar.gz",
+      "bytes": 67566,
+      "sha256": "fce247b48d02155eed403ff0456f5e5bc246cde244534e6eb428c9a44d361b30"
+    },
+    {
+      "path": ".sdd/provider-preparation-report.md",
+      "bytes": 1366,
+      "sha256": "a1d5fdd10a8a17a9b9f6f5290e50d97ab8e1c57a88c26a3ffdcce8103378ffca"
+    },
+    {
+      "path": ".sdd/.gitignore",
+      "bytes": 2,
+      "sha256": "cdbcae15105d6b781e620813c79c7e868740d4e9cc53ce6f5fcbbc12387adf4b"
+    }
+  ],
+  "preservation": {
+    "head": "fe95642bddf006f3d2d6cb3ccc57e595d75dc4cd",
+    "status": "## main...origin/main\n D packages/sec-edgar-index-ingest/README.md\n D packages/sec-edgar-index-ingest/pyproject.toml\n D packages/sec-edgar-index-ingest/src/sec_edgar_index_ingest/__init__.py\n D packages/sec-edgar-index-ingest/src/sec_edgar_index_ingest/py.typed\n?? specs/plans/3-sec-filing-index-ingestion-stage-3-spec.md\n?? specs/sec-filing-index-ingestion-stage-3-spec.md\n",
+    "retained_records": 19089,
+    "retained_bytes": 294547731,
+    "required_absences_verified": [
+      "packages/sec-edgar-index-ingest/README.md",
+      "packages/sec-edgar-index-ingest/pyproject.toml",
+      "packages/sec-edgar-index-ingest/src/sec_edgar_index_ingest/__init__.py",
+      "packages/sec-edgar-index-ingest/src/sec_edgar_index_ingest/py.typed"
+    ],
+    "all_retained_copy_hashes_verified": true,
+    "incoming_tracked_replacements_preserved": [
+      "uv.lock",
+      "pyproject.toml",
+      "README.md",
+      "scripts/check-sec-edgar-ingest.sh",
+      "packages/sec-edgar-ingest/pyproject.toml",
+      "packages/sec-edgar-ingest/README.md",
+      "packages/sec-edgar-ingest/tests/test_workspace.py",
+      "packages/sec-edgar-ingest/tests/test_azure_contracts.py",
+      "packages/sec-edgar-ingest/tests/test_cli.py",
+      "packages/sec-edgar-ingest/src/sec_edgar_ingest/results.py",
+      "packages/sec-edgar-ingest/src/sec_edgar_ingest/cli.py",
+      "packages/sec-edgar-ingest/src/sec_edgar_ingest/state.py",
+      "packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py",
+      "packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py",
+      "packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/contracts.py"
+    ],
+    "live_access_authorizations": "closed",
+    "stage7_integrated_checks": "all22_reserved"
+  },
+  "authoritative_stage3_spec": "specs/completed/sec-filing-index-ingestion-stage-3-spec.md",
+  "authoritative_plan3": "specs/plans/completed/3-sec-filing-index-ingestion-stage-3-spec.md",
+  "historical_inputs": [
+    "specs/sec-filing-index-ingestion-stage-3-spec.md",
+    "specs/plans/3-sec-filing-index-ingestion-stage-3-spec.md"
+  ],
+  "unticked_stage_dispositions": {
+    "3": "COMPLETE by authoritative stamp and exact quarantine acceptance",
+    "4": "R1/R2 workflow composition and durable coverage remain; route writing-plans",
+    "5": "reconciliation/approval/stale replay/reintroduction remain",
+    "6": "worker image/IaC/ADF disabled schedules/telemetry remain",
+    "7": "all22 integrated checks reserved/not_run",
+    "8": "production coverage/activation/observed schedules remain"
+  },
+  "live_access_authorizations": "closed",
+  "stage4_implementation_authorized": false,
+  "preflight.json": {
+    "path": "/private/tmp/sec-edgar-stage4-reconcile-9mbg9qog/preflight.json",
+    "sha256": "9065eae3ccad7c14e3a3a752cebcd6f93fd73a6c198b8105a79acc8127eef249",
+    "bytes": 3348
+  },
+  "fresh-inventory.json": {
+    "path": "/private/tmp/sec-edgar-stage4-reconcile-9mbg9qog/fresh-inventory.json",
+    "sha256": "25bbfa039910155dd9f8cfe6a61845c46bd5ea2e034eaf57d7b082751acd6b37",
+    "bytes": 6175370
+  },
+  "fast-forward-receipt.json": {
+    "path": "/private/tmp/sec-edgar-stage4-reconcile-9mbg9qog/fast-forward-receipt.json",
+    "sha256": "2fbc381071ece7c236366b9fc9c695c665c75b95e0daa6a2aa962f6f175fbf23",
+    "bytes": 1757
+  },
+  "stage3_fresh_authority_audit": {
+    "path": "specs/evidence/sec-filing-index-ingestion/stage-4/stage3-authority-audit.json",
+    "sha256": "b0dc77ce7f746d939db987fe5046d7e797745a25c2d3ee62b245a4e312c50c0e",
+    "bytes": 4907,
+    "exit": 0,
+    "records": 9678,
+    "historical_tests_not_rerun": true
+  }
+}

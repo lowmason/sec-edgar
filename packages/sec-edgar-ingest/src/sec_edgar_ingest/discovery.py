@@ -237,7 +237,7 @@ def _verify_receipt_context(value: object, frozen_context: RunContext) -> None:
         raise Conflict('cached listing receipt has conflicting frozen transport provenance')
 
 
-def _reopen_listing(objects: ObjectStore, value: dict, unit: dict, frozen_context: RunContext):
+def reopen_listing(objects: ObjectStore, value: dict, unit: dict, frozen_context: RunContext):
     outcome = DirectoryOutcome.from_mapping(value['outcome'])
     if outcome.url != unit['url'] or outcome.period != unit['period']:
         raise Conflict('cached directory progress differs from the requested directory metadata')
@@ -298,7 +298,7 @@ def discover(settings: Settings, context: RunContext, mode: Literal['quarterly',
         cached = state.directory_progress(discovery_id, url)
         if cached is not None and cached.value['outcome']['outcome'] != 'discovery_failed':
             saved = cached.to_mapping()['value']
-            outcome, selected, entries, discovered_at = _reopen_listing(objects, saved, unit, pinned_context)
+            outcome, selected, entries, discovered_at = reopen_listing(objects, saved, unit, pinned_context)
             state.record_directory(discovery_id, outcome, selected, evidence=saved['evidence'],
                                    selection=saved['selection'], expected_gap=saved['observed_gap_token'])
         else:

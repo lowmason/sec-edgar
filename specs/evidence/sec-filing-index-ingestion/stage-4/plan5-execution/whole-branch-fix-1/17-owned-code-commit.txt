@@ -1,0 +1,20 @@
+argv: ["git", "diff", "--cached", "--name-only"]
+exit: 0
+
+argv: ["git", "add", "--", "packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/results.py", "packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/runner.py", "packages/sec-edgar-ingest/tests/test_workflow_results.py", "packages/sec-edgar-ingest/tests/test_workflow_runner.py"]
+exit: 0
+
+argv: ["git", "diff", "--cached", "--name-only"]
+exit: 0
+packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/results.py
+packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/runner.py
+packages/sec-edgar-ingest/tests/test_workflow_results.py
+packages/sec-edgar-ingest/tests/test_workflow_runner.py
+
+argv: ["git", "diff", "--cached", "--check"]
+exit: 0
+
+argv: ["git", "commit", "-m", "fix: bind workflow reports to discovery and pending authority"]
+exit: 0
+[codex/sec-edgar-stage4-plan5 6528a4e7] fix: bind workflow reports to discovery and pending authority
+ 4 files changed, 216 insertions(+), 19 deletions(-)

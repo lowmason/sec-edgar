@@ -1,0 +1,34 @@
+argv: ["uv", "run", "--offline", "--frozen", "--package", "sec-edgar-ingest", "python", "packages/sec-edgar-ingest/tests/network_guard.py", "discover", "-s", "packages/sec-edgar-ingest/tests", "-p", "test_workflow_results.py", "-v"]
+test_empty_leaf_roles_bridge_and_listing_evidence_cannot_be_substituted (test_workflow_results.WorkflowResultTests.test_empty_leaf_roles_bridge_and_listing_evidence_cannot_be_substituted) ... ok
+test_exact_replay_after_deadline_and_changed_invocation_refusal (test_workflow_results.WorkflowResultTests.test_exact_replay_after_deadline_and_changed_invocation_refusal) ... ok
+test_existing_conflicting_report_index_refuses (test_workflow_results.WorkflowResultTests.test_existing_conflicting_report_index_refuses) ... ok
+test_fatal_discovery_without_result_preserves_frozen_prior_jobs (test_workflow_results.WorkflowResultTests.test_fatal_discovery_without_result_preserves_frozen_prior_jobs) ... ok
+test_historical_report_reads_original_capture_after_pointer_advance (test_workflow_results.WorkflowResultTests.test_historical_report_reads_original_capture_after_pointer_advance) ... ok
+test_intent_object_crash_retains_begun_start_and_missing_index_recovers (test_workflow_results.WorkflowResultTests.test_intent_object_crash_retains_begun_start_and_missing_index_recovers) ... ok
+test_missing_workflow_and_child_indexes_recover_from_immutable_authority (test_workflow_results.WorkflowResultTests.test_missing_workflow_and_child_indexes_recover_from_immutable_authority) ... ok
+test_parent_capture_retains_full_empty_discovery_authority (test_workflow_results.WorkflowResultTests.test_parent_capture_retains_full_empty_discovery_authority) ... ok
+test_repaired_report_retains_original_immutable_repair_anchor (test_workflow_results.WorkflowResultTests.test_repaired_report_retains_original_immutable_repair_anchor) ... ERROR
+test_report_object_crash_reopens_and_repairs_exact_index (test_workflow_results.WorkflowResultTests.test_report_object_crash_reopens_and_repairs_exact_index) ... ok
+test_report_receipt_descriptor_extra_fields_refuse (test_workflow_results.WorkflowResultTests.test_report_receipt_descriptor_extra_fields_refuse) ... ok
+test_selection_object_crash_repairs_only_exact_descriptor (test_workflow_results.WorkflowResultTests.test_selection_object_crash_repairs_only_exact_descriptor) ... ok
+test_selection_substitution_and_missing_evidence_refuse (test_workflow_results.WorkflowResultTests.test_selection_substitution_and_missing_evidence_refuse) ... ok
+test_skipped_before_dispatch_capture_is_required_and_counted_once (test_workflow_results.WorkflowResultTests.test_skipped_before_dispatch_capture_is_required_and_counted_once) ... ok
+test_terminal_member_report_reopens_exact_original_attempt_capture (test_workflow_results.WorkflowResultTests.test_terminal_member_report_reopens_exact_original_attempt_capture) ... ok
+test_unfinished_discovery_retains_actual_frozen_session_ledger (test_workflow_results.WorkflowResultTests.test_unfinished_discovery_retains_actual_frozen_session_ledger) ... ok
+test_valid_old_capture_cannot_discharge_current_parser_backlog (test_workflow_results.WorkflowResultTests.test_valid_old_capture_cannot_discharge_current_parser_backlog) ... ok
+
+======================================================================
+ERROR: test_repaired_report_retains_original_immutable_repair_anchor (test_workflow_results.WorkflowResultTests.test_repaired_report_retains_original_immutable_repair_anchor)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_results.py", line 551, in test_repaired_report_retains_original_immutable_repair_anchor
+    self.delete_index('WorkflowRepairObligation', row.key)
+                                                  ^^^^^^^
+AttributeError: 'Versioned' object has no attribute 'key'
+
+----------------------------------------------------------------------
+Ran 17 tests in 66.198s
+
+FAILED (errors=1)
+
+exit: 1

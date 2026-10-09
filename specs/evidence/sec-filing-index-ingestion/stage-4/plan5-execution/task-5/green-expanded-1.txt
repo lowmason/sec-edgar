@@ -1,0 +1,34 @@
+test_expired_original_is_repaired_fresh_without_pointer_advance (test_workflow_processing.ProcessingTests.test_expired_original_is_repaired_fresh_without_pointer_advance) ... ok
+test_fatal_collection_stops_before_etl_and_retains_all_child_gaps (test_workflow_processing.ProcessingTests.test_fatal_collection_stops_before_etl_and_retains_all_child_gaps) ... ERROR
+test_genuine_conflicting_source_has_no_accepted_processing (test_workflow_processing.ProcessingTests.test_genuine_conflicting_source_has_no_accepted_processing) ... ok
+test_malformed_source_has_no_accepted_observation_or_pointer (test_workflow_processing.ProcessingTests.test_malformed_source_has_no_accepted_observation_or_pointer) ... ok
+test_member_evidence_rejects_forged_version_ref_quarter_and_outcome (test_workflow_processing.ProcessingTests.test_member_evidence_rejects_forged_version_ref_quarter_and_outcome) ... ok
+test_member_receipt_is_content_first_and_replays_identically (test_workflow_processing.ProcessingTests.test_member_receipt_is_content_first_and_replays_identically) ... ok
+test_origin_acquisition_and_current_parser_replay_do_not_borrow_versions (test_workflow_processing.ProcessingTests.test_origin_acquisition_and_current_parser_replay_do_not_borrow_versions) ... ok
+test_partial_q3_q4_and_gate_preserve_exact_child_outcomes (test_workflow_processing.ProcessingTests.test_partial_q3_q4_and_gate_preserve_exact_child_outcomes) ... ok
+test_receipt_context_and_index_correlation_are_authoritative (test_workflow_processing.ProcessingTests.test_receipt_context_and_index_correlation_are_authoritative) ... ok
+test_receipt_replay_repairs_missing_index_without_dispatch (test_workflow_processing.ProcessingTests.test_receipt_replay_repairs_missing_index_without_dispatch) ... ok
+test_refusal_retains_exact_line_and_raw_details (test_workflow_processing.ProcessingTests.test_refusal_retains_exact_line_and_raw_details) ... ok
+test_retry_prefix_is_retained_without_source_quarantine (test_workflow_processing.ProcessingTests.test_retry_prefix_is_retained_without_source_quarantine) ... ok
+test_tampering_refuses_before_record (test_workflow_processing.ProcessingTests.test_tampering_refuses_before_record) ... ok
+
+======================================================================
+ERROR: test_fatal_collection_stops_before_etl_and_retains_all_child_gaps (test_workflow_processing.ProcessingTests.test_fatal_collection_stops_before_etl_and_retains_all_child_gaps)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_processing.py", line 300, in test_fatal_collection_stops_before_etl_and_retains_all_child_gaps
+    h, context, dispatcher, value = self.prepare(Path(tmp), pack_edit=blocked)
+                                    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_processing.py", line 65, in prepare
+    dispatcher = Dispatcher(context, h.settings, h.pack, root, h.store, h.objects)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/checked.py", line 400, in __init__
+    self.pack = FixturePack.load(fixture_pack)
+                ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/download.py", line 709, in load
+    raise FixtureError('fixture response has unsupported fields')
+sec_edgar_ingest.download.FixtureError: fixture response has unsupported fields
+
+----------------------------------------------------------------------
+Ran 13 tests in 58.283s
+
+FAILED (errors=1)

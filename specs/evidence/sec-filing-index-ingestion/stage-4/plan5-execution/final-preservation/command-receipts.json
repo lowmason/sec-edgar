@@ -1,0 +1,34 @@
+{
+  "first": {
+    "command": [
+      "python3",
+      "/private/tmp/sec-plan5-final-preservation-audit-first-failure.py"
+    ],
+    "exit": 1,
+    "stdout": "sec-plan5-final-preservation-audit.stdout.txt",
+    "stderr": "sec-plan5-final-preservation-audit.stderr.txt",
+    "note": "first-failure retained executable is exact executed first version; original executed filename subsequently repaired"
+  },
+  "rerun": {
+    "command": [
+      "python3",
+      "/private/tmp/sec-plan5-final-preservation-audit.py"
+    ],
+    "exit": 1,
+    "stdout": "sec-plan5-final-preservation-audit-rerun.stdout.txt",
+    "stderr": "sec-plan5-final-preservation-audit-rerun.stderr.txt"
+  },
+  "supplement": {
+    "command": [
+      "python3",
+      "/private/tmp/sec-plan5-final-preservation-supplement.py"
+    ],
+    "exit": 0
+  },
+  "optional_process_progress_check": {
+    "command": "ps -axo pid,etime,command | rg sec-plan5-final-preservation-audit.py",
+    "exit": 1,
+    "stderr": "zsh:1: operation not permitted: ps",
+    "disposition": "No escalation requested; optional process listing not part of preservation verification."
+  }
+}

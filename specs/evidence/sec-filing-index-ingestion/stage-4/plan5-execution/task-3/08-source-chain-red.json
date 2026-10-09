@@ -1,0 +1,23 @@
+{
+  "argv": [
+    "uv",
+    "run",
+    "--offline",
+    "--frozen",
+    "--package",
+    "sec-edgar-ingest",
+    "python",
+    "packages/sec-edgar-ingest/tests/network_guard.py",
+    "discover",
+    "-s",
+    "packages/sec-edgar-ingest/tests",
+    "-p",
+    "test_workflow_checked.py",
+    "-k",
+    "test_snapshot_chain_refuses_noncanonical_retained_source_bytes",
+    "-v"
+  ],
+  "exit": 0,
+  "stdout": "",
+  "stderr": "test_snapshot_chain_refuses_noncanonical_retained_source_bytes (test_workflow_checked.CheckedWorkflowTests.test_snapshot_chain_refuses_noncanonical_retained_source_bytes) ... ok\n\n----------------------------------------------------------------------\nRan 1 test in 2.485s\n\nOK\n"
+}

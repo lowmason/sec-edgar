@@ -1,0 +1,218 @@
+argv: ["uv", "run", "--offline", "--frozen", "--package", "sec-edgar-ingest", "python", "packages/sec-edgar-ingest/tests/network_guard.py", "discover", "-s", "packages/sec-edgar-ingest/tests", "-p", "test_workflow_results.py", "-v"]
+test_empty_leaf_roles_bridge_and_listing_evidence_cannot_be_substituted (test_workflow_results.WorkflowResultTests.test_empty_leaf_roles_bridge_and_listing_evidence_cannot_be_substituted) ... ERROR
+test_exact_replay_after_deadline_and_changed_invocation_refusal (test_workflow_results.WorkflowResultTests.test_exact_replay_after_deadline_and_changed_invocation_refusal) ... ERROR
+test_existing_conflicting_report_index_refuses (test_workflow_results.WorkflowResultTests.test_existing_conflicting_report_index_refuses) ... ERROR
+test_fatal_discovery_without_result_preserves_frozen_prior_jobs (test_workflow_results.WorkflowResultTests.test_fatal_discovery_without_result_preserves_frozen_prior_jobs) ... ok
+test_historical_report_reads_original_capture_after_pointer_advance (test_workflow_results.WorkflowResultTests.test_historical_report_reads_original_capture_after_pointer_advance) ... ERROR
+test_missing_workflow_and_child_indexes_recover_from_immutable_authority (test_workflow_results.WorkflowResultTests.test_missing_workflow_and_child_indexes_recover_from_immutable_authority) ... ERROR
+test_parent_capture_retains_full_empty_discovery_authority (test_workflow_results.WorkflowResultTests.test_parent_capture_retains_full_empty_discovery_authority) ... ERROR
+test_report_object_crash_reopens_and_repairs_exact_index (test_workflow_results.WorkflowResultTests.test_report_object_crash_reopens_and_repairs_exact_index) ... ERROR
+test_selection_substitution_and_missing_evidence_refuse (test_workflow_results.WorkflowResultTests.test_selection_substitution_and_missing_evidence_refuse) ... ERROR
+test_skipped_before_dispatch_capture_is_required_and_counted_once (test_workflow_results.WorkflowResultTests.test_skipped_before_dispatch_capture_is_required_and_counted_once) ... ERROR
+test_unfinished_discovery_retains_actual_frozen_session_ledger (test_workflow_results.WorkflowResultTests.test_unfinished_discovery_retains_actual_frozen_session_ledger) ... ok
+test_valid_old_capture_cannot_discharge_current_parser_backlog (test_workflow_results.WorkflowResultTests.test_valid_old_capture_cannot_discharge_current_parser_backlog) ... ERROR
+
+======================================================================
+ERROR: test_empty_leaf_roles_bridge_and_listing_evidence_cannot_be_substituted (test_workflow_results.WorkflowResultTests.test_empty_leaf_roles_bridge_and_listing_evidence_cannot_be_substituted)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_results.py", line 328, in test_empty_leaf_roles_bridge_and_listing_evidence_cannot_be_substituted
+    selection = parse_json(canonical_json(to_mapping_value(self.selection(skipped=True))))
+                           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py", line 31, in canonical_json
+    return json.dumps(value, sort_keys=True, separators=(",", ":"),
+           ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                      ensure_ascii=False, allow_nan=False).encode("utf-8")
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/json/__init__.py", line 238, in dumps
+    **kw).encode(obj)
+          ~~~~~~^^^^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/json/encoder.py", line 200, in encode
+    chunks = self.iterencode(o, _one_shot=True)
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/json/encoder.py", line 261, in iterencode
+    return _iterencode(o, 0)
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/json/encoder.py", line 180, in default
+    raise TypeError(f'Object of type {o.__class__.__name__} '
+                    f'is not JSON serializable')
+TypeError: Object of type FrozenMapping is not JSON serializable
+when serializing list item 0
+when serializing dict item 'already_complete'
+
+======================================================================
+ERROR: test_exact_replay_after_deadline_and_changed_invocation_refusal (test_workflow_results.WorkflowResultTests.test_exact_replay_after_deadline_and_changed_invocation_refusal)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_results.py", line 189, in test_exact_replay_after_deadline_and_changed_invocation_refusal
+    report = self.report()
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_results.py", line 102, in report
+    receipts.append(WorkflowMembers(self.f.store, self.f.objects).record(members[0], self.context, evidence))
+                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/members.py", line 97, in record
+    validate_member_evidence(result, evidence, self.objects)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/processing.py", line 162, in validate_member_evidence
+    raise Conflict('member child step differs from exact member namespace')
+sec_edgar_ingest.storage.contracts.Conflict: member child step differs from exact member namespace
+
+======================================================================
+ERROR: test_existing_conflicting_report_index_refuses (test_workflow_results.WorkflowResultTests.test_existing_conflicting_report_index_refuses)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_results.py", line 171, in test_existing_conflicting_report_index_refuses
+    report = self.report()
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_results.py", line 102, in report
+    receipts.append(WorkflowMembers(self.f.store, self.f.objects).record(members[0], self.context, evidence))
+                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/members.py", line 97, in record
+    validate_member_evidence(result, evidence, self.objects)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/processing.py", line 162, in validate_member_evidence
+    raise Conflict('member child step differs from exact member namespace')
+sec_edgar_ingest.storage.contracts.Conflict: member child step differs from exact member namespace
+
+======================================================================
+ERROR: test_historical_report_reads_original_capture_after_pointer_advance (test_workflow_results.WorkflowResultTests.test_historical_report_reads_original_capture_after_pointer_advance)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_results.py", line 123, in test_historical_report_reads_original_capture_after_pointer_advance
+    report = self.report()
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_results.py", line 102, in report
+    receipts.append(WorkflowMembers(self.f.store, self.f.objects).record(members[0], self.context, evidence))
+                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/members.py", line 97, in record
+    validate_member_evidence(result, evidence, self.objects)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/processing.py", line 162, in validate_member_evidence
+    raise Conflict('member child step differs from exact member namespace')
+sec_edgar_ingest.storage.contracts.Conflict: member child step differs from exact member namespace
+
+======================================================================
+ERROR: test_missing_workflow_and_child_indexes_recover_from_immutable_authority (test_workflow_results.WorkflowResultTests.test_missing_workflow_and_child_indexes_recover_from_immutable_authority)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_results.py", line 161, in test_missing_workflow_and_child_indexes_recover_from_immutable_authority
+    report = self.report()
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_results.py", line 102, in report
+    receipts.append(WorkflowMembers(self.f.store, self.f.objects).record(members[0], self.context, evidence))
+                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/members.py", line 97, in record
+    validate_member_evidence(result, evidence, self.objects)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/processing.py", line 162, in validate_member_evidence
+    raise Conflict('member child step differs from exact member namespace')
+sec_edgar_ingest.storage.contracts.Conflict: member child step differs from exact member namespace
+
+======================================================================
+ERROR: test_parent_capture_retains_full_empty_discovery_authority (test_workflow_results.WorkflowResultTests.test_parent_capture_retains_full_empty_discovery_authority)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_results.py", line 286, in test_parent_capture_retains_full_empty_discovery_authority
+    h = CommandHarness(root, simple_pack(root, empty=True))
+                             ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/support_workflows.py", line 116, in simple_pack
+    return build_pack(root, listings, bodies)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/support_workflows.py", line 30, in build_pack
+    root.mkdir(parents=True, exist_ok=False)
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/pathlib/__init__.py", line 1016, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+FileExistsError: [Errno 17] File exists: '/var/folders/3m/6f8zc0l14dn8yz2x8yy2_3mw0000gn/T/tmpzl3yl8q_'
+
+======================================================================
+ERROR: test_report_object_crash_reopens_and_repairs_exact_index (test_workflow_results.WorkflowResultTests.test_report_object_crash_reopens_and_repairs_exact_index)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_results.py", line 138, in test_report_object_crash_reopens_and_repairs_exact_index
+    report = self.report()
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_results.py", line 102, in report
+    receipts.append(WorkflowMembers(self.f.store, self.f.objects).record(members[0], self.context, evidence))
+                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/members.py", line 97, in record
+    validate_member_evidence(result, evidence, self.objects)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/processing.py", line 162, in validate_member_evidence
+    raise Conflict('member child step differs from exact member namespace')
+sec_edgar_ingest.storage.contracts.Conflict: member child step differs from exact member namespace
+
+======================================================================
+ERROR: test_selection_substitution_and_missing_evidence_refuse (test_workflow_results.WorkflowResultTests.test_selection_substitution_and_missing_evidence_refuse)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_results.py", line 229, in test_selection_substitution_and_missing_evidence_refuse
+    report = self.report()
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_results.py", line 102, in report
+    receipts.append(WorkflowMembers(self.f.store, self.f.objects).record(members[0], self.context, evidence))
+                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/members.py", line 97, in record
+    validate_member_evidence(result, evidence, self.objects)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/processing.py", line 162, in validate_member_evidence
+    raise Conflict('member child step differs from exact member namespace')
+sec_edgar_ingest.storage.contracts.Conflict: member child step differs from exact member namespace
+
+======================================================================
+ERROR: test_skipped_before_dispatch_capture_is_required_and_counted_once (test_workflow_results.WorkflowResultTests.test_skipped_before_dispatch_capture_is_required_and_counted_once)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_results.py", line 214, in test_skipped_before_dispatch_capture_is_required_and_counted_once
+    report = self.report(skipped=True)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_results.py", line 81, in report
+    selection = freeze_selection(self.context, self.selection(skipped=skipped),
+                                 self.f.store, self.f.objects)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/results.py", line 244, in freeze_selection
+    selection = _plain(selection)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/results.py", line 21, in _plain
+    return parse_json(canonical_json(to_mapping_value(value)))
+                      ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py", line 31, in canonical_json
+    return json.dumps(value, sort_keys=True, separators=(",", ":"),
+           ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                      ensure_ascii=False, allow_nan=False).encode("utf-8")
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/json/__init__.py", line 238, in dumps
+    **kw).encode(obj)
+          ~~~~~~^^^^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/json/encoder.py", line 200, in encode
+    chunks = self.iterencode(o, _one_shot=True)
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/json/encoder.py", line 261, in iterencode
+    return _iterencode(o, 0)
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/json/encoder.py", line 180, in default
+    raise TypeError(f'Object of type {o.__class__.__name__} '
+                    f'is not JSON serializable')
+TypeError: Object of type FrozenMapping is not JSON serializable
+when serializing list item 0
+when serializing dict item 'already_complete'
+
+======================================================================
+ERROR: test_valid_old_capture_cannot_discharge_current_parser_backlog (test_workflow_results.WorkflowResultTests.test_valid_old_capture_cannot_discharge_current_parser_backlog)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_results.py", line 415, in test_valid_old_capture_cannot_discharge_current_parser_backlog
+    selection = parse_json(canonical_json(to_mapping_value(self.selection(skipped=True))))
+                           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py", line 31, in canonical_json
+    return json.dumps(value, sort_keys=True, separators=(",", ":"),
+           ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                      ensure_ascii=False, allow_nan=False).encode("utf-8")
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/json/__init__.py", line 238, in dumps
+    **kw).encode(obj)
+          ~~~~~~^^^^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/json/encoder.py", line 200, in encode
+    chunks = self.iterencode(o, _one_shot=True)
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/json/encoder.py", line 261, in iterencode
+    return _iterencode(o, 0)
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/json/encoder.py", line 180, in default
+    raise TypeError(f'Object of type {o.__class__.__name__} '
+                    f'is not JSON serializable')
+TypeError: Object of type FrozenMapping is not JSON serializable
+when serializing list item 0
+when serializing dict item 'already_complete'
+
+----------------------------------------------------------------------
+Ran 12 tests in 37.392s
+
+FAILED (errors=10)
+
+exit: 1

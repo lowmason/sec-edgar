@@ -1,0 +1,21 @@
+{
+  "argv": [
+    "uv",
+    "run",
+    "--offline",
+    "--frozen",
+    "--package",
+    "sec-edgar-ingest",
+    "python",
+    "packages/sec-edgar-ingest/tests/network_guard.py",
+    "discover",
+    "-s",
+    "packages/sec-edgar-ingest/tests",
+    "-p",
+    "test_etl_parser.py",
+    "-v"
+  ],
+  "exit": 0,
+  "stdout": "",
+  "stderr": "test_daily_date_chooses_older_output_quarter (test_etl_parser.EtlParserTests.test_daily_date_chooses_older_output_quarter) ... ok\ntest_cik_dates_paths_and_originals (test_etl_parser.StrictParserTests.test_cik_dates_paths_and_originals) ... ok\ntest_field_refusal_matrix (test_etl_parser.StrictParserTests.test_field_refusal_matrix) ... ok\ntest_final_newline_families_and_duplicates (test_etl_parser.StrictParserTests.test_final_newline_families_and_duplicates) ... ok\ntest_independent_goldens_and_manifest (test_etl_parser.StrictParserTests.test_independent_goldens_and_manifest) ... ok\ntest_stream_refusal_matrix (test_etl_parser.StrictParserTests.test_stream_refusal_matrix) ... ok\ntest_version_registration_and_preopen_refusal (test_etl_parser.StrictParserTests.test_version_registration_and_preopen_refusal) ... ok\n\n----------------------------------------------------------------------\nRan 7 tests in 0.098s\n\nOK\n"
+}

@@ -1,0 +1,78 @@
+argv: ["uv", "run", "--offline", "--frozen", "--package", "sec-edgar-ingest", "python", "packages/sec-edgar-ingest/tests/network_guard.py", "discover", "-s", "packages/sec-edgar-ingest/tests", "-p", "test_workflow_runner.py", "-v"]
+exit: 1
+test_access_blocked_source_defers_every_later_member (test_workflow_runner.RunnerTests.test_access_blocked_source_defers_every_later_member) ... ok
+test_all_refused_retains_baseline_gaps_and_quarantine_exit (test_workflow_runner.RunnerTests.test_all_refused_retains_baseline_gaps_and_quarantine_exit) ... ok
+test_backfill_and_daily_same_run_ids_have_separate_child_namespaces (test_workflow_runner.RunnerTests.test_backfill_and_daily_same_run_ids_have_separate_child_namespaces) ... ok
+test_bounded_inclusive_backfill_captures_both_quarters (test_workflow_runner.RunnerTests.test_bounded_inclusive_backfill_captures_both_quarters) ... ok
+test_corrupt_retained_registry_and_receipt_do_not_block_valid_siblings (test_workflow_runner.RunnerTests.test_corrupt_retained_registry_and_receipt_do_not_block_valid_siblings) ... ok
+test_deadline_after_selection_records_undispatched_units_without_child_work (test_workflow_runner.RunnerTests.test_deadline_after_selection_records_undispatched_units_without_child_work) ... ok
+test_empty_daily_without_backlog_is_no_new_sources (test_workflow_runner.RunnerTests.test_empty_daily_without_backlog_is_no_new_sources) ... ok
+test_empty_quarter_is_independent_missing_unit (test_workflow_runner.RunnerTests.test_empty_quarter_is_independent_missing_unit) ... ok
+test_expired_original_repairs_with_new_valid_workflow_attempt (test_workflow_runner.RunnerTests.test_expired_original_repairs_with_new_valid_workflow_attempt) ... ok
+test_failed_daily_directory_holds_boundary_and_retains_baseline_progress (test_workflow_runner.RunnerTests.test_failed_daily_directory_holds_boundary_and_retains_baseline_progress) ... ok
+test_failed_empty_daily_directory_gap_omission_refuses (test_workflow_runner.RunnerTests.test_failed_empty_daily_directory_gap_omission_refuses) ... ok
+test_formerly_affected_q3_is_not_completed_by_q4_publication (test_workflow_runner.RunnerTests.test_formerly_affected_q3_is_not_completed_by_q4_publication) ... ok
+test_fresh_backfill_counts_every_original_parent_and_replay_dispatches_nothing (test_workflow_runner.RunnerTests.test_fresh_backfill_counts_every_original_parent_and_replay_dispatches_nothing) ... ok
+test_gate_only_and_mixed_gate_progress_preserve_current_pointer (test_workflow_runner.RunnerTests.test_gate_only_and_mixed_gate_progress_preserve_current_pointer) ... ok
+test_missing_frozen_provenance_never_recomputes_existing_selection (test_workflow_runner.RunnerTests.test_missing_frozen_provenance_never_recomputes_existing_selection) ... ok
+test_missing_result_discovery_gap_omission_refuses (test_workflow_runner.RunnerTests.test_missing_result_discovery_gap_omission_refuses) ... FAIL
+test_no_result_discovery_keeps_required_ledger_and_older_pending_jobs (test_workflow_runner.RunnerTests.test_no_result_discovery_keeps_required_ledger_and_older_pending_jobs) ... ok
+test_post_cas_failure_and_process_death_repair_before_report (test_workflow_runner.RunnerTests.test_post_cas_failure_and_process_death_repair_before_report) ... ok
+test_refusal_and_valid_progress_are_incomplete (test_workflow_runner.RunnerTests.test_refusal_and_valid_progress_are_incomplete) ... ok
+test_same_attempt_receipts_replay_after_mutable_discovery_index_is_corrupt (test_workflow_runner.RunnerTests.test_same_attempt_receipts_replay_after_mutable_discovery_index_is_corrupt) ... ok
+test_saved_receipt_repairs_missing_index_and_refuses_divergent_index (test_workflow_runner.RunnerTests.test_saved_receipt_repairs_missing_index_and_refuses_divergent_index) ... ok
+
+======================================================================
+FAIL: test_missing_result_discovery_gap_omission_refuses (test_workflow_runner.RunnerTests.test_missing_result_discovery_gap_omission_refuses)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/results.py", line 305, in freeze_selection
+    _read(path, objects)
+    ~~~~~^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/results.py", line 32, in _read
+    body = objects.read(path)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py", line 112, in read
+    with self._open(path) as stream:
+         ~~~~~~~~~~^^^^^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/contextlib.py", line 141, in __enter__
+    return next(self.gen)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py", line 68, in _open
+    descriptor = os.open(name, FILE_FLAGS, dir_fd=parent)
+FileNotFoundError: [Errno 2] No such file or directory: 'selection.json'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/results.py", line 312, in freeze_selection
+    read_child_capture(call, objects)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/checked.py", line 318, in read_child_capture
+    result = (read_etl_result if expected.command in ('transform', 'publish') else read_result)(
+        value['result_ref'], objects)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/results.py", line 50, in read_result
+    body = objects.read(path)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py", line 112, in read
+    with self._open(path) as stream:
+         ~~~~~~~~~~^^^^^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/contextlib.py", line 141, in __enter__
+    return next(self.gen)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py", line 68, in _open
+    descriptor = os.open(name, FILE_FLAGS, dir_fd=parent)
+FileNotFoundError: [Errno 2] No such file or directory: 'result.json'
+
+During handling of the above exception, another exception occurred:
+
+sec_edgar_ingest.storage.contracts.Conflict: failed discovery lacks its original error gap
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_runner.py", line 415, in test_missing_result_discovery_gap_omission_refuses
+    with self.assertRaisesRegex(Conflict, 'persisted Attempt'):
+         ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: "persisted Attempt" does not match "failed discovery lacks its original error gap"
+
+----------------------------------------------------------------------
+Ran 21 tests in 174.453s
+
+FAILED (failures=1)

@@ -1,0 +1,72 @@
+argv: ["uv", "run", "--offline", "--frozen", "--package", "sec-edgar-ingest", "python", "packages/sec-edgar-ingest/tests/network_guard.py", "discover", "-s", "packages/sec-edgar-ingest/tests", "-p", "test_workflow_legacy.py", "-v"]
+test_corrupt_parent_is_isolated_from_valid_sibling_and_never_recursive (test_workflow_legacy.LegacyTests.test_corrupt_parent_is_isolated_from_valid_sibling_and_never_recursive) ... ok
+test_corrupt_projection_is_never_adopted_as_original_parent (test_workflow_legacy.LegacyTests.test_corrupt_projection_is_never_adopted_as_original_parent) ... ok
+test_corrupt_source_and_processing_do_not_hide_valid_parent (test_workflow_legacy.LegacyTests.test_corrupt_source_and_processing_do_not_hide_valid_parent) ... ok
+test_crash_before_parent_write_recovers_all_original_units (test_workflow_legacy.LegacyTests.test_crash_before_parent_write_recovers_all_original_units) ... ok
+test_divergent_binding_winner_refuses_and_preserves_original_bytes (test_workflow_legacy.LegacyTests.test_divergent_binding_winner_refuses_and_preserves_original_bytes) ... ok
+test_legacy_registry_and_capture_survive_close_reopen (test_workflow_legacy.LegacyTests.test_legacy_registry_and_capture_survive_close_reopen) ... ok
+test_malformed_frozen_unit_is_isolated_from_valid_sibling (test_workflow_legacy.LegacyTests.test_malformed_frozen_unit_is_isolated_from_valid_sibling) ... 
+  test_malformed_frozen_unit_is_isolated_from_valid_sibling (test_workflow_legacy.LegacyTests.test_malformed_frozen_unit_is_isolated_from_valid_sibling) (units=[{'period': '2026Q3', 'role': 'quarter', 'url': 123}, {'period': '2026Q4', 'role': 'quarter', 'url': 'https://www.sec.gov/Archives/edgar/daily-index/2026/QTR4/index.json'}, {'period': '2026', 'role': 'year', 'url': 'https://www.sec.gov/Archives/edgar/daily-index/2026/index.json'}, {'period': 'daily-index', 'role': 'root', 'url': 'https://www.sec.gov/Archives/edgar/daily-index/index.json'}]) ... ERROR
+  test_malformed_frozen_unit_is_isolated_from_valid_sibling (test_workflow_legacy.LegacyTests.test_malformed_frozen_unit_is_isolated_from_valid_sibling) (units=[{'period': '2026Q3', 'role': 'quarter', 'url': None}, {'period': '2026Q4', 'role': 'quarter', 'url': 'https://www.sec.gov/Archives/edgar/daily-index/2026/QTR4/index.json'}, {'period': '2026', 'role': 'year', 'url': 'https://www.sec.gov/Archives/edgar/daily-index/2026/index.json'}, {'period': 'daily-index', 'role': 'root', 'url': 'https://www.sec.gov/Archives/edgar/daily-index/index.json'}]) ... ERROR
+  test_malformed_frozen_unit_is_isolated_from_valid_sibling (test_workflow_legacy.LegacyTests.test_malformed_frozen_unit_is_isolated_from_valid_sibling) (units=[{'period': '2026Q3', 'role': 'quarter', 'url': {}}, {'period': '2026Q4', 'role': 'quarter', 'url': 'https://www.sec.gov/Archives/edgar/daily-index/2026/QTR4/index.json'}, {'period': '2026', 'role': 'year', 'url': 'https://www.sec.gov/Archives/edgar/daily-index/2026/index.json'}, {'period': 'daily-index', 'role': 'root', 'url': 'https://www.sec.gov/Archives/edgar/daily-index/index.json'}]) ... ERROR
+test_missing_progress_is_failed_and_does_not_invent_source (test_workflow_legacy.LegacyTests.test_missing_progress_is_failed_and_does_not_invent_source) ... ok
+test_old_downloaded_unit_keeps_parent_and_exact_pin (test_workflow_legacy.LegacyTests.test_old_downloaded_unit_keeps_parent_and_exact_pin) ... ok
+test_recovery_capture_tampering_refuses (test_workflow_legacy.LegacyTests.test_recovery_capture_tampering_refuses) ... ok
+
+======================================================================
+ERROR: test_malformed_frozen_unit_is_isolated_from_valid_sibling (test_workflow_legacy.LegacyTests.test_malformed_frozen_unit_is_isolated_from_valid_sibling) (units=[{'period': '2026Q3', 'role': 'quarter', 'url': 123}, {'period': '2026Q4', 'role': 'quarter', 'url': 'https://www.sec.gov/Archives/edgar/daily-index/2026/QTR4/index.json'}, {'period': '2026', 'role': 'year', 'url': 'https://www.sec.gov/Archives/edgar/daily-index/2026/index.json'}, {'period': 'daily-index', 'role': 'root', 'url': 'https://www.sec.gov/Archives/edgar/daily-index/index.json'}])
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_legacy.py", line 397, in test_malformed_frozen_unit_is_isolated_from_valid_sibling
+    gaps = bootstrap_legacy(h.store, h.objects)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/legacy.py", line 109, in bootstrap_legacy
+    retain(reconstruct_parent(session, store, objects))
+           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/legacy.py", line 19, in reconstruct_parent
+    for unit in sorted(session['frozen']['units'], key=lambda u: (u['url'].count('/'), u['url'])):
+                ~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/legacy.py", line 19, in <lambda>
+    for unit in sorted(session['frozen']['units'], key=lambda u: (u['url'].count('/'), u['url'])):
+                                                                  ^^^^^^^^^^^^^^
+AttributeError: 'int' object has no attribute 'count'
+
+======================================================================
+ERROR: test_malformed_frozen_unit_is_isolated_from_valid_sibling (test_workflow_legacy.LegacyTests.test_malformed_frozen_unit_is_isolated_from_valid_sibling) (units=[{'period': '2026Q3', 'role': 'quarter', 'url': None}, {'period': '2026Q4', 'role': 'quarter', 'url': 'https://www.sec.gov/Archives/edgar/daily-index/2026/QTR4/index.json'}, {'period': '2026', 'role': 'year', 'url': 'https://www.sec.gov/Archives/edgar/daily-index/2026/index.json'}, {'period': 'daily-index', 'role': 'root', 'url': 'https://www.sec.gov/Archives/edgar/daily-index/index.json'}])
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_legacy.py", line 397, in test_malformed_frozen_unit_is_isolated_from_valid_sibling
+    gaps = bootstrap_legacy(h.store, h.objects)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/legacy.py", line 109, in bootstrap_legacy
+    retain(reconstruct_parent(session, store, objects))
+           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/legacy.py", line 19, in reconstruct_parent
+    for unit in sorted(session['frozen']['units'], key=lambda u: (u['url'].count('/'), u['url'])):
+                ~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/legacy.py", line 19, in <lambda>
+    for unit in sorted(session['frozen']['units'], key=lambda u: (u['url'].count('/'), u['url'])):
+                                                                  ^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'count'
+
+======================================================================
+ERROR: test_malformed_frozen_unit_is_isolated_from_valid_sibling (test_workflow_legacy.LegacyTests.test_malformed_frozen_unit_is_isolated_from_valid_sibling) (units=[{'period': '2026Q3', 'role': 'quarter', 'url': {}}, {'period': '2026Q4', 'role': 'quarter', 'url': 'https://www.sec.gov/Archives/edgar/daily-index/2026/QTR4/index.json'}, {'period': '2026', 'role': 'year', 'url': 'https://www.sec.gov/Archives/edgar/daily-index/2026/index.json'}, {'period': 'daily-index', 'role': 'root', 'url': 'https://www.sec.gov/Archives/edgar/daily-index/index.json'}])
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_legacy.py", line 397, in test_malformed_frozen_unit_is_isolated_from_valid_sibling
+    gaps = bootstrap_legacy(h.store, h.objects)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/legacy.py", line 109, in bootstrap_legacy
+    retain(reconstruct_parent(session, store, objects))
+           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/legacy.py", line 19, in reconstruct_parent
+    for unit in sorted(session['frozen']['units'], key=lambda u: (u['url'].count('/'), u['url'])):
+                ~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/legacy.py", line 19, in <lambda>
+    for unit in sorted(session['frozen']['units'], key=lambda u: (u['url'].count('/'), u['url'])):
+                                                                  ^^^^^^^^^^^^^^
+AttributeError: 'dict' object has no attribute 'count'
+
+----------------------------------------------------------------------
+Ran 10 tests in 34.109s
+
+FAILED (errors=3)
+
+exit: 1

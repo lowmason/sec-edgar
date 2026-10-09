@@ -1,0 +1,23 @@
+{
+  "argv": [
+    "uv",
+    "run",
+    "--offline",
+    "--frozen",
+    "--package",
+    "sec-edgar-ingest",
+    "sec-edgar-ingest",
+    "backfill",
+    "--help"
+  ],
+  "cwd": "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar",
+  "environment_overrides": {
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PYTHONPATH": null,
+    "UV_PYTHON_DOWNLOADS": "never"
+  },
+  "exit": 0,
+  "runtime_seconds": 0.09104112489148974,
+  "stderr": "",
+  "stdout": "usage: sec-edgar-ingest backfill [-h] --config CONFIG --run-id RUN_ID\n                                 --execution-id EXECUTION_ID\n                                 --attempt-id ATTEMPT_ID --deadline DEADLINE\n                                 [--state-dir STATE_DIR] [--today TODAY]\n                                 [--fixture-pack FIXTURE_PACK]\n\noptions:\n  -h, --help            show this help message and exit\n  --config CONFIG\n  --run-id RUN_ID\n  --execution-id EXECUTION_ID\n  --attempt-id ATTEMPT_ID\n  --deadline DEADLINE\n  --state-dir STATE_DIR\n  --today TODAY\n  --fixture-pack FIXTURE_PACK\n"
+}

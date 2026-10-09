@@ -1,0 +1,59 @@
+argv: ["uv", "run", "--offline", "--frozen", "--package", "sec-edgar-ingest", "python", "packages/sec-edgar-ingest/tests/network_guard.py", "discover", "-s", "packages/sec-edgar-ingest/tests", "-p", "test_workflow_runner.py", "-k", "gap_omission", "-v"]
+exit: 1
+test_failed_empty_daily_directory_gap_omission_refuses (test_workflow_runner.RunnerTests.test_failed_empty_daily_directory_gap_omission_refuses) ... ok
+test_missing_result_discovery_gap_omission_refuses (test_workflow_runner.RunnerTests.test_missing_result_discovery_gap_omission_refuses) ... FAIL
+
+======================================================================
+FAIL: test_missing_result_discovery_gap_omission_refuses (test_workflow_runner.RunnerTests.test_missing_result_discovery_gap_omission_refuses)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/results.py", line 305, in freeze_selection
+    _read(path, objects)
+    ~~~~~^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/results.py", line 32, in _read
+    body = objects.read(path)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py", line 112, in read
+    with self._open(path) as stream:
+         ~~~~~~~~~~^^^^^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/contextlib.py", line 141, in __enter__
+    return next(self.gen)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py", line 68, in _open
+    descriptor = os.open(name, FILE_FLAGS, dir_fd=parent)
+FileNotFoundError: [Errno 2] No such file or directory: 'selection.json'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/results.py", line 312, in freeze_selection
+    read_child_capture(call, objects)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/checked.py", line 318, in read_child_capture
+    result = (read_etl_result if expected.command in ('transform', 'publish') else read_result)(
+        value['result_ref'], objects)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/results.py", line 50, in read_result
+    body = objects.read(path)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py", line 112, in read
+    with self._open(path) as stream:
+         ~~~~~~~~~~^^^^^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/contextlib.py", line 141, in __enter__
+    return next(self.gen)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py", line 68, in _open
+    descriptor = os.open(name, FILE_FLAGS, dir_fd=parent)
+FileNotFoundError: [Errno 2] No such file or directory: 'result.json'
+
+During handling of the above exception, another exception occurred:
+
+sec_edgar_ingest.storage.contracts.Conflict: failed discovery lacks its original error gap
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_runner.py", line 415, in test_missing_result_discovery_gap_omission_refuses
+    with self.assertRaisesRegex(Conflict, 'persisted Attempt'):
+         ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: "persisted Attempt" does not match "failed discovery lacks its original error gap"
+
+----------------------------------------------------------------------
+Ran 2 tests in 4.626s
+
+FAILED (failures=1)

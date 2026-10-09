@@ -1,0 +1,19 @@
+{
+  "argv": [
+    "uv",
+    "run",
+    "--offline",
+    "--frozen",
+    "--package",
+    "sec-edgar-ingest",
+    "python",
+    "packages/sec-edgar-ingest/tests/network_guard.py",
+    "discover",
+    "-s",
+    "specs/evidence/sec-filing-index-ingestion/stage-4/plan5-execution/task-4",
+    "-p",
+    "diagnostic.py",
+    "-v"
+  ],
+  "exit": 0
+}

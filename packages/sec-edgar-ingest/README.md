@@ -126,6 +126,51 @@ quarantine/pending work, result repair, stopped ownership, and the conservative
 Azure clean-release guard.
 
 
+`backfill` and `daily` run the existing discover, collect, transform and publish commands through checked durable child results. Backfill takes inclusive endpoints from `backfill.start_quarter` and `backfill.end_quarter`; `open` resolves once when the invocation is pinned. Daily starts at the accepted `2026-10-01` handoff, discovers current/preceding and outage-spanning quarters, and retries every retained unresolved exact member. A missing newer listing does not withdraw an older source.
+
+Example fixture invocation: `sec-edgar-ingest backfill --config /absolute/local.json
+--run-id baseline-2026 --execution-id manual-1 --attempt-id attempt-1 --deadline
+2026-10-08T13:00:00Z --state-dir /absolute/fixture-state --fixture-pack
+/absolute/manifest.json --today 2026-10-08`. Use `daily` with the same argument shape
+for handoff/catch-up. The config/fixture/date/state overrides are explicit fixture
+controls; the Azure backend refuses fixture overrides. Live identities, storage access,
+deployment and schedules require their later-stage authorization.
+
+Keep every correlation ID, config byte identity, image/parser/schema version, deadline,
+fixture manifest hash and supplied date unchanged for an exact retry. A completed report
+can replay after its deadline and returns its original captured generations. An
+unfinished expired invocation requires a new valid attempt; its original evidence stays
+immutable. Reports live at
+`runs/sec/<run-id>/<backfill|daily>/<attempt-id>/result.json`. The immutable report
+precedes its repairable index.
+
+Source counts and quarter operations have different labels: `complete_sources`,
+`pending_sources`, `failed_sources`, `quarantined_sources`, `published_quarters`,
+`unchanged_quarters`, and `awaiting_approval_quarters`. A valid empty quarterly
+directory is an unresolved baseline unit. Daily returns `no_new_sources` only with
+successful required listings and no unresolved work. Quarantine is a terminal
+whole-source refusal; retained failed retry prefixes remain transport evidence when a
+later body succeeds. Gated or partially published sources remain pending/failed until
+every affected quarter is complete. Closed-quarter removal needs Stage 5 approval; there
+is no workflow force bypass.
+
+Exit codes remain: 0 success/no-new/unchanged; 2 invalid inputs or unfinished expired
+deadline; 3 incomplete/discovery failure; 4 pending; 5 retry/deferred/throttled; 6
+access blocked; 7 whole-source quarantine/invalid source; 8 lost ownership; 9
+state/internal/publication conflict; 10 awaiting approval. A publish crash after pointer
+CAS remains an explicit repair obligation. Retry through the checked command boundary; a
+pointer alone does not prove member completion, and repair must not advance the pointer
+twice. Use `capture_quarter` then `read_quarter` to read the captured validated
+generation rather than globbing files or selecting a mutable latest snapshot.
+
+Offline native and isolated installed-wheel workflow proofs passed for these synthetic
+fixture workflows and immutable evidence. They do not establish historical production
+coverage, deployed integration or complete-worker resource fit.
+All 22 Stage 7 checks remain reserved/not_run. Stage 5 owns reconciliation/approval,
+Stage 6 owns the worker/IaC/disabled schedules, Stage 7 owns integrated checks, and
+Stage 8 owns production activation/coverage.
+
+
 For local ETL, pass `--config conf/sec-edgar-etl-fixture.yaml` from the repository
 root. This separate [configuration](../../conf/sec-edgar-etl-fixture.yaml) selects
 `fixture-index-parser-v1` and preserves the acquisition store binding. Leave
@@ -147,11 +192,7 @@ See the [ETL runbook](../../docs/runbooks/sec-edgar-etl-publication.md) for exac
 commands, immutable reference shapes, captured Python reads and interruption
 recovery. The [Stage 3 evidence](../../specs/evidence/sec-filing-index-ingestion/stage-3/verification.md)
 includes actual spawn CAS races, forced exits, raw-only replay and an isolated
-installed-wheel proof on native Python 3.14.0/macOS arm64. Complete retained
-specimens SEC-0141–0143 contain 51 conflicting observations and are correctly
-refused: Stage 3 source acceptance and completion remain blocked. All 22 later
-integrated checks, Linux worker capacity and live Azure/authentication remain
-reserved.
+installed-wheel proof on native Python 3.14.0/macOS arm64. The owner amended Stage 3 acceptance on 2026-10-07 to allow exactly the documented SEC-0141, SEC-0142 and SEC-0143 whole-source quarantines for 21, 24 and 6 conflicting observations. No source, duplicate winner or zero-row parser exception is approved. Other invalid retained rows or missing offline dependencies remain blockers; all 22 later integrated checks remain reserved/not_run.
 
 The installed ETL proof extends the Stage 2 installation above: export the exact
 updated lock, install its hash-bearing PyArrow entry from the existing offline

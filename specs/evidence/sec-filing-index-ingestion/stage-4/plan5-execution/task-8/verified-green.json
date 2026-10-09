@@ -1,0 +1,20 @@
+{
+  "argv": [
+    "uv",
+    "run",
+    "--offline",
+    "--frozen",
+    "--package",
+    "sec-edgar-ingest",
+    "python",
+    "packages/sec-edgar-ingest/tests/network_guard.py",
+    "discover",
+    "-s",
+    "packages/sec-edgar-ingest/tests",
+    "-p",
+    "test_workflow_runner.py",
+    "-v"
+  ],
+  "output": "test_access_blocked_source_defers_every_later_member (test_workflow_runner.RunnerTests.test_access_blocked_source_defers_every_later_member) ... ok\ntest_all_refused_retains_baseline_gaps_and_quarantine_exit (test_workflow_runner.RunnerTests.test_all_refused_retains_baseline_gaps_and_quarantine_exit) ... ok\ntest_backfill_and_daily_same_run_ids_have_separate_child_namespaces (test_workflow_runner.RunnerTests.test_backfill_and_daily_same_run_ids_have_separate_child_namespaces) ... ok\ntest_bounded_inclusive_backfill_captures_both_quarters (test_workflow_runner.RunnerTests.test_bounded_inclusive_backfill_captures_both_quarters) ... ok\ntest_corrupt_retained_registry_and_receipt_do_not_block_valid_siblings (test_workflow_runner.RunnerTests.test_corrupt_retained_registry_and_receipt_do_not_block_valid_siblings) ... ok\ntest_deadline_after_selection_records_undispatched_units_without_child_work (test_workflow_runner.RunnerTests.test_deadline_after_selection_records_undispatched_units_without_child_work) ... ok\ntest_empty_daily_without_backlog_is_no_new_sources (test_workflow_runner.RunnerTests.test_empty_daily_without_backlog_is_no_new_sources) ... ok\ntest_empty_quarter_is_independent_missing_unit (test_workflow_runner.RunnerTests.test_empty_quarter_is_independent_missing_unit) ... ok\ntest_expired_original_repairs_with_new_valid_workflow_attempt (test_workflow_runner.RunnerTests.test_expired_original_repairs_with_new_valid_workflow_attempt) ... ok\ntest_failed_daily_directory_holds_boundary_and_retains_baseline_progress (test_workflow_runner.RunnerTests.test_failed_daily_directory_holds_boundary_and_retains_baseline_progress) ... ok\ntest_formerly_affected_q3_is_not_completed_by_q4_publication (test_workflow_runner.RunnerTests.test_formerly_affected_q3_is_not_completed_by_q4_publication) ... ok\ntest_fresh_backfill_counts_every_original_parent_and_replay_dispatches_nothing (test_workflow_runner.RunnerTests.test_fresh_backfill_counts_every_original_parent_and_replay_dispatches_nothing) ... ok\ntest_gate_only_and_mixed_gate_progress_preserve_current_pointer (test_workflow_runner.RunnerTests.test_gate_only_and_mixed_gate_progress_preserve_current_pointer) ... ok\ntest_missing_frozen_provenance_never_recomputes_existing_selection (test_workflow_runner.RunnerTests.test_missing_frozen_provenance_never_recomputes_existing_selection) ... ok\ntest_no_result_discovery_keeps_required_ledger_and_older_pending_jobs (test_workflow_runner.RunnerTests.test_no_result_discovery_keeps_required_ledger_and_older_pending_jobs) ... ok\ntest_post_cas_failure_and_process_death_repair_before_report (test_workflow_runner.RunnerTests.test_post_cas_failure_and_process_death_repair_before_report) ... ok\ntest_refusal_and_valid_progress_are_incomplete (test_workflow_runner.RunnerTests.test_refusal_and_valid_progress_are_incomplete) ... ok\ntest_same_attempt_receipts_replay_after_mutable_discovery_index_is_corrupt (test_workflow_runner.RunnerTests.test_same_attempt_receipts_replay_after_mutable_discovery_index_is_corrupt) ... ok\ntest_saved_receipt_repairs_missing_index_and_refuses_divergent_index (test_workflow_runner.RunnerTests.test_saved_receipt_repairs_missing_index_and_refuses_divergent_index) ... ok\n\n----------------------------------------------------------------------\nRan 19 tests in 188.679s\n\nOK\n",
+  "exit": 0
+}

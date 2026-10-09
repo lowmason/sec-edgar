@@ -1,0 +1,24 @@
+argv: ["uv", "run", "--offline", "--frozen", "--package", "sec-edgar-ingest", "python", "packages/sec-edgar-ingest/tests/network_guard.py", "discover", "-s", "packages/sec-edgar-ingest/tests", "-p", "test_workflow_provenance.py", "-v"]
+test_corrupt_registry_is_reported_without_hiding_valid_sibling (test_workflow_provenance.ProvenanceTests.test_corrupt_registry_is_reported_without_hiding_valid_sibling) ... ok
+test_divergent_binding_winner_stays_unchanged (test_workflow_provenance.ProvenanceTests.test_divergent_binding_winner_stays_unchanged) ... ok
+test_malformed_unrelated_registry_row_does_not_block_valid_projection (test_workflow_provenance.ProvenanceTests.test_malformed_unrelated_registry_row_does_not_block_valid_projection) ... ok
+test_missing_or_changed_required_ancestors_refuse (test_workflow_provenance.ProvenanceTests.test_missing_or_changed_required_ancestors_refuse) ... ok
+test_missing_successful_receipt_and_wrong_context_refuse (test_workflow_provenance.ProvenanceTests.test_missing_successful_receipt_and_wrong_context_refuse) ... ok
+test_original_frozen_metadata_changes_refuse (test_workflow_provenance.ProvenanceTests.test_original_frozen_metadata_changes_refuse) ... ok
+test_parent_and_member_canonical_bytes_tampering_refuses (test_workflow_provenance.ProvenanceTests.test_parent_and_member_canonical_bytes_tampering_refuses) ... ok
+test_recovered_parent_requires_exact_ordered_authorized_units (test_workflow_provenance.ProvenanceTests.test_recovered_parent_requires_exact_ordered_authorized_units) ... ok
+test_recovery_descriptor_checks_exact_bytes_before_parent_adoption (test_workflow_provenance.ProvenanceTests.test_recovery_descriptor_checks_exact_bytes_before_parent_adoption) ... ok
+test_refused_wrong_context_registration_changes_no_registry_or_objects (test_workflow_provenance.ProvenanceTests.test_refused_wrong_context_registration_changes_no_registry_or_objects) ... ok
+test_registry_survives_sqlite_close_reopen_and_register (test_workflow_provenance.ProvenanceTests.test_registry_survives_sqlite_close_reopen_and_register) ... ok
+test_retained_parent_and_member_tampering_refuses (test_workflow_provenance.ProvenanceTests.test_retained_parent_and_member_tampering_refuses) ... ok
+test_successful_child_must_be_advertised_by_actual_parent_listing (test_workflow_provenance.ProvenanceTests.test_successful_child_must_be_advertised_by_actual_parent_listing) ... ok
+test_support_original_rows_are_nonempty_parser_compatible (test_workflow_provenance.ProvenanceTests.test_support_original_rows_are_nonempty_parser_compatible) ... ok
+test_valid_member_of_failed_parent_retains_original_listing (test_workflow_provenance.ProvenanceTests.test_valid_member_of_failed_parent_retains_original_listing) ... ok
+test_verified_snapshot_transfer_is_idempotent (test_workflow_provenance.ProvenanceTests.test_verified_snapshot_transfer_is_idempotent) ... ok
+
+----------------------------------------------------------------------
+Ran 16 tests in 3.070s
+
+OK
+
+exit: 0

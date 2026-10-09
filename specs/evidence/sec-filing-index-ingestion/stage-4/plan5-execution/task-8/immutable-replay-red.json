@@ -1,0 +1,22 @@
+{
+  "argv": [
+    "uv",
+    "run",
+    "--offline",
+    "--frozen",
+    "--package",
+    "sec-edgar-ingest",
+    "python",
+    "packages/sec-edgar-ingest/tests/network_guard.py",
+    "discover",
+    "-s",
+    "packages/sec-edgar-ingest/tests",
+    "-p",
+    "test_workflow_runner.py",
+    "-k",
+    "test_same_attempt_receipts",
+    "-v"
+  ],
+  "output": "test_same_attempt_receipts_replay_after_mutable_discovery_index_is_corrupt (test_workflow_runner.RunnerTests.test_same_attempt_receipts_replay_after_mutable_discovery_index_is_corrupt) ... ERROR\n\n======================================================================\nERROR: test_same_attempt_receipts_replay_after_mutable_discovery_index_is_corrupt (test_workflow_runner.RunnerTests.test_same_attempt_receipts_replay_after_mutable_discovery_index_is_corrupt)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_runner.py\", line 219, in test_same_attempt_receipts_replay_after_mutable_discovery_index_is_corrupt\n    context, intent, dispatcher = self.prepared(h, run='historical')\n                                  ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_runner.py\", line 190, in prepared\n    context = freeze_workflow(context, intent, h.store, h.objects)\n  File \"/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/results.py\", line 92, in freeze_workflow\n    _match_context(current, saved)\n    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^\n  File \"/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/results.py\", line 47, in _match_context\n    raise Conflict('workflow exact correlation/config/date/version/deadline differs')\nsec_edgar_ingest.storage.contracts.Conflict: workflow exact correlation/config/date/version/deadline differs\n\n----------------------------------------------------------------------\nRan 1 test in 6.321s\n\nFAILED (errors=1)\n",
+  "exit": 1
+}

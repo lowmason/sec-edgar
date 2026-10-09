@@ -1,0 +1,25 @@
+{
+  "argv": [
+    "uv",
+    "run",
+    "--offline",
+    "--frozen",
+    "--package",
+    "sec-edgar-ingest",
+    "python",
+    "packages/sec-edgar-ingest/tests/network_guard.py",
+    "discover",
+    "-s",
+    "packages/sec-edgar-ingest/tests",
+    "-p",
+    "test_workflow_completion.py",
+    "-v",
+    "-k",
+    "foreign_valid_resolution",
+    "-k",
+    "corrupt_begun",
+    "-k",
+    "valid_checked_call_before_begin"
+  ],
+  "exit": 0
+}

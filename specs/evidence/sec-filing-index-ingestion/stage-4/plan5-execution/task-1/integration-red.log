@@ -1,0 +1,71 @@
+test_incomplete_capture_cannot_claim_completion (test_workflow_contracts.CompletionRecordTests.test_incomplete_capture_cannot_claim_completion) ... ok
+test_all_exit_outcomes_have_explicit_member_and_coverage_status (test_workflow_contracts.CoverageTests.test_all_exit_outcomes_have_explicit_member_and_coverage_status) ... ok
+test_all_quarantined_retains_attributed_baseline_publication_gaps (test_workflow_contracts.CoverageTests.test_all_quarantined_retains_attributed_baseline_publication_gaps) ... ok
+test_already_complete_sources_add_coverage_without_duplicate_selection (test_workflow_contracts.CoverageTests.test_already_complete_sources_add_coverage_without_duplicate_selection) ... ok
+test_attributed_quarantine_gaps_do_not_erase_valid_progress (test_workflow_contracts.CoverageTests.test_attributed_quarantine_gaps_do_not_erase_valid_progress) ... ok
+test_baseline_gap_attribution_requires_exact_selected_refused_source_ids (test_workflow_contracts.CoverageTests.test_baseline_gap_attribution_requires_exact_selected_refused_source_ids) ... ok
+test_constructor_refuses_quarantine_for_every_pending_outcome (test_workflow_contracts.CoverageTests.test_constructor_refuses_quarantine_for_every_pending_outcome) ... ok
+test_empty_daily_is_not_failure_or_old_backlog (test_workflow_contracts.CoverageTests.test_empty_daily_is_not_failure_or_old_backlog) ... ok
+test_empty_daily_with_discovery_or_backlog_is_unchanged (test_workflow_contracts.CoverageTests.test_empty_daily_with_discovery_or_backlog_is_unchanged) ... FAIL
+test_fatal_gap_precedes_attributed_all_quarantined_outcome (test_workflow_contracts.CoverageTests.test_fatal_gap_precedes_attributed_all_quarantined_outcome) ... ok
+test_fatal_precedence_includes_discovery_gaps (test_workflow_contracts.CoverageTests.test_fatal_precedence_includes_discovery_gaps) ... ok
+test_independent_missing_source_or_directory_gap_prevents_pure_quarantine (test_workflow_contracts.CoverageTests.test_independent_missing_source_or_directory_gap_prevents_pure_quarantine) ... ok
+test_member_rejects_invalid_references_and_versions (test_workflow_contracts.CoverageTests.test_member_rejects_invalid_references_and_versions) ... ok
+test_member_rejects_invented_etl_and_duplicate_quarters (test_workflow_contracts.CoverageTests.test_member_rejects_invented_etl_and_duplicate_quarters) ... ok
+test_nested_record_decoder_refuses_unknown_keys_and_wrong_types (test_workflow_contracts.CoverageTests.test_nested_record_decoder_refuses_unknown_keys_and_wrong_types) ... ok
+test_pending_member_prevents_complete_coverage (test_workflow_contracts.CoverageTests.test_pending_member_prevents_complete_coverage) ... ok
+test_quarter_counts_and_approval (test_workflow_contracts.CoverageTests.test_quarter_counts_and_approval) ... ok
+test_source_identity_uses_worst_status_and_distinct_progress_counts (test_workflow_contracts.CoverageTests.test_source_identity_uses_worst_status_and_distinct_progress_counts) ... ok
+test_unknown_outcome_is_refused (test_workflow_contracts.CoverageTests.test_unknown_outcome_is_refused) ... ok
+test_valid_progress_does_not_erase_invalid_member (test_workflow_contracts.CoverageTests.test_valid_progress_does_not_erase_invalid_member) ... ok
+test_workflow_decoder_refuses_pending_quarantine_with_matching_counts (test_workflow_contracts.CoverageTests.test_workflow_decoder_refuses_pending_quarantine_with_matching_counts) ... ok
+test_workflow_intent_counters_are_nonnegative_integers (test_workflow_contracts.CoverageTests.test_workflow_intent_counters_are_nonnegative_integers) ... ok
+test_workflow_mapping_roundtrip_and_counter_refusal (test_workflow_contracts.CoverageTests.test_workflow_mapping_roundtrip_and_counter_refusal) ... ok
+test_workflow_nested_fields_are_immutable_and_detached (test_workflow_contracts.CoverageTests.test_workflow_nested_fields_are_immutable_and_detached) ... ok
+test_workflow_path_requires_supported_command_and_single_segment_ids (test_workflow_contracts.CoverageTests.test_workflow_path_requires_supported_command_and_single_segment_ids) ... ok
+test_workflow_rejects_invalid_identity_time_ordering_and_outcome (test_workflow_contracts.CoverageTests.test_workflow_rejects_invalid_identity_time_ordering_and_outcome) ... ok
+test_workflow_skipped_completion_prevents_pure_quarantine (test_workflow_contracts.CoverageTests.test_workflow_skipped_completion_prevents_pure_quarantine) ... ERROR
+test_zero_output_and_old_backlog (test_workflow_contracts.CoverageTests.test_zero_output_and_old_backlog) ... ok
+test_complete_source_participates_in_quarantine_precedence (test_workflow_contracts.SkippedSourceTests.test_complete_source_participates_in_quarantine_precedence) ... ERROR
+
+======================================================================
+ERROR: test_workflow_skipped_completion_prevents_pure_quarantine (test_workflow_contracts.CoverageTests.test_workflow_skipped_completion_prevents_pure_quarantine)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_contracts.py", line 287, in test_workflow_skipped_completion_prevents_pure_quarantine
+    accepted = replace(result, intent=intent, counts=counts, outcome='incomplete')
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/dataclasses.py", line 1698, in replace
+    return _replace(obj, **changes)
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/dataclasses.py", line 1732, in _replace
+    return self.__class__(**changes)
+           ~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "<string>", line 16, in __init__
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/contracts.py", line 131, in __post_init__
+    raise ValueError('workflow counters/outcome disagree with exact members/gaps')
+ValueError: workflow counters/outcome disagree with exact members/gaps
+
+======================================================================
+ERROR: test_complete_source_participates_in_quarantine_precedence (test_workflow_contracts.SkippedSourceTests.test_complete_source_participates_in_quarantine_precedence)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_contracts.py", line 45, in test_complete_source_participates_in_quarantine_precedence
+    outcome, counts = summarize((refused,), (), 1, 0, 'backfill', ('d' * 64,))
+                      ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: summarize() takes from 3 to 5 positional arguments but 6 were given
+
+======================================================================
+FAIL: test_empty_daily_with_discovery_or_backlog_is_unchanged (test_workflow_contracts.CoverageTests.test_empty_daily_with_discovery_or_backlog_is_unchanged)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_contracts.py", line 293, in test_empty_daily_with_discovery_or_backlog_is_unchanged
+    self.assertEqual(summarize((), (), 1)[0], 'unchanged')
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'no_new_sources' != 'unchanged'
+- no_new_sources
++ unchanged
+
+
+----------------------------------------------------------------------
+Ran 29 tests in 0.087s
+
+FAILED (failures=1, errors=2)

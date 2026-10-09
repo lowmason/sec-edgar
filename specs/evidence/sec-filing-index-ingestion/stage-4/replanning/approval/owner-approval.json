@@ -1,0 +1,62 @@
+{
+  "schema_version": "sec-stage4-plan5-owner-approval-v1",
+  "status": "approved_for_separate_offline_execution_subject_to_preservation_gate",
+  "recorded_at_utc": "2026-10-08T18:12:29+00:00",
+  "recorded_at_local": "2026-10-08T14:12:29-04:00",
+  "timezone": "America/New_York",
+  "owner": "Lowell Mason",
+  "owner_message": "Approved.",
+  "approval_source": "Direct human user message in chat 01a11c70-f349-7392-a8d5-65a19bf239f3 following delivery of Plan 5",
+  "reviewed_commit": "bf36795fd548cdec40d3707a337f6787418726dd",
+  "planning_checkout": "/Users/lowell/.codex/worktrees/sec-edgar-stage-4-replan/sec-edgar",
+  "planning_branch": "codex/sec-edgar-stage-4-replan",
+  "documents": [
+    {
+      "source_path": "specs/plans/5-sec-filing-index-ingestion-stage-4-spec.md",
+      "snapshot_path": "specs/evidence/sec-filing-index-ingestion/stage-4/replanning/approval/approved-plan-5.md",
+      "bytes": 456446,
+      "sha256": "87f9108735a13a9699086e5f50f1d4ce082c740d7f58eb47d37fdd775da67b45"
+    },
+    {
+      "source_path": "specs/sec-filing-index-ingestion-stage-4-spec.md",
+      "snapshot_path": "specs/evidence/sec-filing-index-ingestion/stage-4/approval/approved-stage-4-spec.md",
+      "bytes": 14453,
+      "sha256": "5b822a4113eaa18c53a18ae71f244d6b69d2abd9e533381a69644e4b88cd1b0a"
+    },
+    {
+      "source_path": "specs/evidence/sec-filing-index-ingestion/stage-4/approval/roadmap-at-approval.md",
+      "snapshot_path": "specs/evidence/sec-filing-index-ingestion/stage-4/approval/roadmap-at-approval.md",
+      "bytes": 17756,
+      "sha256": "0101934eadf0ca3241b03a458c80ec300012430875c44522410836ab6c0ecc03"
+    }
+  ],
+  "approved_scope": "Approved Stage 4 specification, executed using replacement Plan 5 in a separate offline execution session after preservation reconciliation",
+  "execution_mode": "subagent-driven-development by default, with fresh task reviews and independent whole-branch review; executing-plans only if the owner chooses it",
+  "approval_precedence": "This receipt records fresh approval of the exact Plan 5 bytes despite their preserved PROPOSED header. Do not request Plan 5 approval again for this scope. The original stop remains in force for this planning session. Original Plan 4 approval/addendum do not authorize execution independently of Plan 5.",
+  "preservation_gate": {
+    "status": "open",
+    "original_execution_path": "/Users/lowell/.codex/worktrees/sec-edgar-stage-4/sec-edgar",
+    "original_path_exists_at_approval": false,
+    "stopped_branch": "codex/sec-edgar-stage-4",
+    "stopped_head": "e870a7318d47699c0e4a76ab59fba72781b0debe",
+    "archive_snapshot_ref": "refs/codex/snapshots/44e1d887f038bc90b963848b95a277c13f57f9d9",
+    "retained_inventory_records": 30854,
+    "remaining_runtime_records": 433,
+    "gate": "Before execution mutations, complete owner-reviewed reconciliation of the retained managed attachment and retained inventory. Preserve exact recovered evidence and all prior preservation roots. Plan approval does not certify restoration or waive this gate."
+  },
+  "fresh_approval_preflight": {
+    "path": "specs/evidence/sec-filing-index-ingestion/stage-4/replanning/approval/approval-preflight.json",
+    "source_sha256": "584c0362d9d58f5223548273ecc21bdadfbab2b4b7f5063a4e7b7cb558f2f8d3",
+    "original_primary_records_unchanged": 30007,
+    "exact_recovery_additions_retained": 71,
+    "exact_ignored_records_reverified": 1555,
+    "approved_hashes_verified": true
+  },
+  "implementation_started_under_plan5": false,
+  "stage4_complete": false,
+  "this_session_scope": "planning/approval/handoff documentation only",
+  "live_access_authorizations": "closed",
+  "all_22_stage7_checks": "reserved/not_run",
+  "network_access": "not authorized",
+  "integration": "No merge, push, deployment, schedule activation or removal of preserved worktrees is authorized by this receipt."
+}

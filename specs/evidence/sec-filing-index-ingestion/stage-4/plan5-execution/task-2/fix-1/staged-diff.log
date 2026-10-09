@@ -1,0 +1,95 @@
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/members.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/members.py
+index 45750ecf..624cd523 100644
+--- a/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/members.py
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/members.py
+@@ -1,7 +1,7 @@
+ from ..models import to_mapping_value
+ from ..storage.contracts import Conflict
+ from ..models import canonical_json
+-from .provenance import project_member, read_member, read_source
++from .provenance import project_member, projection, read_member, read_parent, read_source, source_ref
+ 
+ class WorkflowMembers:
+     def __init__(self, store, objects):
+@@ -32,7 +32,8 @@ class WorkflowMembers:
+         selected = read_source(member_ref, self.objects)
+         if len(selected.members) != 1:
+             raise Conflict('registry requires singleton member')
+-        value = project_member(parent_ref, selected.members[0].source_id, self.store, self.objects)
+-        if value['member_ref'] != member_ref:
++        parent = read_parent(parent_ref, self.store, self.objects)
++        expected = projection(parent, selected.members[0].source_id)
++        if selected != expected or source_ref(expected) != member_ref:
+             raise Conflict('registered member differs from exact projection')
+-        return value
++        return project_member(parent_ref, selected.members[0].source_id, self.store, self.objects)
+diff --git a/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/provenance.py b/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/provenance.py
+index cf3724cb..45b090da 100644
+--- a/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/provenance.py
++++ b/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/provenance.py
+@@ -179,7 +179,7 @@ def projection(parent, source_id):
+                                acquisition_mode=parent.acquisition_mode)
+ 
+ def project_member(parent_ref, source_id, store, objects):
+-    if any(row.value['member_ref'] == parent_ref for row in store.scan('WorkflowMember', {})):
++    if any(row.value.get('member_ref') == parent_ref for row in store.scan('WorkflowMember', {})):
+         raise Conflict('a registered projection cannot become an original parent')
+     parent = read_parent(parent_ref, store, objects)
+     member = projection(parent, source_id)
+diff --git a/packages/sec-edgar-ingest/tests/test_workflow_provenance.py b/packages/sec-edgar-ingest/tests/test_workflow_provenance.py
+index 7a6eeac1..383f4340 100644
+--- a/packages/sec-edgar-ingest/tests/test_workflow_provenance.py
++++ b/packages/sec-edgar-ingest/tests/test_workflow_provenance.py
+@@ -377,3 +377,52 @@ class ProvenanceTests(unittest.TestCase):
+                 self.assertEqual(len(observations), 1)
+                 self.assertEqual(observations[0].original_fields, fields)
+                 self.assertEqual(target.read_bytes(), body)
++
++    def test_malformed_unrelated_registry_row_does_not_block_valid_projection(self):
++        from sec_edgar_ingest.workflows.members import WorkflowMembers
++        with tempfile.TemporaryDirectory() as directory:
++            h = discovery_harness(Path(directory), {'2026Q4': [listing_response('2026Q4', ['master.20261001.idx'])]})
++            try:
++                parent = h.run('daily', date(2026, 10, 7), 'isolated-corrupt-registry')
++                corrupt_id = 'f' * 64
++                h.store.insert('WorkflowMember', corrupt_id, {'member_id': corrupt_id})
++                corrupt_before = h.store.get('WorkflowMember', corrupt_id).to_mapping()
++                value = project_member(h.workset_path(parent), parent.members[0].source_id, h.store, h.objects)
++                valid, gaps = WorkflowMembers(h.store, h.objects).inventory()
++                self.assertEqual(valid, (value,))
++                self.assertEqual(len(gaps), 1)
++                self.assertEqual(gaps[0].code, 'legacy_member_unresolved')
++                self.assertEqual(gaps[0].details['member_id'], corrupt_id)
++                self.assertEqual(h.store.get('WorkflowMember', corrupt_id).to_mapping(), corrupt_before)
++                with self.assertRaisesRegex(Conflict, 'registered projection'):
++                    project_member(value['member_ref'], parent.members[0].source_id, h.store, h.objects)
++            finally:
++                h.close()
++
++    def test_refused_wrong_context_registration_changes_no_registry_or_objects(self):
++        from dataclasses import replace
++        from sec_edgar_ingest.workflows.members import WorkflowMembers
++        from sec_edgar_ingest.workflows.provenance import projection, source_ref
++        from sec_edgar_ingest.worksets import make_source_workset, encode_workset
++        with tempfile.TemporaryDirectory() as directory:
++            h = discovery_harness(Path(directory), {'2026Q4': [listing_response('2026Q4', ['master.20261001.idx'])]})
++            try:
++                parent = h.run('daily', date(2026, 10, 7), 'refusal-before-admission')
++                expected = projection(parent, parent.members[0].source_id)
++                wrong_context = replace(expected.context, attempt_id='other-origin')
++                supplied = make_source_workset(wrong_context, expected.pinned_end_quarter,
++                    expected.discovery_id, expected.members, expected.directories, expected.overlap_from,
++                    acquisition_mode=expected.acquisition_mode)
++                supplied_ref = source_ref(supplied)
++                h.objects.put_once(supplied_ref, encode_workset(supplied))
++                registry_before = tuple(row.to_mapping() for row in h.store.scan('WorkflowMember', {}))
++                object_root = h.root / 'objects'
++                objects_before = {str(path.relative_to(object_root)): path.read_bytes()
++                                  for path in object_root.rglob('*') if path.is_file()}
++                with self.assertRaisesRegex(Conflict, 'exact projection'):
++                    WorkflowMembers(h.store, h.objects).register(h.workset_path(parent), supplied_ref)
++                self.assertEqual(tuple(row.to_mapping() for row in h.store.scan('WorkflowMember', {})), registry_before)
++                self.assertEqual({str(path.relative_to(object_root)): path.read_bytes()
++                                  for path in object_root.rglob('*') if path.is_file()}, objects_before)
++            finally:
++                h.close()

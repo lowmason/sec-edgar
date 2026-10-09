@@ -1,0 +1,75 @@
+test_corrupt_registry_is_reported_without_hiding_valid_sibling (test_workflow_provenance.ProvenanceTests.test_corrupt_registry_is_reported_without_hiding_valid_sibling) ... ok
+test_divergent_binding_winner_stays_unchanged (test_workflow_provenance.ProvenanceTests.test_divergent_binding_winner_stays_unchanged) ... ok
+test_missing_or_changed_required_ancestors_refuse (test_workflow_provenance.ProvenanceTests.test_missing_or_changed_required_ancestors_refuse) ... 
+  test_missing_or_changed_required_ancestors_refuse (test_workflow_provenance.ProvenanceTests.test_missing_or_changed_required_ancestors_refuse) (role='root') ... ERROR
+  test_missing_or_changed_required_ancestors_refuse (test_workflow_provenance.ProvenanceTests.test_missing_or_changed_required_ancestors_refuse) (role='year') ... ERROR
+test_missing_successful_receipt_and_wrong_context_refuse (test_workflow_provenance.ProvenanceTests.test_missing_successful_receipt_and_wrong_context_refuse) ... ok
+test_original_frozen_metadata_changes_refuse (test_workflow_provenance.ProvenanceTests.test_original_frozen_metadata_changes_refuse) ... 
+  test_original_frozen_metadata_changes_refuse (test_workflow_provenance.ProvenanceTests.test_original_frozen_metadata_changes_refuse) (field='end') ... ERROR
+  test_original_frozen_metadata_changes_refuse (test_workflow_provenance.ProvenanceTests.test_original_frozen_metadata_changes_refuse) (field='acquisition_mode') ... ERROR
+  test_original_frozen_metadata_changes_refuse (test_workflow_provenance.ProvenanceTests.test_original_frozen_metadata_changes_refuse) (field='overlap_from') ... ERROR
+test_parent_and_member_canonical_bytes_tampering_refuses (test_workflow_provenance.ProvenanceTests.test_parent_and_member_canonical_bytes_tampering_refuses) ... ok
+test_recovered_parent_requires_exact_ordered_authorized_units (test_workflow_provenance.ProvenanceTests.test_recovered_parent_requires_exact_ordered_authorized_units) ... ok
+test_registry_survives_sqlite_close_reopen_and_register (test_workflow_provenance.ProvenanceTests.test_registry_survives_sqlite_close_reopen_and_register) ... ok
+test_retained_parent_and_member_tampering_refuses (test_workflow_provenance.ProvenanceTests.test_retained_parent_and_member_tampering_refuses) ... ok
+test_valid_member_of_failed_parent_retains_original_listing (test_workflow_provenance.ProvenanceTests.test_valid_member_of_failed_parent_retains_original_listing) ... ok
+
+======================================================================
+ERROR: test_missing_or_changed_required_ancestors_refuse (test_workflow_provenance.ProvenanceTests.test_missing_or_changed_required_ancestors_refuse) (role='root')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_provenance.py", line 150, in test_missing_or_changed_required_ancestors_refuse
+    h.store.replace('DiscoverySession', parent.discovery_id, altered, row.version)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py", line 221, in replace
+    raise Conflict("state row absent or revision changed")
+sec_edgar_ingest.storage.contracts.Conflict: state row absent or revision changed
+
+======================================================================
+ERROR: test_missing_or_changed_required_ancestors_refuse (test_workflow_provenance.ProvenanceTests.test_missing_or_changed_required_ancestors_refuse) (role='year')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_provenance.py", line 150, in test_missing_or_changed_required_ancestors_refuse
+    h.store.replace('DiscoverySession', parent.discovery_id, altered, row.version)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py", line 221, in replace
+    raise Conflict("state row absent or revision changed")
+sec_edgar_ingest.storage.contracts.Conflict: state row absent or revision changed
+
+======================================================================
+ERROR: test_original_frozen_metadata_changes_refuse (test_workflow_provenance.ProvenanceTests.test_original_frozen_metadata_changes_refuse) (field='end')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_provenance.py", line 131, in test_original_frozen_metadata_changes_refuse
+    h.store.replace('DiscoverySession', parent.discovery_id, altered, row.version)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py", line 221, in replace
+    raise Conflict("state row absent or revision changed")
+sec_edgar_ingest.storage.contracts.Conflict: state row absent or revision changed
+
+======================================================================
+ERROR: test_original_frozen_metadata_changes_refuse (test_workflow_provenance.ProvenanceTests.test_original_frozen_metadata_changes_refuse) (field='acquisition_mode')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_provenance.py", line 131, in test_original_frozen_metadata_changes_refuse
+    h.store.replace('DiscoverySession', parent.discovery_id, altered, row.version)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py", line 221, in replace
+    raise Conflict("state row absent or revision changed")
+sec_edgar_ingest.storage.contracts.Conflict: state row absent or revision changed
+
+======================================================================
+ERROR: test_original_frozen_metadata_changes_refuse (test_workflow_provenance.ProvenanceTests.test_original_frozen_metadata_changes_refuse) (field='overlap_from')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_provenance.py", line 131, in test_original_frozen_metadata_changes_refuse
+    h.store.replace('DiscoverySession', parent.discovery_id, altered, row.version)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py", line 221, in replace
+    raise Conflict("state row absent or revision changed")
+sec_edgar_ingest.storage.contracts.Conflict: state row absent or revision changed
+
+----------------------------------------------------------------------
+Ran 10 tests in 2.656s
+
+FAILED (errors=5)

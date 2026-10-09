@@ -1,0 +1,15 @@
+test_copied_obligation_cannot_drop_only_formerly_affected_quarter (test_workflow_completion.CompletionTests.test_copied_obligation_cannot_drop_only_formerly_affected_quarter) ... FAIL
+
+======================================================================
+FAIL: test_copied_obligation_cannot_drop_only_formerly_affected_quarter (test_workflow_completion.CompletionTests.test_copied_obligation_cannot_drop_only_formerly_affected_quarter)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_completion.py", line 486, in test_copied_obligation_cannot_drop_only_formerly_affected_quarter
+    with self.assertRaises((Conflict, ValueError)):
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: (<class 'sec_edgar_ingest.storage.contracts.Conflict'>, <class 'ValueError'>) not raised
+
+----------------------------------------------------------------------
+Ran 1 test in 6.076s
+
+FAILED (failures=1)

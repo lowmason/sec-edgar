@@ -155,6 +155,10 @@ quarters are covered. Unreferenced losing candidate objects remain retained.
 Expired incomplete attempts need a new authorized attempt against the exact
 workset; they cannot silently change the frozen deadline or intent.
 
+Public `backfill`/`daily` workflows use these same transform/publish and captured-reader
+boundaries; their source counters, frozen invocation and unresolved post-CAS repair are
+described in [acquisition recovery](sec-edgar-ingest-acquisition.md).
+
 ## Repeat the offline proof
 
 Use new output directories for every run; existing outputs are refused to keep

@@ -1,0 +1,61 @@
+test_copied_obligation_must_bind_original_command_and_exact_input (test_workflow_completion.CompletionTests.test_copied_obligation_must_bind_original_command_and_exact_input) ... ok
+test_current_index_identity_is_decoded_not_assumed (test_workflow_completion.CompletionTests.test_current_index_identity_is_decoded_not_assumed) ... ok
+test_formerly_affected_quarter_stays_unresolved (test_workflow_completion.CompletionTests.test_formerly_affected_quarter_stays_unresolved) ... ERROR
+test_fresh_attempt_resolves_repair_without_rewriting_original_attempt (test_workflow_completion.CompletionTests.test_fresh_attempt_resolves_repair_without_rewriting_original_attempt) ... ok
+test_historical_capture_survives_pointer_advance (test_workflow_completion.CompletionTests.test_historical_capture_survives_pointer_advance) ... ERROR
+test_missing_result_after_deadline_requires_fresh_attempt (test_workflow_completion.CompletionTests.test_missing_result_after_deadline_requires_fresh_attempt) ... ok
+test_old_failed_parent_remains_valid_after_same_session_directory_repair (test_workflow_completion.CompletionTests.test_old_failed_parent_remains_valid_after_same_session_directory_repair) ... ok
+test_ordinary_public_publish_failure_is_pending_in_fresh_workflow (test_workflow_completion.CompletionTests.test_ordinary_public_publish_failure_is_pending_in_fresh_workflow) ... ERROR
+
+======================================================================
+ERROR: test_formerly_affected_quarter_stays_unresolved (test_workflow_completion.CompletionTests.test_formerly_affected_quarter_stays_unresolved)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_completion.py", line 43, in test_formerly_affected_quarter_stays_unresolved
+    self.f.revised_member()
+    ~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/support_workflow_evidence.py", line 106, in revised_member
+    value = project_member(self.h.workset_path(parent), self.source.source_id,
+                           self.store, self.objects)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/provenance.py", line 185, in project_member
+    member = projection(parent, source_id)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/provenance.py", line 174, in projection
+    raise Conflict('projection needs exact successful immediate member')
+sec_edgar_ingest.storage.contracts.Conflict: projection needs exact successful immediate member
+
+======================================================================
+ERROR: test_historical_capture_survives_pointer_advance (test_workflow_completion.CompletionTests.test_historical_capture_survives_pointer_advance)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_completion.py", line 73, in test_historical_capture_survives_pointer_advance
+    self.f.revised_member()
+    ~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/support_workflow_evidence.py", line 106, in revised_member
+    value = project_member(self.h.workset_path(parent), self.source.source_id,
+                           self.store, self.objects)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/provenance.py", line 185, in project_member
+    member = projection(parent, source_id)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/provenance.py", line 174, in projection
+    raise Conflict('projection needs exact successful immediate member')
+sec_edgar_ingest.storage.contracts.Conflict: projection needs exact successful immediate member
+
+======================================================================
+ERROR: test_ordinary_public_publish_failure_is_pending_in_fresh_workflow (test_workflow_completion.CompletionTests.test_ordinary_public_publish_failure_is_pending_in_fresh_workflow)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_completion.py", line 204, in test_ordinary_public_publish_failure_is_pending_in_fresh_workflow
+    self.f.revised_member()
+    ~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/support_workflow_evidence.py", line 106, in revised_member
+    value = project_member(self.h.workset_path(parent), self.source.source_id,
+                           self.store, self.objects)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/provenance.py", line 185, in project_member
+    member = projection(parent, source_id)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/provenance.py", line 174, in projection
+    raise Conflict('projection needs exact successful immediate member')
+sec_edgar_ingest.storage.contracts.Conflict: projection needs exact successful immediate member
+
+----------------------------------------------------------------------
+Ran 8 tests in 68.619s
+
+FAILED (errors=3)

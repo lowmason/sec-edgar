@@ -1,0 +1,22 @@
+{
+  "argv": [
+    "uv",
+    "run",
+    "--offline",
+    "--frozen",
+    "--package",
+    "sec-edgar-ingest",
+    "python",
+    "packages/sec-edgar-ingest/tests/network_guard.py",
+    "discover",
+    "-s",
+    "packages/sec-edgar-ingest/tests",
+    "-p",
+    "test_workflow_runner.py",
+    "-k",
+    "test_same_attempt_receipts",
+    "-v"
+  ],
+  "output": "test_same_attempt_receipts_replay_after_mutable_discovery_index_is_corrupt (test_workflow_runner.RunnerTests.test_same_attempt_receipts_replay_after_mutable_discovery_index_is_corrupt) ... ERROR\n\n======================================================================\nERROR: test_same_attempt_receipts_replay_after_mutable_discovery_index_is_corrupt (test_workflow_runner.RunnerTests.test_same_attempt_receipts_replay_after_mutable_discovery_index_is_corrupt)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_runner.py\", line 226, in test_same_attempt_receipts_replay_after_mutable_discovery_index_is_corrupt\n    replay = run_workflow(context, h.settings, intent, dispatcher, h.store, h.objects)\n  File \"/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/runner.py\", line 85, in run_workflow\n    descriptor = registry.record(result, context, saved['evidence'])\n  File \"/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/members.py\", line 95, in record\n    read_member(evidence['member'], self.store, self.objects)\n    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/provenance.py\", line 201, in read_member\n    parent = read_parent(value['parent_ref'], store, objects)\n  File \"/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/provenance.py\", line 123, in read_parent\n    frozen = saved['frozen']\n             ~~~~~^^^^^^^^^^\nKeyError: 'frozen'\n\n----------------------------------------------------------------------\nRan 1 test in 6.333s\n\nFAILED (errors=1)\n",
+  "exit": 1
+}

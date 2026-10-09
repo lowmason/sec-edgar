@@ -1,0 +1,21 @@
+{
+  "argv": [
+    "uv",
+    "run",
+    "--offline",
+    "--frozen",
+    "--package",
+    "sec-edgar-ingest",
+    "python",
+    "packages/sec-edgar-ingest/tests/network_guard.py",
+    "discover",
+    "-s",
+    "packages/sec-edgar-ingest/tests",
+    "-p",
+    "test_workflow_checked.py",
+    "-v"
+  ],
+  "exit": 0,
+  "stdout": "",
+  "stderr": "test_boolean_call_flags_reject_integer_substitution (test_workflow_checked.CheckedWorkflowTests.test_boolean_call_flags_reject_integer_substitution) ... ok\ntest_call_is_durable_before_dispatch_and_reopen_uses_it (test_workflow_checked.CheckedWorkflowTests.test_call_is_durable_before_dispatch_and_reopen_uses_it) ... ok\ntest_changed_context_and_flags_refuse_before_new_transport (test_workflow_checked.CheckedWorkflowTests.test_changed_context_and_flags_refuse_before_new_transport) ... ok\ntest_changed_flags_or_canonical_call_refuse (test_workflow_checked.CheckedWorkflowTests.test_changed_flags_or_canonical_call_refuse) ... ok\ntest_checked_record_freezes_call_and_rejects_result_reference_change (test_workflow_checked.CheckedWorkflowTests.test_checked_record_freezes_call_and_rejects_result_reference_change) ... ok\ntest_daily_discovery_collection_keeps_origin_priority_in_checked_context (test_workflow_checked.CheckedWorkflowTests.test_daily_discovery_collection_keeps_origin_priority_in_checked_context) ... ok\ntest_historical_capture_survives_missing_mutable_child_indexes (test_workflow_checked.CheckedWorkflowTests.test_historical_capture_survives_missing_mutable_child_indexes) ... ok\ntest_input_binding_and_raw_tamper_are_refused (test_workflow_checked.CheckedWorkflowTests.test_input_binding_and_raw_tamper_are_refused) ... ok\ntest_origin_collection_and_current_parser_are_separate_exact_contexts (test_workflow_checked.CheckedWorkflowTests.test_origin_collection_and_current_parser_are_separate_exact_contexts) ... ok\ntest_parent_command_namespace_and_exact_replay (test_workflow_checked.CheckedWorkflowTests.test_parent_command_namespace_and_exact_replay) ... ok\ntest_post_cas_repair_keeps_child_unfinished_until_checked_retry (test_workflow_checked.CheckedWorkflowTests.test_post_cas_repair_keeps_child_unfinished_until_checked_retry) ... ok\ntest_real_input_chain_and_retained_retry_prefix (test_workflow_checked.CheckedWorkflowTests.test_real_input_chain_and_retained_retry_prefix) ... ok\ntest_snapshot_chain_refuses_noncanonical_retained_source_bytes (test_workflow_checked.CheckedWorkflowTests.test_snapshot_chain_refuses_noncanonical_retained_source_bytes) ... ok\n\n----------------------------------------------------------------------\nRan 13 tests in 31.438s\n\nOK\n"
+}

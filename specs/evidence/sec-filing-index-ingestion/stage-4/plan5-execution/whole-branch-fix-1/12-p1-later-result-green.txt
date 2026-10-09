@@ -1,0 +1,39 @@
+argv: ["uv", "run", "--offline", "--frozen", "--package", "sec-edgar-ingest", "python", "packages/sec-edgar-ingest/tests/network_guard.py", "discover", "-s", "packages/sec-edgar-ingest/tests", "-p", "test_workflow_runner.py", "-k", "gap_omission", "-v"]
+exit: 1
+test_failed_empty_daily_directory_gap_omission_refuses (test_workflow_runner.RunnerTests.test_failed_empty_daily_directory_gap_omission_refuses) ... FAIL
+test_missing_result_discovery_gap_omission_refuses (test_workflow_runner.RunnerTests.test_missing_result_discovery_gap_omission_refuses) ... ok
+
+======================================================================
+FAIL: test_failed_empty_daily_directory_gap_omission_refuses (test_workflow_runner.RunnerTests.test_failed_empty_daily_directory_gap_omission_refuses)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/results.py", line 307, in freeze_selection
+    _read(path, objects)
+    ~~~~~^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/results.py", line 32, in _read
+    body = objects.read(path)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py", line 112, in read
+    with self._open(path) as stream:
+         ~~~~~~~~~~^^^^^^
+  File "/Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/contextlib.py", line 141, in __enter__
+    return next(self.gen)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py", line 68, in _open
+    descriptor = os.open(name, FILE_FLAGS, dir_fd=parent)
+FileNotFoundError: [Errno 2] No such file or directory: 'selection.json'
+
+During handling of the above exception, another exception occurred:
+
+sec_edgar_ingest.storage.contracts.Conflict: failed discovery terminal details differ from original child
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_runner.py", line 473, in test_failed_empty_daily_directory_gap_omission_refuses
+    with self.assertRaisesRegex(Conflict, 'failure classification'):
+         ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: "failure classification" does not match "failed discovery terminal details differ from original child"
+
+----------------------------------------------------------------------
+Ran 2 tests in 4.591s
+
+FAILED (failures=1)

@@ -1,0 +1,53 @@
+test_corrupt_registry_is_reported_without_hiding_valid_sibling (test_workflow_provenance.ProvenanceTests.test_corrupt_registry_is_reported_without_hiding_valid_sibling) ... ok
+test_divergent_binding_winner_stays_unchanged (test_workflow_provenance.ProvenanceTests.test_divergent_binding_winner_stays_unchanged) ... ok
+test_malformed_unrelated_registry_row_does_not_block_valid_projection (test_workflow_provenance.ProvenanceTests.test_malformed_unrelated_registry_row_does_not_block_valid_projection) ... ERROR
+test_missing_or_changed_required_ancestors_refuse (test_workflow_provenance.ProvenanceTests.test_missing_or_changed_required_ancestors_refuse) ... ok
+test_missing_successful_receipt_and_wrong_context_refuse (test_workflow_provenance.ProvenanceTests.test_missing_successful_receipt_and_wrong_context_refuse) ... ok
+test_original_frozen_metadata_changes_refuse (test_workflow_provenance.ProvenanceTests.test_original_frozen_metadata_changes_refuse) ... ok
+test_parent_and_member_canonical_bytes_tampering_refuses (test_workflow_provenance.ProvenanceTests.test_parent_and_member_canonical_bytes_tampering_refuses) ... ok
+test_recovered_parent_requires_exact_ordered_authorized_units (test_workflow_provenance.ProvenanceTests.test_recovered_parent_requires_exact_ordered_authorized_units) ... ok
+test_recovery_descriptor_checks_exact_bytes_before_parent_adoption (test_workflow_provenance.ProvenanceTests.test_recovery_descriptor_checks_exact_bytes_before_parent_adoption) ... ok
+test_refused_wrong_context_registration_changes_no_registry_or_objects (test_workflow_provenance.ProvenanceTests.test_refused_wrong_context_registration_changes_no_registry_or_objects) ... FAIL
+test_registry_survives_sqlite_close_reopen_and_register (test_workflow_provenance.ProvenanceTests.test_registry_survives_sqlite_close_reopen_and_register) ... ok
+test_retained_parent_and_member_tampering_refuses (test_workflow_provenance.ProvenanceTests.test_retained_parent_and_member_tampering_refuses) ... ok
+test_successful_child_must_be_advertised_by_actual_parent_listing (test_workflow_provenance.ProvenanceTests.test_successful_child_must_be_advertised_by_actual_parent_listing) ... ok
+test_support_original_rows_are_nonempty_parser_compatible (test_workflow_provenance.ProvenanceTests.test_support_original_rows_are_nonempty_parser_compatible) ... ok
+test_valid_member_of_failed_parent_retains_original_listing (test_workflow_provenance.ProvenanceTests.test_valid_member_of_failed_parent_retains_original_listing) ... ok
+test_verified_snapshot_transfer_is_idempotent (test_workflow_provenance.ProvenanceTests.test_verified_snapshot_transfer_is_idempotent) ... ok
+
+======================================================================
+ERROR: test_malformed_unrelated_registry_row_does_not_block_valid_projection (test_workflow_provenance.ProvenanceTests.test_malformed_unrelated_registry_row_does_not_block_valid_projection)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_provenance.py", line 390, in test_malformed_unrelated_registry_row_does_not_block_valid_projection
+    value = project_member(h.workset_path(parent), parent.members[0].source_id, h.store, h.objects)
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/provenance.py", line 182, in project_member
+    if any(row.value['member_ref'] == parent_ref for row in store.scan('WorkflowMember', {})):
+       ^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/provenance.py", line 182, in <genexpr>
+    if any(row.value['member_ref'] == parent_ref for row in store.scan('WorkflowMember', {})):
+           ~~~~~~~~~^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py", line 110, in __getitem__
+    return self._items[key]
+           ~~~~~~~~~~~^^^^^
+KeyError: 'member_ref'
+
+======================================================================
+FAIL: test_refused_wrong_context_registration_changes_no_registry_or_objects (test_workflow_provenance.ProvenanceTests.test_refused_wrong_context_registration_changes_no_registry_or_objects)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_provenance.py", line 424, in test_refused_wrong_context_registration_changes_no_registry_or_objects
+    self.assertEqual(tuple(row.to_mapping() for row in h.store.scan('WorkflowMember', {})), registry_before)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Tuples differ: ({'value': {'member_id': 'e0aa9aa704bded8f[595 chars]2'},) != ()
+
+First tuple contains 1 additional elements.
+First extra element 0:
+{'value': {'member_id': 'e0aa9aa704bded8f153b1ee007145f9de8e522892a156c9d28f23f9488a6fff2', 'member_ref': 'worksets/sec/source/sha256=e0aa9aa704bded8f153b1ee007145f9de8e522892a156c9d28f23f9488a6fff2/workset.json', 'parent_ref': 'worksets/sec/source/sha256=dd6b44071540f2eed11b85f345a0eeaf3e2321d6ce698e2643265942aa73cffe/workset.json', 'source': {'canonical_url': 'https://www.sec.gov/Archives/edgar/daily-index/2026/QTR4/master.20261001.idx', 'kind': 'daily', 'period': '2026-10-01', 'representation': 'idx', 'source_id': '6cf7f339fd98f08d888586fbf41d907cb071d3a54259128e659f51e1f7caaa72'}}, 'version': 'c249f13a51d543ff8d76da7f24038b32'}
+
+Diff is 796 characters long. Set self.maxDiff to None to see it.
+
+----------------------------------------------------------------------
+Ran 16 tests in 3.287s
+
+FAILED (failures=1, errors=1)

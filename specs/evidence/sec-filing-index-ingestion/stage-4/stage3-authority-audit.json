@@ -1,0 +1,137 @@
+{
+  "all22_stage7_checks": "reserved",
+  "completed_documents": {
+    "plan": {
+      "bytes": 84729,
+      "path": "specs/plans/completed/3-sec-filing-index-ingestion-stage-3-spec.md",
+      "sha256": "a9b40480555a1e6ae9eafa091dee1b31aa6a7d214b1d0d63d2b185dc42d143c8"
+    },
+    "spec": {
+      "bytes": 29510,
+      "path": "specs/completed/sec-filing-index-ingestion-stage-3-spec.md",
+      "sha256": "348c51eceb23a33fb525b922d82d56d04a9635d4c25eff9d468618d16ae2a601"
+    }
+  },
+  "conflicts": 51,
+  "exit": 0,
+  "full_scan_rows": 970622,
+  "guard_denied_dns": true,
+  "head": "fe95642bddf006f3d2d6cb3ccc57e595d75dc4cd",
+  "historical_full_check_exit": 0,
+  "historical_installed_exit": 0,
+  "historical_installed_wheel": {
+    "bytes": 111195,
+    "sha256": "eb8bb3b318b3b1a4fe1983291efb92161e22fac998f86230b5f2b7f3cf15c3ab"
+  },
+  "historical_tests": 452,
+  "installed_source_hashes_matched": 28,
+  "inventories": {
+    "acceptance-amendment": {
+      "identity": {
+        "bytes": 3452,
+        "sha256": "1ae8f6139f9d77c984a47e4c8cc5f906b7b8263cc012dd6e3b12c644ac7056b1"
+      },
+      "payload_bytes": 180705,
+      "records": 24
+    },
+    "completion": {
+      "identity": {
+        "bytes": 3024079,
+        "sha256": "e79d1cdb6be0cbe7b53aa698b38ac368f24a61473c0e736a801f813978d7dab4"
+      },
+      "payload_bytes": 97638254,
+      "records": 9678
+    },
+    "delivery": {
+      "identity": {
+        "bytes": 3014055,
+        "sha256": "a2efc7405ed0050f71f9fb2df06783b8444ab5ab56fb8839155428ea1c1a770b"
+      },
+      "payload_bytes": 91115378,
+      "records": 9618
+    },
+    "final-review-fix1": {
+      "identity": {
+        "bytes": 597921,
+        "sha256": "606a2ea013e7695d8fbf6029a00f30016c23dc2829ec882d218a29a11a10be14"
+      },
+      "payload_bytes": 15471496,
+      "records": 2070
+    },
+    "review-checkpoint": {
+      "identity": {
+        "bytes": 2104,
+        "sha256": "55180356113b83bbb6aef097371930c558941f037ec67d4a82fa220a47e0114c"
+      },
+      "payload_bytes": 93841,
+      "records": 15
+    },
+    "specimens": {
+      "identity": {
+        "bytes": 1632,
+        "sha256": "cf9879c99eafcee8e62d93d704ada310652771e01c25dfc3846afda408ebc3f9"
+      },
+      "payload_bytes": 211927,
+      "records": 13
+    },
+    "verification": {
+      "identity": {
+        "bytes": 2277373,
+        "sha256": "4554adb90acdda3e44bffac01bb878d3391d4ae523e0c4439aa4e1ab2c612b6b"
+      },
+      "payload_bytes": 72546066,
+      "records": 7525
+    }
+  },
+  "limitations": [
+    "Preserved primary dist wheel is historical Stage2 output; differs from Stage3 installed-proof hash. No rebuild performed.",
+    "Historical verifiers cannot run unchanged after retirement/merge because they bind pre-retirement spec path, archived absolute worktree paths, historical primary head/status, and clean isolated worktree.",
+    "No full suite rerun or production parser rescan; audit verifies retained evidence and current source hashes."
+  ],
+  "live_access_authorizations": "closed",
+  "negative_cases_rejected": 13,
+  "origin_main": "fe95642bddf006f3d2d6cb3ccc57e595d75dc4cd",
+  "original_specimen_exit": 1,
+  "primary_dist_wheel": {
+    "bytes": 79085,
+    "sha256": "349b9524fca4963de4a2ffdf3fb96f28708c01dba49564594a92944cc3ee5d28"
+  },
+  "reviewed_implementation_unchanged": "2343f39f0e21adc2ad401a9346a8c9ffa0509040",
+  "schema": "stage3-offline-reconciliation-authority-audit-v1",
+  "sources": [
+    {
+      "bytes": 3729148,
+      "conflicts": 21,
+      "first_conflict_line": 6580,
+      "original_source_relative": "specs/evidence/sec-filing-index-ingestion/stage-1/specimens/aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de.zip",
+      "period": "2010Q1",
+      "receipt_id": "SEC-0141",
+      "rows": 300561,
+      "sha256": "aca38d21ee64795f6095c86c0424f94e16a322a4ec0eb6fd38d2e5d6f86822de",
+      "strict_whole_source_refusal_verified": true
+    },
+    {
+      "bytes": 3901000,
+      "conflicts": 24,
+      "first_conflict_line": 87808,
+      "original_source_relative": "specs/evidence/sec-filing-index-ingestion/stage-1/specimens/984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728.zip",
+      "period": "2015Q1",
+      "receipt_id": "SEC-0142",
+      "rows": 318647,
+      "sha256": "984c3130c617c11d085a4deff77a01c21b1113d5bb4c8b2173f5f87eb9f2a728",
+      "strict_whole_source_refusal_verified": true
+    },
+    {
+      "bytes": 3502663,
+      "conflicts": 6,
+      "first_conflict_line": 40292,
+      "original_source_relative": "specs/evidence/sec-filing-index-ingestion/stage-1/specimens/393a535f84b71ed34845f67aa5e5275ecc86afeb1a6558ad5623b0d7d0babe71.zip",
+      "period": "2026Q3",
+      "receipt_id": "SEC-0143",
+      "rows": 302315,
+      "sha256": "393a535f84b71ed34845f67aa5e5275ecc86afeb1a6558ad5623b0d7d0babe71",
+      "strict_whole_source_refusal_verified": true
+    }
+  ],
+  "successful_range_and_capacity_established": false
+}

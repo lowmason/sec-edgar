@@ -1,0 +1,22 @@
+{
+  "argv": [
+    "uv",
+    "run",
+    "--offline",
+    "--frozen",
+    "--package",
+    "sec-edgar-ingest",
+    "python",
+    "packages/sec-edgar-ingest/tests/network_guard.py",
+    "discover",
+    "-s",
+    "packages/sec-edgar-ingest/tests",
+    "-p",
+    "test_workflow_runner.py",
+    "-k",
+    "test_same_attempt_receipts",
+    "-v"
+  ],
+  "output": "test_same_attempt_receipts_replay_after_mutable_discovery_index_is_corrupt (test_workflow_runner.RunnerTests.test_same_attempt_receipts_replay_after_mutable_discovery_index_is_corrupt) ... ERROR\n\n======================================================================\nERROR: test_same_attempt_receipts_replay_after_mutable_discovery_index_is_corrupt (test_workflow_runner.RunnerTests.test_same_attempt_receipts_replay_after_mutable_discovery_index_is_corrupt)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_runner.py\", line 223, in test_same_attempt_receipts_replay_after_mutable_discovery_index_is_corrupt\n    h.store.replace('DiscoverySession', 'workflow-backfill-historical', {'corrupt': True}, row.version)\n    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py\", line 221, in replace\n    raise Conflict(\"state row absent or revision changed\")\nsec_edgar_ingest.storage.contracts.Conflict: state row absent or revision changed\n\n----------------------------------------------------------------------\nRan 1 test in 6.282s\n\nFAILED (errors=1)\n",
+  "exit": 1
+}

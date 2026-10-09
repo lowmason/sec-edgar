@@ -1,0 +1,46 @@
+[
+  {
+    "argv": [
+      "git",
+      "-c",
+      "core.whitespace=cr-at-eol",
+      "diff",
+      "--check"
+    ],
+    "exit": 0,
+    "output": ""
+  },
+  {
+    "argv": [
+      "git",
+      "add",
+      "packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/completion.py",
+      "packages/sec-edgar-ingest/tests/support_workflow_evidence.py",
+      "packages/sec-edgar-ingest/tests/test_workflow_completion.py"
+    ],
+    "exit": 0,
+    "output": ""
+  },
+  {
+    "argv": [
+      "git",
+      "-c",
+      "core.whitespace=cr-at-eol",
+      "diff",
+      "--cached",
+      "--check"
+    ],
+    "exit": 0,
+    "output": ""
+  },
+  {
+    "argv": [
+      "git",
+      "commit",
+      "-m",
+      "feat: validate workflow completion and durable repair evidence"
+    ],
+    "exit": 0,
+    "output": "[codex/sec-edgar-stage4-plan5 75682afe] feat: validate workflow completion and durable repair evidence\n 3 files changed, 1249 insertions(+)\n create mode 100644 packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/completion.py\n create mode 100644 packages/sec-edgar-ingest/tests/support_workflow_evidence.py\n create mode 100644 packages/sec-edgar-ingest/tests/test_workflow_completion.py\n"
+  }
+]

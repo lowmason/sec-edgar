@@ -1,0 +1,26 @@
+argv: ["uv", "run", "--offline", "--frozen", "--package", "sec-edgar-ingest", "python", "packages/sec-edgar-ingest/tests/network_guard.py", "discover", "-s", "packages/sec-edgar-ingest/tests", "-p", "test_workflow_runner.py", "-k", "gap_omission", "-v"]
+exit: 1
+test_failed_empty_daily_directory_gap_omission_refuses (test_workflow_runner.RunnerTests.test_failed_empty_daily_directory_gap_omission_refuses) ... ok
+test_missing_result_discovery_gap_omission_refuses (test_workflow_runner.RunnerTests.test_missing_result_discovery_gap_omission_refuses) ... ERROR
+
+======================================================================
+ERROR: test_missing_result_discovery_gap_omission_refuses (test_workflow_runner.RunnerTests.test_missing_result_discovery_gap_omission_refuses)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/tests/test_workflow_runner.py", line 431, in test_missing_result_discovery_gap_omission_refuses
+    self.assertEqual(read_workflow_result(result_path, h.store, h.objects), report)
+                     ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/results.py", line 516, in read_workflow_result
+    selection, selection_descriptor = _validate_report(result, store, objects)
+                                      ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/results.py", line 347, in _validate_report
+    _validate_selection(selection, context, frozen['intent'], store, objects)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lowell/.codex/worktrees/sec-edgar-stage4-plan5/sec-edgar/packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/results.py", line 203, in _validate_selection
+    raise Conflict('selection discovery failure classification differs from checked result')
+sec_edgar_ingest.storage.contracts.Conflict: selection discovery failure classification differs from checked result
+
+----------------------------------------------------------------------
+Ran 2 tests in 4.811s
+
+FAILED (errors=1)
