@@ -2,8 +2,8 @@
 
 **Status: COMPLETE (2026-10-11)** — executed via subagent-driven-development; deferred items in specs/deferred_items.md
 **Owner:** Lowell Mason.
-**Implementing plan:** [Plan 6](plans/6-sec-filing-index-ingestion-stage-5-spec.md).
-**Authority:** [Parent design](sec-filing-index-ingestion-spec.md), [ADR](sec-filing-index-ingestion-adr.md), [roadmap](sec-filing-index-ingestion-roadmap.md), accepted [F1](sec-filing-index-ingestion-stage-1-findings.md), completed [Stage 3](completed/sec-filing-index-ingestion-stage-3-spec.md), and Stage 4's completion authority (roadmap "Stage 4 completion" note, [retired Plan 5](plans/completed/5-sec-filing-index-ingestion-stage-4-spec.md) header and [completion record](evidence/sec-filing-index-ingestion/stage-4/plan5-execution/completion/completion-record.md)). Only roadmap Stage 5 (R5, R7, R10) is specified here, plus the recorded rollback the owner assigned to it (§9).
+**Implementing plan:** [Plan 6](../plans/completed/6-sec-filing-index-ingestion-stage-5-spec.md).
+**Authority:** [Parent design](../sec-filing-index-ingestion-spec.md), [ADR](../sec-filing-index-ingestion-adr.md), [roadmap](../sec-filing-index-ingestion-roadmap.md), accepted [F1](../sec-filing-index-ingestion-stage-1-findings.md), completed [Stage 3](sec-filing-index-ingestion-stage-3-spec.md), and Stage 4's completion authority (roadmap "Stage 4 completion" note, [retired Plan 5](../plans/completed/5-sec-filing-index-ingestion-stage-4-spec.md) header and [completion record](../evidence/sec-filing-index-ingestion/stage-4/plan5-execution/completion/completion-record.md)). Only roadmap Stage 5 (R5, R7, R10) is specified here, plus the recorded rollback the owner assigned to it (§9).
 
 ## 1. Reconciliation and scope
 
@@ -47,7 +47,7 @@ The accepted pins carry over unchanged: Python **>=3.14**, Requests **2.34.2**, 
 
 - Discovery runs `discover --mode quarterly --refresh` under discovery ID `workflow-reconcile-<run-id>`. The report validator requires `refresh` for `reconcile` and forbids it for `backfill`/`daily`.
 - Requested quarters are the same inclusive span as backfill: `backfill.start_quarter` through the pinned endpoint (all supported quarters). A requested quarter with no readable generation stays a reported gap.
-- The workflow context priority is `reconciliation`. Children keep the shipped derivation: only daily discovery is `daily`, and everything else is `backfill`. The coordinator ranks only `daily` ahead of other work ([coordination.py:193](../packages/sec-edgar-ingest/src/sec_edgar_ingest/coordination.py)), so reconciliation and backfill units already share one non-daily turn order (§4.3), and retained child contexts stay replayable.
+- The workflow context priority is `reconciliation`. Children keep the shipped derivation: only daily discovery is `daily`, and everything else is `backfill`. The coordinator ranks only `daily` ahead of other work ([coordination.py:193](../../packages/sec-edgar-ingest/src/sec_edgar_ingest/coordination.py)), so reconciliation and backfill units already share one non-daily turn order (§4.3), and retained child contexts stay replayable.
 - Re-downloaded identical bytes resolve to the original `Snapshot` record (`AcquisitionState.remember_snapshot`). Processing identity is therefore unchanged, transform reports `unchanged`, publish reports `unchanged`, and the workflow outcome is `unchanged`.
 - Changed bytes go through the same transform/publish path, with Stage 3 precedence, open-quarter retention and the closed-quarter gate. An invalid corrected snapshot is quarantined by the shipped parser. The quarter keeps its prior generation, and the failed member's source period identifies the affected quarter.
 - A gated quarter is never reported as success. Its publish outcome and member outcome are `awaiting_approval`, the report counts it in `awaiting_approval_quarters`, and `candidates` (§6) lists the approval request.
@@ -60,7 +60,7 @@ The accepted pins carry over unchanged: Python **>=3.14**, Requests **2.34.2**, 
 
 ## 4. Supersession and reverts
 
-Stage 3 selects at most one snapshot per source, and the later receipt wins. Stage 4 completion requires a member's *exact* observation in every affected quarter ([completion.py:778](../packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/completion.py)). Under repeated reconciliation, that turns a routine case into a crash:
+Stage 3 selects at most one snapshot per source, and the later receipt wins. Stage 4 completion requires a member's *exact* observation in every affected quarter ([completion.py:778](../../packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/completion.py)). Under repeated reconciliation, that turns a routine case into a crash:
 
 1. A gated correction S2 is superseded by a newer download S3.
 2. S2's member publishes `unchanged`.

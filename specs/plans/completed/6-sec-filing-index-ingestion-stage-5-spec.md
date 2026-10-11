@@ -10,11 +10,11 @@
 
 **Tech Stack:** Python >=3.14; stdlib unittest, dataclasses and SQLite; PyArrow; the pinned Azure SDKs, exercised only through in-memory transports; `uv`, offline and frozen.
 
-**Spec:** [Stage 5 spec](../sec-filing-index-ingestion-stage-5-spec.md). Roadmap: specs/sec-filing-index-ingestion-roadmap.md, Stage 5 — on plan completion, tick the stage and re-validate later stages against what shipped.
+**Spec:** [Stage 5 spec](../../completed/sec-filing-index-ingestion-stage-5-spec.md). Roadmap: specs/sec-filing-index-ingestion-roadmap.md, Stage 5 — on plan completion, tick the stage and re-validate later stages against what shipped.
 
 ## Global Constraints
 
-Copied verbatim from [spec §2](../sec-filing-index-ingestion-stage-5-spec.md#2-constraints-inherited-by-plan-6); every task inherits them:
+Copied verbatim from [spec §2](../../completed/sec-filing-index-ingestion-stage-5-spec.md#2-constraints-inherited-by-plan-6); every task inherits them:
 
 - The implementation will live in **`packages/sec-edgar-ingest/`**, with `sec-edgar-ingest` as the distribution and CLI name and `sec_edgar_ingest` as the Python import package.
 - Backfill, daily ingestion and reconciliation differ in source selection, not in their downloader, parser or publication code.
