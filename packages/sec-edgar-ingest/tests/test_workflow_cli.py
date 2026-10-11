@@ -126,3 +126,14 @@ class WorkflowCliTests(unittest.TestCase):
         self.assertEqual(len(closed), 3)
         with self.assertRaises(FileNotFoundError):
             self.h.objects.read('runs/sec/conflict/daily/a/result.json')
+
+    def test_unprintable_exception_text_still_reports_structured_errors(self):
+        import sec_edgar_ingest.cli as cli
+        from sec_edgar_ingest.models import require_text
+        for run, text in (('empty', ''), ('multiline', 'first line\nsecond line')):
+            with self.subTest(run), patch.object(cli, 'run_workflow', side_effect=RuntimeError(text)):
+                code, message = self.h.invoke('daily', run=run)
+                self.assertEqual((code, message['outcome'], message['result_ref']), (9, 'internal_error', None))
+                event = json.loads(self.h.calls[-1]['stderr'].splitlines()[-1])
+                self.assertEqual((event['event'], event['fields']['error']['details']), ('command_error', {'type': 'RuntimeError'}))
+                require_text(event['fields']['error']['message'], 'message')
