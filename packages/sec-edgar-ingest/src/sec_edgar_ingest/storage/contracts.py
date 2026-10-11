@@ -13,7 +13,7 @@ from ..models import RAW_SNAPSHOT_PATH, Versioned, canonical_json, quarter_value
 CAS_ATTEMPTS = 5
 FILE_CHUNK_BYTES = 1024 * 1024
 ATTEMPT_KINDS = frozenset({"Attempt", "TransportAttempt", "Failure"})
-APPROVAL_KINDS = frozenset({"WithdrawalApproval"})
+APPROVAL_KINDS = frozenset({"WithdrawalApproval", "QuarterRollback"})
 REGISTRY_PATH = "locks/" + BINDING_REGISTRY_BLOB
 SENTINEL_PATH = "locks/" + LOCK_BLOB
 BoundaryObserver = Callable[[str], None]

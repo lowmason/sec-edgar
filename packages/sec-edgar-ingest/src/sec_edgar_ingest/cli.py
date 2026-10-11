@@ -22,6 +22,7 @@ from .etl.history import withdrawal_candidates
 from .etl.manifest import approval_ref
 from .etl.parser import supported_parser, SCHEMA_VERSION
 from .etl.publication import repair_publication
+from .etl.rollback import rollback, rollback_ref
 from .etl.state import EtlState
 from .download import BoundedSender, FixturePack, RequestClient
 from .models import CommandResult, Error, RunContext, canonical_json, parse_json, quarter_for, safe_relative_path, to_mapping_value
@@ -92,6 +93,10 @@ def _parser() -> argparse.ArgumentParser:
     sub.add_argument('--state-dir')
     sub = commands.add_parser('candidates')
     sub.add_argument('--config', required=True)
+    sub.add_argument('--state-dir')
+    sub = commands.add_parser('rollback')
+    for name in ('config', 'quarter', 'from-generation', 'to-generation', 'operator', 'reason'):
+        sub.add_argument('--' + name, required=True)
     sub.add_argument('--state-dir')
     return parser
 
@@ -494,6 +499,18 @@ def _candidates_main(args) -> int:
                                                   'candidates': list(withdrawal_candidates(objects, state))})
 
 
+def _rollback_main(args) -> int:
+    def run(objects, state):
+        result = rollback(args.quarter, args.from_generation, args.to_generation, args.operator, args.reason,
+                          objects, state)
+        return {**result.to_mapping(),
+                'rollback_ref': None if result.rollback is None else rollback_ref(result.rollback)}
+    return _operator_main(args, 'quarter_rollback',
+                          {'quarter': args.quarter, 'from_generation_id': args.from_generation,
+                           'to_generation_id': args.to_generation, 'rollback_ref': None, 'active': None,
+                           'rollback': None, 'error': None}, run)
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = _parser()
     args = parser.parse_args(argv)
@@ -506,6 +523,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _approve_main(args)
     if args.command == 'candidates':
         return _candidates_main(args)
+    if args.command == 'rollback':
+        return _rollback_main(args)
     try:
         settings, today, deadline, pack = _validate(args)
     except (ValueError, OSError, TypeError) as error:

@@ -9,11 +9,11 @@ from .storage.contracts import Conflict, ObjectStore
 
 EXIT_CODES = {
     'success': 0, 'no_new_sources': 0, 'unchanged': 0, 'configuration': 2,
-    'approval_refused': 2, 'discovery_failed': 3, 'incomplete': 3, 'pending': 4,
+    'approval_refused': 2, 'rollback_refused': 2, 'discovery_failed': 3, 'incomplete': 3, 'pending': 4,
     'retry_exhausted': 5, 'deferred': 5, 'throttled': 5,
     'access_blocked': 6, 'quarantined': 7, 'invalid_source': 7,
     'ownership_lost': 8, 'state_conflict': 9, 'internal_error': 9,
-    'publication_conflict': 9, 'awaiting_approval': 10, 'approval_stale': 11,
+    'publication_conflict': 9, 'awaiting_approval': 10, 'approval_stale': 11, 'rollback_stale': 11,
 }
 
 

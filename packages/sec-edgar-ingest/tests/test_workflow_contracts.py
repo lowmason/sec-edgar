@@ -151,6 +151,8 @@ class CoverageTests(unittest.TestCase):
             'awaiting_approval': ('pending', 'awaiting_approval'),
             'approval_refused': ('failed', 'incomplete'),
             'approval_stale': ('failed', 'incomplete'),
+            'rollback_refused': ('failed', 'incomplete'),
+            'rollback_stale': ('failed', 'incomplete'),
         }
         self.assertEqual(set(expected), set(EXIT_CODES))
         for outcome, (status, coverage) in expected.items():
