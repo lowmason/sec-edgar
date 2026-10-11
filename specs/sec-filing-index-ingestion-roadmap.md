@@ -95,7 +95,7 @@ Production triggers remain disabled through Stage 7 (§7).
       Exit: A bounded fixture backfill publishes the expected quarters and reports unresolved units (R1); outage/overlap fixtures catch up across quarter boundaries without losing older pending sources (R2).
       ROUTING: writing-plans
 
-- [ ] Stage 5: Reconciliation and withdrawal approval
+- [x] Stage 5: Reconciliation and withdrawal approval
       Objective: Complete the shared workflows with correction handling and an auditable approval path.
       Spec: §§4.2, 4.4–4.7, 5–6.
       Gap closed: R5; R7; R10.
@@ -226,7 +226,7 @@ This execution roadmap was derived from the preserved historical primary/approva
 
 The owner resumed the roadmap against `main` at `6ef957bb` (merged PR #4). Stages 1–4 carry authoritative stamps. Stages 6–8 were re-validated against the shipped package and are unchanged. For Stage 5 onward, the owner chose a lean process: TDD, per-task and whole-branch review, the full offline suite, and a wheel build with CLI smoke. Azure adapters stay in step with the local backend.
 
-Only Stage 5 is routed, via `writing-plans`, under the [Stage 5 spec](sec-filing-index-ingestion-stage-5-spec.md) and [Plan 6](plans/6-sec-filing-index-ingestion-stage-5-spec.md), both on branch `stage-5-reconcile`. The owner's decisions are recorded in spec §9:
+Only Stage 5 is routed, via `writing-plans`, under the [Stage 5 spec](completed/sec-filing-index-ingestion-stage-5-spec.md) and [Plan 6](plans/completed/6-sec-filing-index-ingestion-stage-5-spec.md), both on branch `stage-5-reconcile`. The owner's decisions are recorded in spec §9:
 
 - Reverts to older bytes are detected and reported as `source_reverted`, not published.
 - Stage 5 builds the explicit recorded rollback (§4.7), so its Produces line now names it. Stage 6 maps the rollback operator role; Stage 7's rollback rehearsal (§7 step 5) consumes it.
@@ -235,3 +235,15 @@ Only Stage 5 is routed, via `writing-plans`, under the [Stage 5 spec](sec-filing
 - The gated-then-reverted limitation (Stage 5 spec §4) is deferred, to be recorded in `specs/deferred_items.md` at stage exit.
 
 Stages 5–8 remain unticked. All live-access authorizations remain closed. Resuming past Stage 5 requires a separate owner request.
+
+## Stage 5 completion and later-stage consistency
+
+Stage 5: COMPLETE (2026-10-11) — implemented by plan 6 ([retired executed plan](plans/completed/6-sec-filing-index-ingestion-stage-5-spec.md); [retired spec](completed/sec-filing-index-ingestion-stage-5-spec.md)). The lean process ran as chosen: red/green TDD per task, a task review each, a whole-branch Opus review, the full offline suite (654 tests OK) and a wheel build with `--help` smoke tests for `reconcile`, `approve`, `candidates` and `rollback`. The final review found no Critical issues; its fixes landed in the fix commit, and the remaining findings plus the owner-deferred gated-then-reverted limitation are in `specs/deferred_items.md`. The Codex second-opinion seat did not run (the CLI rejected its configured model for the ChatGPT account), so integration needs a Codex pass first. This is not a live-access authorization.
+
+Stages 6–8 were re-validated against what shipped, and their objectives, contracts and routing are unchanged:
+
+- **Stage 6** consumes the `reconcile` workflow command (a third command on the Stage 4 runner), the operator commands `approve`, `candidates` and `rollback`, exit code 10 for gated work, exit 11 for a stale approval or rollback, exit 2 for a refused one, and the `Approvals` table with the `approvals` blob container, which sit in the accepted table and container scope but must be provisioned by the deployment definitions. The built image must run every command. Pipelines must treat exit 10 as a distinct gated outcome and exit 11 as stale, never as success. Stage 6 must also map the approval and rollback operator roles to the read/write sets in Stage 5 spec §5, and decide how approval, rollback and re-activation actors are identified (deferred item).
+- **Stage 7**'s rollback rehearsal (parent §7 step 5) consumes `rollback`. The operator procedure reads `quarter_history`, which is library-only until the deferred read-only history command exists. All 22 integrated checks remain reserved/not_run; Stage 5's offline proofs discharge none of them.
+- **Stage 8**'s reconciliation activation (accepted manual reconciliation precedes weekly enablement) consumes `reconcile`. A closed-quarter withdrawal still needs an operator `approve` and is never a successful scheduled run.
+
+Stages 6–8 remain unticked. All live-access authorizations remain closed. Resuming past Stage 5 requires a separate owner request.

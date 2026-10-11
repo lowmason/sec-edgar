@@ -1,6 +1,6 @@
 # SEC filing-index ingestion — Stage 5: Reconciliation and withdrawal approval
 
-**Status: READY FOR EXECUTION (2026-10-11) — owner accepted the §9 recommendations; implementation not started.**
+**Status: COMPLETE (2026-10-11)** — executed via subagent-driven-development; deferred items in specs/deferred_items.md
 **Owner:** Lowell Mason.
 **Implementing plan:** [Plan 6](plans/6-sec-filing-index-ingestion-stage-5-spec.md).
 **Authority:** [Parent design](sec-filing-index-ingestion-spec.md), [ADR](sec-filing-index-ingestion-adr.md), [roadmap](sec-filing-index-ingestion-roadmap.md), accepted [F1](sec-filing-index-ingestion-stage-1-findings.md), completed [Stage 3](completed/sec-filing-index-ingestion-stage-3-spec.md), and Stage 4's completion authority (roadmap "Stage 4 completion" note, [retired Plan 5](plans/completed/5-sec-filing-index-ingestion-stage-4-spec.md) header and [completion record](evidence/sec-filing-index-ingestion/stage-4/plan5-execution/completion/completion-record.md)). Only roadmap Stage 5 (R5, R7, R10) is specified here, plus the recorded rollback the owner assigned to it (§9).
@@ -55,7 +55,7 @@ The accepted pins carry over unchanged: Python **>=3.14**, Requests **2.34.2**, 
   - Stage 4 §5 says both "mixed progress is `incomplete`" and "gate-only unresolved work is `awaiting_approval`". The shipped reducer read the first phrase broadly: any completed work beside a gate was mixed. The owner adopted the narrower reading on 2026-10-11: mixed means completed work beside non-gate unresolved or failed work.
   - The hash-bound Stage 4 spec is not edited; this section records the amendment. Plan 6 Task 3 updates the one accepted Stage 4 assertion that encoded the old reading (`test_gate_only_and_mixed_gate_progress_preserve_current_pointer`, mixed case).
   - Reconcile refreshes every quarterly source, so a gate usually sits beside unchanged quarters. A typical gated reconcile therefore exits 10.
-  - Stored `sec-workflow-result-v1` reports re-validate their outcome with the reducer. A Stage 4-era report written as `incomplete` for a gate beside completed sources therefore no longer validates, and replaying that exact attempt is refused as `state_conflict`. No such report exists outside temporary test state; the retained Stage 4 evidence holds only a gate-only report, whose outcome both readings agree on. The format version is not bumped.
+  - Stored `sec-workflow-result-v1` reports re-validate their outcome with the reducer. A Stage 4-era report written as `incomplete` for a gate beside completed sources therefore no longer validates, and replaying that exact attempt is refused as `state_conflict`. The same holds for a single source holding both a complete-status member and an `awaiting_approval` member with no gap: the shipped reducer gave `pending` (exit 4) and the amended one gives `awaiting_approval` (exit 10), so a Stage 4-era report of that shape also no longer validates. No such report exists outside temporary test state; the retained Stage 4 evidence holds only a gate-only report, whose outcome both readings agree on. The format version is not bumped.
 - Quarterly-mode discovery inventory also lists directories of sources still needing acquisition, which can include daily directories. Under `refresh`, every member of those directories is re-fetched. This affects only sources that are still pending, and Stage 5 does not change discovery inventory.
 
 ## 4. Supersession and reverts
@@ -168,7 +168,7 @@ The rollback ID is the SHA-256 of the quarter, both generation IDs and the sourc
 
 The record is written ahead of the pointer swap, so it records an attempted move, not proof of one. A record whose swap lost a race remains. The pointer, and the lineage read from it, decide what took effect.
 
-A rollback is not a pin. Sources stay selected by receipt order, so the next publish of a newer observation builds forward from the restored generation. Re-publishing the rolled-back-from inputs yields the same deterministic generation ID. A rollback changes the active pointer only (§2): it erases no source history, approval or candidate. Rolling back past an approved candidate makes that candidate `pending` again in `candidates`. A later `approve` re-activates it under its first stored approval; publishing never re-applies an approval by itself.
+A rollback is not a pin. Sources stay selected by receipt order, so the next publish of a newer observation builds forward from the restored generation. Re-publishing the rolled-back-from inputs yields the same deterministic generation ID. A rollback changes the active pointer only (§2): it erases no source history, approval or candidate. Rolling back to an approved candidate's base shows that candidate `pending` again in `candidates`, and a later `approve` re-activates it under its first stored approval (the later approver is not recorded). Rolling back further shows it `stale`, and `approve` returns `approval_stale`. Publishing never re-applies an approval by itself.
 
 **Exact read/write set for `rollback`:**
 
@@ -262,4 +262,4 @@ The owner also deferred the gated-then-reverted limitation (§4) rather than wid
 > Roadmap: specs/sec-filing-index-ingestion-roadmap.md, Stage 5 — on plan completion, tick the
 > stage and re-validate later stages against what shipped.
 
-The owner's 2026-10-11 decisions (§9) are applied, and Plan 6 is ready to execute on branch `stage-5-reconcile`. This document is not a completion stamp or a live-access authorization.
+Stage 5: COMPLETE (2026-10-11) — implemented by plan 6 (specs/plans/completed/6-sec-filing-index-ingestion-stage-5-spec.md). The owner's 2026-10-11 decisions (§9) are applied. The full offline suite passed (654 tests) and the wheel builds with all four new commands answering `--help`. The final Opus review found no Critical issues; its fixes landed in the fix commit, and the remaining findings, together with the owner-deferred gated-then-reverted limitation (§4), are in `specs/deferred_items.md`. The Codex second-opinion seat did not run (the CLI rejected its configured model for the ChatGPT account), so integration needs a Codex pass first. This document is not a live-access authorization; SEC, Azure, credential, deployment and trigger activity remain closed, and all 22 Stage 7 integrated checks remain reserved/not_run.

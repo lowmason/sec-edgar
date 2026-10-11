@@ -1,5 +1,7 @@
 # Stage 5: Reconciliation and withdrawal approval Implementation Plan
 
+**Status: COMPLETE (2026-10-11)** — executed via subagent-driven-development; deferred items in specs/deferred_items.md
+
 > **For agentic workers:** REQUIRED SUB-SKILL: implement this plan task-by-task via subagent-driven-development (the default) — or executing-plans when your human partner chose inline execution at the handoff. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Add the `reconcile` workflow, exact approval of gated closed-quarter withdrawals, an explicit recorded pointer rollback, and the operator `candidates` listing and quarter history, with no force bypass.
@@ -115,7 +117,7 @@ All `src/` and `tests/` paths are under `packages/sec-edgar-ingest/`.
     - `operator_cli(*argv) -> (int, dict | None, str)`
     - `GateFixture`, with `root`, `store`, `objects`, `state`, `settings`, `context`, `pin(day)`, `observation(**kw)`, `publish(*refs, quarter='2026Q4', **kw)`, `capture(quarter='2026Q4')`, `rows(capture=None) -> [(row_number, company_name)]`, `candidate(candidate_ref) -> Candidate`, `gated() -> (base GenerationCapture, revised ObservationRef, Candidate)`, `object_path(ref) -> Path` and `write_config() -> Path`.
 
-- [ ] **Step 1: Create the shared gated-candidate fixture**
+- [x] **Step 1: Create the shared gated-candidate fixture**
 
 `GateFixture` opens stores exactly as the CLI does: `open_stores(settings, base_path=root)` resolves to `root/.fixture-state` with the settings binding. Operator CLI calls with `--state-dir root` therefore see the same state. Do not use `support.store_bundle` here; it opens the stores directly at `root`.
 
@@ -218,7 +220,7 @@ class GateFixture(unittest.TestCase):
         return path
 ```
 
-- [ ] **Step 2: Write the failing tests**
+- [x] **Step 2: Write the failing tests**
 
 Create `packages/sec-edgar-ingest/tests/test_etl_approval.py`:
 
@@ -345,7 +347,7 @@ In `packages/sec-edgar-ingest/tests/test_azure_contracts.py`, replace lines 358-
             self.assertEqual(state.approval_client.table_name, "Approvals")
 ```
 
-- [ ] **Step 3: Run the tests to verify they fail**
+- [x] **Step 3: Run the tests to verify they fail**
 
 Run the focused command with `-p 'test_etl_approval.py'` and no `-k`.
 Expected: an `ImportError` (`cannot import name 'WithdrawalApproval'`).
@@ -353,7 +355,7 @@ Expected: an `ImportError` (`cannot import name 'WithdrawalApproval'`).
 Then run it with `-p 'test_etl_storage.py' -k approvals_table`.
 Expected: a `TypeError` naming the unexpected keyword argument `approval_client`.
 
-- [ ] **Step 4: Add the approval record**
+- [x] **Step 4: Add the approval record**
 
 In `etl/contracts.py`, add these constants after `RESULT_FORMAT = 'sec-etl-result-v1'`:
 
@@ -400,7 +402,7 @@ class WithdrawalApproval(Record):
 
 `_record` already validates the hash-named fields, the `_ref` paths and `quarter`.
 
-- [ ] **Step 5: Add approval addressing, binding and reading**
+- [x] **Step 5: Add approval addressing, binding and reading**
 
 In `etl/manifest.py`, add `from datetime import datetime` to the stdlib imports. Then change the two package imports to:
 
@@ -443,7 +445,9 @@ def read_approval(candidate: Candidate, objects: ObjectStore) -> WithdrawalAppro
     return approval
 ```
 
-- [ ] **Step 6: Accept approved candidates in the reader and index approvals**
+- [x] **Step 6: Accept approved candidates in the reader and index approvals**
+
+> Deviation: the wrapped `.contracts` import in `etl/state.py` is split across two lines (cosmetic).
 
 In `etl/reader.py`, change the manifest import to:
 
@@ -480,7 +484,7 @@ In `etl/state.py`, add `WithdrawalApproval` to the `.contracts` import. Add thes
         return None if row is None else WithdrawalApproval.from_mapping(row.to_mapping()['value'])
 ```
 
-- [ ] **Step 7: Route approval records to `Approvals`, locally and on Azure**
+- [x] **Step 7: Route approval records to `Approvals`, locally and on Azure**
 
 In `storage/contracts.py`, add this constant after `ATTEMPT_KINDS`:
 
@@ -551,12 +555,12 @@ In `open_azure_stores`, replace the `AzureStateStore(...)` construction with:
                             approval_client=tables.get_table_client("Approvals"))
 ```
 
-- [ ] **Step 8: Run the tests to verify they pass**
+- [x] **Step 8: Run the tests to verify they pass**
 
 Run the focused command once for each pattern, with no `-k`: `test_etl_approval.py`, `test_etl_storage.py`, `test_azure_contracts.py` and `test_etl_publication.py`.
 Expected: every run ends `OK`. `test_awaiting_approval_pointer_is_refused_by_capture_and_repair` still passes, because the new refusal message contains `awaiting-approval`.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/contracts.py packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/manifest.py packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/reader.py packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/state.py packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/contracts.py packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py packages/sec-edgar-ingest/tests/support_approval.py packages/sec-edgar-ingest/tests/test_etl_approval.py packages/sec-edgar-ingest/tests/test_etl_storage.py packages/sec-edgar-ingest/tests/test_azure_contracts.py
@@ -590,7 +594,7 @@ git commit -m "feat(etl): bind withdrawal approvals to exact gated candidates"
     - a configuration error exits 2 and writes nothing to stdout.
   - `cli._operator_main(args, event: str | None, empty: dict, run: Callable[[ObjectStore, EtlState], dict]) -> int`, reused by Tasks 5 and 6. It loads the config (exit 2, nothing on stdout, on a configuration error), opens and closes the stores, merges `run`'s result over `empty`, maps any exception to `state_conflict` or `internal_error` (exit 9), writes the optional stderr event line, prints canonical JSON and returns the outcome's exit code.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 In `packages/sec-edgar-ingest/tests/test_etl_approval.py`, add these imports below the existing ones:
 
@@ -740,7 +744,7 @@ In `packages/sec-edgar-ingest/tests/test_workflow_contracts.py`, add two entries
             'approval_stale': ('failed', 'incomplete'),
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run the focused command with `-p 'test_etl_approval.py'`.
 Expected: `ModuleNotFoundError: No module named 'sec_edgar_ingest.etl.approval'`. The new top-level import fails the whole module, Task 1's tests included, until Step 3.
@@ -748,7 +752,7 @@ Expected: `ModuleNotFoundError: No module named 'sec_edgar_ingest.etl.approval'`
 Run it with `-p 'test_workflow_contracts.py' -k all_exit_outcomes`.
 Expected: an `AssertionError` from the set comparison.
 
-- [ ] **Step 3: Implement the operation**
+- [x] **Step 3: Implement the operation**
 
 Create `packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/approval.py`:
 
@@ -876,7 +880,7 @@ def approve(quarter: str, generation_id: str, quarterly_sha256: str, approver: s
 
 Corrupt evidence is not caught here. Examples are an invalid manifest, a non-canonical approval and a gate-record mismatch. Each raises `ValueError` or `Conflict`, which the CLI reports as `state_conflict`.
 
-- [ ] **Step 4: Add the exit codes**
+- [x] **Step 4: Add the exit codes**
 
 In `results.py`, replace `EXIT_CODES` with:
 
@@ -891,7 +895,7 @@ EXIT_CODES = {
 }
 ```
 
-- [ ] **Step 5: Add the `approve` CLI**
+- [x] **Step 5: Add the `approve` CLI**
 
 In `cli.py`, add these imports beside the other `.etl` imports:
 
@@ -968,12 +972,12 @@ In `main`, route `approve` before `_validate`, which reads acquisition-only argu
         return _approve_main(args)
 ```
 
-- [ ] **Step 6: Run the tests to verify they pass**
+- [x] **Step 6: Run the tests to verify they pass**
 
 Run the focused command once for each pattern: `test_etl_approval.py`, `test_workflow_contracts.py` and `test_workflow_cli.py`.
 Expected: `OK` each time.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/approval.py packages/sec-edgar-ingest/src/sec_edgar_ingest/results.py packages/sec-edgar-ingest/src/sec_edgar_ingest/cli.py packages/sec-edgar-ingest/tests/test_etl_approval.py packages/sec-edgar-ingest/tests/test_workflow_contracts.py
@@ -1008,7 +1012,7 @@ git commit -m "feat(etl): approve exact gated withdrawals by pointer CAS"
     - `quarterly(rows) -> bytes` and `sha(rows) -> str`
     - `ReconcileFixture`, with `harness(q3_rows, q4_rows=(X, Y)) -> CommandHarness`, `run_phase(h, command, run, q3_rows=None, q4_rows=(X, Y)) -> (code, message, WorkflowResult | None)`, `names(h, quarter) -> [company_name]` and `candidates(h) -> [Candidate]`.
 
-- [ ] **Step 1: Create the reconcile fixture**
+- [x] **Step 1: Create the reconcile fixture**
 
 Create `packages/sec-edgar-ingest/tests/support_reconcile.py`:
 
@@ -1091,7 +1095,7 @@ In `packages/sec-edgar-ingest/tests/support_workflows.py`, change line 77 so tha
         if command in ('discover', 'collect', 'backfill', 'daily', 'reconcile'):
 ```
 
-- [ ] **Step 2: Write the failing tests**
+- [x] **Step 2: Write the failing tests**
 
 Create `packages/sec-edgar-ingest/tests/test_reconcile_workflow.py`:
 
@@ -1226,7 +1230,7 @@ In `packages/sec-edgar-ingest/tests/test_workflow_runner.py`, change line 353 of
                     self.assertEqual(report.outcome, 'awaiting_approval')
 ```
 
-- [ ] **Step 3: Run the tests to verify they fail**
+- [x] **Step 3: Run the tests to verify they fail**
 
 Run the focused command with `-p 'test_reconcile_workflow.py'`.
 Expected: every test fails. `main` sees `reconcile` as an invalid argparse choice and raises `SystemExit: 2`.
@@ -1234,7 +1238,7 @@ Expected: every test fails. `main` sees `reconcile` as an invalid argparse choic
 Run it with `-p 'test_workflow_contracts.py' -k awaiting_approval_beside`.
 Expected: an `AssertionError` showing `'incomplete'` where `'awaiting_approval'` was expected.
 
-- [ ] **Step 4: Implement the command**
+- [x] **Step 4: Implement the command**
 
 In `workflows/contracts.py`, add after `FORMAT_VERSION = 'sec-workflow-result-v1'`:
 
@@ -1332,14 +1336,16 @@ In `cli.py`, apply these changes:
            return _workflow_main(args)
    ```
 
-- [ ] **Step 5: Run the tests to verify they pass**
+- [x] **Step 5: Run the tests to verify they pass**
 
 Run the focused command with `-p 'test_reconcile_workflow.py'`, then with `-p 'test_workflow_*.py'`. The second run covers every shipped workflow test file, because `WorkflowResult` and the report validator (`workflows/results.py:504`) re-derive each stored outcome through `summarize`.
 Expected: `OK` both times. The only shipped assertion this task changes is `test_workflow_runner.py:353`, edited in Step 2. If any other shipped test fails, stop and report it to the owner; do not edit its expectation.
 
 Compatibility note (spec §3): a stored `sec-workflow-result-v1` report re-validates its outcome with the amended reducer. A Stage 4-era report whose run had a gate beside completed sources was written as `incomplete`, so it no longer validates, and replaying that exact attempt is refused as `state_conflict`. No such report exists outside temporary test state: the retained Stage 4 evidence holds only a gate-only report (outcome `awaiting_approval` under both reducers). The result format is therefore not bumped.
 
-- [ ] **Step 6: Commit**
+> Deviation: the note understates the change. A single source holding both a complete-status member and an `awaiting_approval` member, with no gaps, also changes from `pending` (exit 4) to `awaiting_approval` (exit 10), so a Stage 4-era report of that shape would also no longer validate. The owner accepted this behavior as matching spec §3-§4; commit 5ad228ab added a `summarize` pin for it, and spec §3 now states it.
+
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/contracts.py packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/checked.py packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/runner.py packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/results.py packages/sec-edgar-ingest/src/sec_edgar_ingest/cli.py packages/sec-edgar-ingest/tests/support_workflows.py packages/sec-edgar-ingest/tests/support_reconcile.py packages/sec-edgar-ingest/tests/test_reconcile_workflow.py packages/sec-edgar-ingest/tests/test_workflow_contracts.py packages/sec-edgar-ingest/tests/test_workflow_runner.py
@@ -1366,7 +1372,7 @@ git commit -m "feat(workflows): add reconcile and report gate-only work as await
   - `workflows.runner.source_revert_gaps(results: tuple[MemberResult, ...], store, objects) -> tuple[Error, ...]`. Each gap has code `source_reverted`, is retryable, carries `source_id`, and has details `quarter, observed_sha256, observed_at, first_received_at, active_sha256, active_received_at, generation_id`.
   - Repair-resolution checks (`completion.py:666,730`) stay exact.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 In `packages/sec-edgar-ingest/tests/test_reconcile_workflow.py`, extend the imports:
 
@@ -1431,12 +1437,12 @@ class SupersessionWorkflowTests(ReconcileFixture):
         self.assertEqual(self.names(h, '2026Q3'), ['A', 'B', 'C'])
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run the focused command with `-p 'test_reconcile_workflow.py'`.
 Expected: the module fails to import with `ImportError: cannot import name 'accounts_for'`. The Task 3 tests in the same module fail with it; that is expected until Step 3.
 
-- [ ] **Step 3: Implement the supersession rule**
+- [x] **Step 3: Implement the supersession rule**
 
 In `workflows/completion.py`, add this function immediately before `LEGACY_PUBLISH_FORMAT = ...`:
 
@@ -1472,7 +1478,7 @@ In `evaluate_member`, replace the membership check at line 778:
 
 Leave the checks at lines 666 and 730 unchanged. They verify one specific repaired publication.
 
-- [ ] **Step 4: Implement revert detection**
+- [x] **Step 4: Implement revert detection**
 
 In `workflows/runner.py`, replace the import `from ..etl.reader import capture_quarter` with:
 
@@ -1531,12 +1537,12 @@ def source_revert_gaps(results, store, objects) -> tuple[Error, ...]:
 
 The reducer, as amended in Task 3, still turns any workflow gap into `incomplete`. The report validator requires only that the frozen selection gaps are present, so this added gap passes report validation.
 
-- [ ] **Step 5: Run the tests to verify they pass**
+- [x] **Step 5: Run the tests to verify they pass**
 
 Run the focused command with `-p 'test_reconcile_workflow.py'`, then with `-p 'test_workflow_*.py'`.
 Expected: `OK` both times.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/completion.py packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/runner.py packages/sec-edgar-ingest/tests/test_reconcile_workflow.py
@@ -1565,7 +1571,7 @@ git commit -m "feat(workflows): complete superseded members and report source re
   - `etl.history.withdrawal_candidates(objects, state) -> tuple[dict, ...]`. Entries are sorted by quarter and then generation, with keys `quarter, generation_id, base_generation_id, quarterly_sha256, candidate_ref, changes, withdrawn, status, approved, latest_observed_sha256, latest_observed_at`.
   - CLI `candidates` prints `{"candidates": [...], "error": null, "outcome": "success"}` and exits 0. Failures exit 9 with `candidates: null`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/sec-edgar-ingest/tests/test_etl_history.py`:
 
@@ -1637,12 +1643,12 @@ if __name__ == '__main__':
     unittest.main()
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run the focused command with `-p 'test_etl_history.py'`.
 Expected: `ModuleNotFoundError: No module named 'sec_edgar_ingest.etl.history'`.
 
-- [ ] **Step 3: Implement history and the listing**
+- [x] **Step 3: Implement history and the listing**
 
 In `etl/manifest.py`, move the retained-base read out of `_base_manifest` so that history and rollback reuse the validator's exact check. Replace `_base_manifest` with:
 
@@ -1761,7 +1767,7 @@ def withdrawal_candidates(objects: ObjectStore, state: EtlState) -> tuple[dict[s
     return tuple(sorted(entries, key=lambda entry: (quarter_value(entry['quarter']), entry['generation_id'])))
 ```
 
-- [ ] **Step 4: Add the `candidates` CLI**
+- [x] **Step 4: Add the `candidates` CLI**
 
 In `cli.py`, add the import:
 
@@ -1793,12 +1799,12 @@ In `main`, add after the `approve` routing:
         return _candidates_main(args)
 ```
 
-- [ ] **Step 5: Run the tests to verify they pass**
+- [x] **Step 5: Run the tests to verify they pass**
 
 Run the focused command once for each pattern: `test_etl_history.py`, `test_etl_approval.py`, `test_etl_catalog.py` and `test_etl_publication.py`. The last two cover the `_base_manifest` refactor.
 Expected: `OK` each time.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/history.py packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/manifest.py packages/sec-edgar-ingest/src/sec_edgar_ingest/cli.py packages/sec-edgar-ingest/tests/test_etl_history.py
@@ -1841,7 +1847,7 @@ git commit -m "feat(etl): list withdrawal candidates and quarter lineage"
     - stdout carries the canonical keys `outcome, quarter, from_generation_id, to_generation_id, rollback_ref, active, rollback, error`;
     - one stderr line has event `quarter_rollback`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/sec-edgar-ingest/tests/test_etl_rollback.py`:
 
@@ -2011,7 +2017,7 @@ In `packages/sec-edgar-ingest/tests/test_workflow_contracts.py`, add two entries
             'rollback_stale': ('failed', 'incomplete'),
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run the focused command with `-p 'test_etl_rollback.py'`.
 Expected: `ImportError: cannot import name 'QuarterRollback'`.
@@ -2022,7 +2028,7 @@ Expected: an `AssertionError`; the request goes to `/SourceState`.
 Run it with `-p 'test_workflow_contracts.py' -k all_exit_outcomes`.
 Expected: an `AssertionError` from the set comparison.
 
-- [ ] **Step 3: Add the rollback record, index and routing**
+- [x] **Step 3: Add the rollback record, index and routing**
 
 In `etl/contracts.py`, add these constants after `MAX_OPERATOR_CHARS`:
 
@@ -2094,7 +2100,7 @@ APPROVAL_KINDS = frozenset({"WithdrawalApproval", "QuarterRollback"})
 
 `AzureStateStore._client` already routes every `Approvals` kind to the approval client (Task 1).
 
-- [ ] **Step 4: Implement the operation**
+- [x] **Step 4: Implement the operation**
 
 Create `packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/rollback.py`:
 
@@ -2222,7 +2228,7 @@ def rollback(quarter: str, from_generation: str, to_generation: str, operator: s
 
 As in `approve`, corrupt evidence is not caught here: an invalid lineage, target manifest or stored record raises `ValueError` or `Conflict`, which the CLI reports as `state_conflict`. A gated target without its exact approval fails `validated_manifest` the same way. The stored, first-wins record is the one indexed and returned.
 
-- [ ] **Step 5: Add the exit codes and the CLI**
+- [x] **Step 5: Add the exit codes and the CLI**
 
 In `results.py`, add the two names to `EXIT_CODES`, keeping Task 2's entries:
 
@@ -2274,12 +2280,12 @@ In `main`, add after the `candidates` routing:
         return _rollback_main(args)
 ```
 
-- [ ] **Step 6: Run the tests to verify they pass**
+- [x] **Step 6: Run the tests to verify they pass**
 
 Run the focused command once for each pattern: `test_etl_rollback.py`, `test_etl_storage.py`, `test_workflow_contracts.py`, `test_etl_approval.py` and `test_etl_history.py`.
 Expected: `OK` each time.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/contracts.py packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/state.py packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/contracts.py packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/rollback.py packages/sec-edgar-ingest/src/sec_edgar_ingest/results.py packages/sec-edgar-ingest/src/sec_edgar_ingest/cli.py packages/sec-edgar-ingest/tests/test_etl_rollback.py packages/sec-edgar-ingest/tests/test_etl_storage.py packages/sec-edgar-ingest/tests/test_workflow_contracts.py
@@ -2300,7 +2306,7 @@ git commit -m "feat(etl): record and apply explicit quarter pointer rollback"
 - Consumes everything from Tasks 1-6, through the CLI only, apart from the library APIs `quarter_history` and `EtlState.rollbacks`.
 - Produces: a stage-exit test file, operator documentation, and verified suite, build and help evidence.
 
-- [ ] **Step 1: Write the acceptance test**
+- [x] **Step 1: Write the acceptance test**
 
 Create `packages/sec-edgar-ingest/tests/test_reconcile_acceptance.py`. Every reconcile re-fetches each quarterly source, because refresh members never reuse an earlier binding, so the revert phase reprocesses the Q3 source and reports it:
 
@@ -2385,12 +2391,14 @@ if __name__ == '__main__':
     unittest.main()
 ```
 
-- [ ] **Step 2: Run the acceptance test**
+- [x] **Step 2: Run the acceptance test**
 
 Run the focused command with `-p 'test_reconcile_acceptance.py'`.
 Expected: `OK`. The test only exercises Tasks 1-6, so a failure here is a defect in those tasks. Diagnose it before continuing; do not weaken the assertion.
 
-- [ ] **Step 3: Write the operator runbook**
+- [x] **Step 3: Write the operator runbook**
+
+> Deviation: after the final review, commit 5ad228ab corrected the runbook text: the rollback sentence (rolling back to a candidate's base shows it `pending` and `approve` re-activates it under the original approval; rolling back further shows `stale`), the exit-2 and `rollback_stale` rows, the meaning of `approved`, and the orphan-approval case.
 
 Create `docs/runbooks/sec-edgar-reconciliation-approval.md`:
 
@@ -2487,7 +2495,7 @@ A rollback is not a pin: the next publish of a newer observation builds forward 
 - Integrated checks, including the rollback rehearsal, belong to Stage 7.
 ````
 
-- [ ] **Step 4: Update the README**
+- [x] **Step 4: Update the README**
 
 In `packages/sec-edgar-ingest/README.md`, make these replacements:
 
@@ -2533,7 +2541,9 @@ In `packages/sec-edgar-ingest/README.md`, make these replacements:
 
    ```
 
-- [ ] **Step 5: Update the ETL runbook**
+- [x] **Step 5: Update the ETL runbook**
+
+> Deviation: `docs/runbooks/sec-edgar-ingest-acquisition.md` carried a stale copy of the README block that this plan did not list; commit 5ad228ab applied the same replacements there.
 
 In `docs/runbooks/sec-edgar-etl-publication.md`, replace:
 
@@ -2552,7 +2562,9 @@ to an earlier generation of its exact lineage, with a record. See the
 [reconciliation and approval runbook](sec-edgar-reconciliation-approval.md).
 ```
 
-- [ ] **Step 6: Run the full offline suite**
+- [x] **Step 6: Run the full offline suite**
+
+> Deviation: the controller ran this step before the implementer resumed for Steps 7-9, because the roughly 17-minute suite exceeds a subagent's 10-minute tool limit. 654 tests OK. The pre-execution baseline had two load-flaky multi-process failures (`test_coordination` three_independent_exchange_processes, `test_acquisition_processes` held_socket_parent_death) that pass in isolation and passed in this run.
 
 ```bash
 uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/network_guard.py discover -s packages/sec-edgar-ingest/tests -v 2>&1 | tail -5
@@ -2560,7 +2572,9 @@ uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-i
 
 Expected: the final line is `OK` (skips allowed), after roughly 15 minutes. Compare the result with the baseline run from Execution setup.
 
-- [ ] **Step 7: Build the wheel and smoke-test help**
+- [x] **Step 7: Build the wheel and smoke-test help**
+
+> Deviation: the shell refused the one-line `mktemp`/`for` forms, so the same commands ran one at a time.
 
 ```bash
 out="$(mktemp -d)" && uv build --offline --package sec-edgar-ingest --out-dir "$out" && python3 -m zipfile -l "$out"/sec_edgar_ingest-*.whl | grep -E 'sec_edgar_ingest/etl/(approval|history|rollback)\.py'
@@ -2574,7 +2588,7 @@ for command in reconcile approve candidates rollback; do uv run --offline --froz
 
 Expected: no output.
 
-- [ ] **Step 8: Check whitespace**
+- [x] **Step 8: Check whitespace**
 
 ```bash
 git -c core.whitespace=cr-at-eol diff --check main...HEAD
@@ -2582,7 +2596,7 @@ git -c core.whitespace=cr-at-eol diff --check main...HEAD
 
 Expected: no output.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add packages/sec-edgar-ingest/tests/test_reconcile_acceptance.py docs/runbooks/sec-edgar-reconciliation-approval.md docs/runbooks/sec-edgar-etl-publication.md packages/sec-edgar-ingest/README.md
@@ -2594,6 +2608,8 @@ git commit -m "docs: document reconciliation, withdrawal approval and rollback"
 ## Stage exit
 
 1. Run the final whole-branch review (subagent-driven-development's closing reviewer). Resolve or consciously defer its findings.
+
+   > Deviation: only the Opus code-reviewer seat completed. The Codex second-opinion seat failed at startup (the CLI rejected model `gpt-6.1-sol` for the ChatGPT account), so no `Codex reviewed` line exists. The fix commit 5ad228ab resolved the review's FIX NOW items; the rest are in `specs/deferred_items.md`.
 2. Run writing-plans' Plan Completion Protocol. Its deferred-items step must record the owner-deferred limitation from spec §4, whether or not anything else is deferred. Create `specs/deferred_items.md` if it does not exist yet. The item:
    - **What:** a gated member whose source later reverts to its base bytes cannot clear. Each run re-stages the same candidate, and the run stays `awaiting_approval`.
    - **Fix:** let a later completed download of the same source supersede older pending members. This touches `workflows/completion.py` and the runner's member selection.
