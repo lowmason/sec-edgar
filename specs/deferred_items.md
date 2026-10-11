@@ -37,7 +37,7 @@
       `activated` field from lineage/pointer evidence, not the Approvals index row.
       Size: plan. Done when: both listings expose it, the acceptance test and runbook
       cover it, and the `approved` caveat in the runbook is updated.
-- [ ] Shared CLI error handler can itself fail (final review Minor): `models.Error`
+- [x] Shared CLI error handler can itself fail (final review Minor): `models.Error`
       validates its message with `require_text`, which rejects empty strings and
       control characters including newlines. `cli.py` builds
       `Error(outcome, str(exception), ...)` in `_operator_main` and in the workflow and
@@ -45,7 +45,7 @@
       from Azure SDK errors) makes the handler raise: exit 1 with a traceback and no
       JSON instead of exit 9. Size: quick-fix. Done when: one helper normalizes
       exception text for every CLI error path, with a test using an empty and a
-      multi-line exception message.
+      multi-line exception message. → done 2026-10-11 (/deferred quick fix)
 - [ ] `EXIT_CODES` doubles as the registry of workflow member outcomes (final review
       Minor): `results.py` `EXIT_CODES` feeds `workflows/contracts.py` member-outcome
       validation, so the new `approval_refused`, `approval_stale`, `rollback_refused`
@@ -53,13 +53,13 @@
       although workflow members never emit them. Report validation is slightly looser.
       Size: quick-fix. Revisit if: a stored workflow report with one of those member
       outcomes is accepted, or the outcome tables are next edited.
-- [ ] Test stdout hygiene (final review): passing runs print wire-evidence lines:
+- [x] Test stdout hygiene (final review): passing runs print wire-evidence lines:
       `pointer-wire`, `mapped-wire`, `large-pointer-descriptor` and `approval-wire` in
       `tests/test_etl_storage.py` (the last at the Stage 5 method, ~line 124),
       `task5-sdk-proof` in `tests/test_etl_publication.py:344`, and `retained-workset` /
       `retained-registry` in `tests/test_etl_contracts.py:96,103`. Remove them or turn
       them into assertions in one hygiene commit. Size: quick-fix. Done when: the full
-      offline suite prints no stray stdout.
+      offline suite prints no stray stdout. → done 2026-10-11 (/deferred quick fix)
 - [ ] Load-flaky multi-process tests (execution baseline, pre-existing):
       `test_coordination.CoordinationTests.test_three_independent_exchange_processes_prove_intervals_priority_and_epochs`
       (`sqlite3.OperationalError: database is locked` at `PRAGMA journal_mode=WAL` in
@@ -69,7 +69,7 @@
       baseline (620 tests, 924 s) but pass alone and passed in the later 654-test run.
       Size: plan. Done when: the WAL open retries or the tests serialize, and several
       consecutive full-suite runs pass.
-- [ ] Review Minor, approval/Azure storage coverage gaps (T1/T2/T6): nothing tests that
+- [x] Review Minor, approval/Azure storage coverage gaps (T1/T2/T6): nothing tests that
       `AzureStateStore.close()` closes `approval_client`, that `_check_endpoint`
       rejects a foreign-endpoint Approvals client, that the local store keeps approval
       and rollback rows under `table_name='Approvals'`, the Azure 404 path for a
@@ -78,8 +78,8 @@
       `record_rollback` fails when a store is built without `approval_client`; the
       production factory always supplies it). Files: `storage/azure.py`,
       `tests/test_etl_storage.py`, `tests/test_azure_contracts.py`. Size: quick-fix.
-      Done when: those cases have tests.
-- [ ] Review Minor, rollback/history/candidates coverage and invariants (T5/T6):
+      Done when: those cases have tests. → done 2026-10-11 (/deferred quick fix)
+- [x] Review Minor, rollback/history/candidates coverage and invariants (T5/T6):
       `lineage` cycle, self-reference and missing-base errors, the exit-9 `candidates`
       path and a corrupt candidate row failing the whole listing, the approved-but-not-
       active state; `rollback`: a lost race resolving to `unchanged`, a lineage-valid
@@ -91,7 +91,7 @@
       (`etl/contracts.py`), `rollback.py` could reuse `publication.pointer_value`, and
       `unchanged` returns before the from-generation and ancestry checks (spec §5 step
       order). Files: `etl/history.py`, `etl/rollback.py`, `tests/test_etl_history.py`,
-      `tests/test_etl_rollback.py`. Size: quick-fix. Done when: the tests exist.
+      `tests/test_etl_rollback.py`. Size: quick-fix. Done when: the tests exist. → done 2026-10-11 (/deferred quick fix)
 - [ ] Review Minor, reconcile/workflow coverage (T3/T4/T7): the refresh-flip test
       (`tests/test_reconcile_workflow.py` `test_selection_requires_refresh_exactly_for_reconcile`)
       covers backfill and reconcile but not daily, and the refresh/command check in
