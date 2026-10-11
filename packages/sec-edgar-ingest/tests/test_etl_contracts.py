@@ -93,14 +93,12 @@ class EtlContractTests(unittest.TestCase):
             settings = Settings.from_mapping(config)
             self.assertEqual(settings.to_mapping(), config)
             self.assertEqual(settings.config_sha256, workset.context.config_sha256)
-            print('retained-workset', path.name, workset.workset_id, sha256(body).hexdigest(), len(body))
         registries = list((objects/'locks').glob('**/binding.json'))
         self.assertEqual(len(registries), 1)
         body = registries[0].read_bytes()
         saved = json.loads(body)
         binding = deployment_binding(settings, root=Path(saved['storage']['local_root']))
         self.assertEqual(canonical_json(binding), body)
-        print('retained-registry', sha256(body).hexdigest(), len(body))
 
 
 def observation_ref():

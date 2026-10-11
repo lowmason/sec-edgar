@@ -78,7 +78,6 @@ class EtlStorageTests(unittest.TestCase):
                 self.assertEqual(target.read_bytes(), b'rows')
             for request in transport.requests:
                 self.assertEqual(request.url.split('?')[0], BLOB_ENDPOINT+'/'+container+'/'+path)
-                print('mapped-wire', request.method, request.url.split('?')[0], request.headers.get('If-None-Match'))
             self.assertEqual(transport.requests[0].headers['If-None-Match'], '*')
 
     def test_active_pointer_real_sdk_insert_replace_and_conflict(self):
@@ -98,7 +97,6 @@ class EtlStorageTests(unittest.TestCase):
             store.replace('QuarterPublication', '2026Q4', {'generation': 'c'}, first.version)
         for request in transport.requests:
             self.assertIn('/ActivePointers', request.url)
-            print('pointer-wire', request.method, request.url.split('?')[0], request.headers.get('If-Match'))
         self.assertEqual(transport.requests[1].headers['If-Match'], first.version)
         old = AzureStateStore(service.get_table_client('SourceState'), service.get_table_client('Attempts'))
         with self.assertRaises(ValueError):
@@ -121,7 +119,6 @@ class EtlStorageTests(unittest.TestCase):
         self.assertEqual(created.version, 'W/"approval"')
         self.assertEqual(len(transport.requests), 1)
         self.assertIn('/Approvals', transport.requests[0].url)
-        print('approval-wire', transport.requests[0].method, transport.requests[0].url.split('?')[0])
         without = AzureStateStore(tables('SourceState'), tables('Attempts'), active_client=tables('ActivePointers'))
         with self.assertRaisesRegex(ValueError, 'Approvals client'):
             without.get('WithdrawalApproval', 'a' * 64)
@@ -201,7 +198,6 @@ class EtlStorageTests(unittest.TestCase):
         self.assertEqual(descriptor['PayloadFormat'], 'sec-state-blob-v1')
         self.assertGreater(descriptor['PayloadByteCount'], 64*1024)
         self.assertEqual(transport.requests[1].method, 'GET')
-        print('large-pointer-descriptor', descriptor, 'etag', saved.version)
 
     def test_stream_failure_deletes_only_created_scratch(self):
         import tempfile

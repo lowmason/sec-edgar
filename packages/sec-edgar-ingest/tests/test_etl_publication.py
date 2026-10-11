@@ -341,8 +341,6 @@ class PublicationIntegrationTests(unittest.TestCase):
         descriptor = next(json.loads(r.body) for r in transport.requests if r.method == 'POST' and '/SourceState' in r.url)
         self.assertEqual(descriptor['PayloadFormat'], 'sec-state-blob-v1')
         self.assertGreater(descriptor['PayloadByteCount'], 64*1024)
-        print('task5-sdk-proof', json.dumps({'descriptor': descriptor, 'pointer': winner.to_mapping(),
-              'conditional_etags': [r.headers['If-Match'] for r in writes]}, sort_keys=True))
 
     def test_deadline_expiry_inside_candidate_build_returns_conflict(self):
         from sec_edgar_ingest.etl import publication
