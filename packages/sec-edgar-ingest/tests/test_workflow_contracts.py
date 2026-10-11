@@ -112,6 +112,18 @@ class CoverageTests(unittest.TestCase):
                          transformed=False, quarantined=True)
         self.assertEqual(summarize((done, gated, failed), (), 1)[0], 'incomplete')
 
+    def test_gate_reduction_looks_at_unresolved_members_not_whole_sources(self):
+        from sec_edgar_ingest.results import exit_code
+        complete = self.member()
+        gated = replace(self.member('awaiting_approval', (self.publication('awaiting_approval'),)),
+                        member_id='b' * 64)
+        self.assertEqual(complete.source.source_id, gated.source.source_id)
+        outcome, counts = summarize((complete, gated), (), 1)
+        self.assertEqual((outcome, exit_code(outcome)), ('awaiting_approval', 10))
+        self.assertEqual((counts['complete_sources'], counts['pending_sources']), (0, 1))
+        deferred = replace(self.member('deferred'), member_id='c' * 64, source=fixture_source('2015Q2'))
+        self.assertEqual(summarize((gated, deferred), (), 1)[0], 'pending')
+
     def test_empty_daily_is_not_failure_or_old_backlog(self):
         self.assertEqual(summarize((), (), 0)[0], 'no_new_sources')
         gap = Error('discovery_failed', 'failed', True, None, {})

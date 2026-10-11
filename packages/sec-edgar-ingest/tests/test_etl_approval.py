@@ -37,7 +37,7 @@ class ApprovalEvidenceTests(GateFixture):
         self.assertEqual(ref, 'approvals/sec/filing_index/year=2026/quarter=4/generation='
                          + manifest.generation_id + '/approval.json')
         self.assertEqual(blob_address(ref), ('approvals', ref.removeprefix('approvals/')))
-        for approver in ('', '   ', 'two\nlines', 'tab\there', 'x' * 257, 'zero​width'):
+        for approver in ('', '   ', 'two\nlines', 'tab\there', 'x' * 257, 'zero\u200bwidth'):
             with self.subTest(approver=approver), self.assertRaises(ValueError):
                 approval_for(candidate, approver, APPROVED_AT)
         self.assertEqual(approval_for(candidate, 'x' * 256, APPROVED_AT).approver, 'x' * 256)
@@ -164,9 +164,15 @@ class ApproveTests(GateFixture):
         moved = self.moved_base()
         faults = Faults()
         faults.at('approval.before_pointer', lambda: self.assertEqual(self.publish(moved).outcome, 'published'))
-        result = self.approve(candidate, revised.snapshot.sha256, observer=faults)
+        result = self.approve(candidate, revised.snapshot.sha256, 'Racing Approver', observer=faults)
         self.assertEqual(result.outcome, 'approval_stale')
         self.assertNotEqual(self.capture().generation_id, candidate.manifest.generation_id)
+        # The approval is written before the pointer swap, so the lost race leaves an exact-bound orphan.
+        orphan = self.state.approval(candidate.manifest.generation_id)
+        self.assertIsNotNone(orphan)
+        self.assertEqual(read_approval(candidate, self.objects), orphan)
+        self.assertEqual(orphan.approver, 'Racing Approver')
+        self.assertNotEqual(self.state.pointer('2026Q4').value['generation_id'], candidate.manifest.generation_id)
 
     def test_after_approval_only_a_new_quarterly_snapshot_changes_membership(self):
         _, revised, candidate = self.gated()
@@ -203,6 +209,22 @@ class ApproveTests(GateFixture):
         missing = ('approve', '--config', str(self.root / 'missing.json'), '--quarter', '2026Q4',
                    '--generation', generation, '--quarterly-sha256', revised.snapshot.sha256, '--approver', 'x')
         self.assertEqual(operator_cli(*missing)[:2], (2, None))
+
+    def test_a_corrupt_approval_object_reports_state_conflict_through_the_cli(self):
+        _, revised, candidate = self.gated()
+        generation = candidate.manifest.generation_id
+        command = ('approve', '--config', str(self.write_config()), '--state-dir', str(self.root),
+                   '--quarter', '2026Q4', '--generation', generation, '--approver', 'Lowell Mason',
+                   '--quarterly-sha256', revised.snapshot.sha256)
+        code, message, _ = operator_cli(*command)
+        self.assertEqual((code, message['outcome']), (0, 'success'))
+        self.object_path(approval_ref('2026Q4', generation)).write_bytes(
+            json.dumps(message['approval'], indent=1).encode())
+        code, message, _ = operator_cli(*command)
+        self.assertEqual((code, message['outcome']), (9, 'state_conflict'))
+        self.assertEqual(set(message), {'outcome', 'quarter', 'generation_id', 'approval_ref', 'approval',
+                                        'publication', 'error'})
+        self.assertEqual(message['error']['code'], 'state_conflict')
 
     def test_approve_cli_reports_a_stale_candidate_with_exit_11(self):
         _, revised, candidate = self.gated()

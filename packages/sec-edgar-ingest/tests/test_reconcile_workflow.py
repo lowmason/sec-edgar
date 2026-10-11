@@ -100,12 +100,16 @@ class SupersessionRuleTests(GateFixture):
     def test_accounts_for_exact_or_strictly_later_same_source_observation(self):
         first = self.observation(rows=row() + row(number=2))
         later = self.observation(rows=row(), seconds=1)
-        daily = self.observation(period='2026-10-02', kind='daily', rows=row())
+        # Strictly later, different bytes and the same versions: only the source differs from `later`.
+        daily = self.observation(period='2026-10-02', kind='daily', rows=row(), seconds=1)
+        # Same source and receipt time as `first` but different bytes: only the strict `>` rejects it.
+        simultaneous = self.observation(rows=row('Other'))
         self.assertTrue(accounts_for(first, first))
         self.assertTrue(accounts_for(later, first))
         self.assertFalse(accounts_for(first, later))
         self.assertFalse(accounts_for(None, first))
         self.assertFalse(accounts_for(daily, first))
+        self.assertFalse(accounts_for(simultaneous, first))
         settings, context = etl_context('fixture-index-parser-v2', command='publish')
         upgraded = transform_member(later.source, later.snapshot, context, settings, self.objects, self.state)
         self.assertFalse(accounts_for(upgraded, first))

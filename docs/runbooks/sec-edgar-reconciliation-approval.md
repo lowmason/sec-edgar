@@ -37,6 +37,8 @@ A `source_reverted` gap means the SEC now serves bytes identical to an older sna
 - `approved`;
 - the membership source's `latest_observed_sha256` and `latest_observed_at`.
 
+`approved` means an approval was recorded for this exact candidate, not that it was ever active. The pointer, `quarter_history` and `EtlState.rollbacks` show what took effect.
+
 Before approving, confirm all three:
 
 1. `status` is `pending`.
@@ -54,11 +56,13 @@ sec-edgar-ingest approve --config PATH --quarter YYYYQn --generation ID \
 |---|---|---|
 | `success` | 0 | The pointer moved. The next reconcile resolves the gated members. |
 | `unchanged` | 0 | The candidate was already active. |
-| `approval_refused` | 2 | Correct the arguments. Nothing was written. |
+| `approval_refused` | 2 | Correct the arguments. Nothing was written. Exit 2 with empty stdout is a usage or configuration error; see stderr. |
 | `approval_stale` | 11 | The base moved. Reconcile to stage a candidate against the current generation, then review it. |
 | `state_conflict` / `internal_error` | 9 | Corrupt evidence or an unexpected failure. Stop and investigate. |
 
 The approval object is immutable: `approvals/sec/filing_index/year=<yyyy>/quarter=<q>/generation=<id>/approval.json`, format `sec-withdrawal-approval-v1`. The first stored approval wins. An approval binds one candidate generation, so a later download, or a rebuild on another base, needs its own approval. `approve` writes the approval object, the `Approvals` index and the conditional pointer replace. It does not repair Processing or PublicationReceipt indexes; the next publish that touches the quarter repairs them.
+
+`approve` writes the approval record before it swaps the pointer. If the swap loses a race to a newer generation, `approve` returns `approval_stale` and an exact-bound approval record for that candidate can remain. It authorizes nothing by itself and cannot be used for any other candidate or download. If the quarter is later rolled back to that candidate's base, a further `approve` activates the candidate under the stored approval; the later operator's name is not recorded.
 
 ## Roll back
 
@@ -73,11 +77,11 @@ sec-edgar-ingest rollback --config PATH --quarter YYYYQn --from-generation ID \
 |---|---|---|
 | `success` | 0 | The pointer moved to the target. |
 | `unchanged` | 0 | The target was already active. |
-| `rollback_refused` | 2 | Correct the arguments; the target must be earlier in the active lineage. Nothing was written. |
-| `rollback_stale` | 11 | The active generation changed. Re-read `quarter_history` and decide again. |
+| `rollback_refused` | 2 | Correct the arguments; the target must be earlier in the active lineage. Nothing was written. Exit 2 with empty stdout is a usage or configuration error; see stderr. |
+| `rollback_stale` | 11 | The active generation is not `--from-generation` (it changed, or that generation was never active). Re-read `quarter_history` and decide again. |
 | `state_conflict` / `internal_error` | 9 | Corrupt evidence or an unexpected failure. Stop and investigate. |
 
-A rollback is not a pin: the next publish of a newer observation builds forward again. It cannot retract data consumers already used. Rolling back past an approved withdrawal makes its candidate `pending` again; re-activating it needs another `approve`.
+A rollback is not a pin: the next publish of a newer observation builds forward again. It cannot retract data consumers already used. Rolling back to an approved candidate's base shows it `pending` again; `approve` re-activates it under the original stored approval, and the new `--approver` is not recorded. Rolling back further shows it `stale`, and `approve` returns `approval_stale`; reconcile to stage a new candidate.
 
 ## History
 

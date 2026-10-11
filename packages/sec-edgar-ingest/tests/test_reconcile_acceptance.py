@@ -31,7 +31,8 @@ class ReconcileAcceptanceTests(ReconcileFixture):
 
         command = ('approve', *operator, '--quarter', '2026Q3', '--generation', request['generation_id'],
                    '--approver', 'Lowell Mason')
-        self.assertEqual(operator_cli(*command, '--quarterly-sha256', sha((A, B)))[0], 2)
+        code, refused, _ = operator_cli(*command, '--quarterly-sha256', sha((A, B)))
+        self.assertEqual((code, refused['outcome']), (2, 'approval_refused'))
         self.assertEqual(self.names(h, '2026Q3'), ['A', 'B'])
         code, approved, _ = operator_cli(*command, '--quarterly-sha256', sha((A,)))
         self.assertEqual((code, approved['outcome']), (0, 'success'))
