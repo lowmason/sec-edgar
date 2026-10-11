@@ -29,7 +29,7 @@ from .state import AcquisitionState, attempt_key
 from .storage import open_stores
 from .storage.contracts import CAS_ATTEMPTS, ClockUncertain, Conflict, OwnershipLost
 from .workflows.checked import Dispatcher as WorkflowDispatcher, ChildUnfinished
-from .workflows.contracts import workflow_path
+from .workflows.contracts import WORKFLOW_COMMANDS, WORKFLOW_PRIORITY, workflow_path
 from .workflows.results import freeze_workflow, read_workflow_result, write_workflow_result
 from .workflows.runner import run_workflow
 from .worksets import decode_source_workset
@@ -69,13 +69,13 @@ def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog='sec-edgar-ingest')
     parser.add_argument('--version', action='version', version=__version__)
     commands = parser.add_subparsers(dest='command')
-    for command in ('discover', 'collect', 'transform', 'publish', 'backfill', 'daily'):
+    for command in ('discover', 'collect', 'transform', 'publish', *WORKFLOW_COMMANDS):
         sub = commands.add_parser(command)
         for name in ('config', 'run-id', 'execution-id', 'attempt-id', 'deadline'):
             sub.add_argument('--' + name, required=True)
         for name in ('state-dir', 'today'):
             sub.add_argument('--' + name)
-        if command in ('discover', 'collect', 'backfill', 'daily'):
+        if command in ('discover', 'collect', *WORKFLOW_COMMANDS):
             sub.add_argument('--fixture-pack')
         if command == 'discover':
             sub.add_argument('--mode', required=True, choices=('quarterly', 'daily'))
@@ -360,7 +360,7 @@ def _workflow_saved(args, store, objects):
 def _workflow_context(args, settings, today, deadline, started, pinned):
     context = RunContext(args.run_id, args.execution_id, args.command, args.attempt_id,
         settings.worker.image_digest, settings.etl.parser_version, settings.etl.schema_version,
-        settings.config_sha256, started, deadline, args.command)
+        settings.config_sha256, started, deadline, WORKFLOW_PRIORITY[args.command])
     return pin_context(settings, context, today or pinned or started.date())
 
 
@@ -490,7 +490,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command is None:
         parser.print_help()
         return 0
-    if args.command in ('backfill', 'daily'):
+    if args.command in WORKFLOW_COMMANDS:
         return _workflow_main(args)
     if args.command == 'approve':
         return _approve_main(args)

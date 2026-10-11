@@ -154,11 +154,13 @@ def select_work(context: RunContext, settings: Settings, intent: Mapping, dispat
             if not evaluated.complete:
                 unresolved_ids_before.add(value['source']['source_id'])
     mode = 'daily' if context.command == 'daily' else 'quarterly'
+    flags = ('--mode', mode, '--discovery-id', 'workflow-' + context.command + '-' + context.run_id)
+    if context.command == 'reconcile':
+        flags += ('--refresh',)  # Reconciliation differs only by re-fetching every listed source.
     discovery_call = discovery_error = parent_ref = parent = None
     halted = False
     try:
-        child = dispatcher.execute('discover', 'discover', settings,
-            ('--mode', mode, '--discovery-id', 'workflow-' + context.command + '-' + context.run_id))
+        child = dispatcher.execute('discover', 'discover', settings, flags)
         discovery_call = dict(child.call)
         parent_ref = child.result.source_workset_ref
         if parent_ref is not None:

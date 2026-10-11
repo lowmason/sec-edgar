@@ -19,6 +19,8 @@ COMPLETE = frozenset(('success', 'unchanged', 'no_new_sources'))
 PENDING = frozenset(('pending', 'deferred', 'throttled', 'awaiting_approval'))
 FATAL = ('access_blocked', 'ownership_lost', 'state_conflict', 'internal_error')
 FORMAT_VERSION = 'sec-workflow-result-v1'
+WORKFLOW_COMMANDS = ('backfill', 'daily', 'reconcile')
+WORKFLOW_PRIORITY = {'backfill': 'backfill', 'daily': 'daily', 'reconcile': 'reconciliation'}
 SUPPORTED_PARSERS = frozenset((
     'sec-index-parser-v1', 'fixture-index-parser-v1', 'fixture-index-parser-v2',
 ))
@@ -190,12 +192,14 @@ def summarize(
     # Retained baseline gaps may derive solely from checked whole-source refusals.
     if all_quarantined and all(_gap_derived_from_quarantine(gap, quarantined_ids) for gap in gaps):
         return 'quarantined', counts
-    if gaps or (states['complete'] and (states['failed'] or states['pending'])):
-        return 'incomplete', counts
-    if states['failed']:
+    if gaps or states['failed']:
         return 'incomplete', counts
     if states['pending']:
-        return ('awaiting_approval' if outcomes == {'awaiting_approval'} else 'pending'), counts
+        unresolved = {member.outcome for member in members if member_status(member.outcome) == 'pending'}
+        # Gate-only unresolved work is the distinct gated outcome, even beside completed sources.
+        if unresolved == {'awaiting_approval'}:
+            return 'awaiting_approval', counts
+        return ('incomplete' if states['complete'] else 'pending'), counts
     if not members:
         return ('no_new_sources' if command == 'daily' and not discovered_new and not unresolved_before else 'unchanged'), counts
     if command == 'daily' and not discovered_new and not unresolved_before and not counts['published_quarters']:
@@ -204,7 +208,7 @@ def summarize(
 
 
 def workflow_path(context: RunContext) -> str:
-    if context.command not in ('backfill', 'daily'):
+    if context.command not in WORKFLOW_COMMANDS:
         raise ValueError('workflow command required')
     for name in ('run_id', 'execution_id', 'attempt_id'):
         if '/' in safe_relative_path(getattr(context, name), name):

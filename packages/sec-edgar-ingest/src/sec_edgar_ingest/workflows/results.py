@@ -190,6 +190,8 @@ def _validate_selection(selection, context, invocation, store, objects):
         call, template = _authority(call, None, objects)
         if template.command != 'discover' or call['workflow_command'] != context.command or call['workflow_attempt_id'] != context.attempt_id or template.run_id != context.run_id:
             raise Conflict('selection discovery call belongs to another workflow')
+        if call['intent']['refresh'] is not (context.command == 'reconcile'):
+            raise Conflict('selection discovery refresh differs from its workflow command')
         if error is not None:
             _capture_or_validate_discovery_failure(selection, call, template, objects)
         else:
