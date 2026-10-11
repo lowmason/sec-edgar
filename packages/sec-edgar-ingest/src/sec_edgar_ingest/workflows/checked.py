@@ -27,6 +27,7 @@ from ..etl.reader import validated_manifest
 from ..etl.transform import _pinned_members, _read_manifest, read_observations
 from ..etl.parser import supported_parser
 from ..models import Record, validate_record_fields
+from .contracts import WORKFLOW_COMMANDS
 
 
 @dataclass(frozen=True, slots=True)
@@ -67,7 +68,7 @@ def child_attempt_id(run_id, workflow_command, workflow_attempt_id, step_id, com
                         ('workflow_attempt_id', workflow_attempt_id), ('step_id', step_id),
                         ('command', command)):
         _segment(value, name)
-    if workflow_command not in ('backfill', 'daily') or command not in CHILD_COMMANDS:
+    if workflow_command not in WORKFLOW_COMMANDS or command not in CHILD_COMMANDS:
         raise ValueError('unsupported workflow/child command')
     return 'wf-' + hashlib.sha256(canonical_json(
         to_mapping_value([run_id, workflow_command, workflow_attempt_id, step_id, command]))).hexdigest()[:40]
@@ -390,7 +391,7 @@ def _flags(command, flags):
 
 class Dispatcher:
     def __init__(self, context, settings, fixture_pack, state_dir, store, objects, observer=None):
-        if context.command not in ('backfill', 'daily') or context.pinned_on is None:
+        if context.command not in WORKFLOW_COMMANDS or context.pinned_on is None:
             raise ValueError('dispatcher requires a pinned workflow context')
         if pin_context(settings, context, context.pinned_on)[0] != context:
             raise ValueError('workflow context differs from current settings')

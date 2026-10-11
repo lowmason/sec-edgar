@@ -405,8 +405,21 @@ def validate_capture(capture, objects) -> None:
         manifest = validated_manifest(quarter, objects)
         if (manifest.parser_version, manifest.schema_version) != (ref.parser_version, ref.schema_version):
             raise Conflict('captured publication versions differ')
-        if next((r for r in manifest.sources if r.source.source_id == source.source_id), None) != ref:
+        active = next((r for r in manifest.sources if r.source.source_id == source.source_id), None)
+        if not accounts_for(active, ref):
             raise Conflict('captured publication source membership differs')
+
+
+def accounts_for(active: ObservationRef | None, ref: ObservationRef) -> bool:
+    """The active generation holds the member's exact observation or a strictly later one of its source."""
+    if active is None:
+        return False
+    if active == ref:
+        return True
+    return (active.source == ref.source
+            and (active.parser_version, active.schema_version) == (ref.parser_version, ref.schema_version)
+            and active.snapshot.sha256 != ref.snapshot.sha256
+            and active.snapshot.received_at > ref.snapshot.received_at)
 
 
 LEGACY_PUBLISH_FORMAT = 'sec-workflow-legacy-publish-v1'
@@ -775,7 +788,8 @@ def evaluate_member(value, parser_version, schema_version, store, objects) -> Co
                 gaps.append(Error('publication_pending', 'affected quarter has no publication', True, source.source_id, {'quarter': quarter}))
                 continue
             manifest = validated_manifest(capture, objects)
-            if next((r for r in manifest.sources if r.source.source_id == source.source_id), None) != ref:
+            active = next((r for r in manifest.sources if r.source.source_id == source.source_id), None)
+            if not accounts_for(active, ref):
                 gaps.append(Error('publication_pending', 'affected quarter does not contain exact current observation', True, source.source_id, {'quarter': quarter}))
                 continue
             captures.append(capture.to_mapping())

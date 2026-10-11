@@ -10,7 +10,7 @@ from typing import Iterator
 from ..models import Versioned, canonical_json, parse_json, require_hash
 from ..storage.contracts import Conflict, ObjectStore
 from .contracts import Candidate, GenerationCapture, GenerationManifest, IndexRow
-from .manifest import generation_base, iter_file_rows, read_manifest, validate_candidate
+from .manifest import gate_ref, generation_base, iter_file_rows, read_approval, read_manifest, validate_candidate
 from .state import EtlState, POINTER_FIELDS
 
 
@@ -27,10 +27,15 @@ def capture_from_pointer(row: Versioned) -> GenerationCapture:
 
 def validated_manifest(capture: GenerationCapture, objects: ObjectStore) -> GenerationManifest:
     manifest = read_manifest(capture, objects)
+    candidate = Candidate(manifest, capture.manifest_ref, capture.manifest_sha256,
+                          capture.manifest_bytes, gate_ref(manifest))
     if manifest.gate != 'clear':
-        raise ValueError('an awaiting-approval generation cannot be current')
-    validate_candidate(Candidate(manifest, capture.manifest_ref, capture.manifest_sha256,
-                                 capture.manifest_bytes, None), objects)
+        # Cheap binding check first; validate_candidate then proves content and the gate record.
+        try:
+            read_approval(candidate, objects)
+        except FileNotFoundError as error:
+            raise ValueError('an awaiting-approval generation cannot be current without its exact approval') from error
+    validate_candidate(candidate, objects)
     return manifest
 
 

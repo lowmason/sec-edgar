@@ -350,7 +350,7 @@ class RunnerTests(unittest.TestCase):
                     f.snapshot_input(quarterly_bytes('2026-07-01'), seconds=1)
                     h = CommandHarness(root, simple_pack(root / 'fresh-pack', empty=not mixed), settings=f.settings)
                     report = self.run_parent(h, run='gated', command='daily')
-                    self.assertEqual(report.outcome, 'incomplete' if mixed else 'awaiting_approval')
+                    self.assertEqual(report.outcome, 'awaiting_approval')
                     self.assertTrue(any(m.outcome == 'awaiting_approval' for m in report.members))
                     self.assertEqual(EtlState(h.store).pointer('2026Q3'), prior)
                     self.assertGreaterEqual(report.counts['pending_sources'], 1)

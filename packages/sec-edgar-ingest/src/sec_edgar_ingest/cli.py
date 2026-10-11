@@ -15,10 +15,14 @@ from .collection import collect
 from .config import Settings, load_config, pin_context
 from .coordination import Clock, Coordinator
 from .discovery import discover
+from .etl.approval import approve
 from .etl.commands import (PublicationRepairPending, read_etl_result, run_transform, run_publish,
                            write_etl_result, validate_workset_ref)
+from .etl.history import withdrawal_candidates
+from .etl.manifest import approval_ref
 from .etl.parser import supported_parser, SCHEMA_VERSION
 from .etl.publication import repair_publication
+from .etl.rollback import rollback, rollback_ref
 from .etl.state import EtlState
 from .download import BoundedSender, FixturePack, RequestClient
 from .models import CommandResult, Error, RunContext, canonical_json, parse_json, quarter_for, safe_relative_path, to_mapping_value
@@ -27,7 +31,7 @@ from .state import AcquisitionState, attempt_key
 from .storage import open_stores
 from .storage.contracts import CAS_ATTEMPTS, ClockUncertain, Conflict, OwnershipLost
 from .workflows.checked import Dispatcher as WorkflowDispatcher, ChildUnfinished
-from .workflows.contracts import workflow_path
+from .workflows.contracts import WORKFLOW_COMMANDS, WORKFLOW_PRIORITY, workflow_path
 from .workflows.results import freeze_workflow, read_workflow_result, write_workflow_result
 from .workflows.runner import run_workflow
 from .worksets import decode_source_workset
@@ -67,13 +71,13 @@ def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog='sec-edgar-ingest')
     parser.add_argument('--version', action='version', version=__version__)
     commands = parser.add_subparsers(dest='command')
-    for command in ('discover', 'collect', 'transform', 'publish', 'backfill', 'daily'):
+    for command in ('discover', 'collect', 'transform', 'publish', *WORKFLOW_COMMANDS):
         sub = commands.add_parser(command)
         for name in ('config', 'run-id', 'execution-id', 'attempt-id', 'deadline'):
             sub.add_argument('--' + name, required=True)
         for name in ('state-dir', 'today'):
             sub.add_argument('--' + name)
-        if command in ('discover', 'collect', 'backfill', 'daily'):
+        if command in ('discover', 'collect', *WORKFLOW_COMMANDS):
             sub.add_argument('--fixture-pack')
         if command == 'discover':
             sub.add_argument('--mode', required=True, choices=('quarterly', 'daily'))
@@ -83,6 +87,17 @@ def _parser() -> argparse.ArgumentParser:
             sub.add_argument('--workset', required=True)
         if command == 'transform':
             sub.add_argument('--force', action='store_true')
+    sub = commands.add_parser('approve')
+    for name in ('config', 'quarter', 'generation', 'quarterly-sha256', 'approver'):
+        sub.add_argument('--' + name, required=True)
+    sub.add_argument('--state-dir')
+    sub = commands.add_parser('candidates')
+    sub.add_argument('--config', required=True)
+    sub.add_argument('--state-dir')
+    sub = commands.add_parser('rollback')
+    for name in ('config', 'quarter', 'from-generation', 'to-generation', 'operator', 'reason'):
+        sub.add_argument('--' + name, required=True)
+    sub.add_argument('--state-dir')
     return parser
 
 
@@ -354,7 +369,7 @@ def _workflow_saved(args, store, objects):
 def _workflow_context(args, settings, today, deadline, started, pinned):
     context = RunContext(args.run_id, args.execution_id, args.command, args.attempt_id,
         settings.worker.image_digest, settings.etl.parser_version, settings.etl.schema_version,
-        settings.config_sha256, started, deadline, args.command)
+        settings.config_sha256, started, deadline, WORKFLOW_PRIORITY[args.command])
     return pin_context(settings, context, today or pinned or started.date())
 
 
@@ -433,14 +448,83 @@ def _workflow_main(args):
                 resource.close()
 
 
+def _operator_settings(args) -> Settings:
+    settings = load_config(Path(args.config))
+    if settings.storage.backend == 'azure' and args.state_dir:
+        raise ValueError('state directory is fixture-only')
+    return settings
+
+
+def _operator_main(args, event: str | None, empty: dict[str, object], run) -> int:
+    """Run one operator command on the configured stores and print its canonical result."""
+    try:
+        settings = _operator_settings(args)
+    except (ValueError, OSError, TypeError) as error:
+        sys.stderr.write(canonical_json({'outcome': 'configuration', 'error': str(error)}).decode() + '\n')
+        return 2
+    opened = ()
+    try:
+        opened = open_stores(settings, base_path=Path(args.state_dir) if args.state_dir else None)
+        store, objects, _ = opened
+        value = {**empty, **run(objects, EtlState(store))}
+    except Exception as exception:
+        outcome = ('state_conflict' if isinstance(exception, (Conflict, ValueError, OSError, KeyError))
+                   else 'internal_error')
+        value = {**empty, 'outcome': outcome, 'error': Error(
+            outcome, str(exception), False, None, {'type': type(exception).__name__}).to_mapping()}
+    finally:
+        for resource in reversed(opened):
+            if hasattr(resource, 'close'):
+                resource.close()
+    body = to_mapping_value(value)
+    if event is not None:
+        sys.stderr.write(canonical_json({'event': event, 'fields': body}).decode() + '\n')
+    sys.stdout.write(canonical_json(body).decode() + '\n')
+    return exit_code(value['outcome'])
+
+
+def _approve_main(args) -> int:
+    def run(objects, state):
+        result = approve(args.quarter, args.generation, args.quarterly_sha256, args.approver, objects, state)
+        ref = None if result.approval is None else approval_ref(result.approval.quarter, result.approval.generation_id)
+        return {**result.to_mapping(), 'approval_ref': ref}
+    return _operator_main(args, 'withdrawal_approval',
+                          {'quarter': args.quarter, 'generation_id': args.generation, 'approval_ref': None,
+                           'approval': None, 'publication': None, 'error': None}, run)
+
+
+def _candidates_main(args) -> int:
+    return _operator_main(args, None, {'candidates': None, 'error': None},
+                          lambda objects, state: {'outcome': 'success',
+                                                  'candidates': list(withdrawal_candidates(objects, state))})
+
+
+def _rollback_main(args) -> int:
+    def run(objects, state):
+        result = rollback(args.quarter, args.from_generation, args.to_generation, args.operator, args.reason,
+                          objects, state)
+        return {**result.to_mapping(),
+                'rollback_ref': None if result.rollback is None else rollback_ref(result.rollback)}
+    return _operator_main(args, 'quarter_rollback',
+                          {'quarter': args.quarter, 'from_generation_id': args.from_generation,
+                           'to_generation_id': args.to_generation, 'rollback_ref': None, 'active': None,
+                           'rollback': None, 'error': None}, run)
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = _parser()
     args = parser.parse_args(argv)
     if args.command is None:
         parser.print_help()
         return 0
-    if args.command in ('backfill', 'daily'):
+    if args.command in WORKFLOW_COMMANDS:
         return _workflow_main(args)
+    if args.command == 'approve':
+        return _approve_main(args)
+    if args.command == 'candidates':
+        return _candidates_main(args)
+    if args.command == 'rollback':
+        return _rollback_main(args)
     try:
         settings, today, deadline, pack = _validate(args)
     except (ValueError, OSError, TypeError) as error:

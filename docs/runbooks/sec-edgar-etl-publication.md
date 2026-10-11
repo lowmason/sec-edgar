@@ -131,9 +131,10 @@ An open quarterly omission preserves the key and emits `unresolved_absence`.
 A closed quarterly withdrawal becomes `awaiting_approval`, CLI exit **10**.
 Inspect the candidate descriptor, its manifest/files and the exact source hash
 against the frozen original. A gate reached after a CAS loss is reevaluated
-against the winning generation. A gated candidate is never current. Stage 3
-provides no approval mutation or pointer rollback command; those operations
-remain reserved for later authorized work.
+against the winning generation. A gated candidate is not current until Stage 5's
+`approve` activates that exact candidate. Stage 5's `rollback` moves a quarter back
+to an earlier generation of its exact lineage, with a record. See the
+[reconciliation and approval runbook](sec-edgar-reconciliation-approval.md).
 
 A command's durable envelope freezes `{context, intent}` at
 `runs/sec/<run-id>/<command>/<attempt-id>/command.json`; its full result is adjacent

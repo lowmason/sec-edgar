@@ -6,15 +6,16 @@ import sqlite3
 from collections import Counter
 from collections.abc import Iterator
 from contextlib import closing
+from datetime import datetime
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import pyarrow.parquet as pq
 
-from ..models import canonical_json, parse_json, quarter_for, quarter_value
+from ..models import canonical_json, parse_json, quarter_for, quarter_value, require_hash
 from ..storage.contracts import Conflict, ObjectStore
 from .contracts import (Candidate, FileRef, GenerationCapture, GenerationManifest, IndexRow,
-                        ObservationRef, canonical_schema, change_schema)
+                        ObservationRef, WithdrawalApproval, canonical_schema, change_schema)
 from .transform import BATCH_ROWS, _file_identity, _read_manifest, read_observations
 
 
@@ -55,6 +56,35 @@ def gate_payload(candidate: Candidate) -> bytes:
                            'manifest_ref': candidate.manifest_ref,
                            'change_ref': next(ref.path for ref in manifest.files if ref.role == 'changes'),
                            'gate': manifest.gate})
+
+
+def approval_ref(quarter: str, generation_id: str) -> str:
+    year, ordinal = quarter_value(quarter)
+    require_hash(generation_id, 'generation_id')
+    return f'approvals/sec/filing_index/year={year}/quarter={ordinal}/generation={generation_id}/approval.json'
+
+
+def approval_for(candidate: Candidate, approver: str, approved_at: datetime) -> WithdrawalApproval:
+    manifest = candidate.manifest
+    if manifest.gate != 'awaiting_approval' or candidate.candidate_ref != gate_ref(manifest):
+        raise ValueError('approval requires an exact awaiting-approval candidate')
+    return WithdrawalApproval(manifest.quarter, manifest.generation_id, manifest.base_generation_id,
+                              manifest.source_fingerprint, manifest.membership_source.snapshot.sha256,
+                              candidate.candidate_ref, hashlib.sha256(gate_payload(candidate)).hexdigest(),
+                              candidate.manifest_ref, candidate.manifest_sha256, candidate.manifest_bytes,
+                              approver, approved_at)
+
+
+def read_approval(candidate: Candidate, objects: ObjectStore) -> WithdrawalApproval:
+    """Return the stored approval only when it names this exact candidate, base and source hash."""
+    manifest = candidate.manifest
+    body = objects.read(approval_ref(manifest.quarter, manifest.generation_id))
+    approval = WithdrawalApproval.from_mapping(parse_json(body))
+    if canonical_json(approval.to_mapping()) != body:
+        raise ValueError('approval must use canonical JSON')
+    if approval != approval_for(candidate, approval.approver, approval.approved_at):
+        raise ValueError('approval is not bound to this exact candidate, base and source hash')
+    return approval
 
 
 def _validate_identity(manifest: GenerationManifest) -> None:
@@ -168,19 +198,26 @@ def validate_files(manifest: GenerationManifest, objects: ObjectStore) -> None:
         raise ValueError('generation aggregate counts differ')
 
 
-def _base_manifest(manifest, objects):
+def retained_base(manifest: GenerationManifest, objects: ObjectStore) -> GenerationCapture | None:
+    """The exact capture a generation was built against, from its immutable retained-base record."""
     if not manifest.base_generation_id:
-        if manifest.unresolved_absence:
-            raise ValueError('unresolved absence requires an exact retained dependency')
         return None
-    path = generation_base(manifest.quarter, manifest.generation_id) + '/retained-base.json'
-    body = objects.read(path)
+    body = objects.read(generation_base(manifest.quarter, manifest.generation_id) + '/retained-base.json')
     retained = GenerationCapture.from_mapping(parse_json(body))
     if canonical_json(retained.to_mapping()) != body or (retained.quarter, retained.generation_id) != (
             manifest.quarter, manifest.base_generation_id):
         raise ValueError('exact base dependency differs')
     if retained.generation_id == manifest.generation_id:
         raise ValueError('self-referential base dependency')
+    return retained
+
+
+def _base_manifest(manifest, objects):
+    if not manifest.base_generation_id and manifest.unresolved_absence:
+        raise ValueError('unresolved absence requires an exact retained dependency')
+    retained = retained_base(manifest, objects)
+    if retained is None:
+        return None
     previous = read_manifest(retained, objects)
     validate_files(previous, objects)
     return previous

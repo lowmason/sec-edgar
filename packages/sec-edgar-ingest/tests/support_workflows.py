@@ -74,7 +74,7 @@ class CommandHarness:
         argv = [command, '--config', str(self.config), '--run-id', run, '--execution-id', 'manual',
                 '--attempt-id', attempt, '--deadline', (deadline or self.deadline).isoformat(),
                 '--state-dir', str(self.root), '--today', today, *flags]
-        if command in ('discover', 'collect', 'backfill', 'daily'):
+        if command in ('discover', 'collect', 'backfill', 'daily', 'reconcile'):
             argv += ['--fixture-pack', str(self.pack)]
         stdout, stderr = io.StringIO(), io.StringIO()
         with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):

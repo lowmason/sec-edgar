@@ -5,7 +5,8 @@ import hashlib
 
 from ..models import Versioned, canonical_json, quarter_value, require_hash
 from ..storage.contracts import AlreadyExists, CAS_ATTEMPTS, Conflict, StateStore
-from .contracts import Candidate, GenerationCapture, GenerationManifest, ObservationRef, processing_key
+from .contracts import (Candidate, GenerationCapture, GenerationManifest, ObservationRef, QuarterRollback,
+                        WithdrawalApproval, processing_key)
 
 POINTER_FIELDS = frozenset({'quarter', 'generation_id', 'manifest_ref', 'manifest_sha256', 'manifest_bytes', 'source_fingerprint'})
 
@@ -57,6 +58,24 @@ class EtlState:
 
     def record_candidate(self, candidate: Candidate) -> None:
         self._immutable('Candidate', candidate.manifest.generation_id, candidate.to_mapping())
+
+    def record_approval(self, approval: WithdrawalApproval) -> None:
+        self._immutable('WithdrawalApproval', approval.generation_id, approval.to_mapping())
+
+    def approval(self, generation_id: str) -> WithdrawalApproval | None:
+        require_hash(generation_id, 'generation_id')
+        row = self.store.get('WithdrawalApproval', generation_id)
+        return None if row is None else WithdrawalApproval.from_mapping(row.to_mapping()['value'])
+
+    def record_rollback(self, record: QuarterRollback) -> None:
+        self._immutable('QuarterRollback', record.rollback_id, record.to_mapping())
+
+    def rollbacks(self, quarter: str) -> tuple[QuarterRollback, ...]:
+        """Every write-ahead rollback record of one quarter; the pointer decides which took effect."""
+        quarter_value(quarter)
+        records = (QuarterRollback.from_mapping(row.to_mapping()['value'])
+                   for row in self.store.scan('QuarterRollback', {'quarter': quarter}))
+        return tuple(sorted(records, key=lambda record: (record.rolled_back_at, record.rollback_id)))
 
     def record_publication(self, manifest: GenerationManifest) -> None:
         for ref in manifest.sources:

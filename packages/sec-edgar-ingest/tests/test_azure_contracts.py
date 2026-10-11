@@ -356,8 +356,9 @@ class AzureContractTests(unittest.TestCase):
             self.assertEqual(blob_factory.call_args.kwargs["api_version"], "2026-04-06")
             self.assertEqual(table_factory.call_args.kwargs["api_version"], "2020-12-06")
             self.assertEqual([call.args[0] for call in tables.get_table_client.call_args_list],
-                             ["SourceState", "Attempts", "ActivePointers"])
+                             ["SourceState", "Attempts", "ActivePointers", "Approvals"])
             self.assertEqual(state.active_client.table_name, "ActivePointers")
+            self.assertEqual(state.approval_client.table_name, "Approvals")
             for factory in (blob_factory, table_factory):
                 self.assertEqual({key: factory.call_args.kwargs[key] for key in RETRY}, RETRY)
         request = transport.requests[0]

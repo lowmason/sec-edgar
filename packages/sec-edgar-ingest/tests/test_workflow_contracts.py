@@ -87,6 +87,43 @@ class CoverageTests(unittest.TestCase):
         values.update(overrides)
         return WorkflowResult(**values)
 
+    def test_reconcile_is_a_workflow_command_with_reconciliation_priority(self):
+        from sec_edgar_ingest.workflows.contracts import WORKFLOW_COMMANDS, WORKFLOW_PRIORITY
+        context = fixture_context(command='reconcile', priority='reconciliation')
+        self.assertEqual(workflow_path(context), 'runs/sec/fixture-run/reconcile/fixture-attempt/result.json')
+        self.assertEqual(WORKFLOW_COMMANDS, ('backfill', 'daily', 'reconcile'))
+        self.assertEqual(WORKFLOW_PRIORITY, {'backfill': 'backfill', 'daily': 'daily', 'reconcile': 'reconciliation'})
+        with self.assertRaises(ValueError):
+            workflow_path(fixture_context(command='publish'))
+
+    def test_gate_only_unresolved_work_is_awaiting_approval_beside_completed_sources(self):
+        done = replace(self.member(), member_id='b' * 64, source=fixture_source('2015Q2'))
+        gated = self.member('awaiting_approval', (self.publication('awaiting_approval'),))
+        for command in ('backfill', 'daily', 'reconcile'):
+            with self.subTest(command=command):
+                outcome, counts = summarize((done, gated), (), 1, 0, command)
+                self.assertEqual((outcome, counts['complete_sources'], counts['pending_sources'],
+                                  counts['awaiting_approval_quarters']), ('awaiting_approval', 1, 1, 1))
+        deferred = replace(self.member('deferred'), member_id='c' * 64, source=fixture_source('2015Q3'))
+        self.assertEqual(summarize((done, gated, deferred), (), 1)[0], 'incomplete')
+        reverted = Error('source_reverted', 'older bytes', True, done.source.source_id, {'quarter': '2015Q2'})
+        self.assertEqual(summarize((done, gated), (reverted,), 1)[0], 'incomplete')
+        failed = replace(self.member('invalid_source'), member_id='c' * 64, source=fixture_source('2015Q3'),
+                         transformed=False, quarantined=True)
+        self.assertEqual(summarize((done, gated, failed), (), 1)[0], 'incomplete')
+
+    def test_gate_reduction_looks_at_unresolved_members_not_whole_sources(self):
+        from sec_edgar_ingest.results import exit_code
+        complete = self.member()
+        gated = replace(self.member('awaiting_approval', (self.publication('awaiting_approval'),)),
+                        member_id='b' * 64)
+        self.assertEqual(complete.source.source_id, gated.source.source_id)
+        outcome, counts = summarize((complete, gated), (), 1)
+        self.assertEqual((outcome, exit_code(outcome)), ('awaiting_approval', 10))
+        self.assertEqual((counts['complete_sources'], counts['pending_sources']), (0, 1))
+        deferred = replace(self.member('deferred'), member_id='c' * 64, source=fixture_source('2015Q2'))
+        self.assertEqual(summarize((gated, deferred), (), 1)[0], 'pending')
+
     def test_empty_daily_is_not_failure_or_old_backlog(self):
         self.assertEqual(summarize((), (), 0)[0], 'no_new_sources')
         gap = Error('discovery_failed', 'failed', True, None, {})
@@ -124,6 +161,10 @@ class CoverageTests(unittest.TestCase):
             'internal_error': ('failed', 'internal_error'),
             'publication_conflict': ('failed', 'incomplete'),
             'awaiting_approval': ('pending', 'awaiting_approval'),
+            'approval_refused': ('failed', 'incomplete'),
+            'approval_stale': ('failed', 'incomplete'),
+            'rollback_refused': ('failed', 'incomplete'),
+            'rollback_stale': ('failed', 'incomplete'),
         }
         self.assertEqual(set(expected), set(EXIT_CODES))
         for outcome, (status, coverage) in expected.items():

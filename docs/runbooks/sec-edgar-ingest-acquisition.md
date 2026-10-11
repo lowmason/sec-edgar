@@ -136,7 +136,7 @@ fixture manifest hash and supplied date unchanged for an exact retry. A complete
 can replay after its deadline and returns its original captured generations. An
 unfinished expired invocation requires a new valid attempt; its original evidence stays
 immutable. Reports live at
-`runs/sec/<run-id>/<backfill|daily>/<attempt-id>/result.json`. The immutable report
+`runs/sec/<run-id>/<backfill|daily|reconcile>/<attempt-id>/result.json`. The immutable report
 precedes its repairable index.
 
 Source counts and quarter operations have different labels: `complete_sources`,
@@ -146,13 +146,14 @@ directory is an unresolved baseline unit. Daily returns `no_new_sources` only wi
 successful required listings and no unresolved work. Quarantine is a terminal
 whole-source refusal; retained failed retry prefixes remain transport evidence when a
 later body succeeds. Gated or partially published sources remain pending/failed until
-every affected quarter is complete. Closed-quarter removal needs Stage 5 approval; there
-is no workflow force bypass.
+every affected quarter is complete. Closed-quarter removal needs an explicit `approve`
+(see the [reconciliation and approval runbook](sec-edgar-reconciliation-approval.md)); there is no workflow force bypass.
 
-Exit codes remain: 0 success/no-new/unchanged; 2 invalid inputs or unfinished expired
-deadline; 3 incomplete/discovery failure; 4 pending; 5 retry/deferred/throttled; 6
-access blocked; 7 whole-source quarantine/invalid source; 8 lost ownership; 9
-state/internal/publication conflict; 10 awaiting approval. A publish crash after pointer
+Exit codes: 0 success/no-new/unchanged; 2 invalid inputs, unfinished expired deadline
+or refused approval/rollback; 3 incomplete/discovery failure; 4 pending; 5 retry/deferred/throttled;
+6 access blocked; 7 whole-source quarantine/invalid source; 8 lost ownership; 9
+state/internal/publication conflict; 10 awaiting approval (gate-only unresolved work, even
+beside completed sources); 11 stale approval/rollback. A publish crash after pointer
 CAS remains an explicit repair obligation. Retry through the checked command boundary; a
 pointer alone does not prove member completion, and repair must not advance the pointer
 twice. Use `capture_quarter` then `read_quarter` to read the captured validated
@@ -161,7 +162,7 @@ generation rather than globbing files or selecting a mutable latest snapshot.
 Offline native and isolated installed-wheel workflow proofs passed for these synthetic
 fixture workflows and immutable evidence. They do not establish historical production
 coverage, deployed integration or complete-worker resource fit.
-All 22 Stage 7 checks remain reserved/not_run. Stage 5 owns reconciliation/approval,
+All 22 Stage 7 checks remain reserved/not_run. Stage 5 provides reconciliation, approval and recorded rollback,
 Stage 6 owns the worker/IaC/disabled schedules, Stage 7 owns integrated checks, and
 Stage 8 owns production activation/coverage.
 

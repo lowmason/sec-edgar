@@ -106,6 +106,42 @@ class EtlStorageTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             AzureStateStore(service.get_table_client('SourceState'), service.get_table_client('Attempts'), active_client=service.get_table_client('Approvals'))
 
+    def test_withdrawal_approval_real_sdk_routes_to_the_approvals_table(self):
+        from azure.core.credentials import AzureSasCredential
+        from azure.data.tables import TableServiceClient
+        from sec_edgar_ingest.storage.azure import AzureStateStore
+        from test_azure_contracts import ScriptedTransport, table_response, TABLE_ENDPOINT, RETRY
+        transport = ScriptedTransport([table_response(201, etag='W/"approval"')])
+        service = TableServiceClient(TABLE_ENDPOINT, credential=AzureSasCredential('sv=offline&sig=synthetic'), api_version='2020-12-06', transport=transport, **RETRY)
+        self.addCleanup(service.close)
+        tables = service.get_table_client
+        store = AzureStateStore(tables('SourceState'), tables('Attempts'), active_client=tables('ActivePointers'),
+                                approval_client=tables('Approvals'))
+        created = store.insert('WithdrawalApproval', 'a' * 64, {'approver': 'Lowell Mason'})
+        self.assertEqual(created.version, 'W/"approval"')
+        self.assertEqual(len(transport.requests), 1)
+        self.assertIn('/Approvals', transport.requests[0].url)
+        print('approval-wire', transport.requests[0].method, transport.requests[0].url.split('?')[0])
+        without = AzureStateStore(tables('SourceState'), tables('Attempts'), active_client=tables('ActivePointers'))
+        with self.assertRaisesRegex(ValueError, 'Approvals client'):
+            without.get('WithdrawalApproval', 'a' * 64)
+        with self.assertRaises(ValueError):
+            AzureStateStore(tables('SourceState'), tables('Attempts'), approval_client=tables('ActivePointers'))
+
+    def test_quarter_rollback_real_sdk_routes_to_the_approvals_table(self):
+        from azure.core.credentials import AzureSasCredential
+        from azure.data.tables import TableServiceClient
+        from sec_edgar_ingest.storage.azure import AzureStateStore
+        from test_azure_contracts import ScriptedTransport, table_response, TABLE_ENDPOINT, RETRY
+        transport = ScriptedTransport([table_response(201, etag='W/"rollback"')])
+        service = TableServiceClient(TABLE_ENDPOINT, credential=AzureSasCredential('sv=offline&sig=synthetic'), api_version='2020-12-06', transport=transport, **RETRY)
+        self.addCleanup(service.close)
+        tables = service.get_table_client
+        store = AzureStateStore(tables('SourceState'), tables('Attempts'), active_client=tables('ActivePointers'),
+                                approval_client=tables('Approvals'))
+        self.assertEqual(store.insert('QuarterRollback', 'b' * 64, {'operator': 'Lowell Mason'}).version, 'W/"rollback"')
+        self.assertIn('/Approvals', transport.requests[0].url)
+
     def test_transform_acceptance_and_publication_receipts_are_idempotent(self):
         import tempfile
         from dataclasses import replace
