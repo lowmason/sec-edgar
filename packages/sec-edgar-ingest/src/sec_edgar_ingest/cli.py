@@ -15,8 +15,10 @@ from .collection import collect
 from .config import Settings, load_config, pin_context
 from .coordination import Clock, Coordinator
 from .discovery import discover
+from .etl.approval import approve
 from .etl.commands import (PublicationRepairPending, read_etl_result, run_transform, run_publish,
                            write_etl_result, validate_workset_ref)
+from .etl.manifest import approval_ref
 from .etl.parser import supported_parser, SCHEMA_VERSION
 from .etl.publication import repair_publication
 from .etl.state import EtlState
@@ -83,6 +85,10 @@ def _parser() -> argparse.ArgumentParser:
             sub.add_argument('--workset', required=True)
         if command == 'transform':
             sub.add_argument('--force', action='store_true')
+    sub = commands.add_parser('approve')
+    for name in ('config', 'quarter', 'generation', 'quarterly-sha256', 'approver'):
+        sub.add_argument('--' + name, required=True)
+    sub.add_argument('--state-dir')
     return parser
 
 
@@ -433,6 +439,51 @@ def _workflow_main(args):
                 resource.close()
 
 
+def _operator_settings(args) -> Settings:
+    settings = load_config(Path(args.config))
+    if settings.storage.backend == 'azure' and args.state_dir:
+        raise ValueError('state directory is fixture-only')
+    return settings
+
+
+def _operator_main(args, event: str | None, empty: dict[str, object], run) -> int:
+    """Run one operator command on the configured stores and print its canonical result."""
+    try:
+        settings = _operator_settings(args)
+    except (ValueError, OSError, TypeError) as error:
+        sys.stderr.write(canonical_json({'outcome': 'configuration', 'error': str(error)}).decode() + '\n')
+        return 2
+    opened = ()
+    try:
+        opened = open_stores(settings, base_path=Path(args.state_dir) if args.state_dir else None)
+        store, objects, _ = opened
+        value = {**empty, **run(objects, EtlState(store))}
+    except Exception as exception:
+        outcome = ('state_conflict' if isinstance(exception, (Conflict, ValueError, OSError, KeyError))
+                   else 'internal_error')
+        value = {**empty, 'outcome': outcome, 'error': Error(
+            outcome, str(exception), False, None, {'type': type(exception).__name__}).to_mapping()}
+    finally:
+        for resource in reversed(opened):
+            if hasattr(resource, 'close'):
+                resource.close()
+    body = to_mapping_value(value)
+    if event is not None:
+        sys.stderr.write(canonical_json({'event': event, 'fields': body}).decode() + '\n')
+    sys.stdout.write(canonical_json(body).decode() + '\n')
+    return exit_code(value['outcome'])
+
+
+def _approve_main(args) -> int:
+    def run(objects, state):
+        result = approve(args.quarter, args.generation, args.quarterly_sha256, args.approver, objects, state)
+        ref = None if result.approval is None else approval_ref(result.approval.quarter, result.approval.generation_id)
+        return {**result.to_mapping(), 'approval_ref': ref}
+    return _operator_main(args, 'withdrawal_approval',
+                          {'quarter': args.quarter, 'generation_id': args.generation, 'approval_ref': None,
+                           'approval': None, 'publication': None, 'error': None}, run)
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = _parser()
     args = parser.parse_args(argv)
@@ -441,6 +492,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 0
     if args.command in ('backfill', 'daily'):
         return _workflow_main(args)
+    if args.command == 'approve':
+        return _approve_main(args)
     try:
         settings, today, deadline, pack = _validate(args)
     except (ValueError, OSError, TypeError) as error:
