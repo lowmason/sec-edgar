@@ -13,6 +13,7 @@ from ..models import RAW_SNAPSHOT_PATH, Versioned, canonical_json, quarter_value
 CAS_ATTEMPTS = 5
 FILE_CHUNK_BYTES = 1024 * 1024
 ATTEMPT_KINDS = frozenset({"Attempt", "TransportAttempt", "Failure"})
+APPROVAL_KINDS = frozenset({"WithdrawalApproval"})
 REGISTRY_PATH = "locks/" + BINDING_REGISTRY_BLOB
 SENTINEL_PATH = "locks/" + LOCK_BLOB
 BoundaryObserver = Callable[[str], None]
@@ -126,6 +127,8 @@ def identity(kind: str, key: str) -> tuple[str, str]:
 def table_for(kind: str) -> str:
     if kind == "QuarterPublication":
         return "ActivePointers"
+    if kind in APPROVAL_KINDS:
+        return "Approvals"
     return "Attempts" if kind in ATTEMPT_KINDS else "SourceState"
 
 

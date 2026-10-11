@@ -17,6 +17,8 @@ from ..models import (Error, IMAGE_PATTERN, Record, RunContext, SCHEMA_VERSION, 
 TRANSFORMED_FORMAT = 'sec-transformed-workset-v1'
 GENERATION_FORMAT = 'sec-generation-v1'
 RESULT_FORMAT = 'sec-etl-result-v1'
+APPROVAL_FORMAT = 'sec-withdrawal-approval-v1'
+MAX_OPERATOR_CHARS = 256
 ORIGINAL_FIELD_COUNT = 5
 
 
@@ -244,6 +246,39 @@ class GenerationCapture(Record):
     def __post_init__(self):
         _record(self)
         _counts(self, 'manifest_bytes')
+
+
+def require_line(value: object, label: str, limit: int) -> None:
+    """Operator-entered text: one printable line of bounded length."""
+    require_text(value, label)
+    if len(value) > limit or not value.isprintable():
+        raise ValueError(f'{label} must be one printable line of at most {limit} characters')
+
+
+@dataclass(frozen=True, slots=True)
+class WithdrawalApproval(Record):
+    """Immutable operator approval of one exact gated candidate generation."""
+    quarter: str
+    generation_id: str
+    base_generation_id: str
+    source_fingerprint: str
+    quarterly_sha256: str
+    candidate_ref: str
+    gate_sha256: str
+    manifest_ref: str
+    manifest_sha256: str
+    manifest_bytes: int
+    approver: str
+    approved_at: datetime
+    format_version: str = APPROVAL_FORMAT
+
+    def __post_init__(self):
+        _record(self)
+        if self.format_version != APPROVAL_FORMAT:
+            raise ValueError('unsupported approval format')
+        _counts(self, 'manifest_bytes')
+        require_line(self.approver, 'approver', MAX_OPERATOR_CHARS)
+        require_utc(self.approved_at, 'approved_at')
 
 
 @dataclass(frozen=True, slots=True)

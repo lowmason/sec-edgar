@@ -76,12 +76,14 @@ def _etag(version: str | None) -> str:
 class AzureStateStore:
     def __init__(self, source_client: TableClient, attempt_client: TableClient, *,
                  objects: ObjectStore | None = None, observer: BoundaryObserver | None = None,
-                 active_client: TableClient | None = None):
-        if active_client is not None:
-            _check_endpoint(active_client.url, "table")
-            if active_client.table_name != "ActivePointers":
-                raise ValueError("Table client must use the accepted ActivePointers binding")
+                 active_client: TableClient | None = None, approval_client: TableClient | None = None):
+        for client, name in ((active_client, "ActivePointers"), (approval_client, "Approvals")):
+            if client is not None:
+                _check_endpoint(client.url, "table")
+                if client.table_name != name:
+                    raise ValueError(f"Table client must use the accepted {name} binding")
         self.active_client = active_client
+        self.approval_client = approval_client
         for client, name in ((source_client, "SourceState"), (attempt_client, "Attempts")):
             _check_endpoint(client.url, "table")
             if client.table_name != name:
@@ -94,8 +96,9 @@ class AzureStateStore:
     def close(self) -> None:
         self.source_client.close()
         self.attempt_client.close()
-        if self.active_client is not None:
-            self.active_client.close()
+        for client in (self.active_client, self.approval_client):
+            if client is not None:
+                client.close()
 
     def _client(self, kind: str) -> TableClient:
         table = table_for(kind)
@@ -103,6 +106,10 @@ class AzureStateStore:
             if self.active_client is None:
                 raise ValueError("quarter pointer operations require the ActivePointers client")
             return self.active_client
+        if table == "Approvals":
+            if self.approval_client is None:
+                raise ValueError("approval operations require the Approvals client")
+            return self.approval_client
         return self.attempt_client if table == "Attempts" else self.source_client
 
     def _write_payload_entity(self, kind: str, key: str, value: dict[str, object]) -> dict[str, object]:
@@ -516,7 +523,8 @@ def open_azure_stores(settings: Settings, *, observer: BoundaryObserver | None =
     tables = TableServiceClient(endpoint=storage.table_endpoint, credential=credential,
                                api_version=storage.table_api_version, **options)
     state = AzureStateStore(tables.get_table_client(storage.source_table), tables.get_table_client(storage.attempt_table),
-                            objects=objects, observer=observer, active_client=tables.get_table_client("ActivePointers"))
+                            objects=objects, observer=observer, active_client=tables.get_table_client("ActivePointers"),
+                            approval_client=tables.get_table_client("Approvals"))
     leases = AzureLeaseStore(blob_service, lease_seconds=int(validated.coordination.lease_seconds),
                              uncertainty_seconds=validated.coordination.clock_uncertainty_seconds, observer=observer)
     return state, objects, leases
