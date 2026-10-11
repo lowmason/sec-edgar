@@ -139,6 +139,83 @@ class EtlStorageTests(unittest.TestCase):
         self.assertEqual(store.insert('QuarterRollback', 'b' * 64, {'operator': 'Lowell Mason'}).version, 'W/"rollback"')
         self.assertIn('/Approvals', transport.requests[0].url)
 
+    def test_local_approval_and_rollback_rows_persist_in_the_approvals_table(self):
+        import sqlite3
+        import tempfile
+        from contextlib import closing
+        from pathlib import Path
+        from sec_edgar_ingest.storage.local import LocalStateStore
+        with tempfile.TemporaryDirectory() as directory:
+            store = LocalStateStore(Path(directory))
+            self.addCleanup(store.close)
+            approval = store.insert('WithdrawalApproval', 'a' * 64, {'approver': 'Lowell Mason'})
+            rollback = store.insert('QuarterRollback', 'b' * 64, {'operator': 'Lowell Mason', 'quarter': '2026Q4'})
+            # A get/scan round-trip cannot see routing because both sides call table_for; inspect the stored rows.
+            with closing(sqlite3.connect(store.database)) as connection:
+                rows = connection.execute('SELECT table_name, partition, key FROM records ORDER BY key').fetchall()
+            self.assertEqual(rows, [('Approvals', 'sec-owner-lowell-mason:WithdrawalApproval', 'a' * 64),
+                                    ('Approvals', 'sec-owner-lowell-mason:QuarterRollback', 'b' * 64)])
+            self.assertEqual((store.get('WithdrawalApproval', 'a' * 64), list(store.scan('QuarterRollback', {'quarter': '2026Q4'}))),
+                             (approval, [rollback]))
+
+    def test_azure_missing_approval_blob_refuses_an_awaiting_approval_manifest(self):
+        from urllib.parse import unquote
+        from azure.storage.blob import BlobServiceClient
+        from sec_edgar_ingest.etl.contracts import GenerationCapture
+        from sec_edgar_ingest.etl.manifest import approval_ref
+        from sec_edgar_ingest.etl.reader import validated_manifest
+        from sec_edgar_ingest.storage.azure import AzureObjectStore
+        from support_approval import GateFixture
+        from test_azure_contracts import ScriptedTransport, response, blob_error, BLOB_ENDPOINT, RETRY
+        fixture = GateFixture()
+        fixture.setUp()
+        self.addCleanup(fixture.doCleanups)
+        _, _, candidate = fixture.gated()
+        manifest = candidate.manifest
+        capture = GenerationCapture(manifest.quarter, manifest.generation_id, candidate.manifest_ref, candidate.manifest_sha256, candidate.manifest_bytes)
+        transport = ScriptedTransport([response(body=fixture.objects.read(candidate.manifest_ref)), blob_error(404, 'BlobNotFound')])
+        service = BlobServiceClient(BLOB_ENDPOINT, api_version='2026-04-06', transport=transport, **RETRY)
+        self.addCleanup(service.close)
+        with self.assertRaisesRegex(ValueError, 'awaiting-approval generation cannot be current without its exact approval') as raised:
+            validated_manifest(capture, AzureObjectStore(service))
+        self.assertIsInstance(raised.exception.__cause__, FileNotFoundError)
+        self.assertEqual([(request.method, unquote(request.url.split('?')[0])) for request in transport.requests],
+                         [('GET', BLOB_ENDPOINT + '/manifests/' + candidate.manifest_ref),
+                          ('GET', BLOB_ENDPOINT + '/' + approval_ref(manifest.quarter, manifest.generation_id))])
+        self.assertFalse(transport.responses)
+
+    def test_rollback_without_an_approvals_client_uploads_its_record_then_refuses_the_index(self):
+        import json
+        from azure.core.credentials import AzureSasCredential
+        from azure.data.tables import TableServiceClient
+        from sec_edgar_ingest.etl.contracts import QuarterRollback
+        from sec_edgar_ingest.etl.rollback import rollback, rollback_ref
+        from sec_edgar_ingest.etl.state import EtlState
+        from sec_edgar_ingest.storage.azure import AzureStateStore
+        from support_approval import GateFixture, row
+        from test_azure_contracts import ScriptedTransport, entity, table_response, TABLE_ENDPOINT, RETRY
+        fixture = GateFixture()
+        fixture.setUp()
+        self.addCleanup(fixture.doCleanups)
+        self.assertEqual(fixture.publish(fixture.observation(rows=row() + row(number=2))).outcome, 'published')
+        older = fixture.capture()
+        self.assertEqual(fixture.publish(fixture.observation(rows=row('Renamed') + row(number=2), seconds=1)).outcome, 'published')
+        newer = fixture.capture()
+        pointer = fixture.state.pointer('2026Q4').to_mapping()['value']
+        transport = ScriptedTransport([table_response(value=entity('2026Q4', pointer, kind='QuarterPublication'), etag='W/"pointer"')])
+        service = TableServiceClient(TABLE_ENDPOINT, credential=AzureSasCredential('sv=offline&sig=synthetic'), api_version='2020-12-06', transport=transport, **RETRY)
+        self.addCleanup(service.close)
+        tables = service.get_table_client
+        # The production factory always supplies the Approvals client; without it the uploaded record is an accepted orphan.
+        state = EtlState(AzureStateStore(tables('SourceState'), tables('Attempts'), active_client=tables('ActivePointers')))
+        with self.assertRaisesRegex(ValueError, 'Approvals client'):
+            rollback('2026Q4', newer.generation_id, older.generation_id, 'Lowell Mason', 'SEC correction withdrawn', fixture.objects, state)
+        self.assertEqual([(request.method, '/ActivePointers' in request.url) for request in transport.requests], [('GET', True)])
+        (path,) = fixture.object_path('approvals').rglob('rollback.json')
+        record = QuarterRollback.from_mapping(json.loads(path.read_bytes()))
+        self.assertEqual((fixture.object_path(rollback_ref(record)), record.from_generation_id, record.to_generation_id, record.from_pointer_version),
+                         (path, newer.generation_id, older.generation_id, 'W/"pointer"'))
+
     def test_transform_acceptance_and_publication_receipts_are_idempotent(self):
         import tempfile
         from dataclasses import replace
