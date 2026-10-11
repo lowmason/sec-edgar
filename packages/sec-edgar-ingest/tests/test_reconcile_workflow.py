@@ -5,10 +5,16 @@ install()
 import unittest
 from unittest.mock import patch
 
+from support_approval import GateFixture, row
+from support_etl import etl_context
 from support_reconcile import A, B, C, X, ReconcileFixture
+from support_reconcile import sha
+from sec_edgar_ingest.etl.approval import approve
 from sec_edgar_ingest.etl.manifest import read_manifest
 from sec_edgar_ingest.etl.state import EtlState
+from sec_edgar_ingest.etl.transform import transform_member
 from sec_edgar_ingest.workflows.checked import Dispatcher
+from sec_edgar_ingest.workflows.completion import accounts_for
 
 
 class ReconcileWorkflowTests(ReconcileFixture):
@@ -87,6 +93,56 @@ class ReconcileWorkflowTests(ReconcileFixture):
                     code, message = h.invoke(command, run='flipped-' + command)
                     self.assertEqual((code, message['outcome']), (9, 'state_conflict'), h.calls[-1])
                     self.assertIn('refresh differs from its workflow command', h.calls[-1]['stderr'])
+
+
+
+class SupersessionRuleTests(GateFixture):
+    def test_accounts_for_exact_or_strictly_later_same_source_observation(self):
+        first = self.observation(rows=row() + row(number=2))
+        later = self.observation(rows=row(), seconds=1)
+        daily = self.observation(period='2026-10-02', kind='daily', rows=row())
+        self.assertTrue(accounts_for(first, first))
+        self.assertTrue(accounts_for(later, first))
+        self.assertFalse(accounts_for(first, later))
+        self.assertFalse(accounts_for(None, first))
+        self.assertFalse(accounts_for(daily, first))
+        settings, context = etl_context('fixture-index-parser-v2', command='publish')
+        upgraded = transform_member(later.source, later.snapshot, context, settings, self.objects, self.state)
+        self.assertFalse(accounts_for(upgraded, first))
+
+
+class SupersessionWorkflowTests(ReconcileFixture):
+    def test_superseded_gated_member_completes_on_the_following_reconcile(self):
+        h = self.harness((A, B))
+        self.assertEqual(self.run_phase(h, 'backfill', 'base')[0], 0)
+        code, _, first = self.run_phase(h, 'reconcile', 'gate-1', (A,))
+        self.assertEqual((code, first.counts['awaiting_approval_quarters']), (10, 1), h.calls[-1])
+        # Both gated members stay pending in this run whatever their processing order.
+        code, _, second = self.run_phase(h, 'reconcile', 'gate-2', (A, C))
+        self.assertEqual((code, second.outcome), (10, 'awaiting_approval'), h.calls[-1])
+        latest = next(candidate for candidate in self.candidates(h)
+                      if candidate.manifest.membership_source.snapshot.sha256 == sha((A, C)))
+        approved = approve('2026Q3', latest.manifest.generation_id, sha((A, C)), 'Lowell Mason',
+                           h.objects, EtlState(h.store))
+        self.assertEqual(approved.outcome, 'success')
+        code, _, report = self.run_phase(h, 'reconcile', 'after-approval', (A, C))
+        self.assertEqual((code, report.outcome), (0, 'unchanged'), h.calls[-1])
+        self.assertEqual(self.names(h, '2026Q3'), ['A', 'C'])
+
+    def test_revert_to_older_bytes_is_reported_not_published(self):
+        h = self.harness((A, B))
+        self.assertEqual(self.run_phase(h, 'backfill', 'base')[0], 0)
+        code, _, added = self.run_phase(h, 'reconcile', 'add', (A, B, C))
+        self.assertEqual((code, added.outcome), (0, 'success'), h.calls[-1])
+        active = EtlState(h.store).pointer('2026Q3')
+        code, _, report = self.run_phase(h, 'reconcile', 'revert', (A, B))
+        self.assertEqual((code, report.outcome), (3, 'incomplete'), h.calls[-1])
+        gap, = [gap for gap in report.gaps if gap.code == 'source_reverted']
+        self.assertTrue(gap.retryable)
+        self.assertEqual((gap.details['quarter'], gap.details['observed_sha256'], gap.details['active_sha256']),
+                         ('2026Q3', sha((A, B)), sha((A, B, C))))
+        self.assertEqual(EtlState(h.store).pointer('2026Q3'), active)
+        self.assertEqual(self.names(h, '2026Q3'), ['A', 'B', 'C'])
 
 
 if __name__ == '__main__':

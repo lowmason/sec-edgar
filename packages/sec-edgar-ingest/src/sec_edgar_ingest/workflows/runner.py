@@ -8,7 +8,8 @@ from ..collection import HALTING_OUTCOMES
 from ..state import AcquisitionState
 from ..storage.contracts import Conflict, observe
 from ..discovery import quarter_span
-from ..etl.reader import capture_quarter
+from ..etl.manifest import read_manifest
+from ..etl.reader import capture_from_pointer, capture_quarter
 from ..etl.state import EtlState
 from .contracts import MemberResult, WorkflowResult, FATAL, summarize, workflow_path
 from .checked import ChildUnfinished, Dispatcher
@@ -107,6 +108,7 @@ def run_workflow(context: RunContext, settings: Settings, intent: Mapping, dispa
         halted = halted or result.outcome in FATAL or any(gap.code in HALTING_OUTCOMES for gap in result.gaps)
     gaps = [Error.from_mapping(value) for value in selection['gaps']]
     gaps.extend(baseline_gaps(selection, tuple(results), evidences, store, objects))
+    gaps.extend(source_revert_gaps(tuple(results), store, objects))
     selected_ids = {result.source.source_id for result in results}
     already = tuple(sorted({capture['member']['source']['source_id'] for capture in selection['already_complete']} - selected_ids))
     outcome, counts = summarize(tuple(results), tuple(gaps), selection['discovered_sources'],
@@ -247,3 +249,42 @@ def baseline_gaps(selection, results, evidences, store, objects) -> tuple[Error,
         gaps.append(Error('baseline_publication_missing', 'requested baseline quarter lacks readable generation',
                           True, None, details))
     return tuple(gaps)
+
+
+def source_revert_gaps(results, store, objects) -> tuple[Error, ...]:
+    """Report sources whose newest download repeats older bytes that the active generation supersedes.
+
+    Identical bytes keep their first receipt, so receipt-ordered selection keeps the newer
+    snapshot and the member publishes unchanged; without this gap the run would read as reconciled.
+    """
+    acquisition, state, found = AcquisitionState(store), EtlState(store), {}
+    for result in results:
+        quarters = sorted({q.quarter for q in result.quarters if q.outcome in ('published', 'unchanged')})
+        identity = result.source.source_id
+        row = acquisition.get_source(identity) if quarters else None
+        if row is None:
+            continue
+        value = row.to_mapping()['value']
+        latest, observed = value['latest_downloaded_snapshot'], value['latest_received_at']
+        if latest is None or observed is None:
+            continue
+        observed_at = datetime.fromisoformat(observed)
+        first = acquisition.snapshot(identity, latest).received_at
+        for quarter in quarters:
+            pointer = state.pointer(quarter)
+            if pointer is None:
+                continue
+            capture = capture_from_pointer(pointer)
+            manifest = read_manifest(capture, objects)
+            active = next((ref for ref in manifest.sources if ref.source.source_id == identity), None)
+            if active is None or active.snapshot.sha256 == latest:
+                continue
+            if first < active.snapshot.received_at < observed_at:
+                found[identity, quarter] = Error(
+                    'source_reverted', 'newest download repeats older bytes that the active generation supersedes',
+                    True, identity, {'quarter': quarter, 'observed_sha256': latest, 'observed_at': observed,
+                                     'first_received_at': first.isoformat(),
+                                     'active_sha256': active.snapshot.sha256,
+                                     'active_received_at': active.snapshot.received_at.isoformat(),
+                                     'generation_id': capture.generation_id})
+    return tuple(found[key] for key in sorted(found))
