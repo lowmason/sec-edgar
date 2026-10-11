@@ -18,6 +18,7 @@ from .discovery import discover
 from .etl.approval import approve
 from .etl.commands import (PublicationRepairPending, read_etl_result, run_transform, run_publish,
                            write_etl_result, validate_workset_ref)
+from .etl.history import withdrawal_candidates
 from .etl.manifest import approval_ref
 from .etl.parser import supported_parser, SCHEMA_VERSION
 from .etl.publication import repair_publication
@@ -88,6 +89,9 @@ def _parser() -> argparse.ArgumentParser:
     sub = commands.add_parser('approve')
     for name in ('config', 'quarter', 'generation', 'quarterly-sha256', 'approver'):
         sub.add_argument('--' + name, required=True)
+    sub.add_argument('--state-dir')
+    sub = commands.add_parser('candidates')
+    sub.add_argument('--config', required=True)
     sub.add_argument('--state-dir')
     return parser
 
@@ -484,6 +488,12 @@ def _approve_main(args) -> int:
                            'approval': None, 'publication': None, 'error': None}, run)
 
 
+def _candidates_main(args) -> int:
+    return _operator_main(args, None, {'candidates': None, 'error': None},
+                          lambda objects, state: {'outcome': 'success',
+                                                  'candidates': list(withdrawal_candidates(objects, state))})
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = _parser()
     args = parser.parse_args(argv)
@@ -494,6 +504,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _workflow_main(args)
     if args.command == 'approve':
         return _approve_main(args)
+    if args.command == 'candidates':
+        return _candidates_main(args)
     try:
         settings, today, deadline, pack = _validate(args)
     except (ValueError, OSError, TypeError) as error:

@@ -198,19 +198,26 @@ def validate_files(manifest: GenerationManifest, objects: ObjectStore) -> None:
         raise ValueError('generation aggregate counts differ')
 
 
-def _base_manifest(manifest, objects):
+def retained_base(manifest: GenerationManifest, objects: ObjectStore) -> GenerationCapture | None:
+    """The exact capture a generation was built against, from its immutable retained-base record."""
     if not manifest.base_generation_id:
-        if manifest.unresolved_absence:
-            raise ValueError('unresolved absence requires an exact retained dependency')
         return None
-    path = generation_base(manifest.quarter, manifest.generation_id) + '/retained-base.json'
-    body = objects.read(path)
+    body = objects.read(generation_base(manifest.quarter, manifest.generation_id) + '/retained-base.json')
     retained = GenerationCapture.from_mapping(parse_json(body))
     if canonical_json(retained.to_mapping()) != body or (retained.quarter, retained.generation_id) != (
             manifest.quarter, manifest.base_generation_id):
         raise ValueError('exact base dependency differs')
     if retained.generation_id == manifest.generation_id:
         raise ValueError('self-referential base dependency')
+    return retained
+
+
+def _base_manifest(manifest, objects):
+    if not manifest.base_generation_id and manifest.unresolved_absence:
+        raise ValueError('unresolved absence requires an exact retained dependency')
+    retained = retained_base(manifest, objects)
+    if retained is None:
+        return None
     previous = read_manifest(retained, objects)
     validate_files(previous, objects)
     return previous
