@@ -265,7 +265,7 @@ Replace the retained loop (currently lines 145–157, `pending_before, unresolve
         try:
             completed = registry.completed(value, context.parser_version, context.schema_version)
         except (ValueError, OSError, Conflict, KeyError, TypeError) as error:
-            gaps.append(Error('legacy_member_unresolved', 'retained completion receipt is corrupt: ' + str(error),
+            gaps.append(Error('legacy_member_unresolved', 'retained completion receipt is corrupt: ' + error_text(error),
                               False, value['source']['source_id'], {'member_id': value['member_id']}))
             completed = None
         if completed is not None:
@@ -721,6 +721,8 @@ git commit -m "docs: document superseded candidates and the cleared gated-then-r
    ```
 
    Expected: `OK` and `0`.
+
+   If a multi-process test fails, look it up in the open item "Load-flaky multi-process tests" in `specs/deferred_items.md`. Re-run a listed test alone three times, and re-run the full check if those pass, before treating the failure as real.
 3. Run writing-plans' Plan Completion Protocol. In its deferred-items step:
    - Tick the item "Gated-then-reverted member cannot clear" as `→ done in plan 7`.
    - Tick "Review Minor, reconcile/workflow coverage (T3/T4/T7)" as `→ trigger fired; runner-local cases done in plan 7, remainder re-deferred under plan 7`. Append one new item for what Task 3 did not do: the refresh/command check in `workflows/results.py` running only when `discovery_call` is present; spec R10 "a later download needs its own approval" covered at library level only (`tests/test_etl_approval.py`), not in `tests/test_reconcile_acceptance.py`; a revert in a quarter gated by another member of the same run is reported only on the next run; long unwrapped lines in `packages/sec-edgar-ingest/README.md`. Size: quick-fix. Revisit if: those modules are next edited or a regression slips through them.
