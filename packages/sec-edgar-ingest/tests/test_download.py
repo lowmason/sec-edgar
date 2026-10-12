@@ -766,6 +766,98 @@ class PartialExceptionTests(unittest.TestCase):
         self.assertEqual(download.incomplete_read_bytes(nested), b"original nested partial")
 
 
+class ExceptionTextTests(unittest.TestCase):
+    """Raw exception text reaches a structured Error only as one safe line, never replacing the original failure."""
+    def setUp(self):
+        self.download = importlib.import_module("sec_edgar_ingest.download")
+
+    def harness(self, responses):
+        harness = DownloadHarness(responses)
+        self.addCleanup(harness.close)
+        return harness
+
+    def test_unconfirmed_cooldown_records_one_line_exception_text(self):
+        from unittest.mock import patch
+        from support import exception_texts
+        from sec_edgar_ingest.storage.contracts import OwnershipLost
+        for text, line in exception_texts("OwnershipLost"):
+            with self.subTest(text=text):
+                h = self.harness([(429, b"original cooldown", {"Retry-After": "180"})])
+                with patch.object(h.coordinator, "defer_until", side_effect=OwnershipLost(text)), \
+                        self.assertRaises(self.download.FetchError) as raised:
+                    h.fetch_response_only()
+                error, loss = raised.exception.error, raised.exception.receipt.error
+                self.assertEqual((error.code, error.message), ("cooldown_unconfirmed", "retry cooldown could not be confirmed: "+line))
+                self.assertEqual((loss.code, loss.message), ("ownership_lost", "response policy was not confirmed: "+line))
+
+    def test_unconfirmed_exchange_records_one_line_exception_text(self):
+        from unittest.mock import patch
+        from support import exception_texts
+        for text, line in exception_texts("RuntimeError"):
+            with self.subTest(text=text):
+                h = self.harness([(200, b"never sent", {})])
+                with patch.object(h.sender, "send", side_effect=RuntimeError(text)), \
+                        self.assertRaises(self.download.FetchError) as raised:
+                    h.fetch_response_only()
+                error = raised.exception.error
+                self.assertEqual((error.code, error.message),
+                                 ("sender_unverified", "exchange stopped without a confirmed transport outcome: "+line))
+                row, = h.state.request_history(h.context, raised.exception.receipt.url)
+                self.assertEqual(row.value["error"]["message"], error.message)
+
+    def child_error(self, *patches, arm=None):
+        """Run the HTTP child in-process (no spawn, no fatal timer) and rebuild its Error exactly as the parent does."""
+        import os
+        import threading
+        import time
+        from contextlib import ExitStack
+        from unittest.mock import MagicMock, patch
+        from sec_edgar_ingest.coordination import Clock
+        spool = Path(self.enterContext(tempfile.TemporaryDirectory()))
+        (spool/"body").write_bytes(b"")
+        settings, now = fixture_settings(), time.monotonic()
+        transport = self.download._Transport(fixture_source().canonical_url, str(spool), settings.sec.user_agent, 1, 1,
+                                             settings.http.max_received_bytes, now+60, now+60, None, False)
+        with ExitStack() as stack:
+            stack.enter_context(patch.dict(os.environ))
+            stack.enter_context(patch.object(self.download, "arm_child_deadline", side_effect=arm))
+            for item in patches:
+                stack.enter_context(item)
+            self.download._child_exchange(transport, threading.Event(), MagicMock())
+        receipt, _ = self.download.BoundedSender(settings, Clock())._receipt(transport)
+        return receipt.error
+
+    def test_child_metadata_carries_one_line_exception_text_to_the_parent(self):
+        from unittest.mock import MagicMock, patch
+        import requests
+        from support import exception_texts
+        from sec_edgar_ingest.storage.contracts import OwnershipLost
+        def response(read_failure=None):
+            fake = MagicMock(status_code=200, headers={})
+            fake.raw.read1.side_effect = read_failure
+            return fake
+        def adapter(**options):
+            return patch("requests.adapters.HTTPAdapter.send", **options)
+        scenarios = (
+            ("sender_internal", "unexpected HTTP child failure: ", RuntimeError,
+             lambda error: {"patches": (patch.object(self.download, "_read_http_entity", side_effect=error),)}),
+            ("connection_failed", "HTTP connection failed: ", requests.ConnectionError,
+             lambda error: {"patches": (adapter(side_effect=error),)}),
+            ("incomplete_body", "HTTP stream interrupted: ", OSError,
+             lambda error: {"patches": (adapter(return_value=response(error)),)}),
+            ("invalid_content_length", "", ValueError,
+             lambda error: {"patches": (adapter(return_value=response()), patch.object(self.download, "advertised_length", side_effect=error))}),
+            ("hard_timer_unavailable", "", self.download.HardTimerUnavailable, lambda error: {"arm": error}),
+            ("permit_expired", "", OwnershipLost, lambda error: {"arm": error}),
+        )
+        for code, prefix, exception_type, arrange in scenarios:
+            for text, line in exception_texts(exception_type.__name__):
+                with self.subTest(code=code, text=text):
+                    options = arrange(exception_type(text))
+                    error = self.child_error(*options.get("patches", ()), arm=options.get("arm"))
+                    self.assertEqual((error.code, error.message), (code, prefix+line))
+
+
 class DurableRequestAuditTests(unittest.TestCase):
     def test_two_independent_state_clients_cannot_consume_the_same_ordinal(self):
         import threading

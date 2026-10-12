@@ -21,7 +21,7 @@ from urllib.parse import urlsplit
 
 from .config import Settings
 from .coordination import Clock, Coordinator, PolicyBlocked, Sender
-from .models import BodyReceipt, Error, Permit, RunContext, Source, require_number, require_utc
+from .models import BodyReceipt, Error, Permit, RunContext, Source, error_text, require_number, require_utc
 from .state import AcquisitionState
 from .storage.contracts import ClockUncertain, OwnershipLost, TimeBounds
 from .urls import canonical_listing_url, canonical_source_url
@@ -252,7 +252,7 @@ class RequestClient:
                 policy.retry["cooldown_confirmed"] = False
                 policy.next_allowed = None
                 policy.error = self._error("clock_uncertain" if isinstance(exception, ClockUncertain) else "cooldown_unconfirmed",
-                                          "retry cooldown could not be confirmed: "+str(exception), source)
+                                          "retry cooldown could not be confirmed: "+error_text(exception), source)
                 raise
 
     def fetch(self, url: str, context: RunContext, source: Source | None = None) -> BodyReceipt:
@@ -284,7 +284,7 @@ class RequestClient:
             except Exception as exception:
                 receipt = getattr(exception, "receipt", None) or audited.receipt or self._empty(url)
                 error = self._error("ownership_lost" if isinstance(exception, OwnershipLost) else "sender_unverified",
-                                    "exchange stopped without a confirmed transport outcome: "+str(exception), source, details={"outcome": "failed", "ordinal": ordinal})
+                                    "exchange stopped without a confirmed transport outcome: "+error_text(exception), source, details={"outcome": "failed", "ordinal": ordinal})
                 if audited.begun:
                     self.state.request_attempt(context, receipt, audited.permit, ordinal, outcome="failed", error=error)
                 if source is not None:
@@ -486,7 +486,7 @@ def _read_http_entity(transport, cancellation, metadata):
         try:
             length = advertised_length(response.headers)
         except ValueError as error:
-            raise _TransportProblem("invalid_content_length", str(error)) from error
+            raise _TransportProblem("invalid_content_length", error_text(error)) from error
         if length is not None and length > transport.max_received_bytes:
             raise _TransportProblem("received_limit", "advertised entity exceeds its received byte guard")
         with (Path(transport.spool)/"body").open("ab", buffering=0) as stream:
@@ -504,7 +504,7 @@ def _read_http_entity(transport, cancellation, metadata):
                     count = _write_chunk(stream, partial, count, transport.max_received_bytes)
                     _trace_transport(transport, "incomplete-read-partial-spooled", retained_bytes=count)
                 code = "timeout" if isinstance(error, requests.Timeout) or "timeout" in type(error).__name__.lower() else "incomplete_body"
-                raise _TransportProblem(code, "HTTP stream interrupted: "+str(error), retryable=True) from error
+                raise _TransportProblem(code, "HTTP stream interrupted: "+error_text(error), retryable=True) from error
         if length is not None and length != count:
             raise _TransportProblem("content_length_mismatch", "advertised entity length differs from retained bytes", retryable=True)
         if unsupported_encoding:
@@ -512,7 +512,7 @@ def _read_http_entity(transport, cancellation, metadata):
         return count
     except requests.RequestException as error:
         code = "timeout" if isinstance(error, requests.Timeout) else "connection_failed"
-        raise _TransportProblem(code, "HTTP connection failed: "+str(error), retryable=True) from error
+        raise _TransportProblem(code, "HTTP connection failed: "+error_text(error), retryable=True) from error
     finally:
         if response is not None:
             response.close()
@@ -534,14 +534,14 @@ def _child_exchange(transport: _Transport, cancellation, channel):
         _read_http_entity(transport, cancellation, metadata)
         metadata["complete"] = True
     except _TransportProblem as error:
-        metadata["error"] = {"code": error.code, "message": str(error), "retryable": error.retryable, "details": error.details}
+        metadata["error"] = {"code": error.code, "message": error_text(error), "retryable": error.retryable, "details": error.details}
     except HardTimerUnavailable as error:
-        metadata["error"] = {"code": "hard_timer_unavailable", "message": str(error), "retryable": False, "details": {}}
+        metadata["error"] = {"code": "hard_timer_unavailable", "message": error_text(error), "retryable": False, "details": {}}
     except OwnershipLost as error:
-        metadata["error"] = {"code": "permit_expired", "message": str(error), "retryable": False, "details": {}}
+        metadata["error"] = {"code": "permit_expired", "message": error_text(error), "retryable": False, "details": {}}
     except BaseException as error:
         metadata["unsafe"] = True
-        metadata["error"] = {"code": "sender_internal", "message": "unexpected HTTP child failure: "+str(error), "retryable": False, "details": {"type": type(error).__name__}}
+        metadata["error"] = {"code": "sender_internal", "message": "unexpected HTTP child failure: "+error_text(error), "retryable": False, "details": {"type": type(error).__name__}}
     _write_transport_metadata(transport, metadata)
     try:
         channel.send_bytes(b"complete")
