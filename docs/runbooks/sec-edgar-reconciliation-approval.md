@@ -34,7 +34,7 @@ A `source_reverted` gap means the SEC now serves bytes identical to an older sna
   - `pending`: its base is active and the source still serves the candidate's bytes;
   - `superseded`: its base is active, but a later download of the source has different bytes. `approve` refuses it. Once a later download of the source completes, the following run drops the superseded gated member;
   - `active`;
-  - `stale`: the base moved on, or an approved candidate was later superseded;
+  - `stale`: the base moved on, or an approved candidate's generation was later replaced;
 - `approved`;
 - the membership source's `latest_observed_sha256` and `latest_observed_at`.
 
@@ -44,7 +44,7 @@ Before approving, confirm all three:
 
 1. `status` is `pending`.
 2. Every `withdrawn` row should leave the active catalog.
-3. `latest_observed_sha256` equals `quarterly_sha256`. A later download with different bytes lists the candidate as `superseded`, and `approve` returns `approval_stale` for it. When the SEC goes back to the base's bytes, the run that downloads them still reports `awaiting_approval`; once that download has completed, the following run drops the superseded gated member. (A later download that is quarantined, or that itself withdraws rows, does not clear it.)
+3. `latest_observed_sha256` equals `quarterly_sha256`. A later download with different bytes lists the candidate as `superseded`, and `approve` returns `approval_stale` for it. When the SEC goes back to the base's bytes, the run that downloads them still reports `awaiting_approval`; once that download has completed, the following run drops the superseded gated member. The candidate keeps listing `superseded`: candidates are never deleted, and the status compares the source's latest download with the candidate's bytes. A later download that itself withdraws rows does not clear the hold, and neither does a quarantined one. A download quarantined at transform has already become the source's latest download, so the candidate lists `superseded` and `approve` refuses it while the gated member stays held. A download refused at its envelope never becomes the latest download, so the candidate stays `pending`.
 
 ## Approve
 
@@ -58,7 +58,7 @@ sec-edgar-ingest approve --config PATH --quarter YYYYQn --generation ID \
 | `success` | 0 | The pointer moved. The next reconcile resolves the gated members. |
 | `unchanged` | 0 | The candidate was already active. |
 | `approval_refused` | 2 | Correct the arguments. Nothing was written. Exit 2 with empty stdout is a usage or configuration error; see stderr. |
-| `approval_stale` | 11 | The base moved, or a later download supersedes the candidate (`error.details` names `latest_observed_sha256`). Reconcile, then review the current candidates. |
+| `approval_stale` | 11 | The base moved (`error.details` names `active_generation_id` and `base_generation_id`), or a later download supersedes the candidate (`error.details` names `latest_observed_sha256`). Reconcile, then review the current candidates. |
 | `state_conflict` / `internal_error` | 9 | Corrupt evidence or an unexpected failure. Stop and investigate. |
 
 The approval object is immutable: `approvals/sec/filing_index/year=<yyyy>/quarter=<q>/generation=<id>/approval.json`, format `sec-withdrawal-approval-v1`. The first stored approval wins. An approval binds one candidate generation, so a later download, or a rebuild on another base, needs its own approval. `approve` writes the approval object, the `Approvals` index and the conditional pointer replace. It does not repair Processing or PublicationReceipt indexes; the next publish that touches the quarter repairs them.
