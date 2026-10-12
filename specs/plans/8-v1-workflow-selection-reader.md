@@ -27,6 +27,7 @@
 - Tests may only open a temporary copy of the committed evidence bundle. Opening the local store sets WAL mode and `read_workflow_result` repairs index rows, so after any test run `git status --porcelain -- specs/evidence` must print nothing.
 - Do not edit `specs/evidence/`, the completed plan 7, or the plan-5 spec text; they record v1 as it was.
 - Do not push, open a PR, merge or deploy. Integration goes back to the owner.
+- Every commit message ends with a blank line, then exactly `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>` (D2). Work stays on this branch, never on `main`.
 
 Single-file test command, from the repository root (add `-k <substring>` to select tests; repeat `-k` to OR them):
 
@@ -37,8 +38,10 @@ uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-i
 ## Decisions
 
 - **D1** (owner, brief, 2026-10-12): Make stored `sec-workflow-selection-v1` selections readable again; new selections stay `sec-workflow-selection-v2`. This reverses plan 7's "no v1 reader" constraint and fixes it immediately after plan 7. Applied in: Global Constraints, Task 1, Task 2.
+- **D2** (owner, brief, 2026-10-12): Every commit message ends with a blank line, then exactly `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>`; work on a new branch, not on `main`. Applied in: Global Constraints.
+- **D3** (owner, plan review, 2026-10-12): Plan approved as written, including the four defaults below and Task 2's first-write guard (kept). Execute via subagent-driven-development in a fresh session. Applied in: whole plan; Task 2 stays.
 
-**Defaults set while planning, for owner review (not owner decisions):**
+**Defaults set while planning (approved at plan review, D3):**
 
 1. A v1 selection reads as "superseded nothing" and is never upgraded in place (the report pins its bytes). Task 1.
 2. Task 2's first-write guard is included. It is small, but a reviewer could reject it separately: without it, Task 1 alone lets `freeze_selection` persist a brand-new v1 selection (measured: the Task 2 test fails with "Conflict not raised"). Drop Task 2 if you read it as YAGNI.
