@@ -1,5 +1,7 @@
 # V1 Workflow-Selection Reader Implementation Plan
 
+**Status: COMPLETE (2026-10-12)** — executed via subagent-driven-development; deferred items in specs/deferred_items.md
+
 > **For agentic workers:** REQUIRED SUB-SKILL: implement this plan task-by-task via subagent-driven-development (the default) — or executing-plans when your human partner chose inline execution at the handoff. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** A stored `sec-workflow-selection-v1` selection is readable again (`read_workflow_result` and exact replay), while every new selection is still written as `sec-workflow-selection-v2`.
@@ -76,7 +78,7 @@ uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-i
 - Consumes: `freeze_selection(context, selection, store, objects) -> dict`, `read_workflow_result(path, store, objects) -> WorkflowResult`, and `run_workflow(context, settings, intent, dispatcher, store, objects) -> WorkflowResult`, all unchanged.
 - Produces: `results.LEGACY_SELECTION_FORMAT = 'sec-workflow-selection-v1'`. `_validate_selection` accepts exactly two shapes: v1 with the 20 base keys, and `SELECTION_FORMAT` (v2) with those plus `superseded`. For v1, `freeze_selection` returns the mapping unchanged and does not touch the stored bytes.
 
-- [ ] **Step 1: Write the failing test module**
+- [x] **Step 1: Write the failing test module**
 
 Create `packages/sec-edgar-ingest/tests/test_workflow_selection_v1.py`:
 
@@ -179,7 +181,7 @@ if __name__ == '__main__':
     unittest.main()
 ```
 
-- [ ] **Step 2: Run it to verify it fails for the right reason**
+- [x] **Step 2: Run it to verify it fails for the right reason**
 
 ```bash
 uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/network_guard.py discover -s packages/sec-edgar-ingest/tests -p 'test_workflow_selection_v1.py' -v
@@ -193,7 +195,7 @@ git status --porcelain -- specs/evidence
 
 Expected: no output.
 
-- [ ] **Step 3: Implement the reader**
+- [x] **Step 3: Implement the reader**
 
 All three edits are in `packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/results.py`.
 
@@ -238,11 +240,11 @@ with
     superseded = selection.get('superseded', [])  # absent only from a v1 selection, which superseded nothing
 ```
 
-- [ ] **Step 4: Run the new module to verify it passes**
+- [x] **Step 4: Run the new module to verify it passes**
 
 Same command as Step 2. Expected: `Ran 6 tests`, `OK`, and `git status --porcelain -- specs/evidence` still prints nothing.
 
-- [ ] **Step 5: Run the regressions for the v2 path**
+- [x] **Step 5: Run the regressions for the v2 path**
 
 ```bash
 uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/network_guard.py discover -s packages/sec-edgar-ingest/tests -p 'test_workflow_results.py' -v
@@ -256,7 +258,7 @@ uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-i
 
 Expected: `Ran 2 tests`, `OK` (in the planning dry run the first took 150 s and the second 48 s). These freeze and re-validate v2 selections with non-empty `superseded` entries, including forged ones. For each of the runs in this step, redirect stdout (`> /tmp/plan8-task1.stdout`, keeping stderr on screen) and check that `wc -c < /tmp/plan8-task1.stdout` prints `0`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/results.py packages/sec-edgar-ingest/tests/test_workflow_selection_v1.py
@@ -286,7 +288,7 @@ EOF
 - Consumes: `results.SELECTION_FORMAT` (v2) and Task 1's `_validate_selection`, which now accepts v1.
 - Produces: `freeze_selection` raises `Conflict('new selection must use the current format')` when no `selection.json` exists yet and the proposed selection's `format_version` is not `SELECTION_FORMAT`. It writes nothing in that case. A stored selection of any readable format still goes through the existing path.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 In `packages/sec-edgar-ingest/tests/test_workflow_results.py`, add `parse_json` to the models import:
 
@@ -310,7 +312,7 @@ and insert after `test_selection_substitution_and_missing_evidence_refuse` (befo
         self.assertEqual(parse_json(self.f.objects.read(path))['format_version'], 'sec-workflow-selection-v2')
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 ```bash
 uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/network_guard.py discover -s packages/sec-edgar-ingest/tests -p 'test_workflow_results.py' -v -k test_a_new_selection_cannot_be_frozen
@@ -318,7 +320,7 @@ uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-i
 
 Expected: `Ran 1 test`, `FAILED (failures=1)` with `AssertionError: Conflict not raised`. That is the point: after Task 1 alone, a new v1 selection would be frozen and persisted.
 
-- [ ] **Step 3: Add the guard**
+- [x] **Step 3: Add the guard**
 
 In `freeze_selection` (`results.py`), replace
 
@@ -341,7 +343,7 @@ with
 
 The guard must stay the first statement in the branch: `_capture_or_validate_discovery_failure(…, store)` further down writes `terminal.json`.
 
-- [ ] **Step 4: Run it to verify it passes, then the regressions**
+- [x] **Step 4: Run it to verify it passes, then the regressions**
 
 ```bash
 uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/network_guard.py discover -s packages/sec-edgar-ingest/tests -p 'test_workflow_results.py' -v
@@ -361,7 +363,7 @@ uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-i
 
 Expected: `OK`. This file holds `RunnerTests.test_deadline_after_selection_records_undispatched_units_without_child_work`, which is listed under "Load-flaky multi-process tests" in `specs/deferred_items.md`: if it is the only failure, re-run it alone three times before treating it as real, and do not debug it in this task. Finally `git status --porcelain -- specs/evidence` prints nothing.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/results.py packages/sec-edgar-ingest/tests/test_workflow_results.py
