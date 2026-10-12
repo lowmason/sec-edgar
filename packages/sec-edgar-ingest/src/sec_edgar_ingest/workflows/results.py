@@ -349,6 +349,9 @@ def freeze_selection(context, selection, store, objects):
     try:
         _read(path, objects)
     except FileNotFoundError:
+        # First: the checks below can put_once a terminal capture, and a refused selection must leave nothing behind.
+        if selection.get('format_version') != SELECTION_FORMAT:
+            raise Conflict('new selection must use the current format')
         from .checked import _authority
         call = selection['discovery_call']
         if call is not None:

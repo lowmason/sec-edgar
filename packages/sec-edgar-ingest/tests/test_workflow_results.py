@@ -14,7 +14,7 @@ from support_workflow_evidence import EvidenceFixture, quarterly_bytes
 from sec_edgar_ingest.etl.reader import read_quarter
 from sec_edgar_ingest.etl.contracts import GenerationCapture
 from sec_edgar_ingest.etl.state import EtlState
-from sec_edgar_ingest.models import Error, Source, canonical_json, to_mapping_value
+from sec_edgar_ingest.models import Error, Source, canonical_json, parse_json, to_mapping_value
 from sec_edgar_ingest.state import AcquisitionState
 from sec_edgar_ingest.storage.contracts import Conflict, OwnershipLost, identity, table_for
 from sec_edgar_ingest.worksets import decode_source_workset
@@ -249,6 +249,18 @@ class WorkflowResultTests(unittest.TestCase):
         with self.assertRaises((Conflict, ValueError, FileNotFoundError)):
             write_workflow_result(report, self.f.store, self.f.objects)
         target.write_bytes(body)
+
+    def test_a_new_selection_cannot_be_frozen_in_the_legacy_v1_format(self):
+        path = workflow_path(self.context).rsplit('/', 1)[0] + '/selection.json'
+        legacy = {**self.selection(), 'format_version': 'sec-workflow-selection-v1'}
+        del legacy['superseded']
+        with self.assertRaisesRegex(Conflict, 'new selection must use the current format'):
+            freeze_selection(self.context, legacy, self.f.store, self.f.objects)
+        with self.assertRaises(FileNotFoundError):
+            self.f.objects.read(path)
+        frozen = freeze_selection(self.context, self.selection(), self.f.store, self.f.objects)
+        self.assertEqual(frozen['format_version'], 'sec-workflow-selection-v2')
+        self.assertEqual(parse_json(self.f.objects.read(path))['format_version'], 'sec-workflow-selection-v2')
 
     def test_fatal_discovery_without_result_preserves_frozen_prior_jobs(self):
         dispatcher = Dispatcher(self.context, self.f.settings, self.f.pack,
