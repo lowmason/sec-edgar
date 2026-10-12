@@ -95,6 +95,11 @@ def fixture_snapshot(source: "Source", body: bytes) -> "Snapshot":
                     len(body), fixture_context().started_at, {}, source.representation, envelope)
 
 
+def exception_texts(type_name: str) -> tuple[tuple[str, str], ...]:
+    """Empty, multi-line and already-safe exception text, each with the one line a structured Error must record."""
+    return (("", type_name), ("a\nb", "a b"), ("fixture outage", "fixture outage"))
+
+
 class Faults:
     """One-shot observers interrupt the real durable transition at a named boundary."""
     def __init__(self):

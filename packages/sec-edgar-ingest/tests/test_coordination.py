@@ -850,6 +850,58 @@ class CoordinationTests(unittest.TestCase):
         self.assertTrue(receipt.temporary_path.exists())
         self.assertTrue(sender.cancellations[0].is_set())
 
+    def lost_exchange(self, arrange, error):
+        """Exchange once after `arrange` makes `error` cost the turn its ownership; return the retained receipt."""
+        from support import ControlledSender, Faults, fixture_clock
+        directory = self.enterContext(tempfile.TemporaryDirectory())
+        root, clock, faults = Path(directory), fixture_clock(), Faults()
+        coordinator, leases = self.build(root, clock, faults)
+        hooks = arrange(error, coordinator, leases, clock, faults)
+        sender = ControlledSender(root, clock, on_send=hooks.get("on_send"))
+        return coordinator.exchange(fixture_context(), "https://www.sec.gov/Archives/edgar/full-index/2015/QTR1/index.json",
+                                    sender, on_response=hooks.get("on_response"))
+
+    def test_every_returned_loss_reason_is_one_line_exception_text(self):
+        from unittest.mock import patch
+        from support import exception_texts
+        from sec_edgar_ingest.models import Error
+        def raising(error):
+            def fail(*args):
+                raise error
+            return fail
+        def response_policy(error, coordinator, leases, clock, faults):
+            return {"on_response": raising(error)}
+        def renewal(error, coordinator, leases, clock, faults):
+            faults.at("lease.after_renew", raising(error))
+            return {"on_send": lambda cancellation, permit: clock.advance(20)}
+        def drain_pacing(error, coordinator, leases, clock, faults):
+            return {"on_send": lambda cancellation, permit: self.enterContext(patch.object(leases, "write_journal", side_effect=error))}
+        def cooldown(error, coordinator, leases, clock, faults):
+            def policy(receipt, permit):
+                self.enterContext(patch.object(leases, "read_journal", side_effect=error))
+                coordinator.defer_until(clock.now())
+            return {"on_response": policy}
+        def policy_block(error, coordinator, leases, clock, faults):
+            def policy(receipt, permit):
+                self.enterContext(patch.object(leases, "read_journal", side_effect=error))
+                coordinator.block_requests(Error("policy_blocked", "fixture policy block", False, None, {}))
+            return {"on_response": policy}
+        def clean_release(error, coordinator, leases, clock, faults):
+            faults.at("lease.before_clean_release", raising(error))
+            return {}
+        def queue_cleanup(error, coordinator, leases, clock, faults):
+            faults.at("state.after_replace", raising(error))
+            return {}
+        # The first loss reason wins, so a nested _defer/_block failure keeps its own wording inside a response policy.
+        scenarios = ((response_policy, RuntimeError, "response policy was not confirmed: "), (renewal, TimeoutError, ""),
+                     (drain_pacing, OSError, ""), (cooldown, OSError, ""),
+                     (policy_block, OSError, "shared policy block was not confirmed: "), (clean_release, OSError, ""),
+                     (queue_cleanup, OSError, "queue cleanup outcome unknown: "))
+        for arrange, exception_type, prefix in scenarios:
+            for text, line in exception_texts(exception_type.__name__):
+                with self.subTest(site=arrange.__name__, text=text):
+                    receipt = self.lost_exchange(arrange, exception_type(text))
+                    self.assertEqual((receipt.error.code, receipt.error.message), ("ownership_lost", prefix+line))
 
     def test_full_exchange_after_unknown_renewal_waits_confirmed_successor_guard(self):
         from support import ControlledSender, Faults, fixture_clock
