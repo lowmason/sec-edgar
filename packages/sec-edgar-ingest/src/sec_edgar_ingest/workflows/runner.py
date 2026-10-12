@@ -3,7 +3,7 @@ from ..config import Settings
 from ..models import RunContext, to_mapping_value
 from datetime import datetime, timezone
 import hashlib
-from ..models import Error, Source, canonical_json, parse_json
+from ..models import Error, Source, canonical_json, error_text, parse_json
 from ..collection import HALTING_OUTCOMES
 from ..state import AcquisitionState
 from ..storage.contracts import Conflict, observe
@@ -35,7 +35,7 @@ def reuse_exact_binding(value: Mapping, store, objects) -> tuple[Error, ...]:
         if source.value['needs_acquisition']:
             return ()
     except (ValueError, KeyError, TypeError) as error:
-        return (Error('legacy_member_unresolved', 'source reuse evidence is corrupt: ' + str(error),
+        return (Error('legacy_member_unresolved', 'source reuse evidence is corrupt: ' + error_text(error),
                       False, identity, {'member_id': value['member_id']}),)
     candidates = {}
     verified, _ = WorkflowMembers(store, objects).inventory()
@@ -51,7 +51,7 @@ def reuse_exact_binding(value: Mapping, store, objects) -> tuple[Error, ...]:
             objects.verify(snapshot.raw_path, snapshot.sha256, snapshot.byte_count)
             candidates[snapshot.sha256] = snapshot
         except (ValueError, OSError, Conflict, KeyError, TypeError) as error:
-            gaps.append(Error('legacy_member_unresolved', 'retained reuse pin is corrupt: ' + str(error),
+            gaps.append(Error('legacy_member_unresolved', 'retained reuse pin is corrupt: ' + error_text(error),
                               False, identity, {'member_id': other['member_id']}))
     if len(candidates) != 1:
         return tuple(gaps)  # Ordinary checked collection establishes its exact binding.
@@ -147,7 +147,7 @@ def select_work(context: RunContext, settings: Settings, intent: Mapping, dispat
         try:
             completed = registry.completed(value, context.parser_version, context.schema_version)
         except (ValueError, OSError, Conflict, KeyError, TypeError) as error:
-            gaps.append(Error('legacy_member_unresolved', 'retained completion receipt is corrupt: ' + str(error),
+            gaps.append(Error('legacy_member_unresolved', 'retained completion receipt is corrupt: ' + error_text(error),
                               False, value['source']['source_id'], {'member_id': value['member_id']}))
             completed = None
         if completed is None:

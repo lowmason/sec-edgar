@@ -17,7 +17,7 @@ from ..etl.state import EtlState
 from ..etl.transform import _read_manifest
 from ..models import (
     Binding, DirectoryOutcome, Error, RunContext, Snapshot, Source, SourceWorkset,
-    canonical_json, parse_json, quarter_for, quarter_value, require_hash,
+    canonical_json, error_text, parse_json, quarter_for, quarter_value, require_hash,
     require_number, safe_relative_path, to_mapping_value,
 )
 from ..results import result_path
@@ -805,5 +805,5 @@ def evaluate_member(value, parser_version, schema_version, store, objects) -> Co
         return CompletionEvaluation(True, capture, (), ())
     except (Conflict, ValueError, OSError, KeyError, StopIteration) as error:
         return CompletionEvaluation(False, None, obligations,
-            (Error('state_conflict', str(error), False, source.source_id,
+            (Error('state_conflict', error_text(error), False, source.source_id,
                    {'type': type(error).__name__}),))

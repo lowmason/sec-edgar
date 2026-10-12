@@ -8,7 +8,9 @@ import unittest
 from dataclasses import replace
 from datetime import date
 from pathlib import Path
+from unittest.mock import patch
 
+from sec_edgar_ingest.storage.contracts import Conflict
 from sec_edgar_ingest.worksets import decode_snapshot_workset, encode_workset, make_source_workset
 from support import (CollectionCrash, collection_harness, collection_race_entry, discovery_harness,
                      failed_response, fixture_context, fixture_source, fixture_workset,
@@ -66,6 +68,47 @@ class CollectionTests(unittest.TestCase):
         self.assertEqual(recovered.fetch_count, 3)
         self.assertEqual(recovered.source_state.binding(workset.workset_id, sources[0].source_id), pin)
         self.assertEqual(len(tuple(recovered.store.scan('Failure', {}))), 1)
+
+    def unsafe_text_harness(self, name):
+        h = collection_harness(self.root / name, [])
+        self.addCleanup(h.close)
+        return h
+
+    def test_unsafe_member_exception_text_is_recorded_as_one_line_gap(self):
+        for name, exception, message in (
+                ('empty', Conflict(''), 'Conflict'),
+                ('multi-line', OSError('state store refused\nRequestId: fixture'), 'state store refused RequestId: fixture'),
+                ('safe', Conflict('member pin conflicts'), 'member pin conflicts')):
+            with self.subTest(name):
+                h = self.unsafe_text_harness(name)
+                with patch('sec_edgar_ingest.collection.collect_member', side_effect=exception):
+                    result = h.collect(self.workset)
+                self.assertEqual((result.outcome, result.failed), ('state_conflict', 1))
+                self.assertEqual([(gap.code, gap.message, gap.source_id) for gap in result.gaps],
+                                 [('state_conflict', message, self.source.source_id)])
+
+    def test_unsafe_failure_checkpoint_text_is_recorded_as_one_line_gap(self):
+        prefix = 'source failure checkpoint could not be recorded: '
+        for name, failure, message in (('empty', OSError(''), prefix + 'OSError'),
+                                       ('multi-line', OSError('disk\nfull'), prefix + 'disk full')):
+            with self.subTest(name):
+                h = self.unsafe_text_harness(name)
+                with patch('sec_edgar_ingest.collection.collect_member', side_effect=Conflict('member pin conflicts')), \
+                     patch.object(h.source_state, 'record_failure', side_effect=failure):
+                    result = h.collect(self.workset)
+                self.assertEqual(result.outcome, 'state_conflict')
+                self.assertEqual([gap.message for gap in result.gaps], [message, 'member pin conflicts'])
+                self.assertEqual(result.gaps[0].details['cause']['message'], 'member pin conflicts')
+
+    def test_unsafe_input_check_text_is_recorded_as_one_line_gap(self):
+        for name, exception, message in (('empty', ValueError(''), 'ValueError'),
+                                         ('multi-line', ValueError('workset\ninvalid'), 'workset invalid')):
+            with self.subTest(name):
+                h = self.unsafe_text_harness(name)
+                with patch('sec_edgar_ingest.collection._check_collection_input', side_effect=exception):
+                    result = h.collect(self.workset)
+                self.assertEqual(result.outcome, 'configuration')
+                self.assertEqual([(gap.code, gap.message) for gap in result.gaps], [('configuration', message)])
 
     def test_new_workset_reuses_accepted_and_explicit_refresh_fetches_new_original(self):
         h = self.harness([valid_idx_response('daily'), valid_idx_response('daily', 'Refreshed')])
