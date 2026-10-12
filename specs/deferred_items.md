@@ -18,7 +18,7 @@
       operator command next to `candidates` (reuse `cli._operator_main`). Size: plan.
       Done when: a CLI command prints the active lineage (counts, gate, membership
       hash, approval) and the quarter's rollback records as canonical JSON, and the
-      runbook uses it.
+      runbook uses it. → bound to roadmap Stage 6 Produces (resume 2026-10-12)
 - [ ] Capture who re-activates an approved candidate (final review, accepted
       semantics): after a rollback to an approved candidate's base, a further
       `approve` re-activates it under the FIRST stored approval (first approval wins,
@@ -81,7 +81,8 @@
       branch, with no retained members in its fixture, and passed 7 reruns alone.
       Size: plan. Done when: the WAL open retries or the tests serialize, the
       deadline-bound tests tolerate a slow spawn (and the timer test deletes its trace
-      in a `finally`), and several consecutive full-suite runs pass.
+      in a `finally`), and several consecutive full-suite runs pass. → bound to roadmap
+      Stage 7 Consumes: close before Stage 7 (resume 2026-10-12)
 - [x] Review Minor, approval/Azure storage coverage gaps (T1/T2/T6): nothing tests that
       `AzureStateStore.close()` closes `approval_client`, that `_check_endpoint`
       rejects a foreign-endpoint Approvals client, that the local store keeps approval

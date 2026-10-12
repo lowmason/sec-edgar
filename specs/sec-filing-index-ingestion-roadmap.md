@@ -109,7 +109,7 @@ Production triggers remain disabled through Stage 7 (§7).
       Spec: §§4.1, 4.7–4.9, 5–6, 7 step 2, 8.
       Gap closed: R4; R11; Worker/pipeline delivery.
       Consumes: Stage 1 deployment/provider decisions and Stage 5 complete worker/result contracts.
-      Produces: Pinned worker image, Azure resources/identities, ADF pipelines with start/poll/result handling, disabled triggers, telemetry/alerts and versioned configuration.
+      Produces: Pinned worker image, Azure resources/identities, ADF pipelines with start/poll/result handling, disabled triggers, telemetry/alerts and versioned configuration; the read-only operator `history` command (deferred item "Read-only `history` CLI"; owner-approved at resume, 2026-10-12).
       Exit: Infrastructure and orchestration checks exercise the selected service boundaries (R4); configuration/schedule checks enforce accepted defaults (R11); the built image runs every command and start/status/result failures cannot pass a pipeline (Worker/pipeline delivery).
       ROUTING: writing-plans
 
@@ -117,7 +117,7 @@ Production triggers remain disabled through Stage 7 (§7).
       Objective: Validate the integrated system in isolation and establish measured release/recovery evidence before production operation.
       Spec: §§4.7–4.9, 5–6, 7 steps 3–5, 8, 10.
       Gap closed: Error outcomes; Verification; Isolated integration; Live smoke; Replay/recovery rehearsal; Documentation/infrastructure.
-      Consumes: Stage 6 deployable stack, disabled triggers and complete worker/workflow contracts.
+      Consumes: Stage 6 deployable stack, disabled triggers and complete worker/workflow contracts; a stable offline suite, with the deferred "Load-flaky multi-process tests" item closed (owner-approved at resume, 2026-10-12).
       Produces: Acceptance reports, reviewed runtime configuration, release candidate, exercised runbooks and retained smoke/recovery artifacts.
       Exit: Failure fixtures emit the expected named outcomes (Error outcomes); CI and integration checks pass (§6 Verification); Azure identity/coordination/fault-injection reports pass (Isolated integration); bounded quarterly/daily smoke reports record required measurements (Live smoke); offline replay and approval/rollback rehearsals pass (Replay/recovery rehearsal); versioned infrastructure and exercised operating/reader documentation are reviewable (Documentation/infrastructure).
       ROUTING: writing-plans
@@ -247,3 +247,22 @@ Stages 6–8 were re-validated against what shipped, and their objectives, contr
 - **Stage 8**'s reconciliation activation (accepted manual reconciliation precedes weekly enablement) consumes `reconcile`. A closed-quarter withdrawal still needs an operator `approve` and is never a successful scheduled run.
 
 Stages 6–8 remain unticked. All live-access authorizations remain closed. Resuming past Stage 5 requires a separate owner request.
+
+## Stage 6 resume — 2026-10-12
+
+The owner resumed the roadmap against `main` at `07067a0a` (merged PR #11). Stages 1–5 carry authoritative stamps. Stage 5's open condition, "integration needs a Codex pass first", is discharged: PR #5's test plan records a full-branch Codex review with no actionable findings.
+
+Since Stage 5, plans 7 (gated-revert supersession, PR #10) and 8 (v1 workflow-selection reader, PR #11) shipped, plus `/deferred` quick fixes (PRs #6–#9). These are deferred-item plans, not roadmap stages, and tick nothing. None of plans 6–8 has a `## Handoff to later stages` section, so no entry is amended from a Handoff. What Stages 6–8 now see:
+
+- `candidates` lists a derived `superseded` status, and `approve` refuses a superseded candidate as `approval_stale` (exit 11, already in the Stage 5 note's exit mapping).
+- The shared CLI error handlers always emit their JSON result with the outcome-mapped exit code, never a traceback, whatever the exception text. Acquisition and supervisor failures with unsafe text are recorded as one-line gaps (PRs #6–#9).
+- New workflow selections are `sec-workflow-selection-v2`; stored v1 selections stay readable.
+- A gated member whose source reverted clears on the following run, which Stage 8's reconciliation activation inherits.
+
+The owner approved two scope changes in one question, applied to the entries above: Stage 6 Produces gains the read-only `history` command, and Stage 7 Consumes gains the closed load-flaky test item. No stage is added, split, dropped or reordered, and routing is unchanged.
+
+Stage 6 also accounts for the deferred items bound to it in `specs/deferred_items.md`: actor identification and re-activation attribution (its Done-when names Stage 6), operator commands creating a store at a mistyped path, and download evidence outside retained members (both "Revisit if Stage 6 changes…"). The derived `activated` field stays an ordinary deferred item.
+
+Known planning input, not a change: F1 §2 D-08 records Bicep and local Docker/buildx as absent and requires separate owner authority for a build facility or installation. Re-observed 2026-10-12: `docker`, `podman` and `bicep` absent, `az` present. Stage 6's Exit ("the built image runs every command") needs that authority; S7-04/05 build, push and digest-pull proof remain Stage 7's.
+
+Stages 6–8 remain unticked. All live-access authorizations remain closed. Only Stage 6 is routed, via `writing-plans`.
