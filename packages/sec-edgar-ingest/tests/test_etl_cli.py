@@ -332,6 +332,32 @@ class EtlCliTests(unittest.TestCase):
         self.assertEqual(code, 7, self.calls[-1])
         self.assertEqual(self.read_output(output).outcome, 'invalid_source')
 
+    def test_unsafe_transform_exception_text_is_retained_as_one_line_failure(self):
+        for attempt, exception, message in (
+                ('empty', RuntimeError(''), 'RuntimeError'),
+                ('multi-line', RuntimeError('parser stopped\nat line 3'), 'parser stopped at line 3'),
+                ('safe', RuntimeError('parser stopped at line 3'), 'parser stopped at line 3')):
+            with self.subTest(attempt), patch('sec_edgar_ingest.etl.transform.iter_observations', side_effect=exception):
+                code, output = self.invoke(self.argv(attempt=attempt))
+                self.assertEqual(code, 7, self.calls[-1])
+                failure = self.read_output(output).gaps[0]
+                self.assertEqual((failure.code, failure.message), ('transform_failed', message))
+                quarantine = f'quarantine/sec/etl-cli/{self.source.source_id}/transform/{attempt}/error.json'
+                self.assertEqual(json.loads(self.objects.read(quarantine))['message'], message)
+
+    def test_unsafe_publication_exception_text_is_recorded_as_one_line_gap(self):
+        code, transformed = self.invoke(self.argv())
+        self.assertEqual(code, 0, self.calls[-1])
+        for attempt, exception, message in (
+                ('publish-empty', ValueError(''), 'ValueError'),
+                ('publish-multi-line', ValueError('quarter rows\ndisagree'), 'quarter rows disagree'),
+                ('publish-safe', ValueError('quarter rows disagree'), 'quarter rows disagree')):
+            with self.subTest(attempt), patch('sec_edgar_ingest.etl.commands.publish_quarter', side_effect=exception):
+                code, output = self.invoke(self.argv('publish', transformed['transformed_workset_ref'], attempt))
+                self.assertEqual(code, 7, self.calls[-1])
+                gap = self.read_output(output).gaps[0]
+                self.assertEqual((gap.code, gap.message, gap.details['type']), ('invalid_source', message, 'ValueError'))
+
     def test_empty_complete_transform_and_publish_are_unchanged(self):
         ref = self.transformed_members((), 'empty')
         code, output = self.invoke(self.argv('publish', ref))

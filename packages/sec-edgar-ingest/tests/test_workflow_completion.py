@@ -34,6 +34,35 @@ class CompletionTests(unittest.TestCase):
         self.assertEqual(code, 0)
         return result.transformed_workset_ref
 
+    def test_unsafe_evaluation_exception_text_is_recorded_as_one_line_gap(self):
+        for name, exception, message in (
+                ('empty', Conflict(''), 'Conflict'),
+                ('multi-line', OSError('member blob unreadable\nRequestId: fixture'), 'member blob unreadable RequestId: fixture'),
+                ('safe', Conflict('member projection differs'), 'member projection differs')):
+            with self.subTest(name), patch('sec_edgar_ingest.workflows.completion.read_member', side_effect=exception):
+                evaluation = self.evaluate()
+                self.assertFalse(evaluation.complete)
+                self.assertEqual([(gap.code, gap.message, gap.details['type']) for gap in evaluation.gaps],
+                                 [('state_conflict', message, type(exception).__name__)])
+
+    def test_unsafe_member_inventory_text_is_recorded_as_one_line_gap(self):
+        from sec_edgar_ingest.workflows.members import WorkflowMembers
+        rows = len(tuple(self.f.store.scan('WorkflowMember', {})))
+        for name, exception, message in (('empty', ValueError(''), 'ValueError'),
+                                         ('multi-line', ValueError('member ref\nunreadable'), 'member ref unreadable')):
+            with self.subTest(name), patch('sec_edgar_ingest.workflows.members.read_member', side_effect=exception):
+                valid, gaps = WorkflowMembers(self.f.store, self.f.objects).inventory()
+                self.assertEqual(valid, ())
+                self.assertEqual([(gap.code, gap.message) for gap in gaps], [('legacy_member_unresolved', message)] * rows)
+
+    def test_unsafe_legacy_member_text_is_recorded_as_one_line_gap(self):
+        from sec_edgar_ingest.workflows.legacy import bootstrap_legacy
+        for name, exception, message in (('empty', Conflict(''), 'Conflict'),
+                                         ('multi-line', Conflict('member ref\nunreadable'), 'member ref unreadable')):
+            with self.subTest(name), patch('sec_edgar_ingest.workflows.legacy.read_member', side_effect=exception):
+                gaps = bootstrap_legacy(self.f.store, self.f.objects)
+                self.assertEqual({(gap.details['record_kind'], gap.message) for gap in gaps}, {('WorkflowMember', message)})
+
     def test_formerly_affected_quarter_stays_unresolved(self):
         original = self.transform(quarterly_bytes('2026-07-01'))
         self.assertEqual(self.f.invoke('publish', original)[0], 0)
