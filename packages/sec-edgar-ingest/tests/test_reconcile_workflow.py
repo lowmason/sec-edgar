@@ -23,7 +23,7 @@ from sec_edgar_ingest.state import AcquisitionState
 from sec_edgar_ingest.storage.contracts import Conflict
 from sec_edgar_ingest.workflows.checked import Dispatcher
 from sec_edgar_ingest.workflows.completion import accounts_for
-from sec_edgar_ingest.workflows.members import WorkflowMembers
+from sec_edgar_ingest.workflows.members import WorkflowMembers, download_times
 from sec_edgar_ingest.workflows.results import _validate_selection, read_workflow_result
 from sec_edgar_ingest.workflows.runner import source_revert_gaps
 
@@ -148,22 +148,24 @@ class SupersessionWorkflowTests(ReconcileFixture):
         receipt = AcquisitionState(h.store).promotion_receipt(value['member_id'], value['source']['source_id'])
         return receipt['snapshots'][-1]['received_at']
 
-    def download(self, h, value, sha256, at):
-        """A further download of known bytes under a member, recorded as a concurrent collector of it would.
+    def download(self, h, value, sha256, at, *, under=None):
+        """A further download of known bytes of this member's source, recorded as `collect_member` records one.
 
+        It is recorded under the member itself (a concurrent collector of it) or under another workset `under`.
         `collect_member` checkpoints the promotion before `bind_once`, so a losing collector keeps its receipt
         while the member stays pinned to the winner's bytes.
         """
         acquisition, identity = AcquisitionState(h.store), value['source']['source_id']
+        workset_id = value['member_id'] if under is None else under
         snapshot = acquisition.snapshot(identity, sha256)
-        staged = {'workset_id': value['member_id'], 'source_id': identity,
+        staged = {'workset_id': workset_id, 'source_id': identity,
                   'receipt': {'sha256': sha256, 'byte_count': snapshot.byte_count, 'received_at': at.isoformat()}}
         checkpoint = hashlib.sha256(canonical_json(staged)).hexdigest()
         h.store.insert('StagedReceipt', checkpoint, {**staged, 'checkpoint_id': checkpoint})
         downloaded = Snapshot.from_mapping({**snapshot.to_mapping(), 'received_at': at.isoformat()})
-        acquisition.record_promotion(value['member_id'], downloaded)
+        acquisition.record_promotion(workset_id, downloaded)
         acquisition.remember_snapshot(downloaded)
-        return acquisition.bind_once(Binding(value['member_id'], identity, sha256))
+        return acquisition.bind_once(Binding(workset_id, identity, sha256))
 
     def test_superseded_gated_member_completes_on_the_following_reconcile(self):
         h = self.harness((A, B))
@@ -258,7 +260,9 @@ class SupersessionWorkflowTests(ReconcileFixture):
         backfilled = self.member(h, backfill, '2026Q3')  # completed, downloaded before the gated bytes
         pending = self.member(h, again, '2026Q3', held=True)  # the gated bytes' new download
         elsewhere = self.member(h, first, '2026Q4')  # a completed download of another source
-        # Each forgery breaks one clause; every other field is genuine evidence.
+        # Each label names the clause its forgery breaks, with genuine evidence in every field it leaves alone.
+        # Two also break a second clause: the `not later` time is absent from `by`'s receipts, and the
+        # `other source` member has no Binding under the pending member's source.
         later = datetime.fromisoformat(entry['by_downloaded_at'])
         for label, forgery in (
                 ('not later', {'by_downloaded_at': entry['downloaded_at']}),
@@ -271,6 +275,20 @@ class SupersessionWorkflowTests(ReconcileFixture):
             forged = {**selection, 'superseded': [{**entry, **forgery}, *selection['superseded'][1:]]}
             with self.subTest(label), self.assertRaisesRegex(Conflict, 'lacks its later completed download'):
                 _validate_selection(forged, report.context, selection['invocation'], h.store, h.objects)
+        # A witness from another source, given a forged receipt row of the pinned bytes at the frozen time under
+        # its own source, fails only the shared-source clause.
+        acquisition = AcquisitionState(h.store)
+        pinned = acquisition.snapshot(entry['member']['source']['source_id'], sha((A,)))
+        receipt = {'workset_id': elsewhere['member_id'], 'source_id': elsewhere['source']['source_id'],
+                   'snapshot': {**pinned.to_mapping(), 'received_at': entry['downloaded_at']}}
+        checkpoint = hashlib.sha256(canonical_json(receipt)).hexdigest()
+        h.store.insert('PromotionReceipt', checkpoint, {**receipt, 'checkpoint_id': checkpoint})
+        # The frozen time is now among the witness's receipts of the pinned bytes, and `by` stays genuine.
+        self.assertIn(datetime.fromisoformat(entry['downloaded_at']), download_times(elsewhere, sha((A,)), h.store))
+        forged = {**selection, 'superseded': [{**entry, 'served_by': elsewhere}, *selection['superseded'][1:]]}
+        with self.subTest('witness from another source'), self.assertRaisesRegex(
+                Conflict, 'lacks its later completed download'):
+            _validate_selection(forged, report.context, selection['invocation'], h.store, h.objects)
 
     def test_a_losing_collectors_later_download_of_the_gated_bytes_keeps_the_hold(self):
         h = self.harness((A, B))
@@ -280,6 +298,22 @@ class SupersessionWorkflowTests(ReconcileFixture):
         # download and loses bind_once: the SEC's newest bytes are the gated ones again.
         winner = self.download(h, by, sha((A,)), datetime.now(timezone.utc))
         self.assertEqual(winner.snapshot_sha256, sha((A, B)))
+        code, _, report = self.run_phase(h, 'reconcile', 'revert-2', (A, B))
+        self.assertEqual((code, report.outcome), (10, 'awaiting_approval'), h.calls[-1])
+        selection = parse_json(h.objects.read(report.intent['selection']['ref']))
+        self.assertEqual(selection['superseded'], [])
+        self.assertIn(held.member_id, [value['member_id'] for value in selection['members']])
+
+    def test_a_later_download_outside_the_registry_keeps_the_hold(self):
+        h = self.harness((A, B))
+        held, first = self.gate_then_revert(h)
+        by = self.member(h, first, '2026Q3')
+        # A standalone `discover --refresh` then `collect --workset <parent>` records its receipt under the parent
+        # workset, which no retained member carries, but it still moves the source's latest download.
+        parent = hashlib.sha256(b'standalone collect of a parent workset').hexdigest()
+        self.download(h, by, sha((A,)), datetime.now(timezone.utc), under=parent)
+        latest = AcquisitionState(h.store).get_source(by['source']['source_id']).to_mapping()['value']
+        self.assertEqual(latest['latest_downloaded_snapshot'], sha((A,)))
         code, _, report = self.run_phase(h, 'reconcile', 'revert-2', (A, B))
         self.assertEqual((code, report.outcome), (10, 'awaiting_approval'), h.calls[-1])
         selection = parse_json(h.objects.read(report.intent['selection']['ref']))
@@ -304,14 +338,19 @@ class SupersessionWorkflowTests(ReconcileFixture):
                 self.assertEqual(read_workflow_result(message['result_ref'], h.store, h.objects), report)
         self.assertEqual(entry['served_by'], entry['member'])  # the gated member's own download dates its bytes
 
+    def corrupt_download(self, h, value):
+        """Make this member's only promotion receipt unreadable."""
+        row, = h.store.scan('PromotionReceipt', {'workset_id': value['member_id'],
+                                                 'source_id': value['source']['source_id']})
+        h.store.replace('PromotionReceipt', row.value['checkpoint_id'],
+                        {**row.value, 'snapshot': {**row.value['snapshot'], 'received_at': 'corrupt'}}, row.version)
+
     def test_unreadable_download_evidence_holds_only_its_own_source(self):
         h = self.harness((A, B))
         held, first = self.gate_then_revert(h)
         by = self.member(h, first, '2026Q3')
         identity = by['source']['source_id']
-        row, = h.store.scan('PromotionReceipt', {'workset_id': by['member_id'], 'source_id': identity})
-        h.store.replace('PromotionReceipt', row.value['checkpoint_id'],
-                        {**row.value, 'snapshot': {**row.value['snapshot'], 'received_at': 'corrupt'}}, row.version)
+        self.corrupt_download(h, by)
         code, message = h.invoke('reconcile', run='revert-2')
         self.assertIsNotNone(message.get('result_ref'), h.calls[-1])
         report = read_workflow_result(message['result_ref'], h.store, h.objects)
@@ -323,6 +362,26 @@ class SupersessionWorkflowTests(ReconcileFixture):
         self.assertEqual((gap.source_id, dict(gap.details)), (identity, {'member_id': by['member_id']}))
         other, = [member for member in report.members if member.source.period == '2026Q4']
         self.assertEqual(other.outcome, 'unchanged')
+
+    def test_a_member_already_reported_corrupt_gets_no_second_gap(self):
+        h = self.harness((A, B))
+        held, first = self.gate_then_revert(h)
+        by = self.member(h, first, '2026Q3')
+        self.corrupt_download(h, by)
+        # Its completion receipt is unreadable too, so the retained loop reports it before the download index.
+        h.store.insert('WorkflowMemberResult', 'broken-receipt-row', {
+            'member_id': by['member_id'], 'parser_version': h.settings.etl.parser_version,
+            'schema_version': h.settings.etl.schema_version, 'ref': 'missing/corrupt-receipt.json',
+            'sha256': 'a' * 64, 'bytes': 1})
+        code, message = h.invoke('reconcile', run='revert-2')
+        self.assertIsNotNone(message.get('result_ref'), h.calls[-1])
+        report = read_workflow_result(message['result_ref'], h.store, h.objects)
+        selection = parse_json(h.objects.read(report.intent['selection']['ref']))
+        self.assertEqual(selection['superseded'], [])
+        self.assertIn(held.member_id, [value['member_id'] for value in selection['members']])
+        named = [gap.message.split(':')[0] for gap in report.gaps
+                 if gap.code == 'legacy_member_unresolved' and gap.details.get('member_id') == by['member_id']]
+        self.assertEqual(named, ['retained completion receipt is corrupt'])
 
     def test_a_retry_keeps_its_own_discovered_member_even_when_superseded(self):
         h = self.harness((A, B))

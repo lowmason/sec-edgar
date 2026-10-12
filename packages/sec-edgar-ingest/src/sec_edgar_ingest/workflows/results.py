@@ -185,7 +185,14 @@ def _validate_selection(selection, context, invocation, store, objects):
     dropped = {key[2] for key in order}
     if order != sorted(order) or len(dropped) != len(order) or dropped & ({v['member_id'] for v in members} | set(completed_ids)):
         raise Conflict('selection superseded members overlap or are unordered')
-    acquisition, registry = AcquisitionState(store), WorkflowMembers(store, objects)
+    acquisition, registry, completions = AcquisitionState(store), WorkflowMembers(store, objects), {}
+
+    def completion(value):  # entries often share `by`, and its completion scan is the heaviest read here
+        if value['member_id'] not in completions:
+            completions[value['member_id']] = registry.completed(
+                value, context.parser_version, context.schema_version, repairs=False)
+        return completions[value['member_id']]
+
     for entry in superseded:
         member, by, served_by = entry['member'], entry['by'], entry['served_by']
         for value in (member, by, served_by):
@@ -195,11 +202,12 @@ def _validate_selection(selection, context, invocation, store, objects):
         served, later = (datetime.fromisoformat(entry[name]) for name in ('downloaded_at', 'by_downloaded_at'))
         # Stored reports are re-validated on every read, so check only immutable or append-only rows, reached
         # by member: each frozen time must still be among its witness's receipts, whatever was received since.
+        # The producer's latest-download guard reads mutable SourceState, so it is deliberately not re-checked.
         if (by['source'] != member['source'] or served_by['source'] != member['source'] or later <= served
                 or pinned is None or bound is None
                 or served not in download_times(served_by, pinned.snapshot_sha256, store)
                 or later not in download_times(by, bound.snapshot_sha256, store)
-                or registry.completed(by, context.parser_version, context.schema_version, repairs=False) is None):
+                or completion(by) is None):
             raise Conflict('selection superseded member lacks its later completed download')
     if type(selection['halted']) is not bool:
         raise Conflict('selection halted marker is not boolean')

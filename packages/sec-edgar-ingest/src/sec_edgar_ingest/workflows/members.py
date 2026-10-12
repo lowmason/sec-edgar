@@ -182,8 +182,14 @@ class SourceDownloads:
     def __init__(self, retained: Iterable[Mapping], finished: Iterable[Mapping], sources: Mapping[str, Mapping], store):
         from ..state import AcquisitionState
         acquisition, done = AcquisitionState(store), {value['member_id'] for value in finished}
-        self.served, self.completed, self.pinned = {}, {}, {}
+        self.served, self.completed, self.pinned, self.latest = {}, {}, {}, {}
         self.unreadable, self.tainted = [], set()
+        for identity in sources:
+            try:
+                row = acquisition.get_source(identity)
+                self.latest[identity] = None if row is None else row.to_mapping()['value']['latest_downloaded_snapshot']
+            except (ValueError, OSError, Conflict, KeyError, TypeError):
+                self.tainted.add(identity)  # an unreadable latest download keeps every hold of its source
         for other in retained:
             identity = other['source']['source_id']
             if sources.get(identity) != other['source']:
@@ -212,12 +218,15 @@ class SourceDownloads:
         this member's pinned bytes to any retained member of the source.
 
         Dating the pending side by its bytes covers members bound by reuse and losing collectors' downloads,
-        and keeps a gate that the SEC re-serves (A, then A+B, then A again) standing.
+        and keeps a gate that the SEC re-serves (A, then A+B, then A again) standing. A download recorded
+        under a workset that is no retained member (`collect --workset <parent>`, or a member that fails
+        inventory) has no receipt here but still moves the source's latest download, the signal
+        `etl.approval.superseding` reads: while that is this member's pinned bytes, nothing supersedes it.
         """
-        identity = value['source']['source_id']
-        served = self.served.get((identity, self.pinned.get(value['member_id'])))
+        identity, pinned = value['source']['source_id'], self.pinned.get(value['member_id'])
+        served = self.served.get((identity, pinned))
         completed = self.completed.get(identity)
-        if identity in self.tainted or not served or completed is None:
+        if identity in self.tainted or not served or completed is None or self.latest.get(identity) == pinned:
             return None
         (served_at, served_by), (later, by) = max(served, key=_order), completed
         if later <= served_at:
