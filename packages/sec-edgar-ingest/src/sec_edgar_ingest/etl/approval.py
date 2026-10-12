@@ -2,10 +2,12 @@
 from __future__ import annotations
 
 import hashlib
+from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
 from ..models import Error, Record, canonical_json, quarter_value, require_hash, validate_record_fields
+from ..state import AcquisitionState
 from ..storage.contracts import AlreadyExists, BoundaryObserver, CAS_ATTEMPTS, Conflict, ObjectStore, observe
 from .contracts import (MAX_OPERATOR_CHARS, Candidate, GenerationCapture, PublicationResult, WithdrawalApproval,
                         require_line)
@@ -43,6 +45,27 @@ class ApprovalOutcome(Record):
 def _now() -> datetime:
     """Patchable UTC approval clock."""
     return datetime.now(timezone.utc)
+
+
+def superseding(candidate: Candidate, observed: Mapping[str, object] | None) -> dict[str, str] | None:
+    """The source's latest download (its SourceState value) when strictly later than, and different from,
+    the candidate's membership snapshot.
+
+    Such a candidate withdraws rows on the evidence of bytes the SEC no longer serves.
+    """
+    if observed is None:
+        return None
+    membership = candidate.manifest.membership_source.snapshot
+    latest, at = observed['latest_downloaded_snapshot'], observed['latest_received_at']
+    if latest is None or at is None or latest == membership.sha256 or datetime.fromisoformat(at) <= membership.received_at:
+        return None
+    return {'latest_observed_sha256': latest, 'latest_observed_at': at}
+
+
+def superseding_download(candidate: Candidate, store) -> dict[str, str] | None:
+    """`superseding` against the source's current SourceState row."""
+    row = AcquisitionState(store).get_source(candidate.manifest.membership_source.source.source_id)
+    return superseding(candidate, None if row is None else row.to_mapping()['value'])
 
 
 def _refused(message: str) -> ApprovalOutcome:
@@ -106,6 +129,11 @@ def approve(quarter: str, generation_id: str, quarterly_sha256: str, approver: s
             return ApprovalOutcome('approval_stale', None, None, Error(
                 'approval_stale', 'candidate base generation is no longer active', False, None,
                 {'active_generation_id': active, 'base_generation_id': candidate.manifest.base_generation_id}))
+        superseded = superseding_download(candidate, state.store)
+        if superseded is not None:
+            return ApprovalOutcome('approval_stale', None, None, Error(
+                'approval_stale', 'a later download of the source supersedes the candidate', False, None,
+                {'quarterly_sha256': quarterly_sha256, **superseded}))
         stored = _store_approval(pending, candidate, objects)
         state.record_approval(stored)
         observe(observer, 'approval.before_pointer')

@@ -12,7 +12,8 @@ from support_reconcile import A, B, C, X, Y, ReconcileFixture
 from support_reconcile import sha
 from sec_edgar_ingest.etl.approval import approve
 from sec_edgar_ingest.etl.contracts import processing_key
-from sec_edgar_ingest.etl.manifest import read_manifest
+from sec_edgar_ingest.etl.history import withdrawal_candidates
+from sec_edgar_ingest.etl.manifest import approval_ref, read_manifest
 from sec_edgar_ingest.etl.state import EtlState
 from sec_edgar_ingest.etl.transform import transform_member
 from sec_edgar_ingest.models import parse_json
@@ -219,6 +220,26 @@ class SupersessionWorkflowTests(ReconcileFixture):
         self.assertNotEqual(code, 0, h.calls[-1])
         selection = parse_json(h.objects.read('runs/sec/revert-2/reconcile/a/selection.json'))
         self.assertNotIn(held.member_id, [entry['member']['member_id'] for entry in selection['superseded']])
+
+    def test_a_candidate_whose_source_moved_on_is_listed_superseded_and_refused(self):
+        h = self.harness((A, B))
+        self.assertEqual(self.run_phase(h, 'backfill', 'base')[0], 0)
+        self.assertEqual(self.run_phase(h, 'reconcile', 'gate', (A,))[0], 10, h.calls[-1])
+        listed, = withdrawal_candidates(h.objects, EtlState(h.store))
+        self.assertEqual((listed['status'], listed['latest_observed_sha256']), ('pending', sha((A,))))
+        self.assertEqual(self.run_phase(h, 'reconcile', 'revert', (A, B))[0], 10, h.calls[-1])
+        listed, = withdrawal_candidates(h.objects, EtlState(h.store))
+        self.assertEqual((listed['status'], listed['quarterly_sha256'], listed['latest_observed_sha256']),
+                         ('superseded', sha((A,)), sha((A, B))))
+        before = EtlState(h.store).pointer('2026Q3')
+        result = approve('2026Q3', listed['generation_id'], sha((A,)), 'Lowell Mason', h.objects, EtlState(h.store))
+        self.assertEqual((result.outcome, result.error.details['latest_observed_sha256']),
+                         ('approval_stale', sha((A, B))))
+        self.assertEqual(EtlState(h.store).pointer('2026Q3'), before)
+        self.assertIsNone(EtlState(h.store).approval(listed['generation_id']))
+        with self.assertRaises(FileNotFoundError):
+            h.objects.read(approval_ref('2026Q3', listed['generation_id']))
+        self.assertEqual(self.names(h, '2026Q3'), ['A', 'B'])
 
 
 if __name__ == '__main__':
