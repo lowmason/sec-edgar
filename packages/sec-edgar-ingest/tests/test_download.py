@@ -805,6 +805,26 @@ class ExceptionTextTests(unittest.TestCase):
                 row, = h.state.request_history(h.context, raised.exception.receipt.url)
                 self.assertEqual(row.value["error"]["message"], error.message)
 
+    def test_unconfirmed_supervisor_records_one_line_exception_text(self):
+        import threading
+        from unittest.mock import MagicMock, patch
+        from support import exception_texts, loopback_sender, real_context, real_permit
+        from sec_edgar_ingest.coordination import Clock
+        clock, settings, origin = Clock(), fixture_settings(), "http://127.0.0.1:9"
+        for text, line in exception_texts("RuntimeError"):
+            with self.subTest(text=text):
+                spool = Path(self.enterContext(tempfile.TemporaryDirectory()))
+                sender = loopback_sender(settings, clock, origin, spool=spool)
+                # The child never starts (no pid), so the supervisor skips draining and reports its own failure.
+                child = MagicMock(pid=None)
+                child.start.side_effect = RuntimeError(text)
+                with patch.object(self.download.SPAWN, "Process", return_value=child), \
+                        self.assertRaises(self.download.SenderFailure) as raised:
+                    sender.send(origin+"/fixture", real_context(clock, settings), real_permit(clock),
+                                cancellation=threading.Event())
+                self.assertEqual(str(raised.exception), "HTTP supervisor could not confirm its child outcome: "+line)
+                self.assertEqual(raised.exception.receipt.error.code, "sender_unverified")
+
     def child_error(self, *patches, arm=None):
         """Run the HTTP child in-process (no spawn, no fatal timer) and rebuild its Error exactly as the parent does."""
         import os

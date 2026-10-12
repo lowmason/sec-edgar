@@ -667,7 +667,7 @@ class BoundedSender:
                     receipt, _ = self._receipt(transport, reason="shutdown_unverified")
                     raise SenderFailure(str(drain_error), receipt) from error
             receipt, _ = self._receipt(transport, reason="sender_unverified")
-            raise SenderFailure("HTTP supervisor could not confirm its child outcome: "+str(error), receipt) from error
+            raise SenderFailure("HTTP supervisor could not confirm its child outcome: "+error_text(error), receipt) from error
         finally:
             reader.close()
             writer.close()
