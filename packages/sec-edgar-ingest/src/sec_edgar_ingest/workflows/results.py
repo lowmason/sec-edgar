@@ -13,7 +13,7 @@ from .completion import (validate_capture, validate_resolution_capture,
                          validate_member_provenance)
 from .contracts import WorkflowResult, workflow_path
 
-SELECTION_FORMAT = 'sec-workflow-selection-v1'
+SELECTION_FORMAT = 'sec-workflow-selection-v2'
 
 
 def _plain(value):
@@ -144,10 +144,13 @@ def _capture_or_validate_discovery_failure(selection, call, template, objects, s
 def _validate_selection(selection, context, invocation, store, objects):
     from ..models import DirectoryOutcome, Error
     from ..discovery import quarter_span
+    from ..state import AcquisitionState
     from .checked import _authority
     from .completion import validate_parent_provenance, validate_discovery_session
+    from .members import WorkflowMembers, download_times
+    from .provenance import read_member
     fields = {'format_version', 'context', 'invocation', 'members', 'jobs',
-              'member_provenance', 'already_complete', 'discovery_call',
+              'member_provenance', 'already_complete', 'superseded', 'discovery_call',
               'discovery_error', 'parent_ref', 'parent_provenance', 'discovery_session',
               'required_units', 'halted', 'requested_quarters', 'directories',
               'boundary_before', 'gaps', 'discovered_sources', 'unresolved_before'}
@@ -174,6 +177,38 @@ def _validate_selection(selection, context, invocation, store, objects):
     completed_ids = [c['member']['member_id'] for c in completed]
     if len(set(completed_ids)) != len(completed_ids) or {v['member_id'] for v in members} & set(completed_ids):
         raise Conflict('selection completed captures overlap or duplicate members')
+    superseded = selection['superseded']
+    if any(set(entry) != {'member', 'by', 'served_by', 'downloaded_at', 'by_downloaded_at'} for entry in superseded):
+        raise Conflict('selection superseded entry fields differ')
+    order = [(e['member']['source']['period'], e['member']['source']['source_id'], e['member']['member_id'])
+             for e in superseded]
+    dropped = {key[2] for key in order}
+    if order != sorted(order) or len(dropped) != len(order) or dropped & ({v['member_id'] for v in members} | set(completed_ids)):
+        raise Conflict('selection superseded members overlap or are unordered')
+    acquisition, registry, completions = AcquisitionState(store), WorkflowMembers(store, objects), {}
+
+    def completion(value):  # entries often share `by`, and its completion scan is the heaviest read here
+        if value['member_id'] not in completions:
+            completions[value['member_id']] = registry.completed(
+                value, context.parser_version, context.schema_version, repairs=False)
+        return completions[value['member_id']]
+
+    for entry in superseded:
+        member, by, served_by = entry['member'], entry['by'], entry['served_by']
+        for value in (member, by, served_by):
+            read_member(value, store, objects)
+        identity = member['source']['source_id']
+        pinned, bound = (acquisition.binding(value['member_id'], identity) for value in (member, by))
+        served, later = (datetime.fromisoformat(entry[name]) for name in ('downloaded_at', 'by_downloaded_at'))
+        # Stored reports are re-validated on every read, so check only immutable or append-only rows, reached
+        # by member: each frozen time must still be among its witness's receipts, whatever was received since.
+        # The producer's latest-download guard reads mutable SourceState, so it is deliberately not re-checked.
+        if (by['source'] != member['source'] or served_by['source'] != member['source'] or later <= served
+                or pinned is None or bound is None
+                or served not in download_times(served_by, pinned.snapshot_sha256, store)
+                or later not in download_times(by, bound.snapshot_sha256, store)
+                or completion(by) is None):
+            raise Conflict('selection superseded member lacks its later completed download')
     if type(selection['halted']) is not bool:
         raise Conflict('selection halted marker is not boolean')
     for value in selection['directories']:

@@ -1,7 +1,8 @@
 import hashlib
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
+from datetime import datetime
 
-from ..models import RunContext, canonical_json, parse_json, to_mapping_value
+from ..models import RunContext, Snapshot, canonical_json, parse_json, to_mapping_value
 from ..storage.contracts import Conflict
 from .contracts import COMPLETE, CompletionEvaluation, MemberResult, workflow_path
 from .provenance import immutable, project_member, projection, read_member, read_parent, read_source, source_ref
@@ -125,12 +126,12 @@ class WorkflowMembers:
         self.record(result, saved_context, evidence)
         return result, evidence
 
-    def completed(self, value, parser_version, schema_version) -> Mapping | None:
+    def completed(self, value, parser_version, schema_version, *, repairs=True) -> Mapping | None:
         from .completion import outstanding_repairs, validate_capture
         from ..state import AcquisitionState
         value = to_mapping_value(value)
         read_member(value, self.store, self.objects)
-        if outstanding_repairs(value, self.store, self.objects):
+        if repairs and outstanding_repairs(value, self.store, self.objects):
             return None
         candidates = []
         for row in self.store.scan('WorkflowMemberResult', {'member_id': value['member_id'],
@@ -156,3 +157,85 @@ class WorkflowMembers:
             return None
         capture = sorted(candidates, key=lambda item: canonical_json(to_mapping_value(item)))[0]
         return CompletionEvaluation(True, capture, (), ()).capture
+
+
+def download_times(value: Mapping, sha256: str, store) -> frozenset[datetime]:
+    """When this member itself downloaded these bytes, from its append-only promotion receipts.
+
+    Identical bytes keep their first Snapshot receipt, so only a member's own receipts date its downloads.
+    A member bound without downloading (reuse) has none.
+    """
+    from ..state import AcquisitionState
+    receipt = AcquisitionState(store).promotion_receipt(value['member_id'], value['source']['source_id'])
+    return frozenset(() if receipt is None else (Snapshot.from_mapping(snapshot).received_at
+                     for snapshot in receipt['snapshots'] if snapshot['sha256'] == sha256))
+
+
+class SourceDownloads:
+    """Every own download by the retained members of some sources, indexed once per selection.
+
+    Every promotion receipt counts, whatever bytes its member is pinned to: a losing concurrent collector of a
+    member keeps its receipt but not the pin, and its download still shows what the SEC served. A member whose
+    Binding or receipts cannot be read is kept in `unreadable`, and nothing of its source is superseded.
+    Each source's latest downloaded snapshot is read too (`latest`), because a download outside the retained
+    members moves it without leaving a receipt here; a source whose row cannot be read is tainted the same way.
+    """
+
+    def __init__(self, retained: Iterable[Mapping], finished: Iterable[Mapping], sources: Mapping[str, Mapping], store):
+        from ..state import AcquisitionState
+        acquisition, done = AcquisitionState(store), {value['member_id'] for value in finished}
+        self.served, self.completed, self.pinned, self.latest = {}, {}, {}, {}
+        self.unreadable, self.tainted = [], set()
+        for identity in sources:
+            try:
+                row = acquisition.get_source(identity)
+                self.latest[identity] = None if row is None else row.to_mapping()['value']['latest_downloaded_snapshot']
+            except (ValueError, OSError, Conflict, KeyError, TypeError):
+                self.tainted.add(identity)  # an unreadable latest download keeps every hold of its source
+        for other in retained:
+            identity = other['source']['source_id']
+            if sources.get(identity) != other['source']:
+                continue
+            try:
+                binding = acquisition.binding(other['member_id'], identity)
+                receipt = acquisition.promotion_receipt(other['member_id'], identity)
+                snapshots = () if receipt is None else tuple(Snapshot.from_mapping(value) for value in receipt['snapshots'])
+            except (ValueError, OSError, Conflict, KeyError, TypeError) as error:
+                self.unreadable.append((other, error))
+                self.tainted.add(identity)
+                continue
+            pinned = None if binding is None else binding.snapshot_sha256
+            self.pinned[other['member_id']] = pinned
+            for snapshot in snapshots:
+                download = (snapshot.received_at, other)
+                self.served.setdefault((identity, snapshot.sha256), []).append(download)
+                # A completion is dated only by its own download of the bytes it completed with.
+                if other['member_id'] in done and snapshot.sha256 == pinned:
+                    newest = self.completed.get(identity)
+                    if newest is None or _order(download) > _order(newest):
+                        self.completed[identity] = download
+
+    def supersession(self, value: Mapping) -> dict | None:
+        """The newest completed download of this member's source, when strictly later than the SEC last served
+        this member's pinned bytes to any retained member of the source.
+
+        Dating the pending side by its bytes covers members bound by reuse and losing collectors' downloads,
+        and keeps a gate that the SEC re-serves (A, then A+B, then A again) standing. A download recorded
+        under a workset that is no retained member (`collect --workset <parent>`, or a member that fails
+        inventory) has no receipt here but still moves the source's latest download, the signal
+        `etl.approval.superseding` reads: while that is this member's pinned bytes, nothing supersedes it.
+        """
+        identity, pinned = value['source']['source_id'], self.pinned.get(value['member_id'])
+        served = self.served.get((identity, pinned))
+        completed = self.completed.get(identity)
+        if identity in self.tainted or not served or completed is None or self.latest.get(identity) == pinned:
+            return None
+        (served_at, served_by), (later, by) = max(served, key=_order), completed
+        if later <= served_at:
+            return None
+        return {'member': value, 'by': by, 'served_by': served_by, 'downloaded_at': served_at.isoformat(),
+                'by_downloaded_at': later.isoformat()}
+
+
+def _order(download: tuple[datetime, Mapping]) -> tuple[datetime, str]:
+    return download[0], download[1]['member_id']

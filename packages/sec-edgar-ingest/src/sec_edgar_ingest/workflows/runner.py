@@ -8,14 +8,13 @@ from ..collection import HALTING_OUTCOMES
 from ..state import AcquisitionState
 from ..storage.contracts import Conflict, observe
 from ..discovery import quarter_span
-from ..etl.manifest import read_manifest
-from ..etl.reader import capture_from_pointer, capture_quarter
+from ..etl.reader import capture_from_pointer, capture_quarter, validated_manifest
 from ..etl.state import EtlState
 from .contracts import MemberResult, WorkflowResult, FATAL, summarize, workflow_path
 from .checked import ChildUnfinished, Dispatcher
 from .completion import evaluate_member, capture_member_provenance, capture_parent_provenance, validate_parent_provenance
 from .legacy import bootstrap_legacy
-from .members import WorkflowMembers
+from .members import SourceDownloads, WorkflowMembers
 from .processing import process_member, validate_member_evidence
 from .provenance import project_member, read_parent, read_member, transfer_binding, immutable
 from .results import freeze_selection
@@ -142,19 +141,22 @@ def select_work(context: RunContext, settings: Settings, intent: Mapping, dispat
     gaps = list(bootstrap_legacy(store, objects))
     retained, registry_gaps = registry.inventory()
     gaps.extend(registry_gaps)
-    pending_before, unresolved_ids_before = [], set()
+    pending_before, finished, unresolved, corrupt = [], [], [], set()
     for value in retained:
         try:
             completed = registry.completed(value, context.parser_version, context.schema_version)
         except (ValueError, OSError, Conflict, KeyError, TypeError) as error:
             gaps.append(Error('legacy_member_unresolved', 'retained completion receipt is corrupt: ' + error_text(error),
                               False, value['source']['source_id'], {'member_id': value['member_id']}))
+            corrupt.add(value['member_id'])
             completed = None
-        if completed is None:
-            evaluated = evaluate_member(value, context.parser_version, context.schema_version, store, objects)
-            pending_before.append(value)
-            if not evaluated.complete:
-                unresolved_ids_before.add(value['source']['source_id'])
+        if completed is not None:
+            finished.append(value)
+            continue
+        evaluated = evaluate_member(value, context.parser_version, context.schema_version, store, objects)
+        pending_before.append(value)
+        if not evaluated.complete:
+            unresolved.append((value, evaluated))
     mode = 'daily' if context.command == 'daily' else 'quarterly'
     flags = ('--mode', mode, '--discovery-id', 'workflow-' + context.command + '-' + context.run_id)
     if context.command == 'reconcile':
@@ -186,7 +188,27 @@ def select_work(context: RunContext, settings: Settings, intent: Mapping, dispat
             value = project_member(parent_ref, source.source_id, store, objects)
             gaps.extend(reuse_exact_binding(value, store, objects))
             current.append(value)
-    combined = {value['member_id']: value for value in (*pending_before, *current)}
+    # A later completed download of the same source supersedes an older member that only awaits publication.
+    # Repair obligations and corrupt evidence (state_conflict gaps) stay exact, so they still fail the run.
+    # So does this attempt's own discovery: a retry of a run reuses its discovery session and member ids,
+    # and every discovered member must be selected (results._validate_selection).
+    discovered = {value['member_id'] for value in current}
+    eligible = [value for value, evaluated in unresolved
+                if value['member_id'] not in discovered and not evaluated.obligations
+                and {gap.code for gap in evaluated.gaps} == {'publication_pending'}]
+    superseded = []
+    if eligible:
+        downloads = SourceDownloads(retained, finished, {value['source']['source_id']: value['source']
+                                                         for value in eligible}, store)
+        # Unreadable download evidence keeps every hold of its source; other sources still proceed.
+        for value, error in downloads.unreadable:
+            if value['member_id'] not in corrupt:
+                gaps.append(Error('legacy_member_unresolved', 'retained download evidence is corrupt: ' + error_text(error),
+                                  False, value['source']['source_id'], {'member_id': value['member_id']}))
+        superseded = [entry for value in eligible for entry in (downloads.supersession(value),) if entry is not None]
+    dropped = {entry['member']['member_id'] for entry in superseded}
+    unresolved_ids_before = {value['source']['source_id'] for value, _ in unresolved if value['member_id'] not in dropped}
+    combined = {value['member_id']: value for value in (*pending_before, *current) if value['member_id'] not in dropped}
     selected, complete = [], []
     for value in sorted(combined.values(), key=lambda v: (v['source']['period'], v['source']['source_id'], v['member_id'])):
         evaluation = evaluate_member(value, context.parser_version, context.schema_version, store, objects)
@@ -208,10 +230,13 @@ def select_work(context: RunContext, settings: Settings, intent: Mapping, dispat
         session = parent_provenance['discovery']['session']
     required = [] if session is None else session['frozen']['units']
     values = sorted(selected, key=lambda v: (v['source']['period'], v['source']['source_id'], v['member_id']))
-    return {'format_version': 'sec-workflow-selection-v1', 'context': context.to_mapping(),
+    return {'format_version': 'sec-workflow-selection-v2', 'context': context.to_mapping(),
         'invocation': dict(intent), 'members': values, 'jobs': [{'member': value, 'aliases': [value]} for value in selected],
         'member_provenance': [capture_member_provenance(value, store, objects) for value in values],
-        'already_complete': complete, 'discovery_call': discovery_call,
+        'already_complete': complete,
+        'superseded': sorted(superseded, key=lambda entry: (entry['member']['source']['period'],
+                             entry['member']['source']['source_id'], entry['member']['member_id'])),
+        'discovery_call': discovery_call,
         'discovery_error': None if discovery_error is None else discovery_error.to_mapping(),
         'parent_ref': parent_ref, 'parent_provenance': parent_provenance,
         'discovery_session': session, 'required_units': required,
@@ -257,7 +282,7 @@ def source_revert_gaps(results, store, objects) -> tuple[Error, ...]:
     Identical bytes keep their first receipt, so receipt-ordered selection keeps the newer
     snapshot and the member publishes unchanged; without this gap the run would read as reconciled.
     """
-    acquisition, state, found = AcquisitionState(store), EtlState(store), {}
+    acquisition, state, found, manifests = AcquisitionState(store), EtlState(store), {}, {}
     for result in results:
         quarters = sorted({q.quarter for q in result.quarters if q.outcome in ('published', 'unchanged')})
         identity = result.source.source_id
@@ -275,7 +300,9 @@ def source_revert_gaps(results, store, objects) -> tuple[Error, ...]:
             if pointer is None:
                 continue
             capture = capture_from_pointer(pointer)
-            manifest = read_manifest(capture, objects)
+            if capture.generation_id not in manifests:
+                manifests[capture.generation_id] = validated_manifest(capture, objects)
+            manifest = manifests[capture.generation_id]
             active = next((ref for ref in manifest.sources if ref.source.source_id == identity), None)
             if active is None or active.snapshot.sha256 == latest:
                 continue
