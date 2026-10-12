@@ -251,7 +251,7 @@ Expected: `Ran 20 tests`, `OK` (about 80 s). These hand-built selections are v2 
 uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/network_guard.py discover -s packages/sec-edgar-ingest/tests -p 'test_reconcile_workflow.py' -v -k test_gated_then_reverted_member_is_superseded_by_the_later_download -k test_a_stored_supersession_stays_valid_without_rescanning_the_registry
 ```
 
-Expected: `Ran 2 tests`, `OK` (the first took 150 s in the planning dry run). These freeze and re-validate v2 selections with non-empty `superseded` entries, including forged ones. For each of the runs in this step, redirect stdout (`> /tmp/plan8-task1.stdout`, keeping stderr on screen) and check that `wc -c < /tmp/plan8-task1.stdout` prints `0`.
+Expected: `Ran 2 tests`, `OK` (in the planning dry run the first took 150 s and the second 48 s). These freeze and re-validate v2 selections with non-empty `superseded` entries, including forged ones. For each of the runs in this step, redirect stdout (`> /tmp/plan8-task1.stdout`, keeping stderr on screen) and check that `wc -c < /tmp/plan8-task1.stdout` prints `0`.
 
 - [ ] **Step 6: Commit**
 
@@ -356,7 +356,7 @@ Expected: `Ran 6 tests`, `OK`. Then run the runner suite, which freezes new sele
 uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/network_guard.py discover -s packages/sec-edgar-ingest/tests -p 'test_workflow_runner.py' -v
 ```
 
-Expected: `OK`. Finally `git status --porcelain -- specs/evidence` prints nothing.
+Expected: `OK`. This file holds `RunnerTests.test_deadline_after_selection_records_undispatched_units_without_child_work`, which is listed under "Load-flaky multi-process tests" in `specs/deferred_items.md`: if it is the only failure, re-run it alone three times before treating it as real, and do not debug it in this task. Finally `git status --porcelain -- specs/evidence` prints nothing.
 
 - [ ] **Step 5: Commit**
 
