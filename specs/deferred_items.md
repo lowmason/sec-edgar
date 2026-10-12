@@ -1,7 +1,7 @@
 # Deferred items
 
 ## 6-sec-filing-index-ingestion-stage-5-spec — 2026-10-11
-- [ ] Gated-then-reverted member cannot clear (owner-deferred, Stage 5 spec §4 and
+- [x] Gated-then-reverted member cannot clear (owner-deferred, Stage 5 spec §4 and
       plan Stage exit): a gated member whose source later reverts to its base bytes
       is re-staged as the same candidate on every run, so the run stays
       `awaiting_approval`. Fix: let a later completed download of the same source
@@ -9,7 +9,7 @@
       (`accounts_for`) and the runner's member selection (`workflows/runner.py`). See
       specs/plans/completed/6-sec-filing-index-ingestion-stage-5-spec.md. Size: plan.
       Done when: that supersession rule lands, with a gated-then-reverted fixture
-      that completes.
+      that completes. → done in plan 7
 - [ ] Read-only `history` CLI (final review, plan-level gap): `quarter_history` and
       `EtlState.rollbacks` (`etl/history.py`, `etl/state.py`) are library-only, yet
       docs/runbooks/sec-edgar-reconciliation-approval.md tells operators to take the
@@ -29,7 +29,7 @@
       docs/runbooks/sec-edgar-reconciliation-approval.md. Size: design.
       Done when: Stage 6's operator-role mapping decides how approval and rollback
       actors are identified, and re-activation attribution (event or record) is
-      implemented or consciously declined there.
+      implemented or consciously declined there. → note: plan 7 narrows this flow (approve now refuses a superseded candidate after a rollback)
 - [ ] Derived `activated` field (final review, T5): `approved` in `candidates` and
       `quarter_history` (`etl/history.py`) means an approval was indexed, so
       `stale` + `approved: true` cannot tell "activated then superseded" from "approval
@@ -75,7 +75,10 @@
       subtest never deleted its `transport.jsonl`) and
       `test_acquisition_processes.AcquisitionProcessTests.test_independent_child_deadline_records_actual_fatal_exit_and_prefix`
       (`byte_count` 0, as the fatal timer fired before any entity bytes were retained).
-      All three passed 3 of 3 alone and in the next full run.
+      All three passed 3 of 3 alone and in the next full run. On 2026-10-12 a fourth,
+      `test_workflow_runner.RunnerTests.test_deadline_after_selection_records_undispatched_units_without_child_work`
+      (`pending_sources` 1 != 2), failed once in a parallel covering run on plan 7's
+      branch, with no retained members in its fixture, and passed 7 reruns alone.
       Size: plan. Done when: the WAL open retries or the tests serialize, the
       deadline-bound tests tolerate a slow spawn (and the timer test deletes its trace
       in a `finally`), and several consecutive full-suite runs pass.
@@ -102,7 +105,7 @@
       `unchanged` returns before the from-generation and ancestry checks (spec §5 step
       order). Files: `etl/history.py`, `etl/rollback.py`, `tests/test_etl_history.py`,
       `tests/test_etl_rollback.py`. Size: quick-fix. Done when: the tests exist. → done 2026-10-11 (/deferred quick fix)
-- [ ] Review Minor, reconcile/workflow coverage (T3/T4/T7): the refresh-flip test
+- [x] Review Minor, reconcile/workflow coverage (T3/T4/T7): the refresh-flip test
       (`tests/test_reconcile_workflow.py` `test_selection_requires_refresh_exactly_for_reconcile`)
       covers backfill and reconcile but not daily, and the refresh/command check in
       `workflows/results.py` runs only when `discovery_call` is present; `run_phase`
@@ -115,7 +118,7 @@
       own approval" is covered at library level only
       (`tests/test_etl_approval.py`), not in `tests/test_reconcile_acceptance.py`;
       long unwrapped lines in packages/sec-edgar-ingest/README.md. Size: quick-fix.
-      Revisit if: those modules are next edited or a regression slips through them.
+      Revisit if: those modules are next edited or a regression slips through them. → trigger fired; runner-local cases done in plan 7, remainder re-deferred under plan 7
 - [ ] Operator commands create a store at a mistyped path (final review Minor,
       pre-existing): `cli._operator_main` calls `open_stores`, which creates the root,
       writes the binding registry and creates the sqlite schema, so a mistyped
@@ -136,3 +139,63 @@
       first. Size: quick-fix. Done when: (1) is enforced with a test, (2) uses one
       shared pointer-value builder, and (3) is either reordered to match §5 or recorded
       in §5 and the runbook as intended idempotence.
+
+## 7-gated-revert-supersession — 2026-10-12
+- [ ] Task 3 leftovers (plan 7, Plan completion step 3): the refresh/command check in
+      `workflows/results.py` runs only when `discovery_call` is present; spec R10 "a
+      later download needs its own approval" is covered at library level only
+      (`tests/test_etl_approval.py`), not in `tests/test_reconcile_acceptance.py`; a
+      revert in a quarter gated by another member of the same run is reported only on the
+      next run; long unwrapped lines in `packages/sec-edgar-ingest/README.md`. Also
+      `packages/sec-edgar-ingest/README.md:167` still says `awaiting_approval` clears only
+      through approval, but a gated member whose source reverted now clears through
+      supersession (final review, outside the plan's file list). Size: quick-fix.
+      Revisit if: those modules are next edited or a regression slips through them.
+- [ ] v1 workflow selections are unreadable (final review, Codex [P1]; owner kept the
+      plan's decision 2026-10-12): `workflows/results.py` `SELECTION_FORMAT` is
+      `sec-workflow-selection-v2` and `_validate_selection` requires the `superseded`
+      field, so a stored `sec-workflow-selection-v1` report fails `read_workflow_result`
+      and replay with `state_conflict`. Plan 7's Global Constraints chose this (no
+      deployed state, local-fixture only); the only v1 selections in the repo are
+      committed `.fixture-state` proof artifacts under `specs/evidence/` that no test
+      reads. Size: quick-fix. Revisit if: real (non-fixture) workflow state exists before
+      this ships; then accept v1 with no `superseded` entries while new selections stay v2.
+- [ ] Download evidence outside the retained members (final review, Codex round-2 [P2]
+      and reviewer Minors): supersession dates the pending bytes by the promotion receipts
+      of retained members (`workflows/members.py` `SourceDownloads`), so a download
+      recorded under a parent workset (`collect --workset <parent>`, `cli.py`) or by a
+      member whose projection fails `inventory()` leaves no receipt there. A guard on the
+      source's latest downloaded snapshot covers it only while that is the latest:
+      gated A, then completed A+B, then a standalone A, then a quarantined download of C
+      lets the older completion drop the hold. That matches `etl.approval.superseding`
+      (candidate A is already refused once the latest is C), so it is benign today. Also a
+      missing Source row or null `latest_downloaded_snapshot` skips the guard (approve
+      treats it as not superseded; practically unreachable), and an unreadable Source row
+      taints its source silently (no gap, no test). Cure: index every `PromotionReceipt`
+      row by `source_id` whatever the workset (the witness becomes a workset id, so the
+      `served_by` shape changes), fail closed on a missing latest, and give the Source
+      taint a gap and tests. Size: plan. Revisit if: standalone `collect --workset` is
+      used against a source with gated workflow members, or Stage 6 changes how downloads
+      are recorded.
+- [ ] Review Minor, supersession tests and validator (plan 7 task and final reviews): the
+      `not evaluated.obligations` guard in `workflows/runner.py` `select_work` is untested
+      (the plan acknowledged it, Task 1 Step 5); the stored-report validator is weaker
+      than the producer by design (it accepts any recorded served time, does not re-check
+      that `by` is the newest completion or that the pending member awaits only
+      publication, and could also reject a `by` bound to the pending member's own bytes);
+      the quarantine half of the runbook claim that a quarantined later download leaves
+      the gated member in place is derived from `collection.py` and untested; Task 3's
+      fail-closed exit 9 on a corrupt active generation is pinned only by calling
+      `source_revert_gaps` directly, not through `h.invoke('reconcile', ...)`, and its
+      test takes the data file as the first `ref.role != 'changes'` manifest entry
+      (order-dependent). Size: quick-fix. Revisit if: these modules are next edited or a
+      regression slips through them.
+- [ ] Review Minor, approval and CLI coverage for `superseded` (Task 2 review): the
+      `superseding` branches `observed is None`, `latest is None` and equal timestamps
+      (`etl/approval.py`) have no direct test, and a small table test would cover them;
+      `tests/test_etl_cli.py` patches `withdrawal_candidates`, so no CLI test exercises
+      status `superseded` end to end; `test_a_candidate_whose_source_moved_on_is_listed_superseded_and_refused`
+      builds `(result.outcome, result.error.details[...])` before comparing, so a regressed
+      refusal dies with `AttributeError` instead of `'success' != 'approval_stale'` (assert
+      the outcome on its own line first). Size: quick-fix. Revisit if: `etl/approval.py`
+      or `etl/history.py` is next edited.
