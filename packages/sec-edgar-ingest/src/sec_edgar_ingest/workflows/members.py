@@ -177,6 +177,8 @@ class SourceDownloads:
     Every promotion receipt counts, whatever bytes its member is pinned to: a losing concurrent collector of a
     member keeps its receipt but not the pin, and its download still shows what the SEC served. A member whose
     Binding or receipts cannot be read is kept in `unreadable`, and nothing of its source is superseded.
+    Each source's latest downloaded snapshot is read too (`latest`), because a download outside the retained
+    members moves it without leaving a receipt here; a source whose row cannot be read is tainted the same way.
     """
 
     def __init__(self, retained: Iterable[Mapping], finished: Iterable[Mapping], sources: Mapping[str, Mapping], store):
