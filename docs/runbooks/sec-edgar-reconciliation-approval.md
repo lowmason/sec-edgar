@@ -34,7 +34,7 @@ A `source_reverted` gap means the SEC now serves bytes identical to an older sna
   - `pending`: its base is active and the source still serves the candidate's bytes;
   - `superseded`: its base is active, but a later download of the source has different bytes. `approve` refuses it. Once a later download of the source completes, the following run drops the superseded gated member;
   - `active`;
-  - `stale`: the base moved on, or an approved candidate's generation was later replaced;
+  - `stale`: the base moved on, or an approved candidate's generation was later replaced by a generation other than its base;
 - `approved`;
 - the membership source's `latest_observed_sha256` and `latest_observed_at`.
 
