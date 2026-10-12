@@ -59,9 +59,9 @@ class ReconcileFixture(unittest.TestCase):
         if q3_rows is not None:
             h.pack = self.pack(q3_rows, q4_rows)
         code, message = h.invoke(command, run=run)
-        report = (None if message.get('result_ref') is None
-                  else read_workflow_result(message['result_ref'], h.store, h.objects))
-        return code, message, report
+        if message.get('result_ref') is None:
+            self.fail(f'{command} {run!r} exited {code} without a report: {h.calls[-1]}')
+        return code, message, read_workflow_result(message['result_ref'], h.store, h.objects)
 
     def names(self, h, quarter):
         return [value['company_name'] for value in h.capture(quarter)[1]]

@@ -8,8 +8,7 @@ from ..collection import HALTING_OUTCOMES
 from ..state import AcquisitionState
 from ..storage.contracts import Conflict, observe
 from ..discovery import quarter_span
-from ..etl.manifest import read_manifest
-from ..etl.reader import capture_from_pointer, capture_quarter
+from ..etl.reader import capture_from_pointer, capture_quarter, validated_manifest
 from ..etl.state import EtlState
 from .contracts import MemberResult, WorkflowResult, FATAL, summarize, workflow_path
 from .checked import ChildUnfinished, Dispatcher
@@ -273,7 +272,7 @@ def source_revert_gaps(results, store, objects) -> tuple[Error, ...]:
     Identical bytes keep their first receipt, so receipt-ordered selection keeps the newer
     snapshot and the member publishes unchanged; without this gap the run would read as reconciled.
     """
-    acquisition, state, found = AcquisitionState(store), EtlState(store), {}
+    acquisition, state, found, manifests = AcquisitionState(store), EtlState(store), {}, {}
     for result in results:
         quarters = sorted({q.quarter for q in result.quarters if q.outcome in ('published', 'unchanged')})
         identity = result.source.source_id
@@ -291,7 +290,9 @@ def source_revert_gaps(results, store, objects) -> tuple[Error, ...]:
             if pointer is None:
                 continue
             capture = capture_from_pointer(pointer)
-            manifest = read_manifest(capture, objects)
+            if capture.generation_id not in manifests:
+                manifests[capture.generation_id] = validated_manifest(capture, objects)
+            manifest = manifests[capture.generation_id]
             active = next((ref for ref in manifest.sources if ref.source.source_id == identity), None)
             if active is None or active.snapshot.sha256 == latest:
                 continue

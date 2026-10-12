@@ -14,6 +14,7 @@ from sec_edgar_ingest.etl.approval import approve
 from sec_edgar_ingest.etl.contracts import processing_key
 from sec_edgar_ingest.etl.history import withdrawal_candidates
 from sec_edgar_ingest.etl.manifest import approval_ref, read_manifest
+from sec_edgar_ingest.etl.reader import capture_from_pointer
 from sec_edgar_ingest.etl.state import EtlState
 from sec_edgar_ingest.etl.transform import transform_member
 from sec_edgar_ingest.models import parse_json
@@ -21,6 +22,7 @@ from sec_edgar_ingest.storage.contracts import Conflict
 from sec_edgar_ingest.workflows.checked import Dispatcher
 from sec_edgar_ingest.workflows.completion import accounts_for
 from sec_edgar_ingest.workflows.results import _validate_selection
+from sec_edgar_ingest.workflows.runner import source_revert_gaps
 
 
 class ReconcileWorkflowTests(ReconcileFixture):
@@ -94,7 +96,7 @@ class ReconcileWorkflowTests(ReconcileFixture):
 
         h = self.harness((A, B))
         with patch.object(Dispatcher, 'execute', flipped):
-            for command in ('backfill', 'reconcile'):
+            for command in ('backfill', 'daily', 'reconcile'):
                 with self.subTest(command=command):
                     code, message = h.invoke(command, run='flipped-' + command)
                     self.assertEqual((code, message['outcome']), (9, 'state_conflict'), h.calls[-1])
@@ -151,6 +153,13 @@ class SupersessionWorkflowTests(ReconcileFixture):
         self.assertTrue(gap.retryable)
         self.assertEqual((gap.details['quarter'], gap.details['observed_sha256'], gap.details['active_sha256']),
                          ('2026Q3', sha((A, B)), sha((A, B, C))))
+        source_id = next(m.source.source_id for m in report.members if m.source.period == '2026Q3')
+        self.assertEqual((gap.source_id, gap.details['generation_id']),
+                         (source_id, capture_from_pointer(active).generation_id))
+        first, held, observed = (datetime.fromisoformat(gap.details[name])
+                                 for name in ('first_received_at', 'active_received_at', 'observed_at'))
+        self.assertLess(first, held)
+        self.assertLess(held, observed)
         self.assertEqual(EtlState(h.store).pointer('2026Q3'), active)
         self.assertEqual(self.names(h, '2026Q3'), ['A', 'B', 'C'])
 
@@ -240,6 +249,18 @@ class SupersessionWorkflowTests(ReconcileFixture):
         with self.assertRaises(FileNotFoundError):
             h.objects.read(approval_ref('2026Q3', listed['generation_id']))
         self.assertEqual(self.names(h, '2026Q3'), ['A', 'B'])
+
+    def test_revert_detection_reads_the_active_generation_through_full_validation(self):
+        h = self.harness((A, B))
+        self.assertEqual(self.run_phase(h, 'backfill', 'base')[0], 0)
+        code, _, added = self.run_phase(h, 'reconcile', 'add', (A, B, C))
+        self.assertEqual(code, 0, h.calls[-1])
+        capture = capture_from_pointer(EtlState(h.store).pointer('2026Q3'))
+        data = next(ref for ref in read_manifest(capture, h.objects).files if ref.role != 'changes')
+        with open(h.objects.directory / data.path, 'ab') as handle:
+            handle.write(b'x')
+        with self.assertRaises(Conflict):
+            source_revert_gaps(added.members, h.store, h.objects)
 
 
 if __name__ == '__main__':
