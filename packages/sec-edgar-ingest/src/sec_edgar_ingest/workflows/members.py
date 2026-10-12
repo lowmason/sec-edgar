@@ -159,55 +159,72 @@ class WorkflowMembers:
         return CompletionEvaluation(True, capture, (), ()).capture
 
 
-def member_download(value: Mapping, store) -> datetime | None:
-    """When this member itself downloaded its pinned bytes, from its immutable promotion receipt.
+def download_times(value: Mapping, sha256: str, store) -> frozenset[datetime]:
+    """When this member itself downloaded these bytes, from its append-only promotion receipts.
 
-    Identical bytes keep their first Snapshot receipt, so only a member's own receipt dates a download.
-    A member bound without downloading (reuse) has no receipt.
+    Identical bytes keep their first Snapshot receipt, so only a member's own receipts date its downloads.
+    A member bound without downloading (reuse) has none.
     """
     from ..state import AcquisitionState
-    acquisition = AcquisitionState(store)
-    identity = value['source']['source_id']
-    binding = acquisition.binding(value['member_id'], identity)
-    receipt = None if binding is None else acquisition.promotion_receipt(value['member_id'], identity)
-    if receipt is None:
-        return None
-    times = [Snapshot.from_mapping(snapshot).received_at for snapshot in receipt['snapshots']
-             if snapshot['sha256'] == binding.snapshot_sha256]
-    return max(times, default=None)
+    receipt = AcquisitionState(store).promotion_receipt(value['member_id'], value['source']['source_id'])
+    return frozenset(() if receipt is None else (Snapshot.from_mapping(snapshot).received_at
+                     for snapshot in receipt['snapshots'] if snapshot['sha256'] == sha256))
 
 
-def pinned_downloads(value: Mapping, retained: Iterable[Mapping], store) -> tuple[datetime, ...]:
-    """Every own download of this member's pinned bytes by a retained member of its source, oldest first."""
-    from ..state import AcquisitionState
-    acquisition = AcquisitionState(store)
-    identity = value['source']['source_id']
-    pinned = acquisition.binding(value['member_id'], identity)
-    if pinned is None:
-        return ()
-    times = []
-    for other in retained:
-        binding = acquisition.binding(other['member_id'], identity) if other['source'] == value['source'] else None
-        if binding is not None and binding.snapshot_sha256 == pinned.snapshot_sha256:
-            downloaded = member_download(other, store)
-            if downloaded is not None:
-                times.append(downloaded)
-    return tuple(sorted(times))
+class SourceDownloads:
+    """Every own download by the retained members of some sources, indexed once per selection.
 
-
-def supersession(value: Mapping, finished: Iterable[Mapping], retained: Iterable[Mapping], store) -> dict | None:
-    """The newest completed member of this source downloaded strictly after the SEC last served this member's bytes.
-
-    Dating the pending side by its bytes covers members bound by reuse, and keeps a gate that the SEC
-    re-serves (A, then A+B, then A again) standing.
+    Every promotion receipt counts, whatever bytes its member is pinned to: a losing concurrent collector of a
+    member keeps its receipt but not the pin, and its download still shows what the SEC served. A member whose
+    Binding or receipts cannot be read is kept in `unreadable`, and nothing of its source is superseded.
     """
-    served = pinned_downloads(value, retained, store)
-    if not served:
-        return None
-    later = [(theirs, other) for other in finished if other['source'] == value['source']
-             for theirs in (member_download(other, store),) if theirs is not None and theirs > served[-1]]
-    if not later:
-        return None
-    theirs, other = max(later, key=lambda item: (item[0], item[1]['member_id']))
-    return {'member': value, 'by': other, 'downloaded_at': served[-1].isoformat(),
-            'by_downloaded_at': theirs.isoformat()}
+
+    def __init__(self, retained: Iterable[Mapping], finished: Iterable[Mapping], sources: Mapping[str, Mapping], store):
+        from ..state import AcquisitionState
+        acquisition, done = AcquisitionState(store), {value['member_id'] for value in finished}
+        self.served, self.completed, self.pinned = {}, {}, {}
+        self.unreadable, self.tainted = [], set()
+        for other in retained:
+            identity = other['source']['source_id']
+            if sources.get(identity) != other['source']:
+                continue
+            try:
+                binding = acquisition.binding(other['member_id'], identity)
+                receipt = acquisition.promotion_receipt(other['member_id'], identity)
+                snapshots = () if receipt is None else tuple(Snapshot.from_mapping(value) for value in receipt['snapshots'])
+            except (ValueError, OSError, Conflict, KeyError, TypeError) as error:
+                self.unreadable.append((other, error))
+                self.tainted.add(identity)
+                continue
+            pinned = None if binding is None else binding.snapshot_sha256
+            self.pinned[other['member_id']] = pinned
+            for snapshot in snapshots:
+                download = (snapshot.received_at, other)
+                self.served.setdefault((identity, snapshot.sha256), []).append(download)
+                # A completion is dated only by its own download of the bytes it completed with.
+                if other['member_id'] in done and snapshot.sha256 == pinned:
+                    newest = self.completed.get(identity)
+                    if newest is None or _order(download) > _order(newest):
+                        self.completed[identity] = download
+
+    def supersession(self, value: Mapping) -> dict | None:
+        """The newest completed download of this member's source, when strictly later than the SEC last served
+        this member's pinned bytes to any retained member of the source.
+
+        Dating the pending side by its bytes covers members bound by reuse and losing collectors' downloads,
+        and keeps a gate that the SEC re-serves (A, then A+B, then A again) standing.
+        """
+        identity = value['source']['source_id']
+        served = self.served.get((identity, self.pinned.get(value['member_id'])))
+        completed = self.completed.get(identity)
+        if identity in self.tainted or not served or completed is None:
+            return None
+        (served_at, served_by), (later, by) = max(served, key=_order), completed
+        if later <= served_at:
+            return None
+        return {'member': value, 'by': by, 'served_by': served_by, 'downloaded_at': served_at.isoformat(),
+                'by_downloaded_at': later.isoformat()}
+
+
+def _order(download: tuple[datetime, Mapping]) -> tuple[datetime, str]:
+    return download[0], download[1]['member_id']

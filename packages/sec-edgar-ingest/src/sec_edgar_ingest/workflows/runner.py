@@ -14,7 +14,7 @@ from .contracts import MemberResult, WorkflowResult, FATAL, summarize, workflow_
 from .checked import ChildUnfinished, Dispatcher
 from .completion import evaluate_member, capture_member_provenance, capture_parent_provenance, validate_parent_provenance
 from .legacy import bootstrap_legacy
-from .members import WorkflowMembers, supersession
+from .members import SourceDownloads, WorkflowMembers
 from .processing import process_member, validate_member_evidence
 from .provenance import project_member, read_parent, read_member, transfer_binding, immutable
 from .results import freeze_selection
@@ -141,13 +141,14 @@ def select_work(context: RunContext, settings: Settings, intent: Mapping, dispat
     gaps = list(bootstrap_legacy(store, objects))
     retained, registry_gaps = registry.inventory()
     gaps.extend(registry_gaps)
-    pending_before, finished, unresolved = [], [], []
+    pending_before, finished, unresolved, corrupt = [], [], [], set()
     for value in retained:
         try:
             completed = registry.completed(value, context.parser_version, context.schema_version)
         except (ValueError, OSError, Conflict, KeyError, TypeError) as error:
             gaps.append(Error('legacy_member_unresolved', 'retained completion receipt is corrupt: ' + error_text(error),
                               False, value['source']['source_id'], {'member_id': value['member_id']}))
+            corrupt.add(value['member_id'])
             completed = None
         if completed is not None:
             finished.append(value)
@@ -192,10 +193,19 @@ def select_work(context: RunContext, settings: Settings, intent: Mapping, dispat
     # So does this attempt's own discovery: a retry of a run reuses its discovery session and member ids,
     # and every discovered member must be selected (results._validate_selection).
     discovered = {value['member_id'] for value in current}
-    superseded = [entry for value, evaluated in unresolved
-                  if value['member_id'] not in discovered and not evaluated.obligations
-                  and {gap.code for gap in evaluated.gaps} == {'publication_pending'}
-                  for entry in (supersession(value, finished, retained, store),) if entry is not None]
+    eligible = [value for value, evaluated in unresolved
+                if value['member_id'] not in discovered and not evaluated.obligations
+                and {gap.code for gap in evaluated.gaps} == {'publication_pending'}]
+    superseded = []
+    if eligible:
+        downloads = SourceDownloads(retained, finished, {value['source']['source_id']: value['source']
+                                                         for value in eligible}, store)
+        # Unreadable download evidence keeps every hold of its source; other sources still proceed.
+        for value, error in downloads.unreadable:
+            if value['member_id'] not in corrupt:
+                gaps.append(Error('legacy_member_unresolved', 'retained download evidence is corrupt: ' + error_text(error),
+                                  False, value['source']['source_id'], {'member_id': value['member_id']}))
+        superseded = [entry for value in eligible for entry in (downloads.supersession(value),) if entry is not None]
     dropped = {entry['member']['member_id'] for entry in superseded}
     unresolved_ids_before = {value['source']['source_id'] for value, _ in unresolved if value['member_id'] not in dropped}
     combined = {value['member_id']: value for value in (*pending_before, *current) if value['member_id'] not in dropped}

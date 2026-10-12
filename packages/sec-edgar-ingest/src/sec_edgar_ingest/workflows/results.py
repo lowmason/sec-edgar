@@ -144,9 +144,10 @@ def _capture_or_validate_discovery_failure(selection, call, template, objects, s
 def _validate_selection(selection, context, invocation, store, objects):
     from ..models import DirectoryOutcome, Error
     from ..discovery import quarter_span
+    from ..state import AcquisitionState
     from .checked import _authority
     from .completion import validate_parent_provenance, validate_discovery_session
-    from .members import WorkflowMembers, member_download, pinned_downloads
+    from .members import WorkflowMembers, download_times
     from .provenance import read_member
     fields = {'format_version', 'context', 'invocation', 'members', 'jobs',
               'member_provenance', 'already_complete', 'superseded', 'discovery_call',
@@ -177,24 +178,28 @@ def _validate_selection(selection, context, invocation, store, objects):
     if len(set(completed_ids)) != len(completed_ids) or {v['member_id'] for v in members} & set(completed_ids):
         raise Conflict('selection completed captures overlap or duplicate members')
     superseded = selection['superseded']
-    if any(set(entry) != {'member', 'by', 'downloaded_at', 'by_downloaded_at'} for entry in superseded):
+    if any(set(entry) != {'member', 'by', 'served_by', 'downloaded_at', 'by_downloaded_at'} for entry in superseded):
         raise Conflict('selection superseded entry fields differ')
     order = [(e['member']['source']['period'], e['member']['source']['source_id'], e['member']['member_id'])
              for e in superseded]
     dropped = {key[2] for key in order}
     if order != sorted(order) or len(dropped) != len(order) or dropped & ({v['member_id'] for v in members} | set(completed_ids)):
         raise Conflict('selection superseded members overlap or are unordered')
-    if superseded:  # the inventory scan is paid only by selections that superseded something
-        registry = WorkflowMembers(store, objects)
-        retained, _ = registry.inventory()
+    acquisition, registry = AcquisitionState(store), WorkflowMembers(store, objects)
     for entry in superseded:
-        member, by = entry['member'], entry['by']
-        read_member(member, store, objects)
+        member, by, served_by = entry['member'], entry['by'], entry['served_by']
+        for value in (member, by, served_by):
+            read_member(value, store, objects)
+        identity = member['source']['source_id']
+        pinned, bound = (acquisition.binding(value['member_id'], identity) for value in (member, by))
         served, later = (datetime.fromisoformat(entry[name]) for name in ('downloaded_at', 'by_downloaded_at'))
-        # Stored reports are re-validated on every read, so check only evidence that never changes.
-        if (by['source'] != member['source'] or later <= served
-                or registry.completed(by, context.parser_version, context.schema_version, repairs=False) is None
-                or member_download(by, store) != later or served not in pinned_downloads(member, retained, store)):
+        # Stored reports are re-validated on every read, so check only immutable or append-only rows, reached
+        # by member: each frozen time must still be among its witness's receipts, whatever was received since.
+        if (by['source'] != member['source'] or served_by['source'] != member['source'] or later <= served
+                or pinned is None or bound is None
+                or served not in download_times(served_by, pinned.snapshot_sha256, store)
+                or later not in download_times(by, bound.snapshot_sha256, store)
+                or registry.completed(by, context.parser_version, context.schema_version, repairs=False) is None):
             raise Conflict('selection superseded member lacks its later completed download')
     if type(selection['halted']) is not bool:
         raise Conflict('selection halted marker is not boolean')
