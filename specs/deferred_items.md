@@ -67,8 +67,18 @@
       `test_acquisition_processes.AcquisitionProcessTests.test_held_socket_parent_death_zero_successor_unsafe_interval_and_daily_next`
       (integrated successor exited 1) failed together in the pre-execution full-suite
       baseline (620 tests, 924 s) but pass alone and passed in the later 654-test run.
-      Size: plan. Done when: the WAL open retries or the tests serialize, and several
-      consecutive full-suite runs pass.
+      On 2026-10-12 a 684-test run at load average ~5 failed the held-socket test again,
+      plus two tests bound to a 0.4 s exchange deadline that a slow spawn can miss:
+      `test_download.BoundedProcessTests.test_timer_installation_failure_and_stale_child_start_send_zero_requests`
+      (`timer-installation-failure` got `permit_expired`, as the child started after the
+      1/3 s dispatch window; the `stale-*` subtests then failed only because the failed
+      subtest never deleted its `transport.jsonl`) and
+      `test_acquisition_processes.AcquisitionProcessTests.test_independent_child_deadline_records_actual_fatal_exit_and_prefix`
+      (`byte_count` 0, as the fatal timer fired before any entity bytes were retained).
+      All three passed 3 of 3 alone and in the next full run.
+      Size: plan. Done when: the WAL open retries or the tests serialize, the
+      deadline-bound tests tolerate a slow spawn (and the timer test deletes its trace
+      in a `finally`), and several consecutive full-suite runs pass.
 - [x] Review Minor, approval/Azure storage coverage gaps (T1/T2/T6): nothing tests that
       `AzureStateStore.close()` closes `approval_client`, that `_check_endpoint`
       rejects a foreign-endpoint Approvals client, that the local store keeps approval
