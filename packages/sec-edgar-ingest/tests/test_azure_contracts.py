@@ -378,6 +378,26 @@ class AzureContractTests(unittest.TestCase):
         from unittest.mock import Mock
         return Mock(url=TABLE_ENDPOINT, table_name=name)
 
+    def test_state_close_closes_every_table_client_including_approvals(self):
+        from unittest.mock import call
+        clients = [self._factory_table(name) for name in ("SourceState", "Attempts", "ActivePointers", "Approvals")]
+        self.azure.AzureStateStore(*clients[:2], active_client=clients[2], approval_client=clients[3]).close()
+        self.assertEqual([client.close.call_args_list for client in clients], [[call()]] * 4)
+        self.azure.AzureStateStore(*clients[:2]).close()
+        self.assertEqual([client.close.call_count for client in clients], [2, 2, 1, 1])
+
+    def test_state_rejects_an_approvals_client_outside_the_fixed_table_endpoint(self):
+        from unittest.mock import Mock
+        foreign = TableServiceClient("https://otheraccount.table.core.windows.net", credential=AzureSasCredential("sv=offline&sig=synthetic"),
+                                     api_version="2020-12-06", transport=ScriptedTransport([]), **RETRY)
+        self.addCleanup(foreign.close)
+        approvals = [foreign.get_table_client("Approvals")] + [Mock(url=url, table_name="Approvals") for url in
+                     (BLOB_ENDPOINT, TABLE_ENDPOINT.replace("https:", "http:"), TABLE_ENDPOINT + "/Approvals")]
+        for client in approvals:
+            with self.subTest(url=client.url), self.assertRaisesRegex(ValueError, "fixed credential-free account endpoint"):
+                self.azure.AzureStateStore(self._factory_table("SourceState"), self._factory_table("Attempts"),
+                                           active_client=self._factory_table("ActivePointers"), approval_client=client)
+
     def test_lease_observation_rejects_clock_jump_nonfinite_and_excess_latency(self):
         for fault in ("wall_jump", "nonfinite", "slow"):
             with self.subTest(fault=fault):

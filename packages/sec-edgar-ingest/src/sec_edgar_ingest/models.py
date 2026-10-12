@@ -60,6 +60,15 @@ def require_text(value: object, label: str) -> None:
         raise ValueError(f"{label} must be a nonempty safe string")
 
 
+def error_text(exception: BaseException) -> str:
+    """The exception's text as one line that `require_text` accepts, for a structured `Error.message`.
+
+    Multi-line SDK errors keep every line, joined by single spaces; empty text falls back to the type name.
+    """
+    text = "".join(char if char.isprintable() else " " for char in str(exception))
+    return " ".join(text.split()) or type(exception).__name__
+
+
 def require_hash(value: object, label: str) -> None:
     if not isinstance(value, str) or SHA256_PATTERN.fullmatch(value) is None:
         raise ValueError(f"{label} must be a lower-case SHA-256 hash")

@@ -3,10 +3,20 @@ from network_guard import install
 install()
 
 import unittest
+from itertools import islice
+from unittest import mock
 
+from support import Faults
 from support_approval import GateFixture, operator_cli, row
 from sec_edgar_ingest.etl.approval import approve
-from sec_edgar_ingest.etl.history import quarter_history, withdrawal_candidates
+from sec_edgar_ingest.etl.contracts import GenerationCapture
+from sec_edgar_ingest.etl.history import lineage, quarter_history, withdrawal_candidates
+from sec_edgar_ingest.storage.contracts import Conflict
+
+
+def capture_of(candidate):
+    return GenerationCapture(candidate.manifest.quarter, candidate.manifest.generation_id, candidate.manifest_ref,
+                             candidate.manifest_sha256, candidate.manifest_bytes)
 
 
 class HistoryTests(GateFixture):
@@ -15,6 +25,35 @@ class HistoryTests(GateFixture):
                          self.objects, self.state)
         self.assertEqual(result.outcome, 'success')
         return result
+
+    def candidates_cli(self):
+        return operator_cli('candidates', '--config', str(self.write_config()), '--state-dir', str(self.root))
+
+    def test_lineage_refuses_a_cycle_or_a_self_reference(self):
+        base, _, candidate = self.gated()
+        top = capture_of(candidate)
+        self.assertEqual([capture for capture, _ in lineage(top, self.objects)], [top, base])
+        cases = {'cycle': ({top.generation_id: base, base.generation_id: top}, [top, base]),
+                 'self-reference': ({top.generation_id: top}, [top])}
+        for label, (bases, expected) in cases.items():
+            walked = []
+            # Generation ids are content hashes, so only a forged retained base can close a loop.
+            with self.subTest(label), mock.patch('sec_edgar_ingest.etl.history.retained_base',
+                                                 lambda manifest, _: bases[manifest.generation_id]):
+                with self.assertRaisesRegex(Conflict, 'lineage repeats a generation'):
+                    for capture, _ in islice(lineage(top, self.objects), 5):
+                        walked.append(capture)
+                self.assertEqual(walked, expected)
+
+    def test_lineage_raises_when_a_retained_base_manifest_is_missing(self):
+        base, _, candidate = self.gated()
+        top = capture_of(candidate)
+        self.object_path(base.manifest_ref).unlink()
+        walk = lineage(top, self.objects)
+        self.assertEqual(next(walk)[0], top)
+        # The top's retained-base record still names the base; reading the base manifest itself fails.
+        with self.assertRaises(FileNotFoundError):
+            next(walk)
 
     def test_history_walks_the_exact_lineage_with_approval_evidence(self):
         base, revised, candidate = self.gated()
@@ -59,6 +98,45 @@ class HistoryTests(GateFixture):
         self.assertEqual([entry['generation_id'] for entry in message['candidates']],
                          [candidate.manifest.generation_id])
         self.assertEqual(operator_cli('candidates', '--config', str(self.root / 'missing.json'))[:2], (2, None))
+
+    def test_candidates_cli_reports_a_failed_listing_with_exit_9(self):
+        self.gated()
+        for error, outcome in ((Conflict('changes object drifted'), 'state_conflict'),
+                               (RuntimeError('listing exploded'), 'internal_error')):
+            with self.subTest(outcome), mock.patch('sec_edgar_ingest.etl.history.iter_file_rows', side_effect=error):
+                code, message, _ = self.candidates_cli()
+                self.assertEqual((code, message), (9, {'outcome': outcome, 'candidates': None, 'error': {
+                    'code': outcome, 'message': str(error), 'retryable': False, 'source_id': None,
+                    'details': {'type': type(error).__name__}}}))
+
+    def test_a_corrupt_candidate_row_fails_the_whole_listing(self):
+        _, _, first = self.gated()
+        withdrawn = self.publish(self.observation(rows=row(number=2), seconds=2))
+        self.assertEqual(withdrawn.outcome, 'awaiting_approval')
+        second = self.candidate(withdrawn.candidate_ref)
+        self.assertEqual(len(withdrawal_candidates(self.objects, self.state)), 2)
+        # Corrupt the row scanned last, so a valid entry has already been listed when the drift is found.
+        corrupt, other = sorted((first, second), key=lambda candidate: candidate.manifest.generation_id, reverse=True)
+        stored = self.store.get('Candidate', corrupt.manifest.generation_id)
+        self.store.replace('Candidate', corrupt.manifest.generation_id,
+                           {**stored.value, 'candidate_ref': other.candidate_ref}, stored.version)
+        with self.assertRaisesRegex(Conflict, 'candidate index differs'):
+            withdrawal_candidates(self.objects, self.state)
+        code, message, _ = self.candidates_cli()
+        self.assertEqual((code, message['outcome'], message['candidates'], message['error']['details']),
+                         (9, 'state_conflict', None, {'type': 'Conflict'}))
+
+    def test_candidates_report_an_approval_whose_pointer_race_was_lost(self):
+        _, revised, candidate = self.gated()
+        moved = self.observation(rows=row('Updated') + row(number=2), seconds=2)
+        faults = Faults()
+        faults.at('approval.before_pointer', lambda: self.assertEqual(self.publish(moved).outcome, 'published'))
+        result = approve('2026Q4', candidate.manifest.generation_id, revised.snapshot.sha256, 'Racing Approver',
+                         self.objects, self.state, observer=faults)
+        self.assertEqual(result.outcome, 'approval_stale')
+        listed, = withdrawal_candidates(self.objects, self.state)
+        self.assertEqual((listed['generation_id'], listed['status'], listed['approved']),
+                         (candidate.manifest.generation_id, 'stale', True))
 
 
 if __name__ == '__main__':

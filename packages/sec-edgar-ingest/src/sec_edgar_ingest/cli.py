@@ -25,7 +25,8 @@ from .etl.publication import repair_publication
 from .etl.rollback import rollback, rollback_ref
 from .etl.state import EtlState
 from .download import BoundedSender, FixturePack, RequestClient
-from .models import CommandResult, Error, RunContext, canonical_json, parse_json, quarter_for, safe_relative_path, to_mapping_value
+from .models import (CommandResult, Error, RunContext, canonical_json, error_text, parse_json, quarter_for,
+                     safe_relative_path, to_mapping_value)
 from .results import exit_code, log_event, read_result, result_path, write_result
 from .state import AcquisitionState, attempt_key
 from .storage import open_stores
@@ -433,7 +434,7 @@ def _workflow_main(args):
         if isinstance(exception, ChildUnfinished):
             outcome = exception.outcome
             details.update(exception.details)
-        error = Error(outcome, str(exception),
+        error = Error(outcome, error_text(exception),
             isinstance(exception, ChildUnfinished) and exception.resumable, None, details)
         if context is not None:
             log_event(context, 'command_error', {'outcome': outcome, 'error': error.to_mapping()})
@@ -471,7 +472,7 @@ def _operator_main(args, event: str | None, empty: dict[str, object], run) -> in
         outcome = ('state_conflict' if isinstance(exception, (Conflict, ValueError, OSError, KeyError))
                    else 'internal_error')
         value = {**empty, 'outcome': outcome, 'error': Error(
-            outcome, str(exception), False, None, {'type': type(exception).__name__}).to_mapping()}
+            outcome, error_text(exception), False, None, {'type': type(exception).__name__}).to_mapping()}
     finally:
         for resource in reversed(opened):
             if hasattr(resource, 'close'):
@@ -595,12 +596,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         repair_pending = isinstance(exception, PublicationRepairPending)
         if repair_pending:
             details.update(exception.details)
-        error = Error(outcome, str(exception), repair_pending, None, details)
+        error = Error(outcome, error_text(exception), repair_pending, None, details)
         if state is not None and context is not None:
             try:
                 _retain_error(state, context, outcome, error)
             except Exception as retention:
-                error = Error('internal_error', 'attempt error could not be retained: ' + str(retention), False, None, {'cause': error.to_mapping()})
+                error = Error('internal_error', 'attempt error could not be retained: ' + error_text(retention), False, None, {'cause': error.to_mapping()})
                 outcome = 'internal_error'
         if context is not None:
             log_event(context, 'command_error', {'outcome': outcome, 'error': error.to_mapping()})

@@ -176,6 +176,36 @@ class EtlCliTests(unittest.TestCase):
         self.assertEqual(saved.context.to_mapping(), before)
         self.assertEqual(self.store.get('Attempt', attempt_key(saved.context)).value['outcome'], 'success')
 
+    def test_unprintable_exception_text_still_reports_structured_errors(self):
+        from sec_edgar_ingest.models import require_text
+        candidates = ['candidates', '--config', str(self.config), '--state-dir', str(self.root)]
+        for attempt, text in (('empty', ''), ('multiline', 'Operation returned an invalid status\nRequestId:abc')):
+            with self.subTest(attempt), patch('sec_edgar_ingest.cli.run_transform', side_effect=RuntimeError(text)):
+                code, message = self.invoke(self.argv(attempt=attempt))
+                self.assertEqual((code, message['outcome']), (9, 'internal_error'))
+                require_text(json.loads(self.calls[-1]['stderr'].splitlines()[-1])['fields']['error']['message'], 'message')
+            with self.subTest(attempt, command='candidates'), \
+                 patch('sec_edgar_ingest.cli.withdrawal_candidates', side_effect=RuntimeError(text)):
+                code, message = self.invoke(candidates)
+                self.assertEqual((code, message['outcome'], message['candidates']), (9, 'internal_error', None))
+                require_text(message['error']['message'], 'message')
+        with patch('sec_edgar_ingest.cli.run_transform', side_effect=RuntimeError('interrupted')), \
+             patch('sec_edgar_ingest.cli._retain_error', side_effect=OSError('first line\nsecond line')):
+            code, message = self.invoke(self.argv(attempt='retention'))
+        self.assertEqual((code, message['outcome']), (9, 'internal_error'))
+        require_text(json.loads(self.calls[-1]['stderr'].splitlines()[-1])['fields']['error']['message'], 'message')
+
+    def test_error_text_is_always_a_valid_error_message(self):
+        from sec_edgar_ingest.models import error_text, require_text
+        self.assertEqual(error_text(ValueError('plain message')), 'plain message')
+        # Every line survives, joined by single spaces; nothing printable left falls back to the type name.
+        self.assertEqual((error_text(RuntimeError('Operation failed\r\nRequestId:abc\x00 ErrorCode:Gone')),
+                          error_text(RuntimeError(' \n\t')), error_text(KeyError())),
+                         ('Operation failed RequestId:abc ErrorCode:Gone', 'RuntimeError', 'KeyError'))
+        for text in ('', '   ', '\n', 'first line\nsecond line', 'crlf\r\nline', 'tab\there', 'nul\x00byte', 'del\x7f'):
+            with self.subTest(text=text):
+                require_text(error_text(RuntimeError(text)), 'message')
+
     def test_result_object_crash_repairs_attempt_exactly(self):
         from sec_edgar_ingest.etl.commands import write_etl_result, read_etl_result
         from sec_edgar_ingest.state import attempt_key
