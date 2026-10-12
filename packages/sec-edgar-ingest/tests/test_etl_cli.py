@@ -198,6 +198,10 @@ class EtlCliTests(unittest.TestCase):
     def test_error_text_is_always_a_valid_error_message(self):
         from sec_edgar_ingest.models import error_text, require_text
         self.assertEqual(error_text(ValueError('plain message')), 'plain message')
+        # Every line survives, joined by single spaces; nothing printable left falls back to the type name.
+        self.assertEqual((error_text(RuntimeError('Operation failed\r\nRequestId:abc\x00 ErrorCode:Gone')),
+                          error_text(RuntimeError(' \n\t')), error_text(KeyError())),
+                         ('Operation failed RequestId:abc ErrorCode:Gone', 'RuntimeError', 'KeyError'))
         for text in ('', '   ', '\n', 'first line\nsecond line', 'crlf\r\nline', 'tab\there', 'nul\x00byte', 'del\x7f'):
             with self.subTest(text=text):
                 require_text(error_text(RuntimeError(text)), 'message')
