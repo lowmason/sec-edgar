@@ -151,7 +151,7 @@
       through approval, but a gated member whose source reverted now clears through
       supersession (final review, outside the plan's file list). Size: quick-fix.
       Revisit if: those modules are next edited or a regression slips through them.
-- [ ] v1 workflow selections are unreadable (final review, Codex [P1]; owner kept the
+- [x] v1 workflow selections are unreadable (final review, Codex [P1]; owner kept the
       plan's decision 2026-10-12): `workflows/results.py` `SELECTION_FORMAT` is
       `sec-workflow-selection-v2` and `_validate_selection` requires the `superseded`
       field, so a stored `sec-workflow-selection-v1` report fails `read_workflow_result`
@@ -160,6 +160,9 @@
       committed `.fixture-state` proof artifacts under `specs/evidence/` that no test
       reads. Size: quick-fix. Revisit if: real (non-fixture) workflow state exists before
       this ships; then accept v1 with no `superseded` entries while new selections stay v2.
+      → done in plan 8 (owner reversed plan 7's decision 2026-10-12; this supersedes the
+      item's "Revisit if" condition; test_workflow_selection_v1.py now reads the committed
+      v1 artifacts, which the item said no test did)
 - [ ] Download evidence outside the retained members (final review, Codex round-2 [P2]
       and reviewer Minors): supersession dates the pending bytes by the promotion receipts
       of retained members (`workflows/members.py` `SourceDownloads`), so a download
@@ -199,3 +202,49 @@
       refusal dies with `AttributeError` instead of `'success' != 'approval_stale'` (assert
       the outcome on its own line first). Size: quick-fix. Revisit if: `etl/approval.py`
       or `etl/history.py` is next edited.
+
+## 8-v1-workflow-selection-reader — 2026-10-12
+- [ ] Selection-format literal in the runner (final review Minor, pre-existing from
+      plan 7): `workflows/runner.py:233` (`select_work`) writes the string
+      `'sec-workflow-selection-v2'` instead of `results.SELECTION_FORMAT`, which is now
+      one of two format constants beside `LEGACY_SELECTION_FORMAT`. Plan 8 leaves
+      `select_work` untouched. Task 2's first-write guard makes drift loud, not silent:
+      after a `SELECTION_FORMAT` bump every first freeze would raise `new selection must
+      use the current format` until the literal is edited. Cure: import
+      `SELECTION_FORMAT` beside `freeze_selection` (runner.py already imports from
+      `.results`, so there is no cycle). See specs/plans/completed/8-v1-workflow-selection-reader.md.
+      Size: quick-fix. Revisit if: `select_work` is next edited or `SELECTION_FORMAT`
+      changes.
+- [ ] The first-write guard's position is unpinned (Task 2 review Minor, confirmed by the
+      final review): `test_a_new_selection_cannot_be_frozen_in_the_legacy_v1_format`
+      (`tests/test_workflow_results.py:253`, mandated verbatim by the plan) uses
+      `self.selection()`, whose `discovery_error` is `None`, so it never reaches
+      `_capture_or_validate_discovery_failure`. Moving the guard in `freeze_selection`
+      (`workflows/results.py:353`) below that call would still pass, and a refused v1
+      selection with a failed discovery would then leave a `terminal.json` behind that pins
+      later v2 selections for the attempt. Cure: a second test that takes the selection
+      from `test_fatal_discovery_without_result_preserves_frozen_prior_jobs`, switches it
+      to v1 without `superseded`, asserts the `Conflict`, and asserts `FileNotFoundError`
+      reading `call['result_ref'].rsplit('/', 1)[0] + '/terminal.json'`. Size: quick-fix.
+      Done when: that test exists and fails with the guard moved below the discovery block.
+- [ ] A non-object stored selection reports `internal_error` (final review Minor):
+      `_validate_selection` (`workflows/results.py:162`) and the first-write guard
+      (`:353`) call `selection.get('format_version')`, so a stored `selection.json` whose
+      JSON is a string, list, null or number raises `AttributeError`, which `cli.py`
+      reports as `internal_error` rather than `Conflict`/`state_conflict`. The old
+      `set(selection) != fields` check gave a `Conflict` for a string or a list of strings
+      but already raised `TypeError` for numbers, null and lists of objects, so the
+      behaviour was never uniform. Only tampered stored bytes reach it, because only
+      validated selections are written. Cure: put `not isinstance(selection, dict) or` at
+      the front of the `_validate_selection` condition and in the guard, with a test
+      per JSON type. Size: quick-fix. Revisit if: stored workflow state can be corrupted
+      by anything other than tampering, or `_validate_selection` is next edited.
+- [ ] No test reaches the no-rewrite enforcement for a stored v1 selection (final review
+      Minor): every negative test in `tests/test_workflow_selection_v1.py` is refused by
+      `_validate_selection`. None proposes a selection that passes validation but differs
+      from the stored v1 bytes (for example `{**v1, 'format_version': V2, 'superseded':
+      []}` against the stored `proof-repeat` selection), which would show that
+      `freeze_selection`'s `put_once` and read-back compare (`workflows/results.py:374`)
+      refuse it and leave the stored bytes unchanged. The guarantee holds for every storage
+      backend through `put_once`, but nothing pins it for v1. Size: quick-fix. Done when:
+      that test exists and passes against the committed plan-5 bundle copy.

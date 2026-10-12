@@ -14,6 +14,9 @@ from .completion import (validate_capture, validate_resolution_capture,
 from .contracts import WorkflowResult, workflow_path
 
 SELECTION_FORMAT = 'sec-workflow-selection-v2'
+# Plan 5 wrote v1, which has no `superseded` key. A stored v1 selection stays readable, as one that
+# superseded nothing, and is never written. Its exact bytes are pinned by the report, so it is not upgraded.
+LEGACY_SELECTION_FORMAT = 'sec-workflow-selection-v1'
 
 
 def _plain(value):
@@ -150,12 +153,15 @@ def _validate_selection(selection, context, invocation, store, objects):
     from .members import WorkflowMembers, download_times
     from .provenance import read_member
     fields = {'format_version', 'context', 'invocation', 'members', 'jobs',
-              'member_provenance', 'already_complete', 'superseded', 'discovery_call',
+              'member_provenance', 'already_complete', 'discovery_call',
               'discovery_error', 'parent_ref', 'parent_provenance', 'discovery_session',
               'required_units', 'halted', 'requested_quarters', 'directories',
               'boundary_before', 'gaps', 'discovered_sources', 'unresolved_before'}
+    formats = {LEGACY_SELECTION_FORMAT: fields, SELECTION_FORMAT: fields | {'superseded'}}
     selection = _plain(selection)
-    if set(selection) != fields or selection['format_version'] != SELECTION_FORMAT or selection['context'] != context.to_mapping() or selection['invocation'] != _plain(invocation):
+    version = selection.get('format_version')
+    if (not isinstance(version, str) or version not in formats or set(selection) != formats[version]
+            or selection['context'] != context.to_mapping() or selection['invocation'] != _plain(invocation)):
         raise Conflict('selection differs from frozen workflow intent')
     members = selection['members']
     keys = [(v['source']['period'], v['source']['source_id'], v['member_id']) for v in members]
@@ -177,7 +183,7 @@ def _validate_selection(selection, context, invocation, store, objects):
     completed_ids = [c['member']['member_id'] for c in completed]
     if len(set(completed_ids)) != len(completed_ids) or {v['member_id'] for v in members} & set(completed_ids):
         raise Conflict('selection completed captures overlap or duplicate members')
-    superseded = selection['superseded']
+    superseded = selection.get('superseded', [])  # absent only from a v1 selection, which superseded nothing
     if any(set(entry) != {'member', 'by', 'served_by', 'downloaded_at', 'by_downloaded_at'} for entry in superseded):
         raise Conflict('selection superseded entry fields differ')
     order = [(e['member']['source']['period'], e['member']['source']['source_id'], e['member']['member_id'])
@@ -343,6 +349,9 @@ def freeze_selection(context, selection, store, objects):
     try:
         _read(path, objects)
     except FileNotFoundError:
+        # First: the checks below can put_once a terminal capture, and a refused selection must leave nothing behind.
+        if selection.get('format_version') != SELECTION_FORMAT:
+            raise Conflict('new selection must use the current format')
         from .checked import _authority
         call = selection['discovery_call']
         if call is not None:
