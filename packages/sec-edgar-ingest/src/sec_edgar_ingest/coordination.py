@@ -12,7 +12,8 @@ from datetime import datetime, timedelta, timezone
 from typing import Callable, Protocol
 
 from .config import Settings
-from .models import BodyReceipt, Error, Permit, QueueTicket, RunContext, Versioned, require_number, require_text, require_utc
+from .models import (BodyReceipt, Error, Permit, QueueTicket, RunContext, Versioned, error_text, require_number,
+                     require_text, require_utc)
 from .storage.contracts import ClockUncertain, Conflict, LeaseHandle, LeaseStore, OwnershipLost, StateStore, TimeBounds
 
 JOURNAL_VERSION = "sec-lease-journal-v1"
@@ -251,9 +252,9 @@ class Coordinator:
                     self._ticket_status(latest, "finished")
             except Exception as error:
                 if current is not None:
-                    current._lose("queue cleanup outcome unknown: " + str(error))
+                    current._lose("queue cleanup outcome unknown: " + error_text(error))
                 else:
-                    self._trace("loss", owner=owner_id, reason="queue cleanup outcome unknown: " + str(error))
+                    self._trace("loss", owner=owner_id, reason="queue cleanup outcome unknown: " + error_text(error))
 
     def defer_until(self, instant: datetime) -> None:
         require_utc(instant, "not_before")
@@ -399,7 +400,7 @@ class Turn:
                     self.coordinator._trace("renew", owner=self.handle.owner_id, epoch=self.epoch,
                                            ownership_until=self.handle.ownership_until_upper.isoformat())
             except Exception as error:
-                self._lose(str(error))
+                self._lose(error_text(error))
 
     def _start_monitor(self) -> None:
         clock = self.coordinator.clock
@@ -466,11 +467,11 @@ class Turn:
                                        start_before_mono=permit.start_before_mono)
                 return permit
             except PolicyBlocked as error:
-                self._lose(str(error))
+                self._lose(error_text(error))
                 raise
             except Exception as error:
-                self._lose(str(error))
-                raise OwnershipLost(str(error)) from error
+                self._lose(error_text(error))
+                raise OwnershipLost(error_text(error)) from error
 
     def assert_current(self, permit: Permit) -> None:
         with self._lock:
@@ -483,8 +484,8 @@ class Turn:
                     raise OwnershipLost("permit dispatch window expired")
                 self._dispatched = True
             except Exception as error:
-                self._lose(str(error))
-                raise OwnershipLost(str(error)) from error
+                self._lose(error_text(error))
+                raise OwnershipLost(error_text(error)) from error
 
     def _response_policy(self, receipt: BodyReceipt, permit: Permit, callback) -> None:
         with self._lock:
@@ -496,7 +497,7 @@ class Turn:
                 callback(receipt, permit)
                 self._require_live()
             except Exception as error:
-                self._lose("response policy was not confirmed: "+str(error))
+                self._lose("response policy was not confirmed: "+error_text(error))
                 raise OwnershipLost(self.loss_reason) from error
 
     def _block(self, reason: Error) -> None:
@@ -510,7 +511,7 @@ class Turn:
                 self.coordinator._trace("policy-block", owner=self.handle.owner_id, epoch=self.epoch,
                                         reason=self._value["policy_block"])
             except Exception as error:
-                self._lose("shared policy block was not confirmed: "+str(error))
+                self._lose("shared policy block was not confirmed: "+error_text(error))
                 raise OwnershipLost(self.loss_reason) from error
 
     def complete(self, permit: Permit, drained: bool) -> None:
@@ -532,8 +533,8 @@ class Turn:
                 self.coordinator._trace("drain-pacing", owner=self.handle.owner_id, epoch=self.epoch,
                                         not_before=self._value["not_before"])
             except Exception as error:
-                self._lose(str(error))
-                raise OwnershipLost(str(error)) from error
+                self._lose(error_text(error))
+                raise OwnershipLost(error_text(error)) from error
 
     def _defer(self, instant: datetime) -> None:
         with self._lock:
@@ -544,8 +545,8 @@ class Turn:
                 self._write()
                 self.coordinator._trace("cooldown", owner=self.handle.owner_id, epoch=self.epoch, not_before=self._value["not_before"])
             except Exception as error:
-                self._lose(str(error))
-                raise OwnershipLost(str(error)) from error
+                self._lose(error_text(error))
+                raise OwnershipLost(error_text(error)) from error
 
     def _finish(self) -> None:
         with self._lock:
@@ -571,7 +572,7 @@ class Turn:
                                             unsafe_until=self._value["unsafe_until"], drained=True,
                                             clean_release=self._value["clean_release"])
             except Exception as error:
-                self._lose(str(error))
+                self._lose(error_text(error))
             finally:
                 self._closed = True
                 self._stop.set()
