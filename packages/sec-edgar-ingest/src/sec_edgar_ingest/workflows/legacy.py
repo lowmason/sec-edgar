@@ -1,7 +1,7 @@
 from ..models import to_mapping_value
 import hashlib
 from collections.abc import Mapping
-from ..models import Error, RunContext, Source, canonical_json, parse_json, require_text
+from ..models import Error, RunContext, Source, canonical_json, error_text, parse_json, require_text
 from ..state import AcquisitionState, attempt_key
 from ..storage.contracts import Conflict
 from ..worksets import encode_workset, decode_snapshot_workset
@@ -70,7 +70,8 @@ def bootstrap_legacy(store, objects):
 
     def unresolved(kind, value, error, source_id=None, **details):
         digest = hashlib.sha256(canonical_json(to_mapping_value(value))).hexdigest()
-        gaps.append(Error('legacy_member_unresolved', str(error), False, source_id,
+        message = error if isinstance(error, str) else error_text(error)
+        gaps.append(Error('legacy_member_unresolved', message, False, source_id,
                           {'record_kind': kind, 'record_sha256': digest, **details}))
 
     for row in store.scan('WorkflowMember', {}):

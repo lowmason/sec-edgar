@@ -10,7 +10,7 @@ from typing import Literal
 from .config import Settings, pin_context
 from .download import HTTP_OK, FetchError, RequestClient
 from .models import (BodyReceipt, DirectoryOutcome, Error, RunContext, Source, SourceWorkset,
-                     canonical_json, parse_json, quarter_for, quarter_value, require_text)
+                     canonical_json, error_text, parse_json, quarter_for, quarter_value, require_text)
 from .state import AcquisitionState
 from .storage.contracts import Conflict, ObjectStore
 from .urls import SEC_ORIGIN, canonical_listing_url, child_url, source_id
@@ -327,7 +327,7 @@ def discover(settings: Settings, context: RunContext, mode: Literal['quarterly',
                     receipt, error = failure.receipt, failure.error
                 else:
                     code = 'unsupported_source' if isinstance(failure, _SelectionError) else 'listing_invalid'
-                    error = Error(code, str(failure), True, None, {})
+                    error = Error(code, error_text(failure), True, None, {})
                 evidence = _persist_receipt(objects, receipt, request_context, failed=True) if receipt is not None else None
                 error = Error(error.code, error.message, error.retryable, None,
                               {**error.to_mapping()['details'], 'evidence': evidence})

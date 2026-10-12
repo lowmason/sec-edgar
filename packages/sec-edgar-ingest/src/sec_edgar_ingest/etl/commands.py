@@ -6,7 +6,7 @@ from collections import Counter
 from datetime import datetime, timezone
 
 from ..config import Settings, pin_context
-from ..models import Error, RunContext, canonical_json, parse_json, safe_relative_path
+from ..models import Error, RunContext, canonical_json, error_text, parse_json, safe_relative_path
 from ..results import log_event, result_path
 from ..state import AcquisitionState, attempt_key
 from ..worksets import decode_snapshot_workset, encode_workset
@@ -242,7 +242,7 @@ def run_publish(transformed_workset_ref: str, context: RunContext, settings: Set
                 outcome = ('state_conflict' if isinstance(error, (Conflict, OSError)) else
                            'invalid_source' if isinstance(error, ValueError) else 'internal_error')
                 result = PublicationResult(quarter, outcome, None, None, None, 0)
-                gaps.append(Error(outcome, str(error), False, None, {'quarter': quarter, 'type': type(error).__name__}))
+                gaps.append(Error(outcome, error_text(error), False, None, {'quarter': quarter, 'type': type(error).__name__}))
             else:
                 if result.outcome == 'publication_conflict':
                     gaps.append(Error('publication_conflict', 'bounded quarter publication did not commit', True, None,

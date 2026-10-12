@@ -11,7 +11,7 @@ class WorkflowMembers:
         self.store, self.objects = store, objects
 
     def inventory(self):
-        from ..models import Error
+        from ..models import Error, error_text
         valid, gaps = [], []
         for row in self.store.scan('WorkflowMember', {}):
             value = row.to_mapping()['value']
@@ -20,7 +20,7 @@ class WorkflowMembers:
                 valid.append(value)
             except (ValueError, OSError, Conflict, KeyError, TypeError) as error:
                 identity = value.get('member_id') if isinstance(value, dict) else None
-                gaps.append(Error('legacy_member_unresolved', str(error), False, None,
+                gaps.append(Error('legacy_member_unresolved', error_text(error), False, None,
                     {'record_kind': 'WorkflowMember', 'member_id': identity,
                      'record_sha256': __import__('hashlib').sha256(canonical_json(to_mapping_value(value))).hexdigest()}))
         return tuple(sorted(valid, key=lambda v: (v['source']['period'], v['source']['source_id'], v['member_id']))), tuple(gaps)

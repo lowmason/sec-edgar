@@ -11,7 +11,7 @@ from .config import Settings, pin_context
 from .download import FetchError, HTTP_OK, RequestClient
 from .models import (Binding, BodyReceipt, CommandResult, DAILY_ENVELOPE_VERSION, Error,
                      QUARTERLY_ENVELOPE_VERSION, RunContext, Snapshot, Source, SourceWorkset,
-                     ValidatedBody, Permit, canonical_json, require_hash, require_text, safe_relative_path)
+                     ValidatedBody, Permit, canonical_json, error_text, require_hash, require_text, safe_relative_path)
 from .state import AcquisitionState
 from .storage.contracts import Conflict, ObjectStore, OwnershipLost
 from .validation import ValidationError, validate_envelope
@@ -295,7 +295,7 @@ def collect(workset: SourceWorkset, context: RunContext, settings: Settings, cli
         state.begin_attempt(context)
     except (Conflict, ValueError, OSError) as error:
         outcome = 'configuration' if isinstance(error, ValueError) else 'state_conflict'
-        gaps.append(Error(outcome, str(error), False, None, {}))
+        gaps.append(Error(outcome, error_text(error), False, None, {}))
     else:
         for directory in workset.directories:
             if directory.outcome == 'discovery_failed':
@@ -315,15 +315,15 @@ def collect(workset: SourceWorkset, context: RunContext, settings: Settings, cli
                 if isinstance(exception, FetchError):
                     error, receipt = exception.error, exception.receipt
                 elif isinstance(exception, ValidationError):
-                    error, receipt = Error(exception.code, str(exception), False, source.source_id, {}), exception.receipt
+                    error, receipt = Error(exception.code, error_text(exception), False, source.source_id, {}), exception.receipt
                 else:
                     code = 'ownership_lost' if isinstance(exception, OwnershipLost) else 'state_conflict'
-                    error = Error(code, str(exception), False, source.source_id, {})
+                    error = Error(code, error_text(exception), False, source.source_id, {})
                 if not isinstance(exception, FetchError):
                     try:
                         state.record_failure(source, error)
                     except (Conflict, OSError, ValueError) as failure:
-                        gaps.append(Error('state_conflict', 'source failure checkpoint could not be recorded: '+str(failure),
+                        gaps.append(Error('state_conflict', 'source failure checkpoint could not be recorded: '+error_text(failure),
                                           False, source.source_id, {'cause': error.to_mapping()}))
                         outcome = 'state_conflict'
                 gaps.append(error)
@@ -334,7 +334,7 @@ def collect(workset: SourceWorkset, context: RunContext, settings: Settings, cli
                 override = (receipt, error) if receipt is not None else None
                 quarantined += _retain_attempt_failures(objects, state, context, source, override=override)
             except (Conflict, OSError, ValueError, KeyError) as retention:
-                gaps.append(Error('state_conflict', 'quarantine evidence could not be confirmed: '+str(retention),
+                gaps.append(Error('state_conflict', 'quarantine evidence could not be confirmed: '+error_text(retention),
                                   False, source.source_id, {}))
                 outcome = 'state_conflict'
             halt = HALTING_OUTCOMES.get(error.code) if error is not None else None
@@ -342,7 +342,7 @@ def collect(workset: SourceWorkset, context: RunContext, settings: Settings, cli
                 try:
                     run_halt = state.run_halt(context)
                 except (Conflict, ValueError, OSError) as control:
-                    gaps.append(Error('state_conflict', 'run control could not be confirmed: '+str(control), False, None, {}))
+                    gaps.append(Error('state_conflict', 'run control could not be confirmed: '+error_text(control), False, None, {}))
                     outcome = 'state_conflict'
                     break
                 if run_halt is not None:
@@ -362,7 +362,7 @@ def collect(workset: SourceWorkset, context: RunContext, settings: Settings, cli
                         accepted[source.source_id] = _verify_snapshot(
                             state.snapshot(source.source_id, binding.snapshot_sha256), source, objects)
                 except (Conflict, OSError, ValueError) as error:
-                    gaps.append(Error('state_conflict', str(error), False, source.source_id, {}))
+                    gaps.append(Error('state_conflict', error_text(error), False, source.source_id, {}))
                     failed += 1
         if len(accepted) == len(workset.members) and workset.discovery_complete and not gaps:
             try:
@@ -380,7 +380,7 @@ def collect(workset: SourceWorkset, context: RunContext, settings: Settings, cli
                 outcome = 'success' if workset.members else 'no_new_sources'
             except (Conflict, OSError, ValueError) as error:
                 outcome = 'state_conflict'
-                gaps.append(Error(outcome, str(error), False, None, {}))
+                gaps.append(Error(outcome, error_text(error), False, None, {}))
     downloaded = len(fetched)
     result = CommandResult(context, outcome, source_ref, snapshot_ref, len(workset.members),
                            downloaded, len(accepted)-downloaded, len(workset.members)-len(accepted), failed, quarantined,

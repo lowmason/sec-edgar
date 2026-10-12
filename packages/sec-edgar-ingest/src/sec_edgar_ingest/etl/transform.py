@@ -16,7 +16,7 @@ import pyarrow.parquet as pq
 
 from ..config import Settings, pin_context
 from ..models import (BodyReceipt, Error, IMAGE_PATTERN, RunContext, Snapshot, Source,
-                      canonical_json, parse_json, quarter_for)
+                      canonical_json, error_text, parse_json, quarter_for)
 from ..state import AcquisitionState
 from ..storage.contracts import BoundaryObserver, Conflict, FILE_CHUNK_BYTES, ObjectStore, observe
 from ..validation import validate_envelope
@@ -201,7 +201,7 @@ def _write_rows(raw, root, source, snapshot, context):
 
 
 def _failure(error, source, snapshot, context) -> Error:
-    return Error('state_conflict' if isinstance(error, Conflict) else 'transform_failed', str(error),
+    return Error('state_conflict' if isinstance(error, Conflict) else 'transform_failed', error_text(error),
                  False, source.source_id, {'line_number': getattr(error, 'line_number', None),
                  'reason': getattr(error, 'reason', str(error)), 'raw_sha256': snapshot.sha256,
                  'parser_version': context.parser_version, 'schema_version': context.schema_version})
