@@ -112,3 +112,17 @@
       fixture-only `--state-dir` makes `candidates` print `[]` with exit 0. Size:
       quick-fix. Revisit if: an operator reports an empty `candidates` listing against
       a wrong directory, or Stage 6 changes how operator commands open stores.
+- [ ] Rollback invariants (split 2026-10-11 from the ticked "rollback/history/candidates
+      coverage and invariants" item, whose tests landed via /deferred; its Done-when did
+      not cover these): (1) `QuarterRollback.__post_init__` (`etl/contracts.py`) does not
+      require `to_manifest_ref == generation_base(quarter, to_generation_id) +
+      '/manifest.json'`, so a record can name a manifest outside its target generation;
+      (2) `etl/rollback.py` builds the pointer value inline at the `commit_pointer` call,
+      while `publication.pointer_value` builds the same shape from a `Candidate`, so
+      sharing one builder needs a capture-based form; (3) `rollback` returns `unchanged`
+      when the target is already active, before the from-generation and ancestry
+      checks, whereas Stage 5 spec §5
+      (specs/completed/sec-filing-index-ingestion-stage-5-spec.md) orders those checks
+      first. Size: quick-fix. Done when: (1) is enforced with a test, (2) uses one
+      shared pointer-value builder, and (3) is either reordered to match §5 or recorded
+      in §5 and the runbook as intended idempotence.
