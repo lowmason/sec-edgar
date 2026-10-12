@@ -19,6 +19,7 @@ Spec-less plan, from `/deferred` on 2026-10-11 (requirements = deferred item "Ga
 Two design points settled during planning:
 
 - **The pending side is dated by its bytes, not by itself.** A member bound without downloading has no receipt of its own. That happens to a non-refresh `backfill` member that `collect_member` binds through `reusable_snapshot`. So the pending side's time is the newest own download of its pinned hash by any retained member of the source. This also keeps A → (A, B) → A correct: once the SEC serves A again, A's newest download is later than (A, B)'s, so the gate stands. The superseding side always uses the completed member's own download.
+- **A member this attempt discovered is never superseded.** A retry of the same run reuses its discovery session, keyed by run id rather than attempt id (`state.py` `_run_provenance`), and so reuses its member ids. `_validate_selection` requires every discovered projection to be selected or already complete. Dropping one would therefore fail every retry of that run with exit 9. Verified 2026-10-11: a retry attempt re-selects the gated member's exact id. The retry re-stages the stale candidate once instead.
 - **Only members that merely await publication are superseded.** `evaluate_member` turns corrupt evidence into a `state_conflict` gap instead of raising. So the drop requires that a member's evaluation gaps all be `publication_pending`, and that it has no repair obligations. Otherwise a corrupt member would vanish from the run instead of failing with exit 9. The gated member and the reuse-bound backfill member both produce only `publication_pending` (both are pinned and processed).
 - **The validator checks only time-invariant facts.** `read_workflow_result` → `_validate_report` → `_validate_selection` runs on every later read of a stored report. Validation therefore checks immutable evidence only: bindings, promotion receipts, the completion receipt without the mutable outstanding-repair check, and that the recorded pending-side time is one of the bytes' recorded downloads. It never re-checks "newest" or "currently complete".
 
@@ -49,14 +50,14 @@ Add `-k <substring>` to select one test. Reconcile workflow tests take 30–90 s
 | File | Change | Task |
 |---|---|---|
 | `packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/members.py` | New `member_download`, `pinned_downloads`, `supersession`; `completed(..., repairs=)` | 1 |
-| `packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/runner.py` | `select_work` drops superseded members and freezes them | 1 |
+| `packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/runner.py` | `select_work` drops superseded members and freezes them (1); `source_revert_gaps` validates with a per-generation cache (3) | 1, 3 |
 | `packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/results.py` | `SELECTION_FORMAT` v2; `_validate_selection` validates `superseded` | 1 |
 | `packages/sec-edgar-ingest/tests/test_workflow_results.py` | Hand-built selections become v2 with `superseded: []` | 1 |
-| `packages/sec-edgar-ingest/tests/test_reconcile_workflow.py` | Gated-then-reverted fixture; #11 runner cases | 1, 3 |
+| `packages/sec-edgar-ingest/tests/test_reconcile_workflow.py` | Gated-then-reverted, retry and corrupt-member fixtures; superseded candidates; #11 runner cases | 1, 2, 3 |
 | `packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/approval.py` | New `superseding_download`; `approve` refusal | 2 |
 | `packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/history.py` | `withdrawal_candidates` status `superseded` | 2 |
 | `packages/sec-edgar-ingest/tests/support_reconcile.py` | `run_phase` fails with diagnostics when no report | 3 |
-| `docs/runbooks/sec-edgar-reconciliation-approval.md` | `superseded` status; drop the "known, deferred limitation" | 4 |
+| `docs/runbooks/sec-edgar-reconciliation-approval.md` | `superseded` status; drop the "known, deferred limitation"; conditional re-approval after rollback | 4 |
 
 ---
 
@@ -64,7 +65,7 @@ Add `-k <substring>` to select one test. Reconcile workflow tests take 30–90 s
 
 **Files:**
 - Modify: `packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/members.py` (imports; `WorkflowMembers.completed` gains `repairs=True`; append three functions)
-- Modify: `packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/runner.py:140-157` (retained loop), `:189` (`combined`), `:211-223` (returned selection)
+- Modify: `packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/runner.py:145-157` (retained loop), `:189` (`combined`, after the `current` loop), `:211-223` (returned selection)
 - Modify: `packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/results.py:16` (`SELECTION_FORMAT`), `:149-176` (`_validate_selection`)
 - Modify: `packages/sec-edgar-ingest/tests/test_workflow_results.py:73`, `:322` (hand-built selections)
 - Test: `packages/sec-edgar-ingest/tests/test_reconcile_workflow.py` (class `SupersessionWorkflowTests`)
@@ -122,12 +123,46 @@ Append to `class SupersessionWorkflowTests` (after `test_revert_to_older_bytes_i
         entry = selection['superseded'][0]
         self.assertEqual(EtlState(h.store).pointer('2026Q3'), base)
         self.assertEqual(self.names(h, '2026Q3'), ['A', 'B'])
-        forged = {**selection, 'superseded': [{**entry, 'by_downloaded_at': entry['downloaded_at']}]}
-        with self.assertRaisesRegex(Conflict, 'superseded'):
-            _validate_selection(forged, report.context, selection['invocation'], h.store, h.objects)
+        # Forgeries: a superseding download no later than the pending one, and a pending time never recorded.
+        for label, forgery in (('not later', {'by_downloaded_at': entry['downloaded_at']}),
+                               ('unrecorded', {'downloaded_at': '2000-01-01T00:00:00+00:00'})):
+            forged = {**selection, 'superseded': [{**entry, **forgery}, *selection['superseded'][1:]]}
+            with self.subTest(label), self.assertRaisesRegex(Conflict, 'lacks its later completed download'):
+                _validate_selection(forged, report.context, selection['invocation'], h.store, h.objects)
+
+    def test_a_retry_keeps_its_own_discovered_member_even_when_superseded(self):
+        h = self.harness((A, B))
+        self.assertEqual(self.run_phase(h, 'backfill', 'base')[0], 0)
+        self.assertEqual(self.run_phase(h, 'reconcile', 'gate', (A,))[0], 10, h.calls[-1])
+        self.assertEqual(self.run_phase(h, 'reconcile', 'revert', (A, B))[0], 10, h.calls[-1])
+        # A retry of the gated run reuses its discovery session, so it discovers the same gated member again;
+        # dropping it would leave a discovered projection unselected and fail every retry with exit 9.
+        h.pack = self.pack((A,), (X, Y))
+        code, message = h.invoke('reconcile', run='gate', attempt='b')
+        self.assertEqual((code, message['outcome']), (10, 'awaiting_approval'), h.calls[-1])
+
+    def test_a_corrupt_pending_member_is_not_superseded(self):
+        h = self.harness((A, B))
+        self.assertEqual(self.run_phase(h, 'backfill', 'base')[0], 0)
+        code, _, gated = self.run_phase(h, 'reconcile', 'gate', (A,))
+        self.assertEqual(code, 10, h.calls[-1])
+        self.assertEqual(self.run_phase(h, 'reconcile', 'revert-1', (A, B))[0], 10, h.calls[-1])
+        held, = [member for member in gated.members if member.outcome == 'awaiting_approval']
+        # Corrupt the gated bytes' Processing identity: evaluate_member now reports state_conflict.
+        key = processing_key(held.source.source_id, sha((A,)), held.parser_version, held.schema_version)
+        row = h.store.get('Processing', key)
+        h.store.replace('Processing', key, {**row.value, 'processing_key': 'f' * 64}, row.version)
+        code, message = h.invoke('reconcile', run='revert-2')
+        self.assertNotEqual(code, 0, h.calls[-1])
+        selection = parse_json(h.objects.read('runs/sec/revert-2/reconcile/a/selection.json'))
+        self.assertNotIn(held.member_id, [entry['member']['member_id'] for entry in selection['superseded']])
 ```
 
-Also add `from datetime import datetime` to the imports.
+Also add to the imports: `from datetime import datetime`, `from sec_edgar_ingest.etl.contracts import processing_key`, and `Y` to the existing `from support_reconcile import …` line.
+
+The last two tests pass before the fix (nothing is superseded yet). They guard the two exclusions in Step 4. After Step 4, prove each can fail, then restore with the exact reverse edit:
+- Remove `value['member_id'] not in discovered and` from the comprehension. `test_a_retry_keeps_…` must fail with exit 9 and "selection omitted an exact discovered member projection" in `h.calls[-1]['stderr']`.
+- Remove `and {gap.code for gap in evaluated.gaps} == {'publication_pending'}`. `test_a_corrupt_pending_member_…` must fail, because the corrupt member is superseded and the run exits 0.
 
 - [ ] **Step 2: Run it to verify it fails**
 
@@ -136,7 +171,7 @@ Expected: FAIL at the `revert-2` assertion, because the run is still `(10, 'awai
 
 - [ ] **Step 3: Add the download-time functions to `workflows/members.py`**
 
-Change the imports at the top of `members.py` to:
+Replace only the first four lines of `members.py` (`import hashlib` through the `from ..models import …` line; keep the `..storage.contracts`, `.contracts` and `.provenance` imports below them) with:
 
 ```python
 import hashlib
@@ -240,20 +275,28 @@ Replace the retained loop (currently lines 145–157, `pending_before, unresolve
         pending_before.append(value)
         if not evaluated.complete:
             unresolved.append((value, evaluated))
+```
+
+`unresolved_ids_before` is now computed after discovery (next block); it is only read when building the returned selection.
+
+Replace the `combined` line (currently line 189, right after the `current` loop) with:
+
+```python
     # A later completed download of the same source supersedes an older member that only awaits publication.
     # Repair obligations and corrupt evidence (state_conflict gaps) stay exact, so they still fail the run.
+    # So does this attempt's own discovery: a retry of a run reuses its discovery session and member ids,
+    # and every discovered member must be selected (results._validate_selection).
+    discovered = {value['member_id'] for value in current}
     superseded = [entry for value, evaluated in unresolved
-                  if not evaluated.obligations and {gap.code for gap in evaluated.gaps} == {'publication_pending'}
+                  if value['member_id'] not in discovered and not evaluated.obligations
+                  and {gap.code for gap in evaluated.gaps} == {'publication_pending'}
                   for entry in (supersession(value, finished, retained, store),) if entry is not None]
     dropped = {entry['member']['member_id'] for entry in superseded}
     unresolved_ids_before = {value['source']['source_id'] for value, _ in unresolved if value['member_id'] not in dropped}
-```
-
-Replace the `combined` line (currently line 189) with:
-
-```python
     combined = {value['member_id']: value for value in (*pending_before, *current) if value['member_id'] not in dropped}
 ```
+
+`member_download` and `pinned_downloads` are deliberately not wrapped in the retained loop's `try`. A corrupt `Binding` or `PromotionReceipt` row for any same-source member raises out of `select_work` (exit 9, no report) instead of becoming a `legacy_member_unresolved` gap. That fails closed, which this plan prefers to guessing a download order.
 
 In the returned selection dict, change `'format_version': 'sec-workflow-selection-v1'` to `'format_version': 'sec-workflow-selection-v2'`, and add after `'already_complete': complete,`:
 
@@ -268,16 +311,17 @@ In `results.py`, set `SELECTION_FORMAT = 'sec-workflow-selection-v2'`. In `_vali
 
 ```python
     superseded = selection['superseded']
+    if any(set(entry) != {'member', 'by', 'downloaded_at', 'by_downloaded_at'} for entry in superseded):
+        raise Conflict('selection superseded entry fields differ')
     order = [(e['member']['source']['period'], e['member']['source']['source_id'], e['member']['member_id'])
              for e in superseded]
     dropped = {key[2] for key in order}
     if order != sorted(order) or len(dropped) != len(order) or dropped & ({v['member_id'] for v in members} | set(completed_ids)):
         raise Conflict('selection superseded members overlap or are unordered')
-    registry = WorkflowMembers(store, objects)
-    retained, _ = registry.inventory()
+    if superseded:  # the inventory scan is paid only by selections that superseded something
+        registry = WorkflowMembers(store, objects)
+        retained, _ = registry.inventory()
     for entry in superseded:
-        if set(entry) != {'member', 'by', 'downloaded_at', 'by_downloaded_at'}:
-            raise Conflict('selection superseded entry fields differ')
         member, by = entry['member'], entry['by']
         read_member(member, store, objects)
         served, later = (datetime.fromisoformat(entry[name]) for name in ('downloaded_at', 'by_downloaded_at'))
@@ -288,13 +332,14 @@ In `results.py`, set `SELECTION_FORMAT = 'sec-workflow-selection-v2'`. In `_vali
             raise Conflict('selection superseded member lacks its later completed download')
 ```
 
-Add these to the local imports at the top of `_validate_selection`. They are local because `runner.py` imports `results.py` at module level:
+Add these to the local imports at the top of `_validate_selection`, following that function's existing local-import style (`datetime` is already imported at module level, `results.py:6`):
 
 ```python
-    from datetime import datetime
     from .members import WorkflowMembers, member_download, pinned_downloads
     from .provenance import read_member
 ```
+
+A discovered member of the current attempt can never appear in `superseded`. `select_work` excludes it, and the existing "selection omitted an exact discovered member projection" check would reject a selection that dropped one, because `superseded` must not overlap `members`.
 
 The `not evaluated.obligations` guard in `select_work` (Step 4) has no test of its own; this is deliberate. It keeps repair checks exact (Stage 5 spec §4), and a member with an outstanding repair obligation that is also superseded needs a publish-repair fixture out of proportion to this plan. Reviewers should not block on it.
 
@@ -307,11 +352,13 @@ At line 73 and line 322, change `'format_version': 'sec-workflow-selection-v1'` 
 Run, from the repository root:
 
 ```bash
-uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/network_guard.py discover -s packages/sec-edgar-ingest/tests -p 'test_reconcile_workflow.py' -v
+uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/network_guard.py discover -s packages/sec-edgar-ingest/tests -p 'test_reconcile_*.py' -v
 uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/network_guard.py discover -s packages/sec-edgar-ingest/tests -p 'test_workflow_*.py' -v
 ```
 
-Expected: all pass, including the existing `test_superseded_gated_member_completes_on_the_following_reconcile` and `test_revert_to_older_bytes_is_reported_not_published`. If the new test's `revert-2` outcome is a different completed outcome (for example `success`), stop and report it rather than loosening the assertion: `unchanged` is the expected reading, because no quarter's bytes change.
+Then run the two mutation proofs from Step 1 and restore the source exactly.
+
+Expected: all pass, including `test_reconcile_acceptance.py` and the existing `test_superseded_gated_member_completes_on_the_following_reconcile` and `test_revert_to_older_bytes_is_reported_not_published`. If the new test's `revert-2` outcome is a different completed outcome (for example `success`), stop and report it rather than loosening the assertion: `unchanged` is the expected reading, because no quarter's bytes change.
 
 - [ ] **Step 8: Commit**
 
@@ -329,7 +376,8 @@ git commit -m "fix(workflows): let a later completed download supersede older pe
 
 **Interfaces:**
 - Consumes: nothing from Task 1. It reads the mutable source row (`latest_downloaded_snapshot`, `latest_received_at`), which suits a live listing and a live refusal.
-- Produces: `etl.approval.superseding_download(candidate: Candidate, store) -> dict[str, str] | None`. It returns `{'latest_observed_sha256', 'latest_observed_at'}` when the source's latest download is strictly later than the candidate's membership snapshot receipt **and** has different bytes; otherwise `None`.
+- Produces: `etl.approval.superseding(candidate: Candidate, observed: Mapping | None) -> dict[str, str] | None`. `observed` is the source's SourceState value. It returns `{'latest_observed_sha256', 'latest_observed_at'}` when the source's latest download is strictly later than the candidate's membership snapshot receipt **and** has different bytes; otherwise `None`.
+- Produces: `etl.approval.superseding_download(candidate: Candidate, store) -> dict[str, str] | None`, which is `superseding` applied to the current SourceState row (used by `approve`).
 - Produces: `candidates` status value `superseded` (in place of `pending` only), and `approve` → `approval_stale` (exit 11) with details `quarterly_sha256`, `latest_observed_sha256`, `latest_observed_at`.
 
 - [ ] **Step 1: Write the failing test**
@@ -370,32 +418,38 @@ Append to `class SupersessionWorkflowTests`:
 Run: `uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/network_guard.py discover -s packages/sec-edgar-ingest/tests -p 'test_reconcile_workflow.py' -k moved_on -v`
 Expected: FAIL: `('pending', …) != ('superseded', …)`.
 
-- [ ] **Step 3: Add `superseding_download` and the `approve` refusal**
+- [ ] **Step 3: Add `superseding`, `superseding_download` and the `approve` refusal**
 
 In `etl/approval.py`, add to the imports:
 
 ```python
+from collections.abc import Mapping
+
 from ..state import AcquisitionState
 ```
 
 Add after `_now()`:
 
 ```python
-def superseding_download(candidate: Candidate, store) -> dict[str, str] | None:
-    """The source's latest download when it is strictly later than, and differs from, the candidate's membership.
+def superseding(candidate: Candidate, observed: Mapping[str, object] | None) -> dict[str, str] | None:
+    """The source's latest download (its SourceState value) when strictly later than, and different from,
+    the candidate's membership snapshot.
 
     Such a candidate withdraws rows on the evidence of bytes the SEC no longer serves.
     """
-    membership = candidate.manifest.membership_source
-    row = AcquisitionState(store).get_source(membership.source.source_id)
-    if row is None:
+    if observed is None:
         return None
-    value = row.to_mapping()['value']
-    latest, observed = value['latest_downloaded_snapshot'], value['latest_received_at']
-    if (latest is None or observed is None or latest == membership.snapshot.sha256
-            or datetime.fromisoformat(observed) <= membership.snapshot.received_at):
+    membership = candidate.manifest.membership_source.snapshot
+    latest, at = observed['latest_downloaded_snapshot'], observed['latest_received_at']
+    if latest is None or at is None or latest == membership.sha256 or datetime.fromisoformat(at) <= membership.received_at:
         return None
-    return {'latest_observed_sha256': latest, 'latest_observed_at': observed}
+    return {'latest_observed_sha256': latest, 'latest_observed_at': at}
+
+
+def superseding_download(candidate: Candidate, store) -> dict[str, str] | None:
+    """`superseding` against the source's current SourceState row."""
+    row = AcquisitionState(store).get_source(candidate.manifest.membership_source.source.source_id)
+    return superseding(candidate, None if row is None else row.to_mapping()['value'])
 ```
 
 In `approve`, directly after the `if active != candidate.manifest.base_generation_id:` block (the `approval_stale` return for a moved base) and before `stored = _store_approval(pending, candidate, objects)`, insert:
@@ -413,22 +467,28 @@ In `approve`, directly after the `if active != candidate.manifest.base_generatio
 In `etl/history.py`, add this import (no cycle: `etl/approval.py` does not import `history`):
 
 ```python
-from .approval import superseding_download
+from .approval import superseding
 ```
 
-Replace the status expression (currently lines 66–67):
+Replace the status expression and the source-row read below it (currently lines 66–70):
 
 ```python
         status = ('active' if active == manifest.generation_id
                   else 'pending' if active == manifest.base_generation_id else 'stale')
+        source = manifest.membership_source
+        observed = acquisition.get_source(source.source.source_id)
+        observed = None if observed is None else observed.to_mapping()['value']
 ```
 
-with:
+with the same read moved first, so `status` and `latest_observed_*` come from one row:
 
 ```python
+        source = manifest.membership_source
+        observed = acquisition.get_source(source.source.source_id)
+        observed = None if observed is None else observed.to_mapping()['value']
         status = ('active' if active == manifest.generation_id
                   else 'stale' if active != manifest.base_generation_id
-                  else 'superseded' if superseding_download(candidate, state.store) is not None else 'pending')
+                  else 'superseded' if superseding(candidate, observed) is not None else 'pending')
 ```
 
 - [ ] **Step 5: Run the tests to verify they pass**
@@ -439,7 +499,9 @@ uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-i
 uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/network_guard.py discover -s packages/sec-edgar-ingest/tests -p 'test_etl_history.py' -v
 ```
 
-Expected: all pass. The acceptance test's listings (`pending`, `stale`, `active`) are unchanged, because its pending review happens before any later download. `GateFixture` tests record no acquisition state, so `superseding_download` returns `None` there.
+Expected: all pass. The acceptance test's listings (`pending`, `stale`, `active`) are unchanged, because its pending review happens before any later download. `GateFixture` tests record no acquisition state, so `superseding` sees `observed is None` there.
+
+Prove the refusal can fail: temporarily delete the three-line `superseded = …` / `if superseded is not None:` / `return …` block from `approve`. The test must fail with `('success', …) != ('approval_stale', …)`. Then restore the block exactly.
 
 - [ ] **Step 6: Commit**
 
@@ -499,7 +561,15 @@ In `runner.py`, delete `from ..etl.manifest import read_manifest` (its only use 
 from ..etl.reader import capture_from_pointer, capture_quarter, validated_manifest
 ```
 
-In `source_revert_gaps`, replace `manifest = read_manifest(capture, objects)` with `manifest = validated_manifest(capture, objects)`.
+In `source_revert_gaps`, change `acquisition, state, found = AcquisitionState(store), EtlState(store), {}` to `acquisition, state, found, manifests = AcquisitionState(store), EtlState(store), {}, {}`. Then replace `manifest = read_manifest(capture, objects)` with a per-generation cache, so a run with many members in one quarter verifies that generation's files once:
+
+```python
+            if capture.generation_id not in manifests:
+                manifests[capture.generation_id] = validated_manifest(capture, objects)
+            manifest = manifests[capture.generation_id]
+```
+
+A corrupt active generation now raises `Conflict` here, after the members were processed, so the run writes no report and exits 9. That fails closed on purpose: `evaluate_member` already validates the same generation through `validated_manifest`.
 
 - [ ] **Step 4: Assert the full revert-gap evidence and the daily refresh flip**
 
@@ -517,7 +587,9 @@ In `test_revert_to_older_bytes_is_reported_not_published`, after the existing `g
 
 In `test_selection_requires_refresh_exactly_for_reconcile`, change `for command in ('backfill', 'reconcile'):` to `for command in ('backfill', 'daily', 'reconcile'):`. (A flipped daily discovery was verified on 2026-10-11 to give exit 9 `state_conflict` with "refresh differs from its workflow command".)
 
-These two additions characterize existing behavior. Prove each can fail: temporarily swap `first.isoformat()` and `active.snapshot.received_at.isoformat()` in `source_revert_gaps`'s details (the ordering assertion fails), then restore it with the exact reverse edit.
+These two additions characterize existing behavior. Prove each can fail, then restore each change with its exact reverse edit:
+- In `source_revert_gaps`'s details, swap `first.isoformat()` and `active.snapshot.received_at.isoformat()`. The ordering assertion fails.
+- In `results.py` `_validate_selection`, change `call['intent']['refresh'] is not (context.command == 'reconcile')` to `call['intent']['refresh'] is not (context.command in ('reconcile', 'daily'))`. The `daily` subtest fails, because its flipped (refreshing) discovery is now accepted.
 
 - [ ] **Step 5: Make `run_phase` fail with diagnostics**
 
@@ -552,7 +624,7 @@ git commit -m "test(workflows): validate revert detection reads and pin revert-g
 ### Task 4: Operator documentation
 
 **Files:**
-- Modify: `docs/runbooks/sec-edgar-reconciliation-approval.md` (the `status` list, "Before approving" step 3, the `approval_stale` row)
+- Modify: `docs/runbooks/sec-edgar-reconciliation-approval.md` (the `status` list, "Before approving" step 3, the `approval_stale` row, and the two re-approval-after-rollback statements at lines 65 and 84)
 
 - [ ] **Step 1: Update the status list**
 
@@ -568,7 +640,7 @@ with:
 
 ```markdown
   - `pending`: its base is active and the source still serves the candidate's bytes;
-  - `superseded`: its base is active, but a later download of the source has different bytes. `approve` refuses it; the next reconcile clears the run;
+  - `superseded`: its base is active, but a later download of the source has different bytes. `approve` refuses it. Once a later download of the source completes, the following run drops the superseded gated member;
   - `active`;
   - `stale`: the base moved on, or an approved candidate was later superseded;
 ```
@@ -584,7 +656,7 @@ Replace step 3:
 with:
 
 ```markdown
-3. `latest_observed_sha256` equals `quarterly_sha256`. A later download with different bytes lists the candidate as `superseded`, and `approve` returns `approval_stale` for it. When the SEC goes back to the base's bytes, the run that downloads them still reports `awaiting_approval`. The next run drops the superseded gated member and completes.
+3. `latest_observed_sha256` equals `quarterly_sha256`. A later download with different bytes lists the candidate as `superseded`, and `approve` returns `approval_stale` for it. When the SEC goes back to the base's bytes, the run that downloads them still reports `awaiting_approval`; once that download has completed, the following run drops the superseded gated member. (A later download that is quarantined, or that itself withdraws rows, does not clear it.)
 ```
 
 - [ ] **Step 3: Update the `approval_stale` row**
@@ -601,12 +673,38 @@ with:
 | `approval_stale` | 11 | The base moved, or a later download supersedes the candidate (`error.details` names `latest_observed_sha256`). Reconcile, then review the current candidates. |
 ```
 
-- [ ] **Step 4: Check the runbook no longer calls the limitation deferred**
+- [ ] **Step 4: Make re-approval after a rollback conditional**
 
-Run: `grep -n "known, deferred limitation" docs/runbooks/sec-edgar-reconciliation-approval.md`
+Task 2 makes `approve` refuse a `superseded` candidate, so re-approval after a rollback to the candidate's base now depends on the source still serving the candidate's bytes. In the paragraph after the Approve table (line 65), replace:
+
+```markdown
+If the quarter is later rolled back to that candidate's base, a further `approve` activates the candidate under the stored approval; the later operator's name is not recorded.
+```
+
+with:
+
+```markdown
+If the quarter is later rolled back to that candidate's base, a further `approve` activates the candidate under the stored approval, unless a later download of the source has different bytes (the candidate then lists as `superseded`, and `approve` returns `approval_stale`); the later operator's name is not recorded.
+```
+
+In the rollback section (line 84), replace:
+
+```markdown
+Rolling back to an approved candidate's base shows it `pending` again; `approve` re-activates it under the original stored approval, and the new `--approver` is not recorded.
+```
+
+with:
+
+```markdown
+Rolling back to an approved candidate's base shows it `pending` again, or `superseded` if a later download of the source has different bytes. From `pending`, `approve` re-activates it under the original stored approval, and the new `--approver` is not recorded.
+```
+
+- [ ] **Step 5: Check the runbook no longer calls the limitation deferred or re-approval unconditional**
+
+Run: `grep -n "known, deferred limitation\|; \`approve\` re-activates it" docs/runbooks/sec-edgar-reconciliation-approval.md`
 Expected: no output.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
 git add docs/runbooks/sec-edgar-reconciliation-approval.md
@@ -626,4 +724,5 @@ git commit -m "docs: document superseded candidates and the cleared gated-then-r
 3. Run writing-plans' Plan Completion Protocol. In its deferred-items step:
    - Tick the item "Gated-then-reverted member cannot clear" as `→ done in plan 7`.
    - Tick "Review Minor, reconcile/workflow coverage (T3/T4/T7)" as `→ trigger fired; runner-local cases done in plan 7, remainder re-deferred under plan 7`. Append one new item for what Task 3 did not do: the refresh/command check in `workflows/results.py` running only when `discovery_call` is present; spec R10 "a later download needs its own approval" covered at library level only (`tests/test_etl_approval.py`), not in `tests/test_reconcile_acceptance.py`; a revert in a quarter gated by another member of the same run is reported only on the next run; long unwrapped lines in `packages/sec-edgar-ingest/README.md`. Size: quick-fix. Revisit if: those modules are next edited or a regression slips through them.
+   - Append ` → note: plan 7 narrows this flow (approve now refuses a superseded candidate after a rollback)` to the last line of the still-open item "Capture who re-activates an approved candidate", so Stage 6 reads the current behaviour. Do not otherwise edit that item.
 4. Hand integration (merge, PR or cleanup) back to the owner. Do not merge, push or deploy without that decision.
