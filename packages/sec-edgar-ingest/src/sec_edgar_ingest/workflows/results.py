@@ -13,7 +13,7 @@ from .completion import (validate_capture, validate_resolution_capture,
                          validate_member_provenance)
 from .contracts import WorkflowResult, workflow_path
 
-SELECTION_FORMAT = 'sec-workflow-selection-v1'
+SELECTION_FORMAT = 'sec-workflow-selection-v2'
 
 
 def _plain(value):
@@ -146,8 +146,10 @@ def _validate_selection(selection, context, invocation, store, objects):
     from ..discovery import quarter_span
     from .checked import _authority
     from .completion import validate_parent_provenance, validate_discovery_session
+    from .members import WorkflowMembers, member_download, pinned_downloads
+    from .provenance import read_member
     fields = {'format_version', 'context', 'invocation', 'members', 'jobs',
-              'member_provenance', 'already_complete', 'discovery_call',
+              'member_provenance', 'already_complete', 'superseded', 'discovery_call',
               'discovery_error', 'parent_ref', 'parent_provenance', 'discovery_session',
               'required_units', 'halted', 'requested_quarters', 'directories',
               'boundary_before', 'gaps', 'discovered_sources', 'unresolved_before'}
@@ -174,6 +176,26 @@ def _validate_selection(selection, context, invocation, store, objects):
     completed_ids = [c['member']['member_id'] for c in completed]
     if len(set(completed_ids)) != len(completed_ids) or {v['member_id'] for v in members} & set(completed_ids):
         raise Conflict('selection completed captures overlap or duplicate members')
+    superseded = selection['superseded']
+    if any(set(entry) != {'member', 'by', 'downloaded_at', 'by_downloaded_at'} for entry in superseded):
+        raise Conflict('selection superseded entry fields differ')
+    order = [(e['member']['source']['period'], e['member']['source']['source_id'], e['member']['member_id'])
+             for e in superseded]
+    dropped = {key[2] for key in order}
+    if order != sorted(order) or len(dropped) != len(order) or dropped & ({v['member_id'] for v in members} | set(completed_ids)):
+        raise Conflict('selection superseded members overlap or are unordered')
+    if superseded:  # the inventory scan is paid only by selections that superseded something
+        registry = WorkflowMembers(store, objects)
+        retained, _ = registry.inventory()
+    for entry in superseded:
+        member, by = entry['member'], entry['by']
+        read_member(member, store, objects)
+        served, later = (datetime.fromisoformat(entry[name]) for name in ('downloaded_at', 'by_downloaded_at'))
+        # Stored reports are re-validated on every read, so check only evidence that never changes.
+        if (by['source'] != member['source'] or later <= served
+                or registry.completed(by, context.parser_version, context.schema_version, repairs=False) is None
+                or member_download(by, store) != later or served not in pinned_downloads(member, retained, store)):
+            raise Conflict('selection superseded member lacks its later completed download')
     if type(selection['halted']) is not bool:
         raise Conflict('selection halted marker is not boolean')
     for value in selection['directories']:

@@ -3,18 +3,23 @@ from network_guard import install
 install()
 
 import unittest
+from datetime import datetime
 from unittest.mock import patch
 
 from support_approval import GateFixture, row
 from support_etl import etl_context
-from support_reconcile import A, B, C, X, ReconcileFixture
+from support_reconcile import A, B, C, X, Y, ReconcileFixture
 from support_reconcile import sha
 from sec_edgar_ingest.etl.approval import approve
+from sec_edgar_ingest.etl.contracts import processing_key
 from sec_edgar_ingest.etl.manifest import read_manifest
 from sec_edgar_ingest.etl.state import EtlState
 from sec_edgar_ingest.etl.transform import transform_member
+from sec_edgar_ingest.models import parse_json
+from sec_edgar_ingest.storage.contracts import Conflict
 from sec_edgar_ingest.workflows.checked import Dispatcher
 from sec_edgar_ingest.workflows.completion import accounts_for
+from sec_edgar_ingest.workflows.results import _validate_selection
 
 
 class ReconcileWorkflowTests(ReconcileFixture):
@@ -147,6 +152,73 @@ class SupersessionWorkflowTests(ReconcileFixture):
                          ('2026Q3', sha((A, B)), sha((A, B, C))))
         self.assertEqual(EtlState(h.store).pointer('2026Q3'), active)
         self.assertEqual(self.names(h, '2026Q3'), ['A', 'B', 'C'])
+
+    def test_gated_then_reverted_member_is_superseded_by_the_later_download(self):
+        h = self.harness((A, B))
+        self.assertEqual(self.run_phase(h, 'backfill', 'base')[0], 0)
+        base = EtlState(h.store).pointer('2026Q3')
+        code, _, gated = self.run_phase(h, 'reconcile', 'gate', (A,))
+        self.assertEqual((code, gated.outcome), (10, 'awaiting_approval'), h.calls[-1])
+        # A plain backfill binds its member to the gated bytes by reuse: pending too, with no download receipt.
+        code, _, plain = self.run_phase(h, 'backfill', 'plain', (A,))
+        self.assertEqual((code, plain.outcome), (10, 'awaiting_approval'), h.calls[-1])
+        # The SEC reverts to the base bytes; that download completes during this run, so the gate still holds it.
+        code, _, first = self.run_phase(h, 'reconcile', 'revert-1', (A, B))
+        self.assertEqual((code, first.outcome), (10, 'awaiting_approval'), h.calls[-1])
+        code, _, report = self.run_phase(h, 'reconcile', 'revert-2', (A, B))
+        self.assertEqual((code, report.outcome, report.counts['awaiting_approval_quarters']), (0, 'unchanged', 0),
+                         h.calls[-1])
+        self.assertEqual(report.intent['unresolved_before'], 0)
+        selection = parse_json(h.objects.read(report.intent['selection']['ref']))
+        self.assertEqual(selection['format_version'], 'sec-workflow-selection-v2')
+        held = sorted({member.member_id for member in (*gated.members, *plain.members)
+                       if member.outcome == 'awaiting_approval'})
+        self.assertEqual(len(held), 2)  # the gated download and the reuse-bound backfill member
+        # Same period and source, so the frozen order reduces to member id.
+        self.assertEqual([entry['member']['member_id'] for entry in selection['superseded']], held)
+        for entry in selection['superseded']:
+            self.assertIn(entry['by']['member_id'], [member.member_id for member in first.members])
+            self.assertLess(datetime.fromisoformat(entry['downloaded_at']),
+                            datetime.fromisoformat(entry['by_downloaded_at']))
+        # Both are dated by the gated bytes' newest download, the reuse-bound member having none of its own.
+        self.assertEqual(len({entry['downloaded_at'] for entry in selection['superseded']}), 1)
+        self.assertFalse(set(held) & {member.member_id for member in report.members})
+        entry = selection['superseded'][0]
+        self.assertEqual(EtlState(h.store).pointer('2026Q3'), base)
+        self.assertEqual(self.names(h, '2026Q3'), ['A', 'B'])
+        # Forgeries: a superseding download no later than the pending one, and a pending time never recorded.
+        for label, forgery in (('not later', {'by_downloaded_at': entry['downloaded_at']}),
+                               ('unrecorded', {'downloaded_at': '2000-01-01T00:00:00+00:00'})):
+            forged = {**selection, 'superseded': [{**entry, **forgery}, *selection['superseded'][1:]]}
+            with self.subTest(label), self.assertRaisesRegex(Conflict, 'lacks its later completed download'):
+                _validate_selection(forged, report.context, selection['invocation'], h.store, h.objects)
+
+    def test_a_retry_keeps_its_own_discovered_member_even_when_superseded(self):
+        h = self.harness((A, B))
+        self.assertEqual(self.run_phase(h, 'backfill', 'base')[0], 0)
+        self.assertEqual(self.run_phase(h, 'reconcile', 'gate', (A,))[0], 10, h.calls[-1])
+        self.assertEqual(self.run_phase(h, 'reconcile', 'revert', (A, B))[0], 10, h.calls[-1])
+        # A retry of the gated run reuses its discovery session, so it discovers the same gated member again;
+        # dropping it would leave a discovered projection unselected and fail every retry with exit 9.
+        h.pack = self.pack((A,), (X, Y))
+        code, message = h.invoke('reconcile', run='gate', attempt='b')
+        self.assertEqual((code, message['outcome']), (10, 'awaiting_approval'), h.calls[-1])
+
+    def test_a_corrupt_pending_member_is_not_superseded(self):
+        h = self.harness((A, B))
+        self.assertEqual(self.run_phase(h, 'backfill', 'base')[0], 0)
+        code, _, gated = self.run_phase(h, 'reconcile', 'gate', (A,))
+        self.assertEqual(code, 10, h.calls[-1])
+        self.assertEqual(self.run_phase(h, 'reconcile', 'revert-1', (A, B))[0], 10, h.calls[-1])
+        held, = [member for member in gated.members if member.outcome == 'awaiting_approval']
+        # Corrupt the gated bytes' Processing identity: evaluate_member now reports state_conflict.
+        key = processing_key(held.source.source_id, sha((A,)), held.parser_version, held.schema_version)
+        row = h.store.get('Processing', key)
+        h.store.replace('Processing', key, {**row.value, 'processing_key': 'f' * 64}, row.version)
+        code, message = h.invoke('reconcile', run='revert-2')
+        self.assertNotEqual(code, 0, h.calls[-1])
+        selection = parse_json(h.objects.read('runs/sec/revert-2/reconcile/a/selection.json'))
+        self.assertNotIn(held.member_id, [entry['member']['member_id'] for entry in selection['superseded']])
 
 
 if __name__ == '__main__':

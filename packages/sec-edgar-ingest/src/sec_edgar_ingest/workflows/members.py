@@ -1,7 +1,8 @@
 import hashlib
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
+from datetime import datetime
 
-from ..models import RunContext, canonical_json, parse_json, to_mapping_value
+from ..models import RunContext, Snapshot, canonical_json, parse_json, to_mapping_value
 from ..storage.contracts import Conflict
 from .contracts import COMPLETE, CompletionEvaluation, MemberResult, workflow_path
 from .provenance import immutable, project_member, projection, read_member, read_parent, read_source, source_ref
@@ -125,12 +126,12 @@ class WorkflowMembers:
         self.record(result, saved_context, evidence)
         return result, evidence
 
-    def completed(self, value, parser_version, schema_version) -> Mapping | None:
+    def completed(self, value, parser_version, schema_version, *, repairs=True) -> Mapping | None:
         from .completion import outstanding_repairs, validate_capture
         from ..state import AcquisitionState
         value = to_mapping_value(value)
         read_member(value, self.store, self.objects)
-        if outstanding_repairs(value, self.store, self.objects):
+        if repairs and outstanding_repairs(value, self.store, self.objects):
             return None
         candidates = []
         for row in self.store.scan('WorkflowMemberResult', {'member_id': value['member_id'],
@@ -156,3 +157,57 @@ class WorkflowMembers:
             return None
         capture = sorted(candidates, key=lambda item: canonical_json(to_mapping_value(item)))[0]
         return CompletionEvaluation(True, capture, (), ()).capture
+
+
+def member_download(value: Mapping, store) -> datetime | None:
+    """When this member itself downloaded its pinned bytes, from its immutable promotion receipt.
+
+    Identical bytes keep their first Snapshot receipt, so only a member's own receipt dates a download.
+    A member bound without downloading (reuse) has no receipt.
+    """
+    from ..state import AcquisitionState
+    acquisition = AcquisitionState(store)
+    identity = value['source']['source_id']
+    binding = acquisition.binding(value['member_id'], identity)
+    receipt = None if binding is None else acquisition.promotion_receipt(value['member_id'], identity)
+    if receipt is None:
+        return None
+    times = [Snapshot.from_mapping(snapshot).received_at for snapshot in receipt['snapshots']
+             if snapshot['sha256'] == binding.snapshot_sha256]
+    return max(times, default=None)
+
+
+def pinned_downloads(value: Mapping, retained: Iterable[Mapping], store) -> tuple[datetime, ...]:
+    """Every own download of this member's pinned bytes by a retained member of its source, oldest first."""
+    from ..state import AcquisitionState
+    acquisition = AcquisitionState(store)
+    identity = value['source']['source_id']
+    pinned = acquisition.binding(value['member_id'], identity)
+    if pinned is None:
+        return ()
+    times = []
+    for other in retained:
+        binding = acquisition.binding(other['member_id'], identity) if other['source'] == value['source'] else None
+        if binding is not None and binding.snapshot_sha256 == pinned.snapshot_sha256:
+            downloaded = member_download(other, store)
+            if downloaded is not None:
+                times.append(downloaded)
+    return tuple(sorted(times))
+
+
+def supersession(value: Mapping, finished: Iterable[Mapping], retained: Iterable[Mapping], store) -> dict | None:
+    """The newest completed member of this source downloaded strictly after the SEC last served this member's bytes.
+
+    Dating the pending side by its bytes covers members bound by reuse, and keeps a gate that the SEC
+    re-serves (A, then A+B, then A again) standing.
+    """
+    served = pinned_downloads(value, retained, store)
+    if not served:
+        return None
+    later = [(theirs, other) for other in finished if other['source'] == value['source']
+             for theirs in (member_download(other, store),) if theirs is not None and theirs > served[-1]]
+    if not later:
+        return None
+    theirs, other = max(later, key=lambda item: (item[0], item[1]['member_id']))
+    return {'member': value, 'by': other, 'downloaded_at': served[-1].isoformat(),
+            'by_downloaded_at': theirs.isoformat()}

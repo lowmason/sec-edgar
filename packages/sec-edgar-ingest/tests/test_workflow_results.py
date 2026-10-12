@@ -70,13 +70,14 @@ class WorkflowResultTests(unittest.TestCase):
         session = AcquisitionState(self.f.store).discovery_session(parent.discovery_id).to_mapping()['value']
         members = [] if skipped else [self.f.value]
         parent_provenance = capture_parent_provenance(self.f.parent_ref, self.f.store, self.f.objects)
-        return {'format_version': 'sec-workflow-selection-v1',
+        return {'format_version': 'sec-workflow-selection-v2',
                 'context': self.context.to_mapping(), 'invocation': self.invocation,
                 'members': members,
                 'jobs': [{'member': value, 'aliases': [value]} for value in members],
                 'member_provenance': [capture_member_provenance(value, self.f.store, self.f.objects)
                                       for value in members],
                 'already_complete': [self.capture] if skipped else [],
+                'superseded': [],
                 'discovery_call': self.f.discovery_call, 'discovery_error': None,
                 'parent_ref': self.f.parent_ref,
                 'parent_provenance': parent_provenance,
@@ -319,9 +320,9 @@ class WorkflowResultTests(unittest.TestCase):
                 gaps = [Error('baseline_source_missing', 'valid empty listing leaves baseline source unresolved',
                               True, None, {'quarter': quarter}).to_mapping()
                         for quarter in ('2026Q3', '2026Q4')]
-                selection = {'format_version': 'sec-workflow-selection-v1', 'context': context.to_mapping(),
+                selection = {'format_version': 'sec-workflow-selection-v2', 'context': context.to_mapping(),
                     'invocation': invocation, 'members': [], 'jobs': [], 'member_provenance': [],
-                    'already_complete': [], 'discovery_call': child.call, 'discovery_error': None,
+                    'already_complete': [], 'superseded': [], 'discovery_call': child.call, 'discovery_error': None,
                     'parent_ref': child.result.source_workset_ref, 'parent_provenance': proof,
                     'discovery_session': session, 'required_units': session['frozen']['units'],
                     'halted': False, 'requested_quarters': ['2026Q3', '2026Q4'],
