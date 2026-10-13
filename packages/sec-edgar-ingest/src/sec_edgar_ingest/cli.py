@@ -31,8 +31,8 @@ from .models import (CommandResult, Error, RunContext, canonical_json, error_tex
 from .results import exit_code, log_event, read_result, result_path, write_result
 from .state import AcquisitionState, attempt_key
 from .storage import open_stores
-from .storage.contracts import CAS_ATTEMPTS, ClockUncertain, Conflict, OwnershipLost
-from .storage.identity import worker_client_id
+from .storage.contracts import CAS_ATTEMPTS, ClockUncertain, Conflict, OwnershipLost, StoreMissing
+from .storage.identity import OPERATOR_TOKEN_SCOPE, principal_from_token, worker_client_id
 from .workflows.checked import Dispatcher as WorkflowDispatcher, ChildUnfinished
 from .workflows.contracts import WORKFLOW_COMMANDS, WORKFLOW_PRIORITY, workflow_path
 from .workflows.results import freeze_workflow, read_workflow_result, write_workflow_result
@@ -91,15 +91,17 @@ def _parser() -> argparse.ArgumentParser:
         if command == 'transform':
             sub.add_argument('--force', action='store_true')
     sub = commands.add_parser('approve')
-    for name in ('config', 'quarter', 'generation', 'quarterly-sha256', 'approver'):
+    for name in ('config', 'quarter', 'generation', 'quarterly-sha256'):
         sub.add_argument('--' + name, required=True)
+    sub.add_argument('--approver', help='local-fixture only; Azure records the signed-in principal')
     sub.add_argument('--state-dir')
     sub = commands.add_parser('candidates')
     sub.add_argument('--config', required=True)
     sub.add_argument('--state-dir')
     sub = commands.add_parser('rollback')
-    for name in ('config', 'quarter', 'from-generation', 'to-generation', 'operator', 'reason'):
+    for name in ('config', 'quarter', 'from-generation', 'to-generation', 'reason'):
         sub.add_argument('--' + name, required=True)
+    sub.add_argument('--operator', help='local-fixture only; Azure records the signed-in principal')
     sub.add_argument('--state-dir')
     return parser
 
@@ -459,18 +461,48 @@ def _operator_settings(args) -> Settings:
     return settings
 
 
-def _operator_main(args, event: str | None, empty: dict[str, object], run) -> int:
-    """Run one operator command on the configured stores and print its canonical result."""
+def _configuration_error(error: Exception) -> int:
+    sys.stderr.write(canonical_json({'outcome': 'configuration', 'error': str(error)}).decode() + '\n')
+    return 2
+
+
+def _operator_identity(settings: Settings, supplied: str | None, flag: str | None):
+    """(credential, actor). Azure uses the operator's `az login` and records its principal, refusing free
+    text; the local-fixture backend requires the free-text flag of a command that records an actor."""
+    if settings.storage.backend != 'azure':
+        if flag is not None and supplied is None:
+            raise ValueError(f'--{flag} is required on the local-fixture backend')
+        return None, supplied
+    if supplied is not None:
+        raise ValueError(f'--{flag} is refused on Azure; the signed-in principal is recorded')
+    from azure.core.exceptions import ClientAuthenticationError
+    from .storage.azure import operator_credential
+    credential = operator_credential()
+    try:
+        token = credential.get_token(OPERATOR_TOKEN_SCOPE)
+    except ClientAuthenticationError as error:
+        raise ValueError('operator sign-in is unavailable: ' + error_text(error)) from error
+    return credential, principal_from_token(token.token)
+
+
+def _operator_main(args, event: str | None, empty: dict[str, object], run, actor: str | None = None) -> int:
+    """Run one operator command on verify-only stores and print its canonical result.
+
+    `actor` names the flag (`approver` or `operator`) of a command that records who acted.
+    """
     try:
         settings = _operator_settings(args)
+        credential, principal = _operator_identity(settings, None if actor is None else getattr(args, actor), actor)
     except (ValueError, OSError, TypeError) as error:
-        sys.stderr.write(canonical_json({'outcome': 'configuration', 'error': str(error)}).decode() + '\n')
-        return 2
+        return _configuration_error(error)
     opened = ()
     try:
-        opened = open_stores(settings, base_path=Path(args.state_dir) if args.state_dir else None)
+        opened = open_stores(settings, base_path=Path(args.state_dir) if args.state_dir else None,
+                             access='operator', credential=credential)
         store, objects, _ = opened
-        value = {**empty, **run(objects, EtlState(store))}
+        value = {**empty, **run(objects, EtlState(store), principal)}
+    except StoreMissing as error:
+        return _configuration_error(error)
     except Exception as exception:
         outcome = ('state_conflict' if isinstance(exception, (Conflict, ValueError, OSError, KeyError))
                    else 'internal_error')
@@ -488,31 +520,31 @@ def _operator_main(args, event: str | None, empty: dict[str, object], run) -> in
 
 
 def _approve_main(args) -> int:
-    def run(objects, state):
-        result = approve(args.quarter, args.generation, args.quarterly_sha256, args.approver, objects, state)
+    def run(objects, state, actor):
+        result = approve(args.quarter, args.generation, args.quarterly_sha256, actor, objects, state)
         ref = None if result.approval is None else approval_ref(result.approval.quarter, result.approval.generation_id)
         return {**result.to_mapping(), 'approval_ref': ref}
     return _operator_main(args, 'withdrawal_approval',
                           {'quarter': args.quarter, 'generation_id': args.generation, 'approval_ref': None,
-                           'approval': None, 'publication': None, 'error': None}, run)
+                           'approval': None, 'publication': None, 'error': None}, run, actor='approver')
 
 
 def _candidates_main(args) -> int:
     return _operator_main(args, None, {'candidates': None, 'error': None},
-                          lambda objects, state: {'outcome': 'success',
-                                                  'candidates': list(withdrawal_candidates(objects, state))})
+                          lambda objects, state, actor: {'outcome': 'success',
+                                                         'candidates': list(withdrawal_candidates(objects, state))})
 
 
 def _rollback_main(args) -> int:
-    def run(objects, state):
-        result = rollback(args.quarter, args.from_generation, args.to_generation, args.operator, args.reason,
+    def run(objects, state, actor):
+        result = rollback(args.quarter, args.from_generation, args.to_generation, actor, args.reason,
                           objects, state)
         return {**result.to_mapping(),
                 'rollback_ref': None if result.rollback is None else rollback_ref(result.rollback)}
     return _operator_main(args, 'quarter_rollback',
                           {'quarter': args.quarter, 'from_generation_id': args.from_generation,
                            'to_generation_id': args.to_generation, 'rollback_ref': None, 'active': None,
-                           'rollback': None, 'error': None}, run)
+                           'rollback': None, 'error': None}, run, actor='operator')
 
 
 def main(argv: Sequence[str] | None = None) -> int:
