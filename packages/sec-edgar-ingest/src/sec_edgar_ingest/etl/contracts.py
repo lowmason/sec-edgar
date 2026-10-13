@@ -20,6 +20,7 @@ RESULT_FORMAT = 'sec-etl-result-v1'
 APPROVAL_FORMAT = 'sec-withdrawal-approval-v1'
 MAX_OPERATOR_CHARS = 256
 ROLLBACK_FORMAT = 'sec-pointer-rollback-v1'
+ACTIVATION_FORMAT = 'sec-approval-activation-v1'
 MAX_REASON_CHARS = 1024
 ORIGINAL_FIELD_COUNT = 5
 
@@ -317,6 +318,36 @@ class QuarterRollback(Record):
         """One identity per attempted move from an exact pointer version to one target."""
         return hashlib.sha256(canonical_json([self.quarter, self.from_generation_id, self.to_generation_id,
                                               self.from_pointer_version])).hexdigest()
+
+
+@dataclass(frozen=True, slots=True)
+class ApprovalActivation(Record):
+    """Immutable, write-ahead record of one attempted approve move; the pointer decides what took effect."""
+    quarter: str
+    generation_id: str
+    base_generation_id: str
+    from_pointer_version: str
+    approval_ref: str
+    approval_sha256: str
+    actor: str
+    activated_at: datetime
+    format_version: str = ACTIVATION_FORMAT
+
+    def __post_init__(self):
+        _record(self)
+        if self.format_version != ACTIVATION_FORMAT:
+            raise ValueError('unsupported activation format')
+        require_hash(self.base_generation_id, 'base_generation_id')
+        if self.base_generation_id == self.generation_id:
+            raise ValueError('activation must change the active generation')
+        require_text(self.from_pointer_version, 'from_pointer_version')
+        require_line(self.actor, 'actor', MAX_OPERATOR_CHARS)
+        require_utc(self.activated_at, 'activated_at')
+
+    @property
+    def activation_id(self) -> str:
+        """One identity per attempted move of the quarter from an exact pointer version to this generation."""
+        return hashlib.sha256(canonical_json([self.quarter, self.generation_id, self.from_pointer_version])).hexdigest()
 
 
 @dataclass(frozen=True, slots=True)

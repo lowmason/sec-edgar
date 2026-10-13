@@ -18,8 +18,9 @@ from pathlib import Path
 from ..config import LOCK_BLOB
 from ..models import Versioned, parse_json, require_hash, require_number, require_text, require_utc, safe_relative_path
 from .contracts import (AlreadyExists, BoundaryObserver, CAS_ATTEMPTS, ClockUncertain, Conflict, FILE_CHUNK_BYTES,
-                        LeaseHandle, OwnershipLost, TimeBounds, REGISTRY_PATH, SENTINEL_PATH, deployment_binding,
-                        exact_version, identity, observe, payload_bytes, table_for, validate_raw_address)
+                        LeaseHandle, OwnershipLost, StoreMissing, TimeBounds, REGISTRY_PATH, SENTINEL_PATH,
+                        deployment_binding, exact_version, identity, observe, payload_bytes, table_for,
+                        validate_raw_address)
 
 DIRECTORY_FLAGS = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
 FILE_FLAGS = os.O_RDONLY | os.O_NOFOLLOW
@@ -27,15 +28,27 @@ SQLITE_INIT_ATTEMPTS = 3
 
 
 class LocalObjectStore:
-    def __init__(self, root: Path, *, observer: BoundaryObserver | None = None, binding=None):
+    def __init__(self, root: Path, *, observer: BoundaryObserver | None = None, binding=None, create: bool = True):
         self.root = Path(root).resolve()
-        self.root.mkdir(parents=True, exist_ok=True)
         self.directory = self.root / "objects"
+        self.observer = observer
+        expected = payload_bytes(binding or deployment_binding(root=self.root))
+        if not create:
+            # Operator opens never mkdir or write: a write-once probe would still leave a temp file behind.
+            if not self.directory.is_dir() or self.directory.is_symlink():
+                raise StoreMissing(f"no local store exists at {self.root}")
+            try:
+                registry = self.read(REGISTRY_PATH)
+            except FileNotFoundError as error:
+                raise StoreMissing(f"local store at {self.root} has no deployment binding") from error
+            if registry != expected:
+                raise Conflict("local store binding differs from this deployment")
+            return
+        self.root.mkdir(parents=True, exist_ok=True)
         self.directory.mkdir(exist_ok=True)
         if self.directory.is_symlink():
             raise ValueError("object root must not be a symlink")
-        self.observer = observer
-        self._write_once(REGISTRY_PATH, io.BytesIO(payload_bytes(binding or deployment_binding(root=self.root))), notify=False)
+        self._write_once(REGISTRY_PATH, io.BytesIO(expected), notify=False)
 
     @contextmanager
     def _parent(self, path: str, *, create: bool = False):
@@ -150,16 +163,21 @@ class LocalObjectStore:
 
 
 class LocalStateStore:
-    def __init__(self, root: Path, *, page_size: int = 128, observer: BoundaryObserver | None = None, binding=None):
+    def __init__(self, root: Path, *, page_size: int = 128, observer: BoundaryObserver | None = None, binding=None,
+                 create: bool = True):
         require_number(page_size, "page_size", positive=True, integer=True)
         self.root = Path(root).resolve()
-        LocalObjectStore(self.root, binding=binding)
+        LocalObjectStore(self.root, binding=binding, create=create)
         self.database = self.root / "state.sqlite3"
         if self.database.is_symlink():
             raise ValueError("state database must not be a symlink")
         self.page_size = page_size
         self.observer = observer
         self._closed = False
+        if not create:
+            if not self.database.is_file():
+                raise StoreMissing(f"local store at {self.root} has no state database")
+            return
         for attempt in range(SQLITE_INIT_ATTEMPTS):
             try:
                 with self._connection() as connection:

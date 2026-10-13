@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import os
 import re
 import sys
 from collections.abc import Sequence
@@ -12,13 +13,13 @@ from pathlib import Path
 
 from . import __version__
 from .collection import collect
-from .config import Settings, load_config, pin_context
+from .config import Settings, load_config, load_config_env, pin_context
 from .coordination import Clock, Coordinator
 from .discovery import discover
-from .etl.approval import approve
+from .etl.approval import activation_ref, approve
 from .etl.commands import (PublicationRepairPending, read_etl_result, run_transform, run_publish,
                            write_etl_result, validate_workset_ref)
-from .etl.history import withdrawal_candidates
+from .etl.history import quarter_history, withdrawal_candidates
 from .etl.manifest import approval_ref
 from .etl.parser import supported_parser, SCHEMA_VERSION
 from .etl.publication import repair_publication
@@ -26,15 +27,17 @@ from .etl.rollback import rollback, rollback_ref
 from .etl.state import EtlState
 from .download import BoundedSender, FixturePack, RequestClient
 from .models import (CommandResult, Error, RunContext, canonical_json, error_text, parse_json, quarter_for,
-                     safe_relative_path, to_mapping_value)
+                     quarter_value, safe_relative_path, to_mapping_value)
 from .results import exit_code, log_event, read_result, result_path, write_result
 from .state import AcquisitionState, attempt_key
 from .storage import open_stores
-from .storage.contracts import CAS_ATTEMPTS, ClockUncertain, Conflict, OwnershipLost
+from .storage.contracts import CAS_ATTEMPTS, ClockUncertain, Conflict, OwnershipLost, StoreMissing
+from .storage.identity import EXECUTION_NAME_ENV, OPERATOR_TOKEN_SCOPE, principal_from_token, worker_client_id
 from .workflows.checked import Dispatcher as WorkflowDispatcher, ChildUnfinished
 from .workflows.contracts import WORKFLOW_COMMANDS, WORKFLOW_PRIORITY, workflow_path
 from .workflows.results import freeze_workflow, read_workflow_result, write_workflow_result
 from .workflows.runner import run_workflow
+from .workflows.summary import emit_summary
 from .worksets import decode_source_workset
 
 SOURCE_REF = re.compile(r'worksets/sec/source/sha256=[0-9a-f]{64}/workset\.json\Z')
@@ -74,8 +77,16 @@ def _parser() -> argparse.ArgumentParser:
     commands = parser.add_subparsers(dest='command')
     for command in ('discover', 'collect', 'transform', 'publish', *WORKFLOW_COMMANDS):
         sub = commands.add_parser(command)
+        workflow = command in WORKFLOW_COMMANDS
+        if workflow:
+            source = sub.add_mutually_exclusive_group(required=True)
+            source.add_argument('--config')
+            source.add_argument('--config-env', metavar='NAME',
+                                help='read the configuration JSON from this environment variable')
+            sub.add_argument('--execution-id', help='local-fixture only; Azure uses ' + EXECUTION_NAME_ENV)
         for name in ('config', 'run-id', 'execution-id', 'attempt-id', 'deadline'):
-            sub.add_argument('--' + name, required=True)
+            if not (workflow and name in ('config', 'execution-id')):
+                sub.add_argument('--' + name, required=True)
         for name in ('state-dir', 'today'):
             sub.add_argument('--' + name)
         if command in ('discover', 'collect', *WORKFLOW_COMMANDS):
@@ -89,15 +100,21 @@ def _parser() -> argparse.ArgumentParser:
         if command == 'transform':
             sub.add_argument('--force', action='store_true')
     sub = commands.add_parser('approve')
-    for name in ('config', 'quarter', 'generation', 'quarterly-sha256', 'approver'):
+    for name in ('config', 'quarter', 'generation', 'quarterly-sha256'):
         sub.add_argument('--' + name, required=True)
+    sub.add_argument('--approver', help='local-fixture only; Azure records the signed-in principal')
     sub.add_argument('--state-dir')
     sub = commands.add_parser('candidates')
     sub.add_argument('--config', required=True)
     sub.add_argument('--state-dir')
+    sub = commands.add_parser('history')
+    sub.add_argument('--config', required=True)
+    sub.add_argument('--quarter', required=True)
+    sub.add_argument('--state-dir')
     sub = commands.add_parser('rollback')
-    for name in ('config', 'quarter', 'from-generation', 'to-generation', 'operator', 'reason'):
+    for name in ('config', 'quarter', 'from-generation', 'to-generation', 'reason'):
         sub.add_argument('--' + name, required=True)
+    sub.add_argument('--operator', help='local-fixture only; Azure records the signed-in principal')
     sub.add_argument('--state-dir')
     return parser
 
@@ -133,6 +150,7 @@ def _validate(args) -> tuple[Settings, date | None, datetime, FixturePack | None
     if settings.storage.backend == 'azure':
         if getattr(args, 'fixture_pack', None) or args.state_dir or args.today:
             raise ValueError('fixture pack, state directory and date override are fixture-only')
+        worker_client_id(os.environ)
         pack = None
     else:
         if not etl and not args.fixture_pack:
@@ -301,9 +319,20 @@ def _stdout(result, reference):
 
 
 def _validate_workflow(args):
-    for name in ('run_id', 'execution_id', 'attempt_id'):
+    for name in ('run_id', 'attempt_id'):
         _segment(getattr(args, name), name)
-    settings = load_config(Path(args.config))
+    settings = (load_config_env(args.config_env, os.environ) if args.config_env is not None
+                else load_config(Path(args.config)))
+    if settings.storage.backend == 'azure':
+        if args.execution_id is not None:
+            raise ValueError('--execution-id is refused on Azure; the job execution name is used')
+        # The workflow path reads the resolved execution ID from args from here on.
+        args.execution_id = os.environ.get(EXECUTION_NAME_ENV, '')
+        if not args.execution_id:
+            raise ValueError(f'{EXECUTION_NAME_ENV} must name the job execution on Azure')
+    elif args.execution_id is None:
+        raise ValueError('local-fixture workflow commands require --execution-id')
+    _segment(args.execution_id, 'execution_id')
     supported_parser(settings.etl.parser_version,
                      fixture=settings.storage.backend == 'local-fixture')
     if settings.etl.schema_version != SCHEMA_VERSION:
@@ -319,6 +348,7 @@ def _validate_workflow(args):
     if settings.storage.backend == 'azure':
         if args.fixture_pack or args.state_dir or args.today:
             raise ValueError('fixture pack, state directory and date override are fixture-only')
+        worker_client_id(os.environ)
         pack = None
     else:
         if not args.fixture_pack:
@@ -424,6 +454,7 @@ def _workflow_main(args):
         reference = write_workflow_result(result, store, objects)
         log_event(context, 'command_finished', {'outcome': result.outcome,
             'result_ref': reference, 'counters': result.to_mapping()['counts']})
+        emit_summary(result, reference, objects, store)
         return _workflow_stdout(result, reference)
     except Exception as exception:
         outcome = ('configuration' if isinstance(exception, (_ExpiredAttempt, TimeoutError)) else
@@ -450,24 +481,56 @@ def _workflow_main(args):
 
 
 def _operator_settings(args) -> Settings:
+    if args.command == 'history':
+        quarter_value(args.quarter)
     settings = load_config(Path(args.config))
     if settings.storage.backend == 'azure' and args.state_dir:
         raise ValueError('state directory is fixture-only')
     return settings
 
 
-def _operator_main(args, event: str | None, empty: dict[str, object], run) -> int:
-    """Run one operator command on the configured stores and print its canonical result."""
+def _configuration_error(error: Exception) -> int:
+    sys.stderr.write(canonical_json({'outcome': 'configuration', 'error': str(error)}).decode() + '\n')
+    return 2
+
+
+def _operator_identity(settings: Settings, supplied: str | None, flag: str | None):
+    """(credential, actor). Azure uses the operator's `az login` and records its principal, refusing free
+    text; the local-fixture backend requires the free-text flag of a command that records an actor."""
+    if settings.storage.backend != 'azure':
+        if flag is not None and supplied is None:
+            raise ValueError(f'--{flag} is required on the local-fixture backend')
+        return None, supplied
+    if supplied is not None:
+        raise ValueError(f'--{flag} is refused on Azure; the signed-in principal is recorded')
+    from azure.core.exceptions import ClientAuthenticationError
+    from .storage.azure import operator_credential
+    credential = operator_credential()
+    try:
+        token = credential.get_token(OPERATOR_TOKEN_SCOPE)
+    except ClientAuthenticationError as error:
+        raise ValueError('operator sign-in is unavailable: ' + error_text(error)) from error
+    return credential, principal_from_token(token.token)
+
+
+def _operator_main(args, event: str | None, empty: dict[str, object], run, actor: str | None = None) -> int:
+    """Run one operator command on verify-only stores and print its canonical result.
+
+    `actor` names the flag (`approver` or `operator`) of a command that records who acted.
+    """
     try:
         settings = _operator_settings(args)
+        credential, principal = _operator_identity(settings, None if actor is None else getattr(args, actor), actor)
     except (ValueError, OSError, TypeError) as error:
-        sys.stderr.write(canonical_json({'outcome': 'configuration', 'error': str(error)}).decode() + '\n')
-        return 2
+        return _configuration_error(error)
     opened = ()
     try:
-        opened = open_stores(settings, base_path=Path(args.state_dir) if args.state_dir else None)
+        opened = open_stores(settings, base_path=Path(args.state_dir) if args.state_dir else None,
+                             access='operator', credential=credential)
         store, objects, _ = opened
-        value = {**empty, **run(objects, EtlState(store))}
+        value = {**empty, **run(objects, EtlState(store), principal)}
+    except StoreMissing as error:
+        return _configuration_error(error)
     except Exception as exception:
         outcome = ('state_conflict' if isinstance(exception, (Conflict, ValueError, OSError, KeyError))
                    else 'internal_error')
@@ -485,31 +548,42 @@ def _operator_main(args, event: str | None, empty: dict[str, object], run) -> in
 
 
 def _approve_main(args) -> int:
-    def run(objects, state):
-        result = approve(args.quarter, args.generation, args.quarterly_sha256, args.approver, objects, state)
+    def run(objects, state, actor):
+        result = approve(args.quarter, args.generation, args.quarterly_sha256, actor, objects, state)
         ref = None if result.approval is None else approval_ref(result.approval.quarter, result.approval.generation_id)
-        return {**result.to_mapping(), 'approval_ref': ref}
+        return {**result.to_mapping(), 'approval_ref': ref,
+                'activation_ref': None if result.activation is None else activation_ref(result.activation)}
     return _operator_main(args, 'withdrawal_approval',
                           {'quarter': args.quarter, 'generation_id': args.generation, 'approval_ref': None,
-                           'approval': None, 'publication': None, 'error': None}, run)
+                           'approval': None, 'publication': None, 'activation': None, 'activation_ref': None,
+                           'error': None}, run, actor='approver')
 
 
 def _candidates_main(args) -> int:
     return _operator_main(args, None, {'candidates': None, 'error': None},
-                          lambda objects, state: {'outcome': 'success',
-                                                  'candidates': list(withdrawal_candidates(objects, state))})
+                          lambda objects, state, actor: {'outcome': 'success',
+                                                         'candidates': list(withdrawal_candidates(objects, state))})
+
+
+def _history_main(args) -> int:
+    def run(objects, state, actor):
+        return {'outcome': 'success', 'lineage': list(quarter_history(args.quarter, objects, state)),
+                'rollbacks': [record.to_mapping() for record in state.rollbacks(args.quarter)],
+                'activations': [record.to_mapping() for record in state.activations(args.quarter)]}
+    return _operator_main(args, None, {'quarter': args.quarter, 'lineage': None, 'rollbacks': None,
+                                       'activations': None, 'error': None}, run)
 
 
 def _rollback_main(args) -> int:
-    def run(objects, state):
-        result = rollback(args.quarter, args.from_generation, args.to_generation, args.operator, args.reason,
+    def run(objects, state, actor):
+        result = rollback(args.quarter, args.from_generation, args.to_generation, actor, args.reason,
                           objects, state)
         return {**result.to_mapping(),
                 'rollback_ref': None if result.rollback is None else rollback_ref(result.rollback)}
     return _operator_main(args, 'quarter_rollback',
                           {'quarter': args.quarter, 'from_generation_id': args.from_generation,
                            'to_generation_id': args.to_generation, 'rollback_ref': None, 'active': None,
-                           'rollback': None, 'error': None}, run)
+                           'rollback': None, 'error': None}, run, actor='operator')
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -524,6 +598,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _approve_main(args)
     if args.command == 'candidates':
         return _candidates_main(args)
+    if args.command == 'history':
+        return _history_main(args)
     if args.command == 'rollback':
         return _rollback_main(args)
     try:

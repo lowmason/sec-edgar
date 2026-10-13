@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import hashlib
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass, replace
 from datetime import date
 from pathlib import Path
@@ -251,12 +252,30 @@ def _validate_azure_policy(settings: Settings) -> None:
         raise ValueError("azure finite lease_seconds must be in the supported 15..60 second range")
 
 
-def load_config(path: Path) -> Settings:
+def parse_config(text: str) -> Settings:
     try:
-        value = parse_json(path.read_text(encoding="utf-8"))
-    except (ValueError, UnicodeDecodeError) as error:
+        value = parse_json(text)
+    except ValueError as error:
         raise ValueError("configuration requires strict JSON syntax (YAML 1.2 subset)") from error
     return Settings.from_mapping(value)
+
+
+def load_config(path: Path) -> Settings:
+    try:
+        text = path.read_text(encoding="utf-8")
+    except UnicodeDecodeError as error:
+        raise ValueError("configuration requires strict JSON syntax (YAML 1.2 subset)") from error
+    return parse_config(text)
+
+
+def load_config_env(name: str, environ: Mapping[str, str]) -> Settings:
+    """The same strict configuration, carried by one environment variable (the Azure job secret)."""
+    if not isinstance(name, str) or re.fullmatch(r"[A-Z][A-Z0-9_]*", name) is None:
+        raise ValueError("--config-env must name an upper-case environment variable")
+    text = environ.get(name)
+    if not text:
+        raise ValueError(f"configuration environment variable {name} is unset or empty")
+    return parse_config(text)
 
 
 def pin_context(settings: Settings, context: RunContext, today: date) -> tuple[RunContext, str]:

@@ -4,13 +4,17 @@ import hashlib
 import importlib
 import io
 import json
+import os
 import tempfile
 import unittest
 from dataclasses import replace
 from pathlib import Path
+from unittest.mock import patch
 
 from support import cli_harness, fixture_context, store_bundle
+from support_azure import WORKER_CLIENT_ID
 from sec_edgar_ingest.models import CommandResult, canonical_json
+from sec_edgar_ingest.storage.identity import WORKER_CLIENT_ID_ENV
 
 
 class ResultTests(unittest.TestCase):
@@ -403,7 +407,10 @@ class ValidationBoundaryTests(unittest.TestCase):
         args = ['--mode', 'quarterly', '--discovery-id', 'd', '--execution-id', 'e', '--attempt-id', 'a']
         self.assertEqual(h.invoke('discover', args).returncode, 2)
         common = ['--config', str(h.config_path), '--run-id', 'cli-run', '--deadline', '2099-01-01T00:00:00Z']
-        self.assertEqual(h.invoke('discover', args, common=common).returncode, 2)
+        with patch.dict(os.environ, {WORKER_CLIENT_ID_ENV: WORKER_CLIENT_ID}):
+            distant = h.invoke('discover', args, common=common)
+        self.assertEqual(distant.returncode, 2)
+        self.assertIn('3600-second worker allowance', distant.stderr)
         self.assertEqual(h.external_client_constructions, 0)
 
     def test_missing_valid_workset_retains_failed_attempt(self):
