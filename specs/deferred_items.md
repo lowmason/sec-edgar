@@ -82,7 +82,8 @@
       Size: plan. Done when: the WAL open retries or the tests serialize, the
       deadline-bound tests tolerate a slow spawn (and the timer test deletes its trace
       in a `finally`), and several consecutive full-suite runs pass. → bound to roadmap
-      Stage 7 Consumes: close before Stage 7 (resume 2026-10-12)
+      Stage 7 Consumes: close before Stage 7 (resume 2026-10-12); a separate /deferred
+      plan closes it, not Stage 6 (owner, 2026-10-12)
 - [x] Review Minor, approval/Azure storage coverage gaps (T1/T2/T6): nothing tests that
       `AzureStateStore.close()` closes `approval_client`, that `_check_endpoint`
       rejects a foreign-endpoint Approvals client, that the local store keeps approval
