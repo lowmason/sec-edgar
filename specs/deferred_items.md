@@ -297,9 +297,10 @@
       specs/plans/10-sec-filing-index-ingestion-stage-6-spec.md near line 3859) is silently
       suppressed on every run. Also, `gap_codes` keys in `workflow_summary` are not limited
       to `EXIT_CODES` names (only `member_outcomes` keys are, and Plan 10's vocabulary test
-      covers `member_outcomes` only). Size: quick-fix. Done when: Plan 10's review adds an
-      alert, or records a decision to decline it, for a non-null `summary_error`, and
-      decides whether any alert may read `gap_codes` keys.
+      covers `member_outcomes` only). Owner (plan 10 review, 2026-10-13): declined for Plan
+      10, and no Plan 10 alert reads `gap_codes` (Plan 10 D5). Size: quick-fix. Done when:
+      an alert on a non-null `summary_error` is in the Azure definitions, before the Stage 7
+      deploy.
 - [ ] Operator, approval and deployment test and validation gaps (Plan 9 task reviews,
       triaged defer): operator-open conflict tests in tests/test_operator_open.py skip the
       no-write assertions used elsewhere; the Azure refusal of `rollback --operator` free
@@ -325,13 +326,14 @@
       VM, rollback is checked by count only (no active-generation assertion), and the
       workflows run with `--config` only while ADF passes `--config-env
       SEC_EDGAR_INGEST_CONFIG` (add one `-e SEC_EDGAR_INGEST_CONFIG=... --config-env`
-      invocation). Size: quick-fix. Done when: Plan 10 reruns the smoke with those four
-      changes, or consciously declines them.
+      invocation). Owner (plan 10 review, 2026-10-13): Plan 10 builds no image, so it
+      declines them (Plan 10 D6). Size: quick-fix. Done when: the smoke is next run, at
+      Stage 7's image work, with those four changes.
 - [ ] Colima VM image and an unexplained pre-build image (Task 11 review, owner disclosure):
       Task 11's `colima start` downloaded Colima's own aarch64 VM disk image (about 325 MB),
       a network use that D1 and D5 ("Nothing else touches the network") do not name; and the
       Task 11 report's `docker info` showed `Images: 1` before the build, unidentified
-      (binfmt was ruled out). Size: quick-fix. Done when: the owner records that D1 covers
-      the VM image, or the Stage 6 spec's network wording names it, and `docker image ls -a
-      --digests` at Plan 10's next `colima start`, before any build, shows nothing or only
-      the pinned `python@sha256:d1e795fb…` base.
+      (binfmt was ruled out). Owner (plan 10 review, 2026-10-13): D1 covers the VM image
+      (Plan 10 D6). Size: quick-fix. Done when: `docker image ls -a --digests` at the next
+      `colima start`, before any build, shows nothing or only the pinned
+      `python@sha256:d1e795fb…` base.
