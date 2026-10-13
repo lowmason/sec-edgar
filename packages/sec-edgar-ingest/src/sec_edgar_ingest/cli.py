@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import os
 import re
 import sys
 from collections.abc import Sequence
@@ -31,6 +32,7 @@ from .results import exit_code, log_event, read_result, result_path, write_resul
 from .state import AcquisitionState, attempt_key
 from .storage import open_stores
 from .storage.contracts import CAS_ATTEMPTS, ClockUncertain, Conflict, OwnershipLost
+from .storage.identity import worker_client_id
 from .workflows.checked import Dispatcher as WorkflowDispatcher, ChildUnfinished
 from .workflows.contracts import WORKFLOW_COMMANDS, WORKFLOW_PRIORITY, workflow_path
 from .workflows.results import freeze_workflow, read_workflow_result, write_workflow_result
@@ -133,6 +135,7 @@ def _validate(args) -> tuple[Settings, date | None, datetime, FixturePack | None
     if settings.storage.backend == 'azure':
         if getattr(args, 'fixture_pack', None) or args.state_dir or args.today:
             raise ValueError('fixture pack, state directory and date override are fixture-only')
+        worker_client_id(os.environ)
         pack = None
     else:
         if not etl and not args.fixture_pack:

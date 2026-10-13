@@ -3,6 +3,7 @@ import hashlib
 import importlib
 import importlib.util
 import json
+import os
 import tempfile
 import unittest
 from collections import deque
@@ -20,6 +21,7 @@ from azure.storage.blob import BlobServiceClient
 from requests.structures import CaseInsensitiveDict
 
 from support import FixtureClock, fixture_settings, fixture_snapshot, fixture_source
+from support_azure import WORKER_CLIENT_ID
 
 BLOB_ENDPOINT = "https://secedgardevb8617.blob.core.windows.net"
 TABLE_ENDPOINT = "https://secedgardevb8617.table.core.windows.net"
@@ -337,6 +339,7 @@ class AzureContractTests(unittest.TestCase):
                         self.fail(f"Raw server Date must be rejected as ClockUncertain before SDK deserialization: {error}")
 
     def test_factory_conditions_fixed_registry_before_authority_clients(self):
+        from sec_edgar_ingest.storage.identity import WORKER_CLIENT_ID_ENV
         settings = fixture_settings(storage={"backend": "azure", "root": None, "account_name": "secedgardevb8617",
                                              "blob_endpoint": BLOB_ENDPOINT, "table_endpoint": TABLE_ENDPOINT,
                                              "raw_container": "raw", "workset_container": "worksets",
@@ -346,21 +349,22 @@ class AzureContractTests(unittest.TestCase):
                                     etl={"parser_version": "sec-envelope-v1"},
                                     worker={"image_digest": "sha256:" + "1" * 64, "provenance": "configured-image"})
         service, transport = self.blobs([response(201)])
-        with patch.object(self.azure, "ManagedIdentityCredential") as credential, patch.object(self.azure, "BlobServiceClient", return_value=service) as blob_factory, patch.object(self.azure, "TableServiceClient") as table_factory:
-            tables = table_factory.return_value
-            source = tables.get_table_client.return_value
-            source.url = TABLE_ENDPOINT
-            tables.get_table_client.side_effect = lambda name: self._factory_table(name)
-            state, objects, leases = self.azure.open_azure_stores(settings)
-            credential.assert_called_once_with()
-            self.assertEqual(blob_factory.call_args.kwargs["api_version"], "2026-04-06")
-            self.assertEqual(table_factory.call_args.kwargs["api_version"], "2020-12-06")
-            self.assertEqual([call.args[0] for call in tables.get_table_client.call_args_list],
-                             ["SourceState", "Attempts", "ActivePointers", "Approvals"])
-            self.assertEqual(state.active_client.table_name, "ActivePointers")
-            self.assertEqual(state.approval_client.table_name, "Approvals")
-            for factory in (blob_factory, table_factory):
-                self.assertEqual({key: factory.call_args.kwargs[key] for key in RETRY}, RETRY)
+        with patch.dict(os.environ, {WORKER_CLIENT_ID_ENV: WORKER_CLIENT_ID}):
+            with patch.object(self.azure, "ManagedIdentityCredential") as credential, patch.object(self.azure, "BlobServiceClient", return_value=service) as blob_factory, patch.object(self.azure, "TableServiceClient") as table_factory:
+                tables = table_factory.return_value
+                source = tables.get_table_client.return_value
+                source.url = TABLE_ENDPOINT
+                tables.get_table_client.side_effect = lambda name: self._factory_table(name)
+                state, objects, leases = self.azure.open_azure_stores(settings)
+                credential.assert_called_once_with(client_id=WORKER_CLIENT_ID)
+                self.assertEqual(blob_factory.call_args.kwargs["api_version"], "2026-04-06")
+                self.assertEqual(table_factory.call_args.kwargs["api_version"], "2020-12-06")
+                self.assertEqual([call.args[0] for call in tables.get_table_client.call_args_list],
+                                 ["SourceState", "Attempts", "ActivePointers", "Approvals"])
+                self.assertEqual(state.active_client.table_name, "ActivePointers")
+                self.assertEqual(state.approval_client.table_name, "Approvals")
+                for factory in (blob_factory, table_factory):
+                    self.assertEqual({key: factory.call_args.kwargs[key] for key in RETRY}, RETRY)
         request = transport.requests[0]
         self.assertIn("/locks/sec-owner-lowell-mason/binding.json", request.url)
         self.assertEqual(request.headers["If-None-Match"], "*")
@@ -369,10 +373,11 @@ class AzureContractTests(unittest.TestCase):
         self.assertEqual(registry["account"], "secedgardevb8617")
         different = json.dumps({"namespace": "other"}).encode()
         service, transport = self.blobs([blob_error(409, "BlobAlreadyExists"), response(body=different)])
-        with patch.object(self.azure, "ManagedIdentityCredential"), patch.object(self.azure, "BlobServiceClient", return_value=service), patch.object(self.azure, "TableServiceClient") as table_factory:
-            with self.assertRaises(self.contracts.Conflict):
-                self.azure.open_azure_stores(settings)
-            table_factory.assert_not_called()
+        with patch.dict(os.environ, {WORKER_CLIENT_ID_ENV: WORKER_CLIENT_ID}):
+            with patch.object(self.azure, "ManagedIdentityCredential"), patch.object(self.azure, "BlobServiceClient", return_value=service), patch.object(self.azure, "TableServiceClient") as table_factory:
+                with self.assertRaises(self.contracts.Conflict):
+                    self.azure.open_azure_stores(settings)
+                table_factory.assert_not_called()
 
     def _factory_table(self, name):
         from unittest.mock import Mock

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import math
+import os
 import time
 from collections.abc import Iterator
 from datetime import datetime, timedelta, timezone
@@ -13,14 +14,15 @@ from urllib.parse import quote, urlsplit
 from azure.core import MatchConditions
 from azure.core.exceptions import HttpResponseError, ResourceExistsError, ResourceModifiedError, ResourceNotFoundError
 from azure.data.tables import TableClient, TableServiceClient, UpdateMode
-from azure.identity import ManagedIdentityCredential
-from azure.storage.blob import BlobLeaseClient, BlobServiceClient
+from azure.identity import AzureCliCredential, ManagedIdentityCredential
+from azure.storage.blob import BlobLeaseClient, BlobServiceClient, ContentSettings
 
 from ..config import ACCOUNT_NAME, LOCK_BLOB, Settings
 from ..models import Versioned, parse_json, require_hash, require_number, require_text, require_utc, safe_relative_path
 from .contracts import (AlreadyExists, BoundaryObserver, ClockUncertain, Conflict, FILE_CHUNK_BYTES,
                         LeaseHandle, ObjectStore, OwnershipLost, TimeBounds, REGISTRY_PATH, deployment_binding, exact_version,
                         blob_address, identity, observe, payload_bytes, table_for, validate_raw_address)
+from .identity import worker_client_id
 
 RETRY_OPTIONS = dict(retry_total=0, retry_connect=0, retry_read=0, retry_status=0)
 STORAGE_CONNECTION_TIMEOUT_SECONDS = 5
@@ -247,9 +249,12 @@ class AzureObjectStore:
 
     def _upload(self, path: str, stream, sha256: str, byte_count: int) -> str:
         blob = self._blob(path)
+        # ADF reads JSON results as parsed output only when the blob is typed JSON (S7-09).
+        options = {"content_settings": ContentSettings(content_type="application/json")} if path.endswith(".json") else {}
         observe(self.observer, "object.before_upload")
         try:
-            blob.upload_blob(stream, length=byte_count, overwrite=False, match_condition=MatchConditions.IfMissing)
+            blob.upload_blob(stream, length=byte_count, overwrite=False, match_condition=MatchConditions.IfMissing,
+                             **options)
         except (ResourceExistsError, ResourceModifiedError) as error:
             if error.status_code not in (409, 412):
                 raise
@@ -506,13 +511,23 @@ class AzureLeaseStore:
         return Versioned(parse_json(body), _etag(observed.get("etag")))
 
 
-def open_azure_stores(settings: Settings, *, observer: BoundaryObserver | None = None):
+def worker_credential() -> ManagedIdentityCredential:
+    """The job's user-assigned worker identity, selected by client ID; never the system identity."""
+    return ManagedIdentityCredential(client_id=worker_client_id(os.environ))
+
+
+def operator_credential() -> AzureCliCredential:
+    """The operator's own `az login`; operator commands never fall back through a credential chain."""
+    return AzureCliCredential()
+
+
+def open_azure_stores(settings: Settings, *, observer: BoundaryObserver | None = None, credential=None):
     validated = Settings.from_mapping(settings.to_mapping())
     if validated.storage.backend != "azure":
         raise ValueError("Azure factory requires validated Azure settings")
     if not validated.coordination.lease_seconds.is_integer():
         raise ValueError("Azure finite lease duration must use whole seconds")
-    credential = ManagedIdentityCredential()
+    credential = credential if credential is not None else worker_credential()
     storage = validated.storage
     options = {**RETRY_OPTIONS, "connection_timeout": STORAGE_CONNECTION_TIMEOUT_SECONDS,
                "read_timeout": STORAGE_READ_TIMEOUT_SECONDS}

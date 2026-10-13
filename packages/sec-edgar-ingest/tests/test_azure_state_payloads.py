@@ -1,6 +1,7 @@
 """Size and recovery contracts through real pinned SDKs, with offline service limits."""
 import copy
 import json
+import os
 import re
 import unittest
 from dataclasses import replace
@@ -14,6 +15,7 @@ from azure.data.tables import TableServiceClient
 from azure.storage.blob import BlobServiceClient
 
 from support import fixture_context, fixture_settings
+from support_azure import WORKER_CLIENT_ID
 from test_azure_contracts import (BLOB_ENDPOINT, TABLE_ENDPOINT, RETRY, ScriptedTransport,
                                   ScriptedResponse, response, table_response, table_error, blob_error)
 
@@ -118,8 +120,10 @@ class AzureStatePayloadTests(unittest.TestCase):
                                     api_version="2020-12-06", transport=self.transport, **RETRY)
         self.addCleanup(blobs.close)
         self.addCleanup(tables.close)
-        with patch.object(self.azure, "ManagedIdentityCredential"), patch.object(self.azure, "BlobServiceClient", return_value=blobs), patch.object(self.azure, "TableServiceClient", return_value=tables):
-            state, objects, _ = self.azure.open_azure_stores(self.settings)
+        from sec_edgar_ingest.storage.identity import WORKER_CLIENT_ID_ENV
+        with patch.dict(os.environ, {WORKER_CLIENT_ID_ENV: WORKER_CLIENT_ID}):
+            with patch.object(self.azure, "ManagedIdentityCredential"), patch.object(self.azure, "BlobServiceClient", return_value=blobs), patch.object(self.azure, "TableServiceClient", return_value=tables):
+                state, objects, _ = self.azure.open_azure_stores(self.settings)
         return state, objects
 
     def register_intended_history(self, store):
