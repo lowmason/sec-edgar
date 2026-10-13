@@ -23,7 +23,8 @@ from sec_edgar_ingest.models import canonical_json, to_mapping_value
 
 COMMANDS = ('discover', 'collect', 'transform', 'publish', 'backfill', 'daily', 'reconcile',
             'approve', 'candidates', 'rollback', 'history')
-# Colima shares the home directory with its VM; /tmp is not shared.
+# Only the Colima mount ~/.cache/sec-edgar-ingest-smoke is shared with the VM, so SMOKE_ROOT must
+# equal that mount path; /tmp is not shared.
 SMOKE_ROOT = Path.home() / '.cache' / 'sec-edgar-ingest-smoke'
 
 

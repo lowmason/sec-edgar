@@ -67,11 +67,18 @@ class AzureConfigTemplateTests(unittest.TestCase):
     def test_the_renderer_refuses_fixture_values_and_a_worker_section(self):
         template = json.loads(TEMPLATE.read_text())
         cases = {'worker section': {**template, 'worker': {'image_digest': DIGEST, 'provenance': 'x'}},
-                 'local backend': {**template, 'storage': {**template['storage'], 'backend': 'local-fixture'}},
                  'fixture parser': {**template, 'etl': {**template['etl'], 'parser_version': 'fixture-index-parser-v1'}}}
         for label, value in cases.items():
             with self.subTest(label), self.assertRaises(ValueError):
                 render(json.dumps(value).encode())
+        azure_only = ('account_name', 'blob_endpoint', 'table_endpoint')
+        local = {**template, 'storage': {**{key: value for key, value in template['storage'].items()
+                                            if key not in azure_only},
+                                         'backend': 'local-fixture', 'root': '.fixture-state'}}
+        # Settings accepts this template with its worker section, so only the renderer's own backend check can refuse it.
+        Settings.from_mapping({**local, 'worker': {'image_digest': DIGEST, 'provenance': 'stage-6-offline-test'}})
+        with self.subTest('local backend'), self.assertRaisesRegex(ValueError, 'azure backend'):
+            render(json.dumps(local).encode())
         for digest, provenance in (('sha256:' + '0' * 64, 'release'), (DIGEST, 'synthetic-fixture'), ('latest', 'release')):
             with self.subTest(digest=digest, provenance=provenance), self.assertRaises(ValueError):
                 render(digest=digest, provenance=provenance)

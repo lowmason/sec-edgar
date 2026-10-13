@@ -6,6 +6,7 @@ import json
 import sqlite3
 import tempfile
 import unittest
+from contextlib import closing
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from types import SimpleNamespace
@@ -109,7 +110,7 @@ class WorkflowSummaryTests(unittest.TestCase):
 
     def test_workflow_commands_write_no_approval_evidence(self):
         self.gate()
-        with sqlite3.connect(self.root / '.fixture-state' / 'state.sqlite3') as database:
+        with closing(sqlite3.connect(self.root / '.fixture-state' / 'state.sqlite3')) as database:
             rows = database.execute("SELECT COUNT(*) FROM records WHERE table_name='Approvals'").fetchone()[0]
         self.assertEqual(rows, 0)
         self.assertFalse((self.h.objects.directory / 'approvals').exists())
