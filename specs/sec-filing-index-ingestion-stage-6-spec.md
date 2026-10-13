@@ -77,8 +77,8 @@ Existing config, workset and binding-registry bytes are never rewritten. All 22 
 - **Runtime:**
   - the process runs as UID 1000;
   - `ENTRYPOINT ["sec-edgar-ingest"]`;
-  - `TMPDIR` points into an EmptyDir mount, so temporary space is the job's ephemeral storage;
-  - the configuration file mounts at `/etc/sec-edgar-ingest/config.json` (§4).
+  - `TMPDIR` is `/tmp/sec-edgar-ingest`, created in the image and owned by UID 1000. It lives on the container's writable layer: an execution override cannot mount volumes (§4), so no EmptyDir is used. Whether that space fits the workload is S7-18;
+  - the image carries no configuration (§4).
 - **Build context:** a script assembles it from the Dockerfile, the lock and the wheel in a clean directory. The same context serves the local build here and the ACR quick task in Stage 7.
 
 **Proof that the built image runs every command (D1).** The image is built locally with `docker buildx build --platform linux/amd64`. The platform choice is a CLI flag, never a Dockerfile line. A smoke script runs the image under `--network none` and checks:
@@ -106,12 +106,14 @@ A renderer fills in the digest and provenance, validates the result through `Set
 
 No release digest exists in Stage 6, so the template and renderer are the versioned configuration. Stage 7 renders the release config once S7-05 has published the image.
 
-**Delivery.**
+**Delivery.** A Jobs `2026-07-01` execution override carries only `args`, `command`, `env`, `image`, `name` and `resources` per container, and it replaces the whole template. Volumes therefore cannot carry the config into an ADF launch. Environment entries can reference job secrets by name.
 
 - **Bicep inputs:** Bicep receives `configJson` and `configSha256` only.
 - **Job image:** derived from the config, as `<registry>/sec-edgar-ingest@<json(configJson).worker.image_digest>`. The image and the config therefore cannot disagree.
-- **Mount:** the job stores `configJson` as a secret and mounts it through a secret volume at `/etc/sec-edgar-ingest/config.json`.
+- **Secret and variable:** the job stores `configJson` as the secret `ingest-config`. The job container, and ADF's override of it, set the environment variable `SEC_EDGAR_INGEST_CONFIG` with `secretRef: ingest-config`. The config is not sensitive; the secret is only the transport, so ADF never carries the config bytes.
+- **CLI:** workflow commands accept `--config-env NAME` as the exclusive alternative to `--config PATH`. It reads the config JSON from that variable and applies identical validation. Workflow children keep receiving a temporary config file.
 - **ADF expectations:** ADF receives the digest and `configSha256` as pipeline-parameter defaults from the same parameters file.
+- **Assumption (S7-06):** that a `secretRef` in an override's `env` resolves against the job's secrets. The Jobs permission guidance warns of exactly this capability. The fallback is passing the config inline as an argument.
 - **Changing either value redeploys the job.** An attempt begun under the old pair fails on replay with `Conflict` (`cli.py:175–185`). Every ADF launch is a fresh attempt (§7.1), so only an execution in flight at deploy time is exposed. The Stage 7 runbook deploys only with no execution in flight.
 
 **What ties the digest to the running image.** The worker cannot measure its own digest: an image cannot embed a config that names the image. ADF closes the loop instead. It requires both of these:
@@ -207,7 +209,7 @@ The record is written ahead of the compare-and-swap. Like a rollback record, it 
 - **Correlation.** `--run-id` is the calling pipeline's `RunId`. `--attempt-id` is `launch-<n>`, where n runs from 1 to 1 + `orchestration.transient_replays`. Every launch is a new attempt, because replay compares the whole saved context.
 - **Execution ID.** On Azure, workflow commands take it from `CONTAINER_APP_JOB_EXECUTION_NAME`, which Container Apps sets in every job execution. `--execution-id` must then be omitted; supplying it is `configuration`. On the local-fixture backend it stays required. The result therefore names the actual execution.
 - **Deadline.** `--deadline` is the launch time plus 3,300 s, in UTC. That stays inside the 3,600 s worker allowance and the replica timeout, and leaves 300 s to write the result.
-- **Start.** A Web activity POSTs to the job's `start` operation (API `2026-07-01`) with managed identity, audience `https://management.azure.com/`, `turnOffAsync: true` and retry 0. An override replaces the whole template, so the body carries the full container: the image by digest, resources, the client-ID env var, volume mounts and the command arguments. A test asserts that this container equals the job's own container in everything except the arguments.
+- **Start.** A Web activity POSTs to the job's `start` operation (API `2026-07-01`) with managed identity, audience `https://management.azure.com/`, `turnOffAsync: true` and retry 0. An override replaces the whole template, so the body carries the full container: the name, the image by digest, resources, both environment variables (`SEC_EDGAR_INGEST_WORKER_CLIENT_ID` and `SEC_EDGAR_INGEST_CONFIG`) and the arguments, starting with `--config-env SEC_EDGAR_INGEST_CONFIG`. A test asserts that this container equals the job's own container in everything except the arguments.
 - **Start responses.**
   - A 200 response naming an execution under the exact job path is observed.
   - A 202 response is followed only through an HTTPS `management.azure.com` Location on the selected async route.
@@ -222,7 +224,7 @@ The record is written ahead of the compare-and-swap. Like a rollback record, it 
 
 ### 7.3 Result and classification
 
-**Reading the result.** On `Succeeded` or `Failed`, ADF reads `results/runs/sec/<RunId>/<command>/launch-<n>/result.json` with `x-ms-version: 2026-04-06`. A result matches when all of these hold:
+**Reading the result.** On `Succeeded` or `Failed`, ADF reads `results/runs/sec/<RunId>/<command>/launch-<n>/result.json` with `x-ms-version: 2026-04-06`. Today the worker uploads every object with the SDK default content type. Stage 6 therefore uploads `.json` objects with `Content-Type: application/json`, and the pipeline reads the Web activity's output as the parsed object. The §10 scenarios use exactly that shape. Whether ADF parses it so is an S7-09 assumption; the fallback is `json(…output.Response)`. A result matches when all of these hold:
 
 - `format_version` is `sec-workflow-result-v1`;
 - `context.run_id`, `context.command` and `context.attempt_id` equal the launch's;
@@ -239,13 +241,13 @@ The record is written ahead of the compare-and-swap. Like a rollback record, it 
 | `Succeeded` or `Failed` | absent or unreadable | `result_missing` |
 | `Succeeded` or `Failed` | present but not matching | `result_mismatch` |
 | `Succeeded` | matching, outcome with exit 0 | **success** |
-| `Succeeded` with a non-zero outcome, or `Failed` with an exit-0 outcome | matching | `result_mismatch` |
-| `Failed` | matching, `awaiting_approval` | `awaiting_approval`: the distinct gated outcome |
-| `Failed` | matching, an exit-11 outcome | `stale` |
-| `Failed` | matching, `pending`, launches remaining | relaunch as `launch-<n+1>` |
-| `Failed` | matching, any other non-zero outcome | that outcome's name |
+| `Failed` | matching, outcome with exit 0 | `result_mismatch` |
+| `Succeeded` or `Failed` | matching, `awaiting_approval` | `awaiting_approval`: the distinct gated outcome |
+| `Succeeded` or `Failed` | matching, an exit-11 outcome | `stale` |
+| `Succeeded` or `Failed` | matching, `pending`, launches remaining | relaunch as `launch-<n+1>` |
+| `Succeeded` or `Failed` | matching, any other non-zero outcome | that outcome's name |
 
-Only **success** ends a pipeline `Succeeded`. Every other row ends in a Fail activity whose error code is the pipeline outcome. Exit-0 outcomes are those that `results.EXIT_CODES` maps to 0. A test asserts the table covers every key exactly.
+Non-zero outcomes are classified by name whatever the terminal state. Gated and stale outcomes therefore stay distinct even if S7-08 shows Container Apps mapping a non-zero exit differently, and none of them is ever success. Only **success** ends a pipeline `Succeeded`. Every other row ends in a Fail activity whose error code is the pipeline outcome. Exit-0 outcomes are those that `results.EXIT_CODES` maps to 0. A test asserts the table covers every key exactly.
 
 **Replay.** Only `pending` is replayed. It means a matching durable result whose unresolved work is all pending, deferred or throttled, with nothing completed or failed. Replays are capped at `orchestration.transient_replays` (1). Nothing else is replayed, including any execution whose state or result is unknown.
 
@@ -313,7 +315,7 @@ infra/azure/sec-edgar-ingest/
   - Containers: `raw`, `worksets`, `quarantine`, `locks`, `results`, `generations`, `manifests`, `approvals`.
   - Tables: `SourceState`, `Attempts`, `ActivePointers`, `Approvals`.
 - **Registry:** Basic, with the admin user off, anonymous pull off, ARM-token authentication on and classic RBAC (F1 D-05/D-06).
-- **Job:** a `Manual` job in a Consumption environment, with the §2 job values. It has an EmptyDir for temporary space and the config secret volume. It carries the worker and pull UAMIs and no system-assigned identity; the pull UAMI is the registry identity.
+- **Job:** a `Manual` job in a Consumption environment, with the §2 job values. It has the `ingest-config` secret and no volumes (§4). It carries the worker and pull UAMIs and no system-assigned identity; the pull UAMI is the registry identity.
 - **Factory:** ADF with a system-assigned identity. The pipelines use only Web, Until, Wait, If, Switch, Set Variable, Execute Pipeline and Fail activities.
 - **Parameters without defaults:** `configJson`, `configSha256`, `operatorPrincipalId` and both trigger `startTime` values. Region defaults to `eastus`, restricted to eastus, eastus2 and centralus.
 
@@ -351,7 +353,8 @@ All of these read `main.json` and the pipeline and alert sources with the stdlib
 
 **Worker and commands:**
 
-- `SEC_EDGAR_INGEST_WORKER_CLIENT_ID` and `CONTAINER_APP_JOB_EXECUTION_NAME`;
+- `SEC_EDGAR_INGEST_WORKER_CLIENT_ID`, `SEC_EDGAR_INGEST_CONFIG` with `--config-env`, and `CONTAINER_APP_JOB_EXECUTION_NAME`;
+- `Content-Type: application/json` on `.json` objects;
 - the `history` command;
 - Azure principal attribution;
 - the `sec-approval-activation-v1` object and the `ApprovalActivation` kind;
@@ -361,6 +364,15 @@ All of these read `main.json` and the pipeline and alert sources with the stdlib
 **Telemetry:** the `workflow_summary` fields, the `WorkflowMilestone` entity, and which alerts Stage 8 enables.
 
 **Local image proof (D1):** the build context script and the smoke script. The release image, its digest, and the live pull, start, state, result, trigger, alert and runtime evidence remain S7-04 to S7-10 and S7-16 to S7-18.
+
+**Assumptions Stage 6 adds to the Stage 7 checks:**
+
+- S7-06: an override's `env` `secretRef` resolves against the job's secrets (§4).
+- S7-08: Container Apps marks a non-zero exit `Failed`. Classification no longer depends on it (§7.3).
+- S7-09: ADF parses a JSON-typed result body into its output object (§7.3).
+- S7-18: the container's writable layer holds the worker's temporary space (§3).
+
+**Redeploying triggers:** ADF rejects an update to a started trigger. Any redeploy after Stage 8 enables triggers stops them first and restarts them afterwards, as a recorded release step.
 
 ## 12. Verification and boundary
 
@@ -372,7 +384,7 @@ All of these read `main.json` and the pipeline and alert sources with the stdlib
 | `history` deferred item | The command prints lineage, rollbacks and activations, and the runbook uses it | 9 |
 | Attribution deferred item | Azure approve and rollback record the token principal and refuse free text. Activation records are written ahead of the swap, are idempotent and keep lost races; `history` lists them | 9 |
 | Mistyped-path deferred item | Operator commands refuse a missing store on both backends and never write the registry | 9 |
-| Azure in step | Credential selection, the verify-only open, the `ApprovalActivation` routing and the `WorkflowMilestone` routing are exercised through pinned-SDK mocked transports | 9 |
+| Azure in step | Credential selection, the verify-only open, the `ApprovalActivation` routing, the `WorkflowMilestone` routing and the JSON content type are exercised through pinned-SDK mocked transports. `--config-env` loads the same `Settings` as `--config` | 9 |
 | Stage exit | Full offline suite, wheel build, help for every command, Bicep rebuild with a clean diff, image smoke | 9, 10 |
 
 **Out of scope:**
@@ -398,7 +410,8 @@ The stage splits at a dependent seam: the worker contract feeds the definitions.
   - credentials and the verify-only open;
   - `history`;
   - attribution and activation records;
-  - the execution ID from the environment;
+  - the execution ID and `--config-env` from the environment;
+  - JSON content type on `.json` objects;
   - `workflow_summary` and the milestone;
   - the config template, renderer and golden binding;
   - the Dockerfile, build context and local image smoke.
@@ -424,7 +437,9 @@ The stage splits at a dependent seam: the worker contract feeds the definitions.
 
 **D2 — Stage spec before the plan.** The owner chose a spec first, with this owner-decisions section, following the Stage 2–5 precedent. Stage 6 still routes through `writing-plans`, and the roadmap is unchanged.
 
-**Q1 — Configuration delivery:** a secret-volume file rendered from the committed template, with the job image derived from the config's digest (§4).
+**Q1 — Configuration delivery:** the config is rendered from the committed template, stored as a job secret, and reaches the worker through an environment variable that references that secret. The job image is derived from the config's digest (§4).
+
+The owner first chose a secret-volume file. That choice was re-asked the same day after F1's retained Jobs `2026-07-01` start reference showed that an execution override cannot carry volume mounts. The owner then chose the environment-variable form.
 
 **Q2 — Operator access:** `AzureCliCredential` for operator commands and a verify-only open on both backends; the worker UAMI is selected by client ID (§5).
 
@@ -448,6 +463,9 @@ The stage splits at a dependent seam: the worker contract feeds the definitions.
 7. The worker narrowed to read-only on approvals, and one operator role set (§5).
 8. The reconciliation milestone (§8).
 9. The backfill range `2015Q1`–`open` in the template (§4).
+10. Non-zero outcomes classified by name whatever the terminal state (§7.3).
+11. `Content-Type: application/json` on `.json` objects, read by ADF as parsed output (§7.3).
+12. The four Stage 7 assumptions listed in §11.
 
 ## 15. Rollout note
 
