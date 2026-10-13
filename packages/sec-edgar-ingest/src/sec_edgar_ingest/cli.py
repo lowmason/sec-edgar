@@ -16,7 +16,7 @@ from .collection import collect
 from .config import Settings, load_config, pin_context
 from .coordination import Clock, Coordinator
 from .discovery import discover
-from .etl.approval import approve
+from .etl.approval import activation_ref, approve
 from .etl.commands import (PublicationRepairPending, read_etl_result, run_transform, run_publish,
                            write_etl_result, validate_workset_ref)
 from .etl.history import withdrawal_candidates
@@ -523,10 +523,12 @@ def _approve_main(args) -> int:
     def run(objects, state, actor):
         result = approve(args.quarter, args.generation, args.quarterly_sha256, actor, objects, state)
         ref = None if result.approval is None else approval_ref(result.approval.quarter, result.approval.generation_id)
-        return {**result.to_mapping(), 'approval_ref': ref}
+        return {**result.to_mapping(), 'approval_ref': ref,
+                'activation_ref': None if result.activation is None else activation_ref(result.activation)}
     return _operator_main(args, 'withdrawal_approval',
                           {'quarter': args.quarter, 'generation_id': args.generation, 'approval_ref': None,
-                           'approval': None, 'publication': None, 'error': None}, run, actor='approver')
+                           'approval': None, 'publication': None, 'activation': None, 'activation_ref': None,
+                           'error': None}, run, actor='approver')
 
 
 def _candidates_main(args) -> int:

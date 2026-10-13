@@ -223,7 +223,7 @@ class ApproveTests(GateFixture):
         code, message, _ = operator_cli(*command)
         self.assertEqual((code, message['outcome']), (9, 'state_conflict'))
         self.assertEqual(set(message), {'outcome', 'quarter', 'generation_id', 'approval_ref', 'approval',
-                                        'publication', 'error'})
+                                        'publication', 'activation', 'activation_ref', 'error'})
         self.assertEqual(message['error']['code'], 'state_conflict')
 
     def test_approve_cli_reports_a_stale_candidate_with_exit_11(self):

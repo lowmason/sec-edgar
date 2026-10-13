@@ -5,8 +5,8 @@ import hashlib
 
 from ..models import Versioned, canonical_json, quarter_value, require_hash
 from ..storage.contracts import AlreadyExists, CAS_ATTEMPTS, Conflict, StateStore
-from .contracts import (Candidate, GenerationCapture, GenerationManifest, ObservationRef, QuarterRollback,
-                        WithdrawalApproval, processing_key)
+from .contracts import (ApprovalActivation, Candidate, GenerationCapture, GenerationManifest, ObservationRef,
+                        QuarterRollback, WithdrawalApproval, processing_key)
 
 POINTER_FIELDS = frozenset({'quarter', 'generation_id', 'manifest_ref', 'manifest_sha256', 'manifest_bytes', 'source_fingerprint'})
 
@@ -76,6 +76,16 @@ class EtlState:
         records = (QuarterRollback.from_mapping(row.to_mapping()['value'])
                    for row in self.store.scan('QuarterRollback', {'quarter': quarter}))
         return tuple(sorted(records, key=lambda record: (record.rolled_back_at, record.rollback_id)))
+
+    def record_activation(self, record: ApprovalActivation) -> None:
+        self._immutable('ApprovalActivation', record.activation_id, record.to_mapping())
+
+    def activations(self, quarter: str) -> tuple[ApprovalActivation, ...]:
+        """Every write-ahead approve activation of one quarter; the pointer decides which took effect."""
+        quarter_value(quarter)
+        records = (ApprovalActivation.from_mapping(row.to_mapping()['value'])
+                   for row in self.store.scan('ApprovalActivation', {'quarter': quarter}))
+        return tuple(sorted(records, key=lambda record: (record.activated_at, record.activation_id)))
 
     def record_publication(self, manifest: GenerationManifest) -> None:
         for ref in manifest.sources:

@@ -50,8 +50,10 @@ Before approving, confirm all three:
 
 ```text
 sec-edgar-ingest approve --config PATH --quarter YYYYQn --generation ID \
-  --quarterly-sha256 HASH --approver TEXT [--state-dir PATH]
+  --quarterly-sha256 HASH [--approver TEXT] [--state-dir PATH]
 ```
+
+`--approver` is required on the local-fixture backend and refused on Azure. On Azure, `approve` signs in with the operator's `az login` and records `entra:<tenant-id>/<object-id>` followed by the account's user name. The same holds for `rollback --operator`.
 
 | Outcome | Exit | Next action |
 |---|---|---|
@@ -61,15 +63,15 @@ sec-edgar-ingest approve --config PATH --quarter YYYYQn --generation ID \
 | `approval_stale` | 11 | The base moved (`error.details` names `active_generation_id` and `base_generation_id`), or a later download supersedes the candidate (`error.details` names `latest_observed_sha256`). Reconcile, then review the current candidates. |
 | `state_conflict` / `internal_error` | 9 | Corrupt evidence or an unexpected failure. Stop and investigate. |
 
-The approval object is immutable: `approvals/sec/filing_index/year=<yyyy>/quarter=<q>/generation=<id>/approval.json`, format `sec-withdrawal-approval-v1`. The first stored approval wins. An approval binds one candidate generation, so a later download, or a rebuild on another base, needs its own approval. `approve` writes the approval object, the `Approvals` index and the conditional pointer replace. It does not repair Processing or PublicationReceipt indexes; the next publish that touches the quarter repairs them.
+The approval object is immutable: `approvals/sec/filing_index/year=<yyyy>/quarter=<q>/generation=<id>/approval.json`, format `sec-withdrawal-approval-v1`. The first stored approval wins. An approval binds one candidate generation, so a later download, or a rebuild on another base, needs its own approval. `approve` writes the approval object (the decision), then an activation record (the move), then the conditional pointer replace. The record is at `approvals/sec/filing_index/year=<yyyy>/quarter=<q>/generation=<id>/activation=<activation-id>/activation.json`, format `sec-approval-activation-v1`, and both are indexed in `Approvals`. `unchanged`, `approval_stale` and refusals write no activation. stdout names it in `activation_ref`. It does not repair Processing or PublicationReceipt indexes; the next publish that touches the quarter repairs them.
 
-`approve` writes the approval record before it swaps the pointer. If the swap loses a race to a newer generation, `approve` returns `approval_stale` and an exact-bound approval record for that candidate can remain. It authorizes nothing by itself and cannot be used for any other candidate or download. If the quarter is later rolled back to that candidate's base, a further `approve` activates the candidate under the stored approval, unless a later download of the source has different bytes (the candidate then lists as `superseded`, and `approve` returns `approval_stale`); the later operator's name is not recorded.
+`approve` writes the approval record before it swaps the pointer. If the swap loses a race to a newer generation, `approve` returns `approval_stale` and an exact-bound approval record for that candidate can remain. It authorizes nothing by itself and cannot be used for any other candidate or download. If the quarter is later rolled back to that candidate's base, a further `approve` activates the candidate under the stored approval, unless a later download of the source has different bytes (the candidate then lists as `superseded`, and `approve` returns `approval_stale`); that re-activation writes only an activation record, attributed to its own actor.
 
 ## Roll back
 
 ```text
 sec-edgar-ingest rollback --config PATH --quarter YYYYQn --from-generation ID \
-  --to-generation ID --operator TEXT --reason TEXT [--state-dir PATH]
+  --to-generation ID [--operator TEXT] --reason TEXT [--state-dir PATH]
 ```
 
 `--from-generation` must be the active generation, and `--to-generation` an earlier generation of its exact lineage; take both from `quarter_history`. The command writes an immutable record first, at `approvals/sec/filing_index/year=<yyyy>/quarter=<q>/rollback=<id>/rollback.json` (format `sec-pointer-rollback-v1`), then swaps the pointer. A record whose swap lost a race stays as evidence of the attempt; the pointer decides what took effect.
@@ -82,7 +84,7 @@ sec-edgar-ingest rollback --config PATH --quarter YYYYQn --from-generation ID \
 | `rollback_stale` | 11 | The active generation is not `--from-generation` (it changed, or that generation was never active). Re-read `quarter_history` and decide again. |
 | `state_conflict` / `internal_error` | 9 | Corrupt evidence or an unexpected failure. Stop and investigate. |
 
-A rollback is not a pin: the next publish of a newer observation builds forward again. It cannot retract data consumers already used. Rolling back to an approved candidate's base shows it `pending` again, or `superseded` if a later download of the source has different bytes. From `pending`, `approve` re-activates it under the original stored approval, and the new `--approver` is not recorded. Rolling back further shows it `stale`, and `approve` returns `approval_stale`; reconcile to stage a new candidate.
+A rollback is not a pin: the next publish of a newer observation builds forward again. It cannot retract data consumers already used. Rolling back to an approved candidate's base shows it `pending` again, or `superseded` if a later download of the source has different bytes. From `pending`, `approve` re-activates it under the original stored approval and records the re-activating actor in a new activation record. Rolling back further shows it `stale`, and `approve` returns `approval_stale`; reconcile to stage a new candidate.
 
 ## History
 
@@ -91,5 +93,5 @@ A rollback is not a pin: the next publish of a newer observation builds forward 
 ## Not provided
 
 - Roll-forward, pins and dismissal of stale candidates.
-- Approver and rollback-operator identity mapping, alerts for pending approvals, and schedules belong to Stage 6.
+- Alerts for pending approvals and schedules are Stage 6's Azure definitions (Plan 10).
 - Integrated checks, including the rollback rehearsal, belong to Stage 7.

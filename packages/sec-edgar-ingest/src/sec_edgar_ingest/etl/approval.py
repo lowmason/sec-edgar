@@ -6,11 +6,11 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
-from ..models import Error, Record, canonical_json, quarter_value, require_hash, validate_record_fields
+from ..models import Error, Record, canonical_json, parse_json, quarter_value, require_hash, validate_record_fields
 from ..state import AcquisitionState
 from ..storage.contracts import AlreadyExists, BoundaryObserver, CAS_ATTEMPTS, Conflict, ObjectStore, observe
-from .contracts import (MAX_OPERATOR_CHARS, Candidate, GenerationCapture, PublicationResult, WithdrawalApproval,
-                        require_line)
+from .contracts import (MAX_OPERATOR_CHARS, ApprovalActivation, Candidate, GenerationCapture, PublicationResult,
+                        WithdrawalApproval, require_line)
 from .manifest import (approval_for, approval_ref, gate_ref, generation_base, read_approval, read_manifest,
                        validate_candidate)
 from .publication import pointer_value
@@ -30,6 +30,7 @@ class ApprovalOutcome(Record):
     publication: PublicationResult | None
     approval: WithdrawalApproval | None
     error: Error | None
+    activation: ApprovalActivation | None = None
 
     def __post_init__(self):
         validate_record_fields(self)
@@ -40,6 +41,8 @@ class ApprovalOutcome(Record):
             raise ValueError('approval outcome evidence differs from its outcome')
         if not committed and (self.error is None or self.error.code != self.outcome):
             raise ValueError('refused or stale approval requires its matching error')
+        if (self.activation is not None) != (self.outcome == 'success'):
+            raise ValueError('exactly a successful approval carries the activation that moved the pointer')
 
 
 def _now() -> datetime:
@@ -72,10 +75,11 @@ def _refused(message: str) -> ApprovalOutcome:
     return ApprovalOutcome('approval_refused', None, None, Error('approval_refused', message, False, None, {}))
 
 
-def _committed(outcome: str, candidate: Candidate, approval: WithdrawalApproval, conflicts: int) -> ApprovalOutcome:
+def _committed(outcome: str, candidate: Candidate, approval: WithdrawalApproval, conflicts: int,
+               activation: ApprovalActivation | None = None) -> ApprovalOutcome:
     publication = PublicationResult(candidate.manifest.quarter, 'published' if outcome == 'success' else 'unchanged',
                                     candidate.manifest.generation_id, candidate.manifest_ref, None, conflicts)
-    return ApprovalOutcome(outcome, publication, approval, None)
+    return ApprovalOutcome(outcome, publication, approval, None, activation)
 
 
 def load_candidate(quarter: str, generation_id: str, objects: ObjectStore) -> Candidate:
@@ -100,6 +104,27 @@ def _store_approval(approval: WithdrawalApproval, candidate: Candidate, objects:
     except Conflict:
         pass  # The first approval wins; read_approval re-validates its exact binding.
     return read_approval(candidate, objects)
+
+
+def activation_ref(record: ApprovalActivation) -> str:
+    year, ordinal = quarter_value(record.quarter)
+    return (f'approvals/sec/filing_index/year={year}/quarter={ordinal}/generation={record.generation_id}'
+            f'/activation={record.activation_id}/activation.json')
+
+
+def _store_activation(record: ApprovalActivation, objects: ObjectStore) -> ApprovalActivation:
+    ref = activation_ref(record)
+    try:
+        objects.put_once(ref, canonical_json(record.to_mapping()))
+    except Conflict:
+        pass  # The first record of this exact attempted move wins; it is re-validated below.
+    body = objects.read(ref)
+    stored = ApprovalActivation.from_mapping(parse_json(body))
+    if canonical_json(stored.to_mapping()) != body or activation_ref(stored) != ref or (
+            stored.base_generation_id, stored.approval_ref, stored.approval_sha256) != (
+            record.base_generation_id, record.approval_ref, record.approval_sha256):
+        raise ValueError('stored activation differs from this exact pointer move')
+    return stored
 
 
 def approve(quarter: str, generation_id: str, quarterly_sha256: str, approver: str,
@@ -136,6 +161,11 @@ def approve(quarter: str, generation_id: str, quarterly_sha256: str, approver: s
                 {'quarterly_sha256': quarterly_sha256, **superseded}))
         stored = _store_approval(pending, candidate, objects)
         state.record_approval(stored)
+        activation = _store_activation(ApprovalActivation(
+            quarter, generation_id, candidate.manifest.base_generation_id, current.version,
+            approval_ref(quarter, generation_id), hashlib.sha256(canonical_json(stored.to_mapping())).hexdigest(),
+            approver, _now()), objects)
+        state.record_activation(activation)
         observe(observer, 'approval.before_pointer')
         try:
             state.commit_pointer(quarter, pointer_value(candidate), current)
@@ -143,5 +173,5 @@ def approve(quarter: str, generation_id: str, quarterly_sha256: str, approver: s
             observe(observer, 'approval.cas_lost')
             continue
         observe(observer, 'approval.after_pointer')
-        return _committed('success', candidate, stored, conflicts)
+        return _committed('success', candidate, stored, conflicts, activation)
     raise Conflict('approval exhausted conditional pointer races')
