@@ -22,7 +22,7 @@ Everything here uses local fixture state or offline evidence. Live SEC, Azure, c
 
 A failed or quarantined correction leaves the quarter's prior generation active. The failed member's source period names the affected quarter.
 
-A `source_reverted` gap means the SEC now serves bytes identical to an older snapshot than the active one. The active generation stays, and every reconcile reports the gap. To follow the SEC, roll back (below) to the generation whose membership hash equals the gap's `observed_sha256`; `quarter_history` lists each generation's membership hash. If no generation in the lineage holds those bytes, the gap repeats until the SEC serves different bytes. Restored bytes that differ in any way are a new snapshot and publish normally.
+A `source_reverted` gap means the SEC now serves bytes identical to an older snapshot than the active one. The active generation stays, and every reconcile reports the gap. To follow the SEC, roll back (below) to the generation whose membership hash equals the gap's `observed_sha256`; `sec-edgar-ingest history` lists each generation's membership hash. If no generation in the lineage holds those bytes, the gap repeats until the SEC serves different bytes. Restored bytes that differ in any way are a new snapshot and publish normally.
 
 ## Review a withdrawal request
 
@@ -38,7 +38,7 @@ A `source_reverted` gap means the SEC now serves bytes identical to an older sna
 - `approved`;
 - the membership source's `latest_observed_sha256` and `latest_observed_at`.
 
-`approved` means an approval was recorded for this exact candidate, not that it was ever active. The pointer, `quarter_history` and `EtlState.rollbacks` show what took effect.
+`approved` means an approval was recorded for this exact candidate, not that it was ever active. The pointer and `sec-edgar-ingest history` show what took effect.
 
 Before approving, confirm all three:
 
@@ -74,21 +74,33 @@ sec-edgar-ingest rollback --config PATH --quarter YYYYQn --from-generation ID \
   --to-generation ID [--operator TEXT] --reason TEXT [--state-dir PATH]
 ```
 
-`--from-generation` must be the active generation, and `--to-generation` an earlier generation of its exact lineage; take both from `quarter_history`. The command writes an immutable record first, at `approvals/sec/filing_index/year=<yyyy>/quarter=<q>/rollback=<id>/rollback.json` (format `sec-pointer-rollback-v1`), then swaps the pointer. A record whose swap lost a race stays as evidence of the attempt; the pointer decides what took effect.
+`--from-generation` must be the active generation, and `--to-generation` an earlier generation of its exact lineage; take both from `sec-edgar-ingest history`. The command writes an immutable record first, at `approvals/sec/filing_index/year=<yyyy>/quarter=<q>/rollback=<id>/rollback.json` (format `sec-pointer-rollback-v1`), then swaps the pointer. A record whose swap lost a race stays as evidence of the attempt; the pointer decides what took effect.
 
 | Outcome | Exit | Next action |
 |---|---|---|
 | `success` | 0 | The pointer moved to the target. |
 | `unchanged` | 0 | The target was already active. |
 | `rollback_refused` | 2 | Correct the arguments; the target must be earlier in the active lineage. Nothing was written. Exit 2 with empty stdout is a usage or configuration error; see stderr. |
-| `rollback_stale` | 11 | The active generation is not `--from-generation` (it changed, or that generation was never active). Re-read `quarter_history` and decide again. |
+| `rollback_stale` | 11 | The active generation is not `--from-generation` (it changed, or that generation was never active). Re-run `sec-edgar-ingest history` and decide again. |
 | `state_conflict` / `internal_error` | 9 | Corrupt evidence or an unexpected failure. Stop and investigate. |
 
 A rollback is not a pin: the next publish of a newer observation builds forward again. It cannot retract data consumers already used. Rolling back to an approved candidate's base shows it `pending` again, or `superseded` if a later download of the source has different bytes. From `pending`, `approve` re-activates it under the original stored approval and records the re-activating actor in a new activation record. Rolling back further shows it `stale`, and `approve` returns `approval_stale`; reconcile to stage a new candidate.
 
 ## History
 
-`quarter_history(quarter, objects, state)` in `sec_edgar_ingest.etl.history` returns the active generation's lineage, newest first, through each exact `retained-base.json`. Each entry carries the counts, gate, mode, membership hash and change file, plus the approval for each approved gated generation. `EtlState.rollbacks(quarter)` returns the quarter's rollback records; after a rollback, they name the generations the lineage no longer shows.
+```text
+sec-edgar-ingest history --config PATH --quarter YYYYQn [--state-dir PATH]
+```
+
+Read-only. It prints `{"activations": [...], "error": null, "lineage": [...], "outcome": "success", "quarter": ..., "rollbacks": [...]}`:
+
+- `lineage` is the active generation's lineage, newest first, through each exact `retained-base.json`. Each entry carries the counts, gate, mode, membership hash and change file, plus the approval of each approved gated generation. A quarter with no pointer has an empty lineage.
+- `rollbacks` are the quarter's rollback records. After a rollback, they name the generations the lineage no longer shows.
+- `activations` are the quarter's approve activation records, attempted moves included. The pointer decides which took effect.
+
+Exit 0 is success. Exit 2 with empty stdout is a configuration error: an invalid quarter, or no store at the configured binding (a mistyped `--state-dir` creates nothing). Exit 9 is `state_conflict` or `internal_error`.
+
+Every operator command (`approve`, `rollback`, `candidates`, `history`) opens an existing store verify-only. It never creates a directory, database, container, table or binding registry.
 
 ## Not provided
 

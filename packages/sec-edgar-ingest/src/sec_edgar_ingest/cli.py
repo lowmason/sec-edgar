@@ -19,7 +19,7 @@ from .discovery import discover
 from .etl.approval import activation_ref, approve
 from .etl.commands import (PublicationRepairPending, read_etl_result, run_transform, run_publish,
                            write_etl_result, validate_workset_ref)
-from .etl.history import withdrawal_candidates
+from .etl.history import quarter_history, withdrawal_candidates
 from .etl.manifest import approval_ref
 from .etl.parser import supported_parser, SCHEMA_VERSION
 from .etl.publication import repair_publication
@@ -27,7 +27,7 @@ from .etl.rollback import rollback, rollback_ref
 from .etl.state import EtlState
 from .download import BoundedSender, FixturePack, RequestClient
 from .models import (CommandResult, Error, RunContext, canonical_json, error_text, parse_json, quarter_for,
-                     safe_relative_path, to_mapping_value)
+                     quarter_value, safe_relative_path, to_mapping_value)
 from .results import exit_code, log_event, read_result, result_path, write_result
 from .state import AcquisitionState, attempt_key
 from .storage import open_stores
@@ -97,6 +97,10 @@ def _parser() -> argparse.ArgumentParser:
     sub.add_argument('--state-dir')
     sub = commands.add_parser('candidates')
     sub.add_argument('--config', required=True)
+    sub.add_argument('--state-dir')
+    sub = commands.add_parser('history')
+    sub.add_argument('--config', required=True)
+    sub.add_argument('--quarter', required=True)
     sub.add_argument('--state-dir')
     sub = commands.add_parser('rollback')
     for name in ('config', 'quarter', 'from-generation', 'to-generation', 'reason'):
@@ -455,6 +459,8 @@ def _workflow_main(args):
 
 
 def _operator_settings(args) -> Settings:
+    if args.command == 'history':
+        quarter_value(args.quarter)
     settings = load_config(Path(args.config))
     if settings.storage.backend == 'azure' and args.state_dir:
         raise ValueError('state directory is fixture-only')
@@ -537,6 +543,15 @@ def _candidates_main(args) -> int:
                                                          'candidates': list(withdrawal_candidates(objects, state))})
 
 
+def _history_main(args) -> int:
+    def run(objects, state, actor):
+        return {'outcome': 'success', 'lineage': list(quarter_history(args.quarter, objects, state)),
+                'rollbacks': [record.to_mapping() for record in state.rollbacks(args.quarter)],
+                'activations': [record.to_mapping() for record in state.activations(args.quarter)]}
+    return _operator_main(args, None, {'quarter': args.quarter, 'lineage': None, 'rollbacks': None,
+                                       'activations': None, 'error': None}, run)
+
+
 def _rollback_main(args) -> int:
     def run(objects, state, actor):
         result = rollback(args.quarter, args.from_generation, args.to_generation, actor, args.reason,
@@ -561,6 +576,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _approve_main(args)
     if args.command == 'candidates':
         return _candidates_main(args)
+    if args.command == 'history':
+        return _history_main(args)
     if args.command == 'rollback':
         return _rollback_main(args)
     try:

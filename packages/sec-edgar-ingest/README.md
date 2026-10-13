@@ -164,7 +164,7 @@ pointer alone does not prove member completion, and repair must not advance the 
 twice. Use `capture_quarter` then `read_quarter` to read the captured validated
 generation rather than globbing files or selecting a mutable latest snapshot.
 
-`reconcile` takes the same arguments as `backfill` and runs through the same workflow runner. Its discovery always refreshes every supported quarterly source. Unchanged bytes report `unchanged`, and corrections publish through the shipped precedence and gate rules. A closed-quarter withdrawal stays `awaiting_approval` until an operator reviews it with `sec-edgar-ingest candidates --config PATH` and activates that exact candidate with `sec-edgar-ingest approve --config PATH --quarter YYYYQn --generation ID --quarterly-sha256 HASH --approver TEXT`. Approval is immutable, the first approval wins, and it binds one candidate generation, so a later download needs its own approval. A newest download that repeats older bytes is reported as a `source_reverted` gap rather than published. `sec-edgar-ingest rollback` then moves the quarter back to the generation that holds those bytes, writing an immutable record first. See the [reconciliation and approval runbook](../../docs/runbooks/sec-edgar-reconciliation-approval.md).
+`reconcile` takes the same arguments as `backfill` and runs through the same workflow runner. Its discovery always refreshes every supported quarterly source. Unchanged bytes report `unchanged`, and corrections publish through the shipped precedence and gate rules. A closed-quarter withdrawal stays `awaiting_approval` until an operator reviews it with `sec-edgar-ingest candidates --config PATH` and activates that exact candidate with `sec-edgar-ingest approve --config PATH --quarter YYYYQn --generation ID --quarterly-sha256 HASH [--approver TEXT]`. Approval is immutable, the first approval wins, and it binds one candidate generation, so a later download needs its own approval. A newest download that repeats older bytes is reported as a `source_reverted` gap rather than published. `sec-edgar-ingest rollback` then moves the quarter back to the generation that holds those bytes, writing an immutable record first. See the [reconciliation and approval runbook](../../docs/runbooks/sec-edgar-reconciliation-approval.md).
 
 Offline native and isolated installed-wheel workflow proofs passed for these synthetic
 fixture workflows and immutable evidence. They do not establish historical production
@@ -206,3 +206,8 @@ exact built wheel and checks site-packages source equality outside the checkout:
 ```sh
 uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/etl_proof.py installed --output /absolute/new/installed-proof
 ```
+
+Operator commands are `candidates`, `approve`, `rollback` and the read-only `history --quarter YYYYQn`; see
+`docs/runbooks/sec-edgar-reconciliation-approval.md`. They open an existing store verify-only and never create
+one: a missing store is a configuration error (exit 2, empty stdout). On Azure they authenticate with the
+operator's `az login`, and `approve`/`rollback` record that principal instead of `--approver`/`--operator`.
