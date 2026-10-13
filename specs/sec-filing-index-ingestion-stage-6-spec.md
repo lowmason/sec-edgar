@@ -199,7 +199,7 @@ It is canonical JSON with format `sec-approval-activation-v1`, and its fields ar
 
 The record is written ahead of the compare-and-swap. Like a rollback record, it records an attempt, and the pointer decides what took effect. A first approval therefore writes the approval (the decision) and an activation (the move). A re-activation after a rollback writes only an activation, attributed to its own actor.
 
-`unchanged`, `approval_stale` and refusals write no activation. `approve` prints `activation_ref`. This closes the deferred item "Capture who re-activates an approved candidate" as implemented.
+`unchanged`, refusals and an `approval_stale` found before the swap write no activation; a swap that lost a race keeps its activation as evidence of the attempt. (owner, plan 9, 2026-10-13) `approve` prints `activation_ref`. This closes the deferred item "Capture who re-activates an approved candidate" as implemented.
 
 ## 7. Orchestration
 
