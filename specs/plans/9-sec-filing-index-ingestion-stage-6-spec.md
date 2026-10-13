@@ -1,5 +1,7 @@
 # SEC filing-index ingestion — Stage 6 worker image and operator surface Implementation Plan
 
+**Status: COMPLETE (2026-10-13)** — executed via subagent-driven-development; deferred items in specs/deferred_items.md
+
 > **For agentic workers:** REQUIRED SUB-SKILL: implement this plan task-by-task via subagent-driven-development (the default) — or executing-plans when your human partner chose inline execution at the handoff. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Give the worker and operator commands everything Azure needs: the worker identity, a read-only operator open with principal attribution and activation records, `history`, config and execution ID from the environment, alerting telemetry, the rendered Azure config, and a locally built Linux amd64 image proven to run every command.
@@ -46,6 +48,8 @@ uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-i
 ```text
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 ```
+
+> Deviation: the owner chose per-model trailers at execution (2026-10-13): each commit ends with the `Co-Authored-By` line naming the model that wrote it (Opus, Sonnet or Haiku 5.5), not the literal Opus line above.
 
 ## Decisions
 
@@ -109,7 +113,7 @@ Test paths below are under `packages/sec-edgar-ingest/tests/`; source paths unde
   - `storage.azure`: `worker_credential()`, `operator_credential()`, and `open_azure_stores(settings, *, observer=None, credential=None)`.
   - Test support `support_azure`: `TENANT_ID`, `OBJECT_ID`, `WORKER_CLIENT_ID`, `AZURE_STORAGE`, `azure_settings(**overrides) -> Settings`, `write_azure_config(path) -> Path`, `jwt(**claims) -> str`, `FakeCredential(token)`, `FailingCredential()`.
 
-- [ ] **Step 1: Write the test support module**
+- [x] **Step 1: Write the test support module**
 
 `tests/support_azure.py`:
 
@@ -172,7 +176,7 @@ class FailingCredential:
         raise ClientAuthenticationError("Please run 'az login' to set up an account")
 ```
 
-- [ ] **Step 2: Write the failing tests**
+- [x] **Step 2: Write the failing tests**
 
 `tests/test_azure_identity.py`:
 
@@ -301,12 +305,12 @@ if __name__ == "__main__":
     unittest.main()
 ```
 
-- [ ] **Step 3: Run the tests to verify they fail**
+- [x] **Step 3: Run the tests to verify they fail**
 
 Run: `uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/network_guard.py test_azure_identity -v`
 Expected: ERROR at import with `ModuleNotFoundError: No module named 'sec_edgar_ingest.storage.identity'`.
 
-- [ ] **Step 4: Implement `storage/identity.py`**
+- [x] **Step 4: Implement `storage/identity.py`**
 
 ```python
 """Azure identity inputs and operator attribution, without constructing SDK clients."""
@@ -356,7 +360,7 @@ def principal_from_token(token: str) -> str:
     return principal
 ```
 
-- [ ] **Step 5: Implement the Azure adapter changes**
+- [x] **Step 5: Implement the Azure adapter changes**
 
 In `storage/azure.py`:
 - Add `import os`.
@@ -398,7 +402,7 @@ def operator_credential() -> AzureCliCredential:
 
 In `open_azure_stores`, change the signature to `def open_azure_stores(settings: Settings, *, observer: BoundaryObserver | None = None, credential=None):` and replace `credential = ManagedIdentityCredential()` with `credential = credential if credential is not None else worker_credential()`.
 
-- [ ] **Step 6: Gate Azure stage commands on the client ID**
+- [x] **Step 6: Gate Azure stage commands on the client ID**
 
 In `cli.py` add `import os` and `from .storage.identity import worker_client_id`. In `_validate`, replace:
 
@@ -419,18 +423,20 @@ with:
         pack = None
 ```
 
-- [ ] **Step 7: Update the pinned factory test**
+- [x] **Step 7: Update the pinned factory test**
+
+> Deviation: `tests/test_azure_state_payloads.py` also needed the same environment patch (its 8 tests open Azure stores). `tests/test_cli.py`'s distant-deadline case was masked by the new client-ID gate; follow-up commit 96c2fed9 sets the client ID there and asserts the 3600-second allowance message.
 
 In `tests/test_azure_contracts.py`, add `import os` to the imports and `from support_azure import WORKER_CLIENT_ID` after the `support` import, and add `from sec_edgar_ingest.storage.identity import WORKER_CLIENT_ID_ENV` inside the test. In `test_factory_conditions_fixed_registry_before_authority_clients`:
 - Wrap both `with patch.object(self.azure, "ManagedIdentityCredential") …` blocks in `with patch.dict(os.environ, {WORKER_CLIENT_ID_ENV: WORKER_CLIENT_ID}):`.
 - Replace `credential.assert_called_once_with()` with `credential.assert_called_once_with(client_id=WORKER_CLIENT_ID)`.
 
-- [ ] **Step 8: Run the tests to verify they pass**
+- [x] **Step 8: Run the tests to verify they pass**
 
 Run: `uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/network_guard.py test_azure_identity test_azure_contracts -v`
 Expected: PASS, all tests.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/identity.py packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py packages/sec-edgar-ingest/src/sec_edgar_ingest/cli.py packages/sec-edgar-ingest/tests/support_azure.py packages/sec-edgar-ingest/tests/test_azure_identity.py packages/sec-edgar-ingest/tests/test_azure_contracts.py
@@ -460,7 +466,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
   - `LocalObjectStore(root, *, observer=None, binding=None, create=True)` and `LocalStateStore(root, *, page_size=128, observer=None, binding=None, create=True)`.
   - `support_approval.tree_snapshot(root) -> dict[str, str]`.
 
-- [ ] **Step 1: Add the snapshot helper**
+- [x] **Step 1: Add the snapshot helper**
 
 Append to `tests/support_approval.py` (add `import hashlib` to its imports):
 
@@ -476,7 +482,9 @@ def tree_snapshot(root: Path) -> dict[str, str]:
     return entries
 ```
 
-- [ ] **Step 2: Write the failing tests**
+- [x] **Step 2: Write the failing tests**
+
+> Deviation: the test's `worker_open` helper closed every element of the `open_stores` tuple, but `LocalObjectStore` has no `close()`; it guards the call with `hasattr(resource, 'close')`.
 
 `tests/test_operator_open.py`:
 
@@ -607,12 +615,12 @@ if __name__ == '__main__':
     unittest.main()
 ```
 
-- [ ] **Step 3: Run the tests to verify they fail**
+- [x] **Step 3: Run the tests to verify they fail**
 
 Run: `uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/network_guard.py test_operator_open -v`
 Expected: ERROR at import with `ImportError: cannot import name 'StoreMissing'`.
 
-- [ ] **Step 4: Add `StoreMissing`**
+- [x] **Step 4: Add `StoreMissing`**
 
 In `storage/contracts.py`, after `class ClockUncertain`:
 
@@ -621,7 +629,7 @@ class StoreMissing(LookupError):
     """An operator open found no store at the configured binding; nothing was created."""
 ```
 
-- [ ] **Step 5: Add verify-only local constructors**
+- [x] **Step 5: Add verify-only local constructors**
 
 In `storage/local.py`, import `StoreMissing` from `.contracts`, and replace `LocalObjectStore.__init__` with:
 
@@ -658,7 +666,7 @@ In `LocalStateStore.__init__`, change the signature to `def __init__(self, root:
             return
 ```
 
-- [ ] **Step 6: Add operator access to the Azure factory**
+- [x] **Step 6: Add operator access to the Azure factory**
 
 Replace `open_azure_stores` in `storage/azure.py` with:
 
@@ -704,7 +712,7 @@ def open_azure_stores(settings: Settings, *, observer: BoundaryObserver | None =
 
 Add `StoreMissing` to the `.contracts` import list in `storage/azure.py`.
 
-- [ ] **Step 7: Route access through `open_stores`**
+- [x] **Step 7: Route access through `open_stores`**
 
 Replace `storage/__init__.py` with:
 
@@ -738,12 +746,12 @@ def open_stores(settings: Settings, *, base_path: Path | None = None, observer: 
     return open_azure_stores(validated, observer=observer, access=access, credential=credential)
 ```
 
-- [ ] **Step 8: Run the tests to verify they pass**
+- [x] **Step 8: Run the tests to verify they pass**
 
 Run: `uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/network_guard.py test_operator_open test_azure_contracts test_storage -v`
 Expected: PASS.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add packages/sec-edgar-ingest/src/sec_edgar_ingest/storage packages/sec-edgar-ingest/tests/support_approval.py packages/sec-edgar-ingest/tests/test_operator_open.py
@@ -767,7 +775,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
   - `cli._operator_main(args, event, empty, run, actor=None)`, where `run(objects, state, actor)` takes three arguments.
   - `approve --approver` and `rollback --operator` become optional: local requires them; Azure refuses them.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `tests/test_operator_identity.py`:
 
@@ -868,12 +876,12 @@ if __name__ == '__main__':
     unittest.main()
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/network_guard.py test_operator_identity -v`
 Expected: FAIL. Without `--approver`, argparse still exits (`SystemExit: 2`). On Azure, `open_stores` is called without `access`. The mistyped `--state-dir` is created.
 
-- [ ] **Step 3: Make the actor flags optional**
+- [x] **Step 3: Make the actor flags optional**
 
 In `cli._parser`, replace the approve and rollback blocks with:
 
@@ -893,7 +901,7 @@ In `cli._parser`, replace the approve and rollback blocks with:
     sub.add_argument('--state-dir')
 ```
 
-- [ ] **Step 4: Resolve the operator identity before any store opens**
+- [x] **Step 4: Resolve the operator identity before any store opens**
 
 In `cli.py`, extend the `storage.contracts` import with `StoreMissing`, and change the identity import to `from .storage.identity import OPERATOR_TOKEN_SCOPE, principal_from_token, worker_client_id`. Replace `_operator_main`, `_approve_main`, `_candidates_main` and `_rollback_main` with:
 
@@ -984,12 +992,12 @@ def _rollback_main(args) -> int:
                            'rollback': None, 'error': None}, run, actor='operator')
 ```
 
-- [ ] **Step 5: Run the new and the existing operator tests**
+- [x] **Step 5: Run the new and the existing operator tests**
 
 Run: `uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/network_guard.py test_operator_identity test_etl_approval test_etl_rollback test_etl_history test_etl_cli test_reconcile_acceptance -v`
 Expected: PASS. The existing tests always open stores before their operator calls, so the verify-only open finds them.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/sec-edgar-ingest/src/sec_edgar_ingest/cli.py packages/sec-edgar-ingest/tests/test_operator_identity.py
@@ -1021,7 +1029,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
   - `ApprovalOutcome.activation`, which is non-null exactly on `success`.
   - The `approve` CLI keys gain `activation` and `activation_ref`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `tests/test_approval_activation.py`:
 
@@ -1156,12 +1164,12 @@ if __name__ == '__main__':
     unittest.main()
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/network_guard.py test_approval_activation -v`
 Expected: ERROR at import with `ImportError: cannot import name '_store_activation'`.
 
-- [ ] **Step 3: Add the record and its routing**
+- [x] **Step 3: Add the record and its routing**
 
 In `etl/contracts.py`, add `ACTIVATION_FORMAT = 'sec-approval-activation-v1'` after `ROLLBACK_FORMAT`, and after the `QuarterRollback` class:
 
@@ -1216,7 +1224,7 @@ In `etl/state.py`, add `ApprovalActivation` to the `.contracts` import, and afte
         return tuple(sorted(records, key=lambda record: (record.activated_at, record.activation_id)))
 ```
 
-- [ ] **Step 4: Write the activation ahead of the swap**
+- [x] **Step 4: Write the activation ahead of the swap**
 
 In `etl/approval.py`:
 - Change the models import to `from ..models import Error, Record, canonical_json, parse_json, quarter_value, require_hash, validate_record_fields`.
@@ -1300,7 +1308,7 @@ In `approve`, replace the block from `stored = _store_approval(pending, candidat
 
 `current` is never `None` here: the candidate's base is a required hash, and the loop reaches this line only when the active generation equals that base.
 
-- [ ] **Step 5: Print `activation_ref` from the CLI**
+- [x] **Step 5: Print `activation_ref` from the CLI**
 
 In `cli.py`, change the approval import to `from .etl.approval import activation_ref, approve`, and replace `_approve_main` with:
 
@@ -1324,7 +1332,9 @@ In `tests/test_etl_approval.py`, replace the exact key set in `test_a_corrupt_ap
                                         'publication', 'activation', 'activation_ref', 'error'})
 ```
 
-- [ ] **Step 6: Update the approval runbook**
+- [x] **Step 6: Update the approval runbook**
+
+> Deviation: the runbook's rollback usage line also shows `[--operator TEXT]`. The sentence "`unchanged`, `approval_stale` and refusals write no activation" was wrong for a lost swap race and was corrected on the owner's decision (commit d549cd95); the matching Stage 6 spec sentence (§6) was amended the same way (commit 4e11a0ac, owner, 2026-10-13).
 
 In `docs/runbooks/sec-edgar-reconciliation-approval.md`:
 - Replace the approve usage line `  --quarterly-sha256 HASH --approver TEXT [--state-dir PATH]` with `  --quarterly-sha256 HASH [--approver TEXT] [--state-dir PATH]`.
@@ -1340,12 +1350,12 @@ In `docs/runbooks/sec-edgar-reconciliation-approval.md`:
 - Replace ``From `pending`, `approve` re-activates it under the original stored approval, and the new `--approver` is not recorded.`` with ``From `pending`, `approve` re-activates it under the original stored approval and records the re-activating actor in a new activation record.``
 - In "Not provided", replace `- Approver and rollback-operator identity mapping, alerts for pending approvals, and schedules belong to Stage 6.` with `- Alerts for pending approvals and schedules are Stage 6's Azure definitions (Plan 10).`
 
-- [ ] **Step 7: Run the tests to verify they pass**
+- [x] **Step 7: Run the tests to verify they pass**
 
 Run: `uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/network_guard.py test_approval_activation test_etl_approval test_etl_rollback test_etl_history test_etl_storage test_reconcile_acceptance -v`
 Expected: PASS.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add packages/sec-edgar-ingest/src/sec_edgar_ingest packages/sec-edgar-ingest/tests/test_approval_activation.py packages/sec-edgar-ingest/tests/test_etl_approval.py docs/runbooks/sec-edgar-reconciliation-approval.md
@@ -1368,7 +1378,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 - Consumes: `quarter_history` (existing), `EtlState.rollbacks`, `EtlState.activations` (Task 4), `_operator_main(..., actor=None)` (Task 3).
 - Produces: `sec-edgar-ingest history --config PATH --quarter YYYYQn [--state-dir PATH]`, which prints canonical `{outcome, quarter, lineage, rollbacks, activations, error}`. Exits: `success` 0, `configuration` 2 (empty stdout), `state_conflict` or `internal_error` 9.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `tests/test_history_cli.py`:
 
@@ -1451,12 +1461,12 @@ if __name__ == '__main__':
 
 `write_config` writes `config.json` beside `.fixture-state` inside the snapshotted directory. The test therefore writes it before taking the snapshot. Rewriting the same bytes later leaves its content hash unchanged.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/network_guard.py test_history_cli -v`
 Expected: FAIL. argparse rejects the `history` subcommand with `SystemExit: 2`.
 
-- [ ] **Step 3: Implement the command**
+- [x] **Step 3: Implement the command**
 
 In `cli.py`:
 - Change the history import to `from .etl.history import quarter_history, withdrawal_candidates`.
@@ -1501,7 +1511,9 @@ In `main`, after the `candidates` branch, add:
         return _history_main(args)
 ```
 
-- [ ] **Step 4: Point the runbook and README at the command**
+- [x] **Step 4: Point the runbook and README at the command**
+
+> Deviation: the README's `reconcile` example also shows `[--approver TEXT]`, since the flag is optional now.
 
 In `docs/runbooks/sec-edgar-reconciliation-approval.md`:
 - Replace ``; `quarter_history` lists each generation's membership hash.`` with ``; `sec-edgar-ingest history` lists each generation's membership hash.``
@@ -1535,12 +1547,12 @@ one: a missing store is a configuration error (exit 2, empty stdout). On Azure t
 operator's `az login`, and `approve`/`rollback` record that principal instead of `--approver`/`--operator`.
 ```
 
-- [ ] **Step 5: Run the tests to verify they pass**
+- [x] **Step 5: Run the tests to verify they pass**
 
 Run: `uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/network_guard.py test_history_cli test_etl_history test_operator_identity -v`
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/sec-edgar-ingest/src/sec_edgar_ingest/cli.py packages/sec-edgar-ingest/tests/test_history_cli.py docs/runbooks/sec-edgar-reconciliation-approval.md packages/sec-edgar-ingest/README.md
@@ -1566,7 +1578,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
   - Workflow commands take exactly one of `--config PATH` / `--config-env NAME` (argparse exit 2 otherwise).
   - `--execution-id` is optional for workflow commands. On Azure it is refused, and the value comes from `CONTAINER_APP_JOB_EXECUTION_NAME`. Local-fixture requires it. Stage commands are unchanged.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `tests/test_workflow_config_env.py`:
 
@@ -1689,12 +1701,12 @@ if __name__ == '__main__':
     unittest.main()
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/network_guard.py test_workflow_config_env -v`
 Expected: FAIL or ERROR, with argparse reporting `unrecognized arguments: --config-env`.
 
-- [ ] **Step 3: Add `parse_config` and `load_config_env`**
+- [x] **Step 3: Add `parse_config` and `load_config_env`**
 
 In `config.py`, add `from collections.abc import Mapping` to the imports, and replace `load_config` with:
 
@@ -1725,7 +1737,7 @@ def load_config_env(name: str, environ: Mapping[str, str]) -> Settings:
     return parse_config(text)
 ```
 
-- [ ] **Step 4: Accept `--config-env` and resolve the execution ID**
+- [x] **Step 4: Accept `--config-env` and resolve the execution ID**
 
 In `cli.py`:
 - Change the config import to `from .config import Settings, load_config, load_config_env, pin_context`.
@@ -1801,7 +1813,7 @@ with:
 
 The rest of `_validate_workflow` stays as it is.
 
-- [ ] **Step 5: Document the Azure invocation**
+- [x] **Step 5: Document the Azure invocation**
 
 Append to `packages/sec-edgar-ingest/README.md`:
 
@@ -1814,12 +1826,12 @@ its execution ID from that variable and refuses `--execution-id`, so its result 
 Stage commands keep `--config` and `--execution-id`.
 ```
 
-- [ ] **Step 6: Run the tests to verify they pass**
+- [x] **Step 6: Run the tests to verify they pass**
 
 Run: `uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/network_guard.py test_workflow_config_env test_workflow_cli test_azure_identity test_config -v`
 Expected: PASS.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add packages/sec-edgar-ingest/src/sec_edgar_ingest/config.py packages/sec-edgar-ingest/src/sec_edgar_ingest/cli.py packages/sec-edgar-ingest/tests/test_workflow_config_env.py packages/sec-edgar-ingest/README.md
@@ -1845,7 +1857,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
   - A `workflow_summary` stderr event after `command_finished` on every fresh workflow result.
   - Test support `support_scenario`: `TODAY`, `BASE_Q3`, `GATED_Q3`, `scenario_settings()` and `scenario_pack(root, name, q3) -> Path` (the manifest path).
 
-- [ ] **Step 1: Write the scenario support module**
+- [x] **Step 1: Write the scenario support module**
 
 `tests/support_scenario.py`:
 
@@ -1877,7 +1889,7 @@ def scenario_pack(root: Path, name: str, q3: tuple) -> Path:
     return pack
 ```
 
-- [ ] **Step 2: Write the failing tests**
+- [x] **Step 2: Write the failing tests**
 
 `tests/test_workflow_summary.py`:
 
@@ -2021,12 +2033,12 @@ if __name__ == '__main__':
     unittest.main()
 ```
 
-- [ ] **Step 3: Run the tests to verify they fail**
+- [x] **Step 3: Run the tests to verify they fail**
 
 Run: `uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/network_guard.py test_workflow_summary -v`
 Expected: ERROR at import with `ModuleNotFoundError: No module named 'sec_edgar_ingest.workflows.summary'`.
 
-- [ ] **Step 4: Implement `workflows/summary.py`**
+- [x] **Step 4: Implement `workflows/summary.py`**
 
 ```python
 """Alerting telemetry for one fresh workflow result. It never changes the result, stdout or exit code."""
@@ -2110,7 +2122,7 @@ def emit_summary(result: WorkflowResult, reference: str, objects: ObjectStore, s
     log_event(result.context, 'workflow_summary', fields)
 ```
 
-- [ ] **Step 5: Call it after `command_finished`**
+- [x] **Step 5: Call it after `command_finished`**
 
 In `cli.py`, add `from .workflows.summary import emit_summary`, and in `_workflow_main` replace:
 
@@ -2129,12 +2141,12 @@ with:
         return _workflow_stdout(result, reference)
 ```
 
-- [ ] **Step 6: Run the tests to verify they pass**
+- [x] **Step 6: Run the tests to verify they pass**
 
 Run: `uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/network_guard.py test_workflow_summary test_workflow_cli test_reconcile_workflow test_reconcile_acceptance -v`
 Expected: PASS.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/summary.py packages/sec-edgar-ingest/src/sec_edgar_ingest/cli.py packages/sec-edgar-ingest/tests/support_scenario.py packages/sec-edgar-ingest/tests/test_workflow_summary.py
@@ -2161,7 +2173,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
   - `deployment.main(argv)`: `python -m sec_edgar_ingest.deployment --template PATH --image-digest sha256:… --provenance TEXT --out-dir DIR` writes `sec-edgar-ingest.azure.json` and `main.parameters.json`.
   - Plan 10 reads the template and golden paths above.
 
-- [ ] **Step 1: Write the template**
+- [x] **Step 1: Write the template**
 
 `infra/azure/sec-edgar-ingest/config/sec-edgar-ingest.azure.template.json`. Every section except `storage`, `etl.parser_version` and the omitted `worker` equals `conf/sec-edgar-ingest.yaml`, the accepted §4.8 defaults:
 
@@ -2228,7 +2240,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 }
 ```
 
-- [ ] **Step 2: Write the failing tests**
+- [x] **Step 2: Write the failing tests**
 
 `tests/test_azure_config_template.py`:
 
@@ -2331,12 +2343,12 @@ if __name__ == '__main__':
     unittest.main()
 ```
 
-- [ ] **Step 3: Run the tests to verify they fail**
+- [x] **Step 3: Run the tests to verify they fail**
 
 Run: `uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/network_guard.py test_azure_config_template -v`
 Expected: ERROR at import with `ModuleNotFoundError: No module named 'sec_edgar_ingest.deployment'`.
 
-- [ ] **Step 4: Implement the renderer**
+- [x] **Step 4: Implement the renderer**
 
 `src/sec_edgar_ingest/deployment.py`:
 
@@ -2405,7 +2417,7 @@ if __name__ == '__main__':
     raise SystemExit(main())
 ```
 
-- [ ] **Step 5: Write the golden binding and check it against the planned bytes**
+- [x] **Step 5: Write the golden binding and check it against the planned bytes**
 
 ```bash
 uv run --offline --frozen --package sec-edgar-ingest python - <<'EOF'
@@ -2429,12 +2441,12 @@ Expected: exactly these bytes, which were computed independently during planning
 
 If the bytes differ, stop: the binding would differ from the one the first Azure open writes. Report it rather than editing the expectation.
 
-- [ ] **Step 6: Run the tests to verify they pass**
+- [x] **Step 6: Run the tests to verify they pass**
 
 Run: `uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/network_guard.py test_azure_config_template -v`
 Expected: PASS.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add infra/azure/sec-edgar-ingest/config packages/sec-edgar-ingest/src/sec_edgar_ingest/deployment.py packages/sec-edgar-ingest/tests/test_azure_config_template.py
@@ -2452,7 +2464,7 @@ Applies only if the owner approves it at plan review (Decisions, item 5). If dec
 **Files:**
 - Modify: `specs/sec-filing-index-ingestion-stage-6-spec.md` (§3, the **Base** bullet; the status line is untouched)
 
-- [ ] **Step 1: Apply the amendment**
+- [x] **Step 1: Apply the amendment**
 
 Replace:
 
@@ -2466,7 +2478,7 @@ with:
 - **Base:** `infra/azure/sec-edgar-ingest/image/Dockerfile` starts `FROM docker.io/library/python@sha256:d1e795fb…`, the exact reference F1's successful quick task used. That is `python:3.14.8-slim-bookworm`'s Linux amd64 child digest, so no platform selection is needed. (owner, plan 9, 2026-10-12)
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add specs/sec-filing-index-ingestion-stage-6-spec.md
@@ -2488,7 +2500,9 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 **Interfaces:**
 - Produces: `scripts/build-image-context.sh OUT_DIR`, which writes `Dockerfile`, `requirements.lock` and exactly one `sec_edgar_ingest-*.whl` into a new or empty `OUT_DIR`. The image runs as UID 1000, has `ENTRYPOINT ["sec-edgar-ingest"]` and `TMPDIR=/tmp/sec-edgar-ingest`. Task 11 and Plan 10 (the Stage 7 handoff) use it.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
+
+> Deviation: `test_image_definition.py` lives under `packages/sec-edgar-ingest/tests/` (its `REPO = parents[3]` and the commit's `git add` require it); the Files list above omits the package prefix.
 
 `tests/test_image_definition.py`:
 
@@ -2564,12 +2578,12 @@ if __name__ == '__main__':
     unittest.main()
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/network_guard.py test_image_definition -v`
 Expected: ERROR with `FileNotFoundError` for `infra/azure/sec-edgar-ingest/image/Dockerfile`.
 
-- [ ] **Step 3: Write the Dockerfile and copy the lock**
+- [x] **Step 3: Write the Dockerfile and copy the lock**
 
 `infra/azure/sec-edgar-ingest/image/Dockerfile`. `FROM` stays the literal first line, as in F1's accepted quick-task context:
 
@@ -2609,7 +2623,7 @@ shasum -a 256 infra/azure/sec-edgar-ingest/image/requirements.lock
 
 Expected: `523b2da36079ce4a7c6b11ac06feb0a7992a8c3aef757c32909850685023b5c2`.
 
-- [ ] **Step 4: Write the build context script**
+- [x] **Step 4: Write the build context script**
 
 `scripts/build-image-context.sh`:
 
@@ -2640,12 +2654,12 @@ scripts/build-image-context.sh /tmp/s6-image-context-check
 
 Expected: stdout lists `Dockerfile`, `requirements.lock` and `sec_edgar_ingest-0.1.0-py3-none-any.whl`; uv may also leave a `.gitignore`. Re-running into the same directory exits 2 with `context directory must be new or empty`. Then `rm -r /tmp/s6-image-context-check`, which is this step's own scratch output.
 
-- [ ] **Step 5: Run the test to verify it passes**
+- [x] **Step 5: Run the test to verify it passes**
 
 Run: `uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/network_guard.py test_image_definition -v`
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add infra/azure/sec-edgar-ingest/image scripts/build-image-context.sh packages/sec-edgar-ingest/tests/test_image_definition.py
@@ -2667,7 +2681,9 @@ This task installs local tools under D1 and builds and runs the image. Pulling t
 - Consumes: `scripts/build-image-context.sh` (Task 10); `support_scenario` (Task 7); `sha` from `support_reconcile`; `history` and `activation_ref` (Tasks 4–5).
 - Produces: `image_smoke.py IMAGE`, which exits 0 only when every check passes. Plan 10 reruns it at stage exit.
 
-- [ ] **Step 1: Install the container tools (D1)**
+- [x] **Step 1: Install the container tools (D1)**
+
+> Deviation: `colima start` downloaded Colima's own VM disk image (about 325 MB), a network use that D1 and D5 do not name; it is recorded in `specs/deferred_items.md` for the owner to settle. Rosetta was already present, so the Rosetta stop did not fire.
 
 ```bash
 brew install colima docker docker-buildx
@@ -2680,7 +2696,7 @@ docker info --format '{{.OSType}}/{{.Architecture}}'
 
 Expected: buildx prints its version (Homebrew stable 0.38.0 at planning time), and `docker info` prints `linux/aarch64`. The smoke's work root is mounted explicitly writable (`:w`), because a read-only home mount would only surface at the smoke's first state write. Rosetta was present at planning time (`arch -x86_64 /usr/bin/true` succeeded); do not install it or accept a Rosetta license. If Rosetta is missing, stop and ask the owner.
 
-- [ ] **Step 2: Write the smoke script**
+- [x] **Step 2: Write the smoke script**
 
 `packages/sec-edgar-ingest/tests/image_smoke.py`:
 
@@ -2804,7 +2820,7 @@ if __name__ == '__main__':
 
 The work directory is created by this script and removed only after a pass. On failure it stays under `~/.cache/sec-edgar-ingest-smoke/` for inspection.
 
-- [ ] **Step 3: Build the image for Linux amd64**
+- [x] **Step 3: Build the image for Linux amd64**
 
 ```bash
 rm -rf /tmp/s6-image-context
@@ -2825,7 +2841,7 @@ rmdir ~/.cache/sec-edgar-ingest-smoke/write-check
 
 Expected: exit 0. If the write fails, fix the Colima mount (Step 1) before going further. Do not debug the smoke itself.
 
-- [ ] **Step 4: Run the smoke**
+- [x] **Step 4: Run the smoke**
 
 Run: `uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/image_smoke.py sec-edgar-ingest:stage6-local`
 Expected:
@@ -2834,7 +2850,7 @@ Expected:
 
 The workflows run `discover`, `collect`, `transform` and `publish` as in-process children, with PyArrow and cryptography loaded natively under amd64 emulation.
 
-- [ ] **Step 5: Stop the VM and commit**
+- [x] **Step 5: Stop the VM and commit**
 
 ```bash
 colima stop
@@ -2851,7 +2867,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 **Files:**
 - Modify: `scripts/check-sec-edgar-ingest.sh`
 
-- [ ] **Step 1: Check help for every command in the check script**
+- [x] **Step 1: Check help for every command in the check script**
 
 In `scripts/check-sec-edgar-ingest.sh`, replace the line:
 
@@ -2868,12 +2884,12 @@ for command in discover collect transform publish backfill daily reconcile appro
 done
 ```
 
-- [ ] **Step 2: Run the full plan-exit checks**
+- [x] **Step 2: Run the full plan-exit checks**
 
 Run: `scripts/check-sec-edgar-ingest.sh`
 Expected: exit 0. The full offline suite passes (`OK`), the wheel and sdist build offline, help prints for every command, `--version` prints `0.1.0`, `compileall` is quiet, and `git diff --check` is clean.
 
-- [ ] **Step 3: Confirm no forbidden activity or edits**
+- [x] **Step 3: Confirm no forbidden activity or edits**
 
 ```bash
 git diff --stat 9d7ea225..HEAD -- specs/evidence specs/plans/completed specs/plans/4-sec-filing-index-ingestion-stage-4-spec.md specs/plans/5-sec-filing-index-ingestion-stage-4-spec.md specs/sec-filing-index-ingestion-stage-4-spec.md conf
@@ -2882,7 +2898,7 @@ grep -rn "stage6-local\|sha256:[0-9a-f]\{64\}" infra/azure/sec-edgar-ingest/conf
 
 Expected: the first command prints nothing. The second prints nothing: no local image digest was recorded, and the template has no digest.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add scripts/check-sec-edgar-ingest.sh
@@ -2892,3 +2908,5 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ```
 
 Then the final whole-branch review (subagent-driven-development), followed by the Plan Completion Protocol. This plan's header has no `Roadmap:` line, so step 3a does not apply: Stage 6 stays unticked until Plan 10 completes. Its deferred-items pass ticks `history`, actor identification and re-activation attribution, and the mistyped path, each `→ done in plan 9`. Plan retirement must leave the spec in place, because Plan 10 still implements it. Finishing the branch then opens this plan's pull request from `stage-6-azure-orchestration` to `main` (D6), carrying the Plan 10 document as D7 states.
+
+> Deviation: the final whole-branch review (Opus reviewer plus Codex) led to one fix round after the owner's decisions: the Stage 6 spec §6 amendment (commit 4e11a0ac) and a hygiene commit (95b0b704: runbook wording, a closed SQLite connection in `test_workflow_summary.py`, two stale comments, and a renderer test case that reaches the renderer's own backend check).

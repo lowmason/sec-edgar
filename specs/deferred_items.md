@@ -10,7 +10,7 @@
       specs/plans/completed/6-sec-filing-index-ingestion-stage-5-spec.md. Size: plan.
       Done when: that supersession rule lands, with a gated-then-reverted fixture
       that completes. → done in plan 7
-- [ ] Read-only `history` CLI (final review, plan-level gap): `quarter_history` and
+- [x] Read-only `history` CLI (final review, plan-level gap): `quarter_history` and
       `EtlState.rollbacks` (`etl/history.py`, `etl/state.py`) are library-only, yet
       docs/runbooks/sec-edgar-reconciliation-approval.md tells operators to take the
       rollback `--to-generation` and the revert target "from `quarter_history`".
@@ -18,8 +18,8 @@
       operator command next to `candidates` (reuse `cli._operator_main`). Size: plan.
       Done when: a CLI command prints the active lineage (counts, gate, membership
       hash, approval) and the quarter's rollback records as canonical JSON, and the
-      runbook uses it. → bound to roadmap Stage 6 Produces (resume 2026-10-12)
-- [ ] Capture who re-activates an approved candidate (final review, accepted
+      runbook uses it. → bound to roadmap Stage 6 Produces (resume 2026-10-12) → done in plan 9
+- [x] Capture who re-activates an approved candidate (final review, accepted
       semantics): after a rollback to an approved candidate's base, a further
       `approve` re-activates it under the FIRST stored approval (first approval wins,
       `etl/approval.py` `_store_approval`) and records nothing about the acting
@@ -29,7 +29,7 @@
       docs/runbooks/sec-edgar-reconciliation-approval.md. Size: design.
       Done when: Stage 6's operator-role mapping decides how approval and rollback
       actors are identified, and re-activation attribution (event or record) is
-      implemented or consciously declined there. → note: plan 7 narrows this flow (approve now refuses a superseded candidate after a rollback)
+      implemented or consciously declined there. → note: plan 7 narrows this flow (approve now refuses a superseded candidate after a rollback) → done in plan 9
 - [ ] Derived `activated` field (final review, T5): `approved` in `candidates` and
       `quarter_history` (`etl/history.py`) means an approval was indexed, so
       `stale` + `approved: true` cannot tell "activated then superseded" from "approval
@@ -84,6 +84,10 @@
       in a `finally`), and several consecutive full-suite runs pass. → bound to roadmap
       Stage 7 Consumes: close before Stage 7 (resume 2026-10-12); a separate /deferred
       plan closes it, not Stage 6 (owner, 2026-10-12)
+      Plan 9 evidence (2026-10-13): `test_download` `BoundedProcessTests`,
+      `test_coordination` (three-process WAL open) and `test_acquisition_processes` (held
+      loopback, 3 s wait) each failed once in full runs that overlapped concurrent agent
+      work, and none failed in the quiet full runs (Tasks 5-8, 10 and 12: 739-763 tests).
 - [x] Review Minor, approval/Azure storage coverage gaps (T1/T2/T6): nothing tests that
       `AzureStateStore.close()` closes `approval_client`, that `_check_endpoint`
       rejects a foreign-endpoint Approvals client, that the local store keeps approval
@@ -121,12 +125,12 @@
       (`tests/test_etl_approval.py`), not in `tests/test_reconcile_acceptance.py`;
       long unwrapped lines in packages/sec-edgar-ingest/README.md. Size: quick-fix.
       Revisit if: those modules are next edited or a regression slips through them. → trigger fired; runner-local cases done in plan 7, remainder re-deferred under plan 7
-- [ ] Operator commands create a store at a mistyped path (final review Minor,
+- [x] Operator commands create a store at a mistyped path (final review Minor,
       pre-existing): `cli._operator_main` calls `open_stores`, which creates the root,
       writes the binding registry and creates the sqlite schema, so a mistyped
       fixture-only `--state-dir` makes `candidates` print `[]` with exit 0. Size:
       quick-fix. Revisit if: an operator reports an empty `candidates` listing against
-      a wrong directory, or Stage 6 changes how operator commands open stores.
+      a wrong directory, or Stage 6 changes how operator commands open stores. → done in plan 9
 - [ ] Rollback invariants (split 2026-10-11 from the ticked "rollback/history/candidates
       coverage and invariants" item, whose tests landed via /deferred; its Done-when did
       not cover these): (1) `QuarterRollback.__post_init__` (`etl/contracts.py`) does not
@@ -250,3 +254,84 @@
       refuse it and leave the stored bytes unchanged. The guarantee holds for every storage
       backend through `put_once`, but nothing pins it for v1. Size: quick-fix. Done when:
       that test exists and passes against the committed plan-5 bundle copy.
+
+## 9-sec-filing-index-ingestion-stage-6-spec — 2026-10-13
+- [ ] Pending-approvals count loads every withdrawal history (Codex final review P2,
+      owner-deferred; also Task 7 review Minor): `emit_summary` in
+      packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/summary.py computes
+      `pending_approvals` through `etl/history.py` `withdrawal_candidates`, which
+      re-validates every recorded `Candidate` and builds each candidate's full `withdrawn`
+      list from `changes.parquet`, on every fresh workflow result, after the durable result
+      is written and without a deadline check. Memory and I/O grow with total withdrawal
+      history (the job has 4 GiB); an overrun after the result is written would leave a
+      Failed execution beside an exit-0 result, which Plan 10 classifies `result_mismatch`.
+      Cure: a status-only counter beside `withdrawal_candidates` that never materializes
+      withdrawn rows, used by `emit_summary`, with a test. Size: quick-fix. Revisit if: the
+      number of recorded gated candidates grows, or a job approaches its memory or
+      `replicaTimeout` limit.
+- [ ] Operator access with no credential falls back to the worker identity (Task 2 review):
+      `open_azure_stores(..., access='operator', credential=None)` in
+      packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/azure.py calls
+      `worker_credential()`. The only Azure operator caller (`cli._operator_main`) always
+      passes the `az login` credential and the worker identity lacks Approvals writes, but a
+      future caller could silently open as the worker. Cure: raise `ValueError` when `access
+      == 'operator'` and `credential is None`, with a test. Size: quick-fix. Done when: the
+      guard and its test exist.
+- [ ] Workflow summary resilience and coverage (Task 7 review): in
+      packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/summary.py, (a)
+      `emit_summary` guards four independent extras with one `try`, so a failure in
+      `describe` also skips the milestone advance and nulls `last_successful_reconcile_at`;
+      (b) the `record_reconcile_success` docstring says the milestone "can be rebuilt from
+      results" but no rebuild exists, and a crash between `write_workflow_result` and
+      `emit_summary` leaves it stale until the next exit-0 reconcile; (c)
+      tests/test_workflow_summary.py lacks the CAS retry and exhaustion branch,
+      `oldest_unresolved_period` on a daily run with a gate pending, a check that fields
+      computed before a failed extra stay filled, and `gap_codes` /
+      `discovery_complete=False` contents. Size: quick-fix. Revisit if:
+      `workflows/summary.py` is next edited, or a missed reconcile-staleness or
+      pending-approval alert is traced to a swallowed `summary_error`.
+- [ ] Plan 10 has no alert on `summary_error` (final review, for Plan 10's review): if
+      `withdrawal_candidates` keeps failing (for example the integrity `Conflict` in
+      `etl/history.py`), `pending_approvals` stays null and Plan 10's pending-approval alert
+      (`toint(fields.pending_approvals) > 0`,
+      specs/plans/10-sec-filing-index-ingestion-stage-6-spec.md near line 3859) is silently
+      suppressed on every run. Also, `gap_codes` keys in `workflow_summary` are not limited
+      to `EXIT_CODES` names (only `member_outcomes` keys are, and Plan 10's vocabulary test
+      covers `member_outcomes` only). Size: quick-fix. Done when: Plan 10's review adds an
+      alert, or records a decision to decline it, for a non-null `summary_error`, and
+      decides whether any alert may read `gap_codes` keys.
+- [ ] Operator, approval and deployment test and validation gaps (Plan 9 task reviews,
+      triaged defer): operator-open conflict tests in tests/test_operator_open.py skip the
+      no-write assertions used elsewhere; the Azure refusal of `rollback --operator` free
+      text and approve's `open_stores` kwargs are unasserted in
+      tests/test_operator_identity.py; `ApprovalActivation.__post_init__` in
+      `etl/contracts.py` does not enforce `approval_ref == approval_ref(quarter,
+      generation_id)` for index readers (`QuarterRollback` has the same gap; adding it risks
+      a circular import from `etl.manifest`), and tests/test_approval_activation.py covers a
+      stale candidate only by a moved base, not a superseding download; `deployment.main` in
+      `deployment.py` writes outside its `try` (an unwritable `--out-dir` gives a traceback
+      instead of exit 2, and the two files are not written atomically) and its CLI test
+      covers only success (no exit-2 shape, no ARM `$schema` or `contentVersion`);
+      `principal_from_token` in `storage/identity.py` does not fall back to
+      `preferred_username` when `upn` is present but rejected;
+      `scripts/build-image-context.sh` is tested only for its exec bit (the new-or-empty
+      rule, usage exit 2 and one-wheel check were verified by hand) and
+      tests/test_image_definition.py does not pin WORKDIR, HOME or `chmod 0700`.
+      Size: quick-fix. Revisit if: those modules are next edited.
+- [ ] Image smoke hardening (Task 11 review): in
+      packages/sec-edgar-ingest/tests/image_smoke.py, a non-JSON stdout gives a bare
+      `JSONDecodeError` that loses the container's output (`Smoke.command`), a
+      `TimeoutExpired` kills only the `docker` CLI so the container can keep running in the
+      VM, rollback is checked by count only (no active-generation assertion), and the
+      workflows run with `--config` only while ADF passes `--config-env
+      SEC_EDGAR_INGEST_CONFIG` (add one `-e SEC_EDGAR_INGEST_CONFIG=... --config-env`
+      invocation). Size: quick-fix. Done when: Plan 10 reruns the smoke with those four
+      changes, or consciously declines them.
+- [ ] Colima VM image and an unexplained pre-build image (Task 11 review, owner disclosure):
+      Task 11's `colima start` downloaded Colima's own aarch64 VM disk image (about 325 MB),
+      a network use that D1 and D5 ("Nothing else touches the network") do not name; and the
+      Task 11 report's `docker info` showed `Images: 1` before the build, unidentified
+      (binfmt was ruled out). Size: quick-fix. Done when: the owner records that D1 covers
+      the VM image, or the Stage 6 spec's network wording names it, and `docker image ls -a
+      --digests` at Plan 10's next `colima start`, before any build, shows nothing or only
+      the pinned `python@sha256:d1e795fb…` base.
