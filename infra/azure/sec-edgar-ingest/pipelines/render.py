@@ -59,16 +59,18 @@ STATE = "variables('state')"
 RESULT = "json(variables('result'))"
 LOCATION = "activity('Start job').output.ADFWebActivityResponseHeaders['Location']"
 LOCATION_PATH = f"split({LOCATION}, '?')[0]"
+LOCATION_QUERY = f"split({LOCATION}, '?')[1]"
 # §7.1: only an HTTPS management.azure.com Location on the selected async route, one operation segment,
-# no dot or encoded segments, no fragment and exactly the selected API version.
+# no dot or encoded segments, no fragment and exactly the selected API version, named once in any letter case.
 LOCATION_VALID = (
     f"and(and(or(startsWith({LOCATION}, concat(pipeline().parameters.asyncPrefix, "
     f"'containerappsjoboperationresults/')), startsWith({LOCATION}, concat(pipeline().parameters.asyncPrefix, "
     f"'containerappsjoboperationstatuses/'))), equals(length(split({LOCATION}, '?')), 2)), "
     f"and(and(equals(length(split({LOCATION_PATH}, '/')), add(length(split(pipeline().parameters.asyncPrefix, "
-    f"'/')), 1)), not(or(endsWith({LOCATION_PATH}, '/'), or(contains({LOCATION_PATH}, '..'), "
+    f"'/')), 1)), not(or(endsWith({LOCATION_PATH}, '/'), or(contains({LOCATION_PATH}, '/.'), "
     f"contains({LOCATION_PATH}, '%'))))), and(not(contains({LOCATION}, '#')), "
-    f"contains(split(split({LOCATION}, '?')[1], '&'), 'api-version=2026-07-01'))))")
+    f"and(contains(split({LOCATION_QUERY}, '&'), 'api-version=2026-07-01'), "
+    f"equals(length(split(toLower({LOCATION_QUERY}), 'api-version=')), 2)))))")
 
 
 def retry_after(activity: str) -> str:

@@ -111,6 +111,12 @@ INVALID_LOCATIONS = {
     'a fragment': operation() + '#x',
     'a second query': operation() + '?x=1',
     'a dot segment': operation('..'),
+    'a single dot segment': operation('.'),
+    'a conflicting api-version after the selected one': operation() + '&api-version=2025-01-01',
+    'a conflicting api-version before the selected one': operation().replace(
+        '?api-version=2026-07-01', '?api-version=2025-01-01&api-version=2026-07-01'),
+    'a repeated api-version': operation() + '&api-version=2026-07-01',
+    'a conflicting api-version in another case': operation() + '&API-VERSION=2025-01-01',
     'an encoded segment': operation('op%2F..%2Fx'),
     'an extra segment': operation('op-1/extra'),
     'no operation id': operation(''),
