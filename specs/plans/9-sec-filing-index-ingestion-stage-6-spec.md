@@ -52,6 +52,9 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 - **D1** (owner, brief, 2026-10-12): "Local build, Stage 6 only. Install a local container runtime with buildx (amd64 emulation) and Bicep 0.38.33. These are tool installs only, with no Azure or SEC calls. The local image proves the commands run; the release image is still built by ACR quick task in Stage 7 (S7-05), so its digest will differ." Applied in: Task 10, Task 11 (Bicep goes to Plan 10). Home: spec §14.
 - **D2** (owner, brief, 2026-10-12): a short Stage 6 spec with an owner-decisions section before the plan. Applied in: the spec (approved 2026-10-12). Home: spec §14.
 - **D3** (owner, spec review, 2026-10-12): "Approved — write both plans". This approves the spec, Q1–Q4 and its twelve defaults, including two plans at the §13 seam (this plan has no `Roadmap:` line), the §1 deferred-item scope, and Plan 10's offline checks. Applied in: all tasks; Global Constraints.
+- **D4** (owner, plan review, 2026-10-12): "Approve as written", including the Task 9 spec amendment (settled item 5). Applied in: all tasks; Task 9 (spec amendment).
+- **D5** (owner, plan review, 2026-10-12): "Allow both". During Task 11's build, buildx pulls the pinned base image from Docker Hub by digest and pip fetches the 21 hash-pinned wheels from PyPI (settled item 4). Applied in: Task 11.
+- **D6** (owner, plan review, 2026-10-12): "Open a PR for Plan 9". When this plan completes, it merges to `main` through its own pull request, and Plan 10 then branches from the merged `main`. Applied in: Task 12 (finishing the branch).
 
 Settled for the owner's review at plan approval:
 
