@@ -1994,6 +1994,24 @@ class WorkflowSummaryTests(unittest.TestCase):
         self.assertEqual(rows, 0)
         self.assertFalse((self.h.objects.directory / 'approvals').exists())
 
+    def test_milestone_rows_route_to_source_state_on_azure(self):
+        from azure.core.credentials import AzureSasCredential
+        from azure.data.tables import TableServiceClient
+        from sec_edgar_ingest.storage.azure import AzureStateStore
+        from sec_edgar_ingest.storage.contracts import table_for
+        from test_azure_contracts import RETRY, TABLE_ENDPOINT, ScriptedTransport, table_response
+        self.assertEqual(table_for(MILESTONE_KIND), 'SourceState')
+        transport = ScriptedTransport([table_response(201, etag='W/"milestone"')])
+        service = TableServiceClient(TABLE_ENDPOINT, credential=AzureSasCredential('sv=offline&sig=synthetic'),
+                                     api_version='2020-12-06', transport=transport, **RETRY)
+        self.addCleanup(service.close)
+        tables = service.get_table_client
+        store = AzureStateStore(tables('SourceState'), tables('Attempts'), active_client=tables('ActivePointers'),
+                                approval_client=tables('Approvals'))
+        inserted = store.insert(MILESTONE_KIND, RECONCILE_MILESTONE, {'workflow': 'reconcile'})
+        self.assertEqual(inserted.version, 'W/"milestone"')
+        self.assertIn('/SourceState', transport.requests[0].url)
+
 
 if __name__ == '__main__':
     unittest.main()
@@ -2649,14 +2667,14 @@ This task installs local tools under D1 and builds and runs the image. Pulling t
 
 ```bash
 brew install colima docker docker-buildx
-mkdir -p ~/.docker/cli-plugins
+mkdir -p ~/.docker/cli-plugins ~/.cache/sec-edgar-ingest-smoke
 ln -sfn "$(brew --prefix docker-buildx)/bin/docker-buildx" ~/.docker/cli-plugins/docker-buildx
-colima start --vm-type vz --vz-rosetta --cpu 4 --memory 8
+colima start --vm-type vz --vz-rosetta --mount-type virtiofs --mount "$HOME/.cache/sec-edgar-ingest-smoke:w" --cpu 4 --memory 8
 docker buildx version
 docker info --format '{{.OSType}}/{{.Architecture}}'
 ```
 
-Expected: buildx prints its version (Homebrew stable 0.38.0 at planning time), and `docker info` prints `linux/aarch64`. Rosetta was present at planning time (`arch -x86_64 /usr/bin/true` succeeded); do not install or accept a Rosetta license. If Rosetta is missing, stop and ask the owner.
+Expected: buildx prints its version (Homebrew stable 0.38.0 at planning time), and `docker info` prints `linux/aarch64`. The smoke's work root is mounted explicitly writable (`:w`), because a read-only home mount would only surface at the smoke's first state write. Rosetta was present at planning time (`arch -x86_64 /usr/bin/true` succeeded); do not install it or accept a Rosetta license. If Rosetta is missing, stop and ask the owner.
 
 - [ ] **Step 2: Write the smoke script**
 
@@ -2792,6 +2810,16 @@ docker image inspect sec-edgar-ingest:stage6-local --format '{{.Os}}/{{.Architec
 ```
 
 Expected: the build succeeds, and inspect prints `linux/amd64 1000:1000 ["sec-edgar-ingest"]`. This local image ID is not a release digest and is never written into any config, template or record.
+
+Confirm that UID 1000 can write through the mount before running the smoke:
+
+```bash
+mkdir -m 777 -p ~/.cache/sec-edgar-ingest-smoke/write-check
+docker run --rm --network none --platform linux/amd64 --entrypoint sh -v "$HOME/.cache/sec-edgar-ingest-smoke/write-check:/work" sec-edgar-ingest:stage6-local -c 'touch /work/ok && rm /work/ok'
+rmdir ~/.cache/sec-edgar-ingest-smoke/write-check
+```
+
+Expected: exit 0. If the write fails, fix the Colima mount (Step 1) before going further. Do not debug the smoke itself.
 
 - [ ] **Step 4: Run the smoke**
 
