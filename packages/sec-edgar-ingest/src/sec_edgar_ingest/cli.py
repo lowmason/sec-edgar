@@ -37,6 +37,7 @@ from .workflows.checked import Dispatcher as WorkflowDispatcher, ChildUnfinished
 from .workflows.contracts import WORKFLOW_COMMANDS, WORKFLOW_PRIORITY, workflow_path
 from .workflows.results import freeze_workflow, read_workflow_result, write_workflow_result
 from .workflows.runner import run_workflow
+from .workflows.summary import emit_summary
 from .worksets import decode_source_workset
 
 SOURCE_REF = re.compile(r'worksets/sec/source/sha256=[0-9a-f]{64}/workset\.json\Z')
@@ -453,6 +454,7 @@ def _workflow_main(args):
         reference = write_workflow_result(result, store, objects)
         log_event(context, 'command_finished', {'outcome': result.outcome,
             'result_ref': reference, 'counters': result.to_mapping()['counts']})
+        emit_summary(result, reference, objects, store)
         return _workflow_stdout(result, reference)
     except Exception as exception:
         outcome = ('configuration' if isinstance(exception, (_ExpiredAttempt, TimeoutError)) else
