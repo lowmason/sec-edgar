@@ -133,6 +133,7 @@ Settled for the owner's review at plan approval:
 7. **Reading of §7.3.** A matching result whose `outcome` is not an `EXIT_CODES` key is `result_mismatch`, the "present but not matching" row.
 8. **Budgets.**
    - The run-worker pipeline has 47 activities, against ADF's documented maximum of 120 per pipeline, inner activities included.
+   - Its longest expression has 1,265 characters, against a limit of 8,192, and the pipeline object is 18.5 KB, against 200 KB. `validate_pipeline` enforces all three limits.
    - Its Until times out at 3 h. That covers two launches of 4,200 s observation plus their waits.
    - A timeout leaves the outcome empty, so it ends `execution_unknown`.
 9. **Values the spec leaves to the plan.**
@@ -179,7 +180,7 @@ The interpreter is the instrument behind spec §10. It models what the ADF docum
 - `startsWith` and `endsWith` that ignore case, and a `contains` that respects it;
 - the `o` timestamp format.
 
-Behaviour the documentation leaves open is a `Semantics` field: a missing property either throws or yields null; `if`, `and` and `or` are either lazy or eager; string `equals` either respects or ignores case. Anything else raises `AdfUnsupported`: an unknown function, `?.`, a bare identifier, a wrong arity or an unmodelled activity type. A pipeline that strays outside the subset therefore fails its tests.
+Behaviour the documentation leaves open is a `Semantics` field: a missing property either throws or yields null; `if`, `and` and `or` are either lazy or eager; string `equals` either respects or ignores case. Anything else raises `AdfUnsupported`: an unknown function, `?.`, a bare identifier, a wrong arity or an unmodelled activity type. So does breaking a documented limit: 120 activities, 8,192 characters per expression, 200 KB per pipeline object, or 25 Switch cases. A pipeline that strays outside the subset therefore fails its tests.
 
 **Files:**
 - Create: `tests/adf_interpreter.py`
@@ -378,6 +379,8 @@ class ValidationTests(unittest.TestCase):
         self.refused([{'name': 'Outer', 'type': 'Until', 'typeProperties': {
             'expression': expression('@equals(1, 1)'), 'activities': [inner_until]}}])
         self.refused([setv(f'A{index}', 'code', 'a') for index in range(121)])
+        self.refused([setv('A', 'code', expression('@concat(' + ', '.join(["'x'"] * 2100) + ')'))])
+        self.refused([setv(f'A{index}', 'code', 'x' * 2000) for index in range(110)])
 
 
 if __name__ == '__main__':
@@ -416,7 +419,11 @@ CONTAINERS = {'Until': ('activities',), 'IfCondition': ('ifTrueActivities', 'ifF
               'Switch': ('defaultActivities',)}
 CONDITIONS = frozenset({'Succeeded', 'Failed', 'Skipped', 'Completed'})
 VARIABLE_TYPES = {'String': str, 'Bool': bool, 'Array': list}
-MAX_ACTIVITIES = 120  # ADF limit: activities per pipeline, inner activities of containers included
+# Documented ADF limits: activities per pipeline (inner activities included), characters per expression,
+# bytes per pipeline object, and cases per Switch.
+MAX_ACTIVITIES = 120
+MAX_EXPRESSION = 8_192
+MAX_PIPELINE_BYTES = 200 * 1024
 MAX_CASES = 25
 
 
@@ -835,6 +842,8 @@ def validate_pipeline(definition) -> None:
             if len(set(values)) != len(values) or not all(isinstance(value, str) for value in values):
                 raise AdfUnsupported(f'{name!r}: case values must be distinct strings')
         for text, node in expressions(activity):
+            if len(text) > MAX_EXPRESSION:
+                raise AdfUnsupported(f'{name!r} has an expression of {len(text)} characters')
             unknown = functions_used(node) - FUNCTIONS
             if unknown:
                 raise AdfUnsupported(f'{name!r} uses {sorted(unknown)} in {text!r}')
@@ -849,6 +858,8 @@ def validate_pipeline(definition) -> None:
                 raise AdfUnsupported(f'{name!r}: a Set Variable cannot reference its own variable')
     if total > MAX_ACTIVITIES:
         raise AdfUnsupported(f'{total} activities exceed the ADF limit of {MAX_ACTIVITIES}')
+    if len(json.dumps(definition, separators=(',', ':')).encode()) > MAX_PIPELINE_BYTES:
+        raise AdfUnsupported('the pipeline object exceeds the ADF limit of 200 KB')
     for container in [activities] + [child for activity, _ in walk_activities(activities)
                                      for child in children(activity)]:
         names = {activity['name'] for activity in container}
