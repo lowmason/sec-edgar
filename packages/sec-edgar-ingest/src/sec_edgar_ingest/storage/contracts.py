@@ -35,6 +35,10 @@ class ClockUncertain(Exception):
     """Storage server time could not be bounded by the configured uncertainty."""
 
 
+class StoreMissing(LookupError):
+    """An operator open found no store at the configured binding; nothing was created."""
+
+
 @dataclass(frozen=True, slots=True)
 class TimeBounds:
     """Server UTC at one monotonic observation; Date precision and RTT are included."""

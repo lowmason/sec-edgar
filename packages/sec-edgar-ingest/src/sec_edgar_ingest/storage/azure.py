@@ -20,8 +20,8 @@ from azure.storage.blob import BlobLeaseClient, BlobServiceClient, ContentSettin
 from ..config import ACCOUNT_NAME, LOCK_BLOB, Settings
 from ..models import Versioned, parse_json, require_hash, require_number, require_text, require_utc, safe_relative_path
 from .contracts import (AlreadyExists, BoundaryObserver, ClockUncertain, Conflict, FILE_CHUNK_BYTES,
-                        LeaseHandle, ObjectStore, OwnershipLost, TimeBounds, REGISTRY_PATH, deployment_binding, exact_version,
-                        blob_address, identity, observe, payload_bytes, table_for, validate_raw_address)
+                        LeaseHandle, ObjectStore, OwnershipLost, StoreMissing, TimeBounds, REGISTRY_PATH, deployment_binding,
+                        exact_version, blob_address, identity, observe, payload_bytes, table_for, validate_raw_address)
 from .identity import worker_client_id
 
 RETRY_OPTIONS = dict(retry_total=0, retry_connect=0, retry_read=0, retry_status=0)
@@ -521,7 +521,11 @@ def operator_credential() -> AzureCliCredential:
     return AzureCliCredential()
 
 
-def open_azure_stores(settings: Settings, *, observer: BoundaryObserver | None = None, credential=None):
+def open_azure_stores(settings: Settings, *, observer: BoundaryObserver | None = None, access: str = "worker",
+                      credential=None):
+    """Worker access writes the binding registry once; operator access only verifies it and takes no lease."""
+    if access not in ("worker", "operator"):
+        raise ValueError("store access must be worker or operator")
     validated = Settings.from_mapping(settings.to_mapping())
     if validated.storage.backend != "azure":
         raise ValueError("Azure factory requires validated Azure settings")
@@ -534,12 +538,23 @@ def open_azure_stores(settings: Settings, *, observer: BoundaryObserver | None =
     blob_service = BlobServiceClient(account_url=storage.blob_endpoint, credential=credential,
                                     api_version=storage.blob_api_version, **options)
     objects = AzureObjectStore(blob_service, observer=observer)
-    objects.put_once(REGISTRY_PATH, payload_bytes(deployment_binding(validated)))
+    binding = payload_bytes(deployment_binding(validated))
+    if access == "worker":
+        objects.put_once(REGISTRY_PATH, binding)
+    else:
+        try:
+            registry = objects.read(REGISTRY_PATH)
+        except FileNotFoundError as error:
+            raise StoreMissing("the configured Azure store has no deployment binding registry") from error
+        if registry != binding:
+            raise Conflict("the Azure deployment binding registry differs from this configuration")
     tables = TableServiceClient(endpoint=storage.table_endpoint, credential=credential,
                                api_version=storage.table_api_version, **options)
     state = AzureStateStore(tables.get_table_client(storage.source_table), tables.get_table_client(storage.attempt_table),
                             objects=objects, observer=observer, active_client=tables.get_table_client("ActivePointers"),
                             approval_client=tables.get_table_client("Approvals"))
+    if access == "operator":
+        return state, objects, None
     leases = AzureLeaseStore(blob_service, lease_seconds=int(validated.coordination.lease_seconds),
                              uncertainty_seconds=validated.coordination.clock_uncertainty_seconds, observer=observer)
     return state, objects, leases
