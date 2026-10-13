@@ -28,7 +28,7 @@ Copied verbatim from spec §2:
 
 From spec §1, §3 and §14:
 
-- The work is offline: no SEC, Azure management or data-plane, credential, deployment or trigger activity. D1 authorizes local tool installs only.
+- The work is offline: no SEC, Azure management or data-plane, credential, deployment or trigger activity. D1 authorizes local tool installs, and D5 adds Task 11's build pulls: the pinned base image from Docker Hub by digest and the 21 hash-pinned wheels from PyPI. Nothing else touches the network.
 - `FROM --platform` is never used. The platform is a `docker buildx` CLI flag, never a Dockerfile line.
 - The local image digest is never recorded as a release digest.
 - Lean process: red/green TDD and a review per task, a final whole-branch review, and at plan exit the full offline suite, a wheel build and a CLI smoke test.
@@ -53,8 +53,9 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 - **D2** (owner, brief, 2026-10-12): a short Stage 6 spec with an owner-decisions section before the plan. Applied in: the spec (approved 2026-10-12). Home: spec §14.
 - **D3** (owner, spec review, 2026-10-12): "Approved — write both plans". This approves the spec, Q1–Q4 and its twelve defaults, including two plans at the §13 seam (this plan has no `Roadmap:` line), the §1 deferred-item scope, and Plan 10's offline checks. Applied in: all tasks; Global Constraints.
 - **D4** (owner, plan review, 2026-10-12): "Approve as written", including the Task 9 spec amendment (settled item 5). Applied in: all tasks; Task 9 (spec amendment).
-- **D5** (owner, plan review, 2026-10-12): "Allow both". During Task 11's build, buildx pulls the pinned base image from Docker Hub by digest and pip fetches the 21 hash-pinned wheels from PyPI (settled item 4). Applied in: Task 11.
-- **D6** (owner, plan review, 2026-10-12): "Open a PR for Plan 9". When this plan completes, it merges to `main` through its own pull request, and Plan 10 then branches from the merged `main`. Applied in: Task 12 (finishing the branch).
+- **D5** (owner, plan review, 2026-10-12): "Allow both". During Task 11's build, buildx pulls the pinned base image from Docker Hub by digest and pip fetches the 21 hash-pinned wheels from PyPI (settled item 4). Applied in: Global Constraints; Task 11.
+- **D6** (owner, plan review, 2026-10-12): "Open a PR for Plan 9". When this plan completes, it merges to `main` through its own pull request. Applied in: Task 12 (finishing the branch).
+- **D7** (owner, plan review, 2026-10-12): "Include, marked unreviewed" and "From merged main". Plan 9's pull request carries the Plan 10 document unchanged, and its body states that Plan 10 awaits owner review and has not run. Plan 10 branches from `main` after that pull request merges. Applied in: Task 12 (finishing the branch).
 
 Settled for the owner's review at plan approval:
 
@@ -2890,4 +2891,4 @@ git commit -m "chore(ingest): check help for every command at plan exit
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ```
 
-Then the final whole-branch review (subagent-driven-development), followed by the Plan Completion Protocol. This plan's header has no `Roadmap:` line, so step 3a does not apply: Stage 6 stays unticked until Plan 10 completes. Its deferred-items pass ticks `history`, actor identification and re-activation attribution, and the mistyped path, each `→ done in plan 9`. Plan retirement must leave the spec in place, because Plan 10 still implements it.
+Then the final whole-branch review (subagent-driven-development), followed by the Plan Completion Protocol. This plan's header has no `Roadmap:` line, so step 3a does not apply: Stage 6 stays unticked until Plan 10 completes. Its deferred-items pass ticks `history`, actor identification and re-activation attribution, and the mistyped path, each `→ done in plan 9`. Plan retirement must leave the spec in place, because Plan 10 still implements it. Finishing the branch then opens this plan's pull request from `stage-6-azure-orchestration` to `main` (D6), carrying the Plan 10 document as D7 states.
