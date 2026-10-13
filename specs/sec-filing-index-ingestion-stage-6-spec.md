@@ -72,7 +72,7 @@ Existing config, workset and binding-registry bytes are never rewritten. All 22 
 
 **Definition.**
 
-- **Base:** `infra/azure/sec-edgar-ingest/image/Dockerfile` starts `FROM docker.io/library/python:3.14.8-slim-bookworm@sha256:d1e795fb…`. That is the amd64 child digest, so no platform selection is needed. `FROM --platform` is never used: it failed F1's ACR quick-task scanner (F1 §4), and Stage 7 builds with quick tasks (S7-05).
+- **Base:** `infra/azure/sec-edgar-ingest/image/Dockerfile` starts `FROM docker.io/library/python@sha256:d1e795fb…`, the exact reference F1's successful quick task used. That is `python:3.14.8-slim-bookworm`'s Linux amd64 child digest, so no platform selection is needed. (owner, plan 9, 2026-10-12) `FROM --platform` is never used: it failed F1's ACR quick-task scanner (F1 §4), and Stage 7 builds with quick tasks (S7-05).
 - **Dependencies:** they come from `infra/azure/sec-edgar-ingest/image/requirements.lock`, a byte copy of F1's retained lock. A test asserts its SHA-256 equals `523b2da3…` and that its 21 pins equal the versions resolved in `uv.lock`. The install is `pip install --require-hashes --no-deps --only-binary=:all:`, followed by the offline-built `sec-edgar-ingest` wheel with `--no-deps`.
 - **Runtime:**
   - the process runs as UID 1000;
