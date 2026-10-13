@@ -211,3 +211,10 @@ Operator commands are `candidates`, `approve`, `rollback` and the read-only `his
 `docs/runbooks/sec-edgar-reconciliation-approval.md`. They open an existing store verify-only and never create
 one: a missing store is a configuration error (exit 2, empty stdout). On Azure they authenticate with the
 operator's `az login`, and `approve`/`rollback` record that principal instead of `--approver`/`--operator`.
+
+Workflow commands (`backfill`, `daily`, `reconcile`) take exactly one of `--config PATH` or
+`--config-env NAME`; the latter reads the same strict JSON from that environment variable. On Azure, the job
+sets `SEC_EDGAR_INGEST_CONFIG` from its `ingest-config` secret and `SEC_EDGAR_INGEST_WORKER_CLIENT_ID` to the
+worker identity, and Container Apps sets `CONTAINER_APP_JOB_EXECUTION_NAME`. A workflow command there takes
+its execution ID from that variable and refuses `--execution-id`, so its result names the real execution.
+Stage commands keep `--config` and `--execution-id`.

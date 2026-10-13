@@ -13,7 +13,7 @@ from pathlib import Path
 
 from . import __version__
 from .collection import collect
-from .config import Settings, load_config, pin_context
+from .config import Settings, load_config, load_config_env, pin_context
 from .coordination import Clock, Coordinator
 from .discovery import discover
 from .etl.approval import activation_ref, approve
@@ -32,7 +32,7 @@ from .results import exit_code, log_event, read_result, result_path, write_resul
 from .state import AcquisitionState, attempt_key
 from .storage import open_stores
 from .storage.contracts import CAS_ATTEMPTS, ClockUncertain, Conflict, OwnershipLost, StoreMissing
-from .storage.identity import OPERATOR_TOKEN_SCOPE, principal_from_token, worker_client_id
+from .storage.identity import EXECUTION_NAME_ENV, OPERATOR_TOKEN_SCOPE, principal_from_token, worker_client_id
 from .workflows.checked import Dispatcher as WorkflowDispatcher, ChildUnfinished
 from .workflows.contracts import WORKFLOW_COMMANDS, WORKFLOW_PRIORITY, workflow_path
 from .workflows.results import freeze_workflow, read_workflow_result, write_workflow_result
@@ -76,8 +76,16 @@ def _parser() -> argparse.ArgumentParser:
     commands = parser.add_subparsers(dest='command')
     for command in ('discover', 'collect', 'transform', 'publish', *WORKFLOW_COMMANDS):
         sub = commands.add_parser(command)
+        workflow = command in WORKFLOW_COMMANDS
+        if workflow:
+            source = sub.add_mutually_exclusive_group(required=True)
+            source.add_argument('--config')
+            source.add_argument('--config-env', metavar='NAME',
+                                help='read the configuration JSON from this environment variable')
+            sub.add_argument('--execution-id', help='local-fixture only; Azure uses ' + EXECUTION_NAME_ENV)
         for name in ('config', 'run-id', 'execution-id', 'attempt-id', 'deadline'):
-            sub.add_argument('--' + name, required=True)
+            if not (workflow and name in ('config', 'execution-id')):
+                sub.add_argument('--' + name, required=True)
         for name in ('state-dir', 'today'):
             sub.add_argument('--' + name)
         if command in ('discover', 'collect', *WORKFLOW_COMMANDS):
@@ -310,9 +318,20 @@ def _stdout(result, reference):
 
 
 def _validate_workflow(args):
-    for name in ('run_id', 'execution_id', 'attempt_id'):
+    for name in ('run_id', 'attempt_id'):
         _segment(getattr(args, name), name)
-    settings = load_config(Path(args.config))
+    settings = (load_config_env(args.config_env, os.environ) if args.config_env is not None
+                else load_config(Path(args.config)))
+    if settings.storage.backend == 'azure':
+        if args.execution_id is not None:
+            raise ValueError('--execution-id is refused on Azure; the job execution name is used')
+        # The workflow path reads the resolved execution ID from args from here on.
+        args.execution_id = os.environ.get(EXECUTION_NAME_ENV, '')
+        if not args.execution_id:
+            raise ValueError(f'{EXECUTION_NAME_ENV} must name the job execution on Azure')
+    elif args.execution_id is None:
+        raise ValueError('local-fixture workflow commands require --execution-id')
+    _segment(args.execution_id, 'execution_id')
     supported_parser(settings.etl.parser_version,
                      fixture=settings.storage.backend == 'local-fixture')
     if settings.etl.schema_version != SCHEMA_VERSION:
@@ -328,6 +347,7 @@ def _validate_workflow(args):
     if settings.storage.backend == 'azure':
         if args.fixture_pack or args.state_dir or args.today:
             raise ValueError('fixture pack, state directory and date override are fixture-only')
+        worker_client_id(os.environ)
         pack = None
     else:
         if not args.fixture_pack:
