@@ -44,6 +44,9 @@ SCENARIOS = {
     'a 202 status-route Location is followed': (
         [Launch(start=accepted(operation(route='containerappsjoboperationstatuses')), locate=(started(1),))],
         'success', 1),
+    'a 202 Location with signed parameters is followed': (
+        [Launch(start=accepted(operation() + '&t=638000000000000000&c=MIIHhzCCBm-gAwIB_x&s=AbC-_123&h=AbC-_123'),
+                locate=(started(1),))], 'success', 1),
     'a failed Location poll keeps locating': (
         [Launch(start=accepted(operation()), locate=(WebFailure('503'), started(1)))], 'success', 1),
     'a Location that never names the execution is unknown': (
@@ -117,6 +120,12 @@ INVALID_LOCATIONS = {
         '?api-version=2026-07-01', '?api-version=2025-01-01&api-version=2026-07-01'),
     'a repeated api-version': operation() + '&api-version=2026-07-01',
     'a conflicting api-version in another case': operation() + '&API-VERSION=2025-01-01',
+    'a valueless api-version': operation() + '&api-version',
+    'a percent-encoded api-version hyphen': operation() + '&api%2Dversion=2025-01-01',
+    'a percent-encoded api-version letter': operation() + '&%61pi-version=2025-01-01',
+    'a backslash single dot segment': operation('\\.'),
+    'a backslash dot segment': operation('\\..'),
+    'a backslash climb': operation('\\..' * 7 + '\\subscriptions\\00000000-0000-4000-8000-000000000000'),
     'an encoded segment': operation('op%2F..%2Fx'),
     'an extra segment': operation('op-1/extra'),
     'no operation id': operation(''),

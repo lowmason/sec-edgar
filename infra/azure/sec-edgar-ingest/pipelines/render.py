@@ -61,16 +61,18 @@ LOCATION = "activity('Start job').output.ADFWebActivityResponseHeaders['Location
 LOCATION_PATH = f"split({LOCATION}, '?')[0]"
 LOCATION_QUERY = f"split({LOCATION}, '?')[1]"
 # §7.1: only an HTTPS management.azure.com Location on the selected async route, one operation segment,
-# no dot or encoded segments, no fragment and exactly the selected API version, named once in any letter case.
+# no dot segment, no fragment and exactly the selected API version, named once in any letter case. Any
+# percent sign or backslash anywhere refuses the Location: ADF has no decode function, so an encoded
+# parameter name or segment cannot be inspected, and a URL parser reads a backslash as a slash.
 LOCATION_VALID = (
     f"and(and(or(startsWith({LOCATION}, concat(pipeline().parameters.asyncPrefix, "
     f"'containerappsjoboperationresults/')), startsWith({LOCATION}, concat(pipeline().parameters.asyncPrefix, "
     f"'containerappsjoboperationstatuses/'))), equals(length(split({LOCATION}, '?')), 2)), "
     f"and(and(equals(length(split({LOCATION_PATH}, '/')), add(length(split(pipeline().parameters.asyncPrefix, "
     f"'/')), 1)), not(or(endsWith({LOCATION_PATH}, '/'), or(contains({LOCATION_PATH}, '/.'), "
-    f"contains({LOCATION_PATH}, '%'))))), and(not(contains({LOCATION}, '#')), "
+    f"contains({LOCATION}, '%'))))), and(not(or(contains({LOCATION}, '#'), contains({LOCATION}, '\\'))), "
     f"and(contains(split({LOCATION_QUERY}, '&'), 'api-version=2026-07-01'), "
-    f"equals(length(split(toLower({LOCATION_QUERY}), 'api-version=')), 2)))))")
+    f"equals(length(split(toLower({LOCATION_QUERY}), 'api-version')), 2)))))")
 
 
 def retry_after(activity: str) -> str:
