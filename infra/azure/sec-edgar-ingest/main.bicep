@@ -151,6 +151,7 @@ var container = {
   ]
 }
 
+// Container Apps checks the registry identity when it creates the job, so the pull grant comes first.
 module job 'modules/job.bicep' = {
   name: 'job'
   scope: group
@@ -165,6 +166,9 @@ module job 'modules/job.bicep' = {
     pullIdentityId: identities.outputs.pullId
     registryServer: registryServer
   }
+  dependsOn: [
+    registryAccess
+  ]
 }
 
 module factory 'modules/factory.bicep' = {
@@ -243,6 +247,7 @@ module jobAccess 'modules/access/job.bicep' = {
   ]
 }
 
+// Only the pull identity: the full map names the factory, which needs the job, which needs this grant.
 module registryAccess 'modules/access/registry.bicep' = {
   name: 'access-registry'
   scope: group
@@ -250,7 +255,9 @@ module registryAccess 'modules/access/registry.bicep' = {
     registryName: names.registry
     assignments: roles.assignments
     roleIds: roleIds
-    principals: principals
+    principals: {
+      pull: identities.outputs.pullPrincipalId
+    }
   }
   dependsOn: [
     registry

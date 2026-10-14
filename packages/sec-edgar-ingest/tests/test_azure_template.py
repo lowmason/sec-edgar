@@ -323,8 +323,12 @@ class AccessTests(unittest.TestCase):
         for item in modules:
             parameters = item['properties']['parameters']
             self.assertEqual(parameters['assignments'], {'value': "[variables('roles').assignments]"})
-            self.assertEqual(set(parameters['principals']['value']), {'adf', 'worker', 'pull', 'operator'})
-            self.assertEqual(parameters['principals']['value']['operator'], "[parameters('operatorPrincipalId')]")
+            if item.get('name') == 'access-registry':
+                # Only the pull identity, so the registry grant needs nothing that the job's creation needs.
+                self.assertEqual(set(parameters['principals']['value']), {'pull'})
+            else:
+                self.assertEqual(set(parameters['principals']['value']), {'adf', 'worker', 'pull', 'operator'})
+                self.assertEqual(parameters['principals']['value']['operator'], "[parameters('operatorPrincipalId')]")
             grant, = resources(item['properties']['template'], 'Microsoft.Authorization/roleAssignments')
             body = text(grant['properties'])
             for fragment in ("parameters('roleIds')", "parameters('principals')", "'operator'", "'User'",
@@ -376,10 +380,10 @@ class GrantSetTests(unittest.TestCase):
                    ('access-registry', 'registry',
                     "[format('Microsoft.ContainerRegistry/registries/{0}', parameters('registryName'))]"),
                    ('access-subscription', 'subscription', None))
-        principals = []
+        principals = {}
         for name, key, scope in singles:
             item = deployment(self.template, name)
-            principals.append(self.check_grant(item, f"'{key}'", scope)['principals'])
+            principals[name] = self.check_grant(item, f"'{key}'", scope)['principals']
             handled.setdefault(key, []).append(name)
         self.assertEqual(deployment(self.template, 'access-job')['properties']['parameters']['jobName'],
                          {'value': "[variables('names').job]"})
@@ -398,7 +402,7 @@ class GrantSetTests(unittest.TestCase):
                              ({'value': f"[format('{kind}:{{0}}', variables('{collection}')[copyIndex()])]"},
                               {'value': f"[variables('{collection}')[copyIndex()]]"},
                               {'value': "[variables('names').storage]"}))
-            principals.append(parameters['principals'])
+            principals[loop] = parameters['principals']
             for name in self.template['variables'][collection]:
                 handled.setdefault(f'{kind}:{name}', []).append(loop)
         # Each scope key is handled by exactly one deployment, so no grant is made twice.
@@ -407,14 +411,22 @@ class GrantSetTests(unittest.TestCase):
         # only role assignments, so nothing outside roles.json is granted (no extras).
         listed = {(item['principal'], item['role'], item['scope']) for item in load('roles.json')['assignments']}
         self.assertEqual({grant for grant in listed if grant[2] in handled}, listed)
-        # Each principal key is the identity the spec names, the same map in every deployment.
-        self.assertTrue(all(value == principals[0] for value in principals))
-        bound = principals[0]['value']
+        # Each principal key is the identity the spec names, the same map in every deployment but the registry's.
+        registry = principals.pop('access-registry')['value']
+        shared = list(principals.values())
+        self.assertTrue(all(value == shared[0] for value in shared))
+        bound = shared[0]['value']
         for key, (source, output) in {'adf': ('factory', 'principalId'), 'worker': ('identities', 'workerPrincipalId'),
                                       'pull': ('identities', 'pullPrincipalId')}.items():
             self.assertIn(f"'Microsoft.Resources/deployments', '{source}')", bound[key], key)
             self.assertTrue(bound[key].endswith(f'.outputs.{output}.value]'), key)
         self.assertEqual(bound['operator'], "[parameters('operatorPrincipalId')]")
+        # The registry deployment binds only the pull identity, to the same output, and names neither the factory
+        # nor the job; every roles.json registry grant names a principal it binds.
+        self.assertEqual(registry, {'pull': bound['pull']})
+        for source in ('factory', 'job'):
+            self.assertNotIn(f"'Microsoft.Resources/deployments', '{source}')", text(registry), source)
+        self.assertLessEqual({principal for principal, _, scope in listed if scope == 'registry'}, set(registry))
         # Role IDs are the custom definitions' own names plus the AcrPull built-in.
         self.assertEqual(self.template['variables']['roleIds'],
                          "[union(toObject(variables('roles').definitions, lambda('role', lambdaVariables('role').roleName), "
@@ -422,6 +434,57 @@ class GrantSetTests(unittest.TestCase):
                          "variables('roles').builtins)]")
         definition, = resources(self.template, 'Microsoft.Authorization/roleDefinitions')
         self.assertEqual(definition['name'], "[guid(subscription().id, variables('roles').definitions[copyIndex()].roleName)]")
+
+
+DEPLOYMENT_REFERENCE = re.compile(r"'Microsoft\.Resources/deployments', '([^']+)'\)\]$")
+
+
+def dependency_graph(compiled: dict) -> dict[str, set[str]]:
+    """Each top-level resource, by its deployment or loop name, to what its compiled dependsOn names: deployments by
+    name, loops by their copy name, anything else by its raw expression."""
+    graph = {}
+    for resource in compiled['resources']:
+        name = resource['copy']['name'] if 'copy' in resource else resource['name']
+        graph[name] = {(found.group(1) if (found := DEPLOYMENT_REFERENCE.search(item)) else item)
+                       for item in resource.get('dependsOn', [])}
+    return graph
+
+
+def depends_on(graph: dict[str, set[str]], name: str) -> set[str]:
+    """Everything `name` waits for, directly or transitively."""
+    seen, frontier = set(), list(graph[name])
+    while frontier:
+        item = frontier.pop()
+        if item not in seen:
+            seen.add(item)
+            frontier.extend(graph.get(item, ()))
+    return seen
+
+
+class DeploymentOrderTests(unittest.TestCase):
+    """Container Apps checks the job's registry identity when it creates the job, so AcrPull must exist first."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.graph = dependency_graph(template())
+
+    def test_the_graph_names_every_deployment(self):
+        for name in ('identities', 'registry', 'job', 'factory', 'access-registry', 'access-job', 'access-subscription',
+                     'containerAccess', 'tableAccess', 'roleDefinitions'):
+            self.assertIn(name, self.graph)
+        self.assertIn('registry', self.graph['access-registry'])
+        self.assertIn('job', self.graph['factory'])
+
+    def test_the_pull_grant_needs_neither_the_job_nor_the_factory(self):
+        waits_for = depends_on(self.graph, 'access-registry')
+        self.assertNotIn('job', waits_for)
+        self.assertNotIn('factory', waits_for)
+        self.assertLessEqual({'registry', 'identities', 'roleDefinitions'}, waits_for)
+
+    def test_the_job_waits_for_the_pull_grant(self):
+        self.assertIn('access-registry', self.graph['job'])
+        self.assertIn('access-registry', depends_on(self.graph, 'factory'))
+        self.assertNotIn('job', depends_on(self.graph, 'job'))
 
 
 if __name__ == '__main__':
