@@ -61,10 +61,12 @@ Triggers deploy stopped and nothing in the template starts them. Stage 8 starts 
 ADF rejects an update to a started trigger. Any redeploy after Stage 8 therefore:
 
 1. stops both triggers;
-2. deploys;
-3. starts both triggers again.
+2. confirms that no execution is in flight, as in Deploy step 3: stopping a trigger does not stop a run already in progress;
+3. deploys;
+4. starts both triggers again;
+5. enables both staleness alerts again, because the template deploys `alert-sec-edgar-daily-staleness` and `alert-sec-edgar-reconcile-staleness` disabled and so resets them on every deploy. This runbook states no command for enabling an alert; the stage that runs this step verifies one first.
 
-Record all three steps.
+Record every step.
 
 `pl-sec-edgar-backfill` has no trigger. Run it by hand as a bounded campaign.
 
@@ -97,9 +99,9 @@ All alerts mail `ag-sec-edgar-dev`. Per-run alerts run every 15 minutes over a 3
 | `alert-sec-edgar-ambiguous-start` | `execution_unknown` | Recover by hand (above) |
 | `alert-sec-edgar-lease-failure` | `ownership_lost` | Check for a second worker; see the acquisition runbook |
 | `alert-sec-edgar-access-block` | `access_blocked` | Stop the triggers; review SEC access before resuming |
-| `alert-sec-edgar-retry-exhausted` | `member_outcomes.retry_exhausted` above 0 | The next run revisits the member; repeated alerts need review |
-| `alert-sec-edgar-quarantine` | Quarantined members or outcome | See the acquisition runbook's quarantine section |
-| `alert-sec-edgar-publication-conflict` | `publication_conflict` | See the publication runbook |
+| `alert-sec-edgar-retry-exhausted` | A summary whose `outcome` is `retry_exhausted` or whose `member_outcomes.retry_exhausted` is above 0 | The next run revisits the member; repeated alerts need review |
+| `alert-sec-edgar-quarantine` | Quarantined members or outcome | See the acquisition runbook (exit 7, `quarantined` and `invalid_source`) |
+| `alert-sec-edgar-publication-conflict` | `publication_conflict` | See the "No-op, gate and repair" section of the publication runbook |
 | `alert-sec-edgar-pending-approval` | `pending_approvals` above 0, on every run | Review `candidates` |
 | `alert-sec-edgar-reconcile-staleness` | The latest summary shows no successful reconciliation in 8 days | Disabled until Stage 8. Check the reconcile trigger and the last reconcile outcome |
 | `alert-sec-edgar-daily-staleness` | No daily summary with complete discovery in 30 h | Disabled until Stage 8. Check the daily trigger and the last daily outcome |
