@@ -60,7 +60,7 @@
       `retained-registry` in `tests/test_etl_contracts.py:96,103`. Remove them or turn
       them into assertions in one hygiene commit. Size: quick-fix. Done when: the full
       offline suite prints no stray stdout. → done 2026-10-11 (/deferred quick fix)
-- [ ] Load-flaky multi-process tests (execution baseline, pre-existing):
+- [x] Load-flaky multi-process tests (execution baseline, pre-existing):
       `test_coordination.CoordinationTests.test_three_independent_exchange_processes_prove_intervals_priority_and_epochs`
       (`sqlite3.OperationalError: database is locked` at `PRAGMA journal_mode=WAL` in
       `storage/local.py` `LocalStateStore.__init__`, ~line 167) and
@@ -88,6 +88,7 @@
       `test_coordination` (three-process WAL open) and `test_acquisition_processes` (held
       loopback, 3 s wait) each failed once in full runs that overlapped concurrent agent
       work, and none failed in the quiet full runs (Tasks 5-8, 10 and 12: 739-763 tests).
+      → done in plan 11 (WAL switch retries until the busy timeout; spawn-timed tests sized by support.SPAWN_ALLOWANCE_SECONDS; three consecutive check runs passed)
 - [x] Review Minor, approval/Azure storage coverage gaps (T1/T2/T6): nothing tests that
       `AzureStateStore.close()` closes `approval_client`, that `_check_endpoint`
       rejects a foreign-endpoint Approvals client, that the local store keeps approval
@@ -436,3 +437,95 @@
       sweep assert that the largest accepted Retry-After's Reset ran in [D-2, D-1). Size:
       quick-fix. Done when: the After gates and the three test points are changed, with the
       pipelines re-rendered and `main.json` rebuilt.
+
+## 11-load-flaky-multi-process-tests — 2026-10-14
+- [ ] Fixture reservation-to-send stall (plan 11, Task 6). Every fixture workflow test runs
+      discovery and collection through `_FixtureSender.send` (`download.py`). It refuses a
+      permit once 1/3 s (`1 / requests_per_second`) has passed since `Turn.reserve`, so any
+      process stall over 1/3 s loses that request. Seen once in `test_workflow_runner` as
+      `pending_sources 1 != 2`; reproduced by injecting a 0.4 s stall; not reproduced by CPU
+      or fsync load. A lost request also leaves the coordinator's unsafe guard in place, so
+      that test's next request waits up to about 150 s (`coordination.reservation_guard`
+      with the fixture config). Plan 11 only made
+      `test_workflow_runner.RunnerTests.test_deadline_after_selection_records_undispatched_units_without_child_work`
+      assert its two discovered members first and print the discovery gaps. There are two
+      options: (a) give the fixture workflow settings a lower `sec.requests_per_second`,
+      which slows every fixture discovery about 9-fold at 1/3 request per second; (b) add a
+      fixture-only grace setting, which is a production config change. Size: design. Done
+      when: the owner chooses (a), (b) or accepting the rare stall, and the choice lands or
+      is recorded here.
+- [ ] Production spawn latency against the 1/3 s dispatch window (plan 11 Evidence). Each
+      `BoundedSender` request spawns a child that must start within `1 / requests_per_second`.
+      Planning measured spawn latency, from `Process.start()` to the child's first line with
+      the child importing only `sec_edgar_ingest.download`, at load average 26 on 14 cores:
+      median 0.15 s, p90 0.65 s, max 1.03 s. A slow spawn ends in `permit_expired`, which
+      `RequestClient._outcome` treats as non-retryable, so the source waits for the next run.
+      The late test-child starts found later in plan 11 came from the test-only socket
+      guard's eager Azure import (next item), not from production code, so they do not
+      measure production latency. Size: design. Revisit if: Stage 7's live smoke or
+      integrated checks record `permit_expired` from a late child start, or measure worker
+      spawn latency near 1/3 s.
+- [ ] Spawned test children import `azure.identity` and `msal` eagerly (plan 11 diagnosis):
+      `network_guard.install()` (`packages/sec-edgar-ingest/tests/network_guard.py`) runs in
+      every spawned child, through `tests/support.py`'s module-level install or
+      `guarded_transport_child`, and imports both packages eagerly because
+      `importlib.import_module` bypasses the `__import__` hook. Idle that is 0.22 s of the
+      child's 0.28 s to its first line. Under a competing load that keeps creating processes
+      (about 70 loops, each repeatedly starting Python that imports `azure.identity`, `msal`
+      and `requests`; load average 93-137) it is 2.0-2.5 s of a 2.4-3.5 s start, which
+      overruns the 3 s start window (`support.SPAWN_ALLOWANCE_SECONDS`) and the 0.5 s tail:
+      4 of 5 `BoundedProcessTests` rounds failed with `permit_expired` and `ownership_lost`.
+      The plan's acceptance load, 14 pure-spin CPU burners, does not reproduce it (18 of 18
+      rounds in the diagnosis, 15 of 15 in the final check), because macOS demotes
+      long-running spinners. One earlier run beside 14 burners failed 3 of 5 rounds,
+      probably under extra load of the competing kind (inferred, not established: other
+      sessions were running). A measured candidate: let spawned HTTP children skip the eager
+      import, keeping the socket guard and the import hook. The child's first line fell from
+      a median of about 2.7 s to about 0.55 s (max 1.3 s) at that load, the class ran about
+      3 s faster idle, and 0 of 2 interleaved rounds failed (baseline 1 of 2): partial, two
+      rounds per variant. It changes the guard's posture (the HTTP children never import
+      Azure, but a direct `importlib` import would no longer be caught there) and sits
+      outside plan 11's file list, so it is the owner's call. Raising
+      `SPAWN_ALLOWANCE_SECONDS` to 6 was measured and rejected: about +18 s per class run,
+      and it contradicts the owner-approved 3 s (plan 11 D2). Size: design. Done when: the
+      owner decides the guard posture and, if accepted, the change lands with a comparison
+      of at least 5 rounds per variant under the competing load. Revisit if: a spawn-timed
+      test fails with `permit_expired` or `ownership_lost` on a busy host, or
+      `network_guard.py` is next edited.
+- [ ] Supervisor-crash test duration cliff (plan 11 diagnosis):
+      `test_download.BoundedProcessTests.test_independent_fatal_timer_survives_supervisor_death_during_blocking_headers`
+      takes about 87 s instead of about 10 s whenever its HTTP child reaches the loopback
+      later than 1 s. The crashing supervisor (`crash_supervisor` in `tests/support.py`,
+      `renew_every_seconds` 1) then renews its lease once, which pushes the dead owner's
+      `unsafe_until` out by about 80 s (`lease_seconds` plus 5 x `STORAGE_CALL_BOUND_SECONDS`
+      of 15 plus the guard), and the in-process successor waits it out. It stays inside the
+      successor's 120 s run deadline (`4 * SPAWN_WAIT_SECONDS`) with about 35 s of margin, so
+      under every load measured it was a duration cost, not a failure. Most of the 122-207 s
+      class times seen under load come from this test. Size: quick-fix. Revisit if: this test
+      fails with a deadline error, or class time under load matters. Cure: raise the
+      successor's run deadline, or set the crash supervisor's `renew_every_seconds` above the
+      worst child start.
+- [ ] Remaining short bounds in the spawn-timed tests (plan 11 final review and diagnosis),
+      not sized from `SPAWN_WAIT_SECONDS`: the `+ 0.1` margins on the child-joined and
+      socket-closed bounds in `BoundedProcessTests`, `process.join(1)` after a signal,
+      `LoopbackServer`'s `peer.settimeout(1)` and `LoopbackServer.close`'s `thread.join(2)` in
+      `tests/support.py`, and
+      `test_coordination.CoordinationTests.test_shared_cancellation_event_reaches_spawned_transport_child`,
+      which waits 5 s for a spawned child (`ready.wait(5)`, `returned.get(timeout=5)`; with
+      the guard import at 2.5 s under load that leaves about 2.5 s). All depend on prompt
+      parent-side scheduling or a fast spawn; none failed in the diagnosis (zero parent
+      stalls over 0.15 s in 34 instrumented rounds). Plan 11 widened the six
+      `closed.wait(1)` calls in `BoundedProcessTests` after one failed under load. Size:
+      quick-fix. Revisit if: one of them fails on a busy host (size it from
+      `SPAWN_WAIT_SECONDS`).
+- [ ] Drain-spacing test hardening (plan 11 final review): the logical-clock test
+      `test_coordination.CoordinationTests.test_next_dispatch_waits_one_interval_after_a_drain_later_than_charged_dispatch`
+      advances the clock by a literal 0.55 s. Its geometry precondition holds today (the
+      drain is later than the charged dispatch), but a drain that lands later than the
+      charge and less than one interval after the first dispatch would weaken it without
+      failing it. Derive the advance from the settings' interval. Also,
+      `test_download.BoundedProcessTests.test_next_actual_get_waits_for_drain_spacing_after_in_adapter_delay`
+      now proves only end-to-end GET spacing (the 3 s window dwarfs its 0.55 s adapter delay,
+      so reservation pacing alone satisfies it); its name still says drain spacing. Rename it
+      when next edited. Size: quick-fix. Revisit if: the coordination harness's interval or
+      dispatch window changes, or either test is next edited.

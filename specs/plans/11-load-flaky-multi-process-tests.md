@@ -1,5 +1,7 @@
 # Load-Flaky Multi-Process Tests Implementation Plan
 
+**Status: COMPLETE (2026-10-14)** — executed via subagent-driven-development; deferred items in specs/deferred_items.md
+
 > **For agentic workers:** REQUIRED SUB-SKILL: implement this plan task-by-task via subagent-driven-development (the default) — or executing-plans when your human partner chose inline execution at the handoff. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** The offline suite passes on a busy machine. A fresh local store's switch to WAL waits out a competing initializer. Every test that times a real spawned child gives it windows that a slow spawn fits in. The one failure that is not about spawning names its cause.
@@ -107,7 +109,7 @@ uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-i
 - Consumes: nothing from other tasks.
 - Produces: `storage.local.SQLITE_BUSY_TIMEOUT_SECONDS = 5`, the busy timeout of every state connection and the retry budget for store creation. Also `SQLITE_INIT_FIRST_PAUSE_SECONDS = 0.001` and `SQLITE_INIT_MAX_PAUSE_SECONDS = 0.05`. `SQLITE_INIT_ATTEMPTS` is removed. No other code references it; completed plan 9 and `specs/evidence/` name it as history and stay unchanged. `LocalLeaseStore` builds a `LocalStateStore`, so it gets the retry too; `local.py:185` is the only WAL switch in the package.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 In `packages/sec-edgar-ingest/tests/test_storage.py`, replace the import block at the top:
 
@@ -231,7 +233,7 @@ with:
                     blocker.rollback()
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run:
 
@@ -251,7 +253,7 @@ uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-i
 
 Expected: `FAILED (errors=1)`. Its persistent-lock case raises the same `AttributeError` for `SQLITE_BUSY_TIMEOUT_SECONDS`, from the patch.
 
-- [ ] **Step 3: Implement the retry**
+- [x] **Step 3: Implement the retry**
 
 In `packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py`, replace:
 
@@ -328,7 +330,7 @@ with:
 
 `time` is already imported in `local.py`.
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run both Step 2 commands. Expected: `Ran 2 tests` … `OK`, then `Ran 1 test` … `OK`.
 
@@ -341,7 +343,7 @@ uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-i
 
 Expected: both `OK`. The first pattern covers `test_state.py` and `test_storage.py`.
 
-- [ ] **Step 5: Show the race is gone under load (scratch, not committed)**
+- [x] **Step 5: Show the race is gone under load (scratch, not committed)**
 
 Write `/tmp/plan11/wal_race.py`:
 
@@ -395,7 +397,7 @@ mkdir -p /tmp/plan11 && uv run --offline --frozen --package sec-edgar-ingest pyt
 
 Expected: `inits=6000 failures=0`. In planning, this script failed 5 of 6,000 inits on BASE (an earlier race script: 29 of 6,000) and none with this task.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/sec-edgar-ingest/src/sec_edgar_ingest/storage/local.py packages/sec-edgar-ingest/tests/test_storage.py packages/sec-edgar-ingest/tests/test_coordination.py
@@ -433,7 +435,7 @@ EOF
   Both children are module-level, so spawn can pickle them as `target=`.
 - Produces, in `BoundedProcessTests.send()`: keyword `start_seconds` (default `1/3`), passed to `real_permit`.
 
-- [ ] **Step 1: Write the failing case**
+- [x] **Step 1: Write the failing case**
 
 In `packages/sec-edgar-ingest/tests/support.py`, replace:
 
@@ -499,7 +501,7 @@ with:
                                    ("stale-prepared-request", stale_preparation_child, "permit_expired")):
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run:
 
@@ -511,7 +513,7 @@ Expected: `FAILED`. The case `timer-installation-failure-after-slow-spawn` fails
 
 The stale cases after it then fail too, for example `AssertionError: 2 != 1` from `assert_drained`. The failed case never deleted its `transport.jsonl`: this is the cascade the deferred item recorded. On a busy host the first case can also fail: its child, killed before writing any outcome, finds no leftover receipt, and the test errors with `SenderFailure: HTTP child reported an unconfirmed outcome; retain unsafe guard`.
 
-- [ ] **Step 3: Give each case its windows and delete leftovers in a `finally`**
+- [x] **Step 3: Give each case its windows and delete leftovers in a `finally`**
 
 In `packages/sec-edgar-ingest/tests/test_download.py`, replace the module's `support` import line:
 
@@ -594,7 +596,7 @@ with:
                         (self.root/"sender"/left).unlink(missing_ok=True)
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run the Step 2 command. Expected: `Ran 1 test` … `OK`. Then run the whole module:
 
@@ -604,7 +606,7 @@ uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-i
 
 Expected: `OK`. Other `BoundedProcessTests` can still fail on a busy host until Task 3.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/sec-edgar-ingest/tests/support.py packages/sec-edgar-ingest/tests/test_download.py
@@ -638,7 +640,7 @@ EOF
   - `support.spawn_tolerant_settings(**overrides: dict) -> Settings`. Its defaults are `sec.requests_per_second = 1 / SPAWN_ALLOWANCE_SECONDS` (a 3 s dispatch window) and `http.exchange_deadline_seconds = SPAWN_ALLOWANCE_SECONDS + 0.5`. Each override is a dict merged into its section.
   - `LoopbackServer(…, drip_seconds=0.02)`: the per-byte pause in `mode="headers"`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 In `packages/sec-edgar-ingest/tests/test_download.py`, in `BoundedProcessTests`, replace:
 
@@ -680,7 +682,7 @@ with:
     def test_real_trickle_is_cancelled_by_total_lifetime_with_partial_socket_evidence(self):
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run:
 
@@ -690,7 +692,9 @@ uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-i
 
 Expected: `FAILED (errors=2)`. Both subtests raise `sec_edgar_ingest.download.SenderFailure: HTTP child reported an unconfirmed outcome; retain unsafe guard`: the 0.4 s deadline kills each child before it writes its outcome.
 
-- [ ] **Step 3: Widen the class's windows**
+- [x] **Step 3: Widen the class's windows**
+
+> Deviation: the `support.py` block that inserts `spawn_tolerant_settings` ends its old text with `def fixture_context(` and a newline, but that line continues in the file; it was applied as a mid-line fragment, giving the same result the block intends.
 
 In `packages/sec-edgar-ingest/tests/support.py`, replace:
 
@@ -939,7 +943,7 @@ with:
 
 `timedelta` and `replace` are already imported at the top of `test_download.py`.
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run:
 
@@ -949,7 +953,7 @@ uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-i
 
 Expected: `Ran 14 tests` … `OK`, in about 30–40 s. Then run the whole module (the Task 2 Step 4 command). Expected: `OK`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/sec-edgar-ingest/tests/support.py packages/sec-edgar-ingest/tests/test_download.py
@@ -979,7 +983,7 @@ EOF
 - Consumes (Task 2): `SPAWN_ALLOWANCE_SECONDS`, `SPAWN_WAIT_SECONDS`, `slow_spawn_child_exchange`.
 - Produces: nothing new.
 
-- [ ] **Step 1: Make the independent child start late**
+- [x] **Step 1: Make the independent child start late**
 
 In `test_independent_child_deadline_records_actual_fatal_exit_and_prefix`, replace:
 
@@ -1012,7 +1016,7 @@ with:
                 from unittest.mock import patch
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run:
 
@@ -1022,7 +1026,7 @@ uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-i
 
 Expected: `FAILED (failures=1)` with `AssertionError: 0 not greater than 0`. The child starts after its 0.4 s deadline, so it records `exchange_deadline` before receiving any bytes. On a busy host the failure can instead read `AssertionError: independent child timer failed while supervisor was stalled`: the late child is still alive when the stalled supervisor's `join(1)` returns.
 
-- [ ] **Step 3: Widen both tests' windows**
+- [x] **Step 3: Widen both tests' windows**
 
 In the same test, replace:
 
@@ -1108,7 +1112,7 @@ with:
                 self.assertEqual(len(server.requests), 0)
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run:
 
@@ -1118,7 +1122,7 @@ uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-i
 
 Expected: `Ran 2 tests` … `OK`. The independent-child test takes about 3.5 s, because it sits through its deadline.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/sec-edgar-ingest/tests/test_acquisition_processes.py
@@ -1152,7 +1156,7 @@ EOF
 - Consumes (Task 2): `SPAWN_ALLOWANCE_SECONDS`, `SPAWN_WAIT_SECONDS`, `slow_spawn_child_exchange`. Consumes (Task 3): `spawn_tolerant_settings`.
 - Produces: nothing new. The proof's keys and the assertions in `test_held_socket_parent_death_zero_successor_unsafe_interval_and_daily_next` are unchanged.
 
-- [ ] **Step 1: Make the old sender's child start late**
+- [x] **Step 1: Make the old sender's child start late**
 
 In `integrated_old_sender`, replace:
 
@@ -1167,7 +1171,7 @@ with:
     sender = loopback_sender(settings, clock, origin, target=slow_spawn_child_exchange, spool=root / 'old-sender')
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run:
 
@@ -1177,7 +1181,7 @@ uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-i
 
 Expected: `FAILED (failures=1)` with `AssertionError: old child did not reach held loopback`. The coordinator's 1/3 s dispatch window expires before the late child starts, so it never connects.
 
-- [ ] **Step 3: Widen the proof's windows and waits**
+- [x] **Step 3: Widen the proof's windows and waits**
 
 Replace:
 
@@ -1225,7 +1229,7 @@ with:
 
 Leave each `raise AssertionError(...)` message as it is. The pacing check now compares against the configured interval (3 s), which the coordinator guarantees: it charges each permit at the end of its dispatch window.
 
-- [ ] **Step 4: Run the test to verify it passes**
+- [x] **Step 4: Run the test to verify it passes**
 
 Run the Step 2 command. Expected: `Ran 1 test` … `OK`, in about 30 s. Then run the whole module:
 
@@ -1235,7 +1239,7 @@ uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-i
 
 Expected: `Ran 5 tests` … `OK`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/sec-edgar-ingest/tests/support.py
@@ -1263,7 +1267,7 @@ EOF
 - Consumes: nothing from other tasks.
 - Produces: nothing new.
 
-- [ ] **Step 1: Reproduce today's message (scratch, not committed)**
+- [x] **Step 1: Reproduce today's message (scratch, not committed)**
 
 Write `/tmp/plan11/runner_stall.py`. It stalls one fixture send by 0.4 s, which is over the fixture transport's 1/3 s window:
 
@@ -1302,7 +1306,7 @@ uv run --offline --frozen --package sec-edgar-ingest python /tmp/plan11/runner_s
 
 Expected: `FAIL` with `AssertionError: 1 != 2` at `report.counts['pending_sources']`. That is the recorded failure, and the message does not say why. The run takes about 2.5 minutes (154 s in planning), most of it idle. The refused exchange ends its turn without a confirmed outcome, so the next discovery request waits out the old turn's unsafe guard before it may send. That guard is lease end plus exchange deadline plus clock uncertainty, up to 60 + 90 + 2 s with the fixture config (`coordination.reservation_guard`).
 
-- [ ] **Step 2: Assert the precondition with its gaps**
+- [x] **Step 2: Assert the precondition with its gaps**
 
 In `test_deadline_after_selection_records_undispatched_units_without_child_work`, replace:
 
@@ -1323,7 +1327,7 @@ with:
                 expired = context.deadline + timedelta(seconds=1)
 ```
 
-- [ ] **Step 3: Re-run the stall and the test**
+- [x] **Step 3: Re-run the stall and the test**
 
 Run the Step 1 command again (again about 2.5 minutes). Expected: `FAIL` at the new assertion, `AssertionError: 1 != 2 : [...]`, with the list containing an `ownership_lost` gap whose message includes `fixture transport refuses a cancelled or expired permit`, and a `baseline_source_missing` gap for `2026Q3`.
 
@@ -1335,7 +1339,7 @@ uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-i
 
 Expected: `OK`.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add packages/sec-edgar-ingest/tests/test_workflow_runner.py
@@ -1386,6 +1390,8 @@ EOF
 
    Expected: every line reads `0/5 failed`. Before this plan, the timer, independent-child and held-socket tests each failed 12 of 12 at this load.
 
+   > Deviation: the first run, on HEAD `b25085f7`, failed 3 of 5 `BoundedProcessTests` rounds (the other two groups passed 5 of 5). It was diagnosed rather than rerun until green. Established: the failures are late child starts (every spawned test child runs `network_guard.install()`, which imports `azure.identity` and `msal`: 0.22 s idle, 2.0-2.5 s under a process-creation-heavy competing load), with no parent stalls; 14 CPU burners alone did not reproduce it (18 of 18 rounds passed in the diagnosis). Inferred, not established: that run coincided with such competing load. One failure shape, a leftover `server.closed.wait(1)`, was fixed in `78007ce2` (six sites, now `SPAWN_WAIT_SECONDS`). The rerun on `78007ce2` passed 15 of 15 at an ambient load peaking at 75. The guard import is recorded as a deferred item with the owner's decision.
+
    **b. The WAL race.** Re-run Task 1 Step 5. Expected: `inits=6000 failures=0`.
 
    **c. The full suite beside 6 burners**, the planning baseline's load. Write `/tmp/plan11/suite_under_load.sh`:
@@ -1409,6 +1415,8 @@ EOF
    ```
 
    Expected: `Ran 839 tests`, `OK` and `exit=0`. At this load BASE ran 836 tests in 2,159 s and failed five; planning's run of the plan took 1,984 s (Evidence).
+
+   > Deviation: 840 tests ran, because the final-review fix added one test. Result: `OK`, `exit=0`, 2,106 s.
 2. **Final review.** Run the final whole-branch review (subagent-driven-development's closing `code-reviewer`) over `6400dba9..HEAD`. For the Codex second-opinion seat, use `-c model=gpt-6-astra`, because the default model is rejected for the ChatGPT account:
 
    ```bash
@@ -1416,6 +1424,8 @@ EOF
    ```
 
    Resolve or consciously defer its findings. Engage with them critically: fix the underlying issue, and push back where warranted.
+
+   > Deviation: the final review ran before step 1, because it is the only step that can change code and the load runs are long. Both seats reviewed `6400dba9..69220339`. They agreed on one Important finding: after Task 3 widened the dispatch window to 3 s, `test_next_actual_get_waits_for_drain_spacing_after_in_adapter_delay` could no longer fail, because reservation pacing alone satisfies it. Codex also found that the WAL waits-out test sampled its start time after arming its release timer. Both were fixed in `b25085f7` (a deterministic logical-clock test whose failure under a deleted drain update was shown on a scratch copy; the timestamp moved before the timer; the delayed-adapter run deadline widened; a misleading 0.4 s setting removed), and a scoped re-review passed. Codex's alternative of lengthening the adapter delay was rejected because it would depend on spawn speed again. `b25085f7` and `78007ce2` were not covered by a second Codex pass.
 3. **Several consecutive full-suite runs (the item's Done-when).** Run `scripts/check-sec-edgar-ingest.sh` from the repository root three times in a row, with no code change between runs. Each run is the full offline suite, wheel and sdist build, CLI help, compileall, whitespace check, pipeline render and pinned Bicep compile, about 20–30 minutes. Each must exit 0. On the first run, also confirm the suite prints nothing to stdout:
 
    ```bash
@@ -1424,6 +1434,8 @@ EOF
    ```
 
    Expected: `run 1 exit 0`, `run 2 exit 0`, `run 3 exit 0`; then `OK` and `0`. If any run fails, find the cause before re-running. A failure is not cleared by a passing rerun.
+
+   > Deviation: none in the runs. Three consecutive runs exited 0 (1,885 s, 1,903 s, 1,872 s), each `Ran 840 tests`, `OK`, on `78007ce2` with no change between them; the stdout check printed 0 bytes. They ran on a quiet machine (load about 3-8, swap falling from 20 GB to 6 GB), so they show repeatability, not behaviour under the heavy competing load that failed the first step 1a run.
 4. **Run writing-plans' Plan Completion Protocol.**
    - In its deferred-items step, tick the item "Load-flaky multi-process tests" (section `6-sec-filing-index-ingestion-stage-5-spec — 2026-10-11`) as `- [x]`, and append `→ done in plan 11 (WAL switch retries until the busy timeout; spawn-timed tests sized by support.SPAWN_ALLOWANCE_SECONDS; three consecutive check runs passed)`.
    - Append a `## 11-load-flaky-multi-process-tests — <date>` section with at least these two items, plus anything the reviews leave deferred:
@@ -1433,4 +1445,5 @@ EOF
 
        Size: design. Done when: the owner chooses (a), (b) or accepting the rare stall, and the choice lands or is recorded here.
      - [ ] Production spawn latency against the 1/3 s dispatch window (plan 11 Evidence). Each `BoundedSender` request spawns a child that must start within `1 / requests_per_second`. Planning measured spawn latency at load average 26 on 14 cores: median 0.15 s, p90 0.65 s, max 1.03 s. A slow spawn ends in `permit_expired`, which `RequestClient._outcome` treats as non-retryable, so the source waits for the next run. Size: design. Revisit if: Stage 7's live smoke or integrated checks record `permit_expired` from a late child start, or measure worker spawn latency near 1/3 s.
+   > Deviation: the section carries four items beyond the two listed above: the test-guard eager Azure import (with the owner's decision on its posture), the supervisor-crash test's duration cliff, the remaining short bounds in the spawn-timed tests, and drain-spacing test hardening. Cosmetic review Minors with no closure condition were dropped, not deferred.
 5. **Hand back.** Stop and hand integration (merge, PR or cleanup) back to the owner. Do not merge, push or deploy without that decision. With the item ticked, roadmap Stage 7's Consumes is met. Resuming the roadmap ("resume the roadmap") is the owner's call.
