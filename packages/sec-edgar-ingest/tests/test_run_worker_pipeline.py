@@ -126,6 +126,12 @@ INVALID_LOCATIONS = {
     'a backslash single dot segment': operation('\\.'),
     'a backslash dot segment': operation('\\..'),
     'a backslash climb': operation('\\..' * 7 + '\\subscriptions\\00000000-0000-4000-8000-000000000000'),
+    # A URL parser strips ASCII tab and newline before it reads the path or the query.
+    'a tab before a dot segment': operation('\t..'),
+    'a tab before a single dot segment': operation('\t.'),
+    'a line feed before a dot segment': operation('\n..'),
+    'a carriage return before a dot segment': operation('\r..'),
+    'a tab inside the api-version name': operation() + '&api\t-version=2025-01-01',
     'an encoded segment': operation('op%2F..%2Fx'),
     'an extra segment': operation('op-1/extra'),
     'no operation id': operation(''),

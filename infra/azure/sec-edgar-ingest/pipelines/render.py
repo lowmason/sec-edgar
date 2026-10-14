@@ -60,17 +60,32 @@ RESULT = "json(variables('result'))"
 LOCATION = "activity('Start job').output.ADFWebActivityResponseHeaders['Location']"
 LOCATION_PATH = f"split({LOCATION}, '?')[0]"
 LOCATION_QUERY = f"split({LOCATION}, '?')[1]"
+
+
+def contains_any(text: str, characters: str) -> str:
+    """True when `text` holds any of `characters`: nested two-argument ors over one contains each."""
+    checks = [f"contains({text}, '{character}')" for character in characters]
+    expression = checks[-1]
+    for check in reversed(checks[:-1]):
+        expression = f"or({check}, {expression})"
+    return expression
+
+
+# A fragment, a backslash (a URL parser reads it as a slash) and the ASCII tab, line feed and carriage
+# return (a URL parser strips them, so '.<TAB>.' is a dot segment and 'api<TAB>-version' a second
+# api-version). Written as Python escapes, so the rendered JSON holds \t, \n and \r, not raw characters.
+LOCATION_REFUSED = contains_any(LOCATION, '#\\\t\n\r')
 # §7.1: only an HTTPS management.azure.com Location on the selected async route, one operation segment,
 # no dot segment, no fragment and exactly the selected API version, named once in any letter case. Any
-# percent sign or backslash anywhere refuses the Location: ADF has no decode function, so an encoded
-# parameter name or segment cannot be inspected, and a URL parser reads a backslash as a slash.
+# percent sign anywhere refuses the Location too: ADF has no decode function, so an encoded parameter
+# name or segment cannot be inspected. LOCATION_REFUSED lists the other characters refused anywhere.
 LOCATION_VALID = (
     f"and(and(or(startsWith({LOCATION}, concat(pipeline().parameters.asyncPrefix, "
     f"'containerappsjoboperationresults/')), startsWith({LOCATION}, concat(pipeline().parameters.asyncPrefix, "
     f"'containerappsjoboperationstatuses/'))), equals(length(split({LOCATION}, '?')), 2)), "
     f"and(and(equals(length(split({LOCATION_PATH}, '/')), add(length(split(pipeline().parameters.asyncPrefix, "
     f"'/')), 1)), not(or(endsWith({LOCATION_PATH}, '/'), or(contains({LOCATION_PATH}, '/.'), "
-    f"contains({LOCATION}, '%'))))), and(not(or(contains({LOCATION}, '#'), contains({LOCATION}, '\\'))), "
+    f"contains({LOCATION}, '%'))))), and(not({LOCATION_REFUSED}), "
     f"and(contains(split({LOCATION_QUERY}, '&'), 'api-version=2026-07-01'), "
     f"equals(length(split(toLower({LOCATION_QUERY}), 'api-version')), 2)))))")
 
