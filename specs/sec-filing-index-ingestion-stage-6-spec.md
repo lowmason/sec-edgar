@@ -160,7 +160,7 @@ This closes the "mistyped path" deferred item. Operators need only Blob read on 
 **Departures from F1's preliminary matrix:**
 
 - **Worker narrowed.** The worker loses `Approvals` entity writes and `approvals` Blob writes. Only `approve` and `rollback` write them (`etl/approval.py`, `etl/rollback.py`), and a recorded fixture run asserts that workflow commands write neither. RBAC then enforces F1's rule that the worker never manufactures an approval.
-- **Operator widened.** The operator gains `worksets` read (Stage 5 spec §5) and `SourceState` read, which `approve` needs for its superseded check and `candidates` for its listing.
+- **Operator widened.** The operator gains `worksets` read (Stage 5 spec §5) and `SourceState` read, which `approve` needs for its superseded check and `candidates` for its listing, and `results` read, which the runbook's `execution_unknown` recovery needs to read a launch's `result.json` (owner, final review, 2026-10-13).
 - **One operator role set.** `approve` and `rollback` have identical write sets (Stage 5 §5), so separate RBAC roles could not separate them. F1 D-04 names the same human for approval, rollback and reading.
 - **Bootstrap stays outside the templates.** Deployment and bootstrap authority (D-04's subscription UAA, SecEdgarBootstrap Actions, RG Contributor and RBAC Administrator) is a Stage 7 prerequisite.
 
