@@ -117,20 +117,20 @@ Production triggers remain disabled through Stage 7 (§7).
 
 - [ ] Stage 7: Deployment checkpoint and recovery evidence
       Objective: Validate the integrated system in isolation and establish measured release/recovery evidence before production operation.
-      Spec: §§4.7–4.9, 5–6, 7 steps 3–5, 8, 10.
+      Spec: §§4.7–4.9, 5–6, 7 steps 3–5, 8, 10; Stage 6 spec §11 (`completed/sec-filing-index-ingestion-stage-6-spec.md`) (plan 10, Handoff; Resolved at resume, 2026-10-14).
       Gap closed: Error outcomes; Verification; Isolated integration; Live smoke; Replay/recovery rehearsal; Documentation/infrastructure.
-      Consumes: Stage 6 deployable stack, disabled triggers and complete worker/workflow contracts; a stable offline suite, with the deferred "Load-flaky multi-process tests" item closed (owner-approved at resume, 2026-10-12).
-      Produces: Acceptance reports, reviewed runtime configuration, release candidate, exercised runbooks and retained smoke/recovery artifacts.
-      Exit: Failure fixtures emit the expected named outcomes (Error outcomes); CI and integration checks pass (§6 Verification); Azure identity/coordination/fault-injection reports pass (Isolated integration); bounded quarterly/daily smoke reports record required measurements (Live smoke); offline replay and approval/rollback rehearsals pass (Replay/recovery rehearsal); versioned infrastructure and exercised operating/reader documentation are reviewable (Documentation/infrastructure).
+      Consumes: The Stage 6 stack as built — compiled template, deployment inputs, pipeline contract, alerts and stopped triggers, with no release image (plan 10, Handoff; Resolved at resume, 2026-10-14) — and complete worker/workflow contracts; a stable offline suite, with the deferred "Load-flaky multi-process tests" item closed (owner-approved at resume, 2026-10-12).
+      Produces: Acceptance reports, reviewed runtime configuration, release candidate whose release image is built by ACR quick task and pinned by digest (S7-05), exercised runbooks including a verified staleness-alert enable command, and retained smoke/recovery artifacts (plan 10, Handoff; Resolved at resume, 2026-10-14).
+      Exit: Failure fixtures emit the expected named outcomes, and a direct run with a hostile pipeline parameter ends `execution_unknown` before any request (Error outcomes); CI and integration checks pass (§6 Verification); Azure identity/coordination/fault-injection reports pass, and `validate`, `what-if` and the live checks prove each Stage 6 assumption or correct it in `infra/azure/sec-edgar-ingest/` (Isolated integration); bounded quarterly/daily smoke reports record required measurements (Live smoke); offline replay and approval/rollback rehearsals pass (Replay/recovery rehearsal); versioned infrastructure, carrying a `summary_error` alert before the first deploy, and exercised operating/reader documentation are reviewable (Documentation/infrastructure). The three additions are plan 10, Handoff, "Deferred into Stage 7" (Resolved at resume, 2026-10-14).
       ROUTING: writing-plans
 
 - [ ] Stage 8: Baseline and scheduled-operation acceptance
       Objective: Establish accepted production coverage and verify the enabled schedules through observed executions.
       Spec: §§4.2, 4.7–4.9, 7 steps 6–9 and Exit, 10.
       Gap closed: Baseline rollout; Daily activation; Reconciliation activation; Scheduled acceptance.
-      Consumes: Stage 7 approved release candidate, recovery evidence and deployment checkpoint acceptance.
-      Produces: Accepted baseline/catch-up/reconciliation reports, controlled trigger-enablement records and release evidence naming image/configuration versions and quarter generations.
-      Exit: Coverage records account for every requested baseline unit or an explicitly approved incomplete range (Baseline rollout); accepted catch-up precedes daily enablement (Daily activation); accepted manual reconciliation precedes weekly enablement (Reconciliation activation); subsequent scheduled executions have matching durable reports and logs (Scheduled acceptance).
+      Consumes: Stage 7 approved release candidate, recovery evidence and deployment checkpoint acceptance; Stage 6's stopped triggers, whose start times are deployment parameters, its disabled staleness alerts and Stage 7's verified enable command (plan 10, Handoff; Resolved at resume, 2026-10-14).
+      Produces: Accepted baseline/catch-up/reconciliation reports, controlled records enabling each trigger with its staleness alert (plan 10, Handoff; Resolved at resume, 2026-10-14) and release evidence naming image/configuration versions and quarter generations.
+      Exit: Coverage records account for every requested baseline unit or an explicitly approved incomplete range (Baseline rollout); accepted catch-up precedes enabling the daily trigger and its staleness alert (Daily activation); accepted manual reconciliation precedes enabling the weekly trigger and its staleness alert (Reconciliation activation); subsequent scheduled executions have matching durable reports and logs (Scheduled acceptance). The paired enablements are plan 10, Handoff (Resolved at resume, 2026-10-14).
       ROUTING: writing-plans
 
 ## Stage-spec stamp
@@ -268,3 +268,20 @@ Stage 6 also accounts for the deferred items bound to it in `specs/deferred_item
 Known planning input, not a change: F1 §2 D-08 records Bicep and local Docker/buildx as absent and requires separate owner authority for a build facility or installation. Re-observed 2026-10-12: `docker`, `podman` and `bicep` absent, `az` present. Stage 6's Exit ("the built image runs every command") needs that authority; S7-04/05 build, push and digest-pull proof remain Stage 7's.
 
 Stages 6–8 remain unticked. All live-access authorizations remain closed. Only Stage 6 is routed, via `writing-plans`.
+
+## Stage 7 resume — 2026-10-14
+
+The owner resumed the roadmap against `main` at `c5c1e016` (merged PR #13). Stages 1–6 carry authoritative stamps; Stage 6's names plan 10, after plan 9. Plan 10's `## Handoff to later stages` already reflects the two commits after its completion record (`412aeba8`, the observation-deadline wait fix, and `2a2d9845`). Plan 9 has no Handoff section, so it amends nothing.
+
+Amended from plan 10, Handoff, each point marked Resolved at resume, 2026-10-14:
+
+- **Stage 7.** Spec gains Stage 6 spec §11. Consumes names the stack as built, with no release image. Produces gains the release image built by ACR quick task and pinned by digest (S7-05), which moves from Stage 6's Produces line, and a verified staleness-alert enable command. Exit gains the three items the Handoff defers into Stage 7: each live assumption proven or corrected, hostile direct-run parameters, and a `summary_error` alert before the first deploy.
+- **Stage 8.** Consumes gains the stopped triggers, the disabled staleness alerts and Stage 7's enable command. Produces and Exit pair each trigger enablement with its staleness alert.
+
+No stage is added, split, dropped or reordered, and routing is unchanged.
+
+Stage 7 also accounts for deferred items bound to it in `specs/deferred_items.md` by their Done-when, as planning inputs rather than entry changes: from the plan 9 section, image smoke hardening ("at Stage 7's image work") and the Colima pre-build image check (at the next `colima start`); run-worker scenario coverage, whose `execution_reference` waits on observed execution-name syntax; and operations runbook polish. The runbook item dates the alert-enable command to Stage 8, while the Handoff has Stage 7 verify it; the entries above follow the Handoff.
+
+**Stage 7's Consumes are not yet met.** The "Load-flaky multi-process tests" item is still open. The owner chose (2026-10-12) a separate `/deferred` plan to close it before Stage 7, and plan 9 recorded further failures in full runs that overlapped concurrent work. Stage 7 routes via `writing-plans` once that plan ticks the item; Stage 8 consumes Stage 7.
+
+Stages 7–8 remain unticked. All live-access authorizations remain closed; Stage 7's deployment, live smoke and integrated checks need owner-granted access that this resume does not open.
