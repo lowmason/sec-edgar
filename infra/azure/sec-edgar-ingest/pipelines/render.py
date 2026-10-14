@@ -75,8 +75,9 @@ def wait(name: str, *depends: dict) -> dict:
             'typeProperties': {'waitTimeInSeconds': expression(CAPPED_WAIT)}}
 
 
-# Set just before each observation GET. From the deadline on, int() of a word fails it, so the GET is never sent
-# and the phase's After activity classifies.
+# Set just before each observation GET. From the deadline on, int() of a word fails it, so no further GET is sent
+# and the phase's After activity classifies. A GET whose check passed just before the deadline can still go out one
+# activity dispatch later (a few seconds in ADF), at most once per launch; its result is accepted as usual.
 RESET_WAIT = f"@string(int(if({BEFORE_DEADLINE}, string(pipeline().parameters.pollSeconds), 'deadline')))"
 
 STATE = "variables('state')"
