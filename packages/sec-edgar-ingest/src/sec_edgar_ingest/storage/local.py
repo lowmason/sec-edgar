@@ -24,7 +24,11 @@ from .contracts import (AlreadyExists, BoundaryObserver, CAS_ATTEMPTS, ClockUnce
 
 DIRECTORY_FLAGS = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
 FILE_FLAGS = os.O_RDONLY | os.O_NOFOLLOW
-SQLITE_INIT_ATTEMPTS = 3
+# Every state connection waits this long for a lock. Creating a store also retries its WAL switch until then,
+# because SQLite returns BUSY for that switch at once instead of waiting.
+SQLITE_BUSY_TIMEOUT_SECONDS = 5
+SQLITE_INIT_FIRST_PAUSE_SECONDS = 0.001
+SQLITE_INIT_MAX_PAUSE_SECONDS = 0.05
 
 
 class LocalObjectStore:
@@ -178,7 +182,9 @@ class LocalStateStore:
             if not self.database.is_file():
                 raise StoreMissing(f"local store at {self.root} has no state database")
             return
-        for attempt in range(SQLITE_INIT_ATTEMPTS):
+        deadline = time.monotonic() + SQLITE_BUSY_TIMEOUT_SECONDS
+        pause = SQLITE_INIT_FIRST_PAUSE_SECONDS
+        while True:
             try:
                 with self._connection() as connection:
                     if connection.execute("PRAGMA journal_mode").fetchone()[0] != "wal":
@@ -189,16 +195,19 @@ class LocalStateStore:
                     connection.commit()
                 break
             except sqlite3.OperationalError as error:
-                # Competing WAL transitions can return BUSY without honoring the busy timeout.
-                # Closing the losing connection releases its read lock before bounded retry.
-                if error.sqlite_errorcode & 0xff != sqlite3.SQLITE_BUSY or attempt == SQLITE_INIT_ATTEMPTS-1:
+                # Switching to WAL upgrades a read lock, so SQLite returns BUSY at once, skipping the busy handler
+                # to avoid deadlock, while another initializer holds RESERVED. Closing the losing connection
+                # releases its read lock; pause, then retry until the busy timeout every other lock wait gets.
+                if error.sqlite_errorcode & 0xff != sqlite3.SQLITE_BUSY or time.monotonic() + pause > deadline:
                     raise
+            time.sleep(pause)
+            pause = min(2 * pause, SQLITE_INIT_MAX_PAUSE_SECONDS)
 
     @contextmanager
     def _connection(self):
         if self._closed:
             raise ValueError("state client is closed")
-        connection = sqlite3.connect(self.database, timeout=5)
+        connection = sqlite3.connect(self.database, timeout=SQLITE_BUSY_TIMEOUT_SECONDS)
         try:
             connection.execute("PRAGMA synchronous=FULL")
             yield connection

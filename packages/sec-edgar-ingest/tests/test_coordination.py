@@ -207,6 +207,7 @@ class JournalContractTests(unittest.TestCase):
 
     def test_local_constructor_recovers_real_wal_transition_contention_and_skips_warm_transition(self):
         import sqlite3
+        import time
         from unittest.mock import patch
         from sec_edgar_ingest.storage.local import LocalStateStore
         with tempfile.TemporaryDirectory() as directory:
@@ -261,10 +262,14 @@ class JournalContractTests(unittest.TestCase):
                 release_after_busy = False
                 busy.clear()
                 try:
-                    with self.assertRaises(sqlite3.OperationalError):
-                        LocalStateStore(root)
-                    self.assertEqual(busy, [sqlite3.SQLITE_BUSY]*3,
-                                     "A persistent startup lock must fail closed after finite attempts")
+                    with patch("sec_edgar_ingest.storage.local.SQLITE_BUSY_TIMEOUT_SECONDS", 0.2):
+                        started = time.monotonic()
+                        with self.assertRaises(sqlite3.OperationalError):
+                            LocalStateStore(root)
+                    self.assertGreaterEqual(time.monotonic() - started, 0.15)
+                    self.assertGreater(len(busy), 1, "A busy startup lock is retried, not refused at once")
+                    self.assertEqual(set(busy), {sqlite3.SQLITE_BUSY},
+                                     "A persistent startup lock must fail closed once the busy timeout expires")
                 finally:
                     blocker.rollback()
 
