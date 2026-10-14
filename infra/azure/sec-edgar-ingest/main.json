@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.38.33.27573",
-      "templateHash": "16740559822457464963"
+      "templateHash": "3575316841223186225"
     }
   },
   "parameters": {
@@ -2731,6 +2731,214 @@
         "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('names').group), 'Microsoft.Resources/deployments', 'factory')]",
         "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('names').group), 'Microsoft.Resources/deployments', 'identities')]",
         "roleDefinitions"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "alerts",
+      "resourceGroup": "[variables('names').group]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "workspaceId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('names').group), 'Microsoft.Resources/deployments', 'monitoring'), '2025-04-01').outputs.workspaceId.value]"
+          },
+          "actionGroupId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('names').group), 'Microsoft.Resources/deployments', 'monitoring'), '2025-04-01').outputs.actionGroupId.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.38.33.27573",
+              "templateHash": "5466996666464911230"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string"
+            },
+            "workspaceId": {
+              "type": "string"
+            },
+            "actionGroupId": {
+              "type": "string"
+            }
+          },
+          "variables": {
+            "$fxv#0": "// A run-worker pipeline ended in its Fail activity with an outcome other than the gated and ambiguous ones.\nADFActivityRun\n| where PipelineName == \"pl-sec-edgar-run-worker\" and ActivityType == \"Fail\" and Status == \"Failed\"\n| where ErrorCode !in (\"awaiting_approval\", \"execution_unknown\")\n| project TimeGenerated, PipelineRunId, ErrorCode, ErrorMessage\n",
+            "$fxv#1": "// A run-worker pipeline could not resolve its execution: no relaunch happened; recover by hand.\nADFActivityRun\n| where PipelineName == \"pl-sec-edgar-run-worker\" and ActivityType == \"Fail\" and Status == \"Failed\"\n| where ErrorCode == \"execution_unknown\"\n| project TimeGenerated, PipelineRunId, ErrorCode, ErrorMessage\n",
+            "$fxv#2": "// A worker lost its lease. The row names the execution.\nContainerAppConsoleLogs\n| where JobName == \"job-sec-edgar-dev\"\n| extend entry = parse_json(Log)\n| where tostring(entry.event) in (\"command_finished\", \"command_error\", \"workflow_summary\")\n| where tostring(entry.fields.outcome) == \"ownership_lost\" or toint(entry.fields.member_outcomes.ownership_lost) > 0\n| project TimeGenerated, ExecutionName = tostring(entry.context.execution_id), Log\n",
+            "$fxv#3": "// The SEC blocked access. The row names the execution.\nContainerAppConsoleLogs\n| where JobName == \"job-sec-edgar-dev\"\n| extend entry = parse_json(Log)\n| where tostring(entry.event) in (\"command_finished\", \"command_error\", \"workflow_summary\")\n| where tostring(entry.fields.outcome) == \"access_blocked\" or toint(entry.fields.member_outcomes.access_blocked) > 0\n| project TimeGenerated, ExecutionName = tostring(entry.context.execution_id), Log\n",
+            "$fxv#4": "// A workflow exhausted the retry budget of at least one member.\nContainerAppConsoleLogs\n| where JobName == \"job-sec-edgar-dev\"\n| extend entry = parse_json(Log)\n| where tostring(entry.event) == \"workflow_summary\"\n| where tostring(entry.fields.outcome) == \"retry_exhausted\" or toint(entry.fields.member_outcomes.retry_exhausted) > 0\n| project TimeGenerated, ExecutionName = tostring(entry.context.execution_id), Log\n",
+            "$fxv#5": "// A source was quarantined. The row names the execution.\nContainerAppConsoleLogs\n| where JobName == \"job-sec-edgar-dev\"\n| extend entry = parse_json(Log)\n| where tostring(entry.event) in (\"command_finished\", \"command_error\", \"workflow_summary\")\n| where tostring(entry.fields.outcome) == \"quarantined\" or toint(entry.fields.member_outcomes.quarantined) > 0\n| project TimeGenerated, ExecutionName = tostring(entry.context.execution_id), Log\n",
+            "$fxv#6": "// A publication conflict is unresolved. The row names the execution.\nContainerAppConsoleLogs\n| where JobName == \"job-sec-edgar-dev\"\n| extend entry = parse_json(Log)\n| where tostring(entry.event) in (\"command_finished\", \"command_error\", \"workflow_summary\")\n| where tostring(entry.fields.outcome) == \"publication_conflict\" or toint(entry.fields.member_outcomes.publication_conflict) > 0\n| project TimeGenerated, ExecutionName = tostring(entry.context.execution_id), Log\n",
+            "$fxv#7": "// Every run that leaves a withdrawal candidate pending approval (owner decision Q4: on every run).\nContainerAppConsoleLogs\n| where JobName == \"job-sec-edgar-dev\"\n| extend entry = parse_json(Log)\n| where tostring(entry.event) == \"workflow_summary\"\n| where toint(entry.fields.pending_approvals) > 0\n| project TimeGenerated, ExecutionName = tostring(entry.context.execution_id), Log\n",
+            "$fxv#8": "// The latest summary in the two-day window reports no successful reconciliation in eight days.\nContainerAppConsoleLogs\n| where JobName == \"job-sec-edgar-dev\"\n| extend entry = parse_json(Log)\n| where tostring(entry.event) == \"workflow_summary\"\n| summarize arg_max(TimeGenerated, entry)\n| extend last = todatetime(entry.fields.last_successful_reconcile_at)\n| where isnull(last) or last < ago(8d)\n",
+            "$fxv#9": "// No daily summary with complete discovery in the last 30 hours.\nlet found = toscalar(ContainerAppConsoleLogs\n    | where TimeGenerated > ago(30h) and JobName == \"job-sec-edgar-dev\"\n    | extend entry = parse_json(Log)\n    | where tostring(entry.event) == \"workflow_summary\"\n    | where tostring(entry.context.command) == \"daily\" and tobool(entry.fields.discovery_complete)\n    | count);\nprint found\n| where found == 0\n",
+            "alerts": [
+              {
+                "name": "alert-sec-edgar-failed-job",
+                "description": "A run-worker pipeline failed with an outcome other than awaiting_approval or execution_unknown.",
+                "severity": 1,
+                "enabled": true,
+                "stateful": false,
+                "frequency": "PT15M",
+                "window": "PT30M",
+                "query": "[variables('$fxv#0')]"
+              },
+              {
+                "name": "alert-sec-edgar-ambiguous-start",
+                "description": "A run-worker pipeline ended execution_unknown; no relaunch happened.",
+                "severity": 1,
+                "enabled": true,
+                "stateful": false,
+                "frequency": "PT15M",
+                "window": "PT30M",
+                "query": "[variables('$fxv#1')]"
+              },
+              {
+                "name": "alert-sec-edgar-lease-failure",
+                "description": "A worker lost its lease (ownership_lost).",
+                "severity": 1,
+                "enabled": true,
+                "stateful": false,
+                "frequency": "PT15M",
+                "window": "PT30M",
+                "query": "[variables('$fxv#2')]"
+              },
+              {
+                "name": "alert-sec-edgar-access-block",
+                "description": "The SEC blocked access (access_blocked).",
+                "severity": 1,
+                "enabled": true,
+                "stateful": false,
+                "frequency": "PT15M",
+                "window": "PT30M",
+                "query": "[variables('$fxv#3')]"
+              },
+              {
+                "name": "alert-sec-edgar-retry-exhausted",
+                "description": "A workflow exhausted the retry budget of a member.",
+                "severity": 2,
+                "enabled": true,
+                "stateful": false,
+                "frequency": "PT15M",
+                "window": "PT30M",
+                "query": "[variables('$fxv#4')]"
+              },
+              {
+                "name": "alert-sec-edgar-quarantine",
+                "description": "A source or workflow was quarantined.",
+                "severity": 2,
+                "enabled": true,
+                "stateful": false,
+                "frequency": "PT15M",
+                "window": "PT30M",
+                "query": "[variables('$fxv#5')]"
+              },
+              {
+                "name": "alert-sec-edgar-publication-conflict",
+                "description": "A publication conflict is unresolved.",
+                "severity": 1,
+                "enabled": true,
+                "stateful": false,
+                "frequency": "PT15M",
+                "window": "PT30M",
+                "query": "[variables('$fxv#6')]"
+              },
+              {
+                "name": "alert-sec-edgar-pending-approval",
+                "description": "A withdrawal candidate is pending approval.",
+                "severity": 2,
+                "enabled": true,
+                "stateful": false,
+                "frequency": "PT15M",
+                "window": "PT30M",
+                "query": "[variables('$fxv#7')]"
+              },
+              {
+                "name": "alert-sec-edgar-reconcile-staleness",
+                "description": "No successful reconciliation in eight days. Enabled with the reconcile trigger (Stage 8).",
+                "severity": 2,
+                "enabled": false,
+                "stateful": true,
+                "frequency": "PT1H",
+                "window": "P2D",
+                "query": "[variables('$fxv#8')]"
+              },
+              {
+                "name": "alert-sec-edgar-daily-staleness",
+                "description": "No daily run with complete discovery in 30 hours. Enabled with the daily trigger (Stage 8).",
+                "severity": 2,
+                "enabled": false,
+                "stateful": true,
+                "frequency": "PT1H",
+                "window": "P2D",
+                "query": "[variables('$fxv#9')]"
+              }
+            ]
+          },
+          "resources": [
+            {
+              "copy": {
+                "name": "rules",
+                "count": "[length(variables('alerts'))]"
+              },
+              "type": "Microsoft.Insights/scheduledQueryRules",
+              "apiVersion": "2023-12-01",
+              "name": "[variables('alerts')[copyIndex()].name]",
+              "location": "[parameters('location')]",
+              "kind": "LogAlert",
+              "properties": {
+                "displayName": "[variables('alerts')[copyIndex()].name]",
+                "description": "[variables('alerts')[copyIndex()].description]",
+                "severity": "[variables('alerts')[copyIndex()].severity]",
+                "enabled": "[variables('alerts')[copyIndex()].enabled]",
+                "scopes": [
+                  "[parameters('workspaceId')]"
+                ],
+                "evaluationFrequency": "[variables('alerts')[copyIndex()].frequency]",
+                "windowSize": "[variables('alerts')[copyIndex()].window]",
+                "criteria": {
+                  "allOf": [
+                    {
+                      "query": "[variables('alerts')[copyIndex()].query]",
+                      "timeAggregation": "Count",
+                      "operator": "GreaterThan",
+                      "threshold": 0,
+                      "failingPeriods": {
+                        "numberOfEvaluationPeriods": 1,
+                        "minFailingPeriodsToAlert": 1
+                      }
+                    }
+                  ]
+                },
+                "autoMitigate": "[variables('alerts')[copyIndex()].stateful]",
+                "skipQueryValidation": true,
+                "actions": {
+                  "actionGroups": [
+                    "[parameters('actionGroupId')]"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('names').group)]",
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('names').group), 'Microsoft.Resources/deployments', 'monitoring')]"
       ]
     }
   ]

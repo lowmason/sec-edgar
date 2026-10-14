@@ -1,0 +1,5 @@
+// A run-worker pipeline ended in its Fail activity with an outcome other than the gated and ambiguous ones.
+ADFActivityRun
+| where PipelineName == "pl-sec-edgar-run-worker" and ActivityType == "Fail" and Status == "Failed"
+| where ErrorCode !in ("awaiting_approval", "execution_unknown")
+| project TimeGenerated, PipelineRunId, ErrorCode, ErrorMessage

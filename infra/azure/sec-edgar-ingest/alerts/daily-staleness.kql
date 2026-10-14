@@ -1,0 +1,9 @@
+// No daily summary with complete discovery in the last 30 hours.
+let found = toscalar(ContainerAppConsoleLogs
+    | where TimeGenerated > ago(30h) and JobName == "job-sec-edgar-dev"
+    | extend entry = parse_json(Log)
+    | where tostring(entry.event) == "workflow_summary"
+    | where tostring(entry.context.command) == "daily" and tobool(entry.fields.discovery_complete)
+    | count);
+print found
+| where found == 0

@@ -269,3 +269,13 @@ module subscriptionAccess 'modules/access/subscription.bicep' = {
     roleDefinitions
   ]
 }
+
+module alerts 'modules/alerts.bicep' = {
+  name: 'alerts'
+  scope: group
+  params: {
+    location: location
+    workspaceId: monitoring.outputs.workspaceId
+    actionGroupId: monitoring.outputs.actionGroupId
+  }
+}
