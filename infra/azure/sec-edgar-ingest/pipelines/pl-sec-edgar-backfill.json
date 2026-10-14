@@ -1,0 +1,22 @@
+{
+  "activities": [
+    {
+      "name": "Run worker",
+      "type": "ExecutePipeline",
+      "typeProperties": {
+        "pipeline": {
+          "referenceName": "pl-sec-edgar-run-worker",
+          "type": "PipelineReference"
+        },
+        "waitOnCompletion": true,
+        "parameters": {
+          "command": "backfill",
+          "runId": {
+            "value": "@pipeline().RunId",
+            "type": "Expression"
+          }
+        }
+      }
+    }
+  ]
+}

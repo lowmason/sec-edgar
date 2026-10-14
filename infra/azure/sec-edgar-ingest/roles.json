@@ -1,0 +1,90 @@
+{
+  "definitions": [
+    {
+      "roleName": "SecEdgar Job Controller",
+      "description": "Start and read the sec-edgar-ingest job and its executions.",
+      "actions": [
+        "Microsoft.App/jobs/read",
+        "Microsoft.App/jobs/start/action",
+        "Microsoft.App/jobs/execution/read",
+        "Microsoft.App/jobs/executions/read"
+      ],
+      "dataActions": []
+    },
+    {
+      "roleName": "SecEdgar Job Async Observer",
+      "description": "Read Container Apps job start operations for the sec-edgar-ingest job.",
+      "actions": [
+        "Microsoft.App/locations/containerappsjoboperationresults/read",
+        "Microsoft.App/locations/containerappsjoboperationstatuses/read"
+      ],
+      "dataActions": []
+    },
+    {
+      "roleName": "SecEdgar Blob Reader",
+      "description": "Read blobs in one sec-edgar-ingest container.",
+      "actions": [],
+      "dataActions": [
+        "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read"
+      ]
+    },
+    {
+      "roleName": "SecEdgar Blob Writer",
+      "description": "Read and write blobs in one sec-edgar-ingest container.",
+      "actions": [],
+      "dataActions": [
+        "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read",
+        "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/write"
+      ]
+    },
+    {
+      "roleName": "SecEdgar Entity Reader",
+      "description": "Read entities in one sec-edgar-ingest table.",
+      "actions": [],
+      "dataActions": [
+        "Microsoft.Storage/storageAccounts/tableServices/tables/entities/read"
+      ]
+    },
+    {
+      "roleName": "SecEdgar Entity Writer",
+      "description": "Read, add and update entities in one sec-edgar-ingest table.",
+      "actions": [],
+      "dataActions": [
+        "Microsoft.Storage/storageAccounts/tableServices/tables/entities/read",
+        "Microsoft.Storage/storageAccounts/tableServices/tables/entities/add/action",
+        "Microsoft.Storage/storageAccounts/tableServices/tables/entities/update/action"
+      ]
+    }
+  ],
+  "builtins": {
+    "AcrPull": "7f951dda-4ed3-4680-a7ca-43fe172d538d"
+  },
+  "assignments": [
+    {"principal": "adf", "role": "SecEdgar Job Controller", "scope": "job"},
+    {"principal": "adf", "role": "SecEdgar Job Async Observer", "scope": "subscription"},
+    {"principal": "adf", "role": "SecEdgar Blob Reader", "scope": "container:results"},
+    {"principal": "worker", "role": "SecEdgar Blob Writer", "scope": "container:raw"},
+    {"principal": "worker", "role": "SecEdgar Blob Writer", "scope": "container:worksets"},
+    {"principal": "worker", "role": "SecEdgar Blob Writer", "scope": "container:results"},
+    {"principal": "worker", "role": "SecEdgar Blob Writer", "scope": "container:quarantine"},
+    {"principal": "worker", "role": "SecEdgar Blob Writer", "scope": "container:generations"},
+    {"principal": "worker", "role": "SecEdgar Blob Writer", "scope": "container:manifests"},
+    {"principal": "worker", "role": "SecEdgar Blob Writer", "scope": "container:locks"},
+    {"principal": "worker", "role": "SecEdgar Blob Reader", "scope": "container:approvals"},
+    {"principal": "worker", "role": "SecEdgar Entity Writer", "scope": "table:SourceState"},
+    {"principal": "worker", "role": "SecEdgar Entity Writer", "scope": "table:Attempts"},
+    {"principal": "worker", "role": "SecEdgar Entity Writer", "scope": "table:ActivePointers"},
+    {"principal": "worker", "role": "SecEdgar Entity Reader", "scope": "table:Approvals"},
+    {"principal": "pull", "role": "AcrPull", "scope": "registry"},
+    {"principal": "operator", "role": "SecEdgar Blob Reader", "scope": "container:locks"},
+    {"principal": "operator", "role": "SecEdgar Blob Reader", "scope": "container:worksets"},
+    {"principal": "operator", "role": "SecEdgar Blob Reader", "scope": "container:generations"},
+    {"principal": "operator", "role": "SecEdgar Blob Reader", "scope": "container:manifests"},
+    {"principal": "operator", "role": "SecEdgar Blob Reader", "scope": "container:approvals"},
+    {"principal": "operator", "role": "SecEdgar Blob Reader", "scope": "container:results"},
+    {"principal": "operator", "role": "SecEdgar Blob Writer", "scope": "container:approvals"},
+    {"principal": "operator", "role": "SecEdgar Entity Reader", "scope": "table:SourceState"},
+    {"principal": "operator", "role": "SecEdgar Entity Writer", "scope": "table:ActivePointers"},
+    {"principal": "operator", "role": "SecEdgar Entity Writer", "scope": "table:Approvals"}
+  ]
+}

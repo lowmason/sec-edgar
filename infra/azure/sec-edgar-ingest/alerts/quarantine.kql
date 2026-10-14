@@ -1,0 +1,7 @@
+// A source was quarantined. The row names the execution.
+ContainerAppConsoleLogs
+| where JobName == "job-sec-edgar-dev"
+| extend entry = parse_json(Log)
+| where tostring(entry.event) in ("command_finished", "command_error", "workflow_summary")
+| where tostring(entry.fields.outcome) == "quarantined" or toint(entry.fields.member_outcomes.quarantined) > 0
+| project TimeGenerated, ExecutionName = tostring(entry.context.execution_id), Log

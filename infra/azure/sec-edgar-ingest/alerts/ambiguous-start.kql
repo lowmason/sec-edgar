@@ -1,0 +1,5 @@
+// A run-worker pipeline could not resolve its execution: no relaunch happened; recover by hand.
+ADFActivityRun
+| where PipelineName == "pl-sec-edgar-run-worker" and ActivityType == "Fail" and Status == "Failed"
+| where ErrorCode == "execution_unknown"
+| project TimeGenerated, PipelineRunId, ErrorCode, ErrorMessage

@@ -1,9 +1,9 @@
 # SEC filing-index ingestion — Stage 6: Azure orchestration and deployment definitions
 
-**Status: APPROVED (2026-10-12)** — Lowell Mason approved this spec, its owner decisions (§14) and its defaults ("Approved — write both plans"); implementation not started.
+**Status: COMPLETE (2026-10-13)** — executed via subagent-driven-development; deferred items in specs/deferred_items.md
 **Owner:** Lowell Mason.
-**Implementing plans:** Plan 9 (worker image and operator surface) and Plan 10 (Azure definitions and orchestration), both written after this spec is approved (§13).
-**Authority:** [Parent design](sec-filing-index-ingestion-spec.md), [ADR](sec-filing-index-ingestion-adr.md), [roadmap](sec-filing-index-ingestion-roadmap.md) (Stage 6 entry and "Stage 6 resume — 2026-10-12"), accepted [F1](sec-filing-index-ingestion-stage-1-findings.md), completed [Stage 5 spec](completed/sec-filing-index-ingestion-stage-5-spec.md) and the roadmap's "Stage 5 completion and later-stage consistency" note. Only roadmap Stage 6 (R4, R11, Worker/pipeline delivery) and the `history` command the owner added to its Produces line are specified here.
+**Implementing plans:** [Plan 9](../plans/completed/9-sec-filing-index-ingestion-stage-6-spec.md) (worker image and operator surface) and [Plan 10](../plans/completed/10-sec-filing-index-ingestion-stage-6-spec.md) (Azure definitions and orchestration), both written after this spec was approved (§13). Approved 2026-10-12 (Lowell Mason: "Approved — write both plans").
+**Authority:** [Parent design](../sec-filing-index-ingestion-spec.md), [ADR](../sec-filing-index-ingestion-adr.md), [roadmap](../sec-filing-index-ingestion-roadmap.md) (Stage 6 entry and "Stage 6 resume — 2026-10-12"), accepted [F1](../sec-filing-index-ingestion-stage-1-findings.md), completed [Stage 5 spec](sec-filing-index-ingestion-stage-5-spec.md) and the roadmap's "Stage 5 completion and later-stage consistency" note. Only roadmap Stage 6 (R4, R11, Worker/pipeline delivery) and the `history` command the owner added to its Produces line are specified here.
 
 ## 1. Reconciliation and scope
 
@@ -155,12 +155,12 @@ This closes the "mistyped path" deferred item. Operators need only Blob read on 
 | ADF system-assigned identity | Job Controller → job; Job Async Observer → subscription; Blob Reader → `results` |
 | Worker UAMI | Blob Writer → `raw`, `worksets`, `results`, `quarantine`, `generations`, `manifests`, `locks`; Blob Reader → `approvals`; Entity Writer → `SourceState`, `Attempts`, `ActivePointers`; Entity Reader → `Approvals` |
 | Pull UAMI | built-in AcrPull → registry |
-| Operator (Lowell, object ID parameter) | Blob Reader → `locks`, `worksets`, `generations`, `manifests`, `approvals`; Blob Writer → `approvals`; Entity Reader → `SourceState`; Entity Writer → `ActivePointers`, `Approvals` |
+| Operator (Lowell, object ID parameter) | Blob Reader → `locks`, `worksets`, `generations`, `manifests`, `approvals`, `results` (owner, final review, 2026-10-13); Blob Writer → `approvals`; Entity Reader → `SourceState`; Entity Writer → `ActivePointers`, `Approvals` |
 
 **Departures from F1's preliminary matrix:**
 
 - **Worker narrowed.** The worker loses `Approvals` entity writes and `approvals` Blob writes. Only `approve` and `rollback` write them (`etl/approval.py`, `etl/rollback.py`), and a recorded fixture run asserts that workflow commands write neither. RBAC then enforces F1's rule that the worker never manufactures an approval.
-- **Operator widened.** The operator gains `worksets` read (Stage 5 spec §5) and `SourceState` read, which `approve` needs for its superseded check and `candidates` for its listing.
+- **Operator widened.** The operator gains `worksets` read (Stage 5 spec §5) and `SourceState` read, which `approve` needs for its superseded check and `candidates` for its listing, and `results` read, which the runbook's `execution_unknown` recovery needs to read a launch's `result.json` (owner, final review, 2026-10-13).
 - **One operator role set.** `approve` and `rollback` have identical write sets (Stage 5 §5), so separate RBAC roles could not separate them. F1 D-04 names the same human for approval, rollback and reading.
 - **Bootstrap stays outside the templates.** Deployment and bootstrap authority (D-04's subscription UAA, SecEdgarBootstrap Actions, RG Contributor and RBAC Administrator) is a Stage 7 prerequisite.
 
@@ -368,6 +368,7 @@ All of these read `main.json` and the pipeline and alert sources with the stdlib
 **Assumptions Stage 6 adds to the Stage 7 checks:**
 
 - S7-06: an override's `env` `secretRef` resolves against the job's secrets (§4).
+- S7-06: ADF evaluates the nested expressions in the start body's container to native values. Any other evaluation cannot yield a matching result, so the pipeline ends in a non-success outcome and never relaunches (§7.3). (owner, plan 10, 2026-10-13)
 - S7-08: Container Apps marks a non-zero exit `Failed`. Classification no longer depends on it (§7.3).
 - S7-09: ADF parses a JSON-typed result body into its output object (§7.3).
 - S7-18: the container's writable layer holds the worker's temporary space (§3).

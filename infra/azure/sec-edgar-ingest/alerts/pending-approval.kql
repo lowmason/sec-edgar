@@ -1,0 +1,7 @@
+// Every run that leaves a withdrawal candidate pending approval (owner decision Q4: on every run).
+ContainerAppConsoleLogs
+| where JobName == "job-sec-edgar-dev"
+| extend entry = parse_json(Log)
+| where tostring(entry.event) == "workflow_summary"
+| where toint(entry.fields.pending_approvals) > 0
+| project TimeGenerated, ExecutionName = tostring(entry.context.execution_id), Log

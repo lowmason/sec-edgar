@@ -1,0 +1,8 @@
+// The latest summary in the two-day window reports no successful reconciliation in eight days.
+ContainerAppConsoleLogs
+| where JobName == "job-sec-edgar-dev"
+| extend entry = parse_json(Log)
+| where tostring(entry.event) == "workflow_summary"
+| summarize arg_max(TimeGenerated, entry)
+| extend last = todatetime(entry.fields.last_successful_reconcile_at)
+| where isnull(last) or last < ago(8d)
