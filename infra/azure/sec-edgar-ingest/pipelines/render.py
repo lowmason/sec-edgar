@@ -276,9 +276,11 @@ def run_worker() -> dict:
              'typeProperties': {
                  'expression': expression("@equals(variables('outcome'), 'success')"),
                  'ifTrueActivities': [],
+                 # The message names the result to read: results/runs/sec/<runId>/<command>/launch-<n>/result.json.
                  'ifFalseActivities': [{'name': 'Fail run', 'type': 'Fail', 'typeProperties': {
                      'message': expression(f"@concat('pl-sec-edgar-run-worker ', pipeline().parameters.command, "
-                                           f"' launch-', variables('launch'), ' ended ', {OUTCOME_CODE})"),
+                                           f"' run ', pipeline().parameters.runId, ' launch-', variables('launch'), "
+                                           f"' ended ', {OUTCOME_CODE})"),
                      'errorCode': expression(f'@{OUTCOME_CODE}')}}]}},
         ],
         'variables': {

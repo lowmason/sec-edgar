@@ -87,7 +87,7 @@ Each `pl-sec-edgar-<command>` pipeline runs `pl-sec-edgar-run-worker`. Every lau
 | `pending` | The second launch was still pending | The next scheduled run continues |
 | Any other `EXIT_CODES` name | The worker's own outcome | See the acquisition and publication runbooks |
 
-**Recovering `execution_unknown`.** Read `results/runs/sec/<run ID>/<command>/launch-<n>/result.json` first. If it exists, its `context.execution_id` names the execution. Otherwise, the only valid evidence is a job execution whose arguments carry that exact `--run-id` and `--attempt-id`. Never infer the execution from the newest one or from timing. While such an execution is running, wait. Never start a launch by hand under the same run ID. The next scheduled run uses a new run ID.
+**Recovering `execution_unknown`.** The alert row's `ErrorMessage` is the failed run-worker's `Fail run` message, `pl-sec-edgar-run-worker <command> run <run ID> launch-<n> ended execution_unknown`, which gives the command, the run ID and `<n>`. That run ID is the calling pipeline's `runId`, not the row's `PipelineRunId`, which is the run-worker's own run. Read `results/runs/sec/<run ID>/<command>/launch-<n>/result.json` first, with the operator's Blob Reader grant on `results`. If it exists, its `context.execution_id` names the execution. Otherwise, the only valid evidence is a job execution whose arguments carry that exact `--run-id` and `--attempt-id`. Never infer the execution from the newest one or from timing. While such an execution is running, wait. Never start a launch by hand under the same run ID. The next scheduled run uses a new run ID.
 
 ## Alerts
 

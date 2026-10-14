@@ -274,6 +274,15 @@ class RunWorkerScenarioTests(unittest.TestCase):
         self.assertEqual(set(ends), {'success', 'execution_unknown'})
         self.assertIn(True, ends['success'])
 
+    def test_the_fail_message_names_the_result_to_read(self):
+        # results/runs/sec/<run ID>/<command>/launch-<n>/result.json: the alert row shows this message.
+        for launches, launch, code in (([Launch(start=WebFailure('timeout'))], 1, 'execution_unknown'),
+                                       ([Launch(outcome='pending'), Launch(outcome='pending')], 2, 'pending')):
+            with self.subTest(code):
+                failure, = self.check(launches, code, launch).failures
+                self.assertEqual(failure['message'],
+                                 f'pl-sec-edgar-run-worker daily run {RUN_ID} launch-{launch} ended {code}')
+
     def test_the_callers_pass_their_run_id_and_command(self):
         for command in ('backfill', 'daily', 'reconcile'):
             for launch, expected in ((Launch(), 'Succeeded'), (Launch(outcome='awaiting_approval'), 'Failed')):
@@ -286,6 +295,11 @@ class RunWorkerScenarioTests(unittest.TestCase):
                     arguments = engine.requests[0].body['containers'][0]['args']
                     self.assertEqual((arguments[0], arguments[arguments.index('--run-id') + 1]),
                                      (command, caller_run_id))
+                    # The Fail message names the caller's run ID, the result path's, not the run-worker's own.
+                    self.assertEqual([failure['message'] for failure in engine.failures],
+                                     [] if expected == 'Succeeded' else
+                                     [f'pl-sec-edgar-run-worker {command} run {caller_run_id} launch-1 ended '
+                                      'awaiting_approval'])
 
 
 FAULT_BASES = {

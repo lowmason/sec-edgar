@@ -886,7 +886,7 @@
             "type": "Fail",
             "typeProperties": {
               "message": {
-                "value": "@concat('pl-sec-edgar-run-worker ', pipeline().parameters.command, ' launch-', variables('launch'), ' ended ', if(empty(variables('outcome')), 'execution_unknown', variables('outcome')))",
+                "value": "@concat('pl-sec-edgar-run-worker ', pipeline().parameters.command, ' run ', pipeline().parameters.runId, ' launch-', variables('launch'), ' ended ', if(empty(variables('outcome')), 'execution_unknown', variables('outcome')))",
                 "type": "Expression"
               },
               "errorCode": {

@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.38.33.27573",
-      "templateHash": "5391729294665791723"
+      "templateHash": "11643461247138140045"
     }
   },
   "parameters": {
@@ -956,7 +956,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.38.33.27573",
-              "templateHash": "11391974939973476193"
+              "templateHash": "11750907075365981888"
             }
           },
           "parameters": {
@@ -1895,7 +1895,7 @@
                         "type": "Fail",
                         "typeProperties": {
                           "message": {
-                            "value": "@concat('pl-sec-edgar-run-worker ', pipeline().parameters.command, ' launch-', variables('launch'), ' ended ', if(empty(variables('outcome')), 'execution_unknown', variables('outcome')))",
+                            "value": "@concat('pl-sec-edgar-run-worker ', pipeline().parameters.command, ' run ', pipeline().parameters.runId, ' launch-', variables('launch'), ' ended ', if(empty(variables('outcome')), 'execution_unknown', variables('outcome')))",
                             "type": "Expression"
                           },
                           "errorCode": {
