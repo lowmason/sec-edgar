@@ -527,7 +527,7 @@ class BoundedProcessTests(unittest.TestCase):
         elapsed = time.monotonic()-started
         self.assertFalse(receipt.complete)
         self.assertLess(elapsed, self.settings.http.exchange_deadline_seconds + 0.8)
-        self.assertTrue(server.closed.wait(1), "terminated child must close its actual socket")
+        self.assertTrue(server.closed.wait(SPAWN_WAIT_SECONDS), "terminated child must close its actual socket")
         self.assertGreater(server.sent, 0)
         self.assertGreater(receipt.byte_count, 0, "trickle bytes sent before timeout must survive the original-byte spool")
         self.assertLessEqual(receipt.byte_count, server.sent)
@@ -562,8 +562,8 @@ class BoundedProcessTests(unittest.TestCase):
             # With spawn-tolerant windows the delayed GET lands inside its charged dispatch window, so this is
             # end-to-end spacing only; test_coordination pins the drain-based pacing with a logical clock.
             self.assertGreaterEqual(second_get-first_get, 1/self.settings.sec.requests_per_second, "the second real GET must start at least one configured interval after the first")
-            self.assertTrue(first.closed.wait(1))
-            self.assertTrue(second.closed.wait(1))
+            self.assertTrue(first.closed.wait(SPAWN_WAIT_SECONDS))
+            self.assertTrue(second.closed.wait(SPAWN_WAIT_SECONDS))
             self.assert_drained(first_receipt)
             self.assert_drained(second_receipt)
         finally:
@@ -579,7 +579,7 @@ class BoundedProcessTests(unittest.TestCase):
         receipt = self.send(server)
         self.assertFalse(receipt.complete)
         self.assertLess(time.monotonic()-started, SPAWN_ALLOWANCE_SECONDS + 1 + 0.8)
-        self.assertTrue(server.closed.wait(1))
+        self.assertTrue(server.closed.wait(SPAWN_WAIT_SECONDS))
         self.assert_drained(receipt)
         retain_process_evidence("slow-headers", receipt.temporary_path.parent, server, {"receipt": receipt.to_mapping()})
 
@@ -684,7 +684,7 @@ class BoundedProcessTests(unittest.TestCase):
         thread.join(SPAWN_WAIT_SECONDS)
         self.assertFalse(receipt.complete)
         self.assertEqual(receipt.error.code, "cancelled")
-        self.assertTrue(server.closed.wait(1))
+        self.assertTrue(server.closed.wait(SPAWN_WAIT_SECONDS))
         self.assert_drained(receipt)
         retain_process_evidence("lease-cancellation", receipt.temporary_path.parent, server, {"receipt": receipt.to_mapping()})
 
@@ -703,7 +703,7 @@ class BoundedProcessTests(unittest.TestCase):
             coordinator.exchange(real_context(self.clock, self.settings), server.url, sender)
         receipt = raised.exception.receipt
         self.assertEqual(receipt.temporary_path.read_bytes(), server.body)
-        self.assertTrue(server.closed.wait(1))
+        self.assertTrue(server.closed.wait(SPAWN_WAIT_SECONDS))
         self.assert_drained(receipt)
         self.assertTrue(any(event["event"] == "loss" for event in events))
         self.assertFalse(any(event["event"] == "release" for event in events))
