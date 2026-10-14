@@ -339,5 +339,90 @@ class AccessTests(unittest.TestCase):
         self.assertEqual(literal_role_ids, {'7f951dda-4ed3-4680-a7ca-43fe172d538d'})
 
 
+# The expected expressions below are the exact forms Bicep 0.38.33 emits. A Bicep upgrade that prints filters,
+# lambdas or scopes differently needs them refreshed: a locator change, not a change of meaning.
+SELECTED = "filter(parameters('assignments'), lambda('item', equals(lambdaVariables('item').scope, {key})))"
+
+
+class GrantSetTests(unittest.TestCase):
+    """The compiled role assignments are roles.json in both directions: no extra grant, no missing grant, no grant at
+    a wrong scope and no principal key bound to the wrong identity."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.template = template()
+
+    def check_grant(self, item, key: str, scope):
+        """The deployment's one grant is roles.json filtered to `key`, at `scope`, with role and principal from the item."""
+        grant, = resources(item['properties']['template'], 'Microsoft.Authorization/roleAssignments')
+        selected = SELECTED.format(key=key)
+        self.assertEqual(grant['copy']['count'], f'[length({selected})]')
+        self.assertEqual(grant.get('scope'), scope)
+        item_ = f'{selected}[copyIndex()]'
+        self.assertEqual(grant['properties'], {
+            'roleDefinitionId': f"[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', "
+                                f"parameters('roleIds')[{item_}.role])]",
+            'principalId': f"[parameters('principals')[{item_}.principal]]",
+            'principalType': f"[if(equals({item_}.principal, 'operator'), 'User', 'ServicePrincipal')]"})
+        parameters = item['properties']['parameters']
+        self.assertEqual((parameters['assignments'], parameters['roleIds']),
+                         ({'value': "[variables('roles').assignments]"}, {'value': "[variables('roleIds')]"}))
+        return parameters
+
+    def test_the_template_grants_exactly_the_roles_json_assignments(self):
+        self.assertEqual(len(resources(self.template, 'Microsoft.Authorization/roleAssignments')), 5)
+        handled = {}
+        singles = (('access-job', 'job', "[format('Microsoft.App/jobs/{0}', parameters('jobName'))]"),
+                   ('access-registry', 'registry',
+                    "[format('Microsoft.ContainerRegistry/registries/{0}', parameters('registryName'))]"),
+                   ('access-subscription', 'subscription', None))
+        principals = []
+        for name, key, scope in singles:
+            item = deployment(self.template, name)
+            principals.append(self.check_grant(item, f"'{key}'", scope)['principals'])
+            handled.setdefault(key, []).append(name)
+        self.assertEqual(deployment(self.template, 'access-job')['properties']['parameters']['jobName'],
+                         {'value': "[variables('names').job]"})
+        self.assertEqual(deployment(self.template, 'access-registry')['properties']['parameters']['registryName'],
+                         {'value': "[variables('names').registry]"})
+        self.assertNotIn('resourceGroup', deployment(self.template, 'access-subscription'))
+        for loop, collection, kind, path in (('containerAccess', 'containers', 'container', 'blobServices/{1}/containers/{2}'),
+                                             ('tableAccess', 'tables', 'table', 'tableServices/{1}/tables/{2}')):
+            item, = [node for node in resources(self.template, 'Microsoft.Resources/deployments')
+                     if node.get('copy', {}).get('name') == loop]
+            self.assertEqual(item['copy']['count'], f"[length(variables('{collection}'))]")
+            parameters = self.check_grant(item, "parameters('scopeKey')",
+                                          f"[format('Microsoft.Storage/storageAccounts/{{0}}/{path}', "
+                                          f"parameters('storageName'), 'default', parameters('{kind}Name'))]")
+            self.assertEqual((parameters['scopeKey'], parameters[f'{kind}Name'], parameters['storageName']),
+                             ({'value': f"[format('{kind}:{{0}}', variables('{collection}')[copyIndex()])]"},
+                              {'value': f"[variables('{collection}')[copyIndex()]]"},
+                              {'value': "[variables('names').storage]"}))
+            principals.append(parameters['principals'])
+            for name in self.template['variables'][collection]:
+                handled.setdefault(f'{kind}:{name}', []).append(loop)
+        # Each scope key is handled by exactly one deployment, so no grant is made twice.
+        self.assertEqual({key: len(names) for key, names in handled.items()}, dict.fromkeys(handled, 1))
+        # Every roles.json grant falls under a handled key (none missing); the five filtered grants above are the
+        # only role assignments, so nothing outside roles.json is granted (no extras).
+        listed = {(item['principal'], item['role'], item['scope']) for item in load('roles.json')['assignments']}
+        self.assertEqual({grant for grant in listed if grant[2] in handled}, listed)
+        # Each principal key is the identity the spec names, the same map in every deployment.
+        self.assertTrue(all(value == principals[0] for value in principals))
+        bound = principals[0]['value']
+        for key, (source, output) in {'adf': ('factory', 'principalId'), 'worker': ('identities', 'workerPrincipalId'),
+                                      'pull': ('identities', 'pullPrincipalId')}.items():
+            self.assertIn(f"'Microsoft.Resources/deployments', '{source}')", bound[key], key)
+            self.assertTrue(bound[key].endswith(f'.outputs.{output}.value]'), key)
+        self.assertEqual(bound['operator'], "[parameters('operatorPrincipalId')]")
+        # Role IDs are the custom definitions' own names plus the AcrPull built-in.
+        self.assertEqual(self.template['variables']['roleIds'],
+                         "[union(toObject(variables('roles').definitions, lambda('role', lambdaVariables('role').roleName), "
+                         "lambda('role', guid(subscription().id, lambdaVariables('role').roleName))), "
+                         "variables('roles').builtins)]")
+        definition, = resources(self.template, 'Microsoft.Authorization/roleDefinitions')
+        self.assertEqual(definition['name'], "[guid(subscription().id, variables('roles').definitions[copyIndex()].roleName)]")
+
+
 if __name__ == '__main__':
     unittest.main()
