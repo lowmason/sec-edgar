@@ -48,9 +48,14 @@ def web(name: str, method: str, url: str, resource: str, *depends: dict, headers
             'typeProperties': properties}
 
 
-# §7.2: observation ends 4,200 s (observeSeconds) after the launch's start request, stamped just before it.
+# §7.2: observation ends 4,200 s (observeSeconds) after the launch's start request, stamped just before it. The
+# stamp is cut to its whole second (STAMP), so the deadline is a whole second too, up to 1 s earlier than the
+# uncut one, and --deadline, which formatDateTime already cuts, is unchanged.
+STAMP = "@concat(formatDateTime(utcNow(), 'yyyy-MM-ddTHH:mm:ss'), 'Z')"
 DEADLINE = "addSeconds(variables('launchedAt'), pipeline().parameters.observeSeconds)"
 BEFORE_DEADLINE = f"less(ticks(utcNow()), ticks({DEADLINE}))"
+# At least a full second still to go before the deadline.
+A_SECOND_BEFORE_DEADLINE = f"less(ticks(addSeconds(utcNow(), 1)), ticks({DEADLINE}))"
 
 
 def whole_second_ticks(moment: str) -> str:
@@ -58,10 +63,11 @@ def whole_second_ticks(moment: str) -> str:
     return f"ticks(concat(formatDateTime({moment}, 'yyyy-MM-ddTHH:mm:ss'), 'Z'))"
 
 
-# The whole seconds from the first whole second after now to the deadline's whole second, never negative and
-# never more than the time actually left. The offline interpreter models no sub, div or min, so the tick
-# difference is taken by adding a negated value, and divided by 10^7 by cutting its seven trailing zeros as
-# text (the padding keeps a zero difference readable).
+# The whole seconds from the first whole second after now to the whole-second deadline, never negative and never
+# more than the time actually left. A wait cut to it therefore ends inside the budget's last second, whatever the
+# fraction of now. The offline interpreter models no sub, div or min, so the tick difference is taken by adding a
+# negated value, and divided by 10^7 by cutting its seven trailing zeros as text (the padding keeps a zero
+# difference readable).
 REMAINING_TICKS = (f"max(add({whole_second_ticks(DEADLINE)}, "
                    f"int(concat('-', string({whole_second_ticks('addSeconds(utcNow(), 1)')})))), 0)")
 REMAINING = f"int(split(concat('0000000', string({REMAINING_TICKS}), '|'), '0000000|')[0])"
@@ -75,10 +81,12 @@ def wait(name: str, *depends: dict) -> dict:
             'typeProperties': {'waitTimeInSeconds': expression(CAPPED_WAIT)}}
 
 
-# Set just before each observation GET. From the deadline on, int() of a word fails it, so no further GET is sent
-# and the phase's After activity classifies. A GET whose check passed just before the deadline can still go out one
-# activity dispatch later (a few seconds in ADF), at most once per launch; its result is accepted as usual.
-RESET_WAIT = f"@string(int(if({BEFORE_DEADLINE}, string(pipeline().parameters.pollSeconds), 'deadline')))"
+# Set just before each observation GET. In the budget's last second int() of a word fails it, so the GET is not
+# sent and the phase's After activity classifies. A wait the deadline cut short ends inside that second, so it is
+# never followed by a GET, whatever the sub-second timing; a GET follows only a full wait, and a GET in the last
+# second is refused. A GET whose check passed, at least a second before the deadline, can still go out one activity
+# dispatch later (a few seconds in ADF), at most once per launch; its result is accepted as usual.
+RESET_WAIT = f"@string(int(if({A_SECOND_BEFORE_DEADLINE}, string(pipeline().parameters.pollSeconds), 'deadline')))"
 
 STATE = "variables('state')"
 RESULT = "json(variables('result'))"
@@ -158,7 +166,7 @@ START = [
     assign('Clear image', 'image', '', after('Clear state')),
     assign('Clear result', 'result', '', after('Clear image')),
     assign('Set start wait', 'waitSeconds', '@string(pipeline().parameters.pollSeconds)', after('Clear result')),
-    assign('Stamp launch', 'launchedAt', '@utcNow()', after('Set start wait')),
+    assign('Stamp launch', 'launchedAt', STAMP, after('Set start wait')),
     web('Start job', 'POST',
         "@concat('https://management.azure.com', pipeline().parameters.jobPath, '/start?api-version=2026-07-01')",
         ARM, after('Stamp launch'), headers={'Content-Type': 'application/json'}, body=START_BODY),

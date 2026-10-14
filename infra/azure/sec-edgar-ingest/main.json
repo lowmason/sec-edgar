@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.38.33.27573",
-      "templateHash": "11643461247138140045"
+      "templateHash": "9011979234917453728"
     }
   },
   "parameters": {
@@ -956,7 +956,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.38.33.27573",
-              "templateHash": "11750907075365981888"
+              "templateHash": "16806670542517578732"
             }
           },
           "parameters": {
@@ -1206,7 +1206,7 @@
                                   "typeProperties": {
                                     "variableName": "launchedAt",
                                     "value": {
-                                      "value": "@utcNow()",
+                                      "value": "@concat(formatDateTime(utcNow(), 'yyyy-MM-ddTHH:mm:ss'), 'Z')",
                                       "type": "Expression"
                                     }
                                   }
@@ -1378,7 +1378,7 @@
                                   "typeProperties": {
                                     "variableName": "waitSeconds",
                                     "value": {
-                                      "value": "@string(int(if(less(ticks(utcNow()), ticks(addSeconds(variables('launchedAt'), pipeline().parameters.observeSeconds))), string(pipeline().parameters.pollSeconds), 'deadline')))",
+                                      "value": "@string(int(if(less(ticks(addSeconds(utcNow(), 1)), ticks(addSeconds(variables('launchedAt'), pipeline().parameters.observeSeconds))), string(pipeline().parameters.pollSeconds), 'deadline')))",
                                       "type": "Expression"
                                     }
                                   }
@@ -1524,7 +1524,7 @@
                                   "typeProperties": {
                                     "variableName": "waitSeconds",
                                     "value": {
-                                      "value": "@string(int(if(less(ticks(utcNow()), ticks(addSeconds(variables('launchedAt'), pipeline().parameters.observeSeconds))), string(pipeline().parameters.pollSeconds), 'deadline')))",
+                                      "value": "@string(int(if(less(ticks(addSeconds(utcNow(), 1)), ticks(addSeconds(variables('launchedAt'), pipeline().parameters.observeSeconds))), string(pipeline().parameters.pollSeconds), 'deadline')))",
                                       "type": "Expression"
                                     }
                                   }

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from adf_interpreter import PipelineRun, Request, Response, Semantics, WebFailure
@@ -35,6 +35,7 @@ PARAMETER_TYPES = {'command': 'String', 'runId': 'String', 'containerName': 'Str
                    'configSha256': 'String', 'jobPath': 'String', 'asyncPrefix': 'String', 'resultsUrl': 'String',
                    'maxLaunches': 'Int', 'pollSeconds': 'Int', 'observeSeconds': 'Int', 'workerSeconds': 'Int'}
 RUN_ID = '0f0e0d0c-0b0a-4908-8706-050403020100'
+START = datetime(2026, 10, 12, 9, 0, tzinfo=timezone.utc)  # the interpreter's default start
 UNAVAILABLE = object()  # an execution GET that fails
 ABSENT, UNREADABLE = object(), object()  # result blob states
 
@@ -152,6 +153,18 @@ class FakeAzure:
         return Response(200, body, {'Content-Type': 'application/json'})
 
 
+class PacedRun(PipelineRun):
+    """A run whose activities each take `pace` seconds. Real ADF activities take fractions of a second too, which
+    the interpreter's whole-second clock cannot show; Wait activities still wait their own seconds."""
+
+    def __init__(self, *args, pace: float = 1, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.pace = pace
+
+    def tick(self, seconds=None):
+        super().tick(self.pace if seconds is None else seconds)
+
+
 @dataclass
 class WorkerRun:
     outcome: str            # 'success' or the Fail activity's error code
@@ -165,9 +178,10 @@ class WorkerRun:
 
 
 def run_worker(launches, command: str = 'daily', semantics: Semantics = Semantics(), faults=(),
-               parameters=None) -> WorkerRun:
+               parameters=None, pace: float = 1, offset: float = 0) -> WorkerRun:
+    """`pace` is the seconds each activity takes; `offset` starts the clock that many seconds after START."""
     azure = FakeAzure(command, launches)
-    engine = PipelineRun(pipelines(), azure, semantics, frozenset(faults))
+    engine = PacedRun(pipelines(), azure, semantics, frozenset(faults), START + timedelta(seconds=offset), pace=pace)
     outcome = engine.run('pl-sec-edgar-run-worker', {'command': command, 'runId': RUN_ID, **(parameters or {})})
     codes = [failure['errorCode'] for failure in outcome.failures]
     assert len(codes) <= 1, codes

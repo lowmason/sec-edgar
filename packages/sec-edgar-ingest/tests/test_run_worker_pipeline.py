@@ -27,6 +27,8 @@ def expected_outcome(outcome: str, state: str) -> str:
 
 
 OBSERVE_SECONDS = 4200
+PACE = 0.5  # seconds per activity, for the runs that must hold with fractional timing
+PACES = (PACE, 0.3)  # 0.3 s lets the deadline's and the wait's fractions drift apart
 # Each Retry-After points past the 4,200 s observation deadline; what Azure would answer after it is terminal.
 CROSSING = {
     'an execution Retry-After past the deadline is unknown': [
@@ -219,11 +221,11 @@ class RunWorkerScenarioTests(unittest.TestCase):
         run = run_worker([Launch(states=('Running',))])
         post, *gets = run.requests
         self.assertTrue(all(request.method == 'GET' and '/executions/' in request.url for request in gets))
-        # A poll cycle here is 30 s plus ten activities: the last GET is the last cycle's at or before the deadline,
-        # and the deadline is 4,200 s after the stamp taken just before the start request.
-        deadline = self.deadline(run)
-        self.assertLessEqual(gets[-1].at, deadline)
-        self.assertGreater(gets[-1].at, deadline - timedelta(seconds=40))
+        # A poll cycle here is 30 s plus ten activities: the last GET is the last cycle's at least a second before
+        # the deadline, and the deadline is 4,200 s after the stamp taken just before the start request.
+        deadline, last = self.deadline(run), timedelta(seconds=1)
+        self.assertLessEqual(gets[-1].at, deadline - last)
+        self.assertGreater(gets[-1].at, deadline - last - timedelta(seconds=40))
         self.assertLess(abs((deadline - post.at).total_seconds() - 4200), 5)
         self.assertNotIn('stop', ' '.join(request.url for request in run.requests))
 
@@ -244,8 +246,9 @@ class RunWorkerScenarioTests(unittest.TestCase):
                 self.assertEqual((run.outcome, [request.method for request in run.requests].count('POST')),
                                  ('execution_unknown', 1))
                 gets = self.observation_gets(run)
-                self.assertTrue(all(request.at <= deadline for request in gets), [request.at for request in gets])
-                # The last wait is cut to end at the deadline: the run then only classifies and fails.
+                self.assertTrue(all(request.at <= deadline - timedelta(seconds=1) for request in gets),
+                                [request.at for request in gets])
+                # The last wait is cut to end inside the budget's last second: the run then only classifies and fails.
                 self.assertGreaterEqual(run.ended, deadline)
                 self.assertLessEqual(run.ended, deadline + timedelta(seconds=60))
 
@@ -253,26 +256,67 @@ class RunWorkerScenarioTests(unittest.TestCase):
         for launch, marker in ((Launch(states=('Running', 'Running', 'Succeeded'), retry_after='300'), '/executions/'),
                                (Launch(start=accepted(operation()), locate=(accepted(None, '300'), started(1))),
                                 '/containerappsjoboperationresults/')):
-            with self.subTest(marker):
-                run = run_worker([launch])
-                self.assertEqual(run.outcome, 'success')
-                times = [request.at for request in run.requests if marker in request.url]
-                gaps = [(later - earlier).total_seconds() for earlier, later in zip(times, times[1:])]
-                self.assertTrue(gaps and all(300 <= gap < 315 for gap in gaps), gaps)
+            for pace in (1, *PACES):
+                with self.subTest(marker, pace=pace):
+                    run = run_worker([launch], pace=pace)
+                    self.assertEqual(run.outcome, 'success')
+                    times = [request.at for request in run.requests if marker in request.url]
+                    gaps = [(later - earlier).total_seconds() for earlier, later in zip(times, times[1:])]
+                    self.assertTrue(gaps and all(300 <= gap < 315 for gap in gaps), gaps)
 
-    def test_a_get_on_the_deadline_counts_and_none_follows_it(self):
+    def test_a_get_a_second_before_the_deadline_counts_and_none_follows_it(self):
+        # The last second of the budget is refused: a wait the deadline cut short ends inside it.
+        last = timedelta(seconds=1)
         ends = {}
         for seconds in range(4100, 4200):
             run = run_worker([Launch(states=('Running', 'Succeeded'), retry_after=str(seconds))])
             deadline = self.deadline(run)
             gets = self.observation_gets(run)
-            self.assertTrue(all(request.at <= deadline for request in gets), seconds)
+            self.assertTrue(all(request.at <= deadline - last for request in gets), seconds)
             expected = 'success' if len(gets) == 2 else 'execution_unknown'
             self.assertEqual((run.posts, run.outcome), (1, expected), seconds)
-            ends.setdefault(run.outcome, set()).add(gets[-1].at == deadline)
-        # The sweep crosses the boundary, and a terminal state from a GET sent exactly at the deadline is accepted.
+            ends.setdefault(run.outcome, set()).add(gets[-1].at == deadline - last)
+        # The sweep crosses the boundary, and a terminal state from a GET sent exactly one second before the
+        # deadline, the latest any GET can go, is accepted.
         self.assertEqual(set(ends), {'success', 'execution_unknown'})
         self.assertIn(True, ends['success'])
+
+    def test_a_cut_wait_ends_observation_whatever_the_activity_pace(self):
+        # Activities taking half a second must not let a GET follow a wait that the deadline cut short.
+        for pace in PACES:
+            for semantics in ALL_SEMANTICS:
+                with self.subTest(pace=pace, semantics=semantics):
+                    run = run_worker([Launch(states=('Running', 'Succeeded'), retry_after='6000')],
+                                     semantics=semantics, pace=pace)
+                    gets = self.observation_gets(run)
+                    posts = [request.method for request in run.requests].count('POST')
+                    self.assertEqual((run.outcome, posts, len(gets)), ('execution_unknown', 1, 1))
+
+    def test_a_cut_wait_ends_observation_whatever_the_sub_second_timing(self):
+        # Every pace from 0.05 s to 0.95 s per activity, each from ten start offsets, so the deadline's and the wait's
+        # fractions take every relation. A deadline with a fraction would let a GET follow a cut wait here.
+        for hundredths in range(5, 96):
+            for tenths in range(10):
+                pace, offset = hundredths / 100, tenths / 10
+                run = run_worker([Launch(states=('Running', 'Succeeded'), retry_after='6000')], pace=pace,
+                                 offset=offset)
+                gets = self.observation_gets(run)
+                self.assertEqual((run.outcome, run.posts, len(gets)), ('execution_unknown', 1, 1), (pace, offset))
+
+    def test_every_get_follows_its_full_wait_whatever_the_activity_pace(self):
+        for pace in PACES:
+            outcomes = set()
+            for seconds in range(4100, 4200):
+                run = run_worker([Launch(states=('Running', 'Succeeded'), retry_after=str(seconds))], pace=pace)
+                deadline = self.deadline(run)
+                gets = self.observation_gets(run)
+                gaps = [(later.at - earlier.at).total_seconds() for earlier, later in zip(gets, gets[1:])]
+                self.assertTrue(all(gap >= seconds for gap in gaps), (pace, seconds, gaps))
+                self.assertTrue(all(request.at < deadline for request in gets), (pace, seconds))
+                expected = 'success' if len(gets) == 2 else 'execution_unknown'
+                self.assertEqual((run.posts, run.outcome), (1, expected), (pace, seconds))
+                outcomes.add(run.outcome)
+            self.assertEqual(outcomes, {'success', 'execution_unknown'}, pace)
 
     def test_the_fail_message_names_the_result_to_read(self):
         # results/runs/sec/<run ID>/<command>/launch-<n>/result.json: the alert row shows this message.

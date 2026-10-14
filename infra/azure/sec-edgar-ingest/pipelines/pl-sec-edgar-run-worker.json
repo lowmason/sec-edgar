@@ -197,7 +197,7 @@
                       "typeProperties": {
                         "variableName": "launchedAt",
                         "value": {
-                          "value": "@utcNow()",
+                          "value": "@concat(formatDateTime(utcNow(), 'yyyy-MM-ddTHH:mm:ss'), 'Z')",
                           "type": "Expression"
                         }
                       }
@@ -369,7 +369,7 @@
                       "typeProperties": {
                         "variableName": "waitSeconds",
                         "value": {
-                          "value": "@string(int(if(less(ticks(utcNow()), ticks(addSeconds(variables('launchedAt'), pipeline().parameters.observeSeconds))), string(pipeline().parameters.pollSeconds), 'deadline')))",
+                          "value": "@string(int(if(less(ticks(addSeconds(utcNow(), 1)), ticks(addSeconds(variables('launchedAt'), pipeline().parameters.observeSeconds))), string(pipeline().parameters.pollSeconds), 'deadline')))",
                           "type": "Expression"
                         }
                       }
@@ -515,7 +515,7 @@
                       "typeProperties": {
                         "variableName": "waitSeconds",
                         "value": {
-                          "value": "@string(int(if(less(ticks(utcNow()), ticks(addSeconds(variables('launchedAt'), pipeline().parameters.observeSeconds))), string(pipeline().parameters.pollSeconds), 'deadline')))",
+                          "value": "@string(int(if(less(ticks(addSeconds(utcNow(), 1)), ticks(addSeconds(variables('launchedAt'), pipeline().parameters.observeSeconds))), string(pipeline().parameters.pollSeconds), 'deadline')))",
                           "type": "Expression"
                         }
                       }
