@@ -300,5 +300,44 @@ class JobAndFactoryTests(unittest.TestCase):
         self.assertEqual(looped['properties'], "[variables('callers')[copyIndex()].definition]")
 
 
+class AccessTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.template = template()
+
+    def access_modules(self):
+        single = [deployment(self.template, name) for name in ('access-job', 'access-registry', 'access-subscription')]
+        looped = [item for item in resources(self.template, 'Microsoft.Resources/deployments')
+                  if item.get('copy', {}).get('name') in ('containerAccess', 'tableAccess')]
+        return single + looped
+
+    def test_every_scope_is_granted_through_one_access_module(self):
+        loops = {item['copy']['name']: item for item in resources(self.template, 'Microsoft.Resources/deployments')
+                 if 'copy' in item}
+        self.assertEqual(loops['containerAccess']['copy']['count'], "[length(variables('containers'))]")
+        self.assertEqual(loops['tableAccess']['copy']['count'], "[length(variables('tables'))]")
+        self.assertIn("'container:{0}'", text(loops['containerAccess']['properties']['parameters']['scopeKey']))
+        self.assertIn("'table:{0}'", text(loops['tableAccess']['properties']['parameters']['scopeKey']))
+        modules = self.access_modules()
+        self.assertEqual(len(modules), 5)
+        for item in modules:
+            parameters = item['properties']['parameters']
+            self.assertEqual(parameters['assignments'], {'value': "[variables('roles').assignments]"})
+            self.assertEqual(set(parameters['principals']['value']), {'adf', 'worker', 'pull', 'operator'})
+            self.assertEqual(parameters['principals']['value']['operator'], "[parameters('operatorPrincipalId')]")
+            grant, = resources(item['properties']['template'], 'Microsoft.Authorization/roleAssignments')
+            body = text(grant['properties'])
+            for fragment in ("parameters('roleIds')", "parameters('principals')", "'operator'", "'User'",
+                             "'ServicePrincipal'"):
+                self.assertIn(fragment, body)
+
+    def test_no_broad_or_secret_bearing_permission_anywhere(self):
+        body = text(self.template)
+        for forbidden in ('listKeys', 'listSecrets', 'listCredentials', 'Owner', 'Contributor', '"*"', '/*"'):
+            self.assertNotIn(forbidden, body)
+        literal_role_ids = set(re.findall(r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}', body))
+        self.assertEqual(literal_role_ids, {'7f951dda-4ed3-4680-a7ca-43fe172d538d'})
+
+
 if __name__ == '__main__':
     unittest.main()

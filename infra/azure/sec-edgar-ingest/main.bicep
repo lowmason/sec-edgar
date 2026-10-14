@@ -185,3 +185,87 @@ module factory 'modules/factory.bicep' = {
     reconcileStartTime: reconcileStartTime
   }
 }
+
+// Who each roles.json principal is.
+var principals = {
+  adf: factory.outputs.principalId
+  worker: identities.outputs.workerPrincipalId
+  pull: identities.outputs.pullPrincipalId
+  operator: operatorPrincipalId
+}
+
+module containerAccess 'modules/access/container.bicep' = [for name in containers: {
+  name: 'access-container-${name}'
+  scope: group
+  params: {
+    storageName: names.storage
+    containerName: name
+    scopeKey: 'container:${name}'
+    assignments: roles.assignments
+    roleIds: roleIds
+    principals: principals
+  }
+  dependsOn: [
+    storage
+    roleDefinitions
+  ]
+}]
+
+module tableAccess 'modules/access/table.bicep' = [for name in tables: {
+  name: 'access-table-${name}'
+  scope: group
+  params: {
+    storageName: names.storage
+    tableName: name
+    scopeKey: 'table:${name}'
+    assignments: roles.assignments
+    roleIds: roleIds
+    principals: principals
+  }
+  dependsOn: [
+    storage
+    roleDefinitions
+  ]
+}]
+
+module jobAccess 'modules/access/job.bicep' = {
+  name: 'access-job'
+  scope: group
+  params: {
+    jobName: names.job
+    assignments: roles.assignments
+    roleIds: roleIds
+    principals: principals
+  }
+  dependsOn: [
+    job
+    roleDefinitions
+  ]
+}
+
+module registryAccess 'modules/access/registry.bicep' = {
+  name: 'access-registry'
+  scope: group
+  params: {
+    registryName: names.registry
+    assignments: roles.assignments
+    roleIds: roleIds
+    principals: principals
+  }
+  dependsOn: [
+    registry
+    roleDefinitions
+  ]
+}
+
+module subscriptionAccess 'modules/access/subscription.bicep' = {
+  name: 'access-subscription'
+  params: {
+    assignments: roles.assignments
+    roleIds: roleIds
+    principals: principals
+  }
+  dependsOn: [
+    roleDefinitions
+  ]
+}

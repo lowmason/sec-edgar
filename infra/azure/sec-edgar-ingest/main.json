@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.38.33.27573",
-      "templateHash": "7807643425397500966"
+      "templateHash": "16740559822457464963"
     }
   },
   "parameters": {
@@ -2302,6 +2302,435 @@
         "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('names').group), 'Microsoft.Resources/deployments', 'identities')]",
         "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('names').group), 'Microsoft.Resources/deployments', 'job')]",
         "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('names').group), 'Microsoft.Resources/deployments', 'monitoring')]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "containerAccess",
+        "count": "[length(variables('containers'))]"
+      },
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "[format('access-container-{0}', variables('containers')[copyIndex()])]",
+      "resourceGroup": "[variables('names').group]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "storageName": {
+            "value": "[variables('names').storage]"
+          },
+          "containerName": {
+            "value": "[variables('containers')[copyIndex()]]"
+          },
+          "scopeKey": {
+            "value": "[format('container:{0}', variables('containers')[copyIndex()])]"
+          },
+          "assignments": {
+            "value": "[variables('roles').assignments]"
+          },
+          "roleIds": {
+            "value": "[variables('roleIds')]"
+          },
+          "principals": {
+            "value": {
+              "adf": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('names').group), 'Microsoft.Resources/deployments', 'factory'), '2025-04-01').outputs.principalId.value]",
+              "worker": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('names').group), 'Microsoft.Resources/deployments', 'identities'), '2025-04-01').outputs.workerPrincipalId.value]",
+              "pull": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('names').group), 'Microsoft.Resources/deployments', 'identities'), '2025-04-01').outputs.pullPrincipalId.value]",
+              "operator": "[parameters('operatorPrincipalId')]"
+            }
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.38.33.27573",
+              "templateHash": "17544167693863675324"
+            }
+          },
+          "parameters": {
+            "storageName": {
+              "type": "string"
+            },
+            "containerName": {
+              "type": "string"
+            },
+            "scopeKey": {
+              "type": "string",
+              "metadata": {
+                "description": "The roles.json scope key handled here, container:<name>."
+              }
+            },
+            "assignments": {
+              "type": "array"
+            },
+            "roleIds": {
+              "type": "object"
+            },
+            "principals": {
+              "type": "object"
+            }
+          },
+          "resources": [
+            {
+              "copy": {
+                "name": "grants",
+                "count": "[length(filter(parameters('assignments'), lambda('item', equals(lambdaVariables('item').scope, parameters('scopeKey')))))]"
+              },
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "scope": "[format('Microsoft.Storage/storageAccounts/{0}/blobServices/{1}/containers/{2}', parameters('storageName'), 'default', parameters('containerName'))]",
+              "name": "[guid(resourceId('Microsoft.Storage/storageAccounts/blobServices/containers', parameters('storageName'), 'default', parameters('containerName')), parameters('principals')[filter(parameters('assignments'), lambda('item', equals(lambdaVariables('item').scope, parameters('scopeKey'))))[copyIndex()].principal], filter(parameters('assignments'), lambda('item', equals(lambdaVariables('item').scope, parameters('scopeKey'))))[copyIndex()].role)]",
+              "properties": {
+                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', parameters('roleIds')[filter(parameters('assignments'), lambda('item', equals(lambdaVariables('item').scope, parameters('scopeKey'))))[copyIndex()].role])]",
+                "principalId": "[parameters('principals')[filter(parameters('assignments'), lambda('item', equals(lambdaVariables('item').scope, parameters('scopeKey'))))[copyIndex()].principal]]",
+                "principalType": "[if(equals(filter(parameters('assignments'), lambda('item', equals(lambdaVariables('item').scope, parameters('scopeKey'))))[copyIndex()].principal, 'operator'), 'User', 'ServicePrincipal')]"
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('names').group), 'Microsoft.Resources/deployments', 'factory')]",
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('names').group)]",
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('names').group), 'Microsoft.Resources/deployments', 'identities')]",
+        "roleDefinitions",
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('names').group), 'Microsoft.Resources/deployments', 'storage')]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "tableAccess",
+        "count": "[length(variables('tables'))]"
+      },
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "[format('access-table-{0}', variables('tables')[copyIndex()])]",
+      "resourceGroup": "[variables('names').group]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "storageName": {
+            "value": "[variables('names').storage]"
+          },
+          "tableName": {
+            "value": "[variables('tables')[copyIndex()]]"
+          },
+          "scopeKey": {
+            "value": "[format('table:{0}', variables('tables')[copyIndex()])]"
+          },
+          "assignments": {
+            "value": "[variables('roles').assignments]"
+          },
+          "roleIds": {
+            "value": "[variables('roleIds')]"
+          },
+          "principals": {
+            "value": {
+              "adf": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('names').group), 'Microsoft.Resources/deployments', 'factory'), '2025-04-01').outputs.principalId.value]",
+              "worker": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('names').group), 'Microsoft.Resources/deployments', 'identities'), '2025-04-01').outputs.workerPrincipalId.value]",
+              "pull": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('names').group), 'Microsoft.Resources/deployments', 'identities'), '2025-04-01').outputs.pullPrincipalId.value]",
+              "operator": "[parameters('operatorPrincipalId')]"
+            }
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.38.33.27573",
+              "templateHash": "4481105334611133793"
+            }
+          },
+          "parameters": {
+            "storageName": {
+              "type": "string"
+            },
+            "tableName": {
+              "type": "string"
+            },
+            "scopeKey": {
+              "type": "string",
+              "metadata": {
+                "description": "The roles.json scope key handled here, table:<name>."
+              }
+            },
+            "assignments": {
+              "type": "array"
+            },
+            "roleIds": {
+              "type": "object"
+            },
+            "principals": {
+              "type": "object"
+            }
+          },
+          "resources": [
+            {
+              "copy": {
+                "name": "grants",
+                "count": "[length(filter(parameters('assignments'), lambda('item', equals(lambdaVariables('item').scope, parameters('scopeKey')))))]"
+              },
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "scope": "[format('Microsoft.Storage/storageAccounts/{0}/tableServices/{1}/tables/{2}', parameters('storageName'), 'default', parameters('tableName'))]",
+              "name": "[guid(resourceId('Microsoft.Storage/storageAccounts/tableServices/tables', parameters('storageName'), 'default', parameters('tableName')), parameters('principals')[filter(parameters('assignments'), lambda('item', equals(lambdaVariables('item').scope, parameters('scopeKey'))))[copyIndex()].principal], filter(parameters('assignments'), lambda('item', equals(lambdaVariables('item').scope, parameters('scopeKey'))))[copyIndex()].role)]",
+              "properties": {
+                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', parameters('roleIds')[filter(parameters('assignments'), lambda('item', equals(lambdaVariables('item').scope, parameters('scopeKey'))))[copyIndex()].role])]",
+                "principalId": "[parameters('principals')[filter(parameters('assignments'), lambda('item', equals(lambdaVariables('item').scope, parameters('scopeKey'))))[copyIndex()].principal]]",
+                "principalType": "[if(equals(filter(parameters('assignments'), lambda('item', equals(lambdaVariables('item').scope, parameters('scopeKey'))))[copyIndex()].principal, 'operator'), 'User', 'ServicePrincipal')]"
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('names').group), 'Microsoft.Resources/deployments', 'factory')]",
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('names').group)]",
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('names').group), 'Microsoft.Resources/deployments', 'identities')]",
+        "roleDefinitions",
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('names').group), 'Microsoft.Resources/deployments', 'storage')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "access-job",
+      "resourceGroup": "[variables('names').group]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "jobName": {
+            "value": "[variables('names').job]"
+          },
+          "assignments": {
+            "value": "[variables('roles').assignments]"
+          },
+          "roleIds": {
+            "value": "[variables('roleIds')]"
+          },
+          "principals": {
+            "value": {
+              "adf": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('names').group), 'Microsoft.Resources/deployments', 'factory'), '2025-04-01').outputs.principalId.value]",
+              "worker": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('names').group), 'Microsoft.Resources/deployments', 'identities'), '2025-04-01').outputs.workerPrincipalId.value]",
+              "pull": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('names').group), 'Microsoft.Resources/deployments', 'identities'), '2025-04-01').outputs.pullPrincipalId.value]",
+              "operator": "[parameters('operatorPrincipalId')]"
+            }
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.38.33.27573",
+              "templateHash": "11703884193120291011"
+            }
+          },
+          "parameters": {
+            "jobName": {
+              "type": "string"
+            },
+            "assignments": {
+              "type": "array"
+            },
+            "roleIds": {
+              "type": "object"
+            },
+            "principals": {
+              "type": "object"
+            }
+          },
+          "resources": [
+            {
+              "copy": {
+                "name": "grants",
+                "count": "[length(filter(parameters('assignments'), lambda('item', equals(lambdaVariables('item').scope, 'job'))))]"
+              },
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "scope": "[format('Microsoft.App/jobs/{0}', parameters('jobName'))]",
+              "name": "[guid(resourceId('Microsoft.App/jobs', parameters('jobName')), parameters('principals')[filter(parameters('assignments'), lambda('item', equals(lambdaVariables('item').scope, 'job')))[copyIndex()].principal], filter(parameters('assignments'), lambda('item', equals(lambdaVariables('item').scope, 'job')))[copyIndex()].role)]",
+              "properties": {
+                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', parameters('roleIds')[filter(parameters('assignments'), lambda('item', equals(lambdaVariables('item').scope, 'job')))[copyIndex()].role])]",
+                "principalId": "[parameters('principals')[filter(parameters('assignments'), lambda('item', equals(lambdaVariables('item').scope, 'job')))[copyIndex()].principal]]",
+                "principalType": "[if(equals(filter(parameters('assignments'), lambda('item', equals(lambdaVariables('item').scope, 'job')))[copyIndex()].principal, 'operator'), 'User', 'ServicePrincipal')]"
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('names').group), 'Microsoft.Resources/deployments', 'factory')]",
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('names').group)]",
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('names').group), 'Microsoft.Resources/deployments', 'identities')]",
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('names').group), 'Microsoft.Resources/deployments', 'job')]",
+        "roleDefinitions"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "access-registry",
+      "resourceGroup": "[variables('names').group]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "registryName": {
+            "value": "[variables('names').registry]"
+          },
+          "assignments": {
+            "value": "[variables('roles').assignments]"
+          },
+          "roleIds": {
+            "value": "[variables('roleIds')]"
+          },
+          "principals": {
+            "value": {
+              "adf": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('names').group), 'Microsoft.Resources/deployments', 'factory'), '2025-04-01').outputs.principalId.value]",
+              "worker": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('names').group), 'Microsoft.Resources/deployments', 'identities'), '2025-04-01').outputs.workerPrincipalId.value]",
+              "pull": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('names').group), 'Microsoft.Resources/deployments', 'identities'), '2025-04-01').outputs.pullPrincipalId.value]",
+              "operator": "[parameters('operatorPrincipalId')]"
+            }
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.38.33.27573",
+              "templateHash": "3055459676655122291"
+            }
+          },
+          "parameters": {
+            "registryName": {
+              "type": "string"
+            },
+            "assignments": {
+              "type": "array"
+            },
+            "roleIds": {
+              "type": "object"
+            },
+            "principals": {
+              "type": "object"
+            }
+          },
+          "resources": [
+            {
+              "copy": {
+                "name": "grants",
+                "count": "[length(filter(parameters('assignments'), lambda('item', equals(lambdaVariables('item').scope, 'registry'))))]"
+              },
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "scope": "[format('Microsoft.ContainerRegistry/registries/{0}', parameters('registryName'))]",
+              "name": "[guid(resourceId('Microsoft.ContainerRegistry/registries', parameters('registryName')), parameters('principals')[filter(parameters('assignments'), lambda('item', equals(lambdaVariables('item').scope, 'registry')))[copyIndex()].principal], filter(parameters('assignments'), lambda('item', equals(lambdaVariables('item').scope, 'registry')))[copyIndex()].role)]",
+              "properties": {
+                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', parameters('roleIds')[filter(parameters('assignments'), lambda('item', equals(lambdaVariables('item').scope, 'registry')))[copyIndex()].role])]",
+                "principalId": "[parameters('principals')[filter(parameters('assignments'), lambda('item', equals(lambdaVariables('item').scope, 'registry')))[copyIndex()].principal]]",
+                "principalType": "[if(equals(filter(parameters('assignments'), lambda('item', equals(lambdaVariables('item').scope, 'registry')))[copyIndex()].principal, 'operator'), 'User', 'ServicePrincipal')]"
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('names').group), 'Microsoft.Resources/deployments', 'factory')]",
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('names').group)]",
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('names').group), 'Microsoft.Resources/deployments', 'identities')]",
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('names').group), 'Microsoft.Resources/deployments', 'registry')]",
+        "roleDefinitions"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "access-subscription",
+      "location": "[deployment().location]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "assignments": {
+            "value": "[variables('roles').assignments]"
+          },
+          "roleIds": {
+            "value": "[variables('roleIds')]"
+          },
+          "principals": {
+            "value": {
+              "adf": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('names').group), 'Microsoft.Resources/deployments', 'factory'), '2025-04-01').outputs.principalId.value]",
+              "worker": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('names').group), 'Microsoft.Resources/deployments', 'identities'), '2025-04-01').outputs.workerPrincipalId.value]",
+              "pull": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('names').group), 'Microsoft.Resources/deployments', 'identities'), '2025-04-01').outputs.pullPrincipalId.value]",
+              "operator": "[parameters('operatorPrincipalId')]"
+            }
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.38.33.27573",
+              "templateHash": "11908619794101170774"
+            }
+          },
+          "parameters": {
+            "assignments": {
+              "type": "array"
+            },
+            "roleIds": {
+              "type": "object"
+            },
+            "principals": {
+              "type": "object"
+            }
+          },
+          "resources": [
+            {
+              "copy": {
+                "name": "grants",
+                "count": "[length(filter(parameters('assignments'), lambda('item', equals(lambdaVariables('item').scope, 'subscription'))))]"
+              },
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "name": "[guid(subscription().id, parameters('principals')[filter(parameters('assignments'), lambda('item', equals(lambdaVariables('item').scope, 'subscription')))[copyIndex()].principal], filter(parameters('assignments'), lambda('item', equals(lambdaVariables('item').scope, 'subscription')))[copyIndex()].role)]",
+              "properties": {
+                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', parameters('roleIds')[filter(parameters('assignments'), lambda('item', equals(lambdaVariables('item').scope, 'subscription')))[copyIndex()].role])]",
+                "principalId": "[parameters('principals')[filter(parameters('assignments'), lambda('item', equals(lambdaVariables('item').scope, 'subscription')))[copyIndex()].principal]]",
+                "principalType": "[if(equals(filter(parameters('assignments'), lambda('item', equals(lambdaVariables('item').scope, 'subscription')))[copyIndex()].principal, 'operator'), 'User', 'ServicePrincipal')]"
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('names').group), 'Microsoft.Resources/deployments', 'factory')]",
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('names').group), 'Microsoft.Resources/deployments', 'identities')]",
+        "roleDefinitions"
       ]
     }
   ]
