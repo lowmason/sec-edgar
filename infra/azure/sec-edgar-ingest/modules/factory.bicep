@@ -146,7 +146,7 @@ resource callerPipelines 'Microsoft.DataFactory/factories/pipelines@2018-06-01' 
   ]
 }]
 
-// Triggers deploy stopped: the schema has no settable runtimeState and nothing here starts them (spec §7.4).
+// Triggers deploy stopped: the schema has no settable run state and nothing here starts them (spec §7.4).
 resource dailyTrigger 'Microsoft.DataFactory/factories/triggers@2018-06-01' = {
   parent: factory
   name: 'tr-sec-edgar-daily'
