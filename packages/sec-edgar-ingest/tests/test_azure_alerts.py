@@ -108,5 +108,16 @@ class AlertDeploymentTests(unittest.TestCase):
         self.assertEqual(rule['properties']['scopes'], ["[parameters('workspaceId')]"])
 
 
+class OperationsRunbookTests(unittest.TestCase):
+    def test_the_runbook_covers_every_alert_and_pipeline_outcome(self):
+        runbook = (REPO / 'docs/runbooks/sec-edgar-azure-operations.md').read_text()
+        for slug in EXPECTED:
+            self.assertIn(f'`alert-sec-edgar-{slug}`', runbook)
+        for code in PIPELINE_ONLY | {'success', 'awaiting_approval', 'pending'}:
+            self.assertIn(f'| `{code}` |', runbook)
+        for phrase in ('reserved/not_run', 'deploy stopped', 'launch-<n>', 'Never start a launch by hand'):
+            self.assertIn(phrase, runbook)
+
+
 if __name__ == '__main__':
     unittest.main()
