@@ -16,6 +16,14 @@ if TYPE_CHECKING:
     from sec_edgar_ingest.storage.contracts import StateStore, ObjectStore, LeaseStore, BoundaryObserver
 
 FIXTURE_CONFIG = Path(__file__).parent / "fixtures/config/local.json"
+# Spawned-child timing. Measured 2026-10-14 on a 14-core host at load average 26, spawn-to-first-line latency
+# was median 0.15 s, p90 0.65 s and max 1.03 s, against production windows of 1/3 s to start a request.
+# A window a test must sit through is SPAWN_ALLOWANCE_SECONDS long. A wait that returns once a process reaches
+# its point uses SPAWN_WAIT_SECONDS, which only bounds a hang. SLOW_SPAWN_SECONDS is a deterministic start delay
+# longer than every production window (1/3 s to start, 0.4 s to finish), so a test can exercise a slow spawn.
+SPAWN_ALLOWANCE_SECONDS = 3
+SPAWN_WAIT_SECONDS = 30
+SLOW_SPAWN_SECONDS = 0.5
 
 
 def fixture_settings(**overrides: object) -> "Settings":
@@ -776,6 +784,19 @@ def timer_failure_child(transport, cancellation, channel):
     def fail_timer(_):
         raise download.HardTimerUnavailable("fixture OS timer installation failed")
     download.arm_child_deadline = fail_timer
+    download._child_exchange(transport, cancellation, channel)
+
+
+def slow_spawn_timer_failure_child(transport, cancellation, channel):
+    import time
+    time.sleep(SLOW_SPAWN_SECONDS)
+    timer_failure_child(transport, cancellation, channel)
+
+
+def slow_spawn_child_exchange(transport, cancellation, channel):
+    import time
+    import sec_edgar_ingest.download as download
+    time.sleep(SLOW_SPAWN_SECONDS)
     download._child_exchange(transport, cancellation, channel)
 
 

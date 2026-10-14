@@ -8,7 +8,8 @@ from datetime import timedelta
 from email.utils import format_datetime
 from pathlib import Path
 
-from support import DownloadHarness, body_receipt, download_harness, fixture_context, fixture_settings, fixture_source, store_bundle, zip_bytes
+from support import (SPAWN_ALLOWANCE_SECONDS, DownloadHarness, body_receipt, download_harness, fixture_context,
+                     fixture_settings, fixture_source, store_bundle, zip_bytes)
 
 
 class DownloadTests(unittest.TestCase):
@@ -462,11 +463,11 @@ class BoundedProcessTests(unittest.TestCase):
         self.addCleanup(server.close)
         return server
 
-    def send(self, server, *, target=None, cancellation=None, seconds=0.4):
+    def send(self, server, *, target=None, cancellation=None, seconds=0.4, start_seconds=1/3):
         import multiprocessing
         from support import loopback_sender, real_context, real_permit
         sender = loopback_sender(self.settings, self.clock, server.origin, target=target, spool=self.root/"sender")
-        permit = real_permit(self.clock, seconds)
+        permit = real_permit(self.clock, seconds, start_seconds=start_seconds)
         cancellation = cancellation or multiprocessing.get_context("spawn").Event()
         from support import retain_process_evidence
         try:
@@ -608,18 +609,31 @@ class BoundedProcessTests(unittest.TestCase):
                 (self.root/"sender/transport.jsonl").unlink()
 
     def test_timer_installation_failure_and_stale_child_start_send_zero_requests(self):
-        from support import timer_failure_child, stale_start_child, stale_preparation_child, retain_process_evidence
-        for name, target, code in (("timer-installation-failure", timer_failure_child, "hard_timer_unavailable"), ("stale-spawn-start", stale_start_child, "permit_expired"), ("stale-prepared-request", stale_preparation_child, "permit_expired")):
+        from support import (retain_process_evidence, slow_spawn_timer_failure_child, stale_preparation_child,
+                             stale_start_child, timer_failure_child)
+        # Every deadline outlasts a slow spawn. The timer cases also get a start window that absorbs one;
+        # the stale cases keep the production 1/3 s start window and overrun it on purpose.
+        seconds = SPAWN_ALLOWANCE_SECONDS + 1
+        cases = (("timer-installation-failure", timer_failure_child, SPAWN_ALLOWANCE_SECONDS, "hard_timer_unavailable"),
+                 ("timer-installation-failure-after-slow-spawn", slow_spawn_timer_failure_child, SPAWN_ALLOWANCE_SECONDS,
+                  "hard_timer_unavailable"),
+                 ("stale-spawn-start", stale_start_child, 1/3, "permit_expired"),
+                 ("stale-prepared-request", stale_preparation_child, 1/3, "permit_expired"))
+        for name, target, start_seconds, code in cases:
             with self.subTest(name=name):
-                server = self.server()
-                receipt = self.send(server, target=target)
-                self.assertFalse(receipt.complete)
-                self.assertEqual(receipt.error.code, code)
-                self.assertFalse(server.connected.is_set())
-                self.assertEqual(server.requests, [])
-                self.assert_drained(receipt)
-                retain_process_evidence(name, receipt.temporary_path.parent, server, {"receipt": receipt.to_mapping()})
-                (self.root/"sender/transport.jsonl").unlink()
+                try:
+                    server = self.server()
+                    receipt = self.send(server, target=target, seconds=seconds, start_seconds=start_seconds)
+                    self.assertFalse(receipt.complete)
+                    self.assertEqual(receipt.error.code, code)
+                    self.assertFalse(server.connected.is_set())
+                    self.assertEqual(server.requests, [])
+                    self.assert_drained(receipt)
+                    retain_process_evidence(name, receipt.temporary_path.parent, server, {"receipt": receipt.to_mapping()})
+                finally:
+                    # The cases share one spool, so a failed case must not leave its outcome or trace to the next.
+                    for left in ("transport.jsonl", "receipt.json"):
+                        (self.root/"sender"/left).unlink(missing_ok=True)
 
     def test_cancelled_sender_returns_only_after_child_join_and_socket_close(self):
         import multiprocessing
