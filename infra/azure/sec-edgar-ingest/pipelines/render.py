@@ -48,13 +48,37 @@ def web(name: str, method: str, url: str, resource: str, *depends: dict, headers
             'typeProperties': properties}
 
 
+# §7.2: observation ends 4,200 s (observeSeconds) after the launch's start request, stamped just before it.
+DEADLINE = "addSeconds(variables('launchedAt'), pipeline().parameters.observeSeconds)"
+BEFORE_DEADLINE = f"less(ticks(utcNow()), ticks({DEADLINE}))"
+
+
+def whole_second_ticks(moment: str) -> str:
+    """The ticks of `moment` cut to its whole second, so a difference of two is a multiple of 10^7."""
+    return f"ticks(concat(formatDateTime({moment}, 'yyyy-MM-ddTHH:mm:ss'), 'Z'))"
+
+
+# The whole seconds from the first whole second after now to the deadline's whole second, never negative and
+# never more than the time actually left. The offline interpreter models no sub, div or min, so the tick
+# difference is taken by adding a negated value, and divided by 10^7 by cutting its seven trailing zeros as
+# text (the padding keeps a zero difference readable).
+REMAINING_TICKS = (f"max(add({whole_second_ticks(DEADLINE)}, "
+                   f"int(concat('-', string({whole_second_ticks('addSeconds(utcNow(), 1)')})))), 0)")
+REMAINING = f"int(split(concat('0000000', string({REMAINING_TICKS}), '|'), '0000000|')[0])"
+WAIT = "int(variables('waitSeconds'))"
+CAPPED_WAIT = f"@if(less({WAIT}, {REMAINING}), {WAIT}, {REMAINING})"
+
+
 def wait(name: str, *depends: dict) -> dict:
+    """Waits the poll base or Retry-After, cut so that it ends by the observation deadline."""
     return {'name': name, 'type': 'Wait', 'dependsOn': list(depends),
-            'typeProperties': {'waitTimeInSeconds': expression("@int(variables('waitSeconds'))")}}
+            'typeProperties': {'waitTimeInSeconds': expression(CAPPED_WAIT)}}
 
 
-BEFORE_DEADLINE = ("less(ticks(utcNow()), ticks(addSeconds(variables('launchedAt'), "
-                   "pipeline().parameters.observeSeconds)))")
+# Set just before each observation GET. From the deadline on, int() of a word fails it, so the GET is never sent
+# and the phase's After activity classifies.
+RESET_WAIT = f"@string(int(if({BEFORE_DEADLINE}, string(pipeline().parameters.pollSeconds), 'deadline')))"
+
 STATE = "variables('state')"
 RESULT = "json(variables('result'))"
 LOCATION = "activity('Start job').output.ADFWebActivityResponseHeaders['Location']"
@@ -150,7 +174,7 @@ START = [
 LOCATE = [
     assign('Locate begins', 'nextPhase', 'classify'),
     wait('Wait to locate', after('Locate begins')),
-    assign('Reset locate wait', 'waitSeconds', '@string(pipeline().parameters.pollSeconds)', after('Wait to locate')),
+    assign('Reset locate wait', 'waitSeconds', RESET_WAIT, after('Wait to locate')),
     web('Get operation', 'GET', "@variables('location')", ARM, after('Reset locate wait')),
     assign('Read locate wait', 'waitSeconds', retry_after('Get operation'), after('Get operation')),
     assign('Read located name', 'executionName', f"@if({LOCATED_VALID}, {LOCATED_NAME}, '')",
@@ -163,7 +187,7 @@ LOCATE = [
 OBSERVE = [
     assign('Observe begins', 'nextPhase', 'classify'),
     wait('Wait to observe', after('Observe begins')),
-    assign('Reset observe wait', 'waitSeconds', '@string(pipeline().parameters.pollSeconds)', after('Wait to observe')),
+    assign('Reset observe wait', 'waitSeconds', RESET_WAIT, after('Wait to observe')),
     web('Get execution', 'GET', "@concat('https://management.azure.com', pipeline().parameters.jobPath, "
                                 "'/executions/', variables('executionName'), '?api-version=2026-07-01')",
         ARM, after('Reset observe wait')),

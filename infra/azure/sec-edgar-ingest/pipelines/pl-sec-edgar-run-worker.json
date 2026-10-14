@@ -350,7 +350,7 @@
                       ],
                       "typeProperties": {
                         "waitTimeInSeconds": {
-                          "value": "@int(variables('waitSeconds'))",
+                          "value": "@if(less(int(variables('waitSeconds')), int(split(concat('0000000', string(max(add(ticks(concat(formatDateTime(addSeconds(variables('launchedAt'), pipeline().parameters.observeSeconds), 'yyyy-MM-ddTHH:mm:ss'), 'Z')), int(concat('-', string(ticks(concat(formatDateTime(addSeconds(utcNow(), 1), 'yyyy-MM-ddTHH:mm:ss'), 'Z')))))), 0)), '|'), '0000000|')[0])), int(variables('waitSeconds')), int(split(concat('0000000', string(max(add(ticks(concat(formatDateTime(addSeconds(variables('launchedAt'), pipeline().parameters.observeSeconds), 'yyyy-MM-ddTHH:mm:ss'), 'Z')), int(concat('-', string(ticks(concat(formatDateTime(addSeconds(utcNow(), 1), 'yyyy-MM-ddTHH:mm:ss'), 'Z')))))), 0)), '|'), '0000000|')[0]))",
                           "type": "Expression"
                         }
                       }
@@ -369,7 +369,7 @@
                       "typeProperties": {
                         "variableName": "waitSeconds",
                         "value": {
-                          "value": "@string(pipeline().parameters.pollSeconds)",
+                          "value": "@string(int(if(less(ticks(utcNow()), ticks(addSeconds(variables('launchedAt'), pipeline().parameters.observeSeconds))), string(pipeline().parameters.pollSeconds), 'deadline')))",
                           "type": "Expression"
                         }
                       }
@@ -496,7 +496,7 @@
                       ],
                       "typeProperties": {
                         "waitTimeInSeconds": {
-                          "value": "@int(variables('waitSeconds'))",
+                          "value": "@if(less(int(variables('waitSeconds')), int(split(concat('0000000', string(max(add(ticks(concat(formatDateTime(addSeconds(variables('launchedAt'), pipeline().parameters.observeSeconds), 'yyyy-MM-ddTHH:mm:ss'), 'Z')), int(concat('-', string(ticks(concat(formatDateTime(addSeconds(utcNow(), 1), 'yyyy-MM-ddTHH:mm:ss'), 'Z')))))), 0)), '|'), '0000000|')[0])), int(variables('waitSeconds')), int(split(concat('0000000', string(max(add(ticks(concat(formatDateTime(addSeconds(variables('launchedAt'), pipeline().parameters.observeSeconds), 'yyyy-MM-ddTHH:mm:ss'), 'Z')), int(concat('-', string(ticks(concat(formatDateTime(addSeconds(utcNow(), 1), 'yyyy-MM-ddTHH:mm:ss'), 'Z')))))), 0)), '|'), '0000000|')[0]))",
                           "type": "Expression"
                         }
                       }
@@ -515,7 +515,7 @@
                       "typeProperties": {
                         "variableName": "waitSeconds",
                         "value": {
-                          "value": "@string(pipeline().parameters.pollSeconds)",
+                          "value": "@string(int(if(less(ticks(utcNow()), ticks(addSeconds(variables('launchedAt'), pipeline().parameters.observeSeconds))), string(pipeline().parameters.pollSeconds), 'deadline')))",
                           "type": "Expression"
                         }
                       }

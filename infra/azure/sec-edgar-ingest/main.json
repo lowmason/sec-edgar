@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.38.33.27573",
-      "templateHash": "9215564010311980694"
+      "templateHash": "5391729294665791723"
     }
   },
   "parameters": {
@@ -956,7 +956,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.38.33.27573",
-              "templateHash": "12805855790857282393"
+              "templateHash": "11391974939973476193"
             }
           },
           "parameters": {
@@ -1359,7 +1359,7 @@
                                   ],
                                   "typeProperties": {
                                     "waitTimeInSeconds": {
-                                      "value": "@int(variables('waitSeconds'))",
+                                      "value": "@if(less(int(variables('waitSeconds')), int(split(concat('0000000', string(max(add(ticks(concat(formatDateTime(addSeconds(variables('launchedAt'), pipeline().parameters.observeSeconds), 'yyyy-MM-ddTHH:mm:ss'), 'Z')), int(concat('-', string(ticks(concat(formatDateTime(addSeconds(utcNow(), 1), 'yyyy-MM-ddTHH:mm:ss'), 'Z')))))), 0)), '|'), '0000000|')[0])), int(variables('waitSeconds')), int(split(concat('0000000', string(max(add(ticks(concat(formatDateTime(addSeconds(variables('launchedAt'), pipeline().parameters.observeSeconds), 'yyyy-MM-ddTHH:mm:ss'), 'Z')), int(concat('-', string(ticks(concat(formatDateTime(addSeconds(utcNow(), 1), 'yyyy-MM-ddTHH:mm:ss'), 'Z')))))), 0)), '|'), '0000000|')[0]))",
                                       "type": "Expression"
                                     }
                                   }
@@ -1378,7 +1378,7 @@
                                   "typeProperties": {
                                     "variableName": "waitSeconds",
                                     "value": {
-                                      "value": "@string(pipeline().parameters.pollSeconds)",
+                                      "value": "@string(int(if(less(ticks(utcNow()), ticks(addSeconds(variables('launchedAt'), pipeline().parameters.observeSeconds))), string(pipeline().parameters.pollSeconds), 'deadline')))",
                                       "type": "Expression"
                                     }
                                   }
@@ -1505,7 +1505,7 @@
                                   ],
                                   "typeProperties": {
                                     "waitTimeInSeconds": {
-                                      "value": "@int(variables('waitSeconds'))",
+                                      "value": "@if(less(int(variables('waitSeconds')), int(split(concat('0000000', string(max(add(ticks(concat(formatDateTime(addSeconds(variables('launchedAt'), pipeline().parameters.observeSeconds), 'yyyy-MM-ddTHH:mm:ss'), 'Z')), int(concat('-', string(ticks(concat(formatDateTime(addSeconds(utcNow(), 1), 'yyyy-MM-ddTHH:mm:ss'), 'Z')))))), 0)), '|'), '0000000|')[0])), int(variables('waitSeconds')), int(split(concat('0000000', string(max(add(ticks(concat(formatDateTime(addSeconds(variables('launchedAt'), pipeline().parameters.observeSeconds), 'yyyy-MM-ddTHH:mm:ss'), 'Z')), int(concat('-', string(ticks(concat(formatDateTime(addSeconds(utcNow(), 1), 'yyyy-MM-ddTHH:mm:ss'), 'Z')))))), 0)), '|'), '0000000|')[0]))",
                                       "type": "Expression"
                                     }
                                   }
@@ -1524,7 +1524,7 @@
                                   "typeProperties": {
                                     "variableName": "waitSeconds",
                                     "value": {
-                                      "value": "@string(pipeline().parameters.pollSeconds)",
+                                      "value": "@string(int(if(less(ticks(utcNow()), ticks(addSeconds(variables('launchedAt'), pipeline().parameters.observeSeconds))), string(pipeline().parameters.pollSeconds), 'deadline')))",
                                       "type": "Expression"
                                     }
                                   }

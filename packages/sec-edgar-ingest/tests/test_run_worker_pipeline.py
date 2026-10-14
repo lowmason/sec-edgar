@@ -8,7 +8,7 @@ from dataclasses import fields
 from datetime import datetime, timedelta
 
 from adf_interpreter import ALL_SEMANTICS, PipelineRun, Response, Semantics, WebFailure, validate_pipeline, walk_activities
-from support_adf import (ABSENT, ARM_AUDIENCE, ASYNC_PREFIX, ENV, IMAGE, JOB, PIPELINES, RESOURCES, RUN_ID,
+from support_adf import (ABSENT, ARM_AUDIENCE, ASYNC_PREFIX, ENV, IMAGE, JOB, PIPELINES, RESOURCES, RESULTS, RUN_ID,
                          STORAGE_AUDIENCE, SUBSCRIPTION, UNAVAILABLE, UNREADABLE, FakeAzure, Launch, accepted,
                          execution_name, load, operation, pipelines, result, run_worker, started)
 from sec_edgar_ingest.cli import _parser
@@ -25,6 +25,21 @@ def expected_outcome(outcome: str, state: str) -> str:
         return 'stale'
     return outcome
 
+
+OBSERVE_SECONDS = 4200
+# Each Retry-After points past the 4,200 s observation deadline; what Azure would answer after it is terminal.
+CROSSING = {
+    'an execution Retry-After past the deadline is unknown': [
+        Launch(states=('Running', 'Succeeded'), retry_after='6000')],
+    'a pending result after the deadline never relaunches': [
+        Launch(states=('Running', 'Succeeded'), retry_after='6000', outcome='pending'), Launch()],
+    'a Location Retry-After past the deadline is unknown': [
+        Launch(start=accepted(operation()), locate=(accepted(None, '6000'), started(1)))],
+    'a 202 start Retry-After past the deadline is unknown': [
+        Launch(start=accepted(operation(), retry_after='6000'), locate=(started(1),))],
+    'a 200 start Retry-After past the deadline is unknown': [
+        Launch(start=Response(200, started(1).body, {'Retry-After': '6000'}))],
+}
 
 SCENARIOS = {
     # §7.1 start responses
@@ -70,6 +85,8 @@ SCENARIOS = {
     'an unrecognized state is unknown': ([Launch(states=('Suspended',))], 'execution_unknown', 1),
     'stopped is stopped': ([Launch(states=('Running', 'Stopped'))], 'execution_stopped', 1),
     'another image is a mismatch': ([Launch(image=IMAGE.replace('1' * 64, '2' * 64))], 'execution_mismatch', 1),
+    # §7.2 deadline: a Retry-After that does not fit before it ends observation there, whatever comes after
+    **{name: (launches, 'execution_unknown', 1) for name, launches in CROSSING.items()},
     # §7.3 results
     'an absent result is missing': ([Launch(outcome=ABSENT)], 'result_missing', 1),
     'an unreadable result is missing': ([Launch(outcome=UNREADABLE)], 'result_missing', 1),
@@ -202,9 +219,60 @@ class RunWorkerScenarioTests(unittest.TestCase):
         run = run_worker([Launch(states=('Running',))])
         post, *gets = run.requests
         self.assertTrue(all(request.method == 'GET' and '/executions/' in request.url for request in gets))
-        self.assertLess((gets[-1].at - post.at).total_seconds(), 4200 + 40)
-        self.assertGreater((gets[-1].at - post.at).total_seconds(), 4200 - 40)
+        # A poll cycle here is 30 s plus ten activities: the last GET is the last cycle's at or before the deadline,
+        # and the deadline is 4,200 s after the stamp taken just before the start request.
+        deadline = self.deadline(run)
+        self.assertLessEqual(gets[-1].at, deadline)
+        self.assertGreater(gets[-1].at, deadline - timedelta(seconds=40))
+        self.assertLess(abs((deadline - post.at).total_seconds() - 4200), 5)
         self.assertNotIn('stop', ' '.join(request.url for request in run.requests))
+
+    @staticmethod
+    def deadline(run) -> datetime:
+        return datetime.fromisoformat(run.variables['launchedAt']) + timedelta(seconds=OBSERVE_SECONDS)
+
+    @staticmethod
+    def observation_gets(run) -> list:
+        """The Location and execution GETs; the result read is not observation."""
+        return [request for request in run.requests if request.method == 'GET' and not request.url.startswith(RESULTS)]
+
+    def test_no_wait_or_observation_get_outlasts_the_deadline(self):
+        for name, launches in CROSSING.items():
+            with self.subTest(name):
+                run = run_worker(launches)
+                deadline = self.deadline(run)
+                self.assertEqual((run.outcome, [request.method for request in run.requests].count('POST')),
+                                 ('execution_unknown', 1))
+                gets = self.observation_gets(run)
+                self.assertTrue(all(request.at <= deadline for request in gets), [request.at for request in gets])
+                # The last wait is cut to end at the deadline: the run then only classifies and fails.
+                self.assertGreaterEqual(run.ended, deadline)
+                self.assertLessEqual(run.ended, deadline + timedelta(seconds=60))
+
+    def test_a_retry_after_that_fits_is_honoured_in_full(self):
+        for launch, marker in ((Launch(states=('Running', 'Running', 'Succeeded'), retry_after='300'), '/executions/'),
+                               (Launch(start=accepted(operation()), locate=(accepted(None, '300'), started(1))),
+                                '/containerappsjoboperationresults/')):
+            with self.subTest(marker):
+                run = run_worker([launch])
+                self.assertEqual(run.outcome, 'success')
+                times = [request.at for request in run.requests if marker in request.url]
+                gaps = [(later - earlier).total_seconds() for earlier, later in zip(times, times[1:])]
+                self.assertTrue(gaps and all(300 <= gap < 315 for gap in gaps), gaps)
+
+    def test_a_get_on_the_deadline_counts_and_none_follows_it(self):
+        ends = {}
+        for seconds in range(4100, 4200):
+            run = run_worker([Launch(states=('Running', 'Succeeded'), retry_after=str(seconds))])
+            deadline = self.deadline(run)
+            gets = self.observation_gets(run)
+            self.assertTrue(all(request.at <= deadline for request in gets), seconds)
+            expected = 'success' if len(gets) == 2 else 'execution_unknown'
+            self.assertEqual((run.posts, run.outcome), (1, expected), seconds)
+            ends.setdefault(run.outcome, set()).add(gets[-1].at == deadline)
+        # The sweep crosses the boundary, and a terminal state from a GET sent exactly at the deadline is accepted.
+        self.assertEqual(set(ends), {'success', 'execution_unknown'})
+        self.assertIn(True, ends['success'])
 
     def test_the_callers_pass_their_run_id_and_command(self):
         for command in ('backfill', 'daily', 'reconcile'):

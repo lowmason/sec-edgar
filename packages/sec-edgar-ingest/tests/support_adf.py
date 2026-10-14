@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
+from datetime import datetime
 from pathlib import Path
 
 from adf_interpreter import PipelineRun, Request, Response, Semantics, WebFailure
@@ -160,6 +161,7 @@ class WorkerRun:
     variables: dict
     trace: list
     failures: list
+    ended: datetime         # the interpreter clock when the run finished
 
 
 def run_worker(launches, command: str = 'daily', semantics: Semantics = Semantics(), faults=(),
@@ -173,4 +175,4 @@ def run_worker(launches, command: str = 'daily', semantics: Semantics = Semantic
         assert not codes
     label = 'success' if outcome.status == 'Succeeded' else (codes[0] if codes else None)
     return WorkerRun(label, outcome.status, azure.posts, engine.requests, outcome.variables, engine.trace,
-                     outcome.failures)
+                     outcome.failures, engine.clock)
