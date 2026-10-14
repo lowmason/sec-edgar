@@ -51,6 +51,9 @@ class RunnerTests(unittest.TestCase):
                 context = freeze_workflow(context, intent, h.store, h.objects)
                 dispatcher = Dispatcher(context, h.settings, h.pack, h.root, h.store, h.objects)
                 selected = select_work(context, h.settings, intent, dispatcher, h.store, h.objects)
+                # Discovery runs in real time: a stall of over 1/3 s before a fixture send loses that listing
+                # (deferred by plan 11). Report the gaps here instead of a bare count mismatch further down.
+                self.assertEqual(len(selected['members']), 2, selected['gaps'])
                 freeze_selection(context, selected, h.store, h.objects)
                 expired = context.deadline + timedelta(seconds=1)
                 with patch('sec_edgar_ingest.workflows.runner.datetime') as clock, \
