@@ -1,5 +1,9 @@
 # SEC filing-index ingestion — Stage 6 Azure definitions and orchestration Implementation Plan
 
+**Status: COMPLETE (2026-10-13)** — executed via subagent-driven-development; deferred items in specs/deferred_items.md
+
+> Deviation (every commit step): each commit ends with the `Co-Authored-By` line naming the model that wrote it (Opus, Sonnet or Haiku 5.5), per D7, not the literal Opus line.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: implement this plan task-by-task via subagent-driven-development (the default) — or executing-plans when your human partner chose inline execution at the handoff. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 > Roadmap: specs/sec-filing-index-ingestion-roadmap.md, Stage 6 — on plan completion, tick the
@@ -137,7 +141,7 @@ Settled for the owner's review at plan approval:
 7. **Reading of §7.3.** A matching result whose `outcome` is not an `EXIT_CODES` key is `result_mismatch`, the "present but not matching" row.
 8. **Budgets.**
    - The run-worker pipeline has 47 activities, against ADF's documented maximum of 120 per pipeline, inner activities included.
-   - Its longest expression has 1,265 characters, against a limit of 8,192, and the pipeline object is 18.5 KB, against 200 KB. `validate_pipeline` enforces all three limits.
+   - Its longest expression has 1,756 characters (1,265 when planned), against a limit of 8,192, and the pipeline object is 20.7 KB compact (18.5 KB when planned), against 200 KB. `validate_pipeline` enforces all three limits.
    - Its Until times out at 3 h. That covers two launches of 4,200 s observation plus their waits.
    - A timeout leaves the outcome empty, so it ends `execution_unknown`.
 9. **Values the spec leaves to the plan.**
@@ -198,7 +202,7 @@ Behaviour the documentation leaves open is a `Semantics` field: a missing proper
   - `Response(status=200, body=dict, headers=dict)`; the errors `WebFailure`, `ExpressionError` and `AdfUnsupported`.
   - `validate_pipeline(definition)` and `walk_activities(activities)`; also `FUNCTIONS`, `Evaluator` and `Scope`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `tests/test_adf_interpreter.py`:
 
@@ -391,12 +395,14 @@ if __name__ == '__main__':
     unittest.main()
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/network_guard.py test_adf_interpreter -v`
 Expected: ERROR at import with `ModuleNotFoundError: No module named 'adf_interpreter'`.
 
-- [ ] **Step 3: Write the interpreter**
+- [x] **Step 3: Write the interpreter**
+
+> Deviation: Until enforces its timeout inside an iteration (`tick()` raises before the remaining children and the condition run), not "children run, then the condition, then the timeout" as the task intro says. The owner ruled on 2026-10-13 to keep the code as written: it can only turn a success into a non-success.
 
 `tests/adf_interpreter.py`:
 
@@ -1124,12 +1130,12 @@ class PipelineRun:
         return child.status, {'pipelineRunId': child.run_id}
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/network_guard.py test_adf_interpreter -v`
 Expected: PASS, 14 tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/sec-edgar-ingest/tests/adf_interpreter.py packages/sec-edgar-ingest/tests/test_adf_interpreter.py
@@ -1187,7 +1193,7 @@ The fault suite fails each of the 47 activities in turn and checks four things:
     - the scripting helpers `Launch`, `FakeAzure`, `started`, `accepted`, `operation` and `result`;
     - the constants `ABSENT`, `UNREADABLE`, `UNAVAILABLE`, `PIPELINES`, `IMAGE`, `ENV`, `RESOURCES`, `JOB` and `RUN_ID`.
 
-- [ ] **Step 1: Write the scripted Azure**
+- [x] **Step 1: Write the scripted Azure**
 
 `tests/support_adf.py`:
 
@@ -1370,7 +1376,7 @@ def run_worker(launches, command: str = 'daily', semantics: Semantics = Semantic
                      outcome.failures)
 ```
 
-- [ ] **Step 2: Write the failing tests**
+- [x] **Step 2: Write the failing tests**
 
 `tests/test_run_worker_pipeline.py`:
 
@@ -1682,12 +1688,14 @@ if __name__ == '__main__':
     unittest.main()
 ```
 
-- [ ] **Step 3: Run the tests to verify they fail**
+- [x] **Step 3: Run the tests to verify they fail**
 
 Run: `uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/network_guard.py test_run_worker_pipeline -v`
 Expected: every test ERRORs with `FileNotFoundError` naming `infra/azure/sec-edgar-ingest/pipelines/pl-sec-edgar-run-worker.json` or `render.py`.
 
-- [ ] **Step 4: Write the pipeline source**
+- [x] **Step 4: Write the pipeline source**
+
+> Deviation: after review the followed `Location` is validated more strictly than this code. Any `/.` segment, `\`, `%`, TAB, LF, CR and `#` are refused and exactly one `api-version` is required (341d3c51, 0b9710a6, 99cb4d1a). The final review capped every wait at the 4,200 s observation deadline and refuses an observation GET after it (eb3cacad), and put the calling run ID in the Fail message (0a119855). As built: 47 activities, longest expression 1,756 characters, 20.7 KB compact.
 
 `infra/azure/sec-edgar-ingest/pipelines/render.py`:
 
@@ -1965,17 +1973,17 @@ if __name__ == '__main__':
     main()
 ```
 
-- [ ] **Step 5: Render the JSON**
+- [x] **Step 5: Render the JSON**
 
 Run: `uv run --offline --frozen --package sec-edgar-ingest python infra/azure/sec-edgar-ingest/pipelines/render.py && wc -l infra/azure/sec-edgar-ingest/pipelines/*.json`
 Expected: run-worker 1,006 lines, and each caller 22 lines.
 
-- [ ] **Step 6: Run the tests to verify they pass**
+- [x] **Step 6: Run the tests to verify they pass**
 
 Run: `uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/network_guard.py test_run_worker_pipeline -v`
 Expected: PASS, 17 tests, in about 10 s. Then run `test_adf_interpreter` again: PASS.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add infra/azure/sec-edgar-ingest/pipelines packages/sec-edgar-ingest/tests/support_adf.py packages/sec-edgar-ingest/tests/test_run_worker_pipeline.py
@@ -1993,7 +2001,9 @@ This task applies only if the owner approves it at plan review (Settled item 4).
 **Files:**
 - Modify: `specs/sec-filing-index-ingestion-stage-6-spec.md` (§11, "Assumptions Stage 6 adds to the Stage 7 checks"; the status line is untouched)
 
-- [ ] **Step 1: Apply the amendment**
+- [x] **Step 1: Apply the amendment**
+
+> Deviation: the line ends `(owner, plan 10, 2026-10-13)`, the date of D4, not 2026-10-12.
 
 Replace:
 
@@ -2008,7 +2018,7 @@ with:
 - S7-06: ADF evaluates the nested expressions in the start body's container to native values. Any other evaluation cannot yield a matching result, so the pipeline ends in a non-success outcome and never relaunches (§7.3). (owner, plan 10, 2026-10-12)
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add specs/sec-filing-index-ingestion-stage-6-spec.md
@@ -2039,7 +2049,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
   - The modules `identities` (outputs `workerId`, `workerClientId`, `workerPrincipalId`, `pullId`, `pullPrincipalId`), `registry`, `monitoring` (outputs `workspaceId`, `actionGroupId`) and `storage`.
   - `support_template`: `INFRA`, `REPO`, `CONTAINERS`, `TABLES`, `load`, `template`, `nodes`, `resources`, `deployment`, `module` and `text`.
 
-- [ ] **Step 1: Install Bicep 0.38.33 (D1)**
+- [x] **Step 1: Install Bicep 0.38.33 (D1)**
 
 These commands are tool installs only. They do not log in, select a subscription or call Azure management.
 
@@ -2051,7 +2061,7 @@ AZURE_CORE_COLLECT_TELEMETRY=false az bicep install --version v0.38.33
 
 Expected: `2.90.0`, then the install, then `Bicep CLI version 0.38.33 (…)`. If the CLI is not 2.90.0, or the Bicep version differs, stop and report: both are F1 pins.
 
-- [ ] **Step 2: Write the failing role-matrix test**
+- [x] **Step 2: Write the failing role-matrix test**
 
 `tests/test_azure_roles.py`:
 
@@ -2196,7 +2206,7 @@ def text(value) -> str:
 Run: `uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/network_guard.py test_azure_roles -v`
 Expected: ERROR, `FileNotFoundError` for `roles.json`.
 
-- [ ] **Step 3: Write the role matrix**
+- [x] **Step 3: Write the role matrix**
 
 `infra/azure/sec-edgar-ingest/roles.json` lists the spec §5 tables. `B` and `T` are written out in full:
 
@@ -2295,7 +2305,7 @@ Expected: ERROR, `FileNotFoundError` for `roles.json`.
 Run: `uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/network_guard.py test_azure_roles -v`
 Expected: PASS, 6 tests.
 
-- [ ] **Step 4: Write the failing template tests**
+- [x] **Step 4: Write the failing template tests**
 
 `tests/test_azure_template.py`; Tasks 5 and 6 add classes to it:
 
@@ -2439,7 +2449,7 @@ if __name__ == '__main__':
 Run: `uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/network_guard.py test_azure_template -v`
 Expected: ERROR in `setUpClass`, `FileNotFoundError` for `main.json`.
 
-- [ ] **Step 5: Write main.bicep and the shared modules**
+- [x] **Step 5: Write main.bicep and the shared modules**
 
 `infra/azure/sec-edgar-ingest/main.bicep`; Tasks 5–7 append to it:
 
@@ -2722,7 +2732,7 @@ resource accountTables 'Microsoft.Storage/storageAccounts/tableServices/tables@2
 }]
 ```
 
-- [ ] **Step 6: Compile**
+- [x] **Step 6: Compile**
 
 Run: `~/.azure/bin/bicep build infra/azure/sec-edgar-ingest/main.bicep --outfile infra/azure/sec-edgar-ingest/main.json`
 
@@ -2734,7 +2744,9 @@ Expected: exit 0. Warnings are allowed; list each one in the task report. The ex
 
 Any error stops the task: fix the Bicep, not the test.
 
-- [ ] **Step 7: Run the tests to verify they pass**
+- [x] **Step 7: Run the tests to verify they pass**
+
+> Deviation: a locator-only change. Bicep hoists `loadJsonContent` into `$fxv#N` variables, so `variables.roles` reads `[variables('$fxv#0')]`; the test resolves that indirection by regex and still asserts the content equals `roles.json`. Nested deployments compile at `Microsoft.Resources/deployments@2025-04-01`, which Bicep chose.
 
 Run: `uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/network_guard.py test_azure_template -v`
 Expected: PASS, 8 tests.
@@ -2747,7 +2759,7 @@ The template tests were written before Bicep could be run (D1). An assertion may
 
 If the compiled meaning is wrong, fix the Bicep.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add infra/azure/sec-edgar-ingest/roles.json infra/azure/sec-edgar-ingest/main.bicep infra/azure/sec-edgar-ingest/main.json infra/azure/sec-edgar-ingest/modules packages/sec-edgar-ingest/tests/support_template.py packages/sec-edgar-ingest/tests/test_azure_roles.py packages/sec-edgar-ingest/tests/test_azure_template.py
@@ -2776,7 +2788,9 @@ One `container` object in main.bicep is both the job's container and the default
   - the modules `job` (output `jobId`) and `factory` (output `principalId`);
   - the triggers `tr-sec-edgar-daily` and `tr-sec-edgar-reconcile`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
+
+> Deviation: three tests were added to the 13 here, at the controller's request: the factory's run-worker parameters and defaults against `support_adf`, the start container against the job deployment itself, and the deployed pipelines equal to the committed JSON.
 
 Add this class to `tests/test_azure_template.py`, above `if __name__ == '__main__':`:
 
@@ -2888,7 +2902,7 @@ class JobAndFactoryTests(unittest.TestCase):
 Run: `uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/network_guard.py test_azure_template.JobAndFactoryTests -v`
 Expected: ERROR in `setUpClass`, `AssertionError: ('factory', 0)`.
 
-- [ ] **Step 2: Write the job and factory modules**
+- [x] **Step 2: Write the job and factory modules**
 
 `infra/azure/sec-edgar-ingest/modules/job.bicep`:
 
@@ -3218,7 +3232,7 @@ resource reconcileTrigger 'Microsoft.DataFactory/factories/triggers@2018-06-01' 
 output principalId string = factory.identity.principalId
 ```
 
-- [ ] **Step 3: Append the container, job and factory to main.bicep**
+- [x] **Step 3: Append the container, job and factory to main.bicep**
 
 Append after a blank line:
 
@@ -3279,7 +3293,7 @@ module factory 'modules/factory.bicep' = {
 }
 ```
 
-- [ ] **Step 4: Compile and run the tests**
+- [x] **Step 4: Compile and run the tests**
 
 Run: `~/.azure/bin/bicep build infra/azure/sec-edgar-ingest/main.bicep --outfile infra/azure/sec-edgar-ingest/main.json`
 
@@ -3287,7 +3301,7 @@ Then run: `uv run --offline --frozen --package sec-edgar-ingest python packages/
 
 Expected: exit 0, then PASS, 13 tests. Task 4 Step 6 governs warnings, and Task 4 Step 7 governs any difference in emitted shape.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add infra/azure/sec-edgar-ingest/main.bicep infra/azure/sec-edgar-ingest/main.json infra/azure/sec-edgar-ingest/modules/job.bicep infra/azure/sec-edgar-ingest/modules/factory.bicep packages/sec-edgar-ingest/tests/test_azure_template.py
@@ -3321,7 +3335,9 @@ The role definition ID is `guid(subscription().id, roleName)` for a custom role,
   - the `operatorPrincipalId` parameter.
 - Produces: the deployments `access-job`, `access-registry` and `access-subscription`, and the loops `containerAccess` and `tableAccess`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
+
+> Deviation: `GrantSetTests` was added after `AccessTests` (c7a9da51). Five mutants of the access modules passed `AccessTests`, so the new test compares the compiled grants with `roles.json` in both directions.
 
 Add this class to `tests/test_azure_template.py`, above `if __name__ == '__main__':`:
 
@@ -3368,7 +3384,7 @@ class AccessTests(unittest.TestCase):
 Run: `uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/network_guard.py test_azure_template.AccessTests -v`
 Expected: FAIL or ERROR: `KeyError: 'containerAccess'` and `AssertionError: ('access-job', 0)`.
 
-- [ ] **Step 2: Write the access modules**
+- [x] **Step 2: Write the access modules**
 
 `infra/azure/sec-edgar-ingest/modules/access/container.bicep`:
 
@@ -3517,7 +3533,9 @@ resource grants 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for gran
 }]
 ```
 
-- [ ] **Step 3: Append the principals and access modules to main.bicep**
+- [x] **Step 3: Append the principals and access modules to main.bicep**
+
+> Deviation: after the final review `access-registry` receives only the pull principal and the job depends on it (46091b2d), and `roles.json` gains operator Blob Reader on `results` (d92efb33; owner, 2026-10-13; spec §5 amended).
 
 Append after a blank line:
 
@@ -3607,7 +3625,7 @@ module subscriptionAccess 'modules/access/subscription.bicep' = {
 }
 ```
 
-- [ ] **Step 4: Compile and run the tests**
+- [x] **Step 4: Compile and run the tests**
 
 Run: `~/.azure/bin/bicep build infra/azure/sec-edgar-ingest/main.bicep --outfile infra/azure/sec-edgar-ingest/main.json`
 
@@ -3615,7 +3633,7 @@ Then run: `uv run --offline --frozen --package sec-edgar-ingest python packages/
 
 Expected: exit 0, then PASS, 15 tests and 6 tests. No unused-parameter warning remains.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add infra/azure/sec-edgar-ingest/main.bicep infra/azure/sec-edgar-ingest/main.json infra/azure/sec-edgar-ingest/modules/access packages/sec-edgar-ingest/tests/test_azure_template.py
@@ -3656,7 +3674,9 @@ A vocabulary test confines every quoted literal and every `entry.*` path to:
   - the `monitoring` outputs (Task 4).
 - Produces: the `alerts` module, and the names `alert-sec-edgar-<slug>` for the ten slugs in `EXPECTED`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
+
+> Deviation: a local `hoisted()` helper follows the `$fxv#N` hoisting of `loadTextContent`; the deployed query is still pinned byte for byte to the `.kql` file.
 
 `tests/test_azure_alerts.py`; Task 8 adds a class to it:
 
@@ -3770,7 +3790,7 @@ if __name__ == '__main__':
 Run: `uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/network_guard.py test_azure_alerts -v`
 Expected: `test_each_spec_alert_has_its_query` FAILs (no `.kql` files); the deployment tests ERROR with `AssertionError: ('alerts', 0)`.
 
-- [ ] **Step 2: Write the queries**
+- [x] **Step 2: Write the queries**
 
 `infra/azure/sec-edgar-ingest/alerts/failed-job.kql`:
 
@@ -3891,7 +3911,7 @@ print found
 | where found == 0
 ```
 
-- [ ] **Step 3: Write the alerts module and append it to main.bicep**
+- [x] **Step 3: Write the alerts module and append it to main.bicep**
 
 `infra/azure/sec-edgar-ingest/modules/alerts.bicep`:
 
@@ -4059,7 +4079,7 @@ module alerts 'modules/alerts.bicep' = {
 }
 ```
 
-- [ ] **Step 4: Compile and run the tests**
+- [x] **Step 4: Compile and run the tests**
 
 Run: `~/.azure/bin/bicep build infra/azure/sec-edgar-ingest/main.bicep --outfile infra/azure/sec-edgar-ingest/main.json`
 
@@ -4067,7 +4087,7 @@ Then run: `uv run --offline --frozen --package sec-edgar-ingest python packages/
 
 Expected: exit 0, then PASS (5 tests), then PASS (15 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add infra/azure/sec-edgar-ingest/alerts infra/azure/sec-edgar-ingest/modules/alerts.bicep infra/azure/sec-edgar-ingest/main.bicep infra/azure/sec-edgar-ingest/main.json packages/sec-edgar-ingest/tests/test_azure_alerts.py
@@ -4090,7 +4110,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
   - every name defined in Tasks 2–7.
 - Produces: the runbook that Stage 7 exercises.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Add this class to `tests/test_azure_alerts.py`, above `if __name__ == '__main__':`:
 
@@ -4109,7 +4129,9 @@ class OperationsRunbookTests(unittest.TestCase):
 Run: `uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/network_guard.py test_azure_alerts.OperationsRunbookTests -v`
 Expected: ERROR, `FileNotFoundError` for the runbook.
 
-- [ ] **Step 2: Write the runbook**
+- [x] **Step 2: Write the runbook**
+
+> Deviation: the runbook departs from this text in the redeploy list (five steps, ending with re-enabling both staleness alerts), the quarantine, retry-exhausted and publication-conflict rows (9ee8ad52), and the `execution_unknown` recovery, which names where the run ID and `<n>` come from (0a119855).
 
 `docs/runbooks/sec-edgar-azure-operations.md`:
 
@@ -4238,12 +4260,12 @@ ContainerAppConsoleLogs
 - The last successful reconciliation is `last_successful_reconcile_at`.
 ````
 
-- [ ] **Step 3: Run the test to verify it passes**
+- [x] **Step 3: Run the test to verify it passes**
 
 Run: `uv run --offline --frozen --package sec-edgar-ingest python packages/sec-edgar-ingest/tests/network_guard.py test_azure_alerts -v`
 Expected: PASS, 6 tests.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add docs/runbooks/sec-edgar-azure-operations.md packages/sec-edgar-ingest/tests/test_azure_alerts.py
@@ -4259,7 +4281,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 **Files:**
 - Modify: `scripts/check-sec-edgar-ingest.sh`
 
-- [ ] **Step 1: Add the pipeline-render and Bicep checks**
+- [x] **Step 1: Add the pipeline-render and Bicep checks**
 
 Append to `scripts/check-sec-edgar-ingest.sh`:
 
@@ -4275,7 +4297,7 @@ cmp "$compiled/main.json" infra/azure/sec-edgar-ingest/main.json
 rm -r "$compiled"
 ```
 
-- [ ] **Step 2: Run the full plan-exit checks**
+- [x] **Step 2: Run the full plan-exit checks**
 
 Run: `scripts/check-sec-edgar-ingest.sh`
 
@@ -4290,7 +4312,9 @@ Expected: exit 0, with each of these holding:
 - the pipeline render leaves no diff;
 - the Bicep rebuild equals the committed `main.json`.
 
-- [ ] **Step 3: Confirm no forbidden activity or edits**
+- [x] **Step 3: Confirm no forbidden activity or edits**
+
+> Deviation: the first command diffs from `93deed57`, not the stale `9d7ea225`; the `--include` globs are quoted for zsh; one Bicep comment was reworded so the forbidden-term grep prints nothing (74b7e46d).
 
 ```bash
 git diff --stat 9d7ea225..HEAD -- specs/evidence specs/plans/completed specs/plans/4-sec-filing-index-ingestion-stage-4-spec.md specs/plans/5-sec-filing-index-ingestion-stage-4-spec.md specs/sec-filing-index-ingestion-stage-4-spec.md conf
@@ -4299,7 +4323,7 @@ grep -rn "runtimeState\|listKeys\|listSecrets" infra/azure/sec-edgar-ingest --in
 
 Expected: both print nothing. A command that ran against Azure would also be a stop condition. This plan has none: every `az` command above is a local tool install or version query.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add scripts/check-sec-edgar-ingest.sh
@@ -4320,3 +4344,17 @@ Then run the final whole-branch review (subagent-driven-development), followed b
   Then tick Stage 6 in the roadmap with the stamp.
 - **Deferred items.** Plan 9 already closed the Stage 6 items; the ticking pass runs anyway.
 - **Retirement.** Plan 9 retires first. This plan's retirement then retires the spec to `specs/completed/` in the same commit, because no live plan implements it any more.
+
+## Handoff to later stages
+
+- **Stage 7 (deployment checkpoint and recovery evidence)** consumes the Stage 6 stack as built. Differences from the roadmap's Produces line, inputs, traps and deferrals:
+  - **What ships.** `infra/azure/sec-edgar-ingest/main.bicep` and `modules/**` compile with Bicep 0.38.33 into the committed `main.json`; deploy that file, never the Bicep. `scripts/check-sec-edgar-ingest.sh` rebuilds it and fails on drift. `pipelines/render.py` renders the four pipeline JSON files (`pl-sec-edgar-run-worker`, `-backfill`, `-daily`, `-reconcile`); `roles.json` is the role matrix; `alerts/*.kql` are the ten queries.
+  - **Deployment inputs.** `main.json` takes `operatorPrincipalId`, `dailyStartTime` and `reconcileStartTime` (the no-Z local format; length is the only offline check, and ADF is expected, not shown, to reject a malformed time at deploy), plus `configJson`, `configSha256` and `location` (default `eastus`), which `python -m sec_edgar_ingest.deployment` renders into `main.parameters.json` with the image digest and provenance (docs/runbooks/sec-edgar-azure-operations.md). The template declares no outputs.
+  - **Pipeline contract.** The run-worker takes the 15 parameters in `support_adf.PARAMETER_TYPES`; its outcome codes are `success`, `awaiting_approval`, `pending` and the pipeline-only `execution_unknown`, `execution_stopped`, `execution_mismatch`, `result_missing`, `result_mismatch`, `stale`, plus every other `results.EXIT_CODES` name. Only `success` ends Succeeded; every other outcome is the Fail activity's error code, and its message now names the calling run ID (final review), which keys the result path `results/runs/sec/<run ID>/<command>/launch-<n>/result.json`.
+  - **Alerts.** Ten rules named `alert-sec-edgar-<slug>`; eight per-run rules are enabled, and `alert-sec-edgar-reconcile-staleness` and `alert-sec-edgar-daily-staleness` deploy disabled and stateful (Stage 8 enables them with their triggers). Any redeploy re-disables both; the runbook's redeploy list ends with re-enabling them.
+  - **Differences from the roadmap's Produces line.** The pinned image is not built here: the local image proves the commands run, and the release image is built by ACR quick task in Stage 7 (S7-05), so its digest will differ (D1, D6). Triggers `tr-sec-edgar-daily` and `tr-sec-edgar-reconcile` deploy stopped with Eastern time-zone recurrences; nothing starts them.
+  - **Deviations that change what Stage 7 sees.** The Location the pipeline follows is validated more strictly than the plan's code (any dot segment, `\`, `%` anywhere, TAB/LF/CR, `#`, exactly one `api-version`): a real Location carrying `%` or `\` ends `execution_unknown` for operator recovery. Every wait is capped to the 4,200 s observation deadline and no observation GET is issued after it (final review). Registry access is granted to the pull identity alone and the job waits for it (final review); the operator also holds Blob Reader on `results` (owner, 2026-10-13; spec §5).
+  - **Assumptions to prove live (beyond spec §11).** ADF's expression lexer accepts a raw TAB, LF or CR inside a quoted literal; `int()` reads an 18-digit negative text value and `string()` of a long gives plain digits (otherwise every launch ends `execution_unknown` after a real start, and each run alerts); `waitTimeInSeconds: 0` is accepted; real Location headers carry no `%` or `\` (signed query parameters included) and a region segment equal to `asyncPrefix` (`main.bicep:181`); an operation result names the execution as `{id, name}` (a 202 body that names it is a fallback only when the Location is invalid; no scenario pins that precedence); a GET whose deadline check passed just before the deadline can go out one activity dispatch later, at most once per launch; ADF wraps a non-JSON result body as `{Response: …}`, which classifies `result_mismatch`, not the offline model's `result_missing` (S7-09); the Web activity output cap (F1 cites 4 MB) could end a large backfill result as `result_missing` on every run; the `ContainerAppConsoleLogs` columns `JobName` and `Log`, and the `ADFActivityRun` columns `ErrorCode` and `PipelineRunId` with a Fail activity's custom code in `ErrorCode`, are what the queries use (`skipQueryValidation` hides a wrong name), and `arg_max` with no `by` over an empty window returns no row; RBAC at table scope, user-assigned identity replication and AcrPull propagation (a first deployment may need one retry); the Bicep property bodies for the types Bicep 0.38.33 does not know (BCP081: Storage, ACR, Log Analytics, Jobs and managedEnvironments at the pinned API versions) pass `validate` and `what-if`.
+  - **Refusals.** `az deployment … validate` and `what-if` were never run, nothing logs in to Azure, and all 22 integrated checks remain reserved/not_run. The subscription-scope `access-subscription` deployment name is fixed with `deployment().location`, so every subscription deploy must use the same `--location`.
+  - **Deferred into Stage 7** (`specs/deferred_items.md`, section `10-sec-filing-index-ingestion-stage-6-spec`): the live-verification list above, the run-time pipeline parameter hardening, and the open `summary_error` alert item from Plan 9 (to close before the Stage 7 deploy; `emit_summary` leaves `last_successful_reconcile_at` and `discovery_complete` null when an extra fails, so `alert-sec-edgar-reconcile-staleness` fires on it and `alert-sec-edgar-daily-staleness` drops that run).
+- **Stage 8 (baseline and scheduled-operation acceptance)** consumes the stopped triggers and the staleness alerts. The triggers' start times are deployment parameters, so the schedule is chosen at release; enabling a trigger and its matching staleness alert is an explicit release step (runbook "Triggers and staleness alerts"; the runbook gives no alert-enable command, so Stage 7 verifies one). `pl-sec-edgar-backfill` has no trigger. A gated reconciliation ends `awaiting_approval` and is never success, and its alert is the pending-approval alert, not the failed-job alert. The daily staleness alert fires at 30 hours with no complete discovery and the reconcile one at eight days; a no-new-file daily run is `success` with `discovery_complete` true, so weekends alone do not alert.

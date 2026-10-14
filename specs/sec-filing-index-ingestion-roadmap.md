@@ -104,7 +104,7 @@ Production triggers remain disabled through Stage 7 (§7).
       Exit: All three workflows exercise the same acquisition/ETL implementation (R5); corrected fixtures produce expected deltas and unchanged-input outcomes (R7); approval, stale-replay and reintroduction fixtures yield the expected active membership (R10).
       ROUTING: writing-plans
 
-- [ ] Stage 6: Azure orchestration and deployment definitions
+- [x] Stage 6: Azure orchestration and deployment definitions
       Objective: Package the complete worker and connect it to the selected Azure services through versioned deployment definitions.
       Spec: §§4.1, 4.7–4.9, 5–6, 7 step 2, 8.
       Gap closed: R4; R11; Worker/pipeline delivery.
@@ -112,6 +112,8 @@ Production triggers remain disabled through Stage 7 (§7).
       Produces: Pinned worker image, Azure resources/identities, ADF pipelines with start/poll/result handling, disabled triggers, telemetry/alerts and versioned configuration; the read-only operator `history` command (deferred item "Read-only `history` CLI"; owner-approved at resume, 2026-10-12).
       Exit: Infrastructure and orchestration checks exercise the selected service boundaries (R4); configuration/schedule checks enforce accepted defaults (R11); the built image runs every command and start/status/result failures cannot pass a pipeline (Worker/pipeline delivery).
       ROUTING: writing-plans
+      > Stage 6: COMPLETE (2026-10-13) — implemented by plan 10 (specs/plans/completed/10-sec-filing-index-ingestion-stage-6-spec.md), after plan 9 (specs/plans/completed/9-sec-filing-index-ingestion-stage-6-spec.md). Its Handoff section names what Stages 7 and 8 consume.
+      > Next: resume the roadmap.
 
 - [ ] Stage 7: Deployment checkpoint and recovery evidence
       Objective: Validate the integrated system in isolation and establish measured release/recovery evidence before production operation.

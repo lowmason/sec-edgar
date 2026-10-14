@@ -337,3 +337,90 @@
       (Plan 10 D6). Size: quick-fix. Done when: `docker image ls -a --digests` at the next
       `colima start`, before any build, shows nothing or only the pinned
       `python@sha256:d1e795fb…` base.
+
+## 10-sec-filing-index-ingestion-stage-6-spec — 2026-10-13
+- [ ] Stage 7 must prove the Stage 6 offline assumptions against live Azure (final review of
+      plan 10): every Stage 6 template, pipeline and alert was checked only offline against
+      the committed `main.json`, pipeline JSON and alert KQL, so these remain assumptions:
+      ADF's expression lexer accepts a raw TAB, LF or CR inside a quoted literal and `int()`
+      reads an 18-digit negative text value (`pipelines/render.py` wait cap and `Location`
+      validation); `waitTimeInSeconds: 0` is accepted; a real `Location` header carries no
+      `%` or `\` and its region segment equals `asyncPrefix` (`main.bicep:181`); an operation
+      result names the execution as `{id, name}` (a 202 body naming it is only a fallback when
+      the `Location` is invalid, and no scenario pins that precedence); ADF wraps a non-JSON
+      result body as `{Response: …}` (classifies `result_mismatch`, not `result_missing`;
+      S7-09); the Web activity output cap (F1 cites 4 MB) does not end a large backfill result
+      as `result_missing` on every run; the queries' columns (`ContainerAppConsoleLogs`
+      `JobName` and `Log`; `ADFActivityRun` `ErrorCode` and `PipelineRunId`, with a Fail
+      activity's custom code in `ErrorCode`) exist (`skipQueryValidation` hides a wrong name),
+      each alert fires (S7-17), and `summarize arg_max(...)` with no `by` over an empty window
+      returns no row (so `alert-sec-edgar-reconcile-staleness` is silent when no
+      `workflow_summary` lands in two days); table-scope RBAC, user-assigned identity
+      replication and AcrPull propagation (a first deployment may need one retry); and the
+      Bicep property bodies that Bicep 0.38.33 cannot type (BCP081: Storage, ACR, Log
+      Analytics, Jobs and managedEnvironments at the pinned API versions) pass `validate` and
+      `what-if`. Also pin the grant `name` (a `guid` of scope id, principal and role) and each
+      access deployment's `roleDefinitions` dependency, which neither `AccessTests` nor
+      `GrantSetTests` checks, once a redeploy's what-if shows no change. Size: plan. Done when:
+      Stage 7's checks (S7-05, S7-06, S7-09, S7-17 and the validate/what-if runs) have proven
+      or refuted each assumption and any wrong one is corrected in
+      `infra/azure/sec-edgar-ingest/`.
+- [ ] Run-time pipeline parameters can redirect the ADF identity's tokens (final review of
+      plan 10): `jobPath`, `asyncPrefix`, `resultsUrl`, `imageRef`, `imageDigest` and
+      `containerEnv` are parameters of `pl-sec-edgar-run-worker` (`modules/factory.bicep`,
+      `DEFAULTS` in `pipelines/render.py`). A direct run by a principal holding createRun with
+      `jobPath='.evil.example/x'` changes the host of `concat('https://management.azure.com',
+      jobPath)`, or points `resultsUrl` anywhere, or starts another image. Scheduled runs
+      pass only `command` and `runId`, so they stay pinned, and spec §5 treats start
+      authority as trusted at worker privilege. Cure: require `jobPath` to start with
+      `/subscriptions/` and to contain none of `@`, `.` and `:`, validate `resultsUrl` and
+      `asyncPrefix` the same way, or move the pinned values out of parameters; add scenario
+      rows. Size: quick-fix. Done when: a direct run with a hostile value ends
+      `execution_unknown` before any request is sent. Revisit if: another principal is given
+      createRun on the factory.
+- [ ] ADF interpreter validation gaps (plan 10 Task 1 and final reviews):
+      `packages/sec-edgar-ingest/tests/adf_interpreter.py` checks function arity only when an
+      expression is evaluated (a wrong-arity call in an untaken lazy branch passes
+      `validate_pipeline`), does not check `pipeline().parameters.X` references (a typo
+      fails one activity at run time and can be masked), defaults an unset `Bool` variable to
+      `''`, and raises `KeyError` or `AttributeError` instead of `AdfUnsupported` for a Switch
+      case without `activities` or when `run` skips `validate_pipeline`. Every pipeline test
+      calls `validate_pipeline`, and ADF publish validation is the backstop. Size: quick-fix.
+      Done when: `validate_pipeline` walks arity and parameter references, with tests.
+      Revisit if: `adf_interpreter.py` is next edited.
+- [ ] Run-worker scenario and fault coverage (plan 10 Task 2 and final reviews): add a
+      `SCENARIOS` row for an `Azure-AsyncOperation` header alone (the pipeline never reads it,
+      so the behaviour is structural), rows for the 202-with-body precedence, key the fault
+      suite by (activity, occurrence) so a fault can hit launch 2 only, and derive the Until
+      budget assertion in `test_run_worker_pipeline.py` from `DEFAULTS` instead of
+      `3 * 3600 >= 2 * (4200 + 600)`. Also tighten `execution_reference` in
+      `pipelines/render.py`, which accepts `.`, `..`, `\` and TAB/LF/CR as an execution name
+      (it fails safe because the host is fixed and the result must name the execution), once
+      Stage 7 records real execution-name syntax. Size: quick-fix. Done when: the rows and the
+      derived assertion exist and `execution_reference` matches the observed name syntax.
+- [ ] Compare `support_adf.DEFAULTS` with the template (plan 10 Task 5 review): `DEFAULTS`
+      values for `containerName`, `containerResources`, `containerEnv` names and
+      `maxLaunches == 1 + transient_replays` agree with `modules/job.bicep` and `main.bicep`
+      today only by duplicated literals; `test_azure_template.py` checks names and the
+      default-bearing parameters but not these values. Size: quick-fix. Done when: the test
+      asserts them against `job_container` and the config template.
+- [ ] Operations runbook polish (plan 10 Task 8 review),
+      `docs/runbooks/sec-edgar-azure-operations.md`: the `stale` row says "re-run `candidates`
+      or `history`" but `sec-edgar-reconciliation-approval.md` says reconcile then review
+      candidates (`approval_stale`) or re-run `history` (`rollback_stale`), and no pipeline
+      command emits exit 11 today (a defensive mapping, say so); the `pending` row's "the
+      second launch" holds only while `transient_replays` is 1 (capped at 1 in
+      `config.py`) and "the next scheduled run continues" does not apply to
+      `pl-sec-edgar-backfill`, which has no trigger; Deploy step 4 names validate, what-if and
+      deploy but shows only what-if; the redeploy step "re-enable both staleness alerts" says
+      the runbook states no command and should carry a verified one; the trigger start-time
+      parameters are length-checked only, so say the exact no-Z format. Size: quick-fix.
+      Done when: Stage 7's runbook exercise has verified each command and the rows are
+      corrected (the alert-enable command by Stage 8).
+- [ ] Plan-exit check script polish (plan 10 Task 9 review):
+      `scripts/check-sec-edgar-ingest.sh` runs `git diff --exit-code -- …/pipelines`, which
+      misses a newly rendered untracked pipeline file and false-fails on pre-existing
+      uncommitted edits, and leaks its temp directory when the Bicep build or `cmp` fails (no
+      `trap`). Cure: add `git status --porcelain -- infra/azure/sec-edgar-ingest/pipelines`
+      and a `trap 'rm -rf "$compiled"' EXIT`. Size: quick-fix. Revisit if: a pipeline file is
+      added or the script is next edited.
