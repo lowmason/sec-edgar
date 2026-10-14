@@ -106,6 +106,12 @@ class AlertDeploymentTests(unittest.TestCase):
                          ('LogAlert', 'GreaterThan', 0, 'Count'))
         self.assertEqual(rule['properties']['actions'], {'actionGroups': ["[parameters('actionGroupId')]"]})
         self.assertEqual(rule['properties']['scopes'], ["[parameters('workspaceId')]"])
+        # One rule per alerts entry, taking its enabled and stateful values; queries skip validation (plan item 9).
+        self.assertEqual(rule['copy']['count'], "[length(variables('alerts'))]")
+        self.assertEqual((rule['properties']['enabled'], rule['properties']['autoMitigate'],
+                          rule['properties']['skipQueryValidation']),
+                         ("[variables('alerts')[copyIndex()].enabled]", "[variables('alerts')[copyIndex()].stateful]",
+                          True))
 
 
 class OperationsRunbookTests(unittest.TestCase):

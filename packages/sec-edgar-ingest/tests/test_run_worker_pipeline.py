@@ -314,6 +314,7 @@ FAULT_BASES = {
 class RunWorkerFaultTests(unittest.TestCase):
     def test_a_fault_in_any_activity_never_relaunches_blindly_or_succeeds_falsely(self):
         names = [activity['name'] for activity, _ in walk_activities(load('pl-sec-edgar-run-worker')['activities'])]
+        self.assertEqual(len(names), 47)
         for base, launches in FAULT_BASES.items():
             clean = run_worker(launches())
             for name in names:

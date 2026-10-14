@@ -298,6 +298,12 @@ class JobAndFactoryTests(unittest.TestCase):
         looped, = [resource for resource in resources(self.factory, 'Microsoft.DataFactory/factories/pipelines')
                    if 'copy' in resource]
         self.assertEqual(looped['properties'], "[variables('callers')[copyIndex()].definition]")
+        # The factory lifts only activities and variables from the committed run-worker JSON, so it holds no more.
+        self.assertEqual(set(committed), {'activities', 'variables'})
+        # Four pipelines in all: run-worker and one loop over the three callers.
+        self.assertEqual(len(resources(self.factory, 'Microsoft.DataFactory/factories/pipelines')), 2)
+        self.assertEqual(looped['copy']['count'], "[length(variables('callers'))]")
+        self.assertEqual(1 + len(callers), 4)
 
 
 class AccessTests(unittest.TestCase):
