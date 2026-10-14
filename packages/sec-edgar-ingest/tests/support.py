@@ -1564,8 +1564,10 @@ def acquisition_race_entry(root, company, request_barrier, staged_barrier, bindi
 
 
 def _integrated_settings():
-    return fixture_settings(http={'exchange_deadline_seconds': 0.8},
-                            coordination={'lease_seconds': 2, 'renew_every_seconds': 1, 'clock_uncertainty_seconds': 0.05})
+    # The lease outlasts both successors' spawn and queueing, so they queue inside the unsafe interval.
+    return spawn_tolerant_settings(coordination={'lease_seconds': 2 * SPAWN_ALLOWANCE_SECONDS,
+                                                 'renew_every_seconds': SPAWN_ALLOWANCE_SECONDS,
+                                                 'clock_uncertainty_seconds': 0.05})
 
 
 def _append_process_event(path, event, **fields):
@@ -1586,7 +1588,8 @@ def integrated_old_sender(root, url, origin, cancellation):
     store, objects, leases = store_bundle(root / 'state', clock=clock)
     coordinator = Coordinator(settings, store, leases, clock)
     coordinator.observer = lambda event: _append_process_event(root / 'old-events.jsonl', 'coordinator', value=event)
-    sender = loopback_sender(settings, clock, origin, spool=root / 'old-sender')
+    # The old child always starts late, so every run shows the dispatch window absorbing a slow spawn.
+    sender = loopback_sender(settings, clock, origin, target=slow_spawn_child_exchange, spool=root / 'old-sender')
     context = real_context(clock, settings)
     with coordinator.turn('integrated-old-owner', 'backfill', context.deadline) as turn:
         turn.cancelled = cancellation
@@ -1630,7 +1633,7 @@ def integrated_successor(root, priority, servers, ready):
     client.jitter = lambda: 0
     context = replace(real_context(clock, settings), run_id='integrated-' + priority,
                       execution_id='integrated-' + priority, attempt_id='integrated-' + priority,
-                      priority=priority, deadline=clock.now() + timedelta(seconds=20))
+                      priority=priority, deadline=clock.now() + timedelta(seconds=4 * SPAWN_WAIT_SECONDS))
     try:
         if priority == 'daily':
             listing = client.fetch('https://www.sec.gov/Archives/edgar/daily-index/2026/QTR4/index.json', context)
@@ -1666,7 +1669,7 @@ def integrated_takeover_proof():
         processes = [old_process]
         try:
             old_process.start()
-            if not old.connected.wait(3): raise AssertionError('old child did not reach held loopback')
+            if not old.connected.wait(SPAWN_WAIT_SECONDS): raise AssertionError('old child did not reach held loopback')
             old_process.terminate()
             old_process.join(2)
             killed = time.monotonic()
@@ -1681,18 +1684,18 @@ def integrated_takeover_proof():
             daily = spawn.Process(target=integrated_successor, args=(str(root), 'daily', mapping[:3], daily_ready))
             processes += [backfill, daily]
             backfill.start()
-            if not backfill_ready.wait(2): raise AssertionError('backfill client failed to queue')
+            if not backfill_ready.wait(SPAWN_WAIT_SECONDS): raise AssertionError('backfill client failed to queue')
             daily.start()
-            if not daily_ready.wait(2): raise AssertionError('daily client failed to queue')
+            if not daily_ready.wait(SPAWN_WAIT_SECONDS): raise AssertionError('daily client failed to queue')
             observations = []
             while time.monotonic() < unsafe_mono - 0.02:
                 observations.append({'monotonic': time.monotonic(), 'successor_requests': sum(len(server.requests) for server in specs)})
                 if observations[-1]['successor_requests']: raise AssertionError('successor reached loopback inside persisted unsafe interval')
                 time.sleep(min(0.025, max(0, unsafe_mono - 0.02 - time.monotonic())))
             for process in (daily, backfill):
-                process.join(10)
+                process.join(4 * SPAWN_WAIT_SECONDS)
                 if process.exitcode != 0: raise AssertionError('integrated successor failed: ' + str(process.exitcode))
-            if not old.closed.wait(1): raise AssertionError('orphan old child socket did not drain')
+            if not old.closed.wait(SPAWN_WAIT_SECONDS): raise AssertionError('orphan old child socket did not drain')
             old_transport = [json.loads(line) for line in (root / 'old-sender/transport.jsonl').read_text().splitlines()]
             armed = next(event for event in old_transport if event['event'] == 'alarm-armed')
             status = subprocess.run(['ps', '-o', 'stat=', '-p', str(armed['pid'])], capture_output=True, text=True, timeout=1)
@@ -1701,7 +1704,7 @@ def integrated_takeover_proof():
             backfill_events = [json.loads(line) for line in (root / 'backfill-events.jsonl').read_text().splitlines()]
             starts = sorted([{'priority': 'daily' if index < 3 else 'backfill', **event} for index, server in enumerate(specs) for event in server.events if event['event'] == 'request-received'], key=lambda event: event['monotonic'])
             for before, after in zip(starts, starts[1:]):
-                if after['monotonic'] - before['monotonic'] < 1 / 3: raise AssertionError('shared wire pacing compressed across listing/retry/download')
+                if after['monotonic'] - before['monotonic'] < 1 / _integrated_settings().sec.requests_per_second: raise AssertionError('shared wire pacing compressed across listing/retry/download')
             child_traces = {path.relative_to(root).as_posix(): [json.loads(line) for line in path.read_text().splitlines()] for path in root.rglob('transport.jsonl')}
             proof = {'parent_pid': old_process.pid, 'parent_exit': old_process.exitcode, 'killed_at': killed,
                      'successor_exit': daily.exitcode, 'successor_processes': [{'pid': process.pid, 'exit': process.exitcode} for process in (daily, backfill)],
