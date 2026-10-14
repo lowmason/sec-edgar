@@ -1,0 +1,679 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.38.33.27573",
+      "templateHash": "6706487779991208868"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "eastus",
+      "allowedValues": [
+        "eastus",
+        "eastus2",
+        "centralus"
+      ],
+      "metadata": {
+        "description": "Region for every regional resource, in F1 region order."
+      }
+    },
+    "configJson": {
+      "type": "string",
+      "metadata": {
+        "description": "Canonical Azure config rendered by python -m sec_edgar_ingest.deployment (spec §4)."
+      }
+    },
+    "configSha256": {
+      "type": "string",
+      "minLength": 64,
+      "maxLength": 64,
+      "metadata": {
+        "description": "config_sha256 of configJson, from the same render."
+      }
+    },
+    "operatorPrincipalId": {
+      "type": "string",
+      "metadata": {
+        "description": "Entra object ID of the operator, Lowell Mason (spec §5)."
+      }
+    },
+    "dailyStartTime": {
+      "type": "string",
+      "minLength": 19,
+      "maxLength": 19,
+      "metadata": {
+        "description": "First daily trigger time: Eastern local yyyy-MM-ddTHH:mm:ss, without Z (spec §7.4)."
+      }
+    },
+    "reconcileStartTime": {
+      "type": "string",
+      "minLength": 19,
+      "maxLength": 19,
+      "metadata": {
+        "description": "First reconciliation trigger time: Eastern local yyyy-MM-ddTHH:mm:ss, without Z (spec §7.4)."
+      }
+    }
+  },
+  "variables": {
+    "$fxv#0": {
+      "definitions": [
+        {
+          "roleName": "SecEdgar Job Controller",
+          "description": "Start and read the sec-edgar-ingest job and its executions.",
+          "actions": [
+            "Microsoft.App/jobs/read",
+            "Microsoft.App/jobs/start/action",
+            "Microsoft.App/jobs/execution/read",
+            "Microsoft.App/jobs/executions/read"
+          ],
+          "dataActions": []
+        },
+        {
+          "roleName": "SecEdgar Job Async Observer",
+          "description": "Read Container Apps job start operations for the sec-edgar-ingest job.",
+          "actions": [
+            "Microsoft.App/locations/containerappsjoboperationresults/read",
+            "Microsoft.App/locations/containerappsjoboperationstatuses/read"
+          ],
+          "dataActions": []
+        },
+        {
+          "roleName": "SecEdgar Blob Reader",
+          "description": "Read blobs in one sec-edgar-ingest container.",
+          "actions": [],
+          "dataActions": [
+            "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read"
+          ]
+        },
+        {
+          "roleName": "SecEdgar Blob Writer",
+          "description": "Read and write blobs in one sec-edgar-ingest container.",
+          "actions": [],
+          "dataActions": [
+            "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read",
+            "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/write"
+          ]
+        },
+        {
+          "roleName": "SecEdgar Entity Reader",
+          "description": "Read entities in one sec-edgar-ingest table.",
+          "actions": [],
+          "dataActions": [
+            "Microsoft.Storage/storageAccounts/tableServices/tables/entities/read"
+          ]
+        },
+        {
+          "roleName": "SecEdgar Entity Writer",
+          "description": "Read, add and update entities in one sec-edgar-ingest table.",
+          "actions": [],
+          "dataActions": [
+            "Microsoft.Storage/storageAccounts/tableServices/tables/entities/read",
+            "Microsoft.Storage/storageAccounts/tableServices/tables/entities/add/action",
+            "Microsoft.Storage/storageAccounts/tableServices/tables/entities/update/action"
+          ]
+        }
+      ],
+      "builtins": {
+        "AcrPull": "7f951dda-4ed3-4680-a7ca-43fe172d538d"
+      },
+      "assignments": [
+        {
+          "principal": "adf",
+          "role": "SecEdgar Job Controller",
+          "scope": "job"
+        },
+        {
+          "principal": "adf",
+          "role": "SecEdgar Job Async Observer",
+          "scope": "subscription"
+        },
+        {
+          "principal": "adf",
+          "role": "SecEdgar Blob Reader",
+          "scope": "container:results"
+        },
+        {
+          "principal": "worker",
+          "role": "SecEdgar Blob Writer",
+          "scope": "container:raw"
+        },
+        {
+          "principal": "worker",
+          "role": "SecEdgar Blob Writer",
+          "scope": "container:worksets"
+        },
+        {
+          "principal": "worker",
+          "role": "SecEdgar Blob Writer",
+          "scope": "container:results"
+        },
+        {
+          "principal": "worker",
+          "role": "SecEdgar Blob Writer",
+          "scope": "container:quarantine"
+        },
+        {
+          "principal": "worker",
+          "role": "SecEdgar Blob Writer",
+          "scope": "container:generations"
+        },
+        {
+          "principal": "worker",
+          "role": "SecEdgar Blob Writer",
+          "scope": "container:manifests"
+        },
+        {
+          "principal": "worker",
+          "role": "SecEdgar Blob Writer",
+          "scope": "container:locks"
+        },
+        {
+          "principal": "worker",
+          "role": "SecEdgar Blob Reader",
+          "scope": "container:approvals"
+        },
+        {
+          "principal": "worker",
+          "role": "SecEdgar Entity Writer",
+          "scope": "table:SourceState"
+        },
+        {
+          "principal": "worker",
+          "role": "SecEdgar Entity Writer",
+          "scope": "table:Attempts"
+        },
+        {
+          "principal": "worker",
+          "role": "SecEdgar Entity Writer",
+          "scope": "table:ActivePointers"
+        },
+        {
+          "principal": "worker",
+          "role": "SecEdgar Entity Reader",
+          "scope": "table:Approvals"
+        },
+        {
+          "principal": "pull",
+          "role": "AcrPull",
+          "scope": "registry"
+        },
+        {
+          "principal": "operator",
+          "role": "SecEdgar Blob Reader",
+          "scope": "container:locks"
+        },
+        {
+          "principal": "operator",
+          "role": "SecEdgar Blob Reader",
+          "scope": "container:worksets"
+        },
+        {
+          "principal": "operator",
+          "role": "SecEdgar Blob Reader",
+          "scope": "container:generations"
+        },
+        {
+          "principal": "operator",
+          "role": "SecEdgar Blob Reader",
+          "scope": "container:manifests"
+        },
+        {
+          "principal": "operator",
+          "role": "SecEdgar Blob Reader",
+          "scope": "container:approvals"
+        },
+        {
+          "principal": "operator",
+          "role": "SecEdgar Blob Writer",
+          "scope": "container:approvals"
+        },
+        {
+          "principal": "operator",
+          "role": "SecEdgar Entity Reader",
+          "scope": "table:SourceState"
+        },
+        {
+          "principal": "operator",
+          "role": "SecEdgar Entity Writer",
+          "scope": "table:ActivePointers"
+        },
+        {
+          "principal": "operator",
+          "role": "SecEdgar Entity Writer",
+          "scope": "table:Approvals"
+        }
+      ]
+    },
+    "names": {
+      "group": "rg-sec-edgar-dev-eastus",
+      "environment": "cae-sec-edgar-dev-eastus",
+      "job": "job-sec-edgar-dev",
+      "factory": "adf-sec-edgar-dev",
+      "workspace": "law-sec-edgar-dev",
+      "actionGroup": "ag-sec-edgar-dev",
+      "storage": "secedgardevb8617",
+      "registry": "secedgardevb8617",
+      "worker": "id-sec-edgar-dev-worker",
+      "pull": "id-sec-edgar-dev-pull"
+    },
+    "containers": [
+      "raw",
+      "worksets",
+      "quarantine",
+      "locks",
+      "results",
+      "generations",
+      "manifests",
+      "approvals"
+    ],
+    "tables": [
+      "SourceState",
+      "Attempts",
+      "ActivePointers",
+      "Approvals"
+    ],
+    "roles": "[variables('$fxv#0')]",
+    "roleIds": "[union(toObject(variables('roles').definitions, lambda('role', lambdaVariables('role').roleName), lambda('role', guid(subscription().id, lambdaVariables('role').roleName))), variables('roles').builtins)]",
+    "config": "[json(parameters('configJson'))]",
+    "registryServer": "[format('{0}.azurecr.io', variables('names').registry)]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/resourceGroups",
+      "apiVersion": "2024-03-01",
+      "name": "[variables('names').group]",
+      "location": "[parameters('location')]"
+    },
+    {
+      "copy": {
+        "name": "roleDefinitions",
+        "count": "[length(variables('roles').definitions)]"
+      },
+      "type": "Microsoft.Authorization/roleDefinitions",
+      "apiVersion": "2022-04-01",
+      "name": "[guid(subscription().id, variables('roles').definitions[copyIndex()].roleName)]",
+      "properties": {
+        "roleName": "[variables('roles').definitions[copyIndex()].roleName]",
+        "description": "[variables('roles').definitions[copyIndex()].description]",
+        "type": "CustomRole",
+        "permissions": [
+          {
+            "actions": "[variables('roles').definitions[copyIndex()].actions]",
+            "notActions": [],
+            "dataActions": "[variables('roles').definitions[copyIndex()].dataActions]",
+            "notDataActions": []
+          }
+        ],
+        "assignableScopes": [
+          "[subscription().id]"
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "identities",
+      "resourceGroup": "[variables('names').group]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "workerName": {
+            "value": "[variables('names').worker]"
+          },
+          "pullName": {
+            "value": "[variables('names').pull]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.38.33.27573",
+              "templateHash": "11498766739232988585"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string"
+            },
+            "workerName": {
+              "type": "string"
+            },
+            "pullName": {
+              "type": "string"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+              "apiVersion": "2024-11-30",
+              "name": "[parameters('workerName')]",
+              "location": "[parameters('location')]"
+            },
+            {
+              "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+              "apiVersion": "2024-11-30",
+              "name": "[parameters('pullName')]",
+              "location": "[parameters('location')]"
+            }
+          ],
+          "outputs": {
+            "workerId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('workerName'))]"
+            },
+            "workerClientId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('workerName')), '2024-11-30').clientId]"
+            },
+            "workerPrincipalId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('workerName')), '2024-11-30').principalId]"
+            },
+            "pullId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('pullName'))]"
+            },
+            "pullPrincipalId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('pullName')), '2024-11-30').principalId]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('names').group)]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "registry",
+      "resourceGroup": "[variables('names').group]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "name": {
+            "value": "[variables('names').registry]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.38.33.27573",
+              "templateHash": "17828038071181448790"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.ContainerRegistry/registries",
+              "apiVersion": "2025-11-01",
+              "name": "[parameters('name')]",
+              "location": "[parameters('location')]",
+              "sku": {
+                "name": "Basic"
+              },
+              "properties": {
+                "adminUserEnabled": false,
+                "anonymousPullEnabled": false,
+                "publicNetworkAccess": "Enabled",
+                "roleAssignmentMode": "LegacyRegistryPermissions",
+                "policies": {
+                  "azureADAuthenticationAsArmPolicy": {
+                    "status": "enabled"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('names').group)]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "monitoring",
+      "resourceGroup": "[variables('names').group]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "workspaceName": {
+            "value": "[variables('names').workspace]"
+          },
+          "actionGroupName": {
+            "value": "[variables('names').actionGroup]"
+          },
+          "email": {
+            "value": "mason.lowell@mac.com"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.38.33.27573",
+              "templateHash": "6413967047896324325"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string"
+            },
+            "workspaceName": {
+              "type": "string"
+            },
+            "actionGroupName": {
+              "type": "string"
+            },
+            "email": {
+              "type": "string"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.OperationalInsights/workspaces",
+              "apiVersion": "2025-07-01",
+              "name": "[parameters('workspaceName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "sku": {
+                  "name": "PerGB2018"
+                },
+                "retentionInDays": 90
+              }
+            },
+            {
+              "type": "Microsoft.Insights/actionGroups",
+              "apiVersion": "2023-01-01",
+              "name": "[parameters('actionGroupName')]",
+              "location": "Global",
+              "properties": {
+                "groupShortName": "secedgar",
+                "enabled": true,
+                "emailReceivers": [
+                  {
+                    "name": "operator",
+                    "emailAddress": "[parameters('email')]",
+                    "useCommonAlertSchema": true
+                  }
+                ]
+              }
+            }
+          ],
+          "outputs": {
+            "workspaceId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('workspaceName'))]"
+            },
+            "actionGroupId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Insights/actionGroups', parameters('actionGroupName'))]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('names').group)]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "storage",
+      "resourceGroup": "[variables('names').group]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "name": {
+            "value": "[variables('names').storage]"
+          },
+          "containers": {
+            "value": "[variables('containers')]"
+          },
+          "tables": {
+            "value": "[variables('tables')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.38.33.27573",
+              "templateHash": "9663676162734105857"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "containers": {
+              "type": "array"
+            },
+            "tables": {
+              "type": "array"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Storage/storageAccounts",
+              "apiVersion": "2025-06-01",
+              "name": "[parameters('name')]",
+              "location": "[parameters('location')]",
+              "kind": "StorageV2",
+              "sku": {
+                "name": "Standard_ZRS"
+              },
+              "properties": {
+                "accessTier": "Hot",
+                "isHnsEnabled": true,
+                "allowBlobPublicAccess": false,
+                "allowSharedKeyAccess": false,
+                "defaultToOAuthAuthentication": true,
+                "minimumTlsVersion": "TLS1_2",
+                "publicNetworkAccess": "Enabled",
+                "supportsHttpsTrafficOnly": true
+              }
+            },
+            {
+              "type": "Microsoft.Storage/storageAccounts/blobServices",
+              "apiVersion": "2025-06-01",
+              "name": "[format('{0}/{1}', parameters('name'), 'default')]",
+              "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('name'))]"
+              ]
+            },
+            {
+              "copy": {
+                "name": "blobContainers",
+                "count": "[length(parameters('containers'))]"
+              },
+              "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+              "apiVersion": "2025-06-01",
+              "name": "[format('{0}/{1}/{2}', parameters('name'), 'default', parameters('containers')[copyIndex()])]",
+              "properties": {
+                "publicAccess": "None"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts/blobServices', parameters('name'), 'default')]"
+              ]
+            },
+            {
+              "type": "Microsoft.Storage/storageAccounts/tableServices",
+              "apiVersion": "2025-06-01",
+              "name": "[format('{0}/{1}', parameters('name'), 'default')]",
+              "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('name'))]"
+              ]
+            },
+            {
+              "copy": {
+                "name": "accountTables",
+                "count": "[length(parameters('tables'))]"
+              },
+              "type": "Microsoft.Storage/storageAccounts/tableServices/tables",
+              "apiVersion": "2025-06-01",
+              "name": "[format('{0}/{1}/{2}', parameters('name'), 'default', parameters('tables')[copyIndex()])]",
+              "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts/tableServices', parameters('name'), 'default')]"
+              ]
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('names').group)]"
+      ]
+    }
+  ]
+}
