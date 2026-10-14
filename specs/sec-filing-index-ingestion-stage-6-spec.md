@@ -368,6 +368,7 @@ All of these read `main.json` and the pipeline and alert sources with the stdlib
 **Assumptions Stage 6 adds to the Stage 7 checks:**
 
 - S7-06: an override's `env` `secretRef` resolves against the job's secrets (§4).
+- S7-06: ADF evaluates the nested expressions in the start body's container to native values. Any other evaluation cannot yield a matching result, so the pipeline ends in a non-success outcome and never relaunches (§7.3). (owner, plan 10, 2026-10-13)
 - S7-08: Container Apps marks a non-zero exit `Failed`. Classification no longer depends on it (§7.3).
 - S7-09: ADF parses a JSON-typed result body into its output object (§7.3).
 - S7-18: the container's writable layer holds the worker's temporary space (§3).
