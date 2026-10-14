@@ -424,3 +424,15 @@
       `trap`). Cure: add `git status --porcelain -- infra/azure/sec-edgar-ingest/pipelines`
       and a `trap 'rm -rf "$compiled"' EXIT`. Size: quick-fix. Revisit if: a pipeline file is
       added or the script is next edited.
+- [ ] Last-second gate and sub-second test polish (plan 10 final review, scoped re-review of
+      the wait fix): the Reset gate (`RESET_WAIT`) needs a full second to spare but the two After
+      gates in `pipelines/render.py` (`After locate`, `After observe`) still use
+      `BEFORE_DEADLINE`, so in the budget's last second the run loops a phase on 0 s waits and
+      refused Resets (no GET is sent; it ends at the deadline). Use `A_SECOND_BEFORE_DEADLINE`
+      in both. In `test_run_worker_pipeline.py`, guard the sub-second tests against the pacing
+      hook silently not reaching activity dispatch (assert the first request's `at` has a
+      non-zero microsecond at pace 0.5), reword the PACES comment (0.3 passes even with a
+      fractional stamp; only the grid test needs the whole-second stamp), and in the paced
+      sweep assert that the largest accepted Retry-After's Reset ran in [D-2, D-1). Size:
+      quick-fix. Done when: the After gates and the three test points are changed, with the
+      pipelines re-rendered and `main.json` rebuilt.

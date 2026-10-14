@@ -82,10 +82,11 @@ def wait(name: str, *depends: dict) -> dict:
 
 
 # Set just before each observation GET. In the budget's last second int() of a word fails it, so the GET is not
-# sent and the phase's After activity classifies. A wait the deadline cut short ends inside that second, so it is
-# never followed by a GET, whatever the sub-second timing; a GET follows only a full wait, and a GET in the last
-# second is refused. A GET whose check passed, at least a second before the deadline, can still go out one activity
-# dispatch later (a few seconds in ADF), at most once per launch; its result is accepted as usual.
+# sent; the phase's After activity, which still counts that second as time left, sends the run round the phase on
+# 0 s waits until the deadline passes and then classifies. A wait the deadline cut short ends inside that second, so
+# it is never followed by a GET, whatever the sub-second timing; a GET follows only a full wait, and a GET in the
+# last second is refused. A GET whose check passed, at least a second before the deadline, can still go out one
+# activity dispatch later (a few seconds in ADF), at most once per launch; its result is accepted as usual.
 RESET_WAIT = f"@string(int(if({A_SECOND_BEFORE_DEADLINE}, string(pipeline().parameters.pollSeconds), 'deadline')))"
 
 STATE = "variables('state')"
