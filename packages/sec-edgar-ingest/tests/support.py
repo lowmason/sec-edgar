@@ -37,6 +37,18 @@ def fixture_settings(**overrides: object) -> "Settings":
     return Settings.from_mapping(value)
 
 
+def spawn_tolerant_settings(**overrides: dict) -> "Settings":
+    """Fixture settings whose real coordinator windows absorb a slow spawn.
+
+    A permit gives its child 1 / requests_per_second to start and exchange_deadline_seconds to finish.
+    """
+    sections = {"sec": {"requests_per_second": 1 / SPAWN_ALLOWANCE_SECONDS},
+                "http": {"exchange_deadline_seconds": SPAWN_ALLOWANCE_SECONDS + 0.5}}
+    for key, value in overrides.items():
+        sections[key] = {**sections.get(key, {}), **value}
+    return fixture_settings(**sections)
+
+
 def fixture_context(command: str = "collect", priority: str = "backfill") -> "RunContext":
     from sec_edgar_ingest.config import pin_context
     from sec_edgar_ingest.models import RunContext
@@ -634,11 +646,12 @@ def retain_download_evidence(name, receipt, code):
 
 class LoopbackServer:
     """Exactly one explicitly fixture-only HTTP peer records accepted sockets and closure."""
-    def __init__(self, body=b"fixture prefix", *, mode="complete", status=200, headers=None):
+    def __init__(self, body=b"fixture prefix", *, mode="complete", status=200, headers=None, drip_seconds=0.02):
         import socket
         import threading
         import time
         self.body, self.mode, self.status, self.headers = body, mode, status, dict(headers or {})
+        self.drip_seconds = drip_seconds
         self.events, self.requests, self.sent = [], [], 0
         self.connected, self.prefix_sent, self.closed, self.stopped = (threading.Event() for _ in range(4))
         self.socket = socket.socket()
@@ -691,7 +704,7 @@ class LoopbackServer:
                 if self.mode == "headers":
                     for byte in response:
                         peer.sendall(bytes([byte]))
-                        if self.stopped.wait(0.02):
+                        if self.stopped.wait(self.drip_seconds):
                             return
                 elif self.mode == "blocked-headers":
                     peer.sendall(b"HTTP/1.1 200 Fixture\r\nX-Fixture: ")
@@ -818,7 +831,7 @@ def crash_supervisor(root, url, origin, cancellation):
     from sec_edgar_ingest.coordination import Clock, Coordinator
     import gc
     clock = Clock()
-    settings = fixture_settings(http={"exchange_deadline_seconds": 0.4}, coordination={"lease_seconds": 2, "renew_every_seconds": 1})
+    settings = spawn_tolerant_settings(coordination={"lease_seconds": 2, "renew_every_seconds": 1})
     store, _, leases = store_bundle(Path(root) / "state", clock=clock)
     coordinator = Coordinator(settings, store, leases, clock)
     sender = loopback_sender(settings, clock, origin, spool=Path(root) / "sender")

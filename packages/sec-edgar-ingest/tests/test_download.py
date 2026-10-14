@@ -8,8 +8,9 @@ from datetime import timedelta
 from email.utils import format_datetime
 from pathlib import Path
 
-from support import (SPAWN_ALLOWANCE_SECONDS, DownloadHarness, body_receipt, download_harness, fixture_context,
-                     fixture_settings, fixture_source, store_bundle, zip_bytes)
+from support import (SPAWN_ALLOWANCE_SECONDS, SPAWN_WAIT_SECONDS, DownloadHarness, body_receipt, download_harness,
+                     fixture_context, fixture_settings, fixture_source, spawn_tolerant_settings, store_bundle,
+                     zip_bytes)
 
 
 class DownloadTests(unittest.TestCase):
@@ -452,7 +453,8 @@ class BoundedProcessTests(unittest.TestCase):
                         "a supervised spawn child and independent fatal timer must bound actual transport")
         from sec_edgar_ingest.coordination import Clock
         self.clock = Clock()
-        self.settings = fixture_settings(http={"exchange_deadline_seconds": 0.4})
+        # Every child here is a real spawn, so the coordinator's windows must absorb a slow one.
+        self.settings = spawn_tolerant_settings()
         self.directory = tempfile.TemporaryDirectory()
         self.addCleanup(self.directory.cleanup)
         self.root = Path(self.directory.name)
@@ -463,7 +465,8 @@ class BoundedProcessTests(unittest.TestCase):
         self.addCleanup(server.close)
         return server
 
-    def send(self, server, *, target=None, cancellation=None, seconds=0.4, start_seconds=1/3):
+    def send(self, server, *, target=None, cancellation=None, seconds=SPAWN_ALLOWANCE_SECONDS + 1,
+             start_seconds=SPAWN_ALLOWANCE_SECONDS):
         import multiprocessing
         from support import loopback_sender, real_context, real_permit
         sender = loopback_sender(self.settings, self.clock, server.origin, target=target, spool=self.root/"sender")
@@ -487,6 +490,28 @@ class BoundedProcessTests(unittest.TestCase):
         self.assertEqual(receipt.sha256, hashlib.sha256(receipt.temporary_path.read_bytes()).hexdigest())
         return events
 
+    def test_default_windows_absorb_a_slow_spawn(self):
+        from sec_edgar_ingest.coordination import Coordinator
+        from support import loopback_sender, real_context, slow_spawn_child_exchange
+        with self.subTest(path="direct send"):
+            server = self.server(b"sent after a slow spawn")
+            receipt = self.send(server, target=slow_spawn_child_exchange)
+            self.assertTrue(receipt.complete, receipt.to_mapping())
+            self.assertEqual(receipt.temporary_path.read_bytes(), server.body)
+            self.assert_drained(receipt)
+        with self.subTest(path="coordinator exchange"):
+            server = self.server(b"exchanged after a slow spawn")
+            store, _, leases = store_bundle(self.root/"state", clock=self.clock)
+            self.addCleanup(store.close)
+            self.addCleanup(leases.close)
+            coordinator = Coordinator(self.settings, store, leases, self.clock)
+            sender = loopback_sender(self.settings, self.clock, server.origin, target=slow_spawn_child_exchange,
+                                     spool=self.root/"coordinated")
+            receipt = coordinator.exchange(real_context(self.clock, self.settings), server.url, sender)
+            self.assertTrue(receipt.complete, receipt.to_mapping())
+            self.assertEqual(receipt.temporary_path.read_bytes(), server.body)
+            self.assert_drained(receipt)
+
     def test_real_trickle_is_cancelled_by_total_lifetime_with_partial_socket_evidence(self):
         import time
         from sec_edgar_ingest.coordination import Coordinator
@@ -501,7 +526,7 @@ class BoundedProcessTests(unittest.TestCase):
         receipt = coordinator.exchange(real_context(self.clock, self.settings), server.url, sender)
         elapsed = time.monotonic()-started
         self.assertFalse(receipt.complete)
-        self.assertLess(elapsed, 1.2)
+        self.assertLess(elapsed, self.settings.http.exchange_deadline_seconds + 0.8)
         self.assertTrue(server.closed.wait(1), "terminated child must close its actual socket")
         self.assertGreater(server.sent, 0)
         self.assertGreater(receipt.byte_count, 0, "trickle bytes sent before timeout must survive the original-byte spool")
@@ -516,7 +541,6 @@ class BoundedProcessTests(unittest.TestCase):
     def test_next_actual_get_waits_for_drain_spacing_after_in_adapter_delay(self):
         from sec_edgar_ingest.coordination import Coordinator
         from support import delayed_adapter_child, loopback_sender, real_context, retain_process_evidence
-        self.settings = fixture_settings(http={"exchange_deadline_seconds": 1.0})
         first = self.server(b"first bounded response")
         second = self.server(b"second bounded response")
         store, _, leases = store_bundle(self.root/"state", clock=self.clock)
@@ -533,7 +557,7 @@ class BoundedProcessTests(unittest.TestCase):
             self.assertTrue(second_receipt.complete, second_receipt.to_mapping())
             first_get = next(event["monotonic"] for event in first.events if event["event"] == "request-received")
             second_get = next(event["monotonic"] for event in second.events if event["event"] == "request-received")
-            self.assertGreaterEqual(second_get-first_get, 1/3, "actual GET timestamps must keep the one owner-wide no-burst budget after DNS/connect/adapter delay")
+            self.assertGreaterEqual(second_get-first_get, 1/self.settings.sec.requests_per_second, "actual GET timestamps must keep the one owner-wide no-burst budget after DNS/connect/adapter delay")
             self.assertTrue(first.closed.wait(1))
             self.assertTrue(second.closed.wait(1))
             self.assert_drained(first_receipt)
@@ -545,11 +569,12 @@ class BoundedProcessTests(unittest.TestCase):
     def test_slow_headers_are_bounded_even_without_inactivity_timeout(self):
         import time
         from support import retain_process_evidence
-        server = self.server(mode="headers")
+        # The header bytes drip for longer than the exchange deadline, so only the deadline can end the exchange.
+        server = self.server(mode="headers", drip_seconds=0.25)
         started = time.monotonic()
         receipt = self.send(server)
         self.assertFalse(receipt.complete)
-        self.assertLess(time.monotonic()-started, 1.2)
+        self.assertLess(time.monotonic()-started, SPAWN_ALLOWANCE_SECONDS + 1 + 0.8)
         self.assertTrue(server.closed.wait(1))
         self.assert_drained(receipt)
         retain_process_evidence("slow-headers", receipt.temporary_path.parent, server, {"receipt": receipt.to_mapping()})
@@ -595,18 +620,22 @@ class BoundedProcessTests(unittest.TestCase):
         retain_process_evidence("truncated-original-prefix", receipt.temporary_path.parent, server, {"receipt": receipt.to_mapping()})
 
     def test_received_cap_refuses_extra_byte_before_spool_write(self):
-        self.settings = fixture_settings(http={"exchange_deadline_seconds": 0.4, "max_received_bytes": 4})
+        self.settings = spawn_tolerant_settings(http={"max_received_bytes": 4})
         for mode in ("complete", "unadvertised"):
             with self.subTest(mode=mode):
-                server = self.server(b"12345", mode=mode)
-                receipt = self.send(server)
-                self.assertFalse(receipt.complete)
-                self.assertEqual(receipt.error.code, "received_limit")
-                self.assertLessEqual(receipt.byte_count, 4)
-                if mode == "unadvertised":
-                    self.assertEqual(receipt.temporary_path.read_bytes(), b"1234")
-                self.assert_drained(receipt)
-                (self.root/"sender/transport.jsonl").unlink()
+                try:
+                    server = self.server(b"12345", mode=mode)
+                    receipt = self.send(server)
+                    self.assertFalse(receipt.complete)
+                    self.assertEqual(receipt.error.code, "received_limit")
+                    self.assertLessEqual(receipt.byte_count, 4)
+                    if mode == "unadvertised":
+                        self.assertEqual(receipt.temporary_path.read_bytes(), b"1234")
+                    self.assert_drained(receipt)
+                finally:
+                    # The modes share one spool, so a failed mode must not leave its outcome or trace to the next.
+                    for left in ("transport.jsonl", "receipt.json"):
+                        (self.root/"sender"/left).unlink(missing_ok=True)
 
     def test_timer_installation_failure_and_stale_child_start_send_zero_requests(self):
         from support import (retain_process_evidence, slow_spawn_timer_failure_child, stale_preparation_child,
@@ -642,13 +671,13 @@ class BoundedProcessTests(unittest.TestCase):
         server = self.server(b"prefix", mode="trickle")
         cancellation = multiprocessing.get_context("spawn").Event()
         def cancel_after_prefix():
-            if server.prefix_sent.wait(1):
+            if server.prefix_sent.wait(SPAWN_WAIT_SECONDS):
                 cancellation.wait(0.04)
                 cancellation.set()
         thread = threading.Thread(target=cancel_after_prefix)
         thread.start()
         receipt = self.send(server, cancellation=cancellation)
-        thread.join(1)
+        thread.join(SPAWN_WAIT_SECONDS)
         self.assertFalse(receipt.complete)
         self.assertEqual(receipt.error.code, "cancelled")
         self.assertTrue(server.closed.wait(1))
@@ -715,19 +744,19 @@ class BoundedProcessTests(unittest.TestCase):
         import time
         from support import crash_supervisor, loopback_sender, real_context, retain_process_evidence
         from sec_edgar_ingest.coordination import Coordinator
-        self.settings = fixture_settings(http={"exchange_deadline_seconds": 0.4}, coordination={"lease_seconds": 2, "renew_every_seconds": 1})
+        self.settings = spawn_tolerant_settings(coordination={"lease_seconds": 2, "renew_every_seconds": 1})
         server = self.server(mode="blocked-headers")
         spawn = multiprocessing.get_context("spawn")
         cancellation = spawn.Event()
         process = spawn.Process(target=crash_supervisor, args=(str(self.root), server.url, server.origin, cancellation))
         process.start()
         try:
-            self.assertTrue(server.connected.wait(2), "spawn child must reach the selected loopback before supervisor crash")
+            self.assertTrue(server.connected.wait(SPAWN_WAIT_SECONDS), "spawn child must reach the selected loopback before supervisor crash")
             process.terminate()
             process.join(1)
             self.assertFalse(process.is_alive())
             killed_at = time.monotonic()
-            self.assertTrue(server.closed.wait(1), "orphan child must close the blocked socket under its independent OS timer")
+            self.assertTrue(server.closed.wait(SPAWN_WAIT_SECONDS), "orphan child must close the blocked socket under its independent OS timer")
             events = [json.loads(line) for line in (self.root/"sender/transport.jsonl").read_text().splitlines()]
             armed = next(event for event in events if event["event"] == "alarm-armed")
             self.assertEqual(armed["alarm_disposition"], "default-fatal")
@@ -745,7 +774,9 @@ class BoundedProcessTests(unittest.TestCase):
             coordination_events = []
             coordinator.observer = coordination_events.append
             sender = loopback_sender(self.settings, self.clock, successor.origin, spool=self.root/"successor")
-            context = replace(real_context(self.clock, self.settings), priority="daily")
+            # The successor first waits out the dead owner's unsafe interval, so its run deadline is generous.
+            context = replace(real_context(self.clock, self.settings), priority="daily",
+                              deadline=self.clock.now() + timedelta(seconds=4 * SPAWN_WAIT_SECONDS))
             receipt = coordinator.exchange(context, successor.url, sender)
             self.assertTrue(receipt.complete, receipt.to_mapping())
             self.assert_drained(receipt)
