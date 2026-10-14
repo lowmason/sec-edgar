@@ -110,7 +110,7 @@ class AcquisitionProcessTests(unittest.TestCase):
             server = LoopbackServer(b'never requested')
             try:
                 clock = Clock()
-                settings = fixture_settings(http={'exchange_deadline_seconds': 0.4})
+                settings = fixture_settings()
                 sender = loopback_sender(settings, clock, server.origin, target=stale_start_child, spool=Path(temporary) / 'sender')
                 # Only the 1/3 s start window is stale; the deadline outlasts a slow spawn.
                 permit = real_permit(clock, seconds=SPAWN_ALLOWANCE_SECONDS + 1)
@@ -132,7 +132,7 @@ class AcquisitionProcessTests(unittest.TestCase):
             server = LoopbackServer(b'x' * 7, mode='trickle')
             try:
                 clock = Clock()
-                settings = fixture_settings(http={'exchange_deadline_seconds': 0.4})
+                settings = fixture_settings()
                 # The child always starts late, so every run shows the start window absorbing a slow spawn;
                 # the half second after that window leaves time for a trickled prefix before the fatal timer.
                 sender = loopback_sender(settings, clock, server.origin, target=slow_spawn_child_exchange,

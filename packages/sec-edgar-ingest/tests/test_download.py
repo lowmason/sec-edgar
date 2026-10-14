@@ -547,7 +547,9 @@ class BoundedProcessTests(unittest.TestCase):
         self.addCleanup(store.close)
         self.addCleanup(leases.close)
         coordinator = Coordinator(self.settings, store, leases, self.clock)
-        context = real_context(self.clock, self.settings)
+        # Two paced reservations need more than real_context's fixed 10 s run deadline.
+        context = replace(real_context(self.clock, self.settings),
+                          deadline=self.clock.now() + timedelta(seconds=4 * SPAWN_WAIT_SECONDS))
         first_sender = loopback_sender(self.settings, self.clock, first.origin, target=delayed_adapter_child, spool=self.root/"first")
         second_sender = loopback_sender(self.settings, self.clock, second.origin, spool=self.root/"second")
         try:
@@ -557,7 +559,9 @@ class BoundedProcessTests(unittest.TestCase):
             self.assertTrue(second_receipt.complete, second_receipt.to_mapping())
             first_get = next(event["monotonic"] for event in first.events if event["event"] == "request-received")
             second_get = next(event["monotonic"] for event in second.events if event["event"] == "request-received")
-            self.assertGreaterEqual(second_get-first_get, 1/self.settings.sec.requests_per_second, "actual GET timestamps must keep the one owner-wide no-burst budget after DNS/connect/adapter delay")
+            # With spawn-tolerant windows the delayed GET lands inside its charged dispatch window, so this is
+            # end-to-end spacing only; test_coordination pins the drain-based pacing with a logical clock.
+            self.assertGreaterEqual(second_get-first_get, 1/self.settings.sec.requests_per_second, "the second real GET must start at least one configured interval after the first")
             self.assertTrue(first.closed.wait(1))
             self.assertTrue(second.closed.wait(1))
             self.assert_drained(first_receipt)

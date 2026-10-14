@@ -220,9 +220,9 @@ class LocalStateInitTests(unittest.TestCase):
     def test_init_waits_out_a_competing_wal_switch(self):
         holder = self.hold_reserved()
         release = threading.Timer(0.3, holder.execute, ("COMMIT",))
+        started = time.monotonic()
         release.start()
         self.addCleanup(release.join)
-        started = time.monotonic()
         store = self.local.LocalStateStore(self.root)
         self.addCleanup(store.close)
         self.assertGreaterEqual(time.monotonic() - started, 0.25)

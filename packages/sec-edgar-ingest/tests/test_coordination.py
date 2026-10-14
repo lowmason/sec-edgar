@@ -416,6 +416,27 @@ class CoordinationTests(unittest.TestCase):
         h.reserve("two")
         self.assertGreaterEqual((h.starts[1][1]-h.starts[0][1]).total_seconds(), 1/3)
 
+    def test_next_dispatch_waits_one_interval_after_a_drain_later_than_charged_dispatch(self):
+        from support import fixture_clock
+        directory = self.enterContext(tempfile.TemporaryDirectory())
+        clock = fixture_clock()
+        h = self.harness(Path(directory), clock)
+        self.addCleanup(h.close)
+        h.start("one", "backfill")
+        interval = 1/h.coordinators["one"].settings.sec.requests_per_second
+        permit = h.turns["one"].reserve("slow-drain")
+        clock.advance(permit.start_before_mono-clock.monotonic()-0.00001)
+        h.dispatch("one", permit)
+        clock.advance(0.55)
+        drained_at = clock.now()
+        self.assertGreater(drained_at, permit.must_start_before,
+                           "the first request must drain after its charged dispatch time")
+        h.finish_request("one")
+        h.start("two", "daily")
+        h.reserve("two")
+        self.assertGreaterEqual((h.starts[1][1]-drained_at).total_seconds(), interval,
+                                "The next dispatch must wait one interval after the previous request actually drained")
+
     def test_stale_epoch_and_dispatch_deadline_are_refused(self):
         from support import fixture_clock
         directory = self.enterContext(tempfile.TemporaryDirectory())
