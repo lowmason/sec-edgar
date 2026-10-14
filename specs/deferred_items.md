@@ -294,7 +294,7 @@
       `withdrawal_candidates` keeps failing (for example the integrity `Conflict` in
       `etl/history.py`), `pending_approvals` stays null and Plan 10's pending-approval alert
       (`toint(fields.pending_approvals) > 0`,
-      specs/plans/10-sec-filing-index-ingestion-stage-6-spec.md near line 3859) is silently
+      specs/plans/completed/10-sec-filing-index-ingestion-stage-6-spec.md, Task 7, the pending-approval query) is silently
       suppressed on every run. Also, `gap_codes` keys in `workflow_summary` are not limited
       to `EXIT_CODES` names (only `member_outcomes` keys are, and Plan 10's vocabulary test
       covers `member_outcomes` only). Owner (plan 10 review, 2026-10-13): declined for Plan

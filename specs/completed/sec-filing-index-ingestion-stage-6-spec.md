@@ -1,9 +1,9 @@
 # SEC filing-index ingestion — Stage 6: Azure orchestration and deployment definitions
 
-**Status: APPROVED (2026-10-12)** — Lowell Mason approved this spec, its owner decisions (§14) and its defaults ("Approved — write both plans"); implementation not started.
+**Status: COMPLETE (2026-10-13)** — executed via subagent-driven-development; deferred items in specs/deferred_items.md
 **Owner:** Lowell Mason.
-**Implementing plans:** Plan 9 (worker image and operator surface) and Plan 10 (Azure definitions and orchestration), both written after this spec is approved (§13).
-**Authority:** [Parent design](sec-filing-index-ingestion-spec.md), [ADR](sec-filing-index-ingestion-adr.md), [roadmap](sec-filing-index-ingestion-roadmap.md) (Stage 6 entry and "Stage 6 resume — 2026-10-12"), accepted [F1](sec-filing-index-ingestion-stage-1-findings.md), completed [Stage 5 spec](completed/sec-filing-index-ingestion-stage-5-spec.md) and the roadmap's "Stage 5 completion and later-stage consistency" note. Only roadmap Stage 6 (R4, R11, Worker/pipeline delivery) and the `history` command the owner added to its Produces line are specified here.
+**Implementing plans:** [Plan 9](../plans/completed/9-sec-filing-index-ingestion-stage-6-spec.md) (worker image and operator surface) and [Plan 10](../plans/completed/10-sec-filing-index-ingestion-stage-6-spec.md) (Azure definitions and orchestration), both written after this spec was approved (§13). Approved 2026-10-12 (Lowell Mason: "Approved — write both plans").
+**Authority:** [Parent design](../sec-filing-index-ingestion-spec.md), [ADR](../sec-filing-index-ingestion-adr.md), [roadmap](../sec-filing-index-ingestion-roadmap.md) (Stage 6 entry and "Stage 6 resume — 2026-10-12"), accepted [F1](../sec-filing-index-ingestion-stage-1-findings.md), completed [Stage 5 spec](sec-filing-index-ingestion-stage-5-spec.md) and the roadmap's "Stage 5 completion and later-stage consistency" note. Only roadmap Stage 6 (R4, R11, Worker/pipeline delivery) and the `history` command the owner added to its Produces line are specified here.
 
 ## 1. Reconciliation and scope
 
