@@ -34,7 +34,7 @@ GRANTS = (grants('adf', 'SecEdgar Job Controller', 'job')
           | grants('worker', 'SecEdgar Entity Reader', 'table:Approvals')
           | grants('pull', 'AcrPull', 'registry')
           | grants('operator', 'SecEdgar Blob Reader', *(f'container:{name}' for name in (
-              'locks', 'worksets', 'generations', 'manifests', 'approvals')))
+              'locks', 'worksets', 'generations', 'manifests', 'approvals', 'results')))
           | grants('operator', 'SecEdgar Blob Writer', 'container:approvals')
           | grants('operator', 'SecEdgar Entity Reader', 'table:SourceState')
           | grants('operator', 'SecEdgar Entity Writer', 'table:ActivePointers', 'table:Approvals'))
@@ -65,6 +65,13 @@ class RoleMatrixTests(unittest.TestCase):
         handled = {'job', 'registry', 'subscription', *(f'container:{name}' for name in CONTAINERS),
                    *(f'table:{name}' for name in TABLES)}
         self.assertLessEqual({item['scope'] for item in self.roles['assignments']}, handled)
+
+    def test_the_operator_reads_but_never_writes_results(self):
+        # The execution_unknown recovery reads results/runs/sec/<run ID>/<command>/launch-<n>/result.json (owner,
+        # final review, 2026-10-13); shared-key access is off, so only this grant lets the operator read it.
+        operator = {(item['role'], item['scope']) for item in self.roles['assignments'] if item['principal'] == 'operator'}
+        self.assertIn(('SecEdgar Blob Reader', 'container:results'), operator)
+        self.assertNotIn(('SecEdgar Blob Writer', 'container:results'), operator)
 
     def test_the_worker_never_writes_approvals(self):
         writes = {(role, scope) for principal, role, scope in GRANTS if principal == 'worker'}

@@ -155,7 +155,7 @@ This closes the "mistyped path" deferred item. Operators need only Blob read on 
 | ADF system-assigned identity | Job Controller → job; Job Async Observer → subscription; Blob Reader → `results` |
 | Worker UAMI | Blob Writer → `raw`, `worksets`, `results`, `quarantine`, `generations`, `manifests`, `locks`; Blob Reader → `approvals`; Entity Writer → `SourceState`, `Attempts`, `ActivePointers`; Entity Reader → `Approvals` |
 | Pull UAMI | built-in AcrPull → registry |
-| Operator (Lowell, object ID parameter) | Blob Reader → `locks`, `worksets`, `generations`, `manifests`, `approvals`; Blob Writer → `approvals`; Entity Reader → `SourceState`; Entity Writer → `ActivePointers`, `Approvals` |
+| Operator (Lowell, object ID parameter) | Blob Reader → `locks`, `worksets`, `generations`, `manifests`, `approvals`, `results` (owner, final review, 2026-10-13); Blob Writer → `approvals`; Entity Reader → `SourceState`; Entity Writer → `ActivePointers`, `Approvals` |
 
 **Departures from F1's preliminary matrix:**
 
