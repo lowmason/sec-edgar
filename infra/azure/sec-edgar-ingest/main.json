@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.38.33.27573",
-      "templateHash": "6706487779991208868"
+      "templateHash": "7807643425397500966"
     }
   },
   "parameters": {
@@ -673,6 +673,1635 @@
       },
       "dependsOn": [
         "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('names').group)]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "job",
+      "resourceGroup": "[variables('names').group]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "environmentName": {
+            "value": "[variables('names').environment]"
+          },
+          "jobName": {
+            "value": "[variables('names').job]"
+          },
+          "workspaceId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('names').group), 'Microsoft.Resources/deployments', 'monitoring'), '2025-04-01').outputs.workspaceId.value]"
+          },
+          "container": {
+            "value": {
+              "name": "sec-edgar-ingest",
+              "image": "[format('{0}/sec-edgar-ingest@{1}', variables('registryServer'), variables('config').worker.image_digest)]",
+              "resources": {
+                "cpu": 2,
+                "memory": "4Gi"
+              },
+              "env": [
+                {
+                  "name": "SEC_EDGAR_INGEST_WORKER_CLIENT_ID",
+                  "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('names').group), 'Microsoft.Resources/deployments', 'identities'), '2025-04-01').outputs.workerClientId.value]"
+                },
+                {
+                  "name": "SEC_EDGAR_INGEST_CONFIG",
+                  "secretRef": "ingest-config"
+                }
+              ]
+            }
+          },
+          "configJson": {
+            "value": "[parameters('configJson')]"
+          },
+          "workerIdentityId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('names').group), 'Microsoft.Resources/deployments', 'identities'), '2025-04-01').outputs.workerId.value]"
+          },
+          "pullIdentityId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('names').group), 'Microsoft.Resources/deployments', 'identities'), '2025-04-01').outputs.pullId.value]"
+          },
+          "registryServer": {
+            "value": "[variables('registryServer')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.38.33.27573",
+              "templateHash": "5663990689764873879"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string"
+            },
+            "environmentName": {
+              "type": "string"
+            },
+            "jobName": {
+              "type": "string"
+            },
+            "workspaceId": {
+              "type": "string"
+            },
+            "container": {
+              "type": "object",
+              "metadata": {
+                "description": "The job container; ADF starts it with the same container plus arguments."
+              }
+            },
+            "configJson": {
+              "type": "string",
+              "metadata": {
+                "description": "Canonical config, stored as the ingest-config secret."
+              }
+            },
+            "workerIdentityId": {
+              "type": "string"
+            },
+            "pullIdentityId": {
+              "type": "string"
+            },
+            "registryServer": {
+              "type": "string"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.App/managedEnvironments",
+              "apiVersion": "2026-07-01",
+              "name": "[parameters('environmentName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "appLogsConfiguration": {
+                  "destination": "azure-monitor"
+                },
+                "workloadProfiles": [
+                  {
+                    "name": "Consumption",
+                    "workloadProfileType": "Consumption"
+                  }
+                ]
+              }
+            },
+            {
+              "type": "Microsoft.Insights/diagnosticSettings",
+              "apiVersion": "2021-05-01-preview",
+              "scope": "[format('Microsoft.App/managedEnvironments/{0}', parameters('environmentName'))]",
+              "name": "to-law-sec-edgar-dev",
+              "properties": {
+                "workspaceId": "[parameters('workspaceId')]",
+                "logAnalyticsDestinationType": "Dedicated",
+                "logs": [
+                  {
+                    "category": "ContainerAppConsoleLogs",
+                    "enabled": true
+                  },
+                  {
+                    "category": "ContainerAppSystemLogs",
+                    "enabled": true
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.App/managedEnvironments', parameters('environmentName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.App/jobs",
+              "apiVersion": "2026-07-01",
+              "name": "[parameters('jobName')]",
+              "location": "[parameters('location')]",
+              "identity": {
+                "type": "UserAssigned",
+                "userAssignedIdentities": {
+                  "[format('{0}', parameters('workerIdentityId'))]": {},
+                  "[format('{0}', parameters('pullIdentityId'))]": {}
+                }
+              },
+              "properties": {
+                "environmentId": "[resourceId('Microsoft.App/managedEnvironments', parameters('environmentName'))]",
+                "workloadProfileName": "Consumption",
+                "configuration": {
+                  "triggerType": "Manual",
+                  "replicaTimeout": 3600,
+                  "replicaRetryLimit": 0,
+                  "manualTriggerConfig": {
+                    "parallelism": 1,
+                    "replicaCompletionCount": 1
+                  },
+                  "secrets": [
+                    {
+                      "name": "ingest-config",
+                      "value": "[parameters('configJson')]"
+                    }
+                  ],
+                  "registries": [
+                    {
+                      "server": "[parameters('registryServer')]",
+                      "identity": "[parameters('pullIdentityId')]"
+                    }
+                  ]
+                },
+                "template": {
+                  "containers": [
+                    "[parameters('container')]"
+                  ]
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.App/managedEnvironments', parameters('environmentName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "jobId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.App/jobs', parameters('jobName'))]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('names').group)]",
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('names').group), 'Microsoft.Resources/deployments', 'identities')]",
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('names').group), 'Microsoft.Resources/deployments', 'monitoring')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "factory",
+      "resourceGroup": "[variables('names').group]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "name": {
+            "value": "[variables('names').factory]"
+          },
+          "workspaceId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('names').group), 'Microsoft.Resources/deployments', 'monitoring'), '2025-04-01').outputs.workspaceId.value]"
+          },
+          "container": {
+            "value": {
+              "name": "sec-edgar-ingest",
+              "image": "[format('{0}/sec-edgar-ingest@{1}', variables('registryServer'), variables('config').worker.image_digest)]",
+              "resources": {
+                "cpu": 2,
+                "memory": "4Gi"
+              },
+              "env": [
+                {
+                  "name": "SEC_EDGAR_INGEST_WORKER_CLIENT_ID",
+                  "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('names').group), 'Microsoft.Resources/deployments', 'identities'), '2025-04-01').outputs.workerClientId.value]"
+                },
+                {
+                  "name": "SEC_EDGAR_INGEST_CONFIG",
+                  "secretRef": "ingest-config"
+                }
+              ]
+            }
+          },
+          "imageDigest": {
+            "value": "[variables('config').worker.image_digest]"
+          },
+          "configSha256": {
+            "value": "[parameters('configSha256')]"
+          },
+          "jobPath": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('names').group), 'Microsoft.Resources/deployments', 'job'), '2025-04-01').outputs.jobId.value]"
+          },
+          "asyncPrefix": {
+            "value": "[format('https://management.azure.com/subscriptions/{0}/providers/Microsoft.App/locations/{1}/', subscription().subscriptionId, parameters('location'))]"
+          },
+          "resultsUrl": {
+            "value": "[format('{0}/results/runs/sec/', variables('config').storage.blob_endpoint)]"
+          },
+          "maxLaunches": {
+            "value": "[add(1, variables('config').orchestration.transient_replays)]"
+          },
+          "dailyStartTime": {
+            "value": "[parameters('dailyStartTime')]"
+          },
+          "reconcileStartTime": {
+            "value": "[parameters('reconcileStartTime')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.38.33.27573",
+              "templateHash": "12805855790857282393"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "workspaceId": {
+              "type": "string"
+            },
+            "container": {
+              "type": "object",
+              "metadata": {
+                "description": "The job container; the start override repeats it with arguments (spec §7.1)."
+              }
+            },
+            "imageDigest": {
+              "type": "string"
+            },
+            "configSha256": {
+              "type": "string"
+            },
+            "jobPath": {
+              "type": "string"
+            },
+            "asyncPrefix": {
+              "type": "string"
+            },
+            "resultsUrl": {
+              "type": "string"
+            },
+            "maxLaunches": {
+              "type": "int"
+            },
+            "dailyStartTime": {
+              "type": "string",
+              "metadata": {
+                "description": "Eastern local yyyy-MM-ddTHH:mm:ss, without Z."
+              }
+            },
+            "reconcileStartTime": {
+              "type": "string",
+              "metadata": {
+                "description": "Eastern local yyyy-MM-ddTHH:mm:ss, without Z."
+              }
+            }
+          },
+          "variables": {
+            "$fxv#0": {
+              "activities": [
+                {
+                  "name": "Run launches",
+                  "type": "Until",
+                  "typeProperties": {
+                    "expression": {
+                      "value": "@equals(variables('phase'), 'done')",
+                      "type": "Expression"
+                    },
+                    "timeout": "0.03:00:00",
+                    "activities": [
+                      {
+                        "name": "Launch phase",
+                        "type": "Switch",
+                        "typeProperties": {
+                          "on": {
+                            "value": "@if(and(equals(variables('phase'), 'start'), or(greaterOrEquals(int(variables('launch')), pipeline().parameters.maxLaunches), not(equals(variables('launch'), variables('classified'))))), 'refuse', variables('phase'))",
+                            "type": "Expression"
+                          },
+                          "cases": [
+                            {
+                              "value": "start",
+                              "activities": [
+                                {
+                                  "name": "Start begins",
+                                  "type": "SetVariable",
+                                  "typeProperties": {
+                                    "variableName": "nextPhase",
+                                    "value": "classify"
+                                  }
+                                },
+                                {
+                                  "name": "Count launch",
+                                  "type": "SetVariable",
+                                  "dependsOn": [
+                                    {
+                                      "activity": "Start begins",
+                                      "dependencyConditions": [
+                                        "Succeeded"
+                                      ]
+                                    }
+                                  ],
+                                  "typeProperties": {
+                                    "variableName": "nextLaunch",
+                                    "value": {
+                                      "value": "@string(add(int(variables('launch')), 1))",
+                                      "type": "Expression"
+                                    }
+                                  }
+                                },
+                                {
+                                  "name": "Set launch",
+                                  "type": "SetVariable",
+                                  "dependsOn": [
+                                    {
+                                      "activity": "Count launch",
+                                      "dependencyConditions": [
+                                        "Succeeded"
+                                      ]
+                                    }
+                                  ],
+                                  "typeProperties": {
+                                    "variableName": "launch",
+                                    "value": {
+                                      "value": "@variables('nextLaunch')",
+                                      "type": "Expression"
+                                    }
+                                  }
+                                },
+                                {
+                                  "name": "Clear outcome",
+                                  "type": "SetVariable",
+                                  "dependsOn": [
+                                    {
+                                      "activity": "Set launch",
+                                      "dependencyConditions": [
+                                        "Succeeded"
+                                      ]
+                                    }
+                                  ],
+                                  "typeProperties": {
+                                    "variableName": "outcome",
+                                    "value": ""
+                                  }
+                                },
+                                {
+                                  "name": "Clear execution name",
+                                  "type": "SetVariable",
+                                  "dependsOn": [
+                                    {
+                                      "activity": "Clear outcome",
+                                      "dependencyConditions": [
+                                        "Succeeded"
+                                      ]
+                                    }
+                                  ],
+                                  "typeProperties": {
+                                    "variableName": "executionName",
+                                    "value": ""
+                                  }
+                                },
+                                {
+                                  "name": "Clear location",
+                                  "type": "SetVariable",
+                                  "dependsOn": [
+                                    {
+                                      "activity": "Clear execution name",
+                                      "dependencyConditions": [
+                                        "Succeeded"
+                                      ]
+                                    }
+                                  ],
+                                  "typeProperties": {
+                                    "variableName": "location",
+                                    "value": ""
+                                  }
+                                },
+                                {
+                                  "name": "Clear state",
+                                  "type": "SetVariable",
+                                  "dependsOn": [
+                                    {
+                                      "activity": "Clear location",
+                                      "dependencyConditions": [
+                                        "Succeeded"
+                                      ]
+                                    }
+                                  ],
+                                  "typeProperties": {
+                                    "variableName": "state",
+                                    "value": ""
+                                  }
+                                },
+                                {
+                                  "name": "Clear image",
+                                  "type": "SetVariable",
+                                  "dependsOn": [
+                                    {
+                                      "activity": "Clear state",
+                                      "dependencyConditions": [
+                                        "Succeeded"
+                                      ]
+                                    }
+                                  ],
+                                  "typeProperties": {
+                                    "variableName": "image",
+                                    "value": ""
+                                  }
+                                },
+                                {
+                                  "name": "Clear result",
+                                  "type": "SetVariable",
+                                  "dependsOn": [
+                                    {
+                                      "activity": "Clear image",
+                                      "dependencyConditions": [
+                                        "Succeeded"
+                                      ]
+                                    }
+                                  ],
+                                  "typeProperties": {
+                                    "variableName": "result",
+                                    "value": ""
+                                  }
+                                },
+                                {
+                                  "name": "Set start wait",
+                                  "type": "SetVariable",
+                                  "dependsOn": [
+                                    {
+                                      "activity": "Clear result",
+                                      "dependencyConditions": [
+                                        "Succeeded"
+                                      ]
+                                    }
+                                  ],
+                                  "typeProperties": {
+                                    "variableName": "waitSeconds",
+                                    "value": {
+                                      "value": "@string(pipeline().parameters.pollSeconds)",
+                                      "type": "Expression"
+                                    }
+                                  }
+                                },
+                                {
+                                  "name": "Stamp launch",
+                                  "type": "SetVariable",
+                                  "dependsOn": [
+                                    {
+                                      "activity": "Set start wait",
+                                      "dependencyConditions": [
+                                        "Succeeded"
+                                      ]
+                                    }
+                                  ],
+                                  "typeProperties": {
+                                    "variableName": "launchedAt",
+                                    "value": {
+                                      "value": "@utcNow()",
+                                      "type": "Expression"
+                                    }
+                                  }
+                                },
+                                {
+                                  "name": "Start job",
+                                  "type": "WebActivity",
+                                  "dependsOn": [
+                                    {
+                                      "activity": "Stamp launch",
+                                      "dependencyConditions": [
+                                        "Succeeded"
+                                      ]
+                                    }
+                                  ],
+                                  "policy": {
+                                    "timeout": "0.00:10:00",
+                                    "retry": 0,
+                                    "retryIntervalInSeconds": 30,
+                                    "secureOutput": false,
+                                    "secureInput": false
+                                  },
+                                  "typeProperties": {
+                                    "method": "POST",
+                                    "url": {
+                                      "value": "@concat('https://management.azure.com', pipeline().parameters.jobPath, '/start?api-version=2026-07-01')",
+                                      "type": "Expression"
+                                    },
+                                    "headers": {
+                                      "Content-Type": "application/json"
+                                    },
+                                    "body": {
+                                      "containers": [
+                                        {
+                                          "name": "@pipeline().parameters.containerName",
+                                          "image": "@pipeline().parameters.imageRef",
+                                          "resources": "@pipeline().parameters.containerResources",
+                                          "env": "@pipeline().parameters.containerEnv",
+                                          "args": "@createArray(pipeline().parameters.command, '--config-env', 'SEC_EDGAR_INGEST_CONFIG', '--run-id', pipeline().parameters.runId, '--attempt-id', concat('launch-', variables('launch')), '--deadline', concat(formatDateTime(addSeconds(variables('launchedAt'), pipeline().parameters.workerSeconds), 'yyyy-MM-ddTHH:mm:ss'), 'Z'))"
+                                        }
+                                      ]
+                                    },
+                                    "httpRequestTimeout": "00:01:00",
+                                    "turnOffAsync": true,
+                                    "authentication": {
+                                      "type": "MSI",
+                                      "resource": "https://management.azure.com/"
+                                    }
+                                  }
+                                },
+                                {
+                                  "name": "Read start wait",
+                                  "type": "SetVariable",
+                                  "dependsOn": [
+                                    {
+                                      "activity": "Start job",
+                                      "dependencyConditions": [
+                                        "Succeeded"
+                                      ]
+                                    }
+                                  ],
+                                  "typeProperties": {
+                                    "variableName": "waitSeconds",
+                                    "value": {
+                                      "value": "@string(max(pipeline().parameters.pollSeconds, int(activity('Start job').output.ADFWebActivityResponseHeaders['Retry-After'])))",
+                                      "type": "Expression"
+                                    }
+                                  }
+                                },
+                                {
+                                  "name": "Read start location",
+                                  "type": "SetVariable",
+                                  "dependsOn": [
+                                    {
+                                      "activity": "Read start wait",
+                                      "dependencyConditions": [
+                                        "Completed"
+                                      ]
+                                    }
+                                  ],
+                                  "typeProperties": {
+                                    "variableName": "location",
+                                    "value": {
+                                      "value": "@if(and(and(or(startsWith(activity('Start job').output.ADFWebActivityResponseHeaders['Location'], concat(pipeline().parameters.asyncPrefix, 'containerappsjoboperationresults/')), startsWith(activity('Start job').output.ADFWebActivityResponseHeaders['Location'], concat(pipeline().parameters.asyncPrefix, 'containerappsjoboperationstatuses/'))), equals(length(split(activity('Start job').output.ADFWebActivityResponseHeaders['Location'], '?')), 2)), and(and(equals(length(split(split(activity('Start job').output.ADFWebActivityResponseHeaders['Location'], '?')[0], '/')), add(length(split(pipeline().parameters.asyncPrefix, '/')), 1)), not(or(endsWith(split(activity('Start job').output.ADFWebActivityResponseHeaders['Location'], '?')[0], '/'), or(contains(split(activity('Start job').output.ADFWebActivityResponseHeaders['Location'], '?')[0], '/.'), contains(activity('Start job').output.ADFWebActivityResponseHeaders['Location'], '%'))))), and(not(or(contains(activity('Start job').output.ADFWebActivityResponseHeaders['Location'], '#'), or(contains(activity('Start job').output.ADFWebActivityResponseHeaders['Location'], '\\'), or(contains(activity('Start job').output.ADFWebActivityResponseHeaders['Location'], '\t'), or(contains(activity('Start job').output.ADFWebActivityResponseHeaders['Location'], '\n'), contains(activity('Start job').output.ADFWebActivityResponseHeaders['Location'], '\r')))))), and(contains(split(split(activity('Start job').output.ADFWebActivityResponseHeaders['Location'], '?')[1], '&'), 'api-version=2026-07-01'), equals(length(split(toLower(split(activity('Start job').output.ADFWebActivityResponseHeaders['Location'], '?')[1]), 'api-version')), 2))))), activity('Start job').output.ADFWebActivityResponseHeaders['Location'], '')",
+                                      "type": "Expression"
+                                    }
+                                  }
+                                },
+                                {
+                                  "name": "Read start name",
+                                  "type": "SetVariable",
+                                  "dependsOn": [
+                                    {
+                                      "activity": "Read start location",
+                                      "dependencyConditions": [
+                                        "Completed"
+                                      ]
+                                    }
+                                  ],
+                                  "typeProperties": {
+                                    "variableName": "executionName",
+                                    "value": {
+                                      "value": "@if(and(empty(variables('location')), and(and(not(empty(activity('Start job').output.name)), equals(toLower(activity('Start job').output.id), toLower(concat(pipeline().parameters.jobPath, '/executions/', activity('Start job').output.name)))), and(not(or(contains(activity('Start job').output.name, '/'), contains(activity('Start job').output.name, '?'))), not(or(contains(activity('Start job').output.name, '#'), contains(activity('Start job').output.name, '%')))))), activity('Start job').output.name, '')",
+                                      "type": "Expression"
+                                    }
+                                  }
+                                },
+                                {
+                                  "name": "After start",
+                                  "type": "SetVariable",
+                                  "dependsOn": [
+                                    {
+                                      "activity": "Read start name",
+                                      "dependencyConditions": [
+                                        "Completed"
+                                      ]
+                                    }
+                                  ],
+                                  "typeProperties": {
+                                    "variableName": "nextPhase",
+                                    "value": {
+                                      "value": "@if(not(empty(variables('executionName'))), 'observe', if(empty(variables('location')), 'classify', 'locate'))",
+                                      "type": "Expression"
+                                    }
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "value": "locate",
+                              "activities": [
+                                {
+                                  "name": "Locate begins",
+                                  "type": "SetVariable",
+                                  "typeProperties": {
+                                    "variableName": "nextPhase",
+                                    "value": "classify"
+                                  }
+                                },
+                                {
+                                  "name": "Wait to locate",
+                                  "type": "Wait",
+                                  "dependsOn": [
+                                    {
+                                      "activity": "Locate begins",
+                                      "dependencyConditions": [
+                                        "Succeeded"
+                                      ]
+                                    }
+                                  ],
+                                  "typeProperties": {
+                                    "waitTimeInSeconds": {
+                                      "value": "@int(variables('waitSeconds'))",
+                                      "type": "Expression"
+                                    }
+                                  }
+                                },
+                                {
+                                  "name": "Reset locate wait",
+                                  "type": "SetVariable",
+                                  "dependsOn": [
+                                    {
+                                      "activity": "Wait to locate",
+                                      "dependencyConditions": [
+                                        "Succeeded"
+                                      ]
+                                    }
+                                  ],
+                                  "typeProperties": {
+                                    "variableName": "waitSeconds",
+                                    "value": {
+                                      "value": "@string(pipeline().parameters.pollSeconds)",
+                                      "type": "Expression"
+                                    }
+                                  }
+                                },
+                                {
+                                  "name": "Get operation",
+                                  "type": "WebActivity",
+                                  "dependsOn": [
+                                    {
+                                      "activity": "Reset locate wait",
+                                      "dependencyConditions": [
+                                        "Succeeded"
+                                      ]
+                                    }
+                                  ],
+                                  "policy": {
+                                    "timeout": "0.00:10:00",
+                                    "retry": 0,
+                                    "retryIntervalInSeconds": 30,
+                                    "secureOutput": false,
+                                    "secureInput": false
+                                  },
+                                  "typeProperties": {
+                                    "method": "GET",
+                                    "url": {
+                                      "value": "@variables('location')",
+                                      "type": "Expression"
+                                    },
+                                    "httpRequestTimeout": "00:01:00",
+                                    "turnOffAsync": true,
+                                    "authentication": {
+                                      "type": "MSI",
+                                      "resource": "https://management.azure.com/"
+                                    }
+                                  }
+                                },
+                                {
+                                  "name": "Read locate wait",
+                                  "type": "SetVariable",
+                                  "dependsOn": [
+                                    {
+                                      "activity": "Get operation",
+                                      "dependencyConditions": [
+                                        "Succeeded"
+                                      ]
+                                    }
+                                  ],
+                                  "typeProperties": {
+                                    "variableName": "waitSeconds",
+                                    "value": {
+                                      "value": "@string(max(pipeline().parameters.pollSeconds, int(activity('Get operation').output.ADFWebActivityResponseHeaders['Retry-After'])))",
+                                      "type": "Expression"
+                                    }
+                                  }
+                                },
+                                {
+                                  "name": "Read located name",
+                                  "type": "SetVariable",
+                                  "dependsOn": [
+                                    {
+                                      "activity": "Read locate wait",
+                                      "dependencyConditions": [
+                                        "Completed"
+                                      ]
+                                    }
+                                  ],
+                                  "typeProperties": {
+                                    "variableName": "executionName",
+                                    "value": {
+                                      "value": "@if(and(and(not(empty(activity('Get operation').output.name)), equals(toLower(activity('Get operation').output.id), toLower(concat(pipeline().parameters.jobPath, '/executions/', activity('Get operation').output.name)))), and(not(or(contains(activity('Get operation').output.name, '/'), contains(activity('Get operation').output.name, '?'))), not(or(contains(activity('Get operation').output.name, '#'), contains(activity('Get operation').output.name, '%'))))), activity('Get operation').output.name, '')",
+                                      "type": "Expression"
+                                    }
+                                  }
+                                },
+                                {
+                                  "name": "After locate",
+                                  "type": "SetVariable",
+                                  "dependsOn": [
+                                    {
+                                      "activity": "Wait to locate",
+                                      "dependencyConditions": [
+                                        "Succeeded"
+                                      ]
+                                    },
+                                    {
+                                      "activity": "Read located name",
+                                      "dependencyConditions": [
+                                        "Completed",
+                                        "Skipped"
+                                      ]
+                                    }
+                                  ],
+                                  "typeProperties": {
+                                    "variableName": "nextPhase",
+                                    "value": {
+                                      "value": "@if(not(empty(variables('executionName'))), 'observe', if(less(ticks(utcNow()), ticks(addSeconds(variables('launchedAt'), pipeline().parameters.observeSeconds))), 'locate', 'classify'))",
+                                      "type": "Expression"
+                                    }
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "value": "observe",
+                              "activities": [
+                                {
+                                  "name": "Observe begins",
+                                  "type": "SetVariable",
+                                  "typeProperties": {
+                                    "variableName": "nextPhase",
+                                    "value": "classify"
+                                  }
+                                },
+                                {
+                                  "name": "Wait to observe",
+                                  "type": "Wait",
+                                  "dependsOn": [
+                                    {
+                                      "activity": "Observe begins",
+                                      "dependencyConditions": [
+                                        "Succeeded"
+                                      ]
+                                    }
+                                  ],
+                                  "typeProperties": {
+                                    "waitTimeInSeconds": {
+                                      "value": "@int(variables('waitSeconds'))",
+                                      "type": "Expression"
+                                    }
+                                  }
+                                },
+                                {
+                                  "name": "Reset observe wait",
+                                  "type": "SetVariable",
+                                  "dependsOn": [
+                                    {
+                                      "activity": "Wait to observe",
+                                      "dependencyConditions": [
+                                        "Succeeded"
+                                      ]
+                                    }
+                                  ],
+                                  "typeProperties": {
+                                    "variableName": "waitSeconds",
+                                    "value": {
+                                      "value": "@string(pipeline().parameters.pollSeconds)",
+                                      "type": "Expression"
+                                    }
+                                  }
+                                },
+                                {
+                                  "name": "Get execution",
+                                  "type": "WebActivity",
+                                  "dependsOn": [
+                                    {
+                                      "activity": "Reset observe wait",
+                                      "dependencyConditions": [
+                                        "Succeeded"
+                                      ]
+                                    }
+                                  ],
+                                  "policy": {
+                                    "timeout": "0.00:10:00",
+                                    "retry": 0,
+                                    "retryIntervalInSeconds": 30,
+                                    "secureOutput": false,
+                                    "secureInput": false
+                                  },
+                                  "typeProperties": {
+                                    "method": "GET",
+                                    "url": {
+                                      "value": "@concat('https://management.azure.com', pipeline().parameters.jobPath, '/executions/', variables('executionName'), '?api-version=2026-07-01')",
+                                      "type": "Expression"
+                                    },
+                                    "httpRequestTimeout": "00:01:00",
+                                    "turnOffAsync": true,
+                                    "authentication": {
+                                      "type": "MSI",
+                                      "resource": "https://management.azure.com/"
+                                    }
+                                  }
+                                },
+                                {
+                                  "name": "Read observe wait",
+                                  "type": "SetVariable",
+                                  "dependsOn": [
+                                    {
+                                      "activity": "Get execution",
+                                      "dependencyConditions": [
+                                        "Succeeded"
+                                      ]
+                                    }
+                                  ],
+                                  "typeProperties": {
+                                    "variableName": "waitSeconds",
+                                    "value": {
+                                      "value": "@string(max(pipeline().parameters.pollSeconds, int(activity('Get execution').output.ADFWebActivityResponseHeaders['Retry-After'])))",
+                                      "type": "Expression"
+                                    }
+                                  }
+                                },
+                                {
+                                  "name": "Read state",
+                                  "type": "SetVariable",
+                                  "dependsOn": [
+                                    {
+                                      "activity": "Read observe wait",
+                                      "dependencyConditions": [
+                                        "Completed"
+                                      ]
+                                    }
+                                  ],
+                                  "typeProperties": {
+                                    "variableName": "state",
+                                    "value": {
+                                      "value": "@activity('Get execution').output.properties.status",
+                                      "type": "Expression"
+                                    }
+                                  }
+                                },
+                                {
+                                  "name": "Read image",
+                                  "type": "SetVariable",
+                                  "dependsOn": [
+                                    {
+                                      "activity": "Read state",
+                                      "dependencyConditions": [
+                                        "Completed"
+                                      ]
+                                    }
+                                  ],
+                                  "typeProperties": {
+                                    "variableName": "image",
+                                    "value": {
+                                      "value": "@activity('Get execution').output.properties.template.containers[0].image",
+                                      "type": "Expression"
+                                    }
+                                  }
+                                },
+                                {
+                                  "name": "After observe",
+                                  "type": "SetVariable",
+                                  "dependsOn": [
+                                    {
+                                      "activity": "Wait to observe",
+                                      "dependencyConditions": [
+                                        "Succeeded"
+                                      ]
+                                    },
+                                    {
+                                      "activity": "Read image",
+                                      "dependencyConditions": [
+                                        "Completed",
+                                        "Skipped"
+                                      ]
+                                    }
+                                  ],
+                                  "typeProperties": {
+                                    "variableName": "nextPhase",
+                                    "value": {
+                                      "value": "@if(or(equals(variables('state'), 'Succeeded'), equals(variables('state'), 'Failed')), 'read', if(and(or(empty(variables('state')), or(equals(variables('state'), 'Running'), equals(variables('state'), 'Processing'))), less(ticks(utcNow()), ticks(addSeconds(variables('launchedAt'), pipeline().parameters.observeSeconds)))), 'observe', 'classify'))",
+                                      "type": "Expression"
+                                    }
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "value": "read",
+                              "activities": [
+                                {
+                                  "name": "Read begins",
+                                  "type": "SetVariable",
+                                  "typeProperties": {
+                                    "variableName": "nextPhase",
+                                    "value": "classify"
+                                  }
+                                },
+                                {
+                                  "name": "Get result",
+                                  "type": "WebActivity",
+                                  "dependsOn": [
+                                    {
+                                      "activity": "Read begins",
+                                      "dependencyConditions": [
+                                        "Succeeded"
+                                      ]
+                                    }
+                                  ],
+                                  "policy": {
+                                    "timeout": "0.00:10:00",
+                                    "retry": 0,
+                                    "retryIntervalInSeconds": 30,
+                                    "secureOutput": false,
+                                    "secureInput": false
+                                  },
+                                  "typeProperties": {
+                                    "method": "GET",
+                                    "url": {
+                                      "value": "@concat(pipeline().parameters.resultsUrl, pipeline().parameters.runId, '/', pipeline().parameters.command, '/launch-', variables('launch'), '/result.json')",
+                                      "type": "Expression"
+                                    },
+                                    "headers": {
+                                      "x-ms-version": "2026-04-06"
+                                    },
+                                    "httpRequestTimeout": "00:01:00",
+                                    "turnOffAsync": true,
+                                    "authentication": {
+                                      "type": "MSI",
+                                      "resource": "https://storage.azure.com/"
+                                    }
+                                  }
+                                },
+                                {
+                                  "name": "Keep result",
+                                  "type": "SetVariable",
+                                  "dependsOn": [
+                                    {
+                                      "activity": "Get result",
+                                      "dependencyConditions": [
+                                        "Succeeded"
+                                      ]
+                                    }
+                                  ],
+                                  "typeProperties": {
+                                    "variableName": "result",
+                                    "value": {
+                                      "value": "@string(activity('Get result').output)",
+                                      "type": "Expression"
+                                    }
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "value": "classify",
+                              "activities": [
+                                {
+                                  "name": "Classify begins",
+                                  "type": "SetVariable",
+                                  "typeProperties": {
+                                    "variableName": "nextPhase",
+                                    "value": "done"
+                                  }
+                                },
+                                {
+                                  "name": "Classify execution",
+                                  "type": "SetVariable",
+                                  "dependsOn": [
+                                    {
+                                      "activity": "Classify begins",
+                                      "dependencyConditions": [
+                                        "Succeeded"
+                                      ]
+                                    }
+                                  ],
+                                  "typeProperties": {
+                                    "variableName": "executionOutcome",
+                                    "value": {
+                                      "value": "@if(not(or(or(equals(variables('state'), 'Succeeded'), equals(variables('state'), 'Failed')), equals(variables('state'), 'Stopped'))), 'execution_unknown', if(equals(variables('state'), 'Stopped'), 'execution_stopped', if(not(equals(variables('image'), pipeline().parameters.imageRef)), 'execution_mismatch', if(empty(variables('result')), 'result_missing', ''))))",
+                                      "type": "Expression"
+                                    }
+                                  }
+                                },
+                                {
+                                  "name": "Preset result outcome",
+                                  "type": "SetVariable",
+                                  "dependsOn": [
+                                    {
+                                      "activity": "Classify execution",
+                                      "dependencyConditions": [
+                                        "Succeeded"
+                                      ]
+                                    }
+                                  ],
+                                  "typeProperties": {
+                                    "variableName": "resultOutcome",
+                                    "value": "result_mismatch"
+                                  }
+                                },
+                                {
+                                  "name": "Classify result",
+                                  "type": "SetVariable",
+                                  "dependsOn": [
+                                    {
+                                      "activity": "Preset result outcome",
+                                      "dependencyConditions": [
+                                        "Succeeded"
+                                      ]
+                                    }
+                                  ],
+                                  "typeProperties": {
+                                    "variableName": "resultOutcome",
+                                    "value": {
+                                      "value": "@if(and(and(and(equals(json(variables('result')).format_version, 'sec-workflow-result-v1'), equals(json(variables('result')).context.run_id, pipeline().parameters.runId)), and(equals(json(variables('result')).context.command, pipeline().parameters.command), equals(json(variables('result')).context.attempt_id, concat('launch-', variables('launch'))))), and(and(equals(json(variables('result')).context.execution_id, variables('executionName')), equals(json(variables('result')).context.image_digest, pipeline().parameters.imageDigest)), and(equals(json(variables('result')).context.config_sha256, pipeline().parameters.configSha256), contains(variables('knownOutcomes'), json(variables('result')).outcome)))), if(contains(variables('exitZeroOutcomes'), json(variables('result')).outcome), if(equals(variables('state'), 'Succeeded'), 'success', 'result_mismatch'), if(contains(variables('staleOutcomes'), json(variables('result')).outcome), 'stale', json(variables('result')).outcome)), 'result_mismatch')",
+                                      "type": "Expression"
+                                    }
+                                  }
+                                },
+                                {
+                                  "name": "Classify outcome",
+                                  "type": "SetVariable",
+                                  "dependsOn": [
+                                    {
+                                      "activity": "Classify result",
+                                      "dependencyConditions": [
+                                        "Completed"
+                                      ]
+                                    }
+                                  ],
+                                  "typeProperties": {
+                                    "variableName": "outcome",
+                                    "value": {
+                                      "value": "@if(empty(variables('executionOutcome')), variables('resultOutcome'), variables('executionOutcome'))",
+                                      "type": "Expression"
+                                    }
+                                  }
+                                },
+                                {
+                                  "name": "Mark classified",
+                                  "type": "SetVariable",
+                                  "dependsOn": [
+                                    {
+                                      "activity": "Classify outcome",
+                                      "dependencyConditions": [
+                                        "Succeeded"
+                                      ]
+                                    }
+                                  ],
+                                  "typeProperties": {
+                                    "variableName": "classified",
+                                    "value": {
+                                      "value": "@variables('launch')",
+                                      "type": "Expression"
+                                    }
+                                  }
+                                },
+                                {
+                                  "name": "Classify next",
+                                  "type": "SetVariable",
+                                  "dependsOn": [
+                                    {
+                                      "activity": "Mark classified",
+                                      "dependencyConditions": [
+                                        "Succeeded"
+                                      ]
+                                    }
+                                  ],
+                                  "typeProperties": {
+                                    "variableName": "nextPhase",
+                                    "value": {
+                                      "value": "@if(and(equals(variables('outcome'), 'pending'), less(int(variables('launch')), pipeline().parameters.maxLaunches)), 'start', 'done')",
+                                      "type": "Expression"
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          ],
+                          "defaultActivities": [
+                            {
+                              "name": "Stop launches",
+                              "type": "SetVariable",
+                              "typeProperties": {
+                                "variableName": "nextPhase",
+                                "value": "done"
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "name": "Advance",
+                        "type": "SetVariable",
+                        "dependsOn": [
+                          {
+                            "activity": "Launch phase",
+                            "dependencyConditions": [
+                              "Completed"
+                            ]
+                          }
+                        ],
+                        "typeProperties": {
+                          "variableName": "phase",
+                          "value": {
+                            "value": "@variables('nextPhase')",
+                            "type": "Expression"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "Check outcome",
+                  "type": "IfCondition",
+                  "dependsOn": [
+                    {
+                      "activity": "Run launches",
+                      "dependencyConditions": [
+                        "Completed"
+                      ]
+                    }
+                  ],
+                  "typeProperties": {
+                    "expression": {
+                      "value": "@equals(variables('outcome'), 'success')",
+                      "type": "Expression"
+                    },
+                    "ifTrueActivities": [],
+                    "ifFalseActivities": [
+                      {
+                        "name": "Fail run",
+                        "type": "Fail",
+                        "typeProperties": {
+                          "message": {
+                            "value": "@concat('pl-sec-edgar-run-worker ', pipeline().parameters.command, ' launch-', variables('launch'), ' ended ', if(empty(variables('outcome')), 'execution_unknown', variables('outcome')))",
+                            "type": "Expression"
+                          },
+                          "errorCode": {
+                            "value": "@if(empty(variables('outcome')), 'execution_unknown', variables('outcome'))",
+                            "type": "Expression"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              ],
+              "variables": {
+                "phase": {
+                  "type": "String",
+                  "defaultValue": "start"
+                },
+                "nextPhase": {
+                  "type": "String",
+                  "defaultValue": ""
+                },
+                "launch": {
+                  "type": "String",
+                  "defaultValue": "0"
+                },
+                "nextLaunch": {
+                  "type": "String",
+                  "defaultValue": "0"
+                },
+                "classified": {
+                  "type": "String",
+                  "defaultValue": "0"
+                },
+                "launchedAt": {
+                  "type": "String",
+                  "defaultValue": ""
+                },
+                "executionName": {
+                  "type": "String",
+                  "defaultValue": ""
+                },
+                "location": {
+                  "type": "String",
+                  "defaultValue": ""
+                },
+                "state": {
+                  "type": "String",
+                  "defaultValue": ""
+                },
+                "image": {
+                  "type": "String",
+                  "defaultValue": ""
+                },
+                "waitSeconds": {
+                  "type": "String",
+                  "defaultValue": ""
+                },
+                "result": {
+                  "type": "String",
+                  "defaultValue": ""
+                },
+                "executionOutcome": {
+                  "type": "String",
+                  "defaultValue": ""
+                },
+                "resultOutcome": {
+                  "type": "String",
+                  "defaultValue": ""
+                },
+                "outcome": {
+                  "type": "String",
+                  "defaultValue": ""
+                },
+                "knownOutcomes": {
+                  "type": "Array",
+                  "defaultValue": [
+                    "success",
+                    "no_new_sources",
+                    "unchanged",
+                    "configuration",
+                    "approval_refused",
+                    "rollback_refused",
+                    "discovery_failed",
+                    "incomplete",
+                    "pending",
+                    "retry_exhausted",
+                    "deferred",
+                    "throttled",
+                    "access_blocked",
+                    "quarantined",
+                    "invalid_source",
+                    "ownership_lost",
+                    "state_conflict",
+                    "internal_error",
+                    "publication_conflict",
+                    "awaiting_approval",
+                    "approval_stale",
+                    "rollback_stale"
+                  ]
+                },
+                "exitZeroOutcomes": {
+                  "type": "Array",
+                  "defaultValue": [
+                    "success",
+                    "no_new_sources",
+                    "unchanged"
+                  ]
+                },
+                "staleOutcomes": {
+                  "type": "Array",
+                  "defaultValue": [
+                    "approval_stale",
+                    "rollback_stale"
+                  ]
+                }
+              }
+            },
+            "$fxv#1": {
+              "activities": [
+                {
+                  "name": "Run worker",
+                  "type": "ExecutePipeline",
+                  "typeProperties": {
+                    "pipeline": {
+                      "referenceName": "pl-sec-edgar-run-worker",
+                      "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                      "command": "backfill",
+                      "runId": {
+                        "value": "@pipeline().RunId",
+                        "type": "Expression"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "$fxv#2": {
+              "activities": [
+                {
+                  "name": "Run worker",
+                  "type": "ExecutePipeline",
+                  "typeProperties": {
+                    "pipeline": {
+                      "referenceName": "pl-sec-edgar-run-worker",
+                      "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                      "command": "daily",
+                      "runId": {
+                        "value": "@pipeline().RunId",
+                        "type": "Expression"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "$fxv#3": {
+              "activities": [
+                {
+                  "name": "Run worker",
+                  "type": "ExecutePipeline",
+                  "typeProperties": {
+                    "pipeline": {
+                      "referenceName": "pl-sec-edgar-run-worker",
+                      "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                      "command": "reconcile",
+                      "runId": {
+                        "value": "@pipeline().RunId",
+                        "type": "Expression"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "runWorker": "[variables('$fxv#0')]",
+            "callers": [
+              {
+                "name": "pl-sec-edgar-backfill",
+                "definition": "[variables('$fxv#1')]"
+              },
+              {
+                "name": "pl-sec-edgar-daily",
+                "definition": "[variables('$fxv#2')]"
+              },
+              {
+                "name": "pl-sec-edgar-reconcile",
+                "definition": "[variables('$fxv#3')]"
+              }
+            ]
+          },
+          "resources": [
+            {
+              "type": "Microsoft.DataFactory/factories",
+              "apiVersion": "2018-06-01",
+              "name": "[parameters('name')]",
+              "location": "[parameters('location')]",
+              "identity": {
+                "type": "SystemAssigned"
+              },
+              "properties": {}
+            },
+            {
+              "type": "Microsoft.Insights/diagnosticSettings",
+              "apiVersion": "2021-05-01-preview",
+              "scope": "[format('Microsoft.DataFactory/factories/{0}', parameters('name'))]",
+              "name": "to-law-sec-edgar-dev",
+              "properties": {
+                "workspaceId": "[parameters('workspaceId')]",
+                "logAnalyticsDestinationType": "Dedicated",
+                "logs": [
+                  {
+                    "category": "ActivityRuns",
+                    "enabled": true
+                  },
+                  {
+                    "category": "PipelineRuns",
+                    "enabled": true
+                  },
+                  {
+                    "category": "TriggerRuns",
+                    "enabled": true
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.DataFactory/factories', parameters('name'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.DataFactory/factories/pipelines",
+              "apiVersion": "2018-06-01",
+              "name": "[format('{0}/{1}', parameters('name'), 'pl-sec-edgar-run-worker')]",
+              "properties": {
+                "activities": "[variables('runWorker').activities]",
+                "variables": "[variables('runWorker').variables]",
+                "parameters": {
+                  "command": {
+                    "type": "String"
+                  },
+                  "runId": {
+                    "type": "String"
+                  },
+                  "containerName": {
+                    "type": "String",
+                    "defaultValue": "[parameters('container').name]"
+                  },
+                  "imageRef": {
+                    "type": "String",
+                    "defaultValue": "[parameters('container').image]"
+                  },
+                  "containerResources": {
+                    "type": "Object",
+                    "defaultValue": "[parameters('container').resources]"
+                  },
+                  "containerEnv": {
+                    "type": "Array",
+                    "defaultValue": "[parameters('container').env]"
+                  },
+                  "imageDigest": {
+                    "type": "String",
+                    "defaultValue": "[parameters('imageDigest')]"
+                  },
+                  "configSha256": {
+                    "type": "String",
+                    "defaultValue": "[parameters('configSha256')]"
+                  },
+                  "jobPath": {
+                    "type": "String",
+                    "defaultValue": "[parameters('jobPath')]"
+                  },
+                  "asyncPrefix": {
+                    "type": "String",
+                    "defaultValue": "[parameters('asyncPrefix')]"
+                  },
+                  "resultsUrl": {
+                    "type": "String",
+                    "defaultValue": "[parameters('resultsUrl')]"
+                  },
+                  "maxLaunches": {
+                    "type": "Int",
+                    "defaultValue": "[parameters('maxLaunches')]"
+                  },
+                  "pollSeconds": {
+                    "type": "Int",
+                    "defaultValue": 30
+                  },
+                  "observeSeconds": {
+                    "type": "Int",
+                    "defaultValue": 4200
+                  },
+                  "workerSeconds": {
+                    "type": "Int",
+                    "defaultValue": 3300
+                  }
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.DataFactory/factories', parameters('name'))]"
+              ]
+            },
+            {
+              "copy": {
+                "name": "callerPipelines",
+                "count": "[length(variables('callers'))]"
+              },
+              "type": "Microsoft.DataFactory/factories/pipelines",
+              "apiVersion": "2018-06-01",
+              "name": "[format('{0}/{1}', parameters('name'), variables('callers')[copyIndex()].name)]",
+              "properties": "[variables('callers')[copyIndex()].definition]",
+              "dependsOn": [
+                "[resourceId('Microsoft.DataFactory/factories', parameters('name'))]",
+                "[resourceId('Microsoft.DataFactory/factories/pipelines', parameters('name'), 'pl-sec-edgar-run-worker')]"
+              ]
+            },
+            {
+              "type": "Microsoft.DataFactory/factories/triggers",
+              "apiVersion": "2018-06-01",
+              "name": "[format('{0}/{1}', parameters('name'), 'tr-sec-edgar-daily')]",
+              "properties": {
+                "type": "ScheduleTrigger",
+                "pipelines": [
+                  {
+                    "pipelineReference": {
+                      "referenceName": "pl-sec-edgar-daily",
+                      "type": "PipelineReference"
+                    }
+                  }
+                ],
+                "typeProperties": {
+                  "recurrence": {
+                    "frequency": "Day",
+                    "interval": 1,
+                    "startTime": "[parameters('dailyStartTime')]",
+                    "timeZone": "Eastern Standard Time",
+                    "schedule": {
+                      "hours": [
+                        5
+                      ],
+                      "minutes": [
+                        0
+                      ]
+                    }
+                  }
+                }
+              },
+              "dependsOn": [
+                "callerPipelines",
+                "[resourceId('Microsoft.DataFactory/factories', parameters('name'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.DataFactory/factories/triggers",
+              "apiVersion": "2018-06-01",
+              "name": "[format('{0}/{1}', parameters('name'), 'tr-sec-edgar-reconcile')]",
+              "properties": {
+                "type": "ScheduleTrigger",
+                "pipelines": [
+                  {
+                    "pipelineReference": {
+                      "referenceName": "pl-sec-edgar-reconcile",
+                      "type": "PipelineReference"
+                    }
+                  }
+                ],
+                "typeProperties": {
+                  "recurrence": {
+                    "frequency": "Week",
+                    "interval": 1,
+                    "startTime": "[parameters('reconcileStartTime')]",
+                    "timeZone": "Eastern Standard Time",
+                    "schedule": {
+                      "weekDays": [
+                        "Sunday"
+                      ],
+                      "hours": [
+                        6
+                      ],
+                      "minutes": [
+                        0
+                      ]
+                    }
+                  }
+                }
+              },
+              "dependsOn": [
+                "callerPipelines",
+                "[resourceId('Microsoft.DataFactory/factories', parameters('name'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "principalId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.DataFactory/factories', parameters('name')), '2018-06-01', 'full').identity.principalId]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('names').group)]",
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('names').group), 'Microsoft.Resources/deployments', 'identities')]",
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('names').group), 'Microsoft.Resources/deployments', 'job')]",
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('names').group), 'Microsoft.Resources/deployments', 'monitoring')]"
       ]
     }
   ]

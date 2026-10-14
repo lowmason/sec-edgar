@@ -130,3 +130,58 @@ module storage 'modules/storage.bicep' = {
     tables: tables
   }
 }
+
+// The job container. ADF's start override repeats it with arguments added (spec §4, §7.1).
+var container = {
+  name: 'sec-edgar-ingest'
+  image: '${registryServer}/sec-edgar-ingest@${config.worker.image_digest}'
+  resources: {
+    cpu: 2
+    memory: '4Gi'
+  }
+  env: [
+    {
+      name: 'SEC_EDGAR_INGEST_WORKER_CLIENT_ID'
+      value: identities.outputs.workerClientId
+    }
+    {
+      name: 'SEC_EDGAR_INGEST_CONFIG'
+      secretRef: 'ingest-config'
+    }
+  ]
+}
+
+module job 'modules/job.bicep' = {
+  name: 'job'
+  scope: group
+  params: {
+    location: location
+    environmentName: names.environment
+    jobName: names.job
+    workspaceId: monitoring.outputs.workspaceId
+    container: container
+    configJson: configJson
+    workerIdentityId: identities.outputs.workerId
+    pullIdentityId: identities.outputs.pullId
+    registryServer: registryServer
+  }
+}
+
+module factory 'modules/factory.bicep' = {
+  name: 'factory'
+  scope: group
+  params: {
+    location: location
+    name: names.factory
+    workspaceId: monitoring.outputs.workspaceId
+    container: container
+    imageDigest: config.worker.image_digest
+    configSha256: configSha256
+    jobPath: job.outputs.jobId
+    asyncPrefix: 'https://management.azure.com/subscriptions/${subscription().subscriptionId}/providers/Microsoft.App/locations/${location}/'
+    resultsUrl: '${config.storage.blob_endpoint}/results/runs/sec/'
+    maxLaunches: 1 + config.orchestration.transient_replays
+    dailyStartTime: dailyStartTime
+    reconcileStartTime: reconcileStartTime
+  }
+}
