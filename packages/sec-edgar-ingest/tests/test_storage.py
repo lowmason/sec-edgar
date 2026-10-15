@@ -1,7 +1,10 @@
 import hashlib
 import importlib
 import importlib.util
+import sqlite3
 import tempfile
+import threading
+import time
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -195,3 +198,42 @@ class StorageTests(unittest.TestCase):
                 self.fail(f"Symlink rejection must use the host errno and raise ValueError, got errno {error.errno}")
         self.assertTrue(link.is_symlink())
         self.assertEqual(target.read_bytes(), b"protected")
+
+
+class LocalStateInitTests(unittest.TestCase):
+    """A fresh store's WAL switch must wait out another initializer, within the connection busy timeout."""
+
+    def setUp(self):
+        self.local = importlib.import_module("sec_edgar_ingest.storage.local")
+        self.directory = tempfile.TemporaryDirectory()
+        self.addCleanup(self.directory.cleanup)
+        self.root = Path(self.directory.name)
+
+    def hold_reserved(self):
+        # Act as another initializer between its RESERVED and EXCLUSIVE locks. SQLite then refuses the
+        # store's read-lock upgrade at once, without its busy handler: the race seen in parallel test runs.
+        holder = sqlite3.connect(self.root / "state.sqlite3", isolation_level=None, check_same_thread=False)
+        self.addCleanup(holder.close)
+        holder.execute("BEGIN IMMEDIATE")
+        return holder
+
+    def test_init_waits_out_a_competing_wal_switch(self):
+        holder = self.hold_reserved()
+        release = threading.Timer(0.3, holder.execute, ("COMMIT",))
+        started = time.monotonic()
+        release.start()
+        self.addCleanup(release.join)
+        store = self.local.LocalStateStore(self.root)
+        self.addCleanup(store.close)
+        self.assertGreaterEqual(time.monotonic() - started, 0.25)
+        with store._connection() as connection:
+            self.assertEqual(connection.execute("PRAGMA journal_mode").fetchone()[0], "wal")
+
+    def test_init_gives_up_when_the_busy_timeout_expires(self):
+        self.hold_reserved()
+        with patch.object(self.local, "SQLITE_BUSY_TIMEOUT_SECONDS", 0.2):
+            started = time.monotonic()
+            with self.assertRaises(sqlite3.OperationalError) as raised:
+                self.local.LocalStateStore(self.root)
+        self.assertGreaterEqual(time.monotonic() - started, 0.15)
+        self.assertEqual(raised.exception.sqlite_errorcode & 0xFF, sqlite3.SQLITE_BUSY)

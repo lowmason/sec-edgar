@@ -207,6 +207,7 @@ class JournalContractTests(unittest.TestCase):
 
     def test_local_constructor_recovers_real_wal_transition_contention_and_skips_warm_transition(self):
         import sqlite3
+        import time
         from unittest.mock import patch
         from sec_edgar_ingest.storage.local import LocalStateStore
         with tempfile.TemporaryDirectory() as directory:
@@ -261,10 +262,14 @@ class JournalContractTests(unittest.TestCase):
                 release_after_busy = False
                 busy.clear()
                 try:
-                    with self.assertRaises(sqlite3.OperationalError):
-                        LocalStateStore(root)
-                    self.assertEqual(busy, [sqlite3.SQLITE_BUSY]*3,
-                                     "A persistent startup lock must fail closed after finite attempts")
+                    with patch("sec_edgar_ingest.storage.local.SQLITE_BUSY_TIMEOUT_SECONDS", 0.2):
+                        started = time.monotonic()
+                        with self.assertRaises(sqlite3.OperationalError):
+                            LocalStateStore(root)
+                    self.assertGreaterEqual(time.monotonic() - started, 0.15)
+                    self.assertGreater(len(busy), 1, "A busy startup lock is retried, not refused at once")
+                    self.assertEqual(set(busy), {sqlite3.SQLITE_BUSY},
+                                     "A persistent startup lock must fail closed once the busy timeout expires")
                 finally:
                     blocker.rollback()
 
@@ -410,6 +415,27 @@ class CoordinationTests(unittest.TestCase):
         h.start("two", "daily")
         h.reserve("two")
         self.assertGreaterEqual((h.starts[1][1]-h.starts[0][1]).total_seconds(), 1/3)
+
+    def test_next_dispatch_waits_one_interval_after_a_drain_later_than_charged_dispatch(self):
+        from support import fixture_clock
+        directory = self.enterContext(tempfile.TemporaryDirectory())
+        clock = fixture_clock()
+        h = self.harness(Path(directory), clock)
+        self.addCleanup(h.close)
+        h.start("one", "backfill")
+        interval = 1/h.coordinators["one"].settings.sec.requests_per_second
+        permit = h.turns["one"].reserve("slow-drain")
+        clock.advance(permit.start_before_mono-clock.monotonic()-0.00001)
+        h.dispatch("one", permit)
+        clock.advance(0.55)
+        drained_at = clock.now()
+        self.assertGreater(drained_at, permit.must_start_before,
+                           "the first request must drain after its charged dispatch time")
+        h.finish_request("one")
+        h.start("two", "daily")
+        h.reserve("two")
+        self.assertGreaterEqual((h.starts[1][1]-drained_at).total_seconds(), interval,
+                                "The next dispatch must wait one interval after the previous request actually drained")
 
     def test_stale_epoch_and_dispatch_deadline_are_refused(self):
         from support import fixture_clock

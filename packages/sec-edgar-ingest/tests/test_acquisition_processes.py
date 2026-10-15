@@ -102,16 +102,19 @@ class AcquisitionProcessTests(unittest.TestCase):
         retain_acquisition_proof('integrated-takeover', proof)
 
     def test_stale_sender_awakened_after_allowed_start_sends_zero(self):
-        from support import LoopbackServer, fixture_settings, loopback_sender, real_context, real_permit, stale_start_child
+        from support import (SPAWN_ALLOWANCE_SECONDS, LoopbackServer, fixture_settings, loopback_sender, real_context,
+                             real_permit, stale_start_child)
         from sec_edgar_ingest.coordination import Clock
         import threading
         with tempfile.TemporaryDirectory(prefix='sec-acquisition-stale-') as temporary:
             server = LoopbackServer(b'never requested')
             try:
                 clock = Clock()
-                settings = fixture_settings(http={'exchange_deadline_seconds': 0.4})
+                settings = fixture_settings()
                 sender = loopback_sender(settings, clock, server.origin, target=stale_start_child, spool=Path(temporary) / 'sender')
-                receipt = sender.send(server.url, real_context(clock, settings), real_permit(clock, seconds=0.4), cancellation=multiprocessing.get_context('spawn').Event())
+                # Only the 1/3 s start window is stale; the deadline outlasts a slow spawn.
+                permit = real_permit(clock, seconds=SPAWN_ALLOWANCE_SECONDS + 1)
+                receipt = sender.send(server.url, real_context(clock, settings), permit, cancellation=multiprocessing.get_context('spawn').Event())
                 self.assertFalse(receipt.complete)
                 self.assertEqual(len(server.requests), 0)
                 trace = (Path(temporary) / 'sender/transport.jsonl').read_text()
@@ -122,25 +125,31 @@ class AcquisitionProcessTests(unittest.TestCase):
 
     def test_independent_child_deadline_records_actual_fatal_exit_and_prefix(self):
         import signal
-        from support import LoopbackServer, fixture_settings, loopback_sender, real_context, real_permit
+        from support import (SPAWN_ALLOWANCE_SECONDS, SPAWN_WAIT_SECONDS, LoopbackServer, fixture_settings,
+                             loopback_sender, real_context, real_permit, slow_spawn_child_exchange)
         from sec_edgar_ingest.coordination import Clock
         with tempfile.TemporaryDirectory(prefix='sec-acquisition-deadline-') as temporary:
             server = LoopbackServer(b'x' * 7, mode='trickle')
             try:
                 clock = Clock()
-                settings = fixture_settings(http={'exchange_deadline_seconds': 0.4})
-                sender = loopback_sender(settings, clock, server.origin, spool=Path(temporary) / 'sender')
+                settings = fixture_settings()
+                # The child always starts late, so every run shows the start window absorbing a slow spawn;
+                # the half second after that window leaves time for a trickled prefix before the fatal timer.
+                sender = loopback_sender(settings, clock, server.origin, target=slow_spawn_child_exchange,
+                                         spool=Path(temporary) / 'sender')
+                permit = real_permit(clock, seconds=SPAWN_ALLOWANCE_SECONDS + 0.5, start_seconds=SPAWN_ALLOWANCE_SECONDS)
                 from unittest.mock import patch
                 def stalled_supervisor(process, cancellation, deadline, clock):
-                    process.join(1)
+                    # Never terminate the child: only its own fatal timer may end it.
+                    process.join(max(0.0, deadline - clock.monotonic()) + SPAWN_WAIT_SECONDS)
                     if process.is_alive():
                         raise AssertionError('independent child timer failed while supervisor was stalled')
                     return True
                 with patch('sec_edgar_ingest.download.wait_for_sender', stalled_supervisor):
-                    receipt = sender.send(server.url, real_context(clock, settings), real_permit(clock, seconds=0.4), cancellation=multiprocessing.get_context('spawn').Event())
+                    receipt = sender.send(server.url, real_context(clock, settings), permit, cancellation=multiprocessing.get_context('spawn').Event())
                 self.assertFalse(receipt.complete)
                 self.assertGreater(receipt.byte_count, 0)
-                self.assertTrue(server.closed.wait(1))
+                self.assertTrue(server.closed.wait(SPAWN_WAIT_SECONDS))
                 trace = [json.loads(line) for line in (Path(temporary) / 'sender/transport.jsonl').read_text().splitlines()]
                 joined = next(event for event in trace if event['event'] == 'child-joined')
                 self.assertEqual(joined['exitcode'], -signal.SIGALRM)
