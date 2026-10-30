@@ -1,6 +1,6 @@
 # Stage 2 Baseline Campaign and Coverage Decision Implementation Plan
 
-**Status: REVISED for the 2020Q1 range (Revision 2, 2026-10-29), approved by the owner (D11)** — Tasks 1–3 and 8 executed via executing-plans on release `fc68adef…` (commits `4508859`, `7b63168`, `ea482dd`, `780ea51`, and the D7 fix `4004f2e`). Revision 1 (approved, D9) added Tasks 3a and 3b and rewrote Tasks 4–7 for the 1b release. Tasks 3a and 3b executed on release `9fa189a0…` (commits `b176598`, `c9a9cb3`), and Task 4 Step 1 found the release gate standing. At Task 4 Step 2 the owner moved the range start to 2020Q1 (D10). Revision 2 adds Task 3c and changes Tasks 4–7 for that range. Executed task text is the execution record and stays as run. Task 3c executed (commit `eea0166`), and Task 4 Step 1 found the release gate standing for the 2020Q1 config. The owner answered all ten Task 4 items, and the approval is committed (`7869821`): window 2026-10-29T13:00:00Z to 2026-11-05T13:00:00Z. Task 5 ran one invocation and halted: the pilot ended with launcher exit 9 and `state_conflict` after 67 s, with no workflow result (stop rule 1; commits `1870158`, `729ed1c`). Its publish moved nine filing-quarter pointers before the conflict, so the store holds 1b generations. The owner routed the failure to an engine diagnosis and fix, with no further invocation until then (D12). Tasks 6 and 7 have not run. Roadmap Stage 2 stays unticked. Read `## Revision 2 for the 2020Q1 range` first, then `## Revision 1 for the 1b release`.
+**Status: REVISED for the 1c release (Revision 3, 2026-10-30), awaiting owner review** — Revision 2 (the 2020Q1 range, 2026-10-29) was approved by the owner (D11). Tasks 1–3 and 8 executed via executing-plans on release `fc68adef…` (commits `4508859`, `7b63168`, `ea482dd`, `780ea51`, and the D7 fix `4004f2e`). Revision 1 (approved, D9) added Tasks 3a and 3b and rewrote Tasks 4–7 for the 1b release. Tasks 3a and 3b executed on release `9fa189a0…` (commits `b176598`, `c9a9cb3`), and Task 4 Step 1 found the release gate standing. At Task 4 Step 2 the owner moved the range start to 2020Q1 (D10). Revision 2 adds Task 3c and changes Tasks 4–7 for that range. Executed task text is the execution record and stays as run. Task 3c executed (commit `eea0166`), and Task 4 Step 1 found the release gate standing for the 2020Q1 config. The owner answered all ten Task 4 items, and the approval is committed (`7869821`): window 2026-10-29T13:00:00Z to 2026-11-05T13:00:00Z. Task 5 ran one invocation and halted: the pilot ended with launcher exit 9 and `state_conflict` after 67 s, with no workflow result (stop rule 1; commits `1870158`, `729ed1c`). Its publish moved nine filing-quarter pointers before the conflict, so the store holds 1b generations. The owner routed the failure to an engine diagnosis and fix, with no further invocation until then (D12). Stage 1c shipped that fix as release `c4de77b8…`, selected at `f64c212`. **Revision 3 (2026-10-30, D13) moves Tasks 4–7 to that release and adds offline Tasks 3d and 3e. It awaits owner review.** Tasks 6 and 7 have not run. Roadmap Stage 2 stays unticked. Read `## Revision 3 for the 1c release` first, then `## Revision 2 for the 2020Q1 range`, then `## Revision 1 for the 1b release`.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: implement this plan task-by-task via subagent-driven-development (the default) — or executing-plans when your human partner chose inline execution at the handoff. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -20,11 +20,26 @@ Revision 1 (2026-10-29) moves the campaign to the 1b release. On it, the runner 
 
 Revision 2 (2026-10-29) starts the range at 2020Q1 (D10). Offline Task 3c changes the live config's `backfill.start_quarter`, the matching spec and runbook text, the slice set and the campaign files, and re-runs the known answers. Then the Task 4 gate runs again.
 
-**Tech Stack:** Installed native release `9fa189a0…` (CPython 3.14.0, macOS arm64, Requests 2.34.2, PyArrow 25.0.1, application version 0.2.0). Tasks 1–3 ran on release `fc68adef…`. Stdlib `unittest` under `packages/sec-edgar-ingest/tests/network_guard.py`. SQLite backup API. Launcher `scripts/sec-edgar-local`.
+Revision 3 (2026-10-30) moves the campaign to the 1c release `c4de77b8…` after invocation 1 halted (D12, D13). Task 3d makes the evidence tool report the sources that a run lists as already complete. Task 3e makes the 1c slice configs, checks every registered member for a stop before dispatch, and re-runs the known answers. Then the Task 4 gate runs again, and Task 5 resumes at k = 2 with the pilot.
+
+**Tech Stack:** Installed native release `c4de77b8…` (CPython 3.14.0, macOS arm64, Requests 2.34.2, PyArrow 25.0.1, application version 0.2.0; its locked inputs equal the 1b release's). Tasks 1–3 ran on release `fc68adef…`, and Tasks 3a–3c and invocation 1 on `9fa189a0…`. Stdlib `unittest` under `packages/sec-edgar-ingest/tests/network_guard.py`. SQLite backup API. Launcher `scripts/sec-edgar-local`.
 
 **Spec:** [specs/sec-filing-index-ingestion-spec.md](../sec-filing-index-ingestion-spec.md). This plan implements Stage 2 only: §§4.2–4.9, 5–6 and 7 G2. It plans no work for Stages 3–5.
 
-## Revision 2 for the 2020Q1 range (read first)
+## Revision 3 for the 1c release (read first)
+
+Written 2026-10-30 against the Stage 2 roadmap entry (`Consumes`, amended at the 2026-10-30 resume) and plan 6, Handoff, Stage 2 bullet (`specs/plans/completed/6-sec-filing-index-member-completion.md`). Planning sent no SEC request and wrote nothing under `data/`. It ran the tool's tests, the offline preflight and the tool's read-only reports on the live store. It regenerated the slice configs into the ignored `logs/plan2-rev3/` and evaluated every registered member on a scratch copy of `data/` there (F24–F31). The `platform-stage1` branch was not merged or touched (D13).
+
+1. **What changes.** The release becomes `c4de77b8…` (F24). Global Constraints change their release, config-hash, release-history, slice-config, window and prelude lines. The 8 slice configs are regenerated into `conf/stage2/1c/`, and the `conf/stage2/1b/` configs are removed, because they now select an unsupported release (F25, O20). The evidence tool is re-verified on the 1c code (F26), and new Task 3d makes it report already-complete sources (F28, O21). New Task 3e runs the member check of plan 6 trap (e), the known answers, and the `campaign.md` edits. Task 4 runs again with all ten items (O23). Task 5 resumes at k = 2 with the pilot (O22), and Tasks 6 and 7 report the 1c facts.
+2. **Repair of member `3554e8ef…` and ledger row k = 1.** On `c4de77b8…`, the next invocation selects that member as already complete. No child runs for it, and no pointer moves (plan 6, Handoff; `specs/evidence/stage1c/reproduction.md`, item 4). Task 5 treats that as completion of the repair obligation in `docs/runbooks/local-recovery.md`, row "Crash after pointer update". Row k = 1 of `invocations.md` stays as recorded: exit 9, `state_conflict`, Halt. It is not re-run, and it counts against `max_invocations`.
+3. **Three sources complete without a receipt.** The daily members `3554e8ef…` (2026-07-01), `dc790624…` (2026-10-14) and `00c1f46d…` (2026-10-15) appear under `already_complete_sources` in every result (F27, F28). The ledger and the coverage report count them as complete without a receipt, apart from the work each invocation does (O21).
+4. **The skipped daily-index listing.** Invocation 1's request for `https://www.sec.gov/Archives/edgar/daily-index/index.json` was refused at 13:40:42Z with `permit_expired`, so no listing was fetched (F29). Invocation 2's discovery requests it again. Stop rule 10 does not count invocation 1, which left no `workflow_summary`. Task 7 §2 names the refusal.
+5. **Traps from plan 6, Handoff, Stage 2 bullet.** (a) The stop before dispatch (M4) ends the command with exit 9 and no workflow result, but runs no child and moves no pointer. Stop rules 1 and 2 halt on it, and Task 5 Step 6 now defines the record for a run without a result. (b) On a poisoned store, the `discover` child still sends its requests before the first member stops. (c) Selecting `9fa189a0…` again for this store is unsupported (parent spec §4.9). (d) Plan 5's traps still apply. (e) A registered member with a non-retryable gap and no obligation stops the whole invocation: Task 3e Step 4 checks every member on a scratch copy before the gate. Planning found none (F27).
+6. **What stays.** The 2020Q1–2026Q4 range, the reserve and floor, the budget in `campaign.json` (`max_invocations` 24, invocation 1 included), the stop rules, the member-wall limit, and every config value except `runtime.release_manifest`. Tasks 3a–3c and the k = 1 record are the execution record and stay as run. The approval at `7869821` authorized only invocation 1 (D12). The window end 2026-11-05T13:00:00Z does not move (D13).
+7. **Time left.** On 2026-10-30 about 6 days remain. The campaign needs about 16–20 invocations of about 2,200 s and the Task 6 full check of about 3.5 hours (F31). If the window ends first, the campaign halts, and the owner decides (Task 5 Step 2).
+8. **Release selection and the two-release item.** Revision 1 item 4 said that this plan changes no release selection. That no longer holds: the selection changed from `9fa189a0…` to `c4de77b8…` at `f64c212`, in Stage 1c. The revisit condition of the `specs/deferred_items.md` item "Two-release proof covers only first-generation 1b stores" names only a D5 run, so it is still not met. Task 7 §8 says so.
+
+## Revision 2 for the 2020Q1 range
 
 Written 2026-10-29 at Task 4 Step 2, after the owner asked to start the range at 2020Q1 (D10). Planning sent no SEC request and wrote nothing under `data/`. It computed the new config hashes from scratch copies under the ignored `logs/` and deleted them after. It opened the store with operator access under the edited config, and ran read-only coverage for the new range (F21–F23). It also dry-ran Task 3c's edit scripts on scratch copies.
 
@@ -56,21 +71,22 @@ Consequence: Tasks 1–3 are offline and remain useful preparation. Task 4's liv
 
 **Status of authority:** This plan authorizes no live traffic.
 
-- Tasks 1, 3, 3a, 3b and 3c are offline and send no SEC request.
+- Tasks 1, 3, 3a, 3b, 3c, 3d and 3e are offline and send no SEC request. Task 3e writes nothing under `data/`. Its member check reads a scratch copy under the ignored `logs/`.
 - Task 3c edits `conf/sec-edgar-local.json`, the spec and a runbook. It writes nothing under `data/`. The owner's approval of Revision 2 authorizes it, and it is the only task that may edit the live config.
 - Task 2 changes files under `data/`. The owner approved its defaults O2, O3 and O9 (D6). It still runs only with no writer running (Task 2 Step 1).
-- Task 4 is the owner's live-execution gate. It opens only on a release that clears the feasibility blocker, after a reviewed revision of this plan for that release. Revision 1 is that revision for release `9fa189a0…`. Revision 2 changes its range, so Task 4 runs again after Task 3c. Tasks 5–7 run only after the Task 4 approval commit exists.
+- Task 4 is the owner's live-execution gate. It opens only on a release that clears the feasibility blocker, after a reviewed revision of this plan for that release. Revision 1 is that revision for release `9fa189a0…`. Revision 2 changes its range, so Task 4 runs again after Task 3c. Revision 3 changes the release, so Task 4 runs again after Task 3e: the approval at `7869821` authorized only invocation 1 (D12). Tasks 5–7 run only after the Task 4 approval commit exists.
 - Task 8 edits spec text only. The owner approved O4 (D6), and the task does not depend on the campaign.
 
 ## Global Constraints
 
-Every task's requirements include these lines. Revision 1 (2026-10-29) replaced the release, hash, reserve, slice-config and prelude lines. Revision 2 (2026-10-29) replaced the live-config, slice-config and backfill lines. Tasks 1–3 and 8 ran under the 2026-10-21 lines, which stay in git history at `4004f2e`. Tasks 3a and 3b ran under the Revision 1 lines, at `d3e959c`.
+Every task's requirements include these lines. Revision 1 (2026-10-29) replaced the release, hash, reserve, slice-config and prelude lines. Revision 2 (2026-10-29) replaced the live-config, slice-config and backfill lines. Revision 3 (2026-10-30) replaced the release, live-config, release-history, slice-config and prelude lines, and added the window line. Tasks 1–3 and 8 ran under the 2026-10-21 lines, which stay in git history at `4004f2e`. Tasks 3a and 3b ran under the Revision 1 lines, at `d3e959c`. Task 3c and invocation 1 ran under the Revision 2 lines, at `a6c1845`.
 
-- Release: `9fa189a0bea3c6545e7bce5b82d266d601abe2c3a35a66a58a8b8378d2bc283b` (version 0.2.0, `git_revision` `50423a404fb50a959b3ca4077301117d32804cc6`), manifest `/Users/lowell/Projects/sec-edgar-local/releases/sha256=9fa189a0bea3c6545e7bce5b82d266d601abe2c3a35a66a58a8b8378d2bc283b/release.json`. Selected in the live config at commit `6d80da4`. Evidence: `specs/evidence/stage1b/release.md`, `measurement.md`, `gate.md`.
-- Live config: `conf/sec-edgar-local.json`, `config_version=sec-local-config-v1`. After Task 3c: effective-config SHA-256 `2512fdcb999a302d93de84315d45e4e44d0bb942d5165698b64c371fc42b5be5` and file-byte SHA-256 `bfdf29859325fa396520c0fabd0bcd6f6e34d8854b558d56e4bf4a7731038204` (F21). Before Task 3c: `db62e7fb8c941f125f84992c5bccfdbb65d6461231d899054af505700e9004b1` and `de6c0dd9a67ff4bb29adf82d6df8eb5c69b934ed801ea7f5c2f3c26cc9d47fcc` (offline preflight, 2026-10-29). Task 3c Step 2 makes the one approved edit. Do not edit it otherwise.
+- Release: `c4de77b89bb1d8ecc5d094f0e1dc6f8a5f3a7935e3595a9dd086d1e41a6b8aa7` (version 0.2.0, `git_revision` `3af121a468fdd6b3ec7d8286d5cf619493992d49`), manifest `/Users/lowell/Projects/sec-edgar-local/releases/sha256=c4de77b89bb1d8ecc5d094f0e1dc6f8a5f3a7935e3595a9dd086d1e41a6b8aa7/release.json`. Selected in the live config at commit `f64c212cd1fd11688785442666299270f0103262`. Evidence: `specs/evidence/stage1c/release.md`, `gate.md`, `reproduction.md`. It keeps the 1b dispatch rule and reserve. It changes only `workflows/completion.py` and `workflows/processing.py`.
+- Live config: `conf/sec-edgar-local.json`, `config_version=sec-local-config-v1`. Effective-config SHA-256 `fb93b0e8e05dbc1cbc9bd167ae02ef2d775629905c15938055a6a93c5fb95e96` and file-byte SHA-256 `b2876ce96f933660ed45527cf40d55f191b53075484827d2738d0e4c93eeefac` (F24). Under Revision 2 they were `2512fdcb…` and `bfdf2985…`. Do not edit it.
 - Dispatch reserve and floor: `execution.dispatch_reserve_seconds` 1800 (measured, plan 5 D10). Floor 480 s (release constant `config.DISPATCH_RESERVE_FLOOR_SECONDS`). The launcher refuses `--timeout-seconds` at or below the reserve. At the 3,300-second launcher default, the runner starts no member after 1,500 s (the dispatch cutoff, parent spec §4.7). A member running at the cutoff still completes.
-- Release history of this store: `fc68adef…` wrote every object in it (L12). After the first 1b live write, selecting `fc68adef…` or the D5 release `aa8de1ac…` for this store is unsupported (parent spec §4.9). Never change `runtime.release_manifest` during or after the campaign.
-- Slice configs: `conf/stage2/1b/backfill-<start>-<end>.json`, made only by Task 3b's `slice_config` function. After Task 3c, 8 files remain: the pilot, the years 2020–2025 and `2026Q1`–`2026Q3` (O18). Each one equals the live config except for `backfill.start_quarter` and `backfill.end_quarter`. Its storage and logging roots are written as the same absolute paths. The store binding excludes the range (§4.5), so every slice uses the same bound root. The two files directly under `conf/stage2/` bind to `fc68adef…`. Never run them.
+- Release history of this store: `fc68adef…` wrote it until invocation 1. Invocation 1 (`9fa189a0…`) wrote 1b generations into 9 filing quarters. Selecting `fc68adef…`, the D5 release `aa8de1ac…` or the 1b release `9fa189a0…` for this store is unsupported (parent spec §4.9). `runtime.release_manifest` changed once during the campaign, at `f64c212`, under the Stage 1c owner approval. Never change it again during or after the campaign.
+- Slice configs: `conf/stage2/1c/backfill-<start>-<end>.json`, made only by Task 3e's `slice_config` function: the pilot, the years 2020–2025 and `2026Q1`–`2026Q3`, 8 files (F25). Each one equals the live config except for `backfill.start_quarter` and `backfill.end_quarter`. Its storage and logging roots are written as the same absolute paths. The store binding excludes the range (§4.5), so every slice uses the same bound root. The two files directly under `conf/stage2/` bind to `fc68adef…`. Never run them. Task 3e removes `conf/stage2/1b/` (O20).
+- Campaign window: ends 2026-11-05T13:00:00Z (D13). No invocation starts at or after that time.
 - Observed config facts, 2026-10-21. The file is tracked since commit `001edf5` (spec §4.8 as amended by Task 8).
 - Storage / acquisition: `storage.backend=local`; `acquisition.mode=live`. Data root `/Users/lowell/Projects/sec-edgar-local/data`. Logging root `/Users/lowell/Projects/sec-edgar-local/logs`.
 - Backfill / handoff (live config): `2020Q1` through `open` after Task 3c (was `2015Q1`, D10); daily handoff `2026-10-01`.
@@ -91,7 +107,7 @@ Every task's requirements include these lines. Revision 1 (2026-10-29) replaced 
 
 ```sh
 project=/Users/lowell/Projects/sec-edgar-local
-release="$project/releases/sha256=9fa189a0bea3c6545e7bce5b82d266d601abe2c3a35a66a58a8b8378d2bc283b"
+release="$project/releases/sha256=c4de77b89bb1d8ecc5d094f0e1dc6f8a5f3a7935e3595a9dd086d1e41a6b8aa7"
 native() { "$release/venv/bin/python" -I -B -X pycache_prefix=/dev/null "$@"; }
 tool() { native "$project/scripts/baseline-campaign.py" "$@"; }
 evidence="$project/specs/evidence/baseline-campaign"
@@ -113,10 +129,11 @@ cd "$project"
 - **D10** (owner, Task 4 Step 2, 2026-10-29): The requested range and the live config's `backfill.start_quarter` start at 2020Q1. This replaces O1's 2015Q1 start. Owner's words: "Can we change the range for this package as well as the quarterly index downloads to 2020Q1-2026-Q4?", then "Write Revision 2". Planning read "this package" as the live config, the only place a range lives. Applied in: Revision 2, Global Constraints, Task 3c (config, spec amendment, runbook), Tasks 4–7.
 - **D11** (owner, plan review, 2026-10-29): Revision 2 approved as written. That includes O18 and O19 as proposed, D10's reading of "this package" as the live config, and the spec and runbook wording in Task 3c Step 7. Owner's words: "Approve Revision 2". This approval authorizes Task 3c and its one live config edit. It is not live authority: Task 4 still gates every live invocation. Applied in: Task 3c, Tasks 4–7.
 - **D12** (owner, Task 5 halt, 2026-10-29): Invocation 1 (run `8305a3d9-54a1-46ae-863c-af8227118417`) halted under stop rule 1. The owner routes the failure to an engine diagnosis and fix, and no further invocation runs until then. The owner selected this option: "Route the processing.py:96 completion-check failure to an engine diagnosis and fix. Run no further invocation until then." The Task 4 approval stays committed, but it does not authorize a rerun before the fix. Applied in: Task 5, Handoff.
+- **D13** (owner, brief, 2026-10-30): Revise this plan for Stage 2 against the 1c release `c4de77b8…`. Stage 2's `Consumes` and plan 6, Handoff, Stage 2 bullet name every value to change. The campaign window ends 2026-11-05T13:00:00Z. Do not merge `platform-stage1` during this work. Applied in: Revision 3, Global Constraints, Tasks 3d–7.
 
 ## Defaults for owner review
 
-Each default below is applied in the named task. The owner accepted O1–O10 as proposed (D6) and settled O11 (D5). O12–O17 are new in Revision 1. The owner accepted them as proposed (D9). O1–O10 stand as accepted. Where Revision 1 changes how one applies (O1's slices, O8's limits), the new default names it. O18 and O19 are new in Revision 2. The owner accepted them as proposed (D11). D10 changes O1's range.
+Each default below is applied in the named task. The owner accepted O1–O10 as proposed (D6) and settled O11 (D5). O12–O17 are new in Revision 1. The owner accepted them as proposed (D9). O1–O10 stand as accepted. Where Revision 1 changes how one applies (O1's slices, O8's limits), the new default names it. O18 and O19 are new in Revision 2. The owner accepted them as proposed (D11). D10 changes O1's range. O20–O24 are new in Revision 3 and await owner review.
 
 - **O1 — Range and slices.** Default: requested range 2015Q1–2026Q4, which is 48 quarterly units. This is the live config's `2015Q1`–`open` on a UTC date in 2026Q4. 2026Q4 is the open quarter, so its quarterly source is quarter-to-date. The campaign runs as range slices (F8, F9). The first slice is the pilot `2026Q4`–`open`. Then ascending slices run from 2015Q1 to 2026Q3, and together they cover the range with no gap or overlap. If the campaign starts on or after 2027-01-01T00:00:00Z, `open` becomes 2027Q1: re-derive the range, the open quarter and every value that names 2026Q4 in the plan revision that Task 4 requires. Alternative: an earlier start, such as the `2010Q1` that the completed design names as a possible later revision. Applied in: Tasks 3 and 5. Revision 2 (D10): the owner set the range to 2020Q1–2026Q4, 28 units, and the live config's start to `2020Q1`.
 - **O2 — 2021Q1 manifest restoration.** Default: after a stopped-writer backup, write the canonical bytes back (Task 2). The canonical re-encoding of the drifted file is SHA-256 `a445d0a8…`, 5,100 bytes, which equals the L12 inventory record. Alternative: leave the file. Then every reader and every publication onto 2021Q1 refuses with `state_conflict`. That includes a future `daily` run whose back-dated rows reach 2021Q1. Applied in: Task 2.
@@ -141,6 +158,11 @@ Each default below is applied in the named task. The owner accepted O1–O10 as 
 - **O17 — Revisit triggers deferred into Stage 2.** Default: report, do not halt (except O14). Task 7 §8 records the evidence for each trigger: B4 (`repeated_sources` and `b4_members`), the history scan (engine seconds against `child_call_rows`), A1 (2026Q4 member walls), refused C6 candidates, and the two-release limit (no release change). The items stay open in `specs/deferred_items.md` unless the evidence meets their closure conditions at plan completion. Applied in: Tasks 5, 6, 7.
 - **O18 — The five unused slice configs (Revision 2).** Default: `git rm` the 2015–2019 year configs in Task 3c, so `conf/stage2/1b/` holds exactly the 8 slices to run and none can be run by mistake. They stay in git history at `c9a9cb3`. Alternative: keep them as never-run history, as the two `fc68adef…` configs are kept. Applied in: Task 3c.
 - **O19 — Budget for 28 units (Revision 2).** Default: `max_invocations` 24. That is the pilot's 2–4 invocations, about 14 for the 27 closed quarterly members at about 2 for each invocation, and reruns. The other limits stay as O8 and Revision 1 set them. They are upper bounds and still hold, now with more margin: about 158 of 300 distinct URLs and about 148 MB of 1 GiB received bytes. The runtime and the member-wall limit do not change. Alternative: also lower the campaign request, URL and byte limits in proportion. Applied in: Tasks 3c, 4.
+- **O20 — Slice configs for the 1c release (Revision 3).** Default: make the 8 configs in a new directory `conf/stage2/1c/`, and `git rm` the 8 files in `conf/stage2/1b/`. Each 1b config selects `9fa189a0…`, which is now unsupported for this store (trap (c)). So no config that selects it stays runnable (the O18 precedent). They stay in git history, and the k = 1 record names the 1b pilot. Alternative: keep `conf/stage2/1b/` as never-run history. Applied in: Task 3e.
+- **O21 — Sources complete without a receipt (Revision 3).** The coverage report reads only `result.members`, so it never shows the three sources (F28). Meanwhile, each result's `counts.complete_sources` includes them. Default: Task 3d adds `already_complete_sources` to the coverage output, from each result's `intent`, with the runs that listed each source, and a per-result count. The ledger writes the complete count as `c (a already complete)`. Task 7 §5 lists the sources as complete without a receipt. Alternative: no tool change, and the ledger notes the three sources by hand. That does not meet the plan 6 Handoff, which requires the `coverage` tool to count them. Applied in: Tasks 3d, 5, 6, 7.
+- **O22 — Invocation 2 is the pilot (Revision 3).** Row k = 1 says Halt, so Task 5 Step 1 has no slice decision for k = 2. Default: k = 2 runs the pilot on `conf/stage2/1c/backfill-2026Q4-open.json`. Stop rule 9 treats it as the pilot's first invocation with a result, and stop rule 10 does not count k = 1. Invocation 1 counts against `max_invocations` 24, so 23 remain. Applied in: Tasks 3e, 5.
+- **O23 — The Task 4 gate for Revision 3.** Default: ask all ten items again, as Revision 2 did. Item 7 asks only the window start: the end is fixed at 2026-11-05T13:00:00Z (D13). The approval at `7869821` becomes history in `campaign.md`. Alternative: ask only the items that Revision 3 changes (2 and 7). Applied in: Tasks 3e, 4.
+- **O24 — Two new Finder files under `data/` (Revision 3).** `data/.DS_Store` and `data/objects/.DS_Store` appeared on 2026-10-30 (F30). No immutable file changed. Default: leave them. Record their hashes in `pre-campaign.md`, and expect them under `added` in every files check. Removing them is a write under `data/` during the campaign, and stop rule 5 does not halt on `added`. Alternative: remove them, as O3 did, after recording their hashes. Applied in: Task 3e.
 
 ## Facts established while planning (read-only, 2026-10-21)
 
@@ -200,12 +222,39 @@ No SEC request was sent. Nothing under `data/` was written. Scratch configs were
 - **F22 — Store and coverage on the new range.** The store opens with operator access under the edited config (16 `QuarterPublication` rows), so the store binding excludes the range (§4.5). `coverage --start 2020Q1 --end 2026Q4 --open-quarter 2026Q4` gives `{'no_campaign_result': 28}` and 16 published daily-only quarters. With `--check full` it reads 6,744 rows. `other_filing_quarters` is empty: every published quarter is 2021Q1 or later.
 - **F23 — The engine reads the range only from config.** `discovery.py` and `runner.py` take `backfill.start_quarter` from settings. `workflows/results.py` rebuilds a result's requested quarters from the effective config recorded in that result, so the live edit does not change how slice results validate. Daily rows back-dated into filing quarters before 2020Q1 still publish, as daily-only quarters outside the range. Coverage lists them under `other_filing_quarters`.
 
+## Facts established for Revision 3 (read-only, 2026-10-30)
+
+No SEC request was sent. Nothing under `data/` was written: a hash of every file before and after the scratch copy was read gave identical lists. Scratch files went to the ignored `logs/plan2-rev3/`.
+
+- **F24 — 1c inputs.** The offline preflight of the live config under the 1c interpreter printed effective SHA-256 `fb93b0e8…`, release `c4de77b8…`, range `2020Q1`–`open` and reserve 1800. The file bytes are `b2876ce9…`. Commit `f64c212` changed only `runtime.release_manifest`. These equal plan 6, Handoff, Stage 2 bullet. Engine source is unchanged since the 1c build revision (empty `git diff 3af121a HEAD -- packages/sec-edgar-ingest/src`).
+- **F25 — Slice configs on the 1c release.** Task 3b's generator, run into a scratch directory with the 1c interpreter, reproduces the live effective hash `fb93b0e8…` for `2020Q1`–`open`. Each new config differs from its `conf/stage2/1b/` counterpart only in the release ID inside `runtime.release_manifest`. The 8 configs give these effective hashes:
+
+| Config | Effective SHA-256 |
+| --- | --- |
+| `backfill-2026Q4-open.json` (pilot) | `dc3a45ee4eeb45e32e5c1560b2ce1532848cd35bc8296bbdc0d7eaa91cd10621` |
+| `backfill-2020Q1-2020Q4.json` | `12fe329d97fdd7c384a557e6f0b398bf0360055b548ae46ed50931a802b7468b` |
+| `backfill-2021Q1-2021Q4.json` | `95e18a3a9fe3d226cc418432ecde27a80b50e3eb88f9b02574af9505fc4230bf` |
+| `backfill-2022Q1-2022Q4.json` | `ce0d0231fa14d845405153666b17bd461064b626869b8bc0f814b70ee8b27c25` |
+| `backfill-2023Q1-2023Q4.json` | `c32a1ebd1ad49c7ff41b71ad947330d588f7d319ad779fe4f37bbc1a1922cef8` |
+| `backfill-2024Q1-2024Q4.json` | `e82ddb0e40398fd6eca194082ad787f07d0002ae18c50aaf64addf8d9a84201a` |
+| `backfill-2025Q1-2025Q4.json` | `573641e3edaf7f53e0d04d54c52b8d5ca5e265792665a42554f2a7c4ab81e01e` |
+| `backfill-2026Q1-2026Q3.json` | `96493c96cc5b1b19a8544c5284c67a04f59a0b43f16decbcdd1dba39671b7fe2` |
+
+- **F26 — The tool on the 1c code.** The tool's 15 tests pass on the checkout, whose source equals the 1c `git_revision` (`Ran 15 tests in 144.065s`, `OK`). The tool imports `workflows.results`, which imports `completion` and calls `WorkflowMembers.completed` (plan 6 Handoff). No result format changed (M6). Under the 1c interpreter on the live store: `audit` gives a store total of 15 attempts, 13 distinct URLs, 5,524,449 received bytes, statuses `{'0': 1, '200': 14}`, 0 uncertain and ordinal 1. `coverage` (no result refs) gives `{'no_campaign_result': 28}` and 17 published quarters, all inside the range. The full check reads 13,262 rows. `timing` gives `runs: []` and 6 `WorkflowChildCall` rows. `files` against L12 gives 328 files and 20,120,728 bytes: 0 missing, 0 changed immutable, 175 added (invocation 1's 173 and F30's two), and SQLite state under `changed_state`.
+- **F27 — Every registered member on the 1c code (plan 6 trap (e)).** On a scratch copy of `data/`, `evaluate_member` ran on all 77 `WorkflowMember` rows. 3 are complete, and all 3 lack a receipt: `3554e8ef…` (2026-07-01), `dc790624…` (2026-10-14), `00c1f46d…` (2026-10-15). The other 74 have only retryable gaps: `acquisition_pending` 73 and `transform_pending` 1. No member has a non-retryable gap without an obligation, so none would stop before dispatch. The store holds 1 `WorkflowMemberResult` row, 0 `WorkflowRepairObligation` rows, 17 `QuarterPublication` rows and 20 `Attempt` rows. Origins: 76 members come from L12's run `accept-38bf7c024e0fd5ac` (`fc68adef…`). One, the 2026Q4 quarterly member `5eb08c0b…`, comes from run `8305a3d9…` (`9fa189a0…`).
+- **F28 — The coverage report omits already-complete sources.** `coverage` builds `units` and `daily_sources` from `result.members`. A source that a run selects as already complete is not a member: it is listed only in `intent['already_complete_sources']`. `contracts.summarize` still counts it in `counts.complete_sources`. So without Task 3d, the three sources appear in no report, while each invocation's complete count includes them.
+- **F29 — The skipped daily-index listing.** In invocation 1, the `discover` child's request for `https://www.sec.gov/Archives/edgar/daily-index/index.json` was refused at 13:40:42Z with `permit_expired` ("child refused a stale dispatch window"): status 0, empty body, `quarantine/discovery/sha256=e3b0c442…`. An expired unsent permit is deferred work, not a completed acquisition (spec §4.3). It is the one `failed` attempt in the audit. Daily bodies listed after L12 (from 2026-10-16) are not registered yet. The next discovery requests the listing again.
+- **F30 — New Finder files.** `data/.DS_Store` (6,148 bytes, `d63e67b659ddd513ce55e17c7eb29a0f8dc11d831ab92c42070376f90af5a9f0`) and `data/objects/.DS_Store` (8,196 bytes, `5f0477684d459e88a86e5551e367fca6109bb56c79daa6839e6101df9304a65e`) have mtime 2026-10-30 12:15 local. That is after the Stage 1c replay's hash list, so Finder opened `data/` after 15:19Z (Global Constraints forbid it). No immutable file changed (F26).
+- **F31 — Time inside the window.** The window ends 2026-11-05T13:00:00Z. Expected work: about 16–20 invocations of about 2,200 s (`campaign.md`, Budget), 23 left under `max_invocations`, then the Task 6 full check, about 3.5 hours.
+
 ## File structure
 
 | Path | Responsibility | Task |
 | --- | --- | --- |
-| `scripts/baseline-campaign.py` | Read-only evidence tool: `files`, `audit`, `coverage` (`--check full\|integrity`), `timing`. Verified against releases `fc68adef…` and `9fa189a0…`. | 1, 3a |
-| `packages/sec-edgar-ingest/tests/test_baseline_campaign.py` | Offline tests: pure rules plus fixture-store workflows. | 1, 3a |
+| `scripts/baseline-campaign.py` | Read-only evidence tool: `files`, `audit`, `coverage` (`--check full\|integrity`, with `already_complete_sources`), `timing`. Verified against releases `fc68adef…`, `9fa189a0…` and `c4de77b8…`. | 1, 3a, 3d |
+| `packages/sec-edgar-ingest/tests/test_baseline_campaign.py` | Offline tests: pure rules plus fixture-store workflows. | 1, 3a, 3d |
+| `conf/stage2/1c/backfill-<start>-<end>.json` | The 8 range-only slice configs bound to `c4de77b8…`. Task 3e removes `conf/stage2/1b/`. | 3e, 5 |
+| `specs/evidence/baseline-campaign/pre-campaign/rev3/*.json` | The Revision 3 known answers and the member check. | 3e |
 | `.gitignore` | Adds `backups/`. | 2 |
 | `backups/stage2-pre-campaign-<stamp>/` (ignored) | Stopped-writer backup: SQLite backup copy and raw copy of `data/`. | 2 |
 | `specs/evidence/baseline-campaign/pre-campaign.md`, `pre-campaign/*.json` | Integrity findings, backup, restoration and known-answer results. `pre-campaign/1b/*.json` holds the Revision 1 known answers, `pre-campaign/rev2/*.json` the Revision 2 ones. | 2–3, 3b, 3c |
@@ -213,7 +262,7 @@ No SEC request was sent. Nothing under `data/` was written. Scratch configs were
 | `conf/stage2/1b/backfill-<start>-<end>.json` | The range-only slice configs bound to `9fa189a0…`: 13 made, 8 kept. | 3b, 3c, 5 |
 | `conf/sec-edgar-local.json` | The live config. Task 3c changes `backfill.start_quarter` to `2020Q1`. | 3c |
 | `docs/runbooks/local-ingestion.md` | The backfill start in its config rules. | 3c |
-| `specs/evidence/baseline-campaign/campaign.md`, `campaign.json` | Scope, budget, slice plan, stop rules, evidence locations, approval boundary, release gate and owner approval. Rewritten for the 1b release, then edited for the 2020Q1 range. | 3, 3b, 3c, 4 |
+| `specs/evidence/baseline-campaign/campaign.md`, `campaign.json` | Scope, budget, slice plan, stop rules, evidence locations, approval boundary, release gate and owner approval. Rewritten for the 1b release, edited for the 2020Q1 range, then edited for the 1c release. | 3, 3b, 3c, 3e, 4 |
 | `specs/evidence/baseline-campaign/invocations.md`, `invocations/<k>-<run-id>.json` | Ledger and record for each invocation, with its timing summary. | 5 |
 | `specs/evidence/baseline-campaign/final/*.json`, `quarantine/<quarter>.txt` | Final full coverage, audit, timing, inventory comparison and conflict enumerations. | 6 |
 | `specs/evidence/baseline-campaign/coverage-finding.md` | The G2 finding, dispositions and operating decision. | 7 |
@@ -2375,65 +2424,398 @@ Expected: `git status` lists the live config, the five deleted configs, the spec
 
 ---
 
+### Task 3d: Evidence tool on the 1c release: report already-complete sources (offline, O21)
+
+> Revision 3: new task.
+
+**Files:**
+- Modify: `scripts/baseline-campaign.py`
+- Modify: `packages/sec-edgar-ingest/tests/test_baseline_campaign.py`
+
+**Interfaces:**
+- Consumes: the Task 3a tool at `b176598`. `WorkflowResult.intent` (a mapping; `already_complete_sources` is a tuple of source IDs, absent in older results) and `WorkflowResult.context.run_id`, as defined in `workflows/contracts.py` of `c4de77b8…`.
+- Produces:
+  - `already_complete(results) -> list[dict]`: one `{'source_id': str, 'run_ids': list[str]}` for each source that any result lists in `intent['already_complete_sources']`, sorted by `source_id`. `run_ids` keep the order of `results`.
+  - `coverage` output gains `already_complete_sources` (the `already_complete` list for the read results), and each entry of `results` gains `already_complete_sources` (that result's count). Nothing else in the output changes, and no verdict reads the new fields.
+
+No file under `packages/sec-edgar-ingest/src` changes, and the release is unchanged. So the full offline checker is not required.
+
+- [ ] **Step 1: Write the failing tests**
+
+In `PureRuleTests`, directly before `test_budget_breaches_name_each_exceeded_limit`, add:
+
+```python
+    def test_already_complete_sources_are_reported_once_with_each_listing_run(self):
+        from types import SimpleNamespace
+        a, b = 'a' * 64, 'b' * 64
+
+        def result(run, *sources):
+            return SimpleNamespace(context=SimpleNamespace(run_id=run),
+                                   intent={'already_complete_sources': sources} if sources else {})
+        listed = self.api['already_complete']([result('r1', b, a), result('r2', a), result('r3')])
+        self.assertEqual(listed, [{'source_id': a, 'run_ids': ['r1', 'r2']},
+                                  {'source_id': b, 'run_ids': ['r1']}])
+        self.assertEqual(self.api['already_complete']([]), [])
+```
+
+In `FixtureStoreTests.test_integrity_coverage_reads_no_row_and_reports_no_coverage`, after `self.assertEqual(report['check'], 'integrity')`, add:
+
+```python
+        self.assertEqual(report['already_complete_sources'], [])
+        self.assertEqual(report['results'][0]['already_complete_sources'], 0)
+```
+
+- [ ] **Step 2: Run the tests to verify they fail**
+
+Run the Task 3a Step 2 command.
+
+Expected: `Ran 16 tests` and `FAILED (errors=2)`. Both errors are `KeyError`: `'already_complete'` and `'already_complete_sources'`.
+
+- [ ] **Step 3: Implement `already_complete(results) -> list[dict]` in `scripts/baseline-campaign.py`**
+
+Put it directly after `read_results`. Read `result.intent.get('already_complete_sources', ())`. In `coverage`, add `'already_complete_sources': already_complete(results)` to the returned mapping, after `'results'`, and add `'already_complete_sources': len(result.intent.get('already_complete_sources', ()))` to each `results` entry. In the module docstring, replace `against releases fc68adef... and 9fa189a0...;` with `against releases fc68adef..., 9fa189a0... and c4de77b8...;`.
+
+- [ ] **Step 4: Run the tests to verify they pass**
+
+Run the Task 3a Step 2 command again.
+
+Expected: `Ran 16 tests` and `OK`, in about 2.5 minutes. On 2026-10-30, planning applied this task's Step 1 and Step 3 to the checkout and then restored both files: Step 2 gave exactly the result above (141.7 s), and this step passed (144.1 s). With the change, `coverage --check integrity` on the live store printed `{'no_campaign_result': 28} []`.
+
+- [ ] **Step 5: Check the tool under the release interpreter, read-only**
+
+```sh
+# prelude (Global Constraints)
+pgrep -fl -- '-m sec_edgar_ingest|scripts/sec-edgar-local|local-bootstrap|local_bootstrap' || echo 'no writer'
+tool files --root "$project/data" --recorded specs/evidence/local-port/sec-acceptance.json \
+  | native -c 'import json,sys; v=json.load(sys.stdin)["comparison"]; print(len(v["added"]), v["missing"], v["changed_immutable"])'
+tool coverage --config "$project/conf/sec-edgar-local.json" --start 2020Q1 --end 2026Q4 --open-quarter 2026Q4 \
+  --check integrity | native -c 'import json,sys; v=json.load(sys.stdin); print(v["verdicts"], v["already_complete_sources"])'
+tool timing --config "$project/conf/sec-edgar-local.json"; echo "timing exit=$?"
+```
+
+Expected: `no writer`, then `175 [] []`, then `{'no_campaign_result': 28} []`, then a timing report with `runs: []` and `child_call_rows: 6`, and `timing exit=0` (F26). Any other result stops the plan. Report it to the owner.
+
+- [ ] **Step 6: Commit**
+
+```sh
+git diff --check
+git add scripts/baseline-campaign.py packages/sec-edgar-ingest/tests/test_baseline_campaign.py
+git commit -m "feat(scripts): report already-complete sources in campaign coverage"
+```
+
+---
+
+### Task 3e: Slice configs, member check, known answers and campaign files on the 1c release (offline, O20, O22–O24)
+
+> Revision 3: new task.
+
+**Files:**
+- Create: the 8 files `conf/stage2/1c/backfill-<start>-<end>.json` listed in F25
+- Delete: the 8 files in `conf/stage2/1b/` (O20)
+- Create: `specs/evidence/baseline-campaign/pre-campaign/rev3/preflight.json`, `members.json`, `audit.json`, `coverage-integrity.json`, `coverage-full.json`, `timing.json`, `files.json`
+- Modify: `specs/evidence/baseline-campaign/campaign.md`, `pre-campaign.md` (append a Revision 3 section)
+
+**Interfaces:**
+- Consumes: D13, O20, O22–O24. The Task 3d tool and its commit hash. The live store as invocation 1 left it (F26, F27).
+- Produces: the 8 slice configs with their F25 hashes, `campaign.md` for release `c4de77b8…` with an empty Approval section, which Task 4 gates and Task 5 obeys. `campaign.json` does not change.
+
+- [ ] **Step 1: Confirm the starting state**
+
+```sh
+# prelude
+pgrep -fl -- '-m sec_edgar_ingest|scripts/sec-edgar-local|local-bootstrap|local_bootstrap' || echo 'no writer'
+shasum -a 256 conf/sec-edgar-local.json
+git log -1 --format='%h %s' -- scripts/baseline-campaign.py
+git status --short -- conf/ specs/ docs/ scripts/
+ls conf/stage2/1b | wc -l; ls conf/stage2/1c 2>&1 | head -1
+```
+
+Expected: `no writer`, the file hash `b2876ce96f933660ed45527cf40d55f191b53075484827d2738d0e4c93eeefac`, the Task 3d commit, no `git status` line, `8`, and `No such file or directory`. Any other result stops the plan.
+
+- [ ] **Step 2: Offline preflight of the live config**
+
+Run the Task 3c Step 3 block with `rev3` in place of `rev2`.
+
+Expected: `backfill` `["2020Q1", "open"]`, `dispatch_reserve_seconds` `1800`, `effective_config_sha256` `fb93b0e8e05dbc1cbc9bd167ae02ef2d775629905c15938055a6a93c5fb95e96` and `release_id` `c4de77b89bb1d8ecc5d094f0e1dc6f8a5f3a7935e3595a9dd086d1e41a6b8aa7`. Any difference stops the plan.
+
+- [ ] **Step 3: Make the 8 slice configs and remove the 1b configs (O20)**
+
+Define Task 3b's `slice_config` function unchanged, except that its second argument is `"$project/conf/stage2/1c"`. Then:
+
+```sh
+# prelude
+# slice_config as in Task 3b, writing into conf/stage2/1c
+slice_config 2020Q1 open && rm "$project/conf/stage2/1c/backfill-2020Q1-open.json"
+slice_config 2026Q4 open
+for year in 2020 2021 2022 2023 2024 2025; do slice_config "${year}Q1" "${year}Q4"; done
+slice_config 2026Q1 2026Q3
+old=9fa189a0bea3c6545e7bce5b82d266d601abe2c3a35a66a58a8b8378d2bc283b
+new=c4de77b89bb1d8ecc5d094f0e1dc6f8a5f3a7935e3595a9dd086d1e41a6b8aa7
+for f in conf/stage2/1b/*.json; do
+  sed "s/$old/$new/" "$f" | cmp -s - "conf/stage2/1c/${f:t}" && echo "release-only ${f:t}" || echo "DIFFERS ${f:t}"
+done
+git rm -q conf/stage2/1b/*.json
+ls conf/stage2/1c | wc -l; ls conf/stage2/1b 2>&1 | head -1
+```
+
+Expected:
+
+- The first line is `backfill-2020Q1-open.json fb93b0e8e05dbc1cbc9bd167ae02ef2d775629905c15938055a6a93c5fb95e96`, the live effective hash. That file is then removed.
+- The next 8 lines each print a file name and exactly its F25 hash.
+- 8 `release-only` lines and no `DIFFERS` line.
+- `8`, then `No such file or directory`.
+
+Any other hash or a `DIFFERS` line stops the plan.
+
+- [ ] **Step 4: Check every registered member for a stop before dispatch (plan 6 trap (e))**
+
+This reads a scratch copy under the ignored `logs/`, never the live root.
+
+```sh
+# prelude
+pgrep -fl -- '-m sec_edgar_ingest|scripts/sec-edgar-local|local-bootstrap|local_bootstrap' || echo 'no writer'
+scratch="$campaign_logs/scratch-rev3"
+hash_data() { (cd "$project/data" && find . -type f | LC_ALL=C sort | xargs shasum -a 256); }
+mkdir -p "$scratch" && hash_data > "$scratch/before.sha256"
+cp -Rp "$project/data" "$scratch/data"
+native - "$scratch/data" <<'PY' > "$evidence/pre-campaign/rev3/members.json"
+import json, sys
+from collections import Counter
+from pathlib import Path
+from sec_edgar_ingest.storage.contracts import REGISTRY_PATH
+from sec_edgar_ingest.storage.local import LocalObjectStore, LocalStateStore
+from sec_edgar_ingest.workflows.completion import evaluate_member
+root = Path(sys.argv[1])
+binding = json.loads((root / 'objects' / REGISTRY_PATH).read_bytes())
+objects = LocalObjectStore(root, binding=binding, create=False)
+store = LocalStateStore(root, binding=binding, create=False)
+receipts = {row.to_mapping()['value']['member_id'] for row in store.scan('WorkflowMemberResult', {})}
+rows = []
+for row in store.scan('WorkflowMember', {}):
+    member = row.to_mapping()['value']
+    found = evaluate_member(member, 'sec-index-parser-v1', 'sec-index-v1', store, objects)
+    rows.append({'member_id': member['member_id'], 'kind': member['source']['kind'], 'period': member['source']['period'],
+                 'receipt': member['member_id'] in receipts, 'complete': found.complete,
+                 'obligations': len(found.obligations),
+                 'gaps': [{'code': gap.code, 'retryable': gap.retryable} for gap in found.gaps]})
+print(json.dumps({'members': len(rows), 'receipts': len(receipts), 'complete': sum(row['complete'] for row in rows),
+    'complete_without_receipt': sorted([row['period'], row['member_id']] for row in rows if row['complete'] and not row['receipt']),
+    'gap_codes': dict(sorted(Counter(gap['code'] for row in rows for gap in row['gaps']).items())),
+    'stop_before_dispatch': [row for row in rows if row['obligations'] == 0
+                             and any(not gap['retryable'] for gap in row['gaps'])]}, indent=1))
+PY
+echo "members exit=$?"
+hash_data > "$scratch/after.sha256"; cmp -s "$scratch/before.sha256" "$scratch/after.sha256" && echo data-unchanged
+rm -rf "$scratch"
+native -c 'import json,sys; v=json.load(open(sys.argv[1])); print(v["members"], v["receipts"], v["complete"], [p for p, _ in v["complete_without_receipt"]], v["gap_codes"], len(v["stop_before_dispatch"]))' \
+  "$evidence/pre-campaign/rev3/members.json"
+```
+
+Expected, as planning observed on 2026-10-30 (F27): `no writer`, `members exit=0`, `data-unchanged`, then `77 1 3 ['2026-07-01', '2026-10-14', '2026-10-15'] {'acquisition_pending': 73, 'transform_pending': 1} 0`.
+
+- A non-empty `stop_before_dispatch` stops the plan. Each listed member would end the next invocation with exit 9 before any child runs (trap (a)). Report the members and their gaps to the owner.
+- Any other difference also stops the plan. Report it.
+
+- [ ] **Step 5: Known answers on the live store**
+
+Run the Task 3c Step 6 block with `rev3` in place of `rev2` (output directory and `files-rev3.json`).
+
+Expected, as planning observed on 2026-10-30 (F26):
+
+- `audit exit=0`, `integrity exit=0`, `full exit=0`, `timing exit=0`, `files exit=0`.
+- `store_total` has `attempts: 15`, `distinct_urls: 13`, `max_ordinal: 1`, `received_bytes: 5524449`, `statuses: {'0': 1, '200': 14}`, `uncertain: 0`, `access_denied: 0`.
+- `integrity {'no_campaign_result': 28} 17 ['None'] 0 [None] []`.
+- `full {'no_campaign_result': 28} 17 ['1'] 13262 [None] []`.
+- `[] 6`, then 328 files, 20,120,728 bytes, empty `missing` and `changed_immutable`, 175 `added` paths that include `.DS_Store` and `objects/.DS_Store` (O24), and SQLite files under `changed_state`.
+
+Any other value stops the plan. More Finder files under `added` also stop it: report them to the owner (O24).
+
+- [ ] **Step 6: Edit `specs/evidence/baseline-campaign/campaign.md` for the 1c release**
+
+Put the Task 3d commit hash (`git log -1 --format=%h -- scripts/baseline-campaign.py`) in place of `<Task 3d commit>` before running.
+
+```sh
+# prelude
+native - "$evidence/campaign.md" '<Task 3d commit>' <<'PY'
+import sys
+from pathlib import Path
+path, tool_commit = Path(sys.argv[1]), sys.argv[2]
+text = path.read_text()
+EDITS = [
+    ('**Status:** Approved for live execution within the limits above.\n',
+     "**Status:** Proposed for release `c4de77b8…` (plan 2 Revision 3). Not approved. No live invocation may\n"
+     "start until the Approval section is complete and committed.\n"),
+    ('Revisions 1 and 2.\n', 'Revisions 1–3.\n'),
+    ('range start from 2015Q1 to 2020Q1 in this file and in the live config.\n',
+     'range start from 2015Q1 to 2020Q1 in this file and in the live config. Plan 2 Revision 3 (D13) moved\n'
+     'the campaign to release `c4de77b8…` after invocation 1 halted on `9fa189a0…` (D12).\n'),
+    ('| Release | `9fa189a0bea3c6545e7bce5b82d266d601abe2c3a35a66a58a8b8378d2bc283b` (version 0.2.0) |\n',
+     '| Release | `c4de77b89bb1d8ecc5d094f0e1dc6f8a5f3a7935e3595a9dd086d1e41a6b8aa7` (version 0.2.0), selected at '
+     '`f64c212`. Invocation 1 ran on `9fa189a0…`. |\n'),
+    ('effective SHA-256 `2512fdcb…`, file SHA-256 `bfdf2985…` |\n',
+     'effective SHA-256 `fb93b0e8…`, file SHA-256 `b2876ce9…` |\n'),
+    ('| Slice configs | `conf/stage2/1b/`, 8 files. Effective hashes: plan 2, F13 (the pilot and the 2020–2026 rows). |\n',
+     '| Slice configs | `conf/stage2/1c/`, 8 files. Effective hashes: plan 2, F25. |\n'),
+    ('reproduces the live effective hash `2512fdcb…` |\n', 'reproduces the live effective hash `fb93b0e8…` |\n'),
+    ('at commit `b176598` |\n', 'at commit `' + tool_commit + '` |\n'),
+    ('Open on evidence for release `9fa189a0…`. Live work still needs the Approval below.\n',
+     'Open on evidence for release `c4de77b8…`. It keeps the 1b dispatch rule and reserve, and fixes the\n'
+     'member-completion conflict that halted invocation 1 (`specs/evidence/stage1c/`). Live work still needs\n'
+     'the Approval below.\n'),
+    ('([pre-campaign.md](pre-campaign.md), Revision 2 section).\n',
+     '([pre-campaign.md](pre-campaign.md), Revision 3 section).\n'
+     '5. No registered member stops before dispatch: on a scratch copy, every member has only retryable gaps\n'
+     '   or is complete (plan 2 F27; [pre-campaign/rev3/members.json](pre-campaign/rev3/members.json)).\n'),
+    ('  3. `2026Q1`–`2026Q3`.\n',
+     '  3. `2026Q1`–`2026Q3`.\n'
+     '  Invocation 1 ran the pilot on `9fa189a0…` and halted. Invocation 2 runs the pilot again on the 1c\n'
+     '  config, as its first invocation with a result (plan 2 O22). Its discovery requests\n'
+     '  `daily-index/index.json` again: invocation 1 skipped it at `permit_expired` (plan 2 F29). The daily\n'
+     '  sources 2026-07-01, 2026-10-14 and 2026-10-15 are complete without a receipt. Every invocation lists\n'
+     '  them under `already_complete_sources`, and the ledger reports them apart from new work (plan 2 O21).\n'),
+    ('reruns (plan 2 O19) |\n', 'reruns (plan 2 O19). Invocation 1 counts. |\n'),
+    ('| Window | from the approved UTC start, at most 7 days, and ending before 2027-01-01T00:00:00Z | pre-check | `open` must stay 2026Q4 |\n',
+     '| Window | from the approved UTC start to 2026-11-05T13:00:00Z (plan 2 D13) | pre-check | `open` must stay 2026Q4 |\n'),
+    ('   reduced that count. Halt when a rerun does not reduce it.\n',
+     '   reduced that count. Halt when a rerun does not reduce it. Invocation 2 is the pilot\'s first invocation\n'
+     '   with a result.\n'),
+    ('10. **Halt** on the second consecutive invocation with `discovery_complete: false`.\n',
+     '10. **Halt** on the second consecutive invocation with `discovery_complete: false`. Invocation 1 left no\n'
+     '    `workflow_summary` and does not count.\n'),
+    ('`pre-campaign/rev2/`, `invocations.md`,', '`pre-campaign/rev2/`, `pre-campaign/rev3/`, `invocations.md`,'),
+    ('  `conf/stage2/1b/`.\n', '  `conf/stage2/1c/` (`conf/stage2/1b/` until Revision 3).\n'),
+    ("including its one live config edit.\n",
+     "including its one live config edit.\n"
+     "  The owner's approval of Revision 3 authorizes Tasks 3d and 3e.\n"),
+    ('(3) the Task 3b files check with exit 0;', '(3) the latest files check with exit 0;'),
+    ('(2) the Approval section\n  below,', '(2) the last Approval section\n  below,'),
+    ('a second root, object removal, or any SEC request outside the launcher.\n',
+     'a second root, object removal, or any SEC request outside the launcher. The one release change, to\n'
+     '  `c4de77b8…` at `f64c212`, was approved in Stage 1c, before plan 2 Revision 3.\n'),
+    ('\n## Approval\n',
+     '\n## Approval for release 9fa189a0… (history: invocation 1 only)\n\n'
+     'This approval authorized invocation 1. It authorizes no later invocation (plan 2 D12, Revision 3).\n'),
+]
+for old, new in EDITS:
+    if text.count(old) != 1:
+        raise SystemExit('campaign.md: expected exactly one match for: ' + old[:60])
+    text = text.replace(old, new)
+text = text.rstrip('\n') + '\n\n## Approval\n\nTo be completed in Task 4 with the owner\'s exact words.\n'
+for stale in ('2512fdcb', 'bfdf2985', 'b176598', 'Task 3b files check'):
+    if stale in text:
+        raise SystemExit('campaign.md still names ' + stale)
+path.write_text(text)
+print('campaign.md: %d edits' % len(EDITS))
+PY
+```
+
+Expected: `campaign.md: 22 edits`. Planning dry-ran this script on a copy of the `a6c1845` file. Any `SystemExit` stops the plan. `git diff` shows the old Approval section unchanged under its new heading, and a new empty Approval section at the end.
+
+- [ ] **Step 7: Append the Revision 3 section to `pre-campaign.md`**
+
+Every value below must equal the Step 1–5 outputs. A difference stops the plan.
+
+```markdown
+
+## Known-answer checks on release c4de77b8… (plan 2 Revision 3)
+
+- The live config selects `c4de77b8…` since `f64c212` (Stage 1c). File bytes `b2876ce9…`, effective config `fb93b0e8…`.
+- [rev3/preflight.json](pre-campaign/rev3/preflight.json): effective config `fb93b0e8…`, release `c4de77b8…`,
+  range 2020Q1–open, reserve 1800.
+- Slice generator: `2020Q1`–`open` reproduces `fb93b0e8…`. The 8 configs in `conf/stage2/1c/` match plan 2,
+  F25, and differ from the removed `conf/stage2/1b/` configs only in the release ID (plan 2, O20).
+- [rev3/members.json](pre-campaign/rev3/members.json): 77 registered members, read on a scratch copy. 3 are
+  complete without a receipt (2026-07-01, 2026-10-14, 2026-10-15). 74 have only retryable gaps. None stops
+  before dispatch. `data/` was unchanged by hash.
+- [rev3/audit.json](pre-campaign/rev3/audit.json): 15 transport attempts, 13 URLs, 5,524,449 received bytes,
+  ordinal 1 only: L12's 10 and invocation 1's 5.
+- [rev3/coverage-integrity.json](pre-campaign/rev3/coverage-integrity.json) and
+  [rev3/coverage-full.json](pre-campaign/rev3/coverage-full.json): 28 requested units without a campaign
+  result; 17 published quarters, all inside the range. The full check reads 13,262 rows.
+- [rev3/timing.json](pre-campaign/rev3/timing.json): no workflow result yet, 6 `WorkflowChildCall` rows.
+- [rev3/files.json](pre-campaign/rev3/files.json): 328 files. Against L12: nothing missing or changed
+  immutable, 175 added (invocation 1's 173 and two Finder files), SQLite state changed.
+- Finder files (plan 2, O24), left in place: `data/.DS_Store` `d63e67b6…` (6,148 bytes) and
+  `data/objects/.DS_Store` `5f047768…` (8,196 bytes), mtime 2026-10-30 12:15 local.
+```
+
+- [ ] **Step 8: Commit**
+
+```sh
+git diff --check
+git add conf/stage2/ specs/evidence/baseline-campaign/
+git status --short
+git commit -m "docs(evidence): move the Stage 2 campaign to the 1c release"
+```
+
+Expected: `git status` lists the 8 new `conf/stage2/1c/` files, the 8 deleted `conf/stage2/1b/` files, `campaign.md`, `pre-campaign.md` and the seven `pre-campaign/rev3/` files, all staged.
+
+---
+
 ### Task 4: Release gate and owner live-execution gate (human checkpoint)
 
 > Revision 1: rewritten for release `9fa189a0…`. The 2026-10-21 text gated `fc68adef…` and stays in git history at `4004f2e`.
 >
 > Revision 2: Step 1 checks the edited config and the Task 3c commit. Step 2 asks all ten items again for the 2020Q1 range. Step 1 ran once under Revision 1 on 2026-10-29 and found the gate standing for the 2015Q1 config. It is unticked so that it runs again after Task 3c.
+>
+> Revision 3: Step 1 checks the 1c release, the unchanged live config and the Task 3e commit. Step 2 asks all ten items again for release `c4de77b8…`, with the window end fixed (O23). Steps 1–4 ran under Revision 2 on 2026-10-29 (approval commit `7869821`). They are unticked so that they run again after Task 3e.
 
 **Files:**
-- Modify: `specs/evidence/baseline-campaign/campaign.md` (`Status` and `Approval` sections)
+- Modify: `specs/evidence/baseline-campaign/campaign.md` (`Status` and the last `Approval` section)
 - Modify: `specs/evidence/baseline-campaign/campaign.json` (only if the owner changes a limit)
 
 **Interfaces:**
-- Consumes: the Task 3a, 3b and 3c commits, and `specs/evidence/baseline-campaign/pre-campaign/rev2/preflight.json`.
+- Consumes: the Task 3d and 3e commits, and `specs/evidence/baseline-campaign/pre-campaign/rev3/preflight.json` and `members.json`.
 - Produces: either a stop that ends the plan, or the approval commit that Task 5 checks before every invocation.
 
-- [x] **Step 1: Check the release gate**
+- [ ] **Step 1: Check the release gate**
 
 ```sh
 # prelude
 native -c 'import json,sys; v=json.load(open(sys.argv[1])); print(v["release_id"], v["effective_config_sha256"], v["dispatch_reserve_seconds"])' \
-  "$evidence/pre-campaign/rev2/preflight.json"
+  "$evidence/pre-campaign/rev3/preflight.json"
+native -c 'import json,sys; print(len(json.load(open(sys.argv[1]))["stop_before_dispatch"]))' "$evidence/pre-campaign/rev3/members.json"
 shasum -a 256 conf/sec-edgar-local.json
 git log -1 --format='%H %s' -- specs/evidence/baseline-campaign/campaign.md
+date -u +%Y-%m-%dT%H:%M:%SZ
 ```
 
-Expected: `9fa189a0bea3c6545e7bce5b82d266d601abe2c3a35a66a58a8b8378d2bc283b 2512fdcb999a302d93de84315d45e4e44d0bb942d5165698b64c371fc42b5be5 1800`, then the file hash `bfdf29859325fa396520c0fabd0bcd6f6e34d8854b558d56e4bf4a7731038204`, then the Task 3c commit.
+Expected: `c4de77b89bb1d8ecc5d094f0e1dc6f8a5f3a7935e3595a9dd086d1e41a6b8aa7 fb93b0e8e05dbc1cbc9bd167ae02ef2d775629905c15938055a6a93c5fb95e96 1800`, then `0`, then the file hash `b2876ce96f933660ed45527cf40d55f191b53075484827d2738d0e4c93eeefac`, then the Task 3e commit, then a UTC time before 2026-11-05T13:00:00Z.
 
-- If the release, the effective hash, the file hash or the reserve differs, stop. The owner has selected another release or config, and this revision pins `9fa189a0…` and the 2020Q1 config. Revise the plan again (Global Constraints, Task 3a Step 5, Tasks 3b and 3c) and get owner review before any gate.
-- Otherwise the Release gate that Task 3b wrote stands. Continue to Step 2.
+- If the release, the effective hash, the file hash or the reserve differs, stop. The owner has selected another release or config, and this revision pins `c4de77b8…` and the 2020Q1 config. Revise the plan again (Global Constraints, Tasks 3d and 3e) and get owner review before any gate.
+- If the window has ended, stop. The owner decides whether a new window needs a new revision.
+- Otherwise the Release gate that Task 3e wrote stands. Continue to Step 2.
 
-- [x] **Step 2: Present the revision and the campaign files to the owner**
+- [ ] **Step 2: Present the revision and the campaign files to the owner**
 
-Present `pre-campaign.md` (its Revision 1 and Revision 2 sections), `campaign.md`, and plan 2's O12–O19 and D10. Ask the owner to confirm or change each of these. Ask every item again, including the ones answered before Revision 2 (Revision 2, item 5). Ask one question for each item, so that a changed answer to one item cannot silently replace the others.
+Present `pre-campaign.md` (its Revision 3 section), `campaign.md`, and plan 2's O12–O24, D10 and D13. Ask the owner to confirm or change each of these. Ask every item again, including the ones answered before Revision 3 (O23). Ask one question for each item, so that a changed answer to one item cannot silently replace the others.
 
 1. The range, 2020Q1–2026Q4, 28 units (O1, D10).
-2. The slice list (8 configs), the budget (`max_invocations` 24) and the stop rules (O13, O18, O19).
+2. The slice list (8 configs in `conf/stage2/1c/`, the pilot again at k = 2), the budget (`max_invocations` 24, invocation 1 included) and the stop rules (O13, O19, O20, O22).
 3. The runtime per invocation: 3,300 s, or another value above the 1,800 s reserve and at most 3,600 s.
 4. The member-wall limit, 1,056 s (O14).
 5. The pilot as the first measurement of the A1 member class (O15).
 6. The handling of a refused incremental candidate (O16).
-7. The window start in UTC.
+7. The window start in UTC. The end is fixed at 2026-11-05T13:00:00Z (D13).
 8. The withdrawal policy (O6) and the order effect (O10).
-9. The retained daily sources (O5).
+9. The retained daily sources (O5), and the three sources complete without a receipt (O21).
 10. The sole-issuer declaration.
 
 Do not suggest that the owner skip any item.
 
-- [x] **Step 3: Record the owner's answers verbatim**
+- [ ] **Step 3: Record the owner's answers verbatim**
 
-Replace the Approval section with the following, filled only from the owner's words:
+Replace the last section of `campaign.md`, the empty `## Approval` that Task 3e added, with the following, filled only from the owner's words. Do not change the history section `## Approval for release 9fa189a0… (history: invocation 1 only)`.
 
 ```markdown
 ## Approval
 
 - Owner: Lowell Mason. Approved on (UTC): <owner's timestamp>.
 - Range: <owner's words>. Slices, budget and stop rules: <"as proposed" or the owner's changes>.
-- Runtime per invocation: <3300 or another value above 1800 and up to 3600>. Window: starts <UTC>, ends <UTC>.
+- Runtime per invocation: <3300 or another value above 1800 and up to 3600>. Window: starts <UTC>, ends 2026-11-05T13:00:00Z.
 - Member-wall limit: <1056 or the owner's value>. Pilot as the first A1 measurement: <owner's words>.
 - Refused incremental candidate: <owner's words>.
-- Withdrawal policy and order effect: <owner's words>. Retained daily sources: <owner's words>.
+- Withdrawal policy and order effect: <owner's words>. Retained daily sources and sources complete without a receipt: <owner's words>.
 - Sole-issuer declaration, verbatim: "<owner's words>"
 ```
 
@@ -2443,9 +2825,9 @@ Set `**Status:** Approved for live execution within the limits above.`
 
 - If the owner changes a limit, the member-wall limit included, update `campaign.json` in the same commit.
 - If the owner chooses O15's alternative (measure A1 offline first), stop. That measurement needs its own plan. Task 4 restarts after it.
-- If the owner does not approve, stop. The plan then ends at Task 4 with nothing live run.
+- If the owner does not approve, stop. The plan then ends at Task 4 with nothing more run live.
 
-- [x] **Step 4: Commit**
+- [ ] **Step 4: Commit**
 
 ```sh
 git add specs/evidence/baseline-campaign/campaign.md specs/evidence/baseline-campaign/campaign.json
@@ -2461,6 +2843,8 @@ git commit -m "docs(evidence): record the Stage 2 release gate and owner decisio
 > Revision 2: the 8 configs from 2020Q1, the edited live config hash, and coverage from 2020Q1.
 >
 > Execution record (2026-10-29): Steps 1–7 ran once, for k = 1, and the campaign halted. Every Step 2 check passed, and the pilot started at 13:40:25Z. It ended at 13:41:32Z with launcher exit 9 and `state_conflict`: "child completion lacks all affected quarter/repair evidence". The error is raised at `workflows/processing.py:96`, after a member's `publish` child returned a complete outcome. No `result_ref` and no `workflow_summary` were written. Stop rule 1 matched first, and rules 2 and 3 also match. The audit found 5 attempts (4 with HTTP 200, 1 failed with status 0), 0 uncertain and no breach. The files check found 0 missing, 0 changed immutable and 173 added. The integrity coverage shows nine filing-quarter pointers moved: 2024Q3 is a first publication, and 2024Q4–2026Q3 are incremental generations on `fc68adef…` bases. Deviation: Step 6 defines no `after` block for a run without a result. `tool timing` could not run, so the record's timing fields are null and give the reason. The record also cites every raw log and report by path and SHA-256 (`729ed1c`). Recovery boundary: `docs/runbooks/local-recovery.md`, row "Crash after pointer update". Owner routing: D12.
+>
+> Revision 3: Steps 1–7 run again from k = 2 on release `c4de77b8…`, with the configs in `conf/stage2/1c/`. k = 2 is the pilot (O22). Each record notes the sources that the run lists as already complete (O21). Step 6 now defines the record for a run without a result. The k = 1 record and ledger row stay as recorded. Steps 1–7 ran once under Revision 2 and are unticked so that they run again.
 
 **Files:**
 - Create: `specs/evidence/baseline-campaign/invocations.md`
@@ -2468,20 +2852,20 @@ git commit -m "docs(evidence): record the Stage 2 release gate and owner decisio
 - Create (ignored): `logs/baseline-campaign/coverage-after-<k>.json`, `audit-after-<k>.json`, `timing-after-<k>.json`, `files-after-<k>.json`, `launcher-exit-<k>`, `invocation-<k>.json`
 
 **Interfaces:**
-- Consumes: the Task 4 approval commit, `campaign.json`, the 8 configs in `conf/stage2/1b/`, and Task 3a's `tool audit / coverage --check integrity / timing / files`.
+- Consumes: the Task 4 approval commit, `campaign.json`, the 8 configs in `conf/stage2/1c/`, and the Task 3d tool's `audit / coverage --check integrity / timing / files`.
 - Produces: the result refs and run IDs for Task 6, in `invocations/*.json`. Each record has an `after` block.
 
-The slice order is fixed (O13). Each entry is a file in `conf/stage2/1b/`:
+The slice order is fixed (O13). Each entry is a file in `conf/stage2/1c/`:
 
 1. `backfill-2026Q4-open.json` (the pilot). It reruns under stop rule 9 until no daily source is pending.
 2. `backfill-2020Q1-2020Q4.json`, then each year to `backfill-2025Q1-2025Q4.json`, in ascending order.
 3. `backfill-2026Q1-2026Q3.json`.
 
-Repeat Steps 1–7 for k = 1, 2, … until a stop rule says finish or halt. Never start an invocation while another writer runs. Never read the store while the launcher runs.
+Repeat Steps 1–7 for k = 2, 3, … until a stop rule says finish or halt. k = 1 ran under Revision 2 and halted. Never start an invocation while another writer runs. Never read the store while the launcher runs.
 
-Collection is bound to the release that discovered the member (`specs/evidence/d5-release/two-release.md`; `specs/evidence/stage1b/two-release.md`). So the pilot's `collect` children for the pending members that L12 discovered run on the retained `fc68adef…` release, and the other children run on `9fa189a0…`. That is expected. It is not a release selection, so it does not breach the Global Constraints.
+Collection is bound to the release that discovered the member (`specs/evidence/d5-release/two-release.md`; `specs/evidence/stage1b/two-release.md`). `transform` and `publish` run on the selected release. So in the pilot, the `collect` children run on three releases (F27): `fc68adef…` for the 76 members that L12 discovered, `9fa189a0…` for the 2026Q4 quarterly member that invocation 1 discovered, and `c4de77b8…` for members that this campaign's 1c discoveries register. Every other child runs on `c4de77b8…`. That is expected. It is not a release selection, so it does not breach the Global Constraints. The 1b and 1c releases differ only in `workflows/completion.py` and `workflows/processing.py` (F24), so a 1b `collect` child runs the same collect code as a 1c one. It runs no member-completion check, the step that halted invocation 1: the 1c parent runs it.
 
-- [x] **Step 1: Choose the slice**
+- [ ] **Step 1: Choose the slice**
 
 ```sh
 # prelude
@@ -2489,9 +2873,9 @@ k=$(( $(ls "$evidence"/invocations/*-*.json 2>/dev/null | wc -l) + 1 )); echo "k
 tail -1 "$evidence/invocations.md" 2>/dev/null
 ```
 
-For k = 1, use the pilot. Otherwise use the decision in the last ledger row: on Rerun, the same config; on Next slice, the next config in the order above. Note the config's effective hash from the F13 table.
+For k = 2, use the pilot: row k = 1 says Halt, and Revision 3 resumes there (O22). Otherwise use the decision in the last ledger row: on Rerun, the same config; on Next slice, the next config in the order above. Note the config's effective hash from the F25 table.
 
-- [x] **Step 2: Pre-check**
+- [ ] **Step 2: Pre-check**
 
 ```sh
 # prelude
@@ -2510,22 +2894,22 @@ Expected:
 
 - `no writer`.
 - The last `campaign.md` commit is the Task 4 approval commit.
-- The live config file hash is `bfdf2985…` (F21). A different hash means the config or its release changed: halt (Global Constraints, release history).
+- The live config file hash is `b2876ce9…` (F24). A different hash means the config or its release changed: halt (Global Constraints, release history).
 - At least 50 GiB available.
 - Store growth since pre-campaign (12 MB) of at most 30 GiB.
-- The UTC time is inside the approved window and before 2027-01-01T00:00:00Z.
-- For any slice after the pilot: `daily_open []`. A daily source that is still pending, or failed and not quarantined, stays selected and is after every year slice's end, so the run would end in `state_conflict` (F9).
+- The UTC time is inside the approved window, so before 2026-11-05T13:00:00Z (D13). Leave room for the run: its timeout must end before the window does.
+- `daily_open` prints for every k ≥ 2. At k = 2 it reads the k = 1 record, whose `after.daily_open` is `[]` although that run left no result, so it says nothing there. For any slice after the pilot: `daily_open []`. A daily source that is still pending, or failed and not quarantined, stays selected and is after every year slice's end, so the run would end in `state_conflict` (F9).
 
 If any check fails, halt.
 
-- [x] **Step 3: Run one invocation**
+- [ ] **Step 3: Run one invocation**
 
 The run can last up to the timeout. Run it in the background with the agent harness's background mode, and wait for the exit notification. Do not poll the SEC or the store meanwhile. Set `config` to this invocation's slice config and `timeout` to the approved value.
 
 ```sh
 # prelude
 k=$(( $(ls "$evidence"/invocations/*-*.json 2>/dev/null | wc -l) + 1 ))
-config="$project/conf/stage2/1b/backfill-2026Q4-open.json"   # this invocation's slice config
+config="$project/conf/stage2/1c/backfill-2026Q4-open.json"   # this invocation's slice config
 timeout=3300                                                  # the approved value
 scripts/sec-edgar-local backfill --config "$config" --timeout-seconds "$timeout"
 code=$?
@@ -2534,9 +2918,9 @@ echo "$code" > "$campaign_logs/launcher-exit-$k"
 echo "launcher exit=$code"
 ```
 
-Expected: an exit code. With quarantines present, 3 is normal (F7). A run that deferred members at the cutoff ends `incomplete` or `pending` (exit 3 or 4), never exit 5.
+Expected: an exit code. With quarantines present, 3 is normal (F7). A run that deferred members at the cutoff ends `incomplete` or `pending` (exit 3 or 4), never exit 5. A member that stops before dispatch ends the run with exit 9 and no result (trap (a)): continue to Step 4, then stop rule 1 halts.
 
-- [x] **Step 4: Record the invocation**
+- [ ] **Step 4: Record the invocation**
 
 ```sh
 # prelude
@@ -2576,9 +2960,9 @@ cp "$campaign_logs/invocation-$k.json" "$evidence/invocations/$k-$run_id.json"
 native -c 'import json,sys; v=json.load(open(sys.argv[1])); print(v["release_id"], v["config_sha256"], v["backfill"], v["dispatch_reserve_seconds"], v["result_ref"], v["ended_at"], v["workflow_summary"] is not None)' "$evidence/invocations/$k-$run_id.json"
 ```
 
-Expected: release `9fa189a0…`, the slice config's effective hash from F13, the slice range, `1800`, a non-null `result_ref` and `ended_at`, and `True`. If the release, the config hash or the reserve differs, halt. If `result_ref` is null, apply stop rule 2.
+Expected: release `c4de77b8…`, the slice config's effective hash from F25, the slice range, `1800`, a non-null `result_ref` and `ended_at`, and `True`. If the release, the config hash or the reserve differs, halt. If `result_ref` is null, still run Steps 5 and 6, then apply stop rule 2 in Step 7.
 
-- [x] **Step 5: Audit the budget**
+- [ ] **Step 5: Audit the budget**
 
 ```sh
 # prelude
@@ -2594,7 +2978,7 @@ native -c 'import json,sys; v=json.load(open(sys.argv[1])); print(len(v["runs"])
 
 Expected: `audit exit=0`, the run count equal to k, and `breaches: []`. Otherwise halt (rule 4).
 
-- [x] **Step 6: Coverage, timing and integrity after the invocation**
+- [ ] **Step 6: Coverage, timing and integrity after the invocation**
 
 The coverage here uses `--check integrity`: it reads no row, so it takes seconds, and no unit can be `covered` (O12). Task 6 runs the full check once.
 
@@ -2607,20 +2991,25 @@ for f in "$evidence"/invocations/*-*.json; do
   ref=$(native -c 'import json,sys; print(json.load(open(sys.argv[1]))["result_ref"] or "")' "$f")
   [ -n "$ref" ] && refs+=(--result "$ref")
 done
-this=$(native -c 'import json,sys; print(json.load(open(sys.argv[1]))["result_ref"])' "$record")
+this=$(native -c 'import json,sys; print(json.load(open(sys.argv[1]))["result_ref"] or "")' "$record")
 limit=$(native -c 'import json,sys; print(json.load(open(sys.argv[1]))["max_member_wall_seconds"])' "$evidence/campaign.json")
 tool coverage --config "$project/conf/sec-edgar-local.json" "${refs[@]}" --start 2020Q1 --end 2026Q4 \
   --open-quarter 2026Q4 --check integrity > "$campaign_logs/coverage-after-$k.json"; echo "coverage exit=$?"
-tool timing --config "$project/conf/sec-edgar-local.json" --result "$this" --max-member-wall "$limit" \
-  > "$campaign_logs/timing-after-$k.json"; echo "timing exit=$?"
+if [ -n "$this" ]; then
+  tool timing --config "$project/conf/sec-edgar-local.json" --result "$this" --max-member-wall "$limit" \
+    > "$campaign_logs/timing-after-$k.json"; echo "timing exit=$?"
+else
+  echo '{"runs": [], "child_call_rows": null, "breaches": []}' > "$campaign_logs/timing-after-$k.json"
+  echo "timing not run: no result"
+fi
 tool files --root "$project/data" --recorded specs/evidence/local-port/sec-acceptance.json \
   > "$campaign_logs/files-after-$k.json"; echo "files exit=$?"
 native - "$campaign_logs/coverage-after-$k.json" "$campaign_logs/audit-after-$k.json" \
-  "$campaign_logs/timing-after-$k.json" "$record" <<'PY'
+  "$campaign_logs/timing-after-$k.json" "$campaign_logs/files-after-$k.json" "$record" <<'PY'
 import json, sys
 from pathlib import Path
-coverage, audit, timing, record = (Path(item) for item in sys.argv[1:])
-value, spent, timed = (json.loads(path.read_text()) for path in (coverage, audit, timing))
+coverage, audit, timing, files, record = (Path(item) for item in sys.argv[1:])
+value, spent, timed, found = (json.loads(path.read_text()) for path in (coverage, audit, timing, files))
 waiting = ('pending', 'deferred', 'throttled')
 sources = [unit['source'] for unit in value['units'] if unit['source']] + value['daily_sources']
 eligible = [unit['quarter'] for unit in value['units'] if unit['source'] and unit['source']['outcome'] in waiting]
@@ -2630,26 +3019,38 @@ daily_open = [item['period'] for item in value['daily_sources']
 refused = [{'kind': item['kind'], 'period': item['period'], 'gaps': item['gaps']} for item in sources
            if item['outcome'] == 'invalid_source' and not item['quarantined']]
 untouched = [unit['quarter'] for unit in value['units'] if unit['verdict'] == 'no_campaign_result']
-run = timed['runs'][0]
+run = timed['runs'][0] if timed['runs'] else None
 entry = json.loads(record.read_text())
+listed = [item['already_complete_sources'] for item in value['results'] if item['run_id'] == entry['run_id']]
+compared = found['comparison']
 entry['after'] = {'verdicts': value['verdicts'], 'eligible': eligible, 'untouched': untouched,
                   'daily_open': daily_open, 'refused': refused, 'daily_sources': len(value['daily_sources']),
+                  'already_complete': [item['source_id'] for item in value['already_complete_sources']],
+                  'already_complete_this_run': listed[0] if listed else None,
                   'campaign_total': spent['total'], 'child_call_rows': timed['child_call_rows'],
-                  'timing': {key: run[key] for key in ('dispatch_cutoff', 'tail_seconds', 'timed_members',
-                                                       'b4_members', 'repeated_sources', 'max_member_wall')},
-                  'timing_breaches': timed['breaches']}
+                  'files': {'file_count': found['inventory']['file_count'], 'missing': len(compared['missing']),
+                            'changed_immutable': len(compared['changed_immutable']), 'added': len(compared['added'])},
+                  'timing': None if run is None else {
+                      key: run[key] for key in ('dispatch_cutoff', 'tail_seconds', 'timed_members',
+                                                'b4_members', 'repeated_sources', 'max_member_wall')},
+                  'timing_breaches': None if run is None else timed['breaches'],
+                  'timing_not_run': None if run else 'result_ref is null; tool timing needs a workflow result'}
+if entry['k'] == 2:  # Revision 3, item 2: the halted member completes without a child and moves no pointer again.
+    repaired = '924fd5f5b380e8a8603bab21b91edcd9408962b3a25fe812f067b25777063d58'
+    rerun = [] if run is None else [m['period'] for m in run['members'] if m['source_id'] == repaired and m['ran_children']]
+    entry['after']['repair_check'] = {'listed': repaired in entry['after']['already_complete'], 'ran_children': rerun}
 record.write_text(json.dumps(entry, sort_keys=True, indent=1) + '\n')
 print(json.dumps(entry['after']))
 PY
 ```
 
-Expected: `coverage exit=0` and `files exit=0`. `timing exit=0`, or `timing exit=1` with a non-empty `after.timing_breaches` (rule 7). Any other nonzero exit, or an exit 1 whose output does not parse or has no breach, is a tool failure: halt and report it. The printed `after` block is now in the invocation record. The full timing report stays in `logs/baseline-campaign/timing-after-<k>.json`.
+Expected: `coverage exit=0` and `files exit=0`. `timing exit=0`, or `timing exit=1` with a non-empty `after.timing_breaches` (rule 7). A run without a result prints `timing not run: no result`, and its `after.timing` is null with the reason, as the k = 1 record has it. From k = 2, `after.already_complete` lists the sources of the members `3554e8ef…`, `dc790624…` and `00c1f46d…` (F27); another source there is the runner's choice, not an error, but report it. At k = 2 only, `after.repair_check` must be `{'listed': true, 'ran_children': []}` when the run has a result: the 2026-07-01 source (`924fd5f5…`) was selected as already complete, and no member of it ran a child. Other daily members may still move pointers in 2024Q3–2026Q3. That is new work, not a second move. If the check fails, halt and report to the owner: the repair obligation may not be met (`docs/runbooks/local-recovery.md`, row "Crash after pointer update"). Any other nonzero exit, or an exit 1 whose output does not parse or has no breach, is a tool failure: halt and report it. The printed `after` block is now in the invocation record. The full timing report stays in `logs/baseline-campaign/timing-after-<k>.json`.
 
-- [x] **Step 7: Decide, log and commit**
+- [ ] **Step 7: Decide, log and commit**
 
-Apply the `campaign.md` stop rules in order. Use the launcher exit, `result_ref`, `workflow_summary` (`outcome`, `summary_error`, `discovery_complete`), the audit breaches, the files exit, `after.timing_breaches` (rule 7), `after.refused` (rule 8), `after.eligible` (rule 9) and `after.untouched` (rule 11). For rule 9, compare the length of `eligible` with the previous invocation of the same slice.
+Apply the `campaign.md` stop rules in order. Rule 5 reads `after.files`. Use the launcher exit, `result_ref`, `workflow_summary` (`outcome`, `summary_error`, `discovery_complete`), the audit breaches, the files exit, `after.timing_breaches` (rule 7), `after.refused` (rule 8), `after.eligible` (rule 9) and `after.untouched` (rule 11). For rule 9, compare the length of `eligible` with the previous invocation of the same slice.
 
-Append one row to `invocations.md`. Create the file with this header on k = 1:
+Append one row to `invocations.md`. Write the complete count as `c (a already complete)`, where `c` is `workflow_summary.counts.complete_sources` and `a` is `after.already_complete_this_run` (O21). The file exists since k = 1. Its header is:
 
 ```markdown
 # Stage 2 campaign invocations
@@ -2674,6 +3075,8 @@ On Rerun or Next slice, go back to Step 1. On Finish, go to Task 6. On Halt, rep
 > Revision 1: Step 1 now runs the full content check once (`--check full`) and adds the final timing report.
 >
 > Revision 2: the range starts at 2020Q1, which is 28 units.
+>
+> Revision 3: the coverage report lists `already_complete_sources` (Task 3d), and the k = 1 record has no result ref. Its run ID still goes to the audit.
 
 **Files:**
 - Create: `specs/evidence/baseline-campaign/final/coverage.json`, `audit.json`, `timing.json`, `files.json`
@@ -2703,11 +3106,11 @@ tool audit --config "$project/conf/sec-edgar-local.json" "${flags[@]}" --budget 
   > "$evidence/final/audit.json"; echo "audit exit=$?"
 tool timing --config "$project/conf/sec-edgar-local.json" "${refs[@]}" --max-member-wall "$limit" \
   > "$evidence/final/timing.json"; echo "timing exit=$?"
-native -c 'import json,sys; v=json.load(open(sys.argv[1])); print(v["check"], v["verdicts"], v["complete"], len(v["daily_sources"]), [q["quarter"] for q in v["other_filing_quarters"]])' "$evidence/final/coverage.json"
+native -c 'import json,sys; v=json.load(open(sys.argv[1])); print(v["check"], v["verdicts"], v["complete"], len(v["daily_sources"]), [q["quarter"] for q in v["other_filing_quarters"]], [i["source_id"][:8] for i in v["already_complete_sources"]])' "$evidence/final/coverage.json"
 native -c 'import json,sys; v=json.load(open(sys.argv[1])); print(len(v["runs"]), v["child_call_rows"], v["max_member_wall"], len(v["breaches"]))' "$evidence/final/timing.json"
 ```
 
-Expected: `coverage exit=0`, `audit exit=0` and `timing exit=0`. The coverage check is `full`, and the verdicts cover exactly 28 units with no `published_unchecked`. The timing report has one run for each invocation with a result, and 0 breaches against the limit in `campaign.json`. If the owner approved a higher limit after a halt, `campaign.json` already carries it.
+Expected: `coverage exit=0`, `audit exit=0` and `timing exit=0`. The coverage check is `full`, and the verdicts cover exactly 28 units with no `published_unchecked`. `already_complete_sources` lists at least `3554e8ef`, `dc790624` and `00c1f46d` (F27). The timing report has one run for each invocation with a result (k = 1 has none), and 0 breaches against the limit in `campaign.json`. If the owner approved a higher limit after a halt, `campaign.json` already carries it.
 
 - [ ] **Step 2: Final integrity comparison**
 
@@ -2760,6 +3163,8 @@ git commit -m "docs(evidence): record final Stage 2 coverage and quarantine enum
 > Revision 1: §2 adds the timing evidence, §4 names a refused incremental candidate, and the new §8 records the revisit triggers deferred into Stage 2 (O17).
 >
 > Revision 2: the range is 2020Q1–2026Q4, and §5 reports filing quarters before 2020Q1.
+>
+> Revision 3: invocation 1 ran on `9fa189a0…` and the rest on `c4de77b8…`. §2 reports invocation 1's halt and its skipped listing, §5 the sources complete without a receipt, §7 the release history, and §8 the two-release item for a release change.
 
 **Files:**
 - Create: `specs/evidence/baseline-campaign/coverage-finding.md`
@@ -2776,8 +3181,9 @@ Use these sections in this order. Take every number from the cited JSON files. D
 # Stage 2 baseline coverage finding (G2)
 
 **Status:** Proposed for owner disposition. **Plan:** [plan 2](../../plans/2-sec-filing-index-ingestion-spec.md).
-**Range:** 2020Q1–2026Q4 (28 quarterly units; 2026Q4 open; start set by plan 2 D10). **Release:** `9fa189a0…` (reserve 1,800 s).
-Slice configs: `conf/stage2/1b/`, see invocations.md.
+**Range:** 2020Q1–2026Q4 (28 quarterly units; 2026Q4 open; start set by plan 2 D10). **Release:** `9fa189a0…` for
+invocation 1, `c4de77b8…` from invocation 2 (reserve 1,800 s). Slice configs: `conf/stage2/1b/` for invocation 1,
+`conf/stage2/1c/` after it; see invocations.md.
 
 ## 1. Result
 One paragraph: the verdict counts from final/coverage.json (full check), `complete` true or false, and
@@ -2792,7 +3198,9 @@ campaign against the fixture value 1,010.9 s and the limit `max_member_wall_seco
 closed first publication, closed rebuild by an incoming quarterly authority, open-quarter daily before
 and after the 2026Q4 quarterly publish (A1), closed-quarter daily. Unique expanded bytes: the sum of
 `master.idx` sizes of the retained quarterly ZIPs, from `unzip -l` on each raw ZIP. Report it as post
-hoc, not as enforced.
+hoc, not as enforced. Invocation 1: its halt (exit 9, `state_conflict`, no result), the nine pointers it
+moved, how invocation 2 completed member `3554e8ef…` without a child (plan 2 Revision 3, item 2), and
+its `daily-index/index.json` request refused at `permit_expired` and requested again later (plan 2 F29).
 
 ## 3. Baseline units
 One table row per requested quarter: quarter, verdict, source ID (first 12 hex), member outcome,
@@ -2813,6 +3221,8 @@ gets "deferred to Stage 4 recovery disposition"; its objects stay in the store.
   daily rows: no quarterly source was requested for them (plan 2 D10, F23).
 - Daily sources processed as retained work (daily_sources): count, period range, outcomes. These are
   Stage 3 inputs.
+- Sources complete without a receipt (already_complete_sources): each source ID, its period and the runs
+  that listed it. They count as complete, not as work any invocation did (plan 2 O21).
 - The open quarter 2026Q4: the snapshot receipt time, and the fact that its absences are not withdrawal
   authority.
 - Downstream limitation (O10): closed-quarter publication keeps only quarterly-membership keys. A
@@ -2830,8 +3240,9 @@ Then the line `Owner decision:`, filled only with the owner's words and date.
   Full inventory `logs/baseline-campaign/files-final.json`, SHA-256 `<hash>`.
 - Pre-campaign facts: the 2021Q1 manifest restoration and the absent L12 external directory
   ([pre-campaign.md](pre-campaign.md)). Stage 2 cannot restore the absent directory.
-- Release history: every invocation ran on `9fa189a0…` (invocations/*.json). The store now holds 1b
-  generations, so selecting `fc68adef…` or `aa8de1ac…` for it is unsupported (parent spec §4.9).
+- Release history: invocation 1 ran on `9fa189a0…`, and every later invocation on `c4de77b8…`
+  (invocations/*.json). The selection changed once, at `f64c212`, in Stage 1c. Selecting `fc68adef…`,
+  `aa8de1ac…` or `9fa189a0…` for this store is unsupported (parent spec §4.9).
 
 ## 8. Revisit triggers deferred into Stage 2
 One subsection for each item. Each states the item's revisit condition as written in
@@ -2845,8 +3256,9 @@ specs/deferred_items.md, the evidence from final/timing.json, and one verdict: "
 - Unmeasured A1 member class: the walls of the 2026Q4 daily members that started after the 2026Q4
   quarterly member, against 1,010.9 s.
 - Refused C6 candidate retry block: every `refused` entry in the invocation records, or "none occurred".
-- Two-release proof covers only first-generation 1b stores: no release change happened, so its
-  revisit condition is not met.
+- Two-release proof covers only first-generation 1b stores: the release changed from 1b to 1c, not to
+  D5. The item's revisit condition names only a D5 run, so it is not met unless a D5 run is planned.
+  Report the 1c publishes onto incremental 1b generations, if any, as evidence for the item's note.
 ```
 
 - [ ] **Step 2: Owner disposition**
@@ -2917,13 +3329,15 @@ git commit -m "docs(specs): record tracked config and absent L12 external eviden
 
 ## After the last task
 
-When Tasks 3a–7 have run under Revisions 1 and 2, run the writing-plans Plan Completion Protocol, step 3a included. Rewrite the Handoff below from what then ships. In step 3, tick or update the deferred items that Task 7 §8 found met, and keep the others open.
+When Tasks 3a–7 have run under Revisions 1–3, run the writing-plans Plan Completion Protocol, step 3a included. Rewrite the Handoff below from what then ships. In step 3, tick or update the deferred items that Task 7 §8 found met, and keep the others open.
 
-Review bases for executing-plans Step 3 (whole-plan review). Every task ran on `main`, so `git merge-base` gives no range. Revisions 1 and 2, and every task after Task 3, start after `d3e959c`. The review must also cover Tasks 1–3 and 8. For them, two commits are candidates for the start: `c2ff721` (the parent of Task 1's first commit, `4508859`) and `6c25121` (the commit that added this plan). The owner confirms which one at review time.
+Review bases for executing-plans Step 3 (whole-plan review). Every task ran on `main`, so `git merge-base` gives no range. Revisions 1–3, and every task after Task 3, start after `d3e959c`. Revision 3 and Tasks 3d–7 under it start after `a6c1845`. The review must also cover Tasks 1–3 and 8. For them, two commits are candidates for the start: `c2ff721` (the parent of Task 1's first commit, `4508859`) and `6c25121` (the commit that added this plan). The owner confirms which one at review time.
 
 ## Handoff to later stages
 
 Revision 1 (2026-10-29) re-plans Tasks 3a–7 for release `9fa189a0…`, and Revision 2 (2026-10-29) moves the range start to 2020Q1. Tasks 3a and 3b have run. Nothing live has run. The bullets below are the 2026-10-21 state on release `fc68adef…`. Their F11, D5-release and slice-config statements are superseded by Revision 1. Their 2015Q1 statements, such as a possible 2015Q1 quarantine for Stage 4, are superseded by Revision 2. The Plan Completion Protocol rewrites this section.
+
+**Revision 3 (2026-10-30).** Revision 3 does what the last bullet of "Task 5 halt" below asks: it moves the plan to release `c4de77b8…`, the fix that Stage 1c shipped (plan 6). The roadmap's Stages 3–5 already consume that release (roadmap resume, 2026-10-30). The Plan Completion Protocol rewrites this section.
 
 **Task 5 halt (2026-10-29).** This bullet is current. It supersedes the statements below that nothing live has run.
 
