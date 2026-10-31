@@ -84,3 +84,24 @@ No SEC request was sent. No writer ran during this task.
   The integrity check reads no row.
 - [rev2/timing.json](pre-campaign/rev2/timing.json): no workflow result yet, 0 `WorkflowChildCall` rows.
 - [rev2/files.json](pre-campaign/rev2/files.json): 153 files. Against L12, only SQLite journal state changed.
+
+## Known-answer checks on release c4de77b8… (plan 2 Revision 3)
+
+- The live config selects `c4de77b8…` since `f64c212` (Stage 1c). File bytes `b2876ce9…`, effective config `fb93b0e8…`.
+- [rev3/preflight.json](pre-campaign/rev3/preflight.json): effective config `fb93b0e8…`, release `c4de77b8…`,
+  range 2020Q1–open, reserve 1800.
+- Slice generator: `2020Q1`–`open` reproduces `fb93b0e8…`. The 8 configs in `conf/stage2/1c/` match plan 2,
+  F25, and differ from the removed `conf/stage2/1b/` configs only in the release ID (plan 2, O20).
+- [rev3/members.json](pre-campaign/rev3/members.json): 77 registered members, read on a scratch copy. 3 are
+  complete without a receipt (2026-07-01, 2026-10-14, 2026-10-15). 74 have only retryable gaps. None stops
+  before dispatch. `data/` was unchanged by hash.
+- [rev3/audit.json](pre-campaign/rev3/audit.json): 15 transport attempts, 13 URLs, 5,524,449 received bytes,
+  ordinal 1 only: L12's 10 and invocation 1's 5.
+- [rev3/coverage-integrity.json](pre-campaign/rev3/coverage-integrity.json) and
+  [rev3/coverage-full.json](pre-campaign/rev3/coverage-full.json): 28 requested units without a campaign
+  result; 17 published quarters, all inside the range. The full check reads 13,262 rows.
+- [rev3/timing.json](pre-campaign/rev3/timing.json): no workflow result yet, 6 `WorkflowChildCall` rows.
+- [rev3/files.json](pre-campaign/rev3/files.json): 328 files. Against L12: nothing missing or changed
+  immutable, 175 added (invocation 1's 173 and two Finder files), SQLite state changed.
+- Finder files (plan 2, O24), left in place: `data/.DS_Store` `d63e67b6…` (6,148 bytes) and
+  `data/objects/.DS_Store` `5f047768…` (8,196 bytes), mtime 2026-10-30 12:15 local.
