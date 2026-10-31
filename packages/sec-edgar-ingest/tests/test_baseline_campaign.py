@@ -171,6 +171,18 @@ class PureRuleTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.api['member_timings']('r1', [{**members[0], 'child_refs': [ref('r1', 'collect', 'c3')]}], attempts)
 
+    def test_already_complete_sources_are_reported_once_with_each_listing_run(self):
+        from types import SimpleNamespace
+        a, b = 'a' * 64, 'b' * 64
+
+        def result(run, *sources):
+            return SimpleNamespace(context=SimpleNamespace(run_id=run),
+                                   intent={'already_complete_sources': sources} if sources else {})
+        listed = self.api['already_complete']([result('r1', b, a), result('r2', a), result('r3')])
+        self.assertEqual(listed, [{'source_id': a, 'run_ids': ['r1', 'r2']},
+                                  {'source_id': b, 'run_ids': ['r1']}])
+        self.assertEqual(self.api['already_complete']([]), [])
+
     def test_budget_breaches_name_each_exceeded_limit(self):
         budget = {'format_version': 'sec-baseline-campaign-budget-v1', 'max_invocations': 1,
                   'max_request_attempts': 10, 'max_request_attempts_per_invocation': 4,
@@ -223,6 +235,8 @@ class FixtureStoreTests(unittest.TestCase):
         code, report = self.coverage(h, message['result_ref'], check=('--check', 'integrity'))
         self.assertEqual(code, 0)
         self.assertEqual(report['check'], 'integrity')
+        self.assertEqual(report['already_complete_sources'], [])
+        self.assertEqual(report['results'][0]['already_complete_sources'], 0)
         self.assertEqual({unit['quarter']: unit['verdict'] for unit in report['units']},
                          {'2026Q2': 'quarantined', '2026Q3': 'published_unchecked',
                           '2026Q4': 'published_unchecked'})

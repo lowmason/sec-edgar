@@ -3,7 +3,7 @@
 Run under the selected release interpreter with -I -B -X pycache_prefix=/dev/null. The tool opens
 the store with operator access, sends no request and writes nothing under the store root. It uses
 release internals (workflow result validation, ETL readers, durable child attempts). It is verified
-against releases fc68adef... and 9fa189a0...; re-verify it before use with any other release.
+against releases fc68adef..., 9fa189a0... and c4de77b8...; re-verify it before use with any other release.
 """
 from __future__ import annotations
 
@@ -202,6 +202,18 @@ def read_results(refs: list[str], store, objects) -> list:
     return sorted(results, key=lambda result: (result.context.started_at, result.context.run_id))
 
 
+def already_complete(results: list) -> list[dict]:
+    """Sources that a result lists as already complete, with the runs that listed them.
+
+    Such a source is not a member, so `latest_members` never sees it (plan 2 F28, O21).
+    """
+    runs: dict[str, list[str]] = {}
+    for result in results:
+        for source_id in result.intent.get('already_complete_sources', ()):
+            runs.setdefault(source_id, []).append(result.context.run_id)
+    return [{'source_id': source_id, 'run_ids': runs[source_id]} for source_id in sorted(runs)]
+
+
 def coverage(store, objects, refs: list[str], start: str, end: str, open_quarter: str | None,
              check: str = 'full') -> dict:
     from sec_edgar_ingest.discovery import quarter_span
@@ -234,7 +246,10 @@ def coverage(store, objects, refs: list[str], start: str, end: str, open_quarter
             'open_quarter': open_quarter, 'quarters': len(requested)},
             'results': [{'run_id': result.context.run_id, 'attempt_id': result.context.attempt_id,
                          'command': result.context.command, 'outcome': result.outcome,
-                         'counts': dict(result.counts)} for result in results],
+                         'counts': dict(result.counts),
+                         'already_complete_sources': len(result.intent.get('already_complete_sources', ()))}
+                        for result in results],
+            'already_complete_sources': already_complete(results),
             'verdicts': dict(sorted(verdicts.items())),
             'complete': bool(units) and set(verdicts) <= COVERED,
             'units': units,
