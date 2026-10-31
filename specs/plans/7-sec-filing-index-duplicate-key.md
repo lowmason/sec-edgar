@@ -1,6 +1,6 @@
 # Duplicate-Key Schema v2 and Its Release Implementation Plan
 
-**Approval:** Not yet reviewed. The owner reviews this plan and P1–P10 in "Before Task 1". This plan authorizes no SEC request.
+**Approval:** Not yet reviewed. The owner reviews this plan and P1–P12 in "Before Task 1". This plan authorizes no SEC request.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: implement this plan task-by-task via subagent-driven-development (the default) — or executing-plans when your human partner chose inline execution at the handoff. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -45,7 +45,7 @@ Copied from the spec. Every task's requirements include this section.
 - D11: the release continues 1c-origin pending work on a store the 1c release wrote.
 - D12: the release's locked inputs carry no platform member (owner decision S2).
 - Anti-goals (spec §2.3): no listed value is lost or shown as the "real" one; a non-list conflict still quarantines; no order, scan or batch dependence; no v1 generation becomes unreadable or changes; a dropped form type stays an update, never a gated withdrawal.
-- Budget stop rule (spec §6): one first-v2 full rebuild has a 1,500 s budget (the 3,300 s launcher default minus the 1,800 s reserve). If the 2023Q1 or 2026Q3 rebuild exceeds 1,500 s, stop before the release selection and ask the owner.
+- Budget stop rule (spec §6): "If either measured full rebuild (2023Q1 or 2026Q3) exceeds 1,500 s, the Exit is not met. The stage stops before the release and asks the owner to choose one of two paths." The budget is the 3,300 s launcher default minus the 1,800 s reserve. This plan applies the stop before the live-config selection (Task 11), because the scratch run needs the installed release (P11).
 - The 2026Q3 scratch candidate is never approved, not even on the copy (spec §6).
 - Existing duplicate-quarantine tests are updated, not deleted (spec §5 item 10).
 - Tests use stdlib `unittest` under `network_guard.py`. Write each test before its implementation.
@@ -96,10 +96,12 @@ Planning settled these points. Each is plan-level and is applied in the tasks as
 - **P4 — Exact Arrow types.** A list column is `pa.list_(pa.field('item', pa.string(), nullable=False))`, non-nullable, written with `use_compliant_nested_type=False` like every other file. In the v2 change file, `before` and `after` are `pa.struct(canonical_schema('sec-index-v2'))`. Applied in: Task 1.
 - **P5 — The package version stays `0.2.0`.** `uv.lock`, the three `pyproject.toml` files and the export requirement lines stay byte-identical to the 1c build inputs (revision `3af121a468fdd6b3ec7d8286d5cf619493992d49`). The release ID changes through the Git revision and the wheel. Alternative: bump to `0.3.0`, which changes `uv.lock`. Applied in: Tasks 8 and 9.
 - **P6 — The scratch run uses a committed evidence script, not the CLI.** The deployment binding stores the resolved root (`storage/contracts.py:185`), and `LocalObjectStore` refuses a different binding (`storage/local.py:51`). So the CLI refuses a copy of `data/` at another path. The script opens the copy with its stored binding, as the 1c diagnosis scripts did (`specs/evidence/stage1c/diagnosis/scripts/diag2.py`). It calls the engine's low-level commands `etl.commands.run_transform` and `run_publish`, after `runtime.retain_manifest` as `cli.py:484` does. Applied in: Task 10.
-- **P7 — Scripts with v1 hardcodes.** `scripts/accept-sec-native.py:501–502, 902` and `scripts/measure-d5-drain.py:171` write or check configs that the release must load, so they move to the current pair in Task 6 (`test_acceptance_selection` and `test_measure_cost` cover them). `conf/stage2/*.json` are Stage 2 campaign records: they stay v1 and the Handoff says the new release refuses them. `scripts/baseline-campaign.py:176` only counts rows, so it needs no change. Applied in: Task 6, Handoff.
+- **P7 — Scripts with v1 hardcodes.** `scripts/accept-sec-native.py:501–502, 902` and `scripts/measure-d5-drain.py:171` write or check configs that the release must load, so they move to the current pair in Task 6 (`test_acceptance_selection` and `test_measure_cost` cover them). The edit changes the acceptance driver's bytes. Retained selections in `specs/evidence/local-port/` pin the driver's SHA-256. Their standard verify already refuses a changed driver, and `scripts/verify-sec-native-adjudication.py:33–49` verifies them through the archived originals in `harness-original/`, so the edit breaks no retained check. Alternative: leave the driver at v1, so it can no longer run on this release. `conf/stage2/*.json` are Stage 2 campaign records: they stay v1 and the Handoff says the new release refuses them. `scripts/baseline-campaign.py:176` only counts rows, so it needs no change. Applied in: Task 6, Handoff.
 - **P8 — Old-release test configs pin v1.** Tests that run an older release (`test_release_1b`, `test_release_1c`, `test_release_origin`, `test_release_upgrade`, `test_workflow_installed_lock`, `workflow_proof.installed_upgrade_cases`) give the older interpreter a v1 config and the current one a v2 config. If a test needs more than that pin, stop and ask. Never weaken a test. Applied in: Tasks 6 and 7.
 - **P9 — The 1c interpreter in gate tests.** `support_release.ONE_C_REVISION = '3af121a468fdd6b3ec7d8286d5cf619493992d49'` builds the 1c application with `origin_release`, as plan 6 P2 did for 1b. One extra evidence run uses the installed `c4de77b8…` through `SEC_LOCAL_1C_RELEASE`. Applied in: Tasks 7 and 8.
 - **P10 — Stop rule for existing tests.** Only `test_etl_transform.py:66` and `test_workflow_processing.py:136` assert the old duplicate behavior (`grep`). If another existing test fails because of v2 semantics, stop and ask. Applied in: every code task.
+- **P11 — Budget stop after the build.** The spec says the stage "stops before the release". The scratch run (Task 10) needs the installed release, so the build (Task 9) comes first, and the stop holds the live-config selection (Task 11). Cost: on the cost-fix path, the Task 9 release stays in `releases/` and is never selected. Applied in: Global Constraints, Tasks 9–11.
+- **P12 — A test-only seam for v1 writes.** Tests that build a v1 base keep working after Task 6 through `support_etl.v1_writable()`, a context manager that patches `models.WRITABLE_SCHEMAS` to both versions. `require_writable_schema` reads the module global at call time for this reason. No `src` code uses the seam (Task 6 checks it). Alternative: build each v1 base with the 1c interpreter, which costs a release build per test class. Applied in: Tasks 1 and 6.
 
 ## Facts established while planning (read-only, 2026-10-31)
 
@@ -153,7 +155,7 @@ All `src` and `tests` paths are under `packages/sec-edgar-ingest/`.
 
 ## Before Task 1
 
-- [ ] **Step 1: Plan review (HUMAN).** The owner reviews the plan and answers P1–P10. The spec's status line still reads "Draft for owner review": ask the owner to confirm that the spec is approved. Log each answer in `## Decisions`, in the owner's words. Apply each plan-level change, and re-run the writing-plans Self-Review on what changed. Record the approval on the plan's **Approval** line.
+- [ ] **Step 1: Plan review (HUMAN).** The owner reviews the plan and answers P1–P12. The spec's status line still reads "Draft for owner review": ask the owner to confirm that the spec is approved. Log each answer in `## Decisions`, in the owner's words. Apply each plan-level change, and re-run the writing-plans Self-Review on what changed. Record the approval on the plan's **Approval** line.
 - [ ] **Step 2: Commit the review on `main`.**
 
 ```bash
@@ -173,12 +175,15 @@ git commit -m "docs(plans): record the owner review of plan 7"
 - Modify: `src/sec_edgar_ingest/etl/contracts.py` (`_record` `:47`, new row type and helpers, schema functions `:404–423`, `BUSINESS_FIELDS` and `arrow_row` `:446–453`)
 - Modify: `src/sec_edgar_ingest/config.py:173`, `cli.py:130, 392`, `etl/commands.py:218`, `workflows/contracts.py:55, 104`
 - Modify: every caller of the schema functions and `BUSINESS_FIELDS` (F2), passing today's layout `SCHEMA_V1`, so behavior does not change in this task
+- Modify: `tests/support_etl.py`, `tests/support_catalog.py`, `tests/support_incremental.py`, `tests/etl_proof.py:353`
 - Create: `tests/test_etl_schema_v2.py`
 
 **Interfaces:**
 - Produces, in `models.py`:
   - `SCHEMA_V1 = 'sec-index-v1'`, `SCHEMA_V2 = 'sec-index-v2'`, `KNOWN_SCHEMAS = (SCHEMA_V1, SCHEMA_V2)`, `WRITABLE_SCHEMAS = frozenset(KNOWN_SCHEMAS)` (narrowed in Task 6), `SCHEMA_VERSION = SCHEMA_V1` (the default for new work; `SCHEMA_V2` from Task 6).
-  - `require_known_schema(version: str) -> None` and `require_writable_schema(version: str) -> None`. Both raise `ValueError('unsupported schema_version')`.
+  - `require_known_schema(version: str) -> None` and `require_writable_schema(version: str) -> None`. Both raise `ValueError('unsupported schema_version')`. `require_writable_schema` reads `models.WRITABLE_SCHEMAS` at call time (P12).
+- Produces, in `etl/parser.py`: `parser.SCHEMA_VERSION` is deleted. `cli.py:26`, `etl/commands.py:18` and `tests/etl_proof.py:353` use `models.SCHEMA_VERSION`, so one constant names the default schema.
+- Produces, in tests: `support_etl.v1_writable()` (P12); a `schema_version: str | None = None` keyword on `support_etl.etl_context`, `support_catalog.Lane` and `support_incremental.Twin`, where `None` means the fixture config's value. Tasks 2–5 pass `'sec-index-v2'`. Tests that build a v1 base pass `'sec-index-v1'` inside `v1_writable()`.
 - Produces, in `etl/contracts.py`:
   - `class IndexRowV2(Record)` with fields, in order: `cik: str`, `company_names: tuple[str, ...]`, `form_types: tuple[str, ...]`, `archive_path: str`, `filing_date: date`, `accession_number: str | None`, `source_id: str`, `source_sha256: str`, `parser_version: str`, `schema_version: str`. It applies every `IndexRow` field check. Each list must be a nonempty tuple of distinct, non-empty strings in sorted order (`ValueError('<field> must be sorted distinct non-empty strings')`). Its `schema_version` may be v1 or v2 (D8).
   - `Row = IndexRow | IndexRowV2`. `Observation.row` becomes `Row`.
@@ -195,7 +200,7 @@ git commit -m "docs(plans): record the owner review of plan 7"
 - [ ] **Step 1: Write the failing tests** in `tests/test_etl_schema_v2.py`, class `RowContractTests`:
   - `test_v2_row_requires_sorted_distinct_nonempty_lists`: `('SC TO-T', 'SC 13E3')`, `('SC 13E3', 'SC 13E3')`, `()` and `('',)` each raise `ValueError`. `('SC 13E3', 'SC TO-T')` is accepted.
   - `test_v2_row_accepts_v1_versions`: an `IndexRowV2` with `'sec-index-parser-v1'` and `'sec-index-v1'` constructs (D8).
-  - `test_unknown_schema_is_refused`: `IndexRowV2`, `IndexRow` and `RunContext` with `schema_version='sec-index-v3'` raise `ValueError`.
+  - `test_unknown_schema_is_refused`: `IndexRowV2`, `IndexRow` and `RunContext` with `schema_version='sec-index-v3'` raise `ValueError`. An `IndexRow` with `'sec-index-v2'` raises too: a v1 row is only ever v1.
   - `test_upgrade_row_keeps_every_field_and_version`: the NGM row from spec §4.2 with form `SC 13E3` upgrades to `form_types == ('SC 13E3',)`, `company_names == ('NGM BIOPHARMACEUTICALS INC',)`, and equal `cik`, `archive_path`, `filing_date`, `accession_number`, `source_id`, `source_sha256`, `parser_version`, `schema_version`.
   - `test_merge_rows_unions_both_lists_in_any_order`: the two NGM rows (`SC TO-T`, `SC 13E3`) merge to `('SC 13E3', 'SC TO-T')` in both input orders, with byte-equal `canonical_json(row.to_mapping())`. A rename pair (`'9 METERS BIOPHARMA, INC.'`, `'INNOVATE BIOPHARMACEUTICALS, INC.'`) merges into both names. A pair that differs in both lists merges both (spec §4.4 item 2).
   - `test_merge_rows_refuses_other_differences`: rows that differ in `filing_date` raise `ValueError('rows differ outside form types and company names')`. Two unequal `IndexRow` rows raise too. An empty input and a mix of `IndexRow` and `IndexRowV2` raise.
@@ -364,7 +369,7 @@ git commit -m "feat(etl): merge within the winning source in the incremental bui
   - `test_publish_refuses_a_v1_context`: `run_publish` with a v1 `RunContext` raises `ValueError('unsupported ETL schema version')`, and a stored v1 snapshot workset still decodes.
   - `test_v2_transform_of_a_v1_era_snapshot`: a snapshot workset written under a v1 context is transformed by a v2 context, and its observation ref has `schema_version == 'sec-index-v2'`.
 - [ ] **Step 2: Run and confirm the failures.**
-- [ ] **Step 3: Narrow the write versions and flip the fixture configs.** Update `test_workflow_processing.py:136` as in Task 2 Step 2: keep the test with a filing-date conflict, and add a form-only repeat that now completes. Update the F7 overrides, `workflow_proof.py:130` and the P7 scripts to the current pair.
+- [ ] **Step 3: Narrow the write versions and flip the fixture configs.** Wrap each Task 1–5 test that builds a v1 base in `support_etl.v1_writable()`. Then `grep -rn v1_writable packages/sec-edgar-ingest/src` must print nothing. Update `test_workflow_processing.py:136` as in Task 2 Step 2: keep the test with a filing-date conflict, and add a form-only repeat that now completes. Update the F7 overrides, `workflow_proof.py:130` and the P7 scripts to the current pair.
 - [ ] **Step 4: Pin v1 for older interpreters (P8).** `proof_releases` builds A and B from the current source, so `test_release_upgrade` keeps both on the current pair. Add a keyword to `workflow_proof.upgrade_sequence(output, a_manifest, b_manifest, *, a_schema: str | None = None)` and pass it to `installed_upgrade_cases`. When `a_schema` is given, `settings(release)` gives release A `etl.schema_version = a_schema`, and release B keeps the current pair. Apply the same pin wherever a test gives a config to an older interpreter, such as the 1b side of `test_release_1c`. If a test needs more than the pin, stop and ask (P8).
 - [ ] **Step 5: Run the ETL, workflow and release modules** (`test_etl_* test_workflow_* test_local_* test_config test_cli test_download test_acceptance_selection test_measure_cost test_release test_release_1b test_release_1c test_release_origin test_release_upgrade`), in the background. Expected: `OK`. Stop and ask under P10 for any other failure.
 - [ ] **Step 6: Commit.**
@@ -389,7 +394,7 @@ git commit -m "feat(etl): write only sec-index-v2 and keep v1 readable"
 - [ ] **Step 1: Write the tests** in `tests/test_release_2a.py`, class `TwoReleaseTests`, with the 1c release from `origin_release(..., ONE_C_REVISION)` or `SEC_LOCAL_1C_RELEASE`, and the current release from `support_release.proof_releases`:
   - `test_1c_release_refuses_the_v2_config`: the 1c interpreter runs `load_config` on a v2 fixture config in a child process. It exits non-zero with `unsupported etl.schema_version` on stderr.
   - `test_v2_release_continues_1c_origin_pending_work`: `upgrade_sequence` with the 1c release as A and the current release as B. Assert the same report fields as `test_release_upgrade.py:131–200`: `exit == 0`, each case `b_exit == 0` and `rows > 0`. Also assert that the `pending` case's published generation has `schema_version == 'sec-index-v2'`.
-  - `test_v2_reads_the_1c_generation_unchanged`: the `repair` case's 1c-written generation, captured before B runs, reads back under B with the same row bytes, as `IndexRow` rows.
+  - `test_v2_reads_the_1c_generation_unchanged` (spec §5 item 5, "on the new release"): the reference read runs on the 1c interpreter in a child process. It prints `canonical_json` of every `read_quarter` row of the 1c-written generation. The current release then reads the same capture in another child process. The two outputs are byte-equal, and every current-release row is an `IndexRow`.
 - [ ] **Step 2: Run** `test_release_2a` in the background. Expected: `OK`. If continuation fails, stop and ask: D11 is a requirement, and the fix is not planned.
 - [ ] **Step 3: Commit.**
 
@@ -425,7 +430,7 @@ SEC_LOCAL_1C_RELEASE=/Users/lowell/Projects/sec-edgar-local/releases/sha256=c4de
 
 Expected: 3 tests, `OK`, `exit 0`.
 - [ ] **Step 3: Record the gate.** `gate.md` holds the branch, the gated commit, the command, the start and end times, the `Ran N tests in S s` line, `OK`, the module count, the Step 2 result, and a table mapping spec §5 items 1–10 and Review Focus 1–5 to their test names. Commit it: `docs(evidence): record the Stage 2a branch gate`.
-- [ ] **Step 4: Whole-branch review.** Use the requesting-code-review skill on `main..stage2a-duplicate-key`, against the spec, this plan and its Decisions. Name these focuses: the anti-goals of spec §2.3; the F1 table (every read site known, every write site writable); the three merge points (F4) and the validator (F3); D8 rows in every reader; the v1 byte identity. Fix each accepted finding with a test. If a fix changes `src`, re-run Step 1 and update `gate.md`.
+- [ ] **Step 4: Whole-branch review.** Use the requesting-code-review skill on `main..stage2a-duplicate-key`, against the spec, this plan and its Decisions. Name these focuses: the anti-goals of spec §2.3; the F1 table (every read site known, every write site writable); the three merge points (F4) and the validator (F3); D8 rows in every reader; the v1 byte identity. Fix each accepted finding with a test. If a fix changes `src`, re-run Step 1 and update `gate.md`. Record the review in `gate.md` under `## Review`: the reviewer, the commit range, each finding and its fix or ruling.
 - [ ] **Step 5: Check locked inputs and the platform member (P5, D12).**
 
 ```bash
@@ -469,9 +474,9 @@ Run in the main checkout on `main`. This task reads `data/` once to copy it and 
 **Interfaces:**
 - Consumes: `<2A>`; F9.
 - Produces: per-source and per-rebuild measurements for the Handoff.
-- The script's command line: `retransform.py <root> <config> <sources.json> <results.json> {locate,transform,publish-2023Q1,candidate-2026Q3}`. It opens `<root>` with its stored binding (`diag2.py` method). It loads `<config>`, preflights the running release with `preflight_current`, and calls `runtime.retain_manifest` once. It pins each `RunContext` with `pin_context`, as `tests/support.py:77–91` does. It appends one JSON line per step to `<results.json>`.
-  - `locate`: write to `sources.json` the 35 sources of F9, each with its `source_id`, raw SHA-256 and the snapshot-workset ref that holds it. It scans `objects/worksets/sec/snapshot/` and prefers the workset with the fewest members. It stops with exit 2 if a source has no workset.
-  - `transform`: `etl.commands.run_transform` once per distinct snapshot-workset ref. For each source it records the row count, distinct keys, keys merged by class (combined filing: same name, several form types; rename: same form, several names; both), wall time of its workset, and outcome or failure reason.
+- The script's command line: `retransform.py <root> <config> <sources.json> <results.json> {locate,transform,publish-2023Q1,candidate-2026Q3}`. It opens `<root>` with its stored binding (`diag2.py` method). It loads `<config>`, preflights the running release with `preflight_current`, and calls `runtime.retain_manifest` once. It builds a fresh `RunContext` for each command call, with the fields of `tests/support.py:83–90`, `started_at` = now (UTC), `deadline` = now + `execution.max_run_seconds`, and `pin_context(settings, context, today)` with today's UTC date, so 2026Q3 is a closed quarter. It appends one JSON line per step to `<results.json>`.
+  - `locate`: write to `sources.json` the 35 sources of F9, each with its `source_id`, raw SHA-256, the snapshot-workset ref that holds it and that workset's member count. It scans `objects/worksets/sec/snapshot/` and prefers the workset with the fewest members. It stops with exit 2 if a source has no workset, or if the workset for the 2023Q1 or 2026Q3 quarterly source has more than one member: `run_publish` publishes every quarter its input touches, so a larger workset would time other quarters and move other pointers on the copy.
+  - `transform [--only <source_id>]`: `etl.commands.run_transform` once per distinct snapshot-workset ref, or for one source's workset. For each source it records the row count, distinct keys, keys merged by class (combined filing: same name, several form types; rename: same form, several names; both), wall time of its workset, and outcome or failure reason.
   - `publish-2023Q1`: `run_publish` on the transformed workset that holds the 2023Q1 quarterly source, then `capture_quarter` and `read_quarter`. It records the outcome, the gate, the change counts, the row count read and the publish wall time.
   - `candidate-2026Q3`: `run_publish` on the transformed workset that holds the 2026Q3 quarterly source. It records the outcome (expected `awaiting_approval`), the change counts and the wall time. It runs `validate_candidate_content` on the gated candidate, and checks that the 2026Q3 pointer still names the v1 generation. It never calls `approve`.
 
@@ -479,11 +484,12 @@ Run in the main checkout on `main`. This task reads `data/` once to copy it and 
 - [ ] **Step 2: Hash `data/` and copy it,** with plan 6 Task 6 Step 2's commands and `W=/tmp/stage2a-scratch-$(date -u +%Y%m%dT%H%M%SZ)`. Record `$W`.
 - [ ] **Step 3: Write the scratch config.** Copy `conf/sec-edgar-local.json` to `specs/evidence/stage2a/scratch/config.json`. Set `storage.root` to `$W/data`, `logging.root` to `$W/logs`, `runtime.release_manifest` to the `<2A>` manifest path, and `etl` to `sec-index-parser-v2` / `sec-index-v2`. Change nothing else.
 - [ ] **Step 4: Write `retransform.py`** to the Interfaces above. Then run `locate` on the 2a interpreter (`releases/sha256=<2A>/venv/bin/python -I -B -X pycache_prefix=/dev/null`). Expected: 35 entries, 28 quarterly and 7 daily. If the store refuses the binding or the producer check, stop and report the error.
-- [ ] **Step 5: Run `transform`** in the background. Expected: all 35 sources transform. No source stays quarantined. If one does, its record names the reason, and the reason is not a repeat that differs only in form type or company name. Otherwise stop and ask.
-- [ ] **Step 6: Run `publish-2023Q1`, then `candidate-2026Q3`.** Expected: 2023Q1 `published` with gate `clear` and nonempty rows read back. 2026Q3 `awaiting_approval`, its candidate valid, and its pointer unchanged.
-- [ ] **Step 7: Apply the budget stop rule.** If either publish wall time exceeds 1,500 s, stop. Report both times to the owner and ask them to choose: approve a named limit backed by the measured time, or add a cost fix and measure again. Log the answer as a Decision. The release selection (Task 11) waits for it.
-- [ ] **Step 8: Confirm `data/` is unchanged,** with plan 6 Task 6 Step 4's commands. Expected: `data-unchanged`.
-- [ ] **Step 9: Record and commit.** Copy `sources.json`, `results.json` and both hash files into `specs/evidence/stage2a/scratch/`. Append `## Scratch re-transform` to `release.md`: the scratch path, the interpreter, a per-source table, both rebuilds against 1,500 s, 1,800 s and 3,300 s, the path taken under Step 7, and the lines "The 2026Q3 candidate was not approved." and "No SEC request was sent. Nothing was written under `data/`." Commit: `docs(evidence): record the Stage 2a scratch re-transform`. Then `rm -rf "$W"`.
+- [ ] **Step 5: Probe one small source.** Run `transform --only <source_id of daily 2026-07-22>`. A binding or producer refusal first shows here. If one occurs, stop and report it. Expected: the source transforms, with only the rename class merged (spec §1.1).
+- [ ] **Step 6: Run `transform`** for all sources in the background. Expected: all 35 sources transform. No source stays quarantined. If one does, its record names the reason, and the reason is not a repeat that differs only in form type or company name. Otherwise stop and ask.
+- [ ] **Step 7: Run `publish-2023Q1`, then `candidate-2026Q3`.** Expected: 2023Q1 `published` with gate `clear` and nonempty rows read back. 2026Q3 `awaiting_approval`, its candidate valid, and its pointer unchanged.
+- [ ] **Step 8: Apply the budget stop rule.** If either publish wall time exceeds 1,500 s, stop. Report both times to the owner and ask them to choose: approve a named limit backed by the measured time, or add a cost fix and measure again. Log the answer as a Decision. The release selection (Task 11) waits for it.
+- [ ] **Step 9: Confirm `data/` is unchanged,** with plan 6 Task 6 Step 4's commands. Expected: `data-unchanged`.
+- [ ] **Step 10: Record and commit.** Copy `sources.json`, `results.json` and both hash files into `specs/evidence/stage2a/scratch/`. Append `## Scratch re-transform` to `release.md`: the scratch path, the interpreter, a per-source table, both rebuilds against 1,500 s, 1,800 s and 3,300 s, the path taken under Step 8, and the lines "The 2026Q3 candidate was not approved." and "No SEC request was sent. Nothing was written under `data/`." Commit: `docs(evidence): record the Stage 2a scratch re-transform`. Then `rm -rf "$W"`.
 
 ---
 
@@ -516,7 +522,7 @@ Run in the main checkout on `main`. This task reads `data/` once to copy it and 
 
 ## After the last task
 
-Run the writing-plans Plan Completion Protocol, step 3a included. Deferred item 1 of section `2-sec-filing-index-ingestion-spec — 2026-10-31` stays open: it is done only when Stage 2b covers or re-quarantines the 35 sources (spec §6). Add `→ planned` markup for it at plan commit, not `→ done`. Then remove the worktree and `/tmp/s2a-venv`.
+Run the writing-plans Plan Completion Protocol, step 3a included. Deferred item 1 of section `2-sec-filing-index-ingestion-spec — 2026-10-31` stays open: it is done only when Stage 2b covers or re-quarantines the 35 sources (spec §6). Its `→ planned` note was written at plan commit (`9bbfa9a`); do not tick it. Then remove the worktree and `/tmp/s2a-venv`.
 
 ## Handoff to later stages
 
