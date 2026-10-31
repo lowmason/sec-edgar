@@ -12,6 +12,7 @@ from support_etl import etl_context
 from sec_edgar_ingest.config import pin_context
 from sec_edgar_ingest.etl.catalog import build_candidate, select_sources, source_fingerprint
 from sec_edgar_ingest.etl.contracts import GenerationCapture, ObservationRef, observation_base
+from sec_edgar_ingest.models import SCHEMA_V1
 from sec_edgar_ingest.etl.manifest import read_manifest, validate_candidate, iter_file_rows
 from sec_edgar_ingest.etl.state import EtlState
 from sec_edgar_ingest.etl.transform import transform_member
@@ -305,7 +306,7 @@ class EtlCatalogTests(unittest.TestCase):
         values[0]['company_name'] = 'Invented row'
         ref = candidate.manifest.files[0]
         path = self.root / 'objects' / ref.path
-        pq.write_table(pa.Table.from_pylist(values, schema=canonical_schema()), path,
+        pq.write_table(pa.Table.from_pylist(values, schema=canonical_schema(SCHEMA_V1)), path,
                        version='2.6', compression='snappy', use_dictionary=False)
         body = path.read_bytes()
         changed_ref = replace(ref, sha256=hashlib.sha256(body).hexdigest(), byte_count=len(body))
@@ -334,7 +335,7 @@ class EtlCatalogTests(unittest.TestCase):
             values = [value] if ref.role == 'data' else [{
                 'change_type': 'added', 'cik': loser.cik, 'archive_path': loser.archive_path,
                 'before': None, 'after': value, 'reason': None}]
-            schema = canonical_schema() if ref.role == 'data' else change_schema()
+            schema = canonical_schema(SCHEMA_V1) if ref.role == 'data' else change_schema(SCHEMA_V1)
             pq.write_table(pa.Table.from_pylist(values, schema=schema), path,
                            version='2.6', compression='snappy', use_dictionary=False)
             body = path.read_bytes()
@@ -414,7 +415,7 @@ class EtlCatalogTests(unittest.TestCase):
         for ref in candidate.manifest.files:
             values = self.rows(candidate, ref.role)[:1]
             path = self.root / 'objects' / ref.path
-            schema = canonical_schema() if ref.role == 'data' else change_schema()
+            schema = canonical_schema(SCHEMA_V1) if ref.role == 'data' else change_schema(SCHEMA_V1)
             pq.write_table(pa.Table.from_pylist(values, schema=schema), path,
                            version='2.6', compression='snappy', use_dictionary=False)
             body = path.read_bytes()
@@ -435,7 +436,7 @@ class EtlCatalogTests(unittest.TestCase):
         from sec_edgar_ingest.models import canonical_json
         change_ref = next(ref for ref in candidate.manifest.files if ref.role == 'changes')
         path = self.root / 'objects' / change_ref.path
-        pq.write_table(pa.Table.from_pylist(changes, schema=change_schema()), path,
+        pq.write_table(pa.Table.from_pylist(changes, schema=change_schema(SCHEMA_V1)), path,
                        version='2.6', compression='snappy', use_dictionary=False)
         body = path.read_bytes()
         change_ref = replace(change_ref, sha256=hashlib.sha256(body).hexdigest(), byte_count=len(body), row_count=len(changes))

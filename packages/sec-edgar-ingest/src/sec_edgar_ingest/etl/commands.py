@@ -6,7 +6,8 @@ from collections import Counter
 from datetime import datetime, timezone
 
 from ..config import Settings, pin_context
-from ..models import Error, RunContext, canonical_json, error_text, parse_json, safe_relative_path
+from ..models import (Error, RunContext, canonical_json, error_text, parse_json, require_writable_schema,
+                      safe_relative_path)
 from ..results import log_event, result_path
 from ..state import AcquisitionState, attempt_key
 from ..worksets import decode_snapshot_workset, encode_workset
@@ -15,7 +16,7 @@ from .contracts import (EtlResult, PublicationResult, decode_transformed,
                         processing_key, transformed_ref)
 from .publication import PublicationRepairError, publish_quarter
 from .reader import capture_from_pointer, checked_manifest
-from .parser import supported_parser, SCHEMA_VERSION
+from .parser import supported_parser
 from .state import EtlState
 from .transform import transform_workset
 
@@ -215,8 +216,7 @@ def run_publish(transformed_workset_ref: str, context: RunContext, settings: Set
     if context.command != 'publish' or context.pinned_on is None or pin_context(settings, context, context.pinned_on)[0] != context:
         raise ValueError('publish requires its exact pinned effective configuration')
     supported_parser(context.parser_version, fixture=settings.acquisition.mode == 'fixture')
-    if context.schema_version != SCHEMA_VERSION:
-        raise ValueError('unsupported ETL schema version')
+    require_writable_schema(context.schema_version)
     if datetime.now(timezone.utc) >= context.deadline:
         raise TimeoutError('publication command deadline exceeded')
     validate_workset_ref(transformed_workset_ref, 'transformed')

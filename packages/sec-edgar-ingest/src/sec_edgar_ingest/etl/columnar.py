@@ -14,7 +14,7 @@ import pyarrow as pa
 import pyarrow.compute as pc
 import pyarrow.parquet as pq
 
-from ..models import quarter_value
+from ..models import SCHEMA_V1, quarter_value
 from ..storage.contracts import Conflict, ObjectStore
 from .contracts import (FileRef, IndexRow, Observation, ObservationRef, canonical_schema, change_schema,
                         observation_schema)
@@ -40,7 +40,7 @@ def _read_table(path: str, sha256: str, byte_count: int, objects: ObjectStore, s
 def generation_table(ref: FileRef, objects: ObjectStore) -> pa.Table:
     """One generation file as an Arrow table, after its exact hash, length, schema and row count."""
     table = _read_table(ref.path, ref.sha256, ref.byte_count, objects,
-                        canonical_schema() if ref.role == 'data' else change_schema(),
+                        canonical_schema(SCHEMA_V1) if ref.role == 'data' else change_schema(SCHEMA_V1),
                         'generation file hash or length differs', 'generation Parquet schema differs')
     if table.num_rows != ref.row_count:
         raise ValueError('generation file row count differs')
@@ -68,7 +68,7 @@ def _quarter_bounds(quarter: str) -> tuple[date, date]:
 
 
 def _quarter_table(ref: ObservationRef, objects: ObjectStore, quarter: str) -> pa.Table:
-    table = _read_table(ref.rows_ref, ref.rows_sha256, ref.rows_bytes, objects, observation_schema(),
+    table = _read_table(ref.rows_ref, ref.rows_sha256, ref.rows_bytes, objects, observation_schema(SCHEMA_V1),
                         'observation bytes differ from manifest hash or length', 'observation Parquet schema differs')
     if table.num_rows != ref.source_row_count:
         raise ValueError('observation readback counts differ')

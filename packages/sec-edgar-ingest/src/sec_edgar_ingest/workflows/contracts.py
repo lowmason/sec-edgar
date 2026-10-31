@@ -10,7 +10,7 @@ from datetime import date, datetime
 from ..etl.commands import validate_workset_ref
 from ..etl.contracts import PublicationResult
 from ..models import (
-    Error, Record, RunContext, Source, quarter_value, require_hash,
+    Error, Record, RunContext, Source, quarter_value, require_hash, require_known_schema,
     require_number, require_utc, safe_relative_path, validate_record_fields,
 )
 from ..results import exit_code
@@ -52,7 +52,7 @@ FORMAT_VERSION = 'sec-local-workflow-result-v1'
 WORKFLOW_COMMANDS = ('backfill', 'daily', 'reconcile')
 WORKFLOW_PRIORITY = {'backfill': 'backfill', 'daily': 'daily', 'reconcile': 'reconciliation'}
 SUPPORTED_PARSERS = frozenset((
-    'sec-index-parser-v1', 'fixture-index-parser-v1', 'fixture-index-parser-v2',
+    'sec-index-parser-v1', 'sec-index-parser-v2', 'fixture-index-parser-v1', 'fixture-index-parser-v2',
 ))
 SOURCE_WORKSET_REF = re.compile(r'worksets/sec/source/sha256=[0-9a-f]{64}/workset\.json\Z')
 CHILD_RESULT_REF = re.compile(r'runs/sec/[^/]+/(collect|transform|publish)/[^/]+/result\.json\Z')
@@ -101,7 +101,8 @@ class MemberResult(Record):
             if CHILD_RESULT_REF.fullmatch(ref) is None:
                 raise ValueError('invalid child result reference')
             safe_relative_path(ref, 'child_ref')
-        if self.schema_version != 'sec-index-v1' or self.parser_version not in SUPPORTED_PARSERS:
+        require_known_schema(self.schema_version)
+        if self.parser_version not in SUPPORTED_PARSERS:
             raise ValueError('unsupported member processing versions')
         if len({quarter.quarter for quarter in self.quarters}) != len(self.quarters):
             raise ValueError('duplicate member quarter results')

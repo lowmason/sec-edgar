@@ -1,13 +1,13 @@
 """Strict ETL schema and processing-identity contracts."""
 import unittest
 from hashlib import sha256
-from sec_edgar_ingest.models import canonical_json
+from sec_edgar_ingest.models import SCHEMA_V1, canonical_json
 from sec_edgar_ingest.etl.contracts import canonical_schema, change_schema, processing_key
 
 
 class EtlContractTests(unittest.TestCase):
     def test_canonical_field_types_and_nullability(self):
-        schema = canonical_schema()
+        schema = canonical_schema(SCHEMA_V1)
         expected = [
             ('cik', 'string', False), ('company_name', 'string', False),
             ('form_type', 'string', False), ('archive_path', 'string', False),
@@ -18,11 +18,11 @@ class EtlContractTests(unittest.TestCase):
         self.assertEqual([(f.name, str(f.type), f.nullable) for f in schema], expected)
 
     def test_change_schema_embeds_nullable_full_rows(self):
-        schema = change_schema()
+        schema = change_schema(SCHEMA_V1)
         self.assertEqual(schema.names, ['change_type', 'cik', 'archive_path', 'before', 'after', 'reason'])
         self.assertEqual([f.nullable for f in schema], [False, False, False, True, True, True])
         for name in ('before', 'after'):
-            self.assertEqual(list(schema.field(name).type), list(canonical_schema()))
+            self.assertEqual(list(schema.field(name).type), list(canonical_schema(SCHEMA_V1)))
 
     def test_processing_identity_includes_both_versions(self):
         args = ['a' * 64, 'b' * 64, 'parser-v1', 'sec-index-v1']
@@ -34,8 +34,8 @@ class EtlContractTests(unittest.TestCase):
     def test_observation_schema_preserves_original_fields(self):
         import pyarrow as pa
         from sec_edgar_ingest.etl.contracts import observation_schema
-        schema = observation_schema()
-        self.assertEqual(list(schema)[:-2], list(canonical_schema()))
+        schema = observation_schema(SCHEMA_V1)
+        self.assertEqual(list(schema)[:-2], list(canonical_schema(SCHEMA_V1)))
         self.assertEqual(schema.field('original_fields'), pa.field('original_fields', pa.list_(pa.field('item', pa.string(), nullable=False), 5), nullable=False))
         self.assertEqual(schema.field('line_number'), pa.field('line_number', pa.int64(), nullable=False))
 

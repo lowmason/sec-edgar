@@ -8,8 +8,9 @@ from datetime import date
 from pathlib import Path
 from typing import Literal
 
-from .models import (SCHEMA_VERSION, Record, RunContext, canonical_json, parse_json, quarter_for,
-                     quarter_value, record_from_mapping, require_number, require_text, validate_record_fields)
+from .models import (Record, RunContext, canonical_json, parse_json, quarter_for, quarter_value,
+                     record_from_mapping, require_number, require_text, require_writable_schema,
+                     validate_record_fields)
 
 CONFIG_VERSION = "sec-local-config-v1"
 COORDINATION_NAMESPACE = "sec-owner-lowell-mason"
@@ -170,8 +171,7 @@ class Settings(Record):
         require_text(self.etl.parser_version, "etl.parser_version")
         if re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", self.etl.parser_version) is None or self.etl.parser_version.lower() in ("latest", "open"):
             raise ValueError("etl.parser_version must be explicit immutable provenance")
-        if self.etl.schema_version != SCHEMA_VERSION:
-            raise ValueError("unsupported etl.schema_version")
+        require_writable_schema(self.etl.schema_version)
         if self.reconciliation.require_withdrawal_approval is not True:
             raise ValueError("reconciliation.require_withdrawal_approval must be true")
         if self.acquisition.mode == "live":

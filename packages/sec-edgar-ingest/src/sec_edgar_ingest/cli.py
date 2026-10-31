@@ -23,13 +23,13 @@ from .etl.commands import (PublicationRepairPending, read_etl_result, run_transf
 from .etl.contracts import MAX_OPERATOR_CHARS, MAX_REASON_CHARS, require_line
 from .etl.history import quarter_history, withdrawal_candidates
 from .etl.manifest import approval_ref
-from .etl.parser import supported_parser, SCHEMA_VERSION
+from .etl.parser import supported_parser
 from .etl.publication import repair_publication
 from .etl.rollback import rollback, rollback_ref
 from .etl.state import EtlState
 from .download import BoundedSender, FixturePack, RequestClient
 from .models import (CommandResult, Error, RunContext, canonical_json, error_text, parse_json, quarter_for,
-                     quarter_value, safe_relative_path, to_mapping_value)
+                     quarter_value, require_writable_schema, safe_relative_path, to_mapping_value)
 from .results import exit_code, log_event, read_result, result_path, write_result
 from .state import AcquisitionState, attempt_key
 from .storage import open_stores
@@ -127,8 +127,7 @@ def _validate(args) -> tuple[Settings, date | None, datetime, FixturePack | None
     etl = args.command in ('transform', 'publish')
     if etl:
         supported_parser(settings.etl.parser_version, fixture=settings.acquisition.mode == 'fixture')
-        if settings.etl.schema_version != SCHEMA_VERSION:
-            raise ValueError('unsupported ETL schema version')
+        require_writable_schema(settings.etl.schema_version)
     if not settings.coordination.lease_seconds.is_integer():
         raise ValueError('coordination requires whole finite lease seconds')
     deadline = datetime.fromisoformat(args.deadline.replace('Z', '+00:00'))
@@ -389,8 +388,7 @@ def _validate_workflow(args):
     settings = load_config(Path(args.config))
     supported_parser(settings.etl.parser_version,
                      fixture=settings.acquisition.mode == 'fixture')
-    if settings.etl.schema_version != SCHEMA_VERSION:
-        raise ValueError('unsupported ETL schema version')
+    require_writable_schema(settings.etl.schema_version)
     if not settings.coordination.lease_seconds.is_integer():
         raise ValueError('coordination requires whole finite lease seconds')
     deadline = datetime.fromisoformat(args.deadline.replace('Z', '+00:00'))

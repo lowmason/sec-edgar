@@ -894,9 +894,10 @@ class AcceptanceRun:
 def validate_read(capture, objects):
     from sec_edgar_ingest.etl.reader import read_quarter, validated_manifest
     from sec_edgar_ingest.etl.contracts import canonical_schema
+    from sec_edgar_ingest.models import SCHEMA_V1
     manifest = validated_manifest(capture, objects)
     keys, count, sources = set(), 0, set()
-    expected_fields = set(canonical_schema().names)
+    expected_fields = set(canonical_schema(SCHEMA_V1).names)
     for row in read_quarter(capture, objects):
         value = row.to_mapping()
         if set(value) != expected_fields or row.schema_version != 'sec-index-v1' or row.parser_version != 'sec-index-parser-v1':
@@ -915,7 +916,7 @@ def validate_read(capture, objects):
     return {'quarter': capture.quarter, 'generation_id': capture.generation_id, 'rows': count,
             'validated': True, 'source_count': len(manifest.sources), 'row_source_count': len(sources),
             'manifest_ref': capture.manifest_ref, 'manifest_sha256': capture.manifest_sha256,
-            'manifest_bytes': capture.manifest_bytes, 'schema': str(canonical_schema()),
+            'manifest_bytes': capture.manifest_bytes, 'schema': str(canonical_schema(SCHEMA_V1)),
             'sources': [item.to_mapping() for item in manifest.sources],
             'files': [item.to_mapping() for item in manifest.files]}
 

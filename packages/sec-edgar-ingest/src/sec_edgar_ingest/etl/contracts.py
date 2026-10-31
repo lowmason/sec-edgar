@@ -3,15 +3,15 @@ from __future__ import annotations
 
 import hashlib
 import re
-from collections.abc import Mapping
-from dataclasses import dataclass, field
+from collections.abc import Iterable, Mapping
+from dataclasses import dataclass, field, fields, replace
 from datetime import date, datetime
 from typing import Literal
 
 import pyarrow as pa
 
-from ..models import (Error, Record, RunContext, SCHEMA_VERSION, Snapshot, Source,
-                      canonical_json, parse_json, quarter_value, require_hash, require_number,
+from ..models import (Error, Record, RunContext, SCHEMA_V1, SCHEMA_V2, Snapshot, Source,
+                      canonical_json, parse_json, quarter_value, require_hash, require_known_schema, require_number,
                       require_text, require_utc, freeze, safe_relative_path, validate_record_fields)
 
 TRANSFORMED_FORMAT = 'sec-local-transformed-workset-v1'
@@ -23,6 +23,8 @@ ROLLBACK_FORMAT = 'sec-pointer-rollback-v1'
 ACTIVATION_FORMAT = 'sec-approval-activation-v1'
 MAX_REASON_CHARS = 1024
 ORIGINAL_FIELD_COUNT = 5
+_LIST_FIELDS = ('company_names', 'form_types')
+_KEY_FIELDS = ('cik', 'archive_path')
 
 
 def _versions(parser_version: str, schema_version: str) -> None:
@@ -44,8 +46,7 @@ def _record(record: Record) -> None:
             quarter_value(value)
     if hasattr(record, 'parser_version'):
         _versions(record.parser_version, record.schema_version)
-        if record.schema_version != SCHEMA_VERSION:
-            raise ValueError('unsupported schema_version')
+        require_known_schema(record.schema_version)
 
 
 def _counts(record: Record, *names: str) -> None:
@@ -68,24 +69,107 @@ class IndexRow(Record):
 
     def __post_init__(self):
         _record(self)
-        if re.fullmatch(r'[0-9]{10}', self.cik) is None:
-            raise ValueError('cik must be a zero-padded ten-digit identifier')
-        require_text(self.company_name, 'company_name')
-        require_text(self.form_type, 'form_type')
-        safe_relative_path(self.archive_path, 'archive_path')
-        segments = self.archive_path.split('/')
-        if (len(segments) >= 4 and segments[:2] == ['edgar', 'data']
-                and re.fullmatch(r'[0-9]{1,10}', segments[2])
-                and segments[2].zfill(10) != self.cik):
-            raise ValueError('archive path CIK disagrees with the row CIK')
-        require_hash(self.source_id, 'source_id')
-        if self.accession_number is not None and re.fullmatch(r'[0-9]{10}-[0-9]{2}-[0-9]{6}', self.accession_number) is None:
-            raise ValueError('invalid accession_number')
+        if self.schema_version != SCHEMA_V1:
+            raise ValueError('unsupported schema_version')
+        _check_row(self)
+
+
+@dataclass(frozen=True, slots=True)
+class IndexRowV2(Record):
+    """A sec-index-v2 row: every listed company name and form type of one key. Its versions may be v1 (D8)."""
+    cik: str
+    company_names: tuple[str, ...]
+    form_types: tuple[str, ...]
+    archive_path: str
+    filing_date: date
+    accession_number: str | None
+    source_id: str
+    source_sha256: str
+    parser_version: str
+    schema_version: str
+
+    def __post_init__(self):
+        _record(self)
+        _check_row(self)
+
+
+Row = IndexRow | IndexRowV2
+
+
+def _check_row(row: Row) -> None:
+    """The field checks both row types share, in v1 order. A v2 row checks its two lists where v1 checks two strings."""
+    if re.fullmatch(r'[0-9]{10}', row.cik) is None:
+        raise ValueError('cik must be a zero-padded ten-digit identifier')
+    if type(row) is IndexRowV2:
+        for name in _LIST_FIELDS:
+            values = getattr(row, name)
+            if not values or '' in values or values != tuple(sorted(set(values))):
+                raise ValueError(f'{name} must be sorted distinct non-empty strings')
+            for value in values:
+                require_text(value, name)
+    else:
+        require_text(row.company_name, 'company_name')
+        require_text(row.form_type, 'form_type')
+    safe_relative_path(row.archive_path, 'archive_path')
+    segments = row.archive_path.split('/')
+    if (len(segments) >= 4 and segments[:2] == ['edgar', 'data']
+            and re.fullmatch(r'[0-9]{1,10}', segments[2])
+            and segments[2].zfill(10) != row.cik):
+        raise ValueError('archive path CIK disagrees with the row CIK')
+    require_hash(row.source_id, 'source_id')
+    if row.accession_number is not None and re.fullmatch(r'[0-9]{10}-[0-9]{2}-[0-9]{6}', row.accession_number) is None:
+        raise ValueError('invalid accession_number')
+
+
+def row_type(layout: str) -> type[Row]:
+    """The row type of a schema layout."""
+    require_known_schema(layout)
+    return IndexRow if layout == SCHEMA_V1 else IndexRowV2
+
+
+def decode_row(value: Mapping[str, object], layout: str) -> Row:
+    """One row from an Arrow `to_pylist` mapping (filing date a `date`) or a canonical JSON mapping (an ISO string)."""
+    kind = row_type(layout)
+    if isinstance(value, Mapping) and type(value.get('filing_date')) is date:
+        return kind(**value)
+    return kind.from_mapping(value)
+
+
+def upgrade_row(row: IndexRow) -> IndexRowV2:
+    """A v1 row as a v2 row with one-item lists. Every other field, versions included, is unchanged (D8)."""
+    if type(row) is not IndexRow:
+        raise ValueError('upgrade_row requires a v1 row')
+    return IndexRowV2(row.cik, (row.company_name,), (row.form_type,), row.archive_path, row.filing_date,
+                      row.accession_number, row.source_id, row.source_sha256, row.parser_version, row.schema_version)
+
+
+def conflict_payload(row: Row) -> bytes:
+    """The canonical bytes rows of one key must share to merge: the row without its two lists."""
+    return canonical_json({name: value for name, value in row.to_mapping().items() if name not in _LIST_FIELDS})
+
+
+def merge_rows(rows: Iterable[Row]) -> Row:
+    """One row from rows of one key and type: the sorted distinct union of each list. Order-independent (D5)."""
+    rows = tuple(rows)
+    if not rows:
+        raise ValueError('merge_rows requires at least one row')
+    kind = type(rows[0])
+    if kind not in (IndexRow, IndexRowV2) or any(type(row) is not kind for row in rows):
+        raise ValueError('merge_rows requires rows of one row type')
+    if len(rows) == 1:
+        return rows[0]
+    payload = conflict_payload(rows[0])
+    if any(conflict_payload(row) != payload for row in rows[1:]):
+        raise ValueError('rows differ outside form types and company names')
+    if kind is IndexRow:
+        return rows[0]
+    return replace(rows[0], **{name: tuple(sorted({value for row in rows for value in getattr(row, name)}))
+                               for name in _LIST_FIELDS})
 
 
 @dataclass(frozen=True, slots=True)
 class Observation(Record):
-    row: IndexRow
+    row: Row
     original_fields: tuple[str, str, str, str, str]
     line_number: int
 
@@ -382,25 +466,32 @@ class EtlResult(Record):
             raise ValueError('duplicate quarter result')
 
 
-def canonical_schema() -> pa.Schema:
-    names = ('cik', 'company_name', 'form_type', 'archive_path', 'filing_date',
-             'accession_number', 'source_id', 'source_sha256', 'parser_version', 'schema_version')
-    return pa.schema([pa.field(name, pa.date32() if name == 'filing_date' else pa.string(),
-                               nullable=name == 'accession_number') for name in names])
+def _arrow_type(name: str) -> pa.DataType:
+    if name == 'filing_date':
+        return pa.date32()
+    if name in _LIST_FIELDS:
+        return pa.list_(pa.field('item', pa.string(), nullable=False))
+    return pa.string()
 
 
-def observation_schema() -> pa.Schema:
-    return pa.schema([*canonical_schema(),
+def canonical_schema(layout: str) -> pa.Schema:
+    """The data-file schema of a layout: one column per row field, in row order."""
+    return pa.schema([pa.field(item.name, _arrow_type(item.name), nullable=item.name == 'accession_number')
+                      for item in fields(row_type(layout))])
+
+
+def observation_schema(layout: str) -> pa.Schema:
+    return pa.schema([*canonical_schema(layout),
                       pa.field('original_fields', pa.list_(pa.field('item', pa.string(), nullable=False), ORIGINAL_FIELD_COUNT), nullable=False),
                       pa.field('line_number', pa.int64(), nullable=False)])
 
 
-def change_schema() -> pa.Schema:
+def change_schema(layout: str) -> pa.Schema:
     return pa.schema([pa.field('change_type', pa.string(), nullable=False),
                       pa.field('cik', pa.string(), nullable=False),
                       pa.field('archive_path', pa.string(), nullable=False),
-                      pa.field('before', pa.struct(canonical_schema()), nullable=True),
-                      pa.field('after', pa.struct(canonical_schema()), nullable=True),
+                      pa.field('before', pa.struct(canonical_schema(layout)), nullable=True),
+                      pa.field('after', pa.struct(canonical_schema(layout)), nullable=True),
                       pa.field('reason', pa.string(), nullable=True)])
 
 
@@ -443,11 +534,25 @@ def transformed_ref(workset: TransformedWorkset) -> str:
     return f'worksets/sec/transformed/sha256={workset.workset_id}/workset.json'
 
 
-BUSINESS_FIELDS = ('cik', 'company_name', 'form_type', 'archive_path', 'filing_date', 'accession_number')
+_BUSINESS_FIELDS = {
+    SCHEMA_V1: ('cik', 'company_name', 'form_type', 'archive_path', 'filing_date', 'accession_number'),
+    SCHEMA_V2: ('cik', 'company_names', 'form_types', 'archive_path', 'filing_date', 'accession_number'),
+}
 ABSENCE_REASON = 'absence is not authoritative withdrawal evidence'
 WITHDRAWAL_REASON = 'absent from closed quarterly membership'
 
 
-def arrow_row(value: Mapping[str, object]) -> dict[str, object]:
+def business_fields(layout: str) -> tuple[str, ...]:
+    """A layout's row values without their provenance (source and versions)."""
+    require_known_schema(layout)
+    return _BUSINESS_FIELDS[layout]
+
+
+def update_fields(layout: str) -> tuple[str, ...]:
+    """The business fields without the key: a difference in one of them is an `updated` change."""
+    return tuple(name for name in business_fields(layout) if name not in _KEY_FIELDS)
+
+
+def arrow_row(value: Mapping[str, object], layout: str) -> dict[str, object]:
     """A canonical row mapping with its filing date as a `date`, as the Arrow schemas need."""
-    return {**value, 'filing_date': IndexRow.from_mapping(value).filing_date}
+    return {**value, 'filing_date': decode_row(value, layout).filing_date}

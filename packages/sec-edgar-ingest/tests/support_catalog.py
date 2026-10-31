@@ -31,13 +31,14 @@ def capture(candidate):
 class Lane:
     """A store, its ETL state and a pinned context. Call `close` when done."""
 
-    def __init__(self, day=date(2026, 10, 7), command='transform'):
+    def __init__(self, day=date(2026, 10, 7), command='transform', *, schema_version=None):
+        """`schema_version=None` keeps the fixture config's schema."""
         self.temp = tempfile.TemporaryDirectory()
         self.root = Path(self.temp.name)
         self.store, self.objects, leases = store_bundle(self.root)
         leases.close()
         self.state = EtlState(self.store)
-        self.settings, self.context = etl_context(command=command, root=self.root)
+        self.settings, self.context = etl_context(command=command, root=self.root, schema_version=schema_version)
         self.pin(day)
 
     def close(self):
@@ -45,7 +46,8 @@ class Lane:
         self.temp.cleanup()
 
     def pin(self, day):
-        self.settings = fixture_settings(etl={'parser_version': self.context.parser_version},
+        self.settings = fixture_settings(etl={'parser_version': self.context.parser_version,
+                                              'schema_version': self.context.schema_version},
                                          fixture={'allow_clock_override': True}, root=self.root)
         context = replace(self.context, config_sha256=self.settings.config_sha256, pinned_on=None, effective_config={})
         self.context = pin_context(self.settings, context, day)[0]

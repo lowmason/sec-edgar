@@ -7,13 +7,12 @@ from collections.abc import Iterator
 from datetime import date
 from pathlib import Path
 
-from ..models import Source, Snapshot, safe_relative_path
+from ..models import SCHEMA_V1, Source, Snapshot, safe_relative_path
 from ..validation import DAILY_HEADER, QUARTERLY_HEADER, INVALID_CONTROL, NON_ASCII
 from .contracts import IndexRow, Observation
 
 PARSER_VERSION = 'sec-index-parser-v1'
 FIXTURE_PARSERS = frozenset(('fixture-index-parser-v1', 'fixture-index-parser-v2'))
-SCHEMA_VERSION = 'sec-index-v1'
 FIELD_COUNT = 5
 PREAMBLE_LABELS = ('Description:', 'Last Data Received:', 'Comments:', 'Anonymous FTP:', 'Cloud HTTP:')
 
@@ -31,7 +30,7 @@ def supported_parser(version: str, *, fixture: bool) -> None:
 
 def _versions(parser_version: str, schema_version: str) -> None:
     supported_parser(parser_version, fixture=True)
-    if schema_version != SCHEMA_VERSION:
+    if schema_version != SCHEMA_V1:
         raise ValueError(f'unsupported schema version: {schema_version}')
 
 

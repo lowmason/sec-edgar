@@ -15,7 +15,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 from ..config import Settings, pin_context
-from ..models import (to_mapping_value, BodyReceipt, Error, RunContext, Snapshot, Source,
+from ..models import (SCHEMA_V1, to_mapping_value, BodyReceipt, Error, RunContext, Snapshot, Source,
                       canonical_json, error_text, parse_json, quarter_for)
 from ..state import AcquisitionState
 from ..storage.contracts import BoundaryObserver, Conflict, FILE_CHUNK_BYTES, ObjectStore, observe
@@ -66,7 +66,7 @@ def _remember_observation(db, obs: Observation) -> None:
 
 def _parquet_observations(path: Path) -> Iterator[Observation]:
     with pq.ParquetFile(path) as parquet:
-        if not parquet.schema_arrow.equals(observation_schema(), check_metadata=True):
+        if not parquet.schema_arrow.equals(observation_schema(SCHEMA_V1), check_metadata=True):
             raise ValueError('observation Parquet schema differs')
         for batch in parquet.iter_batches(batch_size=BATCH_ROWS):
             for value in batch.to_pylist():
@@ -196,7 +196,7 @@ def _write_rows(raw, root, source, snapshot, context):
     with (closing(_seen_database(root / 'seen.sqlite')) as db,
           closing(iter_observations(raw, source, snapshot, parser_version=context.parser_version,
                                     schema_version=context.schema_version)) as rows,
-          pq.ParquetWriter(path, observation_schema(), version=PARQUET_VERSION,
+          pq.ParquetWriter(path, observation_schema(SCHEMA_V1), version=PARQUET_VERSION,
                            compression='snappy', use_dictionary=False, use_compliant_nested_type=False) as writer):
         for obs in rows:
             _remember_observation(db, obs)
@@ -205,10 +205,10 @@ def _write_rows(raw, root, source, snapshot, context):
             quarters[quarter_for(obs.row.filing_date)] += 1
             if len(batch) == BATCH_ROWS:
                 _check_deadline(context)
-                writer.write_table(pa.Table.from_pylist(batch, schema=observation_schema()))
+                writer.write_table(pa.Table.from_pylist(batch, schema=observation_schema(SCHEMA_V1)))
                 batch.clear()
         if batch:
-            writer.write_table(pa.Table.from_pylist(batch, schema=observation_schema()))
+            writer.write_table(pa.Table.from_pylist(batch, schema=observation_schema(SCHEMA_V1)))
         distinct = db.execute('SELECT COUNT(*) FROM seen').fetchone()[0]
     digest, byte_count = _file_identity(path)
     base = observation_base(source.source_id, snapshot.sha256, context.parser_version, context.schema_version)

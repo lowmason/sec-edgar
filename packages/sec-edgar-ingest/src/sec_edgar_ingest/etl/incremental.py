@@ -14,12 +14,12 @@ import pyarrow as pa
 import pyarrow.compute as pc
 import pyarrow.parquet as pq
 
-from ..models import RunContext, canonical_json, parse_json
+from ..models import SCHEMA_V1, RunContext, canonical_json, parse_json
 from ..storage.contracts import ObjectStore
 from .columnar import (KEY_SEPARATOR, Key, generation_table, key_column, key_mask, quarter_key_column,
                        quarter_observations, table_keys)
-from .contracts import (ABSENCE_REASON, BUSINESS_FIELDS, WITHDRAWAL_REASON, GenerationManifest, IndexRow,
-                        ObservationRef, arrow_row, canonical_schema, change_schema)
+from .contracts import (ABSENCE_REASON, WITHDRAWAL_REASON, GenerationManifest, IndexRow,
+                        ObservationRef, arrow_row, business_fields, canonical_schema, change_schema)
 from .transform import BATCH_ROWS, PARQUET_VERSION, _check_deadline
 
 Rank = tuple[int, str, str]
@@ -59,8 +59,8 @@ def _best(candidates: list[tuple[Rank, str, bytes]]) -> bytes:
 
 def _change(key: Key, kind: str, before, after, reason=None) -> dict:
     return {'change_type': kind, 'cik': key[0], 'archive_path': key[1],
-            'before': None if before is None else arrow_row(before),
-            'after': None if after is None else arrow_row(after), 'reason': reason}
+            'before': None if before is None else arrow_row(before, SCHEMA_V1),
+            'after': None if after is None else arrow_row(after, SCHEMA_V1), 'reason': reason}
 
 
 def _resolve_touched(key: Key, base: bytes | None, unresolved: set[Key], delta: list[tuple[Rank, str, bytes]],
@@ -88,7 +88,7 @@ def _resolve_touched(key: Key, base: bytes | None, unresolved: set[Key], delta: 
         counts['retained'] += 1
         return base, _change(key, 'unresolved_absence', before, before, ABSENCE_REASON)
     after = parse_json(proposed)
-    if any(before[name] != after[name] for name in BUSINESS_FIELDS):
+    if any(before[name] != after[name] for name in business_fields(SCHEMA_V1)):
         counts['updated'] += 1
         return proposed, _change(key, 'updated', before, after)
     if before != after:
@@ -139,7 +139,7 @@ def build_incremental(quarter: str, active: GenerationManifest, selected: tuple[
         output, change = _resolve_touched(key, base_rows.get(key), unresolved, delta[key], rank_of,
                                           key in members, mode, membership is not None, counts)
         if output is not None:
-            outputs.append(arrow_row(parse_json(output)))
+            outputs.append(arrow_row(parse_json(output), SCHEMA_V1))
         if change is not None:
             changes.append(change)
     for key in sorted(flips):
@@ -150,11 +150,11 @@ def build_incremental(quarter: str, active: GenerationManifest, selected: tuple[
     re_emitted = unresolved_rows.filter(pc.invert(key_mask(unresolved_rows, touched)))
     counts['unresolved_absence'] += re_emitted.num_rows
     counts['retained'] += re_emitted.num_rows
-    kept = base_data.filter(pc.invert(key_mask(base_data, touched))).cast(canonical_schema())
-    data = pa.concat_tables([kept, pa.Table.from_pylist(outputs, schema=canonical_schema())]).sort_by(
+    kept = base_data.filter(pc.invert(key_mask(base_data, touched))).cast(canonical_schema(SCHEMA_V1))
+    data = pa.concat_tables([kept, pa.Table.from_pylist(outputs, schema=canonical_schema(SCHEMA_V1))]).sort_by(
         [('cik', 'ascending'), ('archive_path', 'ascending')])
-    change_table = pa.concat_tables([re_emitted.cast(change_schema()),
-                                     pa.Table.from_pylist(changes, schema=change_schema())]).sort_by(
+    change_table = pa.concat_tables([re_emitted.cast(change_schema(SCHEMA_V1)),
+                                     pa.Table.from_pylist(changes, schema=change_schema(SCHEMA_V1))]).sort_by(
         [('cik', 'ascending'), ('archive_path', 'ascending'), ('change_type', 'ascending')])
     counts['data'] = data.num_rows
     return Delta(data, change_table, counts)

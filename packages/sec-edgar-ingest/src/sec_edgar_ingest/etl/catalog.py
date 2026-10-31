@@ -12,11 +12,12 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 from ..config import Settings
-from ..models import Error, RunContext, canonical_json, parse_json, quarter_for, quarter_value
+from ..models import SCHEMA_V1, Error, RunContext, canonical_json, parse_json, quarter_for, quarter_value
 from ..storage.contracts import BoundaryObserver, Conflict, ObjectStore, observe
 from . import incremental
-from .contracts import (ABSENCE_REASON, BUSINESS_FIELDS, WITHDRAWAL_REASON, Candidate, FileRef, GenerationCapture,
-                        GenerationManifest, IndexRow, ObservationRef, arrow_row, canonical_schema, change_schema)
+from .contracts import (ABSENCE_REASON, WITHDRAWAL_REASON, Candidate, FileRef, GenerationCapture,
+                        GenerationManifest, IndexRow, ObservationRef, arrow_row, business_fields, canonical_schema,
+                        change_schema)
 from .manifest import (_validate_identity, check_candidate_integrity, gate_payload, gate_ref, generation_base,
                        generation_identity, iter_file_rows, read_manifest, source_fingerprint,
                        validate_candidate_content, validate_files)
@@ -185,7 +186,7 @@ def _resolve(db, mode, membership):
                 counts['retained'] += 1
             continue
         after = parse_json(proposed[0])
-        if any(before[name] != after[name] for name in BUSINESS_FIELDS):
+        if any(before[name] != after[name] for name in business_fields(SCHEMA_V1)):
             _change(db, key, 'updated', before, after)
             counts['updated'] += 1
         elif before != after:
@@ -199,7 +200,7 @@ def _resolve(db, mode, membership):
 
 def _write_parquet(db, root, base, role, context):
     name = FILE_NAMES[role]
-    schema = canonical_schema() if role == 'data' else change_schema()
+    schema = canonical_schema(SCHEMA_V1) if role == 'data' else change_schema(SCHEMA_V1)
     sql = ('SELECT payload FROM proposed ORDER BY cik,path' if role == 'data' else
            'SELECT payload FROM changes ORDER BY cik,path,change_type')
     batch, count, path = [], 0, root / name
@@ -208,11 +209,11 @@ def _write_parquet(db, root, base, role, context):
         for (payload,) in db.execute(sql):
             value = parse_json(payload)
             if role == 'data':
-                value = arrow_row(value)
+                value = arrow_row(value, SCHEMA_V1)
             else:
                 for field in ('before', 'after'):
                     if value[field] is not None:
-                        value[field] = arrow_row(value[field])
+                        value[field] = arrow_row(value[field], SCHEMA_V1)
             batch.append(value)
             count += 1
             if len(batch) == BATCH_ROWS:
@@ -270,7 +271,8 @@ def _incremental_candidate(quarter, previous, active, selected, membership, mode
         return existing
     base, files = generation_base(quarter, generation_id), []
     with TemporaryDirectory(prefix='sec-catalog-delta-') as directory:
-        for role, table, schema in (('data', delta.data, canonical_schema()), ('changes', delta.changes, change_schema())):
+        for role, table, schema in (('data', delta.data, canonical_schema(SCHEMA_V1)),
+                                    ('changes', delta.changes, change_schema(SCHEMA_V1))):
             path = Path(directory) / FILE_NAMES[role]
             incremental.write_table(table, path, schema, context)
             digest, byte_count = _file_identity(path)

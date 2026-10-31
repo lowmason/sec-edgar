@@ -1,15 +1,30 @@
 """Real immutable fixture setup for offline ETL tests."""
+from contextlib import contextmanager
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
+from unittest.mock import patch
 
+from sec_edgar_ingest import models
 from sec_edgar_ingest.config import Settings, pin_context
 from support import fixture_context, fixture_settings
 
 
-def etl_context(parser_version='fixture-index-parser-v1', command='transform', attempt='etl1', *, root):
+@contextmanager
+def v1_writable():
+    """Let new work write sec-index-v1 again, so a test can build a v1 base (P12). Never used by `src`."""
+    with patch.object(models, 'WRITABLE_SCHEMAS', frozenset(models.KNOWN_SCHEMAS)):
+        yield
+
+
+def etl_context(parser_version='fixture-index-parser-v1', command='transform', attempt='etl1', *, root,
+                schema_version=None):
+    """`schema_version=None` keeps the fixture config's schema."""
     if root is None:
         raise ValueError('ETL fixture requires its explicit actual store root')
-    settings = fixture_settings(root=root, etl={'parser_version': parser_version})
+    etl = {'parser_version': parser_version}
+    if schema_version is not None:
+        etl['schema_version'] = schema_version
+    settings = fixture_settings(root=root, etl=etl)
     started = datetime.now(timezone.utc)
     context = replace(fixture_context(settings=settings), command=command, attempt_id=attempt,
                       parser_version=parser_version, config_sha256=settings.config_sha256,

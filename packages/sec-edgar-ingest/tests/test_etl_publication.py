@@ -277,6 +277,7 @@ class PublicationIntegrationTests(unittest.TestCase):
         from sec_edgar_ingest.etl.contracts import canonical_schema
         from sec_edgar_ingest.etl.manifest import iter_file_rows
         from sec_edgar_ingest.etl.reader import read_quarter
+        from sec_edgar_ingest.models import SCHEMA_V1
         self.publish(self.observation(rows=row() + row(number=2)))
         capture = self.capture()
         manifest = read_manifest(capture, self.objects)
@@ -287,10 +288,10 @@ class PublicationIntegrationTests(unittest.TestCase):
         manifest_path = self.root / 'objects' / capture.manifest_ref
         manifest_bytes = manifest_path.read_bytes()
         wrong_quarter = [values[0], {**values[1], 'filing_date': date(2026, 9, 30)}]
-        for bad_rows, schema, count in ((values, canonical_schema(), 3),
-                                        ([values[0], values[0]], canonical_schema(), 2),
-                                        (wrong_quarter, canonical_schema(), 2),
-                                        (values, canonical_schema().with_metadata({b'unexpected': b'schema'}), 2)):
+        for bad_rows, schema, count in ((values, canonical_schema(SCHEMA_V1), 3),
+                                        ([values[0], values[0]], canonical_schema(SCHEMA_V1), 2),
+                                        (wrong_quarter, canonical_schema(SCHEMA_V1), 2),
+                                        (values, canonical_schema(SCHEMA_V1).with_metadata({b'unexpected': b'schema'}), 2)):
             pq.write_table(pa.Table.from_pylist(bad_rows, schema=schema), path)
             body = path.read_bytes()
             corrupted = replace(data, row_count=count, byte_count=len(body), sha256=hashlib.sha256(body).hexdigest())

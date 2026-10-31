@@ -12,8 +12,9 @@ from sec_edgar_ingest.etl import incremental
 
 
 class Twin:
-    def __init__(self, day=date(2026, 10, 7)):
-        self.fast, self.full = Lane(day), Lane(day)
+    def __init__(self, day=date(2026, 10, 7), *, schema_version=None):
+        """`schema_version=None` keeps the fixture config's schema."""
+        self.fast, self.full = Lane(day, schema_version=schema_version), Lane(day, schema_version=schema_version)
 
     def close(self):
         self.fast.close()

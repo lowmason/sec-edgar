@@ -12,10 +12,10 @@ from tempfile import TemporaryDirectory
 
 import pyarrow.parquet as pq
 
-from ..models import canonical_json, parse_json, quarter_for, quarter_value, require_hash
+from ..models import SCHEMA_V1, canonical_json, parse_json, quarter_for, quarter_value, require_hash
 from ..storage.contracts import Conflict, ObjectStore
 from .contracts import (Candidate, FileRef, GenerationCapture, GenerationManifest, IndexRow,
-                        ObservationRef, WithdrawalApproval, canonical_schema, change_schema)
+                        ObservationRef, WithdrawalApproval, canonical_schema, change_schema, update_fields)
 from .transform import BATCH_ROWS, _file_identity, _read_manifest, read_observations
 
 
@@ -140,7 +140,7 @@ def iter_file_rows(ref: FileRef, objects: ObjectStore) -> Iterator[dict[str, obj
         objects.materialize(ref.path, path)
         if _file_identity(path) != (ref.sha256, ref.byte_count):
             raise Conflict('generation file hash or length differs')
-        expected = canonical_schema() if ref.role == 'data' else change_schema()
+        expected = canonical_schema(SCHEMA_V1) if ref.role == 'data' else change_schema(SCHEMA_V1)
         with pq.ParquetFile(path) as parquet:
             if not parquet.schema_arrow.equals(expected, check_metadata=True):
                 raise ValueError('generation Parquet schema differs')
@@ -296,8 +296,7 @@ def _validate_row_origins(manifest, objects):
                                 raise ValueError('unresolved row differs from exact retained base')
                             db.execute('INSERT INTO unresolved VALUES(?,?)', key)
                         if value['change_type'] == 'updated':
-                            fields = ('company_name', 'form_type', 'filing_date', 'accession_number')
-                            if all(value['before'][field] == after[field] for field in fields):
+                            if all(value['before'][field] == after[field] for field in update_fields(SCHEMA_V1)):
                                 raise ValueError('provenance-only difference is not a business update')
         wrong_rank = db.execute('SELECT 1 FROM output o LEFT JOIN winners w ON o.cik=w.cik AND o.path=w.path LEFT JOIN unresolved u ON o.cik=u.cik AND o.path=u.path WHERE u.cik IS NULL AND (w.payload IS NULL OR w.payload != o.payload) LIMIT 1').fetchone()
         if wrong_rank:
@@ -342,7 +341,7 @@ def _validate_deltas(db, manifest):
                 if before != after:
                     raise ValueError('delta unresolved absence must preserve the exact base row')
                 kind, reason = 'unresolved_absence', 'absence is not authoritative withdrawal evidence'
-            elif any(before[field] != after[field] for field in ('company_name', 'form_type', 'filing_date', 'accession_number')):
+            elif any(before[field] != after[field] for field in update_fields(SCHEMA_V1)):
                 kind = 'updated'
             elif before != after:
                 counts['provenance_refreshed'] += 1

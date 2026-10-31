@@ -322,8 +322,8 @@ def specimens(output):
     """Scan complete original receipts and apply the production duplicate policy."""
     from collections import Counter
     from datetime import datetime, timezone
-    from sec_edgar_ingest.models import Source, Snapshot, url_source_id
-    from sec_edgar_ingest.etl.parser import iter_observations, PARSER_VERSION, SCHEMA_VERSION, ParseError
+    from sec_edgar_ingest.models import SCHEMA_VERSION, Source, Snapshot, url_source_id
+    from sec_edgar_ingest.etl.parser import iter_observations, PARSER_VERSION, ParseError
     from sec_edgar_ingest.etl.transform import _seen_database, _remember_observation
     evidence = 'specs/evidence/sec-filing-index-ingestion/stage-1'
     receipts = []

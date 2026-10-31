@@ -18,7 +18,7 @@ from sec_edgar_ingest.etl.columnar import generation_table
 from sec_edgar_ingest.etl.contracts import canonical_schema, change_schema
 from sec_edgar_ingest.etl.equivalence import validate_incremental_candidate
 from sec_edgar_ingest.etl.manifest import generation_base, generation_identity, source_fingerprint
-from sec_edgar_ingest.models import canonical_json
+from sec_edgar_ingest.models import SCHEMA_V1, canonical_json
 
 CLOSED = date(2027, 1, 7)
 
@@ -44,7 +44,7 @@ def forge(lane, candidate, *, data=None, changes=None, **fields):
             path.write_bytes(lane.objects.read(ref.path))
             files.append(replace(ref, path=name))
             continue
-        pq.write_table(pa.Table.from_pylist(rows, schema=canonical_schema() if ref.role == 'data' else change_schema()), path)
+        pq.write_table(pa.Table.from_pylist(rows, schema=canonical_schema(SCHEMA_V1) if ref.role == 'data' else change_schema(SCHEMA_V1)), path)
         body = path.read_bytes()
         files.append(replace(ref, path=name, sha256=hashlib.sha256(body).hexdigest(), byte_count=len(body),
                              row_count=len(rows)))

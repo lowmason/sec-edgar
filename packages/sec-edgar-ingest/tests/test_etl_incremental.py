@@ -18,7 +18,7 @@ from sec_edgar_ingest.etl import manifest as generation
 from sec_edgar_ingest.etl.contracts import ObservationRef, observation_base, observation_schema
 from sec_edgar_ingest.etl.publication import publish_quarter
 from sec_edgar_ingest.etl.transform import OBSERVATION_FORMAT, PARQUET_VERSION
-from sec_edgar_ingest.models import canonical_json, parse_json, to_mapping_value
+from sec_edgar_ingest.models import SCHEMA_V1, canonical_json, parse_json, to_mapping_value
 
 OPEN = date(2026, 10, 7)
 CLOSED = date(2027, 1, 7)
@@ -221,7 +221,7 @@ def empty_daily(lane, day='2026-10-03'):
     snapshot = fixture_snapshot(source, b'no rows')
     base = observation_base(source.source_id, snapshot.sha256, lane.context.parser_version, lane.context.schema_version)
     target = lane.root / 'empty-rows.parquet'
-    pq.ParquetWriter(target, observation_schema(), version=PARQUET_VERSION, compression='snappy',
+    pq.ParquetWriter(target, observation_schema(SCHEMA_V1), version=PARQUET_VERSION, compression='snappy',
                      use_dictionary=False, use_compliant_nested_type=False).close()
     body = target.read_bytes()
     ref = ObservationRef(source, snapshot, lane.context.parser_version, lane.context.schema_version,

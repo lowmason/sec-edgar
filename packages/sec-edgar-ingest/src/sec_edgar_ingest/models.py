@@ -16,7 +16,14 @@ from .urls import canonical_source_url, canonical_listing_url, source_id as url_
 FORMAT_VERSION = "sec-local-acquisition-v1"
 RUN_CONTEXT_VERSION = "sec-local-run-context-v1"
 COMMAND_RESULT_VERSION = "sec-local-command-result-v1"
-SCHEMA_VERSION = "sec-index-v1"
+SCHEMA_V1 = "sec-index-v1"
+SCHEMA_V2 = "sec-index-v2"
+# Read versions: stored records of these schemas decode and validate.
+KNOWN_SCHEMAS = (SCHEMA_V1, SCHEMA_V2)
+# Write versions: new work (config, CLI, ETL commands) may use these. Read at call time, so tests can patch it.
+WRITABLE_SCHEMAS = frozenset(KNOWN_SCHEMAS)
+# The schema of new work by default.
+SCHEMA_VERSION = SCHEMA_V1
 QUARTERLY_ENVELOPE_VERSION = "sec-quarterly-envelope-v1"
 DAILY_ENVELOPE_VERSION = "sec-daily-envelope-v1"
 SHA256_PATTERN = re.compile(r"[0-9a-f]{64}\Z")
@@ -73,6 +80,18 @@ def error_text(exception: BaseException) -> str:
 def require_hash(value: object, label: str) -> None:
     if not isinstance(value, str) or SHA256_PATTERN.fullmatch(value) is None:
         raise ValueError(f"{label} must be a lower-case SHA-256 hash")
+
+
+def require_known_schema(version: str) -> None:
+    """A stored record's schema must be one this release can read."""
+    if not isinstance(version, str) or version not in KNOWN_SCHEMAS:
+        raise ValueError("unsupported schema_version")
+
+
+def require_writable_schema(version: str) -> None:
+    """New work's schema must be one this release writes."""
+    if not isinstance(version, str) or version not in WRITABLE_SCHEMAS:
+        raise ValueError("unsupported schema_version")
 
 
 def require_utc(value: object, label: str) -> None:
@@ -337,8 +356,7 @@ class RunContext(Record):
         if self.format_version != RUN_CONTEXT_VERSION:
             raise ValueError("unsupported run context format")
         object.__setattr__(self, "runtime", freeze(validate_descriptor(self.runtime)))
-        if self.schema_version != SCHEMA_VERSION:
-            raise ValueError("unsupported schema_version")
+        require_known_schema(self.schema_version)
         require_hash(self.config_sha256, "config_sha256")
         require_utc(self.started_at, "started_at")
         require_utc(self.deadline, "deadline")
