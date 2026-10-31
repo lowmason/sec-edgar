@@ -1,7 +1,6 @@
 # Stage 2 baseline campaign: scope, budget and approval
 
-**Status:** Proposed for plan 2 Revision 4. Not approved. No live invocation may start until the Approval section
-is complete and committed.
+**Status:** Approved for live execution within the limits above.
 **Plan:** [plan 2](../../plans/2-sec-filing-index-ingestion-spec.md), Revisions 1–4.
 **Spec:** §§4.2–4.9, 5–6, 7 G2 of the [ingestion spec](../../sec-filing-index-ingestion-spec.md).
 **History:** the version of this file at commit `ea482dd` proposed a campaign on release `fc68adef…`. Its
@@ -193,4 +192,12 @@ owner selected.
 
 ## Approval
 
-To be completed in Task 4 (items 2 and 7) with the owner's exact words.
+Plan 2 Revision 4 (D15). The owner approved the revision, then answered the two changed items as separate
+questions in the operator session. Quoted text is the option the owner selected. Items 1 and 3–10 stand as
+recorded in the history Approval section above.
+
+- Owner: Lowell Mason. Approved on (UTC): 2026-10-31T17:16:28Z. The owner gave no timestamp; this is when the operator
+  recorded the answers.
+- Slices, budget and stop rules: "Confirm as proposed" (the live config from k = 4, rule 10 option (a),
+  `max_invocations` 24 with 3 used).
+- Window: starts 2026-10-31T17:30:00Z, ends 2026-11-05T13:00:00Z.
