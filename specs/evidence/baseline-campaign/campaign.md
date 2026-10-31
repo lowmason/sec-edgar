@@ -1,12 +1,14 @@
 # Stage 2 baseline campaign: scope, budget and approval
 
-**Status:** Approved for live execution within the limits above.
-**Plan:** [plan 2](../../plans/2-sec-filing-index-ingestion-spec.md), Revisions 1–3.
+**Status:** Proposed for plan 2 Revision 4. Not approved. No live invocation may start until the Approval section
+is complete and committed.
+**Plan:** [plan 2](../../plans/2-sec-filing-index-ingestion-spec.md), Revisions 1–4.
 **Spec:** §§4.2–4.9, 5–6, 7 G2 of the [ingestion spec](../../sec-filing-index-ingestion-spec.md).
 **History:** the version of this file at commit `ea482dd` proposed a campaign on release `fc68adef…`. Its
 release gate stayed closed (plan 2, F11). This version replaces it. Plan 2 Revision 2 (D10) moved the
 range start from 2015Q1 to 2020Q1 in this file and in the live config. Plan 2 Revision 3 (D13) moved
-the campaign to release `c4de77b8…` after invocation 1 halted on `9fa189a0…` (D12).
+the campaign to release `c4de77b8…` after invocation 1 halted on `9fa189a0…` (D12). Plan 2 Revision 4 (D15)
+replaced the year slices by the live config after invocation 3 halted.
 
 ## Identity
 
@@ -15,7 +17,7 @@ the campaign to release `c4de77b8…` after invocation 1 halted on `9fa189a0…`
 | Release | `c4de77b89bb1d8ecc5d094f0e1dc6f8a5f3a7935e3595a9dd086d1e41a6b8aa7` (version 0.2.0), selected at `f64c212`. Invocation 1 ran on `9fa189a0…`. |
 | Live config | `conf/sec-edgar-local.json`, range `2020Q1`–`open`, effective SHA-256 `fb93b0e8…`, file SHA-256 `b2876ce9…` |
 | Dispatch reserve / floor | 1,800 s / 480 s. At the 3,300 s timeout, no member starts after 1,500 s. |
-| Slice configs | `conf/stage2/1c/`, 8 files. Effective hashes: plan 2, F25. |
+| Slice configs | `conf/stage2/1c/backfill-2026Q4-open.json` (the pilot, run as k = 2; history). From k = 4 every invocation runs the live config `conf/sec-edgar-local.json` (plan 2 Revision 4). The year-slice configs are removed. |
 | Slice generator check | `2020Q1`–`open` reproduces the live effective hash `fb93b0e8…` |
 | Data / log roots | `/Users/lowell/Projects/sec-edgar-local/data` / `…/logs` |
 | Pre-campaign backup | `backups/stage2-pre-campaign-20261021T180646Z` |
@@ -51,20 +53,25 @@ the Approval below.
      day since has added one. These daily units are not baseline units. The finding reports them apart,
      for Stage 3. The pilot reruns under stop rule 9 until no daily source is pending. Its 2026Q4 daily
      members that run after the 2026Q4 quarterly source is published are the A1 class (O15).
-  2. The calendar years 2020, 2021, …, 2025, one slice each, in ascending order.
-  3. `2026Q1`–`2026Q3`.
+  2. Superseded by plan 2 Revision 4 (D15): the calendar-year slices and `2026Q1`–`2026Q3`. Invocation 3
+     (`2020Q1`–`2020Q4`) ended `state_conflict` because every incomplete member is retained, quarantined
+     ones included, and a member after the slice end refuses discovery. The 2026Q4 quarterly member stays
+     quarantined, so no slice may end before 2026Q4. From k = 4 every invocation runs the live config
+     (range `2020Q1`–`open`, which is 2026Q4 while `open` stays 2026Q4). Discovery lists all 28 quarters.
+     The runner processes members in ascending period order and defers the rest at the cutoff, and stop
+     rule 9 reruns until nothing is waiting.
   Invocation 1 ran the pilot on `9fa189a0…` and halted. Invocation 2 runs the pilot again on the 1c
   config, as its first invocation with a result (plan 2 O22). Its discovery requests
   `daily-index/index.json` again: invocation 1 skipped it at `permit_expired` (plan 2 F29). The daily
   sources 2026-07-01, 2026-10-14 and 2026-10-15 are complete without a receipt. Every invocation lists
   them under `already_complete_sources`, and the ledger reports them apart from new work (plan 2 O21).
-  Together the slices cover every quarter exactly once. About 2 full-size quarters start in one
-  invocation. A slice that does not fit defers its last members, and stop rule 9 reruns it.
+  About 2 full-size quarters start in one invocation. Members that do not fit defer, and stop rule 9 reruns.
 - Source quarters and output filing quarters differ (§4.2). Daily rows can be back-dated into old filing
   quarters (findings §4.7). Rows back-dated before 2020Q1 publish daily-only filing quarters outside
   the range. Coverage lists them under `other_filing_quarters` (plan 2 F23).
-- Expected exceptions: the 2024Q1 quarantine (line 88043), retained and selected again by the 2024
-  slice. A possible quarantine for 2026Q3 (retained conflict specimen). Possible withdrawal
+- Expected exceptions: the 2024Q1 quarantine (line 88043), retained and selected again by every later
+  invocation. The 2026Q4 quarterly unit (conflicting key, line 8665) and 6 daily sources in 2026Q3
+  quarantined in invocation 2. A possible quarantine for 2026Q3 (retained conflict specimen). Possible withdrawal
   gates for closed quarters that hold back-dated daily rows (plan 2 F5, O10). Possibly a refused
   incremental candidate (O16).
 
@@ -108,14 +115,16 @@ After each invocation, apply the first rule that matches.
 8. **Halt** when any member has outcome `invalid_source` and is not quarantined. The likely cause is a
    publish that refused its incremental candidate (C6). Its retry is blocked, and its objects stay
    (plan 2 O16). Read the member's gaps and report them.
-9. **Rerun the same slice** when any of its units, or any daily source, has outcome `pending`,
-   `deferred` or `throttled`, and this is the slice's first invocation or its previous invocation
-   reduced that count. Halt when a rerun does not reduce it. Invocation 2 is the pilot's first invocation
-   with a result.
-10. **Halt** on the second consecutive invocation with `discovery_complete: false`. Invocation 1 left no
-    `workflow_summary` and does not count.
-11. **Next slice** when quarters remain without a campaign result. Take the next slice in the Source
-    scope order.
+9. **Rerun** when any quarterly unit or daily source has outcome `pending`, `deferred` or `throttled`,
+   and this is the first invocation on the live config (k = 4) or the previous invocation reduced that
+   count. Halt when a rerun does not reduce it. Invocation 2 was the pilot's first invocation with a result.
+10. **Halt** on the second consecutive invocation with `discovery_complete: false`, unless every
+    directory with outcome `discovery_failed` lies under `https://www.sec.gov/Archives/edgar/daily-index/`
+    and every discovery gap is `permit_expired` or `ancestor_failed` (plan 2 Revision 4, F29). Invocations 1
+    and 2 had exactly that: the `daily-index/index.json` listing was refused with `permit_expired` and its
+    children failed by ancestry. Any failed `full-index` directory or any other gap counts. Invocation 1
+    left no `workflow_summary` and invocation 3 failed before its listings; neither counts.
+11. (Retired by plan 2 Revision 4: there is one config, so there is no next slice.)
 12. **Finish** when every quarter 2020Q1–2026Q4 has a campaign result and no member has outcome
     `pending`, `deferred` or `throttled`. Quarantined, failed and `awaiting_approval` members are not
     eligible work.
@@ -136,7 +145,8 @@ not a failure of the plan.
 
 - Plan 2's approval authorized Tasks 1–3. The owner's approval of Revision 1 authorizes Tasks 3a and 3b.
   The owner's approval of Revision 2 authorizes Task 3c, including its one live config edit.
-  The owner's approval of Revision 3 authorizes Tasks 3d and 3e.
+  The owner's approval of Revision 3 authorizes Tasks 3d and 3e. The owner's approval of Revision 4 (D15)
+  authorizes only the offline edits that it lists. It is not live authority.
 - A live invocation needs all four of these: (1) the Release gate above, open; (2) the last Approval section
   below, completed with the owner's words and committed; (3) the latest files check with exit 0;
   (4) the sole-issuer declaration below, with its start time.
@@ -162,7 +172,9 @@ owner selected.
   launcher on this machine is the only SEC client under my identity. No other machine and not the original
   sec-edgar Azure project sends SEC requests under it."
 
-## Approval
+## Approval for release c4de77b8… and the year slices (history: invocations 2 and 3 only)
+
+This approval covered the slice list of Revision 3. Revision 4 replaced it, and it authorizes no later invocation.
 
 The owner answered each item as a separate question in the operator session. Quoted text is the option the
 owner selected.
@@ -178,3 +190,7 @@ owner selected.
 - Sole-issuer declaration: the owner selected this drafted wording: "During the campaign window, the
   launcher on this machine is the only SEC client under my identity. No other machine and not the original
   sec-edgar Azure project sends SEC requests under it."
+
+## Approval
+
+To be completed in Task 4 (items 2 and 7) with the owner's exact words.
