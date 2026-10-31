@@ -1,6 +1,6 @@
 # Duplicate-Key Schema v2 and Its Release Implementation Plan
 
-**Approval:** Not yet reviewed. The owner reviews this plan and P1–P12 in "Before Task 1". This plan authorizes no SEC request.
+**Approval:** Approved by the owner, 2026-10-31, with P1–P12 as proposed (D1 below), as committed at `b2033ce`. This plan authorizes no SEC request.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: implement this plan task-by-task via subagent-driven-development (the default) — or executing-plans when your human partner chose inline execution at the handoff. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -84,7 +84,7 @@ Execution environment (planning facts, not spec text):
 
 ## Decisions
 
-None.
+- **D1** (owner, plan review, 2026-10-31): plan 7 approved with P1–P12 as proposed, as committed at `b2033ce`. No plan-level or spec-level change. Owner's words: "Approve as proposed". Applied in: Before Task 1 Steps 1–2, and every task through P1–P12.
 
 ## Defaults for owner review
 
@@ -155,7 +155,7 @@ All `src` and `tests` paths are under `packages/sec-edgar-ingest/`.
 
 ## Before Task 1
 
-- [ ] **Step 1: Plan review (HUMAN).** The owner reviews the plan and answers P1–P12. The spec's status line still reads "Draft for owner review": ask the owner to confirm that the spec is approved. Log each answer in `## Decisions`, in the owner's words. Apply each plan-level change, and re-run the writing-plans Self-Review on what changed. Record the approval on the plan's **Approval** line.
+- [x] **Step 1: Plan review (HUMAN).** The owner reviews the plan and answers P1–P12. The spec's status line still reads "Draft for owner review": ask the owner to confirm that the spec is approved. Log each answer in `## Decisions`, in the owner's words. Apply each plan-level change, and re-run the writing-plans Self-Review on what changed. Record the approval on the plan's **Approval** line.
 - [ ] **Step 2: Commit the review on `main`.**
 
 ```bash
