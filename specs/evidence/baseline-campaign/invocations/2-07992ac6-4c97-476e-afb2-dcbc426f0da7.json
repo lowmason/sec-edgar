@@ -1,0 +1,160 @@
+{
+ "after": {
+  "already_complete": [
+   "5c8146c60a18e92e12c84ce0a6af6edeeedb875feb2017f7e285ddb1ae639835",
+   "924fd5f5b380e8a8603bab21b91edcd9408962b3a25fe812f067b25777063d58",
+   "cd8ecb90de7e09e6226449d1ca97510fafb1359d81c56a189ec7691aef76559e"
+  ],
+  "already_complete_this_run": 3,
+  "campaign_total": {
+   "access_denied": 0,
+   "attempts": 82,
+   "distinct_urls": 78,
+   "max_ordinal": 1,
+   "outcomes": {
+    "failed": 2,
+    "received": 80
+   },
+   "received_bytes": 32209320,
+   "statuses": {
+    "0": 2,
+    "200": 80
+   },
+   "uncertain": 0
+  },
+  "child_call_rows": 223,
+  "daily_open": [],
+  "daily_sources": 72,
+  "eligible": [],
+  "files": {
+   "added": 3817,
+   "changed_immutable": 0,
+   "file_count": 3970,
+   "missing": 0
+  },
+  "refused": [],
+  "repair_check": {
+   "listed": true,
+   "ran_children": []
+  },
+  "timing": {
+   "b4_members": 0,
+   "dispatch_cutoff": "2026-10-31T16:55:49.506384+00:00",
+   "max_member_wall": {
+    "kind": "daily",
+    "period": "2026-08-26",
+    "source_id": "d87e76e052ccb0da4fdad538c57a9a81181a882d6cf1698483ba5bb5f28ca5b8",
+    "wall_seconds": 36.13
+   },
+   "repeated_sources": [
+    "d64895140b037ef3df3e0c867437b555053c3a14c33d8c0c3526c9067354d0c7"
+   ],
+   "tail_seconds": 34.592,
+   "timed_members": 75
+  },
+  "timing_breaches": [],
+  "timing_not_run": null,
+  "untouched": [
+   "2020Q1",
+   "2020Q2",
+   "2020Q3",
+   "2020Q4",
+   "2021Q1",
+   "2021Q2",
+   "2021Q3",
+   "2021Q4",
+   "2022Q1",
+   "2022Q2",
+   "2022Q3",
+   "2022Q4",
+   "2023Q1",
+   "2023Q2",
+   "2023Q3",
+   "2023Q4",
+   "2024Q2",
+   "2024Q3",
+   "2024Q4",
+   "2025Q1",
+   "2025Q2",
+   "2025Q3",
+   "2025Q4",
+   "2026Q1",
+   "2026Q2",
+   "2026Q3"
+  ],
+  "verdicts": {
+   "no_campaign_result": 26,
+   "quarantined": 2
+  }
+ },
+ "attempt_id": "887b7cad-3669-4e60-8165-96315132837f",
+ "backfill": {
+  "end_quarter": "open",
+  "start_quarter": "2026Q4"
+ },
+ "command": "backfill",
+ "config_sha256": "dc3a45ee4eeb45e32e5c1560b2ce1532848cd35bc8296bbdc0d7eaa91cd10621",
+ "deadline": "2026-10-31T17:25:49.506384+00:00",
+ "dispatch_reserve_seconds": 1800,
+ "ended_at": "2026-10-31T16:52:53.448240+00:00",
+ "invocation_sha256": "f44663d5cbe1891b92c863db2dbeb730198e4c6ed970e2b7f040d517b66811e7",
+ "k": 2,
+ "launcher_exit": 3,
+ "log_directory": "/Users/lowell/Projects/sec-edgar-local/logs/07992ac6-4c97-476e-afb2-dcbc426f0da7/887b7cad-3669-4e60-8165-96315132837f",
+ "release_id": "c4de77b89bb1d8ecc5d094f0e1dc6f8a5f3a7935e3595a9dd086d1e41a6b8aa7",
+ "result_ref": "runs/sec/07992ac6-4c97-476e-afb2-dcbc426f0da7/backfill/887b7cad-3669-4e60-8165-96315132837f/result.json",
+ "result_sha256": "bb6b7407188a75bc5fae5c1b1c9b51552ee88de92ca4360188de9059dd0f78d7",
+ "run_id": "07992ac6-4c97-476e-afb2-dcbc426f0da7",
+ "started_at": "2026-10-31T16:30:49.506384+00:00",
+ "stdout": [
+  {
+   "counts": {
+    "awaiting_approval_quarters": 0,
+    "complete_sources": 69,
+    "discovered_sources": 1,
+    "downloaded_sources": 74,
+    "failed_sources": 8,
+    "pending_sources": 0,
+    "published_quarters": 384,
+    "quarantined_sources": 8,
+    "transformed_sources": 66,
+    "unchanged_quarters": 0
+   },
+   "outcome": "incomplete",
+   "result_ref": "runs/sec/07992ac6-4c97-476e-afb2-dcbc426f0da7/backfill/887b7cad-3669-4e60-8165-96315132837f/result.json",
+   "source_workset_ref": "worksets/sec/source/sha256=7fee60652232b203b1ab55b6b7f71b0a7a66a26e354e041722c6b8aea2dae05d/workset.json"
+  }
+ ],
+ "workflow_summary": {
+  "boundary_after": "2026-10-18",
+  "command": "backfill",
+  "counts": {
+   "awaiting_approval_quarters": 0,
+   "complete_sources": 69,
+   "discovered_sources": 1,
+   "downloaded_sources": 74,
+   "failed_sources": 8,
+   "pending_sources": 0,
+   "published_quarters": 384,
+   "quarantined_sources": 8,
+   "transformed_sources": 66,
+   "unchanged_quarters": 0
+  },
+  "discovery_complete": false,
+  "gap_codes": {
+   "ancestor_failed": 3,
+   "permit_expired": 1,
+   "transform_failed": 9
+  },
+  "last_successful_reconcile_at": null,
+  "member_outcomes": {
+   "quarantined": 9,
+   "success": 66
+  },
+  "oldest_unresolved_period": "2024Q1",
+  "outcome": "incomplete",
+  "pending_approvals": 0,
+  "result_ref": "runs/sec/07992ac6-4c97-476e-afb2-dcbc426f0da7/backfill/887b7cad-3669-4e60-8165-96315132837f/result.json",
+  "summary_error": null
+ }
+}
