@@ -1,6 +1,6 @@
 # Stage 2 baseline coverage finding (G2)
 
-**Status:** Proposed for owner disposition. **Plan:** [plan 2](../../plans/2-sec-filing-index-ingestion-spec.md).
+**Status:** Accepted by the owner on 2026-10-31. **Plan:** [plan 2](../../plans/2-sec-filing-index-ingestion-spec.md).
 **Range:** 2020Q1–2026Q4 (28 quarterly units; 2026Q4 open; start set by plan 2 D10). **Release:** `9fa189a0…` for
 invocation 1, `c4de77b8…` from invocation 2 (reserve 1,800 s). Configs: `conf/stage2/1b/` for invocation 1,
 `conf/stage2/1c/backfill-2026Q4-open.json` for invocations 2 and 3, and the live config `conf/sec-edgar-local.json`
@@ -123,7 +123,7 @@ later invocations run the live config. Nothing was published in invocation 3.
   (O10), and 2022Q4 and 2023Q1 have no readable generation at all (`baseline_publication_missing`). No quarter is a
   complete baseline for Stage 3 or later.
 - Proposed disposition: deferred to a versioned parser/schema design (Size: design), for all 28 units.
-- Owner disposition:
+- Owner disposition (2026-10-31): "Defer to parser design (Recommended)" (deferred to a versioned parser/schema design, Size: design).
 
 ### 4.2 Daily sources, reported apart from the baseline units
 
@@ -131,7 +131,7 @@ later invocations run the live config. Nothing was published in invocation 3.
   and 2026-10-21. Incomplete: 2026-10-27, with `permit_expired` ("child refused a stale dispatch window"). Proposed
   disposition: the seven quarantined as "deferred to a versioned parser/schema design (Size: design)", and 2026-10-27 as
   "re-run in a later campaign".
-- Owner disposition:
+- Owner disposition (2026-10-31): "As proposed (Recommended)".
 
 ### 4.3 The refused `daily-index/index.json` listing and retained legacy gaps
 
@@ -140,7 +140,7 @@ later invocations run the live config. Nothing was published in invocation 3.
   "source has no verified original parent" and one "source member is after the pinned endpoint" (a record of invocation 3's
   failed discovery). They stopped nothing. Their cause is not investigated.
 - Proposed disposition: "accepted named gap" for this campaign, with both investigated in a later stage.
-- Owner disposition:
+- Owner disposition (2026-10-31): "Accepted named gap (Recommended)".
 
 ### 4.4 No withdrawal gates and no refused incremental candidate
 
@@ -162,11 +162,11 @@ later invocations run the live config. Nothing was published in invocation 3.
 
 ## 6. Operating decision
 
-Proposed: "Approved incomplete: coverage is accepted with the named exceptions in §4 and these downstream limitations: no
+Decision: "Approved incomplete: coverage is accepted with the named exceptions in §4 and these downstream limitations: no
 quarterly baseline exists for any of the 28 requested quarters; the 26 published filing quarters are daily-only and cannot
 be used as quarterly baselines. Refused rows and sources are not accepted data."
 
-Owner decision:
+Owner decision (2026-10-31): "Approved incomplete (Recommended)". The owner chose this option in the operator session; the words are the option label.
 
 ## 7. Evidence integrity
 
