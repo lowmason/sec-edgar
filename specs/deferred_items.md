@@ -293,4 +293,3 @@
       packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/runner.py `select_work` and
       worksets.py `_validate_source_directory`. Size: design. Revisit if: Stage 3 or Stage 5 needs
       a bounded-end command on a store that holds quarantined members.
-
