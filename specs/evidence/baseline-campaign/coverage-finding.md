@@ -1,6 +1,6 @@
 # Stage 2 baseline coverage finding (G2)
 
-**Status:** Accepted by the owner on 2026-10-31. **Plan:** [plan 2](../../plans/2-sec-filing-index-ingestion-spec.md).
+**Status:** Accepted by the owner on 2026-10-31. **Plan:** [plan 2](../../plans/completed/2-sec-filing-index-ingestion-spec.md).
 **Range:** 2020Q1–2026Q4 (28 quarterly units; 2026Q4 open; start set by plan 2 D10). **Release:** `9fa189a0…` for
 invocation 1, `c4de77b8…` from invocation 2 (reserve 1,800 s). Configs: `conf/stage2/1b/` for invocation 1,
 `conf/stage2/1c/backfill-2026Q4-open.json` for invocation 2, `backfill-2020Q1-2020Q4.json` (since removed) for invocation 3,

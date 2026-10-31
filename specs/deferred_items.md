@@ -270,3 +270,27 @@
       test beside `test_member_completion.ProcessMemberTests`, and ship it in the next release.
       Size: quick-fix. Revisit if: an acceptance or campaign run ends with this stock conflict and
       the cause is not visible from the gaps or the obligation rows.
+
+## 2-sec-filing-index-ingestion-spec — 2026-10-31
+- [ ] Parser/schema design for `conflicting duplicate logical key` (plan 2 Tasks 5 and 7, owner
+      ruled defer). All 28 quarterly sources 2020Q1–2026Q4 and 7 daily sources quarantine on it.
+      The raw enumeration shows one accession carrying several form types (SC 13E3 with SC TO-T).
+      See specs/plans/completed/2-sec-filing-index-ingestion-spec.md; evidence in
+      specs/evidence/baseline-campaign/quarantine/ and final/coverage.json; findings §5. Size:
+      design. Done when: the owner approves a versioned parser/schema design for such rows, and a
+      later campaign covers or re-quarantines the 28 units and 7 daily sources.
+- [ ] The `daily-index/index.json` listing is refused with `permit_expired`, and daily 2026-10-27
+      ended `incomplete` for the same cause (plan 2 invocations 1, 2 and 4; owner accepted a named
+      gap). The cause is not diagnosed. See specs/evidence/baseline-campaign/coverage-finding.md
+      §4.2–4.3. Size: plan. Revisit if: Stage 3 discovery meets the refusal again, or a run lists
+      daily bodies after 2026-10-30.
+- [ ] 14 non-retryable `legacy_member_unresolved` gaps, "source has no verified original parent"
+      (plan 2 invocation 4, owner accepted a named gap). Cause not investigated; they stopped
+      nothing. See specs/evidence/baseline-campaign/coverage-finding.md §4.3. Size: plan. Revisit
+      if: a run stops on one of these gaps, or Stage 3 selects those sources.
+- [ ] The engine retains quarantined members, so any run whose pinned end lies before a retained
+      member's period ends `state_conflict` (plan 2 invocation 3; F9 was wrong). See
+      packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/runner.py `select_work` and
+      worksets.py `_validate_source_directory`. Size: design. Revisit if: Stage 3 or Stage 5 needs
+      a bounded-end command on a store that holds quarantined members.
+

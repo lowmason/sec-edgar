@@ -216,7 +216,7 @@ to live execution, not prerequisites to writing the plan that defines them.
   > Stage 1c: COMPLETE (2026-10-30) — implemented by plan 6 (specs/plans/completed/6-sec-filing-index-member-completion.md). Its Handoff section names what Stages 2–5 consume.
   > Next: resume the roadmap.
 
-- [ ] Stage 2: Baseline campaign and coverage decision
+- [x] Stage 2: Baseline campaign and coverage decision
       Objective: Produce an accepted written finding on the requested historical baseline, including every unresolved exception.
       Spec: §§4.2–4.9, 5–6, 7 G2.
       Gap closed: G2.
@@ -224,6 +224,8 @@ to live execution, not prerequisites to writing the plan that defines them.
       Produces: A reviewed finite campaign scope/budget, per-invocation results/captures, a source-and-quarter coverage inventory, and an explicit complete-or-incomplete operating decision.
       Exit: Every requested baseline unit is accounted for by validated publication or a named gap/quarantine with owner disposition; the committed port evidence, immutable live-root objects and releases remain intact, and the absent L12 external directory stays recorded as lost (§6, `780ea51`; plan 2, Handoff; Resolved at resume, 2026-10-22).
       ROUTING: writing-plans
+  > Stage 2: COMPLETE (2026-10-31) — implemented by plan 2 (specs/plans/completed/2-sec-filing-index-ingestion-spec.md). Its Handoff section names what Stages 3, 4 and 5 consume.
+  > Next: resume the roadmap.
 
 - [ ] Stage 3: Daily catch-up acceptance
       Objective: Establish accepted manual daily continuation over the handoff and retained pending inventory.

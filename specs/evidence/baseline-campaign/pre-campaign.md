@@ -1,6 +1,6 @@
 # Stage 2 pre-campaign integrity record
 
-**Date:** 2026-10-21 (UTC). **Plan:** [plan 2](../../plans/2-sec-filing-index-ingestion-spec.md), Task 2.
+**Date:** 2026-10-21 (UTC). **Plan:** [plan 2](../../plans/completed/2-sec-filing-index-ingestion-spec.md), Task 2.
 No SEC request was sent. No writer ran during this task.
 
 ## Integrity findings (before any change)

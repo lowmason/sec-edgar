@@ -1,7 +1,7 @@
 # Stage 2 baseline campaign: scope, budget and approval
 
 **Status:** Approved for live execution within the limits above.
-**Plan:** [plan 2](../../plans/2-sec-filing-index-ingestion-spec.md), Revisions 1–4.
+**Plan:** [plan 2](../../plans/completed/2-sec-filing-index-ingestion-spec.md), Revisions 1–4.
 **Spec:** §§4.2–4.9, 5–6, 7 G2 of the [ingestion spec](../../sec-filing-index-ingestion-spec.md).
 **History:** the version of this file at commit `ea482dd` proposed a campaign on release `fc68adef…`. Its
 release gate stayed closed (plan 2, F11). This version replaces it. Plan 2 Revision 2 (D10) moved the
