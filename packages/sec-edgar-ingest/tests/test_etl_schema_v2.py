@@ -224,5 +224,53 @@ class VersionRegistryTests(unittest.TestCase):
                         check(version)
 
 
+class WriteSiteMessageTests(unittest.TestCase):
+    """Each write site keeps its own refusal text. `RunContext` and `Settings` cannot hold `sec-index-v3`, so the
+    command and CLI sites see a known schema that is not writable, as v1 will be after Task 6."""
+
+    def assertRefused(self, message, call):
+        with self.assertRaises(ValueError) as caught:
+            call()
+        self.assertEqual(str(caught.exception), message)
+
+    def test_config_refuses_an_unknown_schema_with_its_own_text(self):
+        from support import local_config_mapping
+        from sec_edgar_ingest.config import Settings
+        value = local_config_mapping()
+        value['etl']['schema_version'] = 'sec-index-v3'
+        self.assertRefused('unsupported etl.schema_version', lambda: Settings.from_mapping(value))
+
+    def test_publish_refuses_an_unwritable_context_with_its_own_text(self):
+        # `pin_context` revalidates the settings, so the config check would answer first; pass the pin to reach
+        # the command's own check.
+        from unittest.mock import patch
+        from support_etl import etl_context
+        from sec_edgar_ingest.etl import commands
+        with tempfile.TemporaryDirectory() as directory:
+            settings, context = etl_context(command='publish', root=Path(directory))
+            ref = 'worksets/sec/transformed/sha256=' + 'a' * 64 + '/workset.json'
+            with patch.object(commands, 'pin_context', return_value=(context, None)), \
+                 patch.object(models, 'WRITABLE_SCHEMAS', frozenset({SCHEMA_V2})):
+                self.assertRefused('unsupported ETL schema version',
+                                   lambda: commands.run_publish(ref, context, settings, None, None))
+
+    def test_cli_refuses_an_unwritable_config_with_its_own_text(self):
+        from unittest.mock import patch
+        from support import fixture_settings
+        from sec_edgar_ingest import cli
+        common = ['--config', 'unused.json', '--run-id', 'r', '--execution-id', 'e', '--attempt-id', 'a',
+                  '--deadline', '2026-10-06T01:00:00+00:00']
+        cases = ((cli._validate, ['transform', *common, '--workset',
+                                  'worksets/sec/snapshot/sha256=' + 'a' * 64 + '/workset.json']),
+                 (cli._validate_workflow, ['backfill', *common]))
+        settings = fixture_settings(etl={'parser_version': 'fixture-index-parser-v1'})
+        for validate, argv in cases:
+            with self.subTest(validate=validate.__name__), \
+                 patch.object(cli, 'load_config', return_value=settings), \
+                 patch.object(models, 'WRITABLE_SCHEMAS', frozenset({SCHEMA_V2})):
+                args = cli._parser().parse_args(argv)
+                self.assertRefused('unsupported ETL schema version', lambda: validate(args))
+
+
 if __name__ == '__main__':
     unittest.main()

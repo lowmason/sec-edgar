@@ -216,7 +216,10 @@ def run_publish(transformed_workset_ref: str, context: RunContext, settings: Set
     if context.command != 'publish' or context.pinned_on is None or pin_context(settings, context, context.pinned_on)[0] != context:
         raise ValueError('publish requires its exact pinned effective configuration')
     supported_parser(context.parser_version, fixture=settings.acquisition.mode == 'fixture')
-    require_writable_schema(context.schema_version)
+    try:
+        require_writable_schema(context.schema_version)
+    except ValueError:
+        raise ValueError('unsupported ETL schema version') from None
     if datetime.now(timezone.utc) >= context.deadline:
         raise TimeoutError('publication command deadline exceeded')
     validate_workset_ref(transformed_workset_ref, 'transformed')

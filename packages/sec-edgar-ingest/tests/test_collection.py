@@ -187,7 +187,7 @@ class CollectionTests(unittest.TestCase):
                 self.assertIsNone(result.snapshot_workset_ref)
                 self.assertEqual(h.fetch_count, 0)
         with self.assertRaises(ValueError):
-            replace(fixture_context(settings=fixture_settings(root=self.root)), schema_version='sec-index-v2')
+            replace(fixture_context(settings=fixture_settings(root=self.root)), schema_version='sec-index-v3')
 
     def test_collector_current_context_and_snapshot_workset_origin_are_distinct(self):
         origin = replace(self.workset.context, command='discover', execution_id='discovery-execution')

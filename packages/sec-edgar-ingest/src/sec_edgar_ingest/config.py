@@ -171,7 +171,10 @@ class Settings(Record):
         require_text(self.etl.parser_version, "etl.parser_version")
         if re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", self.etl.parser_version) is None or self.etl.parser_version.lower() in ("latest", "open"):
             raise ValueError("etl.parser_version must be explicit immutable provenance")
-        require_writable_schema(self.etl.schema_version)
+        try:
+            require_writable_schema(self.etl.schema_version)
+        except ValueError:
+            raise ValueError("unsupported etl.schema_version") from None
         if self.reconciliation.require_withdrawal_approval is not True:
             raise ValueError("reconciliation.require_withdrawal_approval must be true")
         if self.acquisition.mode == "live":

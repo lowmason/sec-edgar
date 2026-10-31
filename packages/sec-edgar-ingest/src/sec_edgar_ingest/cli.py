@@ -127,7 +127,10 @@ def _validate(args) -> tuple[Settings, date | None, datetime, FixturePack | None
     etl = args.command in ('transform', 'publish')
     if etl:
         supported_parser(settings.etl.parser_version, fixture=settings.acquisition.mode == 'fixture')
-        require_writable_schema(settings.etl.schema_version)
+        try:
+            require_writable_schema(settings.etl.schema_version)
+        except ValueError:
+            raise ValueError('unsupported ETL schema version') from None
     if not settings.coordination.lease_seconds.is_integer():
         raise ValueError('coordination requires whole finite lease seconds')
     deadline = datetime.fromisoformat(args.deadline.replace('Z', '+00:00'))
@@ -388,7 +391,10 @@ def _validate_workflow(args):
     settings = load_config(Path(args.config))
     supported_parser(settings.etl.parser_version,
                      fixture=settings.acquisition.mode == 'fixture')
-    require_writable_schema(settings.etl.schema_version)
+    try:
+        require_writable_schema(settings.etl.schema_version)
+    except ValueError:
+        raise ValueError('unsupported ETL schema version') from None
     if not settings.coordination.lease_seconds.is_integer():
         raise ValueError('coordination requires whole finite lease seconds')
     deadline = datetime.fromisoformat(args.deadline.replace('Z', '+00:00'))

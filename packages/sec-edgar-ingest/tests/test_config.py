@@ -40,7 +40,7 @@ class ConfigTests(unittest.TestCase):
             ("missing handoff", "daily.start_date", None),
             ("reversed quarters", "backfill.end_quarter", "2014Q4"),
             ("unsupported config", "config_version", "v2"),
-            ("unsupported schema", "etl.schema_version", "sec-index-v2"),
+            ("unsupported schema", "etl.schema_version", "sec-index-v3"),
             ("absent parser", "etl.parser_version", None),
             ("absent fixture id", "runtime.fixture_id", None),
             ("malformed runtime", "runtime.kind", "container"),
