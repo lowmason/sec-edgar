@@ -16,6 +16,7 @@ value['logging'] = {'root': '../logs'}
 value['acquisition'] = {'mode': 'live'}
 value['runtime'] = {'kind': 'native', 'release_manifest': str(pathlib.Path(sys.argv[1]).resolve())}
 value['etl']['parser_version'] = 'sec-index-parser-v1'
+value['execution']['dispatch_reserve_seconds'] = 1800
 value['backfill'] = {'start_quarter': '2020Q1', 'end_quarter': 'open'}
 with path.open('x') as stream: json.dump(value, stream, indent=2); stream.write('\n')
 PY

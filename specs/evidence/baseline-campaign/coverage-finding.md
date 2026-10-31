@@ -3,8 +3,8 @@
 **Status:** Accepted by the owner on 2026-10-31. **Plan:** [plan 2](../../plans/2-sec-filing-index-ingestion-spec.md).
 **Range:** 2020Q1–2026Q4 (28 quarterly units; 2026Q4 open; start set by plan 2 D10). **Release:** `9fa189a0…` for
 invocation 1, `c4de77b8…` from invocation 2 (reserve 1,800 s). Configs: `conf/stage2/1b/` for invocation 1,
-`conf/stage2/1c/backfill-2026Q4-open.json` for invocations 2 and 3, and the live config `conf/sec-edgar-local.json`
-for invocation 4 (plan 2 Revision 4). See [invocations.md](invocations.md).
+`conf/stage2/1c/backfill-2026Q4-open.json` for invocation 2, `backfill-2020Q1-2020Q4.json` (since removed) for invocation 3,
+and the live config `conf/sec-edgar-local.json` for invocation 4 (plan 2 Revision 4). See [invocations.md](invocations.md).
 
 ## 1. Result
 
@@ -19,8 +19,8 @@ finished it at k = 4.
 
 ## 2. Campaign as run
 
-Window: 2026-10-29T13:00:00Z to 2026-11-05T13:00:00Z for invocation 1 (D10), and from 2026-10-31T17:30:00Z to
-2026-11-05T13:00:00Z for invocations 2–4. Totals ([final/audit.json](final/audit.json)): 167 attempts of 1,500, 150 distinct
+Window: 2026-10-29T13:00:00Z to 2026-11-05T13:00:00Z for invocation 1 (D10), from 2026-10-31T16:30:00Z for invocations 2
+and 3, and from 2026-10-31T17:30:00Z for invocation 4 (Revision 4), all ending 2026-11-05T13:00:00Z. Totals ([final/audit.json](final/audit.json)): 167 attempts of 1,500, 150 distinct
 URLs of 300, 127,347,240 received bytes of 1,073,741,824, 4 invocations of 24, 0 uncertain, 0 access denied, no breach. Three
 attempts ended with status 0: the `daily-index/index.json` listing in invocations 1 and 2, and the 2026-10-27 daily body in
 invocation 4.
@@ -151,10 +151,13 @@ later invocations run the live config. Nothing was published in invocation 3.
 - Filing quarters outside the range (`other_filing_quarters`): none ([final/coverage.json](final/coverage.json)).
 - Daily sources processed as retained work: 82, periods 2026-07-02 to 2026-10-30, outcomes `success` 74, `quarantined` 7,
   `incomplete` 1. These are Stage 3 inputs.
-- Sources complete without a receipt (12, source IDs first 8 hex): `0a6a3b58`, `16b45f8b`, `24a4e1d9`, `2de20d15`, `5c8146c6`,
-  `668fa827`, `6cf7f339`, `924fd5f5`, `cd8ecb90`, `f4bfa6da`, `fc4e22ff`, `fd002406`. Invocations 2 and 3 each listed 3 of them
-  (including `924fd5f5…`, the 2026-07-01 source) and invocation 4 listed all 12. They count as complete, not as work any
+- Sources complete without a receipt (3, source IDs first 8 hex): `924fd5f5` (2026-07-01), `5c8146c6` and `cd8ecb90`
+  (2026-10-14 and 2026-10-15). Invocations 2, 3 and 4 each listed them. They count as complete, not as work any
   invocation did (O21).
+- Sources that invocation 2 completed and invocation 4 then listed as already complete (9): `6cf7f339` (2026-10-01),
+  `0a6a3b58` (10-02), `668fa827` (10-05), `fd002406` (10-06), `16b45f8b` (10-07), `24a4e1d9` (10-08), `2de20d15` (10-09),
+  `fc4e22ff` (10-13) and `f4bfa6da` (10-16). Each ran collect, transform and publish in invocation 2 with outcome `success`,
+  so they are completed work, not a receipt anomaly.
 - The open quarter 2026Q4: its quarter-to-date source (conflict at line 8665) was quarantined, so its absences were never
   used. They are not withdrawal authority (§4.4). The evidence tool does not report the snapshot receipt time.
 - Downstream limitation (O10): closed-quarter publication keeps only quarterly-membership keys. No quarter has a membership
@@ -184,8 +187,9 @@ Owner decision (2026-10-31): "Approved incomplete (Recommended)". The owner chos
 
 - **B4 single-candidate limit** (`specs/deferred_items.md`, 4-sec-filing-index-bounded-drain, 2026-10-27). Condition: Stage 2
   shows repeated child sequences or refused-skip scans as a material share of run time. Evidence: `b4_members` 0 in both
-  timed runs; `repeated_sources` 1 (invocation 2) and 2 (invocation 4). Verdict: not met. The share of member wall is not
-  separable from the retries of quarantined members.
+  timed runs; `repeated_sources` 1 (invocation 2) and 2 (invocation 4). The share of total member wall spent by members of repeated sources is 11.3 s of 1,226.9 s (0.9%) in
+  invocation 2 and 69.3 s of 847.5 s (8.2%) in invocation 4. Verdict: not met. The repeated sources were quarantined
+  members that retry on every run.
 - **History-scan cost** (5-sec-filing-index-per-member-cost, 2026-10-28). Condition: a live run's per-member engine time grows
   past the measured slope, or the projection exceeds the reserve's margin. Evidence: engine seconds per timed member 7.06 in
   invocation 2 (child-call rows grew from 6 to 223) and 9.77 in invocation 4 (224 to 326). The fit 1.38 s + 0.0290 s per row

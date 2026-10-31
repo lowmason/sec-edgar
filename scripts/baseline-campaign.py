@@ -3,7 +3,8 @@
 Run under the selected release interpreter with -I -B -X pycache_prefix=/dev/null. The tool opens
 the store with operator access, sends no request and writes nothing under the store root. It uses
 release internals (workflow result validation, ETL readers, durable child attempts). It is verified
-against releases fc68adef..., 9fa189a0... and c4de77b8...; re-verify it before use with any other release.
+against releases 9fa189a0... and c4de77b8...; `coverage` imports `checked_manifest`, which fc68adef... lacks.
+Re-verify it before use with any other release.
 """
 from __future__ import annotations
 
