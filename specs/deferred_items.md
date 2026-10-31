@@ -279,6 +279,7 @@
       specs/evidence/baseline-campaign/quarantine/ and final/coverage.json; findings §5. Size:
       design. Done when: the owner approves a versioned parser/schema design for such rows, and a
       later campaign covers or re-quarantines the 28 units and 7 daily sources.
+      → planned 2026-10-31: specs/plans/7-sec-filing-index-duplicate-key.md
 - [ ] The `daily-index/index.json` listing is refused with `permit_expired`, and daily 2026-10-27
       ended `incomplete` for the same cause (plan 2 invocations 1, 2 and 4; owner accepted a named
       gap). The cause is not diagnosed. See specs/evidence/baseline-campaign/coverage-finding.md
