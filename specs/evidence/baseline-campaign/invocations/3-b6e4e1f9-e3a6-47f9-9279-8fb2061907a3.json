@@ -1,0 +1,161 @@
+{
+ "after": {
+  "already_complete": [
+   "5c8146c60a18e92e12c84ce0a6af6edeeedb875feb2017f7e285ddb1ae639835",
+   "924fd5f5b380e8a8603bab21b91edcd9408962b3a25fe812f067b25777063d58",
+   "cd8ecb90de7e09e6226449d1ca97510fafb1359d81c56a189ec7691aef76559e"
+  ],
+  "already_complete_this_run": 3,
+  "campaign_total": {
+   "access_denied": 0,
+   "attempts": 92,
+   "distinct_urls": 86,
+   "max_ordinal": 1,
+   "outcomes": {
+    "failed": 2,
+    "received": 90
+   },
+   "received_bytes": 32289980,
+   "statuses": {
+    "0": 2,
+    "200": 90
+   },
+   "uncertain": 0
+  },
+  "child_call_rows": 224,
+  "daily_open": [
+   "2026-07-08",
+   "2026-07-13",
+   "2026-07-22",
+   "2026-07-27",
+   "2026-09-17",
+   "2026-09-24"
+  ],
+  "daily_sources": 72,
+  "eligible": [
+   "2024Q1",
+   "2026Q4",
+   "2026-07-08",
+   "2026-07-13",
+   "2026-07-22",
+   "2026-07-27",
+   "2026-09-17",
+   "2026-09-24"
+  ],
+  "files": {
+   "added": 3843,
+   "changed_immutable": 0,
+   "file_count": 3996,
+   "missing": 0
+  },
+  "refused": [],
+  "timing": {
+   "b4_members": 0,
+   "dispatch_cutoff": "2026-10-31T17:23:20.907495+00:00",
+   "max_member_wall": null,
+   "repeated_sources": [],
+   "tail_seconds": null,
+   "timed_members": 0
+  },
+  "timing_breaches": [],
+  "timing_not_run": null,
+  "untouched": [
+   "2021Q1",
+   "2021Q2",
+   "2021Q3",
+   "2021Q4",
+   "2022Q1",
+   "2022Q2",
+   "2022Q3",
+   "2022Q4",
+   "2023Q1",
+   "2023Q2",
+   "2023Q3",
+   "2023Q4",
+   "2024Q2",
+   "2024Q3",
+   "2024Q4",
+   "2025Q1",
+   "2025Q2",
+   "2025Q3",
+   "2025Q4",
+   "2026Q1",
+   "2026Q2",
+   "2026Q3"
+  ],
+  "verdicts": {
+   "no_campaign_result": 22,
+   "pending": 2,
+   "source_missing": 4
+  }
+ },
+ "attempt_id": "25f3e899-a563-4ded-a6ef-0ceefd6ffefb",
+ "backfill": {
+  "end_quarter": "2020Q4",
+  "start_quarter": "2020Q1"
+ },
+ "command": "backfill",
+ "config_sha256": "12fe329d97fdd7c384a557e6f0b398bf0360055b548ae46ed50931a802b7468b",
+ "deadline": "2026-10-31T17:53:20.907495+00:00",
+ "dispatch_reserve_seconds": 1800,
+ "ended_at": "2026-10-31T17:04:10.782907+00:00",
+ "invocation_sha256": "f8cbaaf6f5512e956488c5762118a77803a8aaeab03f0f2d952e683c04194511",
+ "k": 3,
+ "launcher_exit": 9,
+ "log_directory": "/Users/lowell/Projects/sec-edgar-local/logs/b6e4e1f9-e3a6-47f9-9279-8fb2061907a3/25f3e899-a563-4ded-a6ef-0ceefd6ffefb",
+ "release_id": "c4de77b89bb1d8ecc5d094f0e1dc6f8a5f3a7935e3595a9dd086d1e41a6b8aa7",
+ "result_ref": "runs/sec/b6e4e1f9-e3a6-47f9-9279-8fb2061907a3/backfill/25f3e899-a563-4ded-a6ef-0ceefd6ffefb/result.json",
+ "result_sha256": "1482d1a30db8f1d84d49e0974ee9fa1d33c146f19e4185679b3a98fb955957b7",
+ "run_id": "b6e4e1f9-e3a6-47f9-9279-8fb2061907a3",
+ "started_at": "2026-10-31T16:58:20.907495+00:00",
+ "stdout": [
+  {
+   "counts": {
+    "awaiting_approval_quarters": 0,
+    "complete_sources": 3,
+    "discovered_sources": 0,
+    "downloaded_sources": 0,
+    "failed_sources": 0,
+    "pending_sources": 8,
+    "published_quarters": 0,
+    "quarantined_sources": 0,
+    "transformed_sources": 0,
+    "unchanged_quarters": 0
+   },
+   "outcome": "state_conflict",
+   "result_ref": "runs/sec/b6e4e1f9-e3a6-47f9-9279-8fb2061907a3/backfill/25f3e899-a563-4ded-a6ef-0ceefd6ffefb/result.json",
+   "source_workset_ref": null
+  }
+ ],
+ "workflow_summary": {
+  "boundary_after": "2026-10-18",
+  "command": "backfill",
+  "counts": {
+   "awaiting_approval_quarters": 0,
+   "complete_sources": 3,
+   "discovered_sources": 0,
+   "downloaded_sources": 0,
+   "failed_sources": 0,
+   "pending_sources": 8,
+   "published_quarters": 0,
+   "quarantined_sources": 0,
+   "transformed_sources": 0,
+   "unchanged_quarters": 0
+  },
+  "discovery_complete": false,
+  "gap_codes": {
+   "baseline_source_missing": 4,
+   "state_conflict": 2,
+   "workflow_deferred": 9
+  },
+  "last_successful_reconcile_at": null,
+  "member_outcomes": {
+   "pending": 9
+  },
+  "oldest_unresolved_period": "2024Q1",
+  "outcome": "state_conflict",
+  "pending_approvals": 0,
+  "result_ref": "runs/sec/b6e4e1f9-e3a6-47f9-9279-8fb2061907a3/backfill/25f3e899-a563-4ded-a6ef-0ceefd6ffefb/result.json",
+  "summary_error": null
+ }
+}
