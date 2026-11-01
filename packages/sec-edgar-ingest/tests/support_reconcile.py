@@ -7,7 +7,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from support import fixture_settings
+from support import fixture_settings, only
 from support_workflows import BASE, CommandHarness, idx, quarter_pack, replace_pack_body
 from sec_edgar_ingest.etl.contracts import Candidate
 from sec_edgar_ingest.workflows.results import read_workflow_result
@@ -64,7 +64,7 @@ class ReconcileFixture(unittest.TestCase):
         return code, message, read_workflow_result(message['result_ref'], h.store, h.objects)
 
     def names(self, h, quarter):
-        return [value['company_name'] for value in h.capture(quarter)[1]]
+        return [only(value['company_names']) for value in h.capture(quarter)[1]]
 
     def candidates(self, h):
         return [Candidate.from_mapping(row.to_mapping()['value']) for row in h.store.scan('Candidate', {})]

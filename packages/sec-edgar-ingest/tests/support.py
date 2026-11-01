@@ -41,6 +41,14 @@ def retained_path(original_path: str) -> Path:
     return target
 
 
+def only(values: Sequence[object]) -> object:
+    """The one item of a sec-index-v2 list field (`company_names`, `form_types`); any other count fails the test."""
+    values = tuple(values)
+    if len(values) != 1:
+        raise AssertionError(f"expected exactly one item, got {values!r}")
+    return values[0]
+
+
 def local_config_mapping(*, root: Path | None = None) -> dict:
     """Build a detached config map without constructing a store."""
     from sec_edgar_ingest.config import load_config

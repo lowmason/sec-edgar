@@ -18,7 +18,7 @@ from sec_edgar_ingest.etl.columnar import (KEY_SEPARATOR, generation_table, key_
                                            quarter_observations, table_keys)
 from sec_edgar_ingest.etl.manifest import iter_file_rows
 from sec_edgar_ingest.etl.transform import read_observations
-from sec_edgar_ingest.models import SCHEMA_V1, quarter_for
+from sec_edgar_ingest.models import quarter_for
 from sec_edgar_ingest.storage.contracts import Conflict
 
 
@@ -38,18 +38,20 @@ class ColumnarReaderTests(unittest.TestCase):
         path.write_bytes(original + b'\0')
 
     def test_generation_tables_equal_the_full_reader(self):
+        layout = self.candidate.manifest.schema_version
         for ref in self.candidate.manifest.files:
             with self.subTest(role=ref.role):
-                self.assertEqual(generation_table(ref, self.lane.objects, SCHEMA_V1).to_pylist(),
-                                 list(iter_file_rows(ref, self.lane.objects, SCHEMA_V1)))
+                self.assertEqual(generation_table(ref, self.lane.objects, layout).to_pylist(),
+                                 list(iter_file_rows(ref, self.lane.objects, layout)))
 
     def test_generation_table_refuses_changed_counts_and_bytes(self):
+        layout = self.candidate.manifest.schema_version
         data = next(ref for ref in self.candidate.manifest.files if ref.role == 'data')
         with self.assertRaisesRegex(ValueError, 'generation file row count differs'):
-            generation_table(replace(data, row_count=data.row_count + 1), self.lane.objects, SCHEMA_V1)
+            generation_table(replace(data, row_count=data.row_count + 1), self.lane.objects, layout)
         self.changed(data.path)
         with self.assertRaisesRegex(Conflict, 'generation file hash or length differs'):
-            generation_table(data, self.lane.objects, SCHEMA_V1)
+            generation_table(data, self.lane.objects, layout)
 
     def test_quarter_observations_equal_the_full_reader_without_a_readback(self):
         with closing(read_observations(self.ref, self.lane.objects)) as rows:

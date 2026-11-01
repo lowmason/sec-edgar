@@ -12,7 +12,6 @@ from support_etl import etl_context
 from sec_edgar_ingest.config import pin_context
 from sec_edgar_ingest.etl.catalog import build_candidate, select_sources, source_fingerprint
 from sec_edgar_ingest.etl.contracts import GenerationCapture, ObservationRef, observation_base
-from sec_edgar_ingest.models import SCHEMA_V1
 from sec_edgar_ingest.etl.manifest import read_manifest, validate_candidate, iter_file_rows
 from sec_edgar_ingest.etl.state import EtlState
 from sec_edgar_ingest.etl.transform import transform_member
@@ -74,7 +73,7 @@ class EtlCatalogTests(unittest.TestCase):
 
     def rows(self, candidate, role='data'):
         return [value for ref in candidate.manifest.files if ref.role == role
-                for value in iter_file_rows(ref, self.objects, SCHEMA_V1)]
+                for value in iter_file_rows(ref, self.objects, candidate.manifest.schema_version)]
 
     def test_stale_snapshot_cannot_replace_newer_source_revision(self):
         source = fixture_source()
@@ -92,17 +91,17 @@ class EtlCatalogTests(unittest.TestCase):
         first = self.build([quarterly, daily])
         second = self.build([daily, quarterly])
         self.assertEqual(first, second)
-        self.assertEqual(self.rows(first)[0]['company_name'], 'Quarterly')
+        self.assertEqual(self.rows(first)[0]['company_names'], ['Quarterly'])
 
     def test_latest_daily_wins_and_prior_sources_survive(self):
         first = self.observation('2026-10-01', 'daily', row('Old'))
         old = self.build([first])
         second = self.observation('2026-10-02', 'daily', row('New'))
         new = self.build([second], old)
-        self.assertEqual(self.rows(new)[0]['company_name'], 'New')
+        self.assertEqual(self.rows(new)[0]['company_names'], ['New'])
         self.assertEqual(len(new.manifest.sources), 2)
         self.assertEqual(new.manifest.updated, 1)
-        self.assertEqual(self.rows(new, 'changes')[0]['before']['company_name'], 'Old')
+        self.assertEqual(self.rows(new, 'changes')[0]['before']['company_names'], ['Old'])
 
     def test_open_absence_retains_then_closed_withdrawal_is_gated(self):
         initial = self.observation(rows=row() + row(number=2))
@@ -138,7 +137,7 @@ class EtlCatalogTests(unittest.TestCase):
         later = self.observation('2026-10-01', 'daily', row('Later'), seconds=2)
         candidate = self.build([first])
         newest = self.build([later], candidate)
-        self.assertEqual(self.rows(newest)[0]['company_name'], 'Later')
+        self.assertEqual(self.rows(newest)[0]['company_names'], ['Later'])
         self.assertEqual(self.build([first], newest), newest)
         with self.assertRaisesRegex(Conflict, 'conflicting observations'):
             select_sources((first,), (replace(first, rows_sha256='a'*64),))
@@ -151,7 +150,7 @@ class EtlCatalogTests(unittest.TestCase):
         daily = self.observation('2026-10-02', 'daily')
         candidate = self.build([ref, daily])
         self.assertEqual(candidate.manifest.row_count, 3)
-        self.assertEqual([r['form_type'] for r in self.rows(candidate)], ['10-K', '10-K/A', '10-K'])
+        self.assertEqual([r['form_types'] for r in self.rows(candidate)], [['10-K'], ['10-K/A'], ['10-K']])
         self.assertIsNone(self.rows(candidate)[-1]['accession_number'])
 
     def test_filing_quarter_distributes_daily_and_off_period_quarterly_has_no_authority(self):
@@ -159,7 +158,7 @@ class EtlCatalogTests(unittest.TestCase):
         quarterly = self.observation('2026Q3', rows=row('Off-period'))
         candidate = self.build([daily, quarterly])
         self.assertIsNone(candidate.manifest.membership_source)
-        self.assertEqual(self.rows(candidate)[0]['company_name'], 'Off-period')
+        self.assertEqual(self.rows(candidate)[0]['company_names'], ['Off-period'])
         prior = self.build([daily], quarter='2026Q3')
         self.assertEqual(prior.manifest.row_count, 1)
         with self.assertRaisesRegex(ValueError, 'empty target-quarter'):
@@ -303,11 +302,11 @@ class EtlCatalogTests(unittest.TestCase):
         from sec_edgar_ingest.etl.contracts import canonical_schema
         candidate = self.build([self.observation()])
         values = self.rows(candidate)
-        values[0]['company_name'] = 'Invented row'
+        values[0]['company_names'] = ['Invented row']
         ref = candidate.manifest.files[0]
         path = self.root / 'objects' / ref.path
-        pq.write_table(pa.Table.from_pylist(values, schema=canonical_schema(SCHEMA_V1)), path,
-                       version='2.6', compression='snappy', use_dictionary=False)
+        pq.write_table(pa.Table.from_pylist(values, schema=canonical_schema(candidate.manifest.schema_version)), path,
+                       version='2.6', compression='snappy', use_dictionary=False, use_compliant_nested_type=False)
         body = path.read_bytes()
         changed_ref = replace(ref, sha256=hashlib.sha256(body).hexdigest(), byte_count=len(body))
         manifest = replace(candidate.manifest, files=(changed_ref, candidate.manifest.files[1]))
@@ -335,9 +334,11 @@ class EtlCatalogTests(unittest.TestCase):
             values = [value] if ref.role == 'data' else [{
                 'change_type': 'added', 'cik': loser.cik, 'archive_path': loser.archive_path,
                 'before': None, 'after': value, 'reason': None}]
-            schema = canonical_schema(SCHEMA_V1) if ref.role == 'data' else change_schema(SCHEMA_V1)
+            layout = candidate.manifest.schema_version
+            schema = canonical_schema(layout) if ref.role == 'data' else change_schema(layout)
             pq.write_table(pa.Table.from_pylist(values, schema=schema), path,
-                           version='2.6', compression='snappy', use_dictionary=False)
+                           version='2.6', compression='snappy', use_dictionary=False,
+                           use_compliant_nested_type=False)
             body = path.read_bytes()
             files.append(replace(ref, sha256=hashlib.sha256(body).hexdigest(), byte_count=len(body)))
         manifest = replace(candidate.manifest, files=tuple(files))
@@ -415,9 +416,11 @@ class EtlCatalogTests(unittest.TestCase):
         for ref in candidate.manifest.files:
             values = self.rows(candidate, ref.role)[:1]
             path = self.root / 'objects' / ref.path
-            schema = canonical_schema(SCHEMA_V1) if ref.role == 'data' else change_schema(SCHEMA_V1)
+            layout = candidate.manifest.schema_version
+            schema = canonical_schema(layout) if ref.role == 'data' else change_schema(layout)
             pq.write_table(pa.Table.from_pylist(values, schema=schema), path,
-                           version='2.6', compression='snappy', use_dictionary=False)
+                           version='2.6', compression='snappy', use_dictionary=False,
+                           use_compliant_nested_type=False)
             body = path.read_bytes()
             files.append(replace(ref, sha256=hashlib.sha256(body).hexdigest(), byte_count=len(body), row_count=1))
         manifest = replace(candidate.manifest, files=tuple(files), row_count=1, added=1)
@@ -436,8 +439,8 @@ class EtlCatalogTests(unittest.TestCase):
         from sec_edgar_ingest.models import canonical_json
         change_ref = next(ref for ref in candidate.manifest.files if ref.role == 'changes')
         path = self.root / 'objects' / change_ref.path
-        pq.write_table(pa.Table.from_pylist(changes, schema=change_schema(SCHEMA_V1)), path,
-                       version='2.6', compression='snappy', use_dictionary=False)
+        pq.write_table(pa.Table.from_pylist(changes, schema=change_schema(candidate.manifest.schema_version)), path,
+                       version='2.6', compression='snappy', use_dictionary=False, use_compliant_nested_type=False)
         body = path.read_bytes()
         change_ref = replace(change_ref, sha256=hashlib.sha256(body).hexdigest(), byte_count=len(body), row_count=len(changes))
         files = tuple(change_ref if ref.role == 'changes' else ref for ref in candidate.manifest.files)
@@ -471,7 +474,7 @@ class EtlCatalogTests(unittest.TestCase):
         revised = self.observation('2026-10-02', 'daily', row('Changed'))
         candidate = self.build([revised], old)
         changes = self.rows(candidate, 'changes')
-        changes[0]['before']['company_name'] = 'Invented before'
+        changes[0]['before']['company_names'] = ['Invented before']
         forged = self.rewrite_changes(candidate, changes)
         with self.assertRaisesRegex(ValueError, 'delta'):
             validate_candidate(forged, self.objects)

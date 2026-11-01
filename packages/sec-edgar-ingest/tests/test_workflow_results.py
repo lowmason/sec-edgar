@@ -146,7 +146,7 @@ class WorkflowResultTests(unittest.TestCase):
         self.assertEqual(reread, report)
         self.assertEqual(self.f.objects.read(path), before)
         capture = GenerationCapture.from_mapping(self.capture['quarters'][0])
-        self.assertEqual(list(read_quarter(capture, self.f.objects))[0].company_name, 'A')
+        self.assertEqual(list(read_quarter(capture, self.f.objects))[0].company_names, ('A',))
         self.assertNotEqual(capture.generation_id, EtlState(self.f.store).pointer('2026Q3').value['generation_id'])
 
     def test_report_object_crash_reopens_and_repairs_exact_index(self):

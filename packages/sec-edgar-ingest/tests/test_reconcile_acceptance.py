@@ -27,7 +27,7 @@ class ReconcileAcceptanceTests(ReconcileFixture):
         request, = listing['candidates']
         self.assertEqual((request['status'], request['approved'], request['quarterly_sha256'],
                           request['latest_observed_sha256']), ('pending', False, sha((A,)), sha((A,))))
-        self.assertEqual([row['company_name'] for row in request['withdrawn']], ['B'])
+        self.assertEqual([row['company_names'] for row in request['withdrawn']], [['B']])
 
         command = ('approve', *operator, '--quarter', '2026Q3', '--generation', request['generation_id'],
                    '--approver', 'Lowell Mason')

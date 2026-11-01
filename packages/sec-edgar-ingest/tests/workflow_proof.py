@@ -24,9 +24,9 @@ FIXTURE_ROOT = Path(__file__).resolve().parent / 'fixtures/workflows/proof'
 BODY_FILES = ('full-root.json', 'full-year.json', 'full-q3.json', 'full-q4.json',
               'full-q3.zip', 'full-q4.zip', 'daily-root.json', 'daily-year.json',
               'daily-q3.json', 'daily-q4.json', 'daily-q4.idx')
-EXPECTED = {'2026Q3': [{'cik': '0000123456', 'company_name': 'Example', 'form_type': '10-K',
+EXPECTED = {'2026Q3': [{'cik': '0000123456', 'company_names': ['Example'], 'form_types': ['10-K'],
     'filing_date': '2026-09-30', 'archive_path': 'edgar/data/123456/0000123456-26-000003.txt'}],
-    '2026Q4': [{'cik': '0000123456', 'company_name': 'Example', 'form_type': '10-K',
+    '2026Q4': [{'cik': '0000123456', 'company_names': ['Example'], 'form_types': ['10-K'],
     'filing_date': '2026-10-01', 'archive_path': 'edgar/data/123456/0000123456-26-000004.txt'}]}
 
 
@@ -83,7 +83,7 @@ def put_json(path, value):
 
 def assert_rows(harness, quarter, expected):
     capture, rows = harness.capture(quarter)
-    names = ('cik', 'company_name', 'form_type', 'filing_date', 'archive_path')
+    names = ('cik', 'company_names', 'form_types', 'filing_date', 'archive_path')
     actual = sorted(({name: row[name] for name in names} for row in rows),
                     key=lambda row: (row['archive_path'], row['filing_date']))
     wanted = sorted(expected, key=lambda row: (row['archive_path'], row['filing_date']))

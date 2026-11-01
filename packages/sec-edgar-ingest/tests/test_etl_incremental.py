@@ -10,7 +10,7 @@ from unittest.mock import patch
 
 import pyarrow.parquet as pq
 
-from support import fixture_snapshot, fixture_source
+from support import fixture_snapshot, fixture_source, only
 from support_catalog import Lane, row
 from support_incremental import Twin
 from sec_edgar_ingest.etl import catalog, equivalence, incremental
@@ -18,7 +18,7 @@ from sec_edgar_ingest.etl import manifest as generation
 from sec_edgar_ingest.etl.contracts import ObservationRef, observation_base, observation_schema
 from sec_edgar_ingest.etl.publication import publish_quarter
 from sec_edgar_ingest.etl.transform import OBSERVATION_FORMAT, PARQUET_VERSION
-from sec_edgar_ingest.models import SCHEMA_V1, canonical_json, parse_json, to_mapping_value
+from sec_edgar_ingest.models import canonical_json, parse_json, to_mapping_value
 
 OPEN = date(2026, 10, 7)
 CLOSED = date(2027, 1, 7)
@@ -38,7 +38,7 @@ class TwinCase(unittest.TestCase):
 
     @staticmethod
     def names(twin, pair):
-        return {value['archive_path'][-10:]: value['company_name'] for value in twin.fast.rows(pair[0])}
+        return {value['archive_path'][-10:]: only(value['company_names']) for value in twin.fast.rows(pair[0])}
 
 
 class OracleTests(TwinCase):
@@ -221,7 +221,7 @@ def empty_daily(lane, day='2026-10-03'):
     snapshot = fixture_snapshot(source, b'no rows')
     base = observation_base(source.source_id, snapshot.sha256, lane.context.parser_version, lane.context.schema_version)
     target = lane.root / 'empty-rows.parquet'
-    pq.ParquetWriter(target, observation_schema(SCHEMA_V1), version=PARQUET_VERSION, compression='snappy',
+    pq.ParquetWriter(target, observation_schema(lane.context.schema_version), version=PARQUET_VERSION, compression='snappy',
                      use_dictionary=False, use_compliant_nested_type=False).close()
     body = target.read_bytes()
     ref = ObservationRef(source, snapshot, lane.context.parser_version, lane.context.schema_version,
@@ -278,7 +278,7 @@ class PrePointerRefusalTests(unittest.TestCase):
         def wrong(*args, **kwargs):
             output, change = original(*args, **kwargs)
             if output is not None:
-                output = canonical_json({**parse_json(output), 'company_name': 'Wrong'})
+                output = canonical_json({**parse_json(output), 'company_names': ['Wrong']})
             return output, change
 
         daily = lane.observation('2026-10-02', 'daily', row(number=2))

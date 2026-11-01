@@ -18,7 +18,7 @@ from sec_edgar_ingest.etl.columnar import generation_table
 from sec_edgar_ingest.etl.contracts import canonical_schema, change_schema
 from sec_edgar_ingest.etl.equivalence import validate_incremental_candidate
 from sec_edgar_ingest.etl.manifest import generation_base, generation_identity, source_fingerprint
-from sec_edgar_ingest.models import SCHEMA_V1, canonical_json
+from sec_edgar_ingest.models import canonical_json
 
 CLOSED = date(2027, 1, 7)
 
@@ -44,7 +44,9 @@ def forge(lane, candidate, *, data=None, changes=None, **fields):
             path.write_bytes(lane.objects.read(ref.path))
             files.append(replace(ref, path=name))
             continue
-        pq.write_table(pa.Table.from_pylist(rows, schema=canonical_schema(SCHEMA_V1) if ref.role == 'data' else change_schema(SCHEMA_V1)), path)
+        layout = manifest.schema_version
+        pq.write_table(pa.Table.from_pylist(rows, schema=canonical_schema(layout) if ref.role == 'data' else change_schema(layout)), path,
+                       use_compliant_nested_type=False)
         body = path.read_bytes()
         files.append(replace(ref, path=name, sha256=hashlib.sha256(body).hexdigest(), byte_count=len(body),
                              row_count=len(rows)))
@@ -110,14 +112,14 @@ class EquivalenceTests(unittest.TestCase):
     def test_refuses_a_changed_untouched_row(self):
         lane, base, candidate = self.open_addition()
         rows = lane.rows(candidate)
-        rows[1] = {**rows[1], 'company_name': 'Forged'}
+        rows[1] = {**rows[1], 'company_names': ['Forged']}
         with self.assertRaisesRegex(ValueError, 'outside its recomputed keys'):
             self.check(lane, forge(lane, candidate, data=rows), base)
 
     def test_refuses_a_changed_touched_row(self):
         lane, base, candidate = self.open_addition()
         rows = lane.rows(candidate)
-        rows[2] = {**rows[2], 'company_name': 'Forged'}
+        rows[2] = {**rows[2], 'company_names': ['Forged']}
         with self.assertRaisesRegex(ValueError, 'rows differ from the full resolution'):
             self.check(lane, forge(lane, candidate, data=rows), base)
 
@@ -196,7 +198,8 @@ class EquivalenceTests(unittest.TestCase):
     def test_recomputes_every_base_key_that_the_authority_does_not_list_in_the_quarter(self):
         lane = self.lane()
         base = lane.build([lane.observation('2026-10-01', 'daily', row() + row(number=2) + row(number=4))])
-        data = generation_table(next(ref for ref in base.manifest.files if ref.role == 'data'), lane.objects, SCHEMA_V1)
+        data = generation_table(next(ref for ref in base.manifest.files if ref.role == 'data'), lane.objects,
+                                base.manifest.schema_version)
         chunked = pa.concat_tables([data.slice(0, 1), data.slice(1)])  # `is_in` must accept a chunked key column.
         daily = lane.observation('2026-10-02', 'daily', row(number=3))
         key = lambda number: ('0000123456', f'edgar/data/123456/0000123456-26-{number:06}.txt')

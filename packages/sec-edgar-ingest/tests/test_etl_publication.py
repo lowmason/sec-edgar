@@ -92,8 +92,8 @@ class PublicationIntegrationTests(unittest.TestCase):
             self.assertEqual(self.state.pointer('2026Q4'), pointer)
         revised = self.observation(rows=row('New'), seconds=1)
         self.assertEqual(self.publish(revised).outcome, 'published')
-        self.assertEqual(self.rows(old)[0].company_name, 'Example')
-        self.assertEqual(self.rows()[0].company_name, 'New')
+        self.assertEqual(self.rows(old)[0].company_names, ('Example',))
+        self.assertEqual(self.rows()[0].company_names, ('New',))
         self.assertEqual(len(list(self.store.scan('PublicationReceipt', {}))), 2)
 
     def test_open_retained_basis_noop_and_version_replay(self):
@@ -119,7 +119,7 @@ class PublicationIntegrationTests(unittest.TestCase):
         faults.at('publication.before_pointer', lambda: self.publish(winner))
         result = self.publish(incoming, observer=faults)
         self.assertEqual((result.outcome, result.conflicts), ('published', 1))
-        self.assertEqual([r.company_name for r in self.rows()], ['Winner', 'Example'])
+        self.assertEqual([r.company_names for r in self.rows()], [('Winner',), ('Example',)])
         manifest = read_manifest(self.capture(), self.objects)
         self.assertIn(winner, manifest.sources)
         self.assertIn(incoming, manifest.sources)
@@ -184,7 +184,8 @@ class PublicationIntegrationTests(unittest.TestCase):
             capture = self.capture()
             committed = boundary in ('publication.after_pointer', 'publication.after_repair')
             self.assertEqual(capture != previous, committed)
-            self.assertEqual(self.rows()[0].company_name, boundary if committed else self.rows(previous)[0].company_name)
+            self.assertEqual(self.rows()[0].company_names,
+                             (boundary,) if committed else self.rows(previous)[0].company_names)
             repair_publication('2026Q4', self.objects, self.state)
             self.assertEqual(self.state.pointer('2026Q4').value['generation_id'], capture.generation_id)
             outcome = self.publish(revised).outcome
@@ -239,7 +240,7 @@ class PublicationIntegrationTests(unittest.TestCase):
         loser = self.observation(rows=row('Losing'), seconds=1)
         candidate = build_candidate('2026Q4', before, (loser,), self.context, self.settings, self.objects, self.state)
         (self.root / 'objects' / candidate.manifest.files[0].path).write_bytes(b'corrupt orphan')
-        self.assertEqual(self.rows()[0].company_name, 'Example')
+        self.assertEqual(self.rows()[0].company_names, ('Example',))
         self.assertEqual(self.capture(), before)
 
     def test_pointer_shape_address_hash_and_fingerprint_are_checked(self):
@@ -277,22 +278,22 @@ class PublicationIntegrationTests(unittest.TestCase):
         from sec_edgar_ingest.etl.contracts import canonical_schema
         from sec_edgar_ingest.etl.manifest import iter_file_rows
         from sec_edgar_ingest.etl.reader import read_quarter
-        from sec_edgar_ingest.models import SCHEMA_V1
         self.publish(self.observation(rows=row() + row(number=2)))
         capture = self.capture()
         manifest = read_manifest(capture, self.objects)
+        layout = manifest.schema_version
         data = next(ref for ref in manifest.files if ref.role == 'data')
-        values = list(iter_file_rows(data, self.objects, SCHEMA_V1))
+        values = list(iter_file_rows(data, self.objects, layout))
         path = self.root / 'objects' / data.path
         original = path.read_bytes()
         manifest_path = self.root / 'objects' / capture.manifest_ref
         manifest_bytes = manifest_path.read_bytes()
         wrong_quarter = [values[0], {**values[1], 'filing_date': date(2026, 9, 30)}]
-        for bad_rows, schema, count in ((values, canonical_schema(SCHEMA_V1), 3),
-                                        ([values[0], values[0]], canonical_schema(SCHEMA_V1), 2),
-                                        (wrong_quarter, canonical_schema(SCHEMA_V1), 2),
-                                        (values, canonical_schema(SCHEMA_V1).with_metadata({b'unexpected': b'schema'}), 2)):
-            pq.write_table(pa.Table.from_pylist(bad_rows, schema=schema), path)
+        for bad_rows, schema, count in ((values, canonical_schema(layout), 3),
+                                        ([values[0], values[0]], canonical_schema(layout), 2),
+                                        (wrong_quarter, canonical_schema(layout), 2),
+                                        (values, canonical_schema(layout).with_metadata({b'unexpected': b'schema'}), 2)):
+            pq.write_table(pa.Table.from_pylist(bad_rows, schema=schema), path, use_compliant_nested_type=False)
             body = path.read_bytes()
             corrupted = replace(data, row_count=count, byte_count=len(body), sha256=hashlib.sha256(body).hexdigest())
             bad_manifest = replace(manifest, files=tuple(corrupted if ref.role == 'data' else ref for ref in manifest.files))

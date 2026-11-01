@@ -11,7 +11,7 @@ from dataclasses import replace
 from datetime import date
 from pathlib import Path
 
-from support import fixture_settings
+from support import fixture_settings, only
 from support_fs import tree_snapshot
 from support_etl import etl_context, seed_observation
 from sec_edgar_ingest.cli import main
@@ -66,9 +66,9 @@ class GateFixture(unittest.TestCase):
         return capture_quarter(quarter, self.objects, self.state)
 
     def rows(self, capture=None):
-        """(row number, company) pairs of a fully validated quarter read."""
+        """(row number, company) pairs of a fully validated quarter read. Each row must list exactly one name."""
         from sec_edgar_ingest.etl.reader import read_quarter
-        return [(int(item.archive_path.rsplit('-', 1)[1].removesuffix('.txt')), item.company_name)
+        return [(int(item.archive_path.rsplit('-', 1)[1].removesuffix('.txt')), only(item.company_names))
                 for item in read_quarter(capture or self.capture(), self.objects)]
 
     def candidate(self, candidate_ref):
