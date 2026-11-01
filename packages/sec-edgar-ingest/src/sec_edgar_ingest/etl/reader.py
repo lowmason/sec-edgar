@@ -7,7 +7,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Iterator
 
-from ..models import Versioned, canonical_json, parse_json, require_hash
+from ..models import SCHEMA_V1, Versioned, canonical_json, parse_json, require_hash
 from ..storage.contracts import Conflict, ObjectStore
 from .contracts import Candidate, GenerationCapture, GenerationManifest, IndexRow
 from .manifest import (check_candidate_integrity, gate_ref, generation_base, iter_file_rows, read_approval,
@@ -71,7 +71,7 @@ def read_quarter(capture: GenerationCapture, objects: ObjectStore) -> Iterator[I
         db.execute('CREATE TABLE rows(payload BLOB)')
         for ref in manifest.files:
             if ref.role == 'data':
-                with closing(iter_file_rows(ref, objects)) as rows:
+                with closing(iter_file_rows(ref, objects, SCHEMA_V1)) as rows:
                     for value in rows:
                         db.execute('INSERT INTO rows VALUES(?)', (canonical_json(IndexRow(**value).to_mapping()),))
         for (payload,) in db.execute('SELECT payload FROM rows ORDER BY rowid'):

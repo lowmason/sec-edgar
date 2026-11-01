@@ -282,7 +282,7 @@ class PublicationIntegrationTests(unittest.TestCase):
         capture = self.capture()
         manifest = read_manifest(capture, self.objects)
         data = next(ref for ref in manifest.files if ref.role == 'data')
-        values = list(iter_file_rows(data, self.objects))
+        values = list(iter_file_rows(data, self.objects, SCHEMA_V1))
         path = self.root / 'objects' / data.path
         original = path.read_bytes()
         manifest_path = self.root / 'objects' / capture.manifest_ref
@@ -436,9 +436,9 @@ class PublicationIntegrationTests(unittest.TestCase):
             events.append('validated')
             return manifest
 
-        def fail_after_real_row(ref, objects):
+        def fail_after_real_row(ref, objects, layout):
             self.assertEqual(events, ['validated'])
-            with closing(actual_rows(ref, objects)) as rows:
+            with closing(actual_rows(ref, objects, layout)) as rows:
                 value = next(rows)
                 emitted.append(value)
                 events.append('spooled_row')

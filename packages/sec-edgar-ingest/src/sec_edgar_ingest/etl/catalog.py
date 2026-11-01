@@ -16,11 +16,11 @@ from ..models import SCHEMA_V1, Error, RunContext, canonical_json, parse_json, q
 from ..storage.contracts import BoundaryObserver, Conflict, ObjectStore, observe
 from . import incremental
 from .contracts import (ABSENCE_REASON, WITHDRAWAL_REASON, Candidate, FileRef, GenerationCapture,
-                        GenerationManifest, IndexRow, ObservationRef, arrow_row, business_fields, canonical_schema,
-                        change_schema)
+                        GenerationManifest, ObservationRef, arrow_row, business_fields, canonical_schema,
+                        change_schema, decode_row)
 from .manifest import (_validate_identity, check_candidate_integrity, gate_payload, gate_ref, generation_base,
-                       generation_identity, iter_file_rows, read_manifest, source_fingerprint,
-                       validate_candidate_content, validate_files)
+                       generation_identity, in_layout, iter_file_rows, merged_payload, read_manifest,
+                       source_fingerprint, validate_candidate_content, validate_files)
 from .state import EtlState
 from .transform import BATCH_ROWS, PARQUET_VERSION, _check_deadline, _file_identity, _validate_context, read_observations, transform_member
 
@@ -141,22 +141,30 @@ def _load_observations(db, selected, quarter, membership, objects, context, read
                             ref.snapshot.received_at.isoformat(), ref.source.source_id, int(ref == membership)))
         _check_deadline(context)
     db.execute('CREATE INDEX ranked ON observations(cik,path,quarterly_preference DESC,source_period DESC,received_at DESC,source_id ASC)')
-    previous_key = None
-    for cik, path, payload in db.execute('SELECT cik,path,payload FROM observations ORDER BY cik,path,quarterly_preference DESC,source_period DESC,received_at DESC,source_id ASC'):
-        if (cik, path) == previous_key:
-            continue
-        previous_key = cik, path
-        db.execute('INSERT INTO proposed VALUES(?,?,?)', (cik, path, payload))
+
+    def propose(winner, payloads):
+        if winner is not None:
+            db.execute('INSERT INTO proposed VALUES(?,?,?)', (*winner[:2], merged_payload(payloads, context.schema_version)))
+    # A key's first row names its winning source. Its row merges that source's rows of the key only (D4).
+    winner, payloads = None, []
+    for cik, path, source, payload in db.execute('SELECT cik,path,source_id,payload FROM observations ORDER BY cik,path,quarterly_preference DESC,source_period DESC,received_at DESC,source_id ASC'):
+        if winner is None or (cik, path) != winner[:2]:
+            propose(winner, payloads)
+            winner, payloads = (cik, path, source), []
+        if source == winner[2]:
+            payloads.append(payload)
+    propose(winner, payloads)
 
 
-def _load_active(db, previous, objects):
+def _load_active(db, previous, objects, layout: str):
+    """The base rows, as a candidate of `layout` holds them (D8)."""
     if previous is None:
         return
     for ref in previous.files:
         if ref.role == 'data':
-            with closing(iter_file_rows(ref, objects)) as rows:
+            with closing(iter_file_rows(ref, objects, previous.schema_version)) as rows:
                 for value in rows:
-                    row = IndexRow(**value)
+                    row = in_layout(decode_row(value, previous.schema_version), layout)
                     db.execute('INSERT INTO active VALUES(?,?,?)', (row.cik, row.archive_path, canonical_json(row.to_mapping())))
 
 
@@ -166,7 +174,7 @@ def _change(db, key, kind, before, after, reason=None):
     db.execute('INSERT INTO changes VALUES(?,?,?,?)', (*key, kind, canonical_json(value)))
 
 
-def _resolve(db, mode, membership):
+def _resolve(db, mode, membership, layout: str):
     counts = Counter()
     if mode == 'closed' and membership:
         db.execute('DELETE FROM proposed WHERE NOT EXISTS (SELECT 1 FROM observations o WHERE o.cik=proposed.cik AND o.path=proposed.path AND o.member=1)')
@@ -186,7 +194,7 @@ def _resolve(db, mode, membership):
                 counts['retained'] += 1
             continue
         after = parse_json(proposed[0])
-        if any(before[name] != after[name] for name in business_fields(SCHEMA_V1)):
+        if any(before[name] != after[name] for name in business_fields(layout)):
             _change(db, key, 'updated', before, after)
             counts['updated'] += 1
         elif before != after:
@@ -199,8 +207,8 @@ def _resolve(db, mode, membership):
 
 
 def _write_parquet(db, root, base, role, context):
-    name = FILE_NAMES[role]
-    schema = canonical_schema(SCHEMA_V1) if role == 'data' else change_schema(SCHEMA_V1)
+    name, layout = FILE_NAMES[role], context.schema_version
+    schema = canonical_schema(layout) if role == 'data' else change_schema(layout)
     sql = ('SELECT payload FROM proposed ORDER BY cik,path' if role == 'data' else
            'SELECT payload FROM changes ORDER BY cik,path,change_type')
     batch, count, path = [], 0, root / name
@@ -209,11 +217,11 @@ def _write_parquet(db, root, base, role, context):
         for (payload,) in db.execute(sql):
             value = parse_json(payload)
             if role == 'data':
-                value = arrow_row(value, SCHEMA_V1)
+                value = arrow_row(value, layout)
             else:
                 for field in ('before', 'after'):
                     if value[field] is not None:
-                        value[field] = arrow_row(value[field], SCHEMA_V1)
+                        value[field] = arrow_row(value[field], layout)
             batch.append(value)
             count += 1
             if len(batch) == BATCH_ROWS:
@@ -328,8 +336,8 @@ def build_candidate(quarter: str, previous: GenerationCapture | None, incoming: 
         root = Path(directory)
         with closing(_database(root / 'catalog.sqlite')) as db:
             _load_observations(db, selected, quarter, membership, objects, context)
-            _load_active(db, active, objects)
-            counts = _resolve(db, mode, membership)
+            _load_active(db, active, objects, context.schema_version)
+            counts = _resolve(db, mode, membership, context.schema_version)
             retained, fingerprint, generation_id, existing = _identify_candidate(
                 quarter, previous, selected, mode, membership, counts['retained'], objects, state, observer)
             if existing:

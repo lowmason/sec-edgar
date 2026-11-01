@@ -18,7 +18,7 @@ from sec_edgar_ingest.etl.columnar import (KEY_SEPARATOR, generation_table, key_
                                            quarter_observations, table_keys)
 from sec_edgar_ingest.etl.manifest import iter_file_rows
 from sec_edgar_ingest.etl.transform import read_observations
-from sec_edgar_ingest.models import quarter_for
+from sec_edgar_ingest.models import SCHEMA_V1, quarter_for
 from sec_edgar_ingest.storage.contracts import Conflict
 
 
@@ -41,7 +41,7 @@ class ColumnarReaderTests(unittest.TestCase):
         for ref in self.candidate.manifest.files:
             with self.subTest(role=ref.role):
                 self.assertEqual(generation_table(ref, self.lane.objects).to_pylist(),
-                                 list(iter_file_rows(ref, self.lane.objects)))
+                                 list(iter_file_rows(ref, self.lane.objects, SCHEMA_V1)))
 
     def test_generation_table_refuses_changed_counts_and_bytes(self):
         data = next(ref for ref in self.candidate.manifest.files if ref.role == 'data')

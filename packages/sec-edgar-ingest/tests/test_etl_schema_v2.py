@@ -1,4 +1,5 @@
 """The sec-index-v2 row contract, its Arrow layouts and the schema version registry (Stage 2a)."""
+import hashlib
 import itertools
 import json
 import tempfile
@@ -7,18 +8,24 @@ from contextlib import closing
 from dataclasses import replace
 from datetime import date
 from pathlib import Path
+from unittest.mock import patch
 
 import pyarrow as pa
 import pyarrow.parquet as pq
 
+import support_catalog
 from support import fixture_context, fixture_snapshot, fixture_source
-from support_etl import etl_context, seed_snapshot
+from support_catalog import Lane
+from support_etl import etl_context, seed_snapshot, v1_writable
 from support_workflows import idx
+from sec_edgar_ingest.etl import catalog
 from sec_edgar_ingest.etl.columnar import quarter_observations
 from sec_edgar_ingest.etl import parser
+from sec_edgar_ingest.etl.manifest import validate_candidate_content
 from sec_edgar_ingest.etl.parser import ParseError, iter_observations, parse_fields
 from sec_edgar_ingest.etl.state import EtlState
-from sec_edgar_ingest.etl.transform import _remember_observation, _seen_database, read_observations, transform_workset
+from sec_edgar_ingest.etl.transform import (BATCH_ROWS, _remember_observation, _seen_database, read_observations,
+                                            transform_workset)
 from sec_edgar_ingest.state import AcquisitionState
 from sec_edgar_ingest.etl.contracts import (
     ORIGINAL_FIELD_COUNT, IndexRow, IndexRowV2, arrow_row, business_fields, canonical_schema, change_schema,
@@ -446,6 +453,177 @@ class ParserV2Tests(unittest.TestCase):
         keys = {(NGM['cik'], NGM['archive_path'])}
         self.assertEqual(list(quarter_observations(ref, objects, '2024Q1', keys)), expected)
         self.assertEqual(list(quarter_observations(ref, objects, '2024Q2')), [])
+
+
+NGM_QUARTER = '2024Q1'
+# The rename class filed in 2024Q1, so that one quarterly source of that quarter lists both keys.
+RENAME_Q1 = dict(RENAME, archive_path='edgar/data/1551986/0000000000-24-000001.txt', filing_date=date(2024, 3, 5),
+                 accession_number='0000000000-24-000001')
+
+
+def line(form, name=NGM_NAME, key=NGM):
+    """One index line of `key`, dated ISO. `Lane.observation` re-spells the date for a daily source."""
+    return ('|'.join(listing_row('quarterly', form, name, key['filing_date'], key)) + '\n').encode()
+
+
+def reversed_read(ref, objects):
+    """`read_observations` with the snapshot's observations in reverse line order."""
+    yield from reversed(list(read_observations(ref, objects)))
+
+
+class CatalogV2Tests(unittest.TestCase):
+    """The full build and the full validator merge both lists within the source that precedence selects."""
+
+    def lane(self, schema_version=SCHEMA_V2):
+        lane = Lane(schema_version=schema_version)
+        self.addCleanup(lane.close)
+        return lane
+
+    def build(self, lane, refs, previous=None, quarter=NGM_QUARTER):
+        candidate = lane.build(refs, previous, quarter)
+        validate_candidate_content(candidate, lane.objects)
+        return candidate
+
+    def reversed_build(self, lane, refs, previous=None, quarter=NGM_QUARTER):
+        """`build`, with the full build reading every source's observations in reverse line order."""
+        load = catalog._load_observations
+        with patch.object(catalog, '_load_observations',
+                          side_effect=lambda *args: load(*args, read=reversed_read)) as loaded:
+            candidate = self.build(lane, refs, previous, quarter)
+        self.assertEqual(loaded.call_count, 1)
+        return candidate
+
+    @staticmethod
+    def files(lane, candidate):
+        return {ref.role: lane.path(ref.path).read_bytes() for ref in candidate.manifest.files}
+
+    @staticmethod
+    def forge(lane, candidate, values):
+        """Rewrite the data and changes files with `values`, and the manifest with their hashes, lengths and counts."""
+        files = []
+        for ref in candidate.manifest.files:
+            schema = canonical_schema(SCHEMA_V2) if ref.role == 'data' else change_schema(SCHEMA_V2)
+            path = lane.path(ref.path)
+            with pq.ParquetWriter(path, schema, **WRITER) as writer:
+                writer.write_table(pa.Table.from_pylist(values[ref.role], schema=schema))
+            body = path.read_bytes()
+            files.append(replace(ref, sha256=hashlib.sha256(body).hexdigest(), byte_count=len(body),
+                                 row_count=len(values[ref.role])))
+        manifest = replace(candidate.manifest, files=tuple(files))
+        body = canonical_json(manifest.to_mapping())
+        lane.path(candidate.manifest_ref).write_bytes(body)
+        return replace(candidate, manifest=manifest, manifest_sha256=hashlib.sha256(body).hexdigest(),
+                       manifest_bytes=len(body))
+
+    def test_combined_filing_and_rename_publish_one_row_each(self):
+        lane = self.lane()
+        body = (line('SC TO-T') + line('SC 13E3') + line('UPLOAD', OLD_NAME, RENAME_Q1)
+                + line('UPLOAD', NEW_NAME, RENAME_Q1))
+        candidate = self.build(lane, [lane.observation(NGM_QUARTER, 'quarterly', body)])
+        self.assertEqual(candidate.manifest.schema_version, SCHEMA_V2)
+        self.assertEqual((candidate.manifest.row_count, candidate.manifest.added), (2, 2))
+        ngm, rename = (decode_row(value, SCHEMA_V2) for value in lane.rows(candidate))
+        self.assertEqual((ngm.cik, ngm.company_names, ngm.form_types, ngm.filing_date, ngm.archive_path),
+                         ('0001426332', ('NGM BIOPHARMACEUTICALS INC',), ('SC 13E3', 'SC TO-T'), date(2024, 3, 8),
+                          'edgar/data/1426332/0001140361-24-012376.txt'))
+        self.assertEqual((rename.cik, rename.company_names, rename.form_types),
+                         (RENAME_Q1['cik'], (OLD_NAME, NEW_NAME), ('UPLOAD',)))
+        self.assertEqual([decode_row(change['after'], SCHEMA_V2) for change in lane.rows(candidate, 'changes')],
+                         [ngm, rename])
+
+    def test_permuted_lines_give_byte_identical_generations(self):
+        # A reordered raw body is another snapshot, and every row carries its snapshot hash. So the permutation
+        # is of one snapshot's observations, as the full build reads them (D5: the same observations in any order).
+        body = (line('SC TO-T') + line('UPLOAD', OLD_NAME, RENAME_Q1) + line('SC 13E3')
+                + line('UPLOAD', NEW_NAME, RENAME_Q1))
+        forward, backward = self.lane(), self.lane()
+        first = self.build(forward, [forward.observation(NGM_QUARTER, 'quarterly', body)])
+        second = self.reversed_build(backward, [backward.observation(NGM_QUARTER, 'quarterly', body)])
+        self.assertEqual(first.manifest.generation_id, second.manifest.generation_id)
+        self.assertEqual(self.files(forward, first), self.files(backward, second))
+        self.assertEqual([value['form_types'] for value in forward.rows(first)], [['SC 13E3', 'SC TO-T'], ['UPLOAD']])
+
+    def test_triple_repeat_across_batch_boundary_is_order_independent(self):
+        rows = [support_catalog.row(number=number) for number in range(1, 9001)]
+        repeat = support_catalog.row(number=9001)
+        # File lines 1 and 2 are the header, so file line L holds rows[L - 3].
+        rows[8190 - 3] = rows[8193 - 3] = repeat
+        rows[8197 - 3] = support_catalog.row(number=9001, form='10-K/A')
+        path = 'edgar/data/123456/0000123456-26-009001.txt'
+        forward, backward = self.lane(), self.lane()
+        first_ref, second_ref = (lane.observation('2026-10-01', 'daily', b''.join(rows)) for lane in (forward, backward))
+        lines = [obs.line_number for obs in read_observations(first_ref, forward.objects) if obs.row.archive_path == path]
+        self.assertEqual(lines, [8190, 8193, 8197])
+        self.assertEqual([(number - 3) // BATCH_ROWS for number in lines], [0, 0, 1])
+        first = self.build(forward, [first_ref], quarter='2026Q4')
+        second = self.reversed_build(backward, [second_ref], quarter='2026Q4')
+        self.assertEqual(first.manifest.row_count, 8998)
+        merged = [value for value in forward.rows(first) if value['archive_path'] == path]
+        self.assertEqual([value['form_types'] for value in merged], [['10-K', '10-K/A']])
+        self.assertEqual(first.manifest.generation_id, second.manifest.generation_id)
+        self.assertEqual(self.files(forward, first), self.files(backward, second))
+
+    def test_merge_never_crosses_sources(self):
+        lane = self.lane()
+        daily = lane.observation('2024-03-08', 'daily', line('SC 13E3'))
+        quarterly = lane.observation(NGM_QUARTER, 'quarterly', line('SC TO-I'))
+        candidate = self.build(lane, [daily, quarterly])
+        [row] = (decode_row(value, SCHEMA_V2) for value in lane.rows(candidate))
+        self.assertEqual(row.form_types, ('SC TO-I',))
+        self.assertEqual((row.source_id, row.source_sha256), (quarterly.source.source_id, quarterly.snapshot.sha256))
+        self.assertEqual(len(candidate.manifest.sources), 2)
+
+    def test_v2_candidate_on_v1_base_counts_provenance_refresh(self):
+        day = date(2026, 10, 7)
+        with v1_writable():
+            lane = self.lane(SCHEMA_V1)
+            lines = b''.join(support_catalog.row(number=number) for number in (1, 2, 3))
+            base = self.build(lane, [lane.observation('2026-10-01', 'daily', lines)], quarter='2026Q4')
+        self.assertEqual(base.manifest.schema_version, SCHEMA_V1)
+        lane.context = replace(lane.context, schema_version=SCHEMA_V2)
+        lane.pin(day)
+        changed = lane.observation('2026-10-02', 'daily', support_catalog.row(number=3, form='10-K/A'))
+        candidate = self.build(lane, [changed], base, quarter='2026Q4')
+        manifest = candidate.manifest
+        self.assertEqual(manifest.schema_version, SCHEMA_V2)
+        self.assertEqual((manifest.provenance_refreshed, manifest.updated, manifest.added, manifest.withdrawn,
+                          manifest.unresolved_absence), (2, 1, 0, 0, 0))
+        [change] = lane.rows(candidate, 'changes')
+        self.assertEqual(change['change_type'], 'updated')
+        self.assertEqual((change['before']['form_types'], change['before']['schema_version']), (['10-K'], SCHEMA_V1))
+        self.assertEqual((change['after']['form_types'], change['after']['schema_version']), (['10-K/A'], SCHEMA_V2))
+
+    def test_dropped_form_type_is_updated_with_clear_gate(self):
+        lane = self.lane()
+        base = self.build(lane, [lane.observation(NGM_QUARTER, 'quarterly', line('SC TO-T') + line('SC 13E3'))])
+        self.assertEqual([value['form_types'] for value in lane.rows(base)], [['SC 13E3', 'SC TO-T']])
+        newer = lane.observation(NGM_QUARTER, 'quarterly', line('SC TO-T'), seconds=1)
+        candidate = self.build(lane, [newer], base)
+        manifest = candidate.manifest
+        self.assertEqual((manifest.quarter_mode, manifest.updated, manifest.withdrawn, manifest.gate),
+                         ('closed', 1, 0, 'clear'))
+        self.assertIsNone(candidate.candidate_ref)
+        [change] = lane.rows(candidate, 'changes')
+        self.assertEqual((change['change_type'], change['before']['form_types'], change['after']['form_types']),
+                         ('updated', ['SC 13E3', 'SC TO-T'], ['SC TO-T']))
+
+    def test_validator_refuses_a_cross_source_merge(self):
+        lane = self.lane()
+        daily = lane.observation('2024-03-08', 'daily', line('SC 13E3'))
+        quarterly = lane.observation(NGM_QUARTER, 'quarterly', line('SC TO-I'))
+        candidate = self.build(lane, [daily, quarterly])
+        [value] = lane.rows(candidate)
+
+        def generation(row):
+            added = {'change_type': 'added', 'cik': row['cik'], 'archive_path': row['archive_path'],
+                     'before': None, 'after': row, 'reason': None}
+            return {'data': [row], 'changes': [added]}
+
+        # The forge itself is sound: the built row, rewritten, still validates.
+        validate_candidate_content(self.forge(lane, candidate, generation(value)), lane.objects)
+        union = self.forge(lane, candidate, generation({**value, 'form_types': ['SC 13E3', 'SC TO-I']}))
+        with self.assertRaisesRegex(ValueError, '^canonical row is not a selected observation or exact retained row$'):
+            validate_candidate_content(union, lane.objects)
 
 
 if __name__ == '__main__':

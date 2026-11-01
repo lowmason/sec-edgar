@@ -4,7 +4,7 @@ from __future__ import annotations
 import hashlib
 import sqlite3
 from collections import Counter
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
 from contextlib import closing
 from datetime import datetime
 from pathlib import Path
@@ -12,10 +12,11 @@ from tempfile import TemporaryDirectory
 
 import pyarrow.parquet as pq
 
-from ..models import SCHEMA_V1, canonical_json, parse_json, quarter_for, quarter_value, require_hash
+from ..models import SCHEMA_V2, canonical_json, parse_json, quarter_for, quarter_value, require_hash
 from ..storage.contracts import Conflict, ObjectStore
 from .contracts import (Candidate, FileRef, GenerationCapture, GenerationManifest, IndexRow,
-                        ObservationRef, WithdrawalApproval, canonical_schema, change_schema, update_fields)
+                        ObservationRef, Row, WithdrawalApproval, canonical_schema, change_schema, decode_row,
+                        merge_rows, update_fields, upgrade_row)
 from .transform import BATCH_ROWS, _file_identity, _read_manifest, read_observations
 
 
@@ -134,13 +135,14 @@ def read_manifest(capture: GenerationCapture, objects: ObjectStore) -> Generatio
     return manifest
 
 
-def iter_file_rows(ref: FileRef, objects: ObjectStore) -> Iterator[dict[str, object]]:
+def iter_file_rows(ref: FileRef, objects: ObjectStore, layout: str) -> Iterator[dict[str, object]]:
+    """One generation file's rows, after its exact hash, length and the schema of its generation's `layout`."""
     with TemporaryDirectory(prefix='sec-generation-read-') as directory:
         path = Path(directory) / 'rows.parquet'
         objects.materialize(ref.path, path)
         if _file_identity(path) != (ref.sha256, ref.byte_count):
             raise Conflict('generation file hash or length differs')
-        expected = canonical_schema(SCHEMA_V1) if ref.role == 'data' else change_schema(SCHEMA_V1)
+        expected = canonical_schema(layout) if ref.role == 'data' else change_schema(layout)
         with pq.ParquetFile(path) as parquet:
             if not parquet.schema_arrow.equals(expected, check_metadata=True):
                 raise ValueError('generation Parquet schema differs')
@@ -153,20 +155,36 @@ def iter_file_rows(ref: FileRef, objects: ObjectStore) -> Iterator[dict[str, obj
                 raise ValueError('generation file row count differs')
 
 
-def _row(value, quarter):
-    row = IndexRow(**value)
+def _row(value, quarter, layout: str) -> Row:
+    row = decode_row(value, layout)
     if quarter_for(row.filing_date) != quarter:
         raise ValueError('row is in the wrong filing quarter')
     return row
 
 
+def merged_payload(payloads: Iterable[bytes], layout: str) -> bytes:
+    """The canonical row of one key's observations in one source: their `merge_rows` (D4, D5).
+
+    Equal payloads need no decode, so a v1 source (whose rows of one key are equal) keeps today's bytes."""
+    distinct = sorted(set(payloads))
+    if len(distinct) == 1:
+        return distinct[0]
+    return canonical_json(merge_rows(decode_row(parse_json(payload), layout) for payload in distinct).to_mapping())
+
+
+def in_layout(row: Row, layout: str) -> Row:
+    """A base row as a candidate of `layout` holds it: a v1 row on a v2 candidate maps with `upgrade_row` (D8)."""
+    return upgrade_row(row) if type(row) is IndexRow and layout == SCHEMA_V2 else row
+
+
 def validate_files(manifest: GenerationManifest, objects: ObjectStore) -> None:
     """Read every emitted byte and row before creating the immutable manifest."""
     _validate_identity(manifest)
+    layout = manifest.schema_version
     counts = Counter()
     for ref in manifest.files:
         previous_key = None
-        with closing(iter_file_rows(ref, objects)) as rows:
+        with closing(iter_file_rows(ref, objects, layout)) as rows:
             for value in rows:
                 key = (value['cik'], value['archive_path'])
                 if ref.role == 'changes':
@@ -175,7 +193,7 @@ def validate_files(manifest: GenerationManifest, objects: ObjectStore) -> None:
                     raise ValueError('generation keys are duplicate or unsorted')
                 previous_key = key
                 if ref.role == 'data':
-                    _row(value, manifest.quarter)
+                    _row(value, manifest.quarter, layout)
                     counts['data'] += 1
                     continue
                 kind = value['change_type']
@@ -188,7 +206,7 @@ def validate_files(manifest: GenerationManifest, objects: ObjectStore) -> None:
                     raise ValueError('change before/after shape differs')
                 for payload in (before, after):
                     if payload is not None:
-                        row = _row(payload, manifest.quarter)
+                        row = _row(payload, manifest.quarter, layout)
                         if (row.cik, row.archive_path) != key[:2]:
                             raise ValueError('change logical key differs')
                 if kind == 'unresolved_absence' and (before != after or not value['reason']):
@@ -225,8 +243,26 @@ def _base_manifest(manifest, objects):
     return previous
 
 
+def _merge_by_source(db, layout):
+    """`allowed` gets the merged row of every (key, source), `winners` that of each key's top-ranked source (D4)."""
+    def store(group, payloads):
+        if group is not None:
+            payload = merged_payload(payloads, layout)
+            db.execute('INSERT OR IGNORE INTO allowed VALUES(?)', (payload,))
+            db.execute('INSERT OR IGNORE INTO winners VALUES(?,?,?)', (*group[:2], payload))
+    # One source has one rank, so each (key, source) is one run of this order, and a key's first run wins.
+    group, payloads = None, []
+    for cik, path, source, payload in db.execute('SELECT cik,path,source,payload FROM ranked ORDER BY cik,path,preference DESC,period DESC,receipt DESC,source ASC'):
+        if (cik, path, source) != group:
+            store(group, payloads)
+            group, payloads = (cik, path, source), []
+        payloads.append(payload)
+    store(group, payloads)
+
+
 def _validate_row_origins(manifest, objects):
     base_manifest = _base_manifest(manifest, objects)
+    layout = manifest.schema_version
     with TemporaryDirectory(prefix='sec-candidate-verify-') as directory, closing(sqlite3.connect(Path(directory) / 'verify.sqlite')) as db:
         db.execute('PRAGMA temp_store=FILE')
         db.execute('CREATE TABLE allowed(payload BLOB PRIMARY KEY)')
@@ -245,25 +281,24 @@ def _validate_row_origins(manifest, objects):
                 for obs in rows:
                     if quarter_for(obs.row.filing_date) == manifest.quarter:
                         payload = canonical_json(obs.row.to_mapping())
-                        db.execute('INSERT OR IGNORE INTO allowed VALUES(?)', (payload,))
                         db.execute('INSERT INTO ranked VALUES(?,?,?,?,?,?,?)',
                                    (obs.row.cik, obs.row.archive_path, payload, int(ref.source.kind == 'quarterly'),
                                     ref.source.period, ref.snapshot.received_at.isoformat(), ref.source.source_id))
                         if ref == manifest.membership_source:
                             db.execute('INSERT OR IGNORE INTO membership VALUES(?,?)', (obs.row.cik, obs.row.archive_path))
-        db.execute('INSERT OR IGNORE INTO winners SELECT cik,path,payload FROM ranked ORDER BY cik,path,preference DESC,period DESC,receipt DESC,source ASC')
+        _merge_by_source(db, layout)
         if base_manifest:
             for ref in base_manifest.files:
                 if ref.role == 'data':
-                    with closing(iter_file_rows(ref, objects)) as rows:
+                    with closing(iter_file_rows(ref, objects, base_manifest.schema_version)) as rows:
                         for value in rows:
-                            row = _row(value, manifest.quarter)
+                            row = in_layout(_row(value, manifest.quarter, base_manifest.schema_version), layout)
                             db.execute('INSERT INTO base_rows VALUES(?,?,?)', (row.cik, row.archive_path, canonical_json(row.to_mapping())))
         for ref in manifest.files:
             if ref.role == 'data':
-                with closing(iter_file_rows(ref, objects)) as rows:
+                with closing(iter_file_rows(ref, objects, layout)) as rows:
                     for value in rows:
-                        row = _row(value, manifest.quarter)
+                        row = _row(value, manifest.quarter, layout)
                         payload = canonical_json(row.to_mapping())
                         key = row.cik, row.archive_path
                         allowed = db.execute('SELECT 1 FROM allowed WHERE payload=?', (payload,)).fetchone()
@@ -273,20 +308,20 @@ def _validate_row_origins(manifest, objects):
                         db.execute('INSERT INTO output VALUES(?,?,?)', (*key, payload))
         for ref in manifest.files:
             if ref.role == 'changes':
-                with closing(iter_file_rows(ref, objects)) as rows:
+                with closing(iter_file_rows(ref, objects, layout)) as rows:
                     for value in rows:
                         key = value['cik'], value['archive_path']
                         normalized = dict(value)
                         for field in ('before', 'after'):
                             if normalized[field] is not None:
-                                normalized[field] = _row(normalized[field], manifest.quarter).to_mapping()
+                                normalized[field] = _row(normalized[field], manifest.quarter, layout).to_mapping()
                         if db.execute('SELECT 1 FROM actual_changes WHERE cik=? AND path=?', key).fetchone():
                             raise ValueError('delta has multiple changes for one logical key')
                         db.execute('INSERT INTO actual_changes VALUES(?,?,?)', (*key, canonical_json(normalized)))
                         after = value['after']
                         output = db.execute('SELECT payload FROM output WHERE cik=? AND path=?', key).fetchone()
                         if after is not None:
-                            if output is None or output[0] != canonical_json(_row(after, manifest.quarter).to_mapping()):
+                            if output is None or output[0] != canonical_json(_row(after, manifest.quarter, layout).to_mapping()):
                                 raise ValueError('change after row differs from canonical output')
                         elif output is not None:
                             raise ValueError('withdrawn key remains in canonical output')
@@ -296,7 +331,7 @@ def _validate_row_origins(manifest, objects):
                                 raise ValueError('unresolved row differs from exact retained base')
                             db.execute('INSERT INTO unresolved VALUES(?,?)', key)
                         if value['change_type'] == 'updated':
-                            if all(value['before'][field] == after[field] for field in update_fields(SCHEMA_V1)):
+                            if all(value['before'][field] == after[field] for field in update_fields(layout)):
                                 raise ValueError('provenance-only difference is not a business update')
         wrong_rank = db.execute('SELECT 1 FROM output o LEFT JOIN winners w ON o.cik=w.cik AND o.path=w.path LEFT JOIN unresolved u ON o.cik=u.cik AND o.path=u.path WHERE u.cik IS NULL AND (w.payload IS NULL OR w.payload != o.payload) LIMIT 1').fetchone()
         if wrong_rank:
@@ -341,7 +376,7 @@ def _validate_deltas(db, manifest):
                 if before != after:
                     raise ValueError('delta unresolved absence must preserve the exact base row')
                 kind, reason = 'unresolved_absence', 'absence is not authoritative withdrawal evidence'
-            elif any(before[field] != after[field] for field in update_fields(SCHEMA_V1)):
+            elif any(before[field] != after[field] for field in update_fields(manifest.schema_version)):
                 kind = 'updated'
             elif before != after:
                 counts['provenance_refreshed'] += 1

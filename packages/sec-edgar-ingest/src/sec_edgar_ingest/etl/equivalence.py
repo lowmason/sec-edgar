@@ -13,7 +13,7 @@ from tempfile import TemporaryDirectory
 
 import pyarrow.compute as pc
 
-from ..models import RunContext, canonical_json
+from ..models import SCHEMA_V1, RunContext, canonical_json
 from ..storage.contracts import ObjectStore
 from .columnar import (generation_table, key_column, key_mask, quarter_key_column, quarter_observations,
                        table_keys)
@@ -28,7 +28,7 @@ CHANGE_FIELDS = ('change_type', 'cik', 'archive_path', 'before', 'after', 'reaso
 def _change_payload(value, quarter) -> bytes:
     for field in ('before', 'after'):
         if value[field] is not None:
-            value[field] = _row(value[field], quarter).to_mapping()
+            value[field] = _row(value[field], quarter, SCHEMA_V1).to_mapping()
     return canonical_json({name: value[name] for name in CHANGE_FIELDS})
 
 
@@ -60,7 +60,7 @@ def _expected(manifest, base_data, keys, context, objects):
         for value in base_data.filter(key_mask(base_data, keys)).to_pylist():
             row = IndexRow(**value)
             db.execute('INSERT INTO active VALUES(?,?,?)', (row.cik, row.archive_path, canonical_json(row.to_mapping())))
-        counts = _resolve(db, manifest.quarter_mode, manifest.membership_source)
+        counts = _resolve(db, manifest.quarter_mode, manifest.membership_source, SCHEMA_V1)
         rows = {(cik, path): payload for cik, path, payload in db.execute('SELECT cik,path,payload FROM proposed')}
         changes = {(cik, path): payload for cik, path, payload in db.execute('SELECT cik,path,payload FROM changes')}
     return rows, changes, counts
@@ -90,7 +90,7 @@ def validate_incremental_candidate(candidate: Candidate, previous: GenerationCap
     expected_rows, expected_changes, counts = _expected(manifest, base_data, keys, context, objects)
     actual_rows = {}
     for value in data.filter(key_mask(data, keys)).to_pylist():
-        row = _row(value, quarter)
+        row = _row(value, quarter, SCHEMA_V1)
         actual_rows[row.cik, row.archive_path] = canonical_json(row.to_mapping())
     if actual_rows != expected_rows:
         raise ValueError('incremental rows differ from the full resolution of their keys')

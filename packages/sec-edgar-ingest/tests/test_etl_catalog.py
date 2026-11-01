@@ -74,7 +74,7 @@ class EtlCatalogTests(unittest.TestCase):
 
     def rows(self, candidate, role='data'):
         return [value for ref in candidate.manifest.files if ref.role == role
-                for value in iter_file_rows(ref, self.objects)]
+                for value in iter_file_rows(ref, self.objects, SCHEMA_V1)]
 
     def test_stale_snapshot_cannot_replace_newer_source_revision(self):
         source = fixture_source()

@@ -75,7 +75,7 @@ class Lane:
 
     def rows(self, candidate, role='data'):
         return [value for ref in candidate.manifest.files if ref.role == role
-                for value in iter_file_rows(ref, self.objects)]
+                for value in iter_file_rows(ref, self.objects, candidate.manifest.schema_version)]
 
     def path(self, name):
         return self.root / 'objects' / name

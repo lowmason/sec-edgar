@@ -4,7 +4,7 @@ from __future__ import annotations
 from collections.abc import Iterator
 from contextlib import closing
 
-from ..models import quarter_value
+from ..models import SCHEMA_V1, quarter_value
 from ..state import AcquisitionState
 from ..storage.contracts import Conflict, ObjectStore
 from .approval import superseding
@@ -71,7 +71,7 @@ def withdrawal_candidates(objects: ObjectStore, state: EtlState) -> tuple[dict[s
                   else 'stale' if active != manifest.base_generation_id
                   else 'superseded' if superseding(candidate, observed) is not None else 'pending')
         changes = _changes(manifest)
-        with closing(iter_file_rows(changes, objects)) as rows:
+        with closing(iter_file_rows(changes, objects, SCHEMA_V1)) as rows:
             withdrawn = [IndexRow(**value['before']).to_mapping() for value in rows
                          if value['change_type'] == 'withdrawn']
         entries.append({'quarter': manifest.quarter, 'generation_id': manifest.generation_id,
