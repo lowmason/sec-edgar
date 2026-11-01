@@ -861,17 +861,19 @@ class IncrementalV2Tests(unittest.TestCase):
     def files(lane, candidate):
         return {ref.role: lane.path(ref.path).read_bytes() for ref in candidate.manifest.files}
 
-    def build(self, day, rows, base=None):
-        """One daily source of `day` on `base` in both lanes. On a base the fast lane must build incrementally,
-        give the full lane's bytes and pass C6. Returns both candidates and the fast lane's source."""
+    def build(self, day, rows, base=None, *, incremental=None, seconds=0):
+        """One daily source of `day` on `base` in both lanes, with the full lane's bytes. When `incremental`
+        (by default, on a base) the fast lane must build incrementally and pass C6.
+        Returns both candidates and the fast lane's source."""
+        incremental = base is not None if incremental is None else incremental
         twin = self.twin
-        pair = twin.observation(day, 'daily', rows)
+        pair = twin.observation(day, 'daily', rows, seconds=seconds)
         (fast, full), built = twin.build([pair], base)
-        self.assertEqual(built, 0 if base is None else 1)
+        self.assertEqual(built, int(incremental))
         self.assertEqual(fast.manifest.schema_version, SCHEMA_V2)
         self.assertEqual(fast, full)
         self.assertEqual(self.files(twin.fast, fast), self.files(twin.full, full))
-        if base is not None:
+        if incremental:
             validate_incremental_candidate(fast, support_catalog.capture(base[0]), twin.fast.context,
                                            twin.fast.objects)
         return (fast, full), pair[0]
@@ -901,6 +903,32 @@ class IncrementalV2Tests(unittest.TestCase):
         [change] = self.twin.fast.rows(candidate, 'changes')
         self.assertEqual((change['change_type'], change['before']['form_types'], change['after']['form_types']),
                          ('updated', ['SC TO-T'], ['SC 13E3']))
+
+    def test_incremental_over_a_retained_v1_row_matches_the_full_rebuild(self):
+        with v1_writable():
+            self.twin = Twin(schema_version=SCHEMA_V1)
+            self.addCleanup(self.twin.close)
+            first = self.twin.observation('2026-10-01', 'daily', support_catalog.row(number=1)
+                                          + support_catalog.row(number=2))
+            v1, _ = self.twin.build([first])
+        self.assertEqual(v1[0].manifest.schema_version, SCHEMA_V1)
+        for lane in (self.twin.fast, self.twin.full):
+            lane.context = replace(lane.context, parser_version=V2_VERSIONS[0], schema_version=V2_VERSIONS[1])
+            lane.pin(lane.context.pinned_on)
+        # A replacement snapshot of the same source omits key 2, so the v2 rebuild retains its v1 row (D8).
+        base, _ = self.build('2026-10-01', support_catalog.row(number=1), v1, incremental=False, seconds=1)
+        self.assertEqual(base[0].manifest.unresolved_absence, 1)
+        (candidate, _), _ = self.build('2026-10-02', support_catalog.row(number=3), base)
+        manifest = candidate.manifest
+        self.assertEqual((manifest.added, manifest.unresolved_absence, manifest.retained_from_generation),
+                         (1, 1, base[0].manifest.generation_id))
+        key_2 = lambda values: [value for value in values if value['archive_path'].endswith('000002.txt')]
+        [retained] = key_2(self.twin.fast.rows(candidate))
+        self.assertEqual((retained['parser_version'], retained['schema_version']), V1_VERSIONS)
+        self.assertEqual((retained['company_names'], retained['form_types']), (['Example'], ['10-K']))
+        [change] = key_2(self.twin.fast.rows(candidate, 'changes'))
+        self.assertEqual((change['change_type'], change['before'], change['after']),
+                         ('unresolved_absence', retained, retained))
 
 
 if __name__ == '__main__':
