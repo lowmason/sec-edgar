@@ -7,12 +7,16 @@ from collections.abc import Iterator
 from datetime import date
 from pathlib import Path
 
-from ..models import SCHEMA_V1, Source, Snapshot, safe_relative_path
+from ..models import KNOWN_SCHEMAS, SCHEMA_V1, SCHEMA_V2, Source, Snapshot, safe_relative_path
 from ..validation import DAILY_HEADER, QUARTERLY_HEADER, INVALID_CONTROL, NON_ASCII
-from .contracts import IndexRow, Observation
+from .contracts import IndexRow, IndexRowV2, Observation
 
-PARSER_VERSION = 'sec-index-parser-v1'
+PARSER_V1 = 'sec-index-parser-v1'
+PARSER_V2 = 'sec-index-parser-v2'
+PARSER_VERSION = PARSER_V1
 FIXTURE_PARSERS = frozenset(('fixture-index-parser-v1', 'fixture-index-parser-v2'))
+# A release parser pairs with one schema. A fixture parser pairs with any known schema (plan P2).
+_PARSER_SCHEMA = {PARSER_V1: SCHEMA_V1, PARSER_V2: SCHEMA_V2}
 FIELD_COUNT = 5
 PREAMBLE_LABELS = ('Description:', 'Last Data Received:', 'Comments:', 'Anonymous FTP:', 'Cloud HTTP:')
 
@@ -24,14 +28,21 @@ class ParseError(ValueError):
 
 
 def supported_parser(version: str, *, fixture: bool) -> None:
-    if version != PARSER_VERSION and not (fixture and version in FIXTURE_PARSERS):
+    if version not in _PARSER_SCHEMA and not (fixture and version in FIXTURE_PARSERS):
         raise ValueError(f'unsupported parser version: {version}')
 
 
-def _versions(parser_version: str, schema_version: str) -> None:
-    supported_parser(parser_version, fixture=True)
-    if schema_version != SCHEMA_V1:
+def supported_pair(parser_version: str, schema_version: str, *, fixture: bool) -> None:
+    supported_parser(parser_version, fixture=fixture)
+    if schema_version not in KNOWN_SCHEMAS:
         raise ValueError(f'unsupported schema version: {schema_version}')
+    paired = _PARSER_SCHEMA.get(parser_version)
+    if paired is not None and paired != schema_version:
+        raise ValueError('parser and schema versions do not pair')
+
+
+def _versions(parser_version: str, schema_version: str) -> None:
+    supported_pair(parser_version, schema_version, fixture=True)
 
 
 def parse_fields(fields: tuple[str, str, str, str, str], source: Source, snapshot: Snapshot,
@@ -65,8 +76,12 @@ def parse_fields(fields: tuple[str, str, str, str, str], source: Source, snapsho
     match = re.fullmatch(r'edgar/data/[0-9]{1,10}/([0-9]{10}-[0-9]{2}-[0-9]{6})\.txt', path)
     accession = match.group(1) if match else None
     try:
-        row = IndexRow(normalized_cik, company, form, path, filing_date, accession,
-                       source.source_id, snapshot.sha256, parser_version, schema_version)
+        if schema_version == SCHEMA_V2:
+            row = IndexRowV2(normalized_cik, (company,), (form,), path, filing_date, accession,
+                             source.source_id, snapshot.sha256, parser_version, schema_version)
+        else:
+            row = IndexRow(normalized_cik, company, form, path, filing_date, accession,
+                           source.source_id, snapshot.sha256, parser_version, schema_version)
         return Observation(row, original_fields, line_number)
     except (TypeError, ValueError) as error:
         raise ParseError(line_number, str(error)) from error

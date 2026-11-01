@@ -1,7 +1,9 @@
 """The sec-index-v2 row contract, its Arrow layouts and the schema version registry (Stage 2a)."""
 import itertools
+import json
 import tempfile
 import unittest
+from contextlib import closing
 from dataclasses import replace
 from datetime import date
 from pathlib import Path
@@ -9,7 +11,15 @@ from pathlib import Path
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from support import fixture_context, fixture_source
+from support import fixture_context, fixture_snapshot, fixture_source
+from support_etl import etl_context, seed_snapshot
+from support_workflows import idx
+from sec_edgar_ingest.etl.columnar import quarter_observations
+from sec_edgar_ingest.etl import parser
+from sec_edgar_ingest.etl.parser import ParseError, iter_observations, parse_fields
+from sec_edgar_ingest.etl.state import EtlState
+from sec_edgar_ingest.etl.transform import _remember_observation, _seen_database, read_observations, transform_workset
+from sec_edgar_ingest.state import AcquisitionState
 from sec_edgar_ingest.etl.contracts import (
     ORIGINAL_FIELD_COUNT, IndexRow, IndexRowV2, arrow_row, business_fields, canonical_schema, change_schema,
     conflict_payload, decode_row, merge_rows, observation_schema, row_type, update_fields, upgrade_row,
@@ -270,6 +280,172 @@ class WriteSiteMessageTests(unittest.TestCase):
                  patch.object(models, 'WRITABLE_SCHEMAS', frozenset({SCHEMA_V2})):
                 args = cli._parser().parse_args(argv)
                 self.assertRefused('unsupported ETL schema version', lambda: validate(args))
+
+
+def listing_row(kind, form, name=NGM_NAME, filed=date(2024, 3, 8), key=NGM):
+    """One index line of `kind` for `key`, with the filing date spelt as that family spells it."""
+    text = filed.isoformat() if kind == 'quarterly' else f'{filed:%Y%m%d}'
+    return (key['cik'].lstrip('0'), name, form, text, key['archive_path'])
+
+
+class ParserV2Tests(unittest.TestCase):
+    FIELDS = ('1426332', NGM_NAME, 'SC 13E3', '2024-03-08', NGM['archive_path'])
+
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.root = Path(self.temporary.name)
+
+    def transform(self, kind, rows, label, *, schema_version=SCHEMA_V2, filed=date(2024, 3, 8)):
+        """Transform one source of `rows` under its own store. Returns the result, the objects and the store root."""
+        root = self.root / label
+        root.mkdir()
+        quarter = f'{filed.year}Q{(filed.month - 1) // 3 + 1}'
+        source = fixture_source(quarter if kind == 'quarterly' else filed.isoformat(), kind)
+        settings, context = etl_context(root=root, schema_version=schema_version)
+        store, objects, origin = seed_snapshot(root, source, idx(rows, kind))
+        self.addCleanup(store.close)
+        path = f'worksets/sec/snapshot/sha256={origin.workset_id}/workset.json'
+        result = transform_workset(path, context, settings, objects, EtlState(store), AcquisitionState(store))
+        return result, objects, root
+
+    def test_v2_observation_has_one_item_lists(self):
+        source = fixture_source('2024Q1', 'quarterly')
+        snapshot = fixture_snapshot(source, b'fixture')
+        for parser_version in (parser.PARSER_V2, 'fixture-index-parser-v1'):
+            with self.subTest(parser_version=parser_version):
+                obs = parse_fields(self.FIELDS, source, snapshot, line_number=7, parser_version=parser_version,
+                                   schema_version=SCHEMA_V2)
+                self.assertIs(type(obs.row), IndexRowV2)
+                self.assertEqual(obs.row.form_types, ('SC 13E3',))
+                self.assertEqual(obs.row.company_names, (NGM_NAME,))
+                self.assertEqual((obs.row.parser_version, obs.row.schema_version), (parser_version, SCHEMA_V2))
+                self.assertEqual((obs.row.cik, obs.row.filing_date, obs.row.accession_number),
+                                 (NGM['cik'], NGM['filing_date'], NGM['accession_number']))
+                self.assertEqual((obs.original_fields, obs.line_number), (self.FIELDS, 7))
+
+    def test_v1_path_still_emits_v1_rows(self):
+        source = fixture_source('2024Q1', 'quarterly')
+        snapshot = fixture_snapshot(source, b'fixture')
+        obs = parse_fields(self.FIELDS, source, snapshot, line_number=7, parser_version='sec-index-parser-v1',
+                           schema_version=SCHEMA_V1)
+        expected = IndexRow(NGM['cik'], NGM_NAME, 'SC 13E3', NGM['archive_path'], NGM['filing_date'],
+                            NGM['accession_number'], source.source_id, snapshot.sha256, 'sec-index-parser-v1',
+                            SCHEMA_V1)
+        self.assertIs(type(obs.row), IndexRow)
+        self.assertEqual(obs.row, expected)
+        self.assertEqual((obs.original_fields, obs.line_number), (self.FIELDS, 7))
+
+    def test_pairs(self):
+        self.assertEqual((parser.PARSER_V1, parser.PARSER_V2), ('sec-index-parser-v1', 'sec-index-parser-v2'))
+        for parser_version, schema_version in (('sec-index-parser-v2', SCHEMA_V1), ('sec-index-parser-v1', SCHEMA_V2)):
+            with self.subTest(parser_version=parser_version, schema_version=schema_version):
+                for fixture in (False, True):
+                    with self.assertRaisesRegex(ValueError, '^parser and schema versions do not pair$'):
+                        parser.supported_pair(parser_version, schema_version, fixture=fixture)
+        parser.supported_pair('sec-index-parser-v1', SCHEMA_V1, fixture=False)
+        parser.supported_pair('sec-index-parser-v2', SCHEMA_V2, fixture=False)
+        for parser_version in ('fixture-index-parser-v1', 'fixture-index-parser-v2'):
+            for schema_version in (SCHEMA_V1, SCHEMA_V2):
+                parser.supported_pair(parser_version, schema_version, fixture=True)
+                with self.assertRaisesRegex(ValueError, 'unsupported parser version'):
+                    parser.supported_pair(parser_version, schema_version, fixture=False)
+        with self.assertRaisesRegex(ValueError, 'unsupported schema version: sec-index-v3'):
+            parser.supported_pair('sec-index-parser-v2', 'sec-index-v3', fixture=False)
+        parser.supported_parser('sec-index-parser-v1', fixture=False)
+        parser.supported_parser('sec-index-parser-v2', fixture=False)
+        with self.assertRaisesRegex(ValueError, 'unsupported parser version'):
+            parser.supported_parser('sec-index-parser-v3', fixture=True)
+
+    def test_unpaired_versions_refuse_before_any_row_or_file_is_read(self):
+        from unittest.mock import patch
+        source = fixture_source('2024Q1', 'quarterly')
+        snapshot = fixture_snapshot(source, b'fixture')
+        for parser_version, schema_version in (('sec-index-parser-v2', SCHEMA_V1), ('sec-index-parser-v1', SCHEMA_V2)):
+            with self.subTest(parser_version=parser_version, schema_version=schema_version):
+                with self.assertRaisesRegex(ValueError, 'parser and schema versions do not pair'):
+                    parse_fields(self.FIELDS, source, snapshot, line_number=7, parser_version=parser_version,
+                                 schema_version=schema_version)
+                with patch.object(Path, 'open', side_effect=AssertionError('opened')):
+                    with self.assertRaisesRegex(ValueError, 'parser and schema versions do not pair'):
+                        list(iter_observations(Path('/does-not-exist'), source, snapshot,
+                                               parser_version=parser_version, schema_version=schema_version))
+
+    def test_combined_filing_transforms_in_both_families(self):
+        for kind in ('quarterly', 'daily'):
+            with self.subTest(kind=kind):
+                rows = [listing_row(kind, 'SC TO-T'), listing_row(kind, 'SC 13E3')]
+                result, objects, _ = self.transform(kind, rows, kind)
+                self.assertTrue(result.complete, result.failures)
+                ref = result.observations[0]
+                self.assertEqual((ref.source_row_count, ref.distinct_key_count), (2, 1))
+                self.assertEqual(dict(ref.quarter_counts), {'2024Q1': 2})
+                observed = list(read_observations(ref, objects))
+                self.assertEqual([type(obs.row) for obs in observed], [IndexRowV2, IndexRowV2])
+                self.assertEqual([(obs.line_number, obs.row.form_types) for obs in observed],
+                                 [(3, ('SC TO-T',)), (4, ('SC 13E3',))])
+                self.assertEqual([obs.original_fields[2] for obs in observed], ['SC TO-T', 'SC 13E3'])
+
+    def test_company_rename_transforms_in_both_families(self):
+        key = dict(RENAME, archive_path='edgar/data/1551986/0000000000-26-000001.txt')
+        filed = date(2026, 1, 5)
+        for kind in ('quarterly', 'daily'):
+            with self.subTest(kind=kind):
+                rows = [listing_row(kind, 'UPLOAD', OLD_NAME, filed, key),
+                        listing_row(kind, 'UPLOAD', NEW_NAME, filed, key)]
+                result, objects, _ = self.transform(kind, rows, kind, filed=filed)
+                self.assertTrue(result.complete, result.failures)
+                ref = result.observations[0]
+                self.assertEqual((ref.source_row_count, ref.distinct_key_count), (2, 1))
+                observed = list(read_observations(ref, objects))
+                self.assertEqual([obs.row.company_names for obs in observed], [(OLD_NAME,), (NEW_NAME,)])
+                self.assertEqual({obs.row.accession_number for obs in observed}, {'0000000000-26-000001'})
+
+    def test_filing_date_conflict_still_refuses_the_source(self):
+        later = date(2024, 3, 9)
+        reason = 'conflicting duplicate logical key'
+        body = idx([listing_row('daily', 'SC 13E3'), listing_row('daily', 'SC 13E3', filed=later)], 'daily')
+        source = fixture_source('2024-03-08', 'daily')
+        path = self.root / 'master.idx'
+        path.write_bytes(body)
+        with closing(_seen_database(self.root / 'seen.sqlite')) as db, self.assertRaises(ParseError) as raised:
+            for obs in iter_observations(path, source, fixture_snapshot(source, body),
+                                         parser_version='sec-index-parser-v2', schema_version=SCHEMA_V2):
+                _remember_observation(db, obs)
+        self.assertEqual((raised.exception.line_number, raised.exception.reason), (4, reason))
+        for kind in ('quarterly', 'daily'):
+            with self.subTest(kind=kind):
+                rows = [listing_row(kind, 'SC 13E3'), listing_row(kind, 'SC 13E3', filed=later)]
+                result, _, root = self.transform(kind, rows, kind)
+                self.assertFalse(result.complete)
+                self.assertEqual(result.observations, ())
+                self.assertEqual((result.failures[0].details['line_number'], result.failures[0].details['reason']),
+                                 (4, reason))
+                retained = [json.loads(item.read_bytes()) for item in (root / 'objects/quarantine').rglob('error.json')]
+                self.assertEqual(len(retained), 1)
+                self.assertEqual((retained[0]['details']['line_number'], retained[0]['details']['reason']), (4, reason))
+
+    def test_v1_form_or_name_repeat_still_refuses_the_source(self):
+        for kind in ('quarterly', 'daily'):
+            for differs, other in (('form', listing_row(kind, 'SC TO-T')),
+                                   ('name', listing_row(kind, 'SC 13E3', 'OTHER INC'))):
+                with self.subTest(kind=kind, differs=differs):
+                    result, _, _ = self.transform(kind, [listing_row(kind, 'SC 13E3'), other], kind + differs,
+                                                  schema_version=SCHEMA_V1)
+                    self.assertFalse(result.complete)
+                    self.assertEqual(result.failures[0].details['reason'], 'conflicting duplicate logical key')
+                    self.assertEqual(result.failures[0].details['line_number'], 4)
+
+    def test_columnar_and_full_readers_decode_v2_alike(self):
+        rows = [listing_row('quarterly', 'SC TO-T'), listing_row('quarterly', 'SC 13E3')]
+        result, objects, _ = self.transform('quarterly', rows, 'columnar')
+        ref = result.observations[0]
+        expected = list(read_observations(ref, objects))
+        self.assertTrue(all(type(obs.row) is IndexRowV2 for obs in expected))
+        self.assertEqual(list(quarter_observations(ref, objects, '2024Q1')), expected)
+        keys = {(NGM['cik'], NGM['archive_path'])}
+        self.assertEqual(list(quarter_observations(ref, objects, '2024Q1', keys)), expected)
+        self.assertEqual(list(quarter_observations(ref, objects, '2024Q2')), [])
 
 
 if __name__ == '__main__':

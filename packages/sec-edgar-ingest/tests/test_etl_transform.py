@@ -57,8 +57,8 @@ class EtlTransformTests(unittest.TestCase):
         self.assertEqual(dict(ref.quarter_counts), {'2025Q3': 2, '2026Q1': 1})
         self.assertEqual([obs.line_number for obs in read_observations(ref, self.objects)], [3, 4, 5])
 
-    def test_conflicting_last_duplicate_after_full_batch_quarantines_source(self):
-        self.seed(HEADER + ROW * 8192 + ROW.replace(b'Example Corp', b'Other Corp'))
+    def test_non_list_conflicting_last_duplicate_after_full_batch_quarantines_source(self):
+        self.seed(HEADER + ROW * 8192 + ROW.replace(b'20250825', b'20250826'))
         result = self.transform()
         self.assertFalse(result.complete)
         self.assertEqual(result.observations, ())
@@ -67,6 +67,17 @@ class EtlTransformTests(unittest.TestCase):
         self.assertEqual(list(self.store.scan('Processing', {})), [])
         quarantine = list((self.root / 'objects/quarantine').rglob('error.json'))
         self.assertEqual(len(quarantine), 1)
+
+    def test_form_or_name_repeat_now_transforms(self):
+        self.settings, self.context = etl_context(root=self.root, schema_version='sec-index-v2')
+        self.seed(HEADER + ROW * 8192 + ROW.replace(b'Example Corp', b'Other Corp'))
+        result = self.transform()
+        self.assertTrue(result.complete, result.failures)
+        self.assertEqual(result.failures, ())
+        ref = result.observations[0]
+        self.assertEqual((ref.source_row_count, ref.distinct_key_count), (8193, 1))
+        self.assertEqual(len(list(self.store.scan('Processing', {}))), 1)
+        self.assertEqual(list((self.root / 'objects/quarantine').rglob('error.json')), [])
 
     def test_corrupt_raw_and_accepted_data_fail_closed(self):
         self.seed()

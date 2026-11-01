@@ -16,7 +16,7 @@ import pyarrow.parquet as pq
 
 from ..models import SCHEMA_V1, quarter_value
 from ..storage.contracts import Conflict, ObjectStore
-from .contracts import (FileRef, IndexRow, Observation, ObservationRef, canonical_schema, change_schema,
+from .contracts import (FileRef, Observation, ObservationRef, canonical_schema, change_schema, decode_row,
                         observation_schema)
 from .transform import _file_identity
 
@@ -68,7 +68,7 @@ def _quarter_bounds(quarter: str) -> tuple[date, date]:
 
 
 def _quarter_table(ref: ObservationRef, objects: ObjectStore, quarter: str) -> pa.Table:
-    table = _read_table(ref.rows_ref, ref.rows_sha256, ref.rows_bytes, objects, observation_schema(SCHEMA_V1),
+    table = _read_table(ref.rows_ref, ref.rows_sha256, ref.rows_bytes, objects, observation_schema(ref.schema_version),
                         'observation bytes differ from manifest hash or length', 'observation Parquet schema differs')
     if table.num_rows != ref.source_row_count:
         raise ValueError('observation readback counts differ')
@@ -91,4 +91,4 @@ def quarter_observations(ref: ObservationRef, objects: ObjectStore, quarter: str
     for value in table.to_pylist():
         original = tuple(value.pop('original_fields'))
         line_number = value.pop('line_number')
-        yield Observation(IndexRow(**value), original, line_number)
+        yield Observation(decode_row(value, ref.schema_version), original, line_number)

@@ -15,15 +15,15 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 from ..config import Settings, pin_context
-from ..models import (SCHEMA_V1, to_mapping_value, BodyReceipt, Error, RunContext, Snapshot, Source,
+from ..models import (to_mapping_value, BodyReceipt, Error, RunContext, Snapshot, Source,
                       canonical_json, error_text, parse_json, quarter_for)
 from ..state import AcquisitionState
 from ..storage.contracts import BoundaryObserver, Conflict, FILE_CHUNK_BYTES, ObjectStore, observe
 from ..validation import validate_envelope
 from ..worksets import decode_snapshot_workset, decode_source_workset, make_snapshot_workset
-from .contracts import (TRANSFORMED_FORMAT, IndexRow, Observation, ObservationRef, TransformedWorkset,
-                        decode_transformed, encode_transformed, observation_base, observation_schema,
-                        processing_key, transformed_ref)
+from .contracts import (TRANSFORMED_FORMAT, Observation, ObservationRef, TransformedWorkset,
+                        conflict_payload, decode_row, decode_transformed, encode_transformed, observation_base,
+                        observation_schema, processing_key, transformed_ref)
 from .parser import ParseError, iter_observations, parse_fields, supported_parser
 from .state import EtlState
 
@@ -56,7 +56,7 @@ def _seen_database(path: Path):
 
 def _remember_observation(db, obs: Observation) -> None:
     key = (obs.row.cik, obs.row.archive_path)
-    normalized = canonical_json(obs.row.to_mapping())
+    normalized = conflict_payload(obs.row)
     old = db.execute('SELECT payload FROM seen WHERE cik=? AND path=?', key).fetchone()
     if old is not None and old[0] != normalized:
         raise ParseError(obs.line_number, 'conflicting duplicate logical key')
@@ -64,22 +64,22 @@ def _remember_observation(db, obs: Observation) -> None:
         db.execute('INSERT INTO seen(cik,path,payload) VALUES(?,?,?)', (*key, normalized))
 
 
-def _parquet_observations(path: Path) -> Iterator[Observation]:
+def _parquet_observations(path: Path, layout: str) -> Iterator[Observation]:
     with pq.ParquetFile(path) as parquet:
-        if not parquet.schema_arrow.equals(observation_schema(SCHEMA_V1), check_metadata=True):
+        if not parquet.schema_arrow.equals(observation_schema(layout), check_metadata=True):
             raise ValueError('observation Parquet schema differs')
         for batch in parquet.iter_batches(batch_size=BATCH_ROWS):
             for value in batch.to_pylist():
                 original = tuple(value.pop('original_fields'))
                 line_number = value.pop('line_number')
-                yield Observation(IndexRow(**value), original, line_number)
+                yield Observation(decode_row(value, layout), original, line_number)
 
 
 def _verify_parquet(path: Path, ref: ObservationRef, database: Path) -> None:
     if _file_identity(path) != (ref.rows_sha256, ref.rows_bytes):
         raise Conflict('observation bytes differ from manifest hash or length')
     quarters, count, previous_line = Counter(), 0, 0
-    with closing(_seen_database(database)) as db, closing(_parquet_observations(path)) as rows:
+    with closing(_seen_database(database)) as db, closing(_parquet_observations(path, ref.schema_version)) as rows:
         for obs in rows:
             expected = parse_fields(obs.original_fields, ref.source, ref.snapshot,
                                     line_number=obs.line_number, parser_version=ref.parser_version,
@@ -101,7 +101,7 @@ def read_observations(ref: ObservationRef, objects: ObjectStore) -> Iterator[Obs
         path = root / 'rows.parquet'
         objects.materialize(ref.rows_ref, path)
         _verify_parquet(path, ref, root / 'verify.sqlite')
-        with closing(_parquet_observations(path)) as rows:
+        with closing(_parquet_observations(path, ref.schema_version)) as rows:
             yield from rows
 
 
@@ -192,11 +192,12 @@ def _validate_raw(source, snapshot, context, settings, objects, path):
 
 def _write_rows(raw, root, source, snapshot, context):
     path = root / 'rows.parquet'
+    schema = observation_schema(context.schema_version)
     count, quarters, batch = 0, Counter(), []
     with (closing(_seen_database(root / 'seen.sqlite')) as db,
           closing(iter_observations(raw, source, snapshot, parser_version=context.parser_version,
                                     schema_version=context.schema_version)) as rows,
-          pq.ParquetWriter(path, observation_schema(SCHEMA_V1), version=PARQUET_VERSION,
+          pq.ParquetWriter(path, schema, version=PARQUET_VERSION,
                            compression='snappy', use_dictionary=False, use_compliant_nested_type=False) as writer):
         for obs in rows:
             _remember_observation(db, obs)
@@ -205,10 +206,10 @@ def _write_rows(raw, root, source, snapshot, context):
             quarters[quarter_for(obs.row.filing_date)] += 1
             if len(batch) == BATCH_ROWS:
                 _check_deadline(context)
-                writer.write_table(pa.Table.from_pylist(batch, schema=observation_schema(SCHEMA_V1)))
+                writer.write_table(pa.Table.from_pylist(batch, schema=schema))
                 batch.clear()
         if batch:
-            writer.write_table(pa.Table.from_pylist(batch, schema=observation_schema(SCHEMA_V1)))
+            writer.write_table(pa.Table.from_pylist(batch, schema=schema))
         distinct = db.execute('SELECT COUNT(*) FROM seen').fetchone()[0]
     digest, byte_count = _file_identity(path)
     base = observation_base(source.source_id, snapshot.sha256, context.parser_version, context.schema_version)
