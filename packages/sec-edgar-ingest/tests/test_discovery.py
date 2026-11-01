@@ -487,7 +487,7 @@ class DiscoveryTests(unittest.TestCase):
         cases = (
             ('run_id', 'another-run'), ('command', 'collect'),
             ('config_sha256', 'b'*64), ('runtime', fixture_descriptor('other-release')),
-            ('parser_version', 'another-parser'), ('schema_version', 'sec-index-v2'),
+            ('parser_version', 'another-parser'), ('schema_version', 'sec-index-v1'),
             ('effective_config', {}), ('pinned_on', None),
             ('pinned_on', '2014-01-01'), (None, None),
         )
