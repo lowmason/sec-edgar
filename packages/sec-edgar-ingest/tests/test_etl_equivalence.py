@@ -196,7 +196,7 @@ class EquivalenceTests(unittest.TestCase):
     def test_recomputes_every_base_key_that_the_authority_does_not_list_in_the_quarter(self):
         lane = self.lane()
         base = lane.build([lane.observation('2026-10-01', 'daily', row() + row(number=2) + row(number=4))])
-        data = generation_table(next(ref for ref in base.manifest.files if ref.role == 'data'), lane.objects)
+        data = generation_table(next(ref for ref in base.manifest.files if ref.role == 'data'), lane.objects, SCHEMA_V1)
         chunked = pa.concat_tables([data.slice(0, 1), data.slice(1)])  # `is_in` must accept a chunked key column.
         daily = lane.observation('2026-10-02', 'daily', row(number=3))
         key = lambda number: ('0000123456', f'edgar/data/123456/0000123456-26-{number:06}.txt')

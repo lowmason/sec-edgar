@@ -12,7 +12,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 from ..config import Settings
-from ..models import SCHEMA_V1, Error, RunContext, canonical_json, parse_json, quarter_for, quarter_value
+from ..models import Error, RunContext, canonical_json, parse_json, quarter_for, quarter_value
 from ..storage.contracts import BoundaryObserver, Conflict, ObjectStore, observe
 from . import incremental
 from .contracts import (ABSENCE_REASON, WITHDRAWAL_REASON, Candidate, FileRef, GenerationCapture,
@@ -279,8 +279,8 @@ def _incremental_candidate(quarter, previous, active, selected, membership, mode
         return existing
     base, files = generation_base(quarter, generation_id), []
     with TemporaryDirectory(prefix='sec-catalog-delta-') as directory:
-        for role, table, schema in (('data', delta.data, canonical_schema(SCHEMA_V1)),
-                                    ('changes', delta.changes, change_schema(SCHEMA_V1))):
+        for role, table, schema in (('data', delta.data, canonical_schema(context.schema_version)),
+                                    ('changes', delta.changes, change_schema(context.schema_version))):
             path = Path(directory) / FILE_NAMES[role]
             incremental.write_table(table, path, schema, context)
             digest, byte_count = _file_identity(path)

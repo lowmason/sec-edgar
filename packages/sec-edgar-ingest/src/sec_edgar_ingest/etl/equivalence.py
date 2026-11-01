@@ -3,7 +3,7 @@
 The recomputed keys are resolved by the full path's own code (`catalog._load_observations` and
 `catalog._resolve`) over every selected source, limited to those keys. Every other row must equal its
 base row, column by column. Nothing here reuses the incremental build (C5); both share only the
-hash-checked readers in `columnar`.
+hash-checked readers in `columnar` and the pure `contracts.merge_rows`.
 """
 from __future__ import annotations
 
@@ -13,11 +13,11 @@ from tempfile import TemporaryDirectory
 
 import pyarrow.compute as pc
 
-from ..models import SCHEMA_V1, RunContext, canonical_json
+from ..models import RunContext, canonical_json
 from ..storage.contracts import ObjectStore
 from .columnar import (generation_table, key_column, key_mask, quarter_key_column, quarter_observations,
                        table_keys)
-from .contracts import Candidate, GenerationCapture, IndexRow
+from .contracts import Candidate, GenerationCapture, decode_row
 from .manifest import _row, check_candidate_integrity
 from .reader import checked_manifest
 from .transform import checked_observation
@@ -25,10 +25,10 @@ from .transform import checked_observation
 CHANGE_FIELDS = ('change_type', 'cik', 'archive_path', 'before', 'after', 'reason')
 
 
-def _change_payload(value, quarter) -> bytes:
+def _change_payload(value, quarter, layout) -> bytes:
     for field in ('before', 'after'):
         if value[field] is not None:
-            value[field] = _row(value[field], quarter, SCHEMA_V1).to_mapping()
+            value[field] = _row(value[field], quarter, layout).to_mapping()
     return canonical_json({name: value[name] for name in CHANGE_FIELDS})
 
 
@@ -52,15 +52,15 @@ def _recomputed_keys(manifest, delta, base_data, objects) -> set:
 
 def _expected(manifest, base_data, keys, context, objects):
     from .catalog import _database, _load_observations, _resolve
-    quarter = manifest.quarter
+    quarter, layout = manifest.quarter, manifest.schema_version
     with TemporaryDirectory(prefix='sec-equivalence-') as directory, \
             closing(_database(Path(directory) / 'expected.sqlite')) as db:
         _load_observations(db, manifest.sources, quarter, manifest.membership_source, objects, context,
                            read=lambda ref, objects: quarter_observations(ref, objects, quarter, keys))
         for value in base_data.filter(key_mask(base_data, keys)).to_pylist():
-            row = IndexRow(**value)
+            row = decode_row(value, layout)
             db.execute('INSERT INTO active VALUES(?,?,?)', (row.cik, row.archive_path, canonical_json(row.to_mapping())))
-        counts = _resolve(db, manifest.quarter_mode, manifest.membership_source, SCHEMA_V1)
+        counts = _resolve(db, manifest.quarter_mode, manifest.membership_source, layout)
         rows = {(cik, path): payload for cik, path, payload in db.execute('SELECT cik,path,payload FROM proposed')}
         changes = {(cik, path): payload for cik, path, payload in db.execute('SELECT cik,path,payload FROM changes')}
     return rows, changes, counts
@@ -68,7 +68,7 @@ def _expected(manifest, base_data, keys, context, objects):
 
 def validate_incremental_candidate(candidate: Candidate, previous: GenerationCapture, context: RunContext,
                                    objects: ObjectStore) -> None:
-    manifest, quarter = candidate.manifest, candidate.manifest.quarter
+    manifest, quarter, layout = candidate.manifest, candidate.manifest.quarter, candidate.manifest.schema_version
     check_candidate_integrity(candidate, objects)
     base = checked_manifest(previous, objects)
     if (manifest.base_generation_id != previous.generation_id or base.quarter != quarter or base.gate != 'clear'
@@ -82,19 +82,19 @@ def validate_incremental_candidate(candidate: Candidate, previous: GenerationCap
         if checked_observation(ref.manifest_ref, objects) != ref:
             raise ValueError('incremental source differs from its immutable observation manifest')
     files, base_files = ({ref.role: ref for ref in value.files} for value in (manifest, base))
-    data, changes = generation_table(files['data'], objects), generation_table(files['changes'], objects)
-    base_data, base_changes = generation_table(base_files['data'], objects), generation_table(base_files['changes'], objects)
+    data, changes = (generation_table(files[role], objects, layout) for role in ('data', 'changes'))
+    base_data, base_changes = (generation_table(base_files[role], objects, layout) for role in ('data', 'changes'))
     _strictly_sorted(data)
     _strictly_sorted(changes)
     keys = _recomputed_keys(manifest, delta, base_data, objects)
     expected_rows, expected_changes, counts = _expected(manifest, base_data, keys, context, objects)
     actual_rows = {}
     for value in data.filter(key_mask(data, keys)).to_pylist():
-        row = _row(value, quarter, SCHEMA_V1)
+        row = _row(value, quarter, layout)
         actual_rows[row.cik, row.archive_path] = canonical_json(row.to_mapping())
     if actual_rows != expected_rows:
         raise ValueError('incremental rows differ from the full resolution of their keys')
-    actual_changes = {(value['cik'], value['archive_path']): _change_payload(value, quarter)
+    actual_changes = {(value['cik'], value['archive_path']): _change_payload(value, quarter, layout)
                       for value in changes.filter(key_mask(changes, keys)).to_pylist()}
     if actual_changes != expected_changes:
         raise ValueError('incremental change rows differ from the full resolution of their keys')

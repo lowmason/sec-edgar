@@ -17,10 +17,12 @@ import support_catalog
 from support import fixture_context, fixture_snapshot, fixture_source
 from support_catalog import Lane
 from support_etl import etl_context, seed_snapshot, v1_writable
+from support_incremental import Twin
 from support_workflows import idx
 from sec_edgar_ingest.etl import catalog
 from sec_edgar_ingest.etl.approval import approve
 from sec_edgar_ingest.etl.columnar import quarter_observations
+from sec_edgar_ingest.etl.equivalence import validate_incremental_candidate
 from sec_edgar_ingest.etl import parser
 from sec_edgar_ingest.etl.history import COUNTS, quarter_history, withdrawal_candidates
 from sec_edgar_ingest.etl.manifest import iter_file_rows, read_manifest, retained_base, validate_candidate_content
@@ -846,6 +848,59 @@ class ReaderV2Tests(unittest.TestCase):
         [row] = self.read(self.capture())
         self.assertEqual((type(row), row.archive_path, (row.parser_version, row.schema_version)),
                          (IndexRowV2, kept.archive_path, V2_VERSIONS))
+
+
+class IncrementalV2Tests(unittest.TestCase):
+    """C5 merges within the one source that precedence selects, as the full rebuild does, and C6 agrees (Review Focus 1)."""
+
+    def setUp(self):
+        self.twin = Twin(schema_version=SCHEMA_V2)  # Pinned on 2026-10-07, so 2026Q4 is the open quarter.
+        self.addCleanup(self.twin.close)
+
+    @staticmethod
+    def files(lane, candidate):
+        return {ref.role: lane.path(ref.path).read_bytes() for ref in candidate.manifest.files}
+
+    def build(self, day, rows, base=None):
+        """One daily source of `day` on `base` in both lanes. On a base the fast lane must build incrementally,
+        give the full lane's bytes and pass C6. Returns both candidates and the fast lane's source."""
+        twin = self.twin
+        pair = twin.observation(day, 'daily', rows)
+        (fast, full), built = twin.build([pair], base)
+        self.assertEqual(built, 0 if base is None else 1)
+        self.assertEqual(fast.manifest.schema_version, SCHEMA_V2)
+        self.assertEqual(fast, full)
+        self.assertEqual(self.files(twin.fast, fast), self.files(twin.full, full))
+        if base is not None:
+            validate_incremental_candidate(fast, support_catalog.capture(base[0]), twin.fast.context,
+                                           twin.fast.objects)
+        return (fast, full), pair[0]
+
+    def test_incremental_merges_a_combined_filing_like_the_full_rebuild(self):
+        base, _ = self.build('2026-10-01', support_catalog.row(number=1))
+        combined = support_catalog.row(number=2, form='SC TO-T') + support_catalog.row(number=2, form='SC 13E3')
+        (candidate, _), _ = self.build('2026-10-02', combined, base)
+        self.assertEqual((candidate.manifest.row_count, candidate.manifest.added), (2, 1))
+        self.assertEqual([value['form_types'] for value in self.twin.fast.rows(candidate)],
+                         [['10-K'], ['SC 13E3', 'SC TO-T']])
+
+    def test_incremental_rename_in_new_daily_source(self):
+        base, _ = self.build('2026-10-01', support_catalog.row(number=1))
+        renamed = support_catalog.row(NEW_NAME, 2) + support_catalog.row(OLD_NAME, 2)
+        (candidate, _), _ = self.build('2026-10-02', renamed, base)
+        self.assertEqual((candidate.manifest.row_count, candidate.manifest.added), (2, 1))
+        self.assertEqual([value['company_names'] for value in self.twin.fast.rows(candidate)],
+                         [['Example'], [OLD_NAME, NEW_NAME]])
+
+    def test_incremental_does_not_merge_base_and_delta_sources(self):
+        base, _ = self.build('2026-10-01', support_catalog.row(number=1, form='SC TO-T'))
+        (candidate, _), newer = self.build('2026-10-02', support_catalog.row(number=1, form='SC 13E3'), base)
+        self.assertEqual((candidate.manifest.updated, candidate.manifest.added), (1, 0))
+        [row] = (decode_row(value, SCHEMA_V2) for value in self.twin.fast.rows(candidate))
+        self.assertEqual((row.form_types, row.source_id), (('SC 13E3',), newer.source.source_id))
+        [change] = self.twin.fast.rows(candidate, 'changes')
+        self.assertEqual((change['change_type'], change['before']['form_types'], change['after']['form_types']),
+                         ('updated', ['SC TO-T'], ['SC 13E3']))
 
 
 if __name__ == '__main__':

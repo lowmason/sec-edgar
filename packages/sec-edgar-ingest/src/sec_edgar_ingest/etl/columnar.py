@@ -14,7 +14,7 @@ import pyarrow as pa
 import pyarrow.compute as pc
 import pyarrow.parquet as pq
 
-from ..models import SCHEMA_V1, quarter_value
+from ..models import quarter_value
 from ..storage.contracts import Conflict, ObjectStore
 from .contracts import (FileRef, Observation, ObservationRef, canonical_schema, change_schema, decode_row,
                         observation_schema)
@@ -37,10 +37,11 @@ def _read_table(path: str, sha256: str, byte_count: int, objects: ObjectStore, s
             return parquet.read()
 
 
-def generation_table(ref: FileRef, objects: ObjectStore) -> pa.Table:
-    """One generation file as an Arrow table, after its exact hash, length, schema and row count."""
+def generation_table(ref: FileRef, objects: ObjectStore, layout: str) -> pa.Table:
+    """One generation file as an Arrow table, after its exact hash, length, the schema of its generation's
+    `layout`, and its row count."""
     table = _read_table(ref.path, ref.sha256, ref.byte_count, objects,
-                        canonical_schema(SCHEMA_V1) if ref.role == 'data' else change_schema(SCHEMA_V1),
+                        canonical_schema(layout) if ref.role == 'data' else change_schema(layout),
                         'generation file hash or length differs', 'generation Parquet schema differs')
     if table.num_rows != ref.row_count:
         raise ValueError('generation file row count differs')

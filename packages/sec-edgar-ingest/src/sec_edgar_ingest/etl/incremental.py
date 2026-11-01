@@ -14,12 +14,12 @@ import pyarrow as pa
 import pyarrow.compute as pc
 import pyarrow.parquet as pq
 
-from ..models import SCHEMA_V1, RunContext, canonical_json, parse_json
+from ..models import RunContext, canonical_json, parse_json
 from ..storage.contracts import ObjectStore
 from .columnar import (KEY_SEPARATOR, Key, generation_table, key_column, key_mask, quarter_key_column,
                        quarter_observations, table_keys)
-from .contracts import (ABSENCE_REASON, WITHDRAWAL_REASON, GenerationManifest, IndexRow,
-                        ObservationRef, arrow_row, business_fields, canonical_schema, change_schema)
+from .contracts import (ABSENCE_REASON, WITHDRAWAL_REASON, GenerationManifest, ObservationRef, arrow_row,
+                        business_fields, canonical_schema, change_schema, decode_row, merge_rows)
 from .transform import BATCH_ROWS, PARQUET_VERSION, _check_deadline
 
 Rank = tuple[int, str, str]
@@ -51,46 +51,51 @@ def _rank(ref: ObservationRef) -> Rank:
     return int(ref.source.kind == 'quarterly'), ref.source.period, ref.snapshot.received_at.isoformat()
 
 
-def _best(candidates: list[tuple[Rank, str, bytes]]) -> bytes:
-    """`_load_observations`' winner: preference, period and receipt descending, then source_id ascending."""
+def _best(candidates: list[tuple[Rank, str, bytes]], layout: str) -> bytes:
+    """`_load_observations`' row: the winning source (preference, period and receipt descending, then source_id
+    ascending), with `merge_rows` over that source's candidates only (D4). One distinct payload keeps its bytes."""
     by_source = sorted(candidates, key=lambda item: item[1])
-    return sorted(by_source, key=lambda item: item[0], reverse=True)[0][2]
+    winner = sorted(by_source, key=lambda item: item[0], reverse=True)[0][1]
+    payloads = sorted({payload for _, source_id, payload in candidates if source_id == winner})
+    if len(payloads) == 1:
+        return payloads[0]
+    return canonical_json(merge_rows(decode_row(parse_json(payload), layout) for payload in payloads).to_mapping())
 
 
-def _change(key: Key, kind: str, before, after, reason=None) -> dict:
+def _change(key: Key, kind: str, before, after, layout: str, reason=None) -> dict:
     return {'change_type': kind, 'cik': key[0], 'archive_path': key[1],
-            'before': None if before is None else arrow_row(before, SCHEMA_V1),
-            'after': None if after is None else arrow_row(after, SCHEMA_V1), 'reason': reason}
+            'before': None if before is None else arrow_row(before, layout),
+            'after': None if after is None else arrow_row(after, layout), 'reason': reason}
 
 
 def _resolve_touched(key: Key, base: bytes | None, unresolved: set[Key], delta: list[tuple[Rank, str, bytes]],
                      rank_of: dict[str, Rank], member: bool, mode: str, has_membership: bool,
-                     counts: Counter) -> tuple[bytes | None, dict | None]:
+                     counts: Counter, layout: str) -> tuple[bytes | None, dict | None]:
     """`catalog._resolve`'s rules for one touched key: (output row or None, change row or None)."""
     candidates = list(delta)
     if base is not None and key not in unresolved:
         source_id = parse_json(base)['source_id']
         candidates.append((rank_of[source_id], source_id, base))
-    proposed = _best(candidates) if candidates else None
+    proposed = _best(candidates, layout) if candidates else None
     if mode == 'closed' and has_membership and not member:
         proposed = None
     if base is None:
         if proposed is None:
             return None, None
         counts['added'] += 1
-        return proposed, _change(key, 'added', None, parse_json(proposed))
+        return proposed, _change(key, 'added', None, parse_json(proposed), layout)
     before = parse_json(base)
     if proposed is None or (mode == 'open' and has_membership and not member):
         if mode == 'closed' and has_membership:
             counts['withdrawn'] += 1
-            return None, _change(key, 'withdrawn', before, None, WITHDRAWAL_REASON)
+            return None, _change(key, 'withdrawn', before, None, layout, WITHDRAWAL_REASON)
         counts['unresolved_absence'] += 1
         counts['retained'] += 1
-        return base, _change(key, 'unresolved_absence', before, before, ABSENCE_REASON)
+        return base, _change(key, 'unresolved_absence', before, before, layout, ABSENCE_REASON)
     after = parse_json(proposed)
-    if any(before[name] != after[name] for name in business_fields(SCHEMA_V1)):
+    if any(before[name] != after[name] for name in business_fields(layout)):
         counts['updated'] += 1
-        return proposed, _change(key, 'updated', before, after)
+        return proposed, _change(key, 'updated', before, after, layout)
     if before != after:
         counts['provenance_refreshed'] += 1
     return proposed, None
@@ -105,8 +110,8 @@ def build_incremental(quarter: str, active: GenerationManifest, selected: tuple[
                       membership: ObservationRef | None, mode: str, context: RunContext,
                       objects: ObjectStore) -> Delta:
     """C5: the full rebuild's tables, computed from the base tables and the delta rows only."""
-    files = {ref.role: ref for ref in active.files}
-    base_data, base_changes = generation_table(files['data'], objects), generation_table(files['changes'], objects)
+    layout, files = context.schema_version, {ref.role: ref for ref in active.files}
+    base_data, base_changes = (generation_table(files[role], objects, layout) for role in ('data', 'changes'))
     rank_of = {ref.source.source_id: _rank(ref) for ref in selected}
     base_ids = {ref.source.source_id for ref in active.sources}
     delta: dict[Key, list[tuple[Rank, str, bytes]]] = {}
@@ -132,29 +137,29 @@ def build_incremental(quarter: str, active: GenerationManifest, selected: tuple[
             flips = table_keys(untouched.filter(pc.invert(pc.is_in(key_column(untouched), value_set=listed))))
     base_rows = {}
     for value in base_data.filter(key_mask(base_data, touched | flips)).to_pylist():
-        row = IndexRow(**value)
+        row = decode_row(value, layout)
         base_rows[row.cik, row.archive_path] = canonical_json(row.to_mapping())
     counts, outputs, changes = Counter(), [], []
     for key in sorted(touched):
         output, change = _resolve_touched(key, base_rows.get(key), unresolved, delta[key], rank_of,
-                                          key in members, mode, membership is not None, counts)
+                                          key in members, mode, membership is not None, counts, layout)
         if output is not None:
-            outputs.append(arrow_row(parse_json(output), SCHEMA_V1))
+            outputs.append(arrow_row(parse_json(output), layout))
         if change is not None:
             changes.append(change)
     for key in sorted(flips):
         before = parse_json(base_rows[key])
-        changes.append(_change(key, 'unresolved_absence', before, before, ABSENCE_REASON))
+        changes.append(_change(key, 'unresolved_absence', before, before, layout, ABSENCE_REASON))
         counts['unresolved_absence'] += 1
         counts['retained'] += 1
     re_emitted = unresolved_rows.filter(pc.invert(key_mask(unresolved_rows, touched)))
     counts['unresolved_absence'] += re_emitted.num_rows
     counts['retained'] += re_emitted.num_rows
-    kept = base_data.filter(pc.invert(key_mask(base_data, touched))).cast(canonical_schema(SCHEMA_V1))
-    data = pa.concat_tables([kept, pa.Table.from_pylist(outputs, schema=canonical_schema(SCHEMA_V1))]).sort_by(
+    kept = base_data.filter(pc.invert(key_mask(base_data, touched))).cast(canonical_schema(layout))
+    data = pa.concat_tables([kept, pa.Table.from_pylist(outputs, schema=canonical_schema(layout))]).sort_by(
         [('cik', 'ascending'), ('archive_path', 'ascending')])
-    change_table = pa.concat_tables([re_emitted.cast(change_schema(SCHEMA_V1)),
-                                     pa.Table.from_pylist(changes, schema=change_schema(SCHEMA_V1))]).sort_by(
+    change_table = pa.concat_tables([re_emitted.cast(change_schema(layout)),
+                                     pa.Table.from_pylist(changes, schema=change_schema(layout))]).sort_by(
         [('cik', 'ascending'), ('archive_path', 'ascending'), ('change_type', 'ascending')])
     counts['data'] = data.num_rows
     return Delta(data, change_table, counts)

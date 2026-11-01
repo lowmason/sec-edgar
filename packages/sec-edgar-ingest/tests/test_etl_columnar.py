@@ -40,16 +40,16 @@ class ColumnarReaderTests(unittest.TestCase):
     def test_generation_tables_equal_the_full_reader(self):
         for ref in self.candidate.manifest.files:
             with self.subTest(role=ref.role):
-                self.assertEqual(generation_table(ref, self.lane.objects).to_pylist(),
+                self.assertEqual(generation_table(ref, self.lane.objects, SCHEMA_V1).to_pylist(),
                                  list(iter_file_rows(ref, self.lane.objects, SCHEMA_V1)))
 
     def test_generation_table_refuses_changed_counts_and_bytes(self):
         data = next(ref for ref in self.candidate.manifest.files if ref.role == 'data')
         with self.assertRaisesRegex(ValueError, 'generation file row count differs'):
-            generation_table(replace(data, row_count=data.row_count + 1), self.lane.objects)
+            generation_table(replace(data, row_count=data.row_count + 1), self.lane.objects, SCHEMA_V1)
         self.changed(data.path)
         with self.assertRaisesRegex(Conflict, 'generation file hash or length differs'):
-            generation_table(data, self.lane.objects)
+            generation_table(data, self.lane.objects, SCHEMA_V1)
 
     def test_quarter_observations_equal_the_full_reader_without_a_readback(self):
         with closing(read_observations(self.ref, self.lane.objects)) as rows:
