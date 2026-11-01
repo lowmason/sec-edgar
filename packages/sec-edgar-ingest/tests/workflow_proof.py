@@ -638,6 +638,10 @@ def installed_upgrade_cases(output, a_manifest, b_manifest, *, a_schema=None):
             original_results = {str(path.relative_to(objects.directory)): path.read_bytes()
                 for path in (objects.directory / 'runs').rglob('result.json')}
             original_pointers = tuple(row.to_mapping() for row in store.scan('QuarterPublication', {}))
+            # Plan 7 P8 (owner Q6): the cross-version repair case proves A's observation bytes survive continue-b.
+            original_observations = ({str(path.relative_to(objects.directory)): path.read_bytes()
+                for path in (objects.directory / 'observations').rglob('manifest.json')}
+                if a_schema is not None and scenario == 'repair' else None)
         finally:
             for resource in reversed(opened):
                 if hasattr(resource, 'close'): resource.close()
@@ -705,6 +709,10 @@ def installed_upgrade_cases(output, a_manifest, b_manifest, *, a_schema=None):
                 origin = {'capture': base, 'manifest': base_manifest, 'rows': list(read_quarter(base, objects)),
                           'observation_ref': base_manifest.sources[0].manifest_ref}
                 origin['observation'] = objects.read(origin['observation_ref'])
+                if origin['observation_ref'] not in original_observations:
+                    raise AssertionError('the original A observation did not exist before continue-b')
+                if original_observations[origin['observation_ref']] != origin['observation']:
+                    raise AssertionError('A observation bytes changed during continue-b')
             moved = a.directory.with_name(a.directory.name + '-missing')
             a.directory.rename(moved)
             try:
