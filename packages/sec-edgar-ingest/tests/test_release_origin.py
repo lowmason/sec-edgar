@@ -24,18 +24,18 @@ BLOCKED = BASE + 'full-index/2026/QTR3/master.zip'
 
 
 class OriginReleaseTests(unittest.TestCase):
+    # D10: an older release cannot read v2 objects, so the current side is its era's release (D5) on v1; test_release_2a and test_release_upgrade cover the new release.
     @classmethod
     def setUpClass(cls):
-        from support_release import origin_release, proof_releases
+        from support_release import D5_REVISION, origin_release
         project = Path(__file__).resolve().parents[3]
         cls.origin = origin_release(project, project / 'releases/artifact-cache')
-        _, cls.current = proof_releases(project, project / 'releases/artifact-cache')
+        cls.current = origin_release(project, project / 'releases/artifact-cache', revision=D5_REVISION)
 
     def configured(self, h, release):
         value = h.settings.to_mapping()
         value['runtime'] = {'kind': 'native', 'release_manifest': str(release.directory / 'release.json')}
-        if release is self.origin:
-            value['etl']['schema_version'] = 'sec-index-v1'  # Plan 7 P8: an older interpreter writes only v1.
+        value['etl']['schema_version'] = 'sec-index-v1'  # Both era releases write only v1 (plan 7 P8).
         return Settings.from_mapping(value)
 
     def origin_run(self, h, settings, run_id):

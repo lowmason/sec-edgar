@@ -14,12 +14,13 @@ import test_release_origin as origin_tests
 class D5OriginTests(origin_tests.OriginReleaseTests):
     """Plan 4's two-release proofs with the D5 release as origin. They stay order-aware (plan 4 R2)."""
 
+    # D10: an older release cannot read v2 objects, so the current side is its era's release (1b) on v1; test_release_2a and test_release_upgrade cover the new release.
     @classmethod
     def setUpClass(cls):
-        from support_release import D5_REVISION, origin_release, proof_releases
+        from support_release import D5_REVISION, ONE_B_REVISION, origin_release
         project = Path(__file__).resolve().parents[3]
         cls.origin = origin_release(project, project / 'releases/artifact-cache', revision=D5_REVISION)
-        _, cls.current = proof_releases(project, project / 'releases/artifact-cache')
+        cls.current = origin_release(project, project / 'releases/artifact-cache', revision=ONE_B_REVISION)
 
     # fc68adef…-only behaviours: D5 reads a sibling-completion receipt and accepts the reserve key.
     test_origin_release_reports_a_b4_receipt_as_unresolved = None

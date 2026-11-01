@@ -14,6 +14,7 @@ from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 from support import fixture_settings
+from support_etl import v1_writable
 from support_process import CheckedRunner
 from support_workflows import BASE, CommandHarness, idx, replace_pack_body, simple_pack
 from sec_edgar_ingest.config import Settings
@@ -29,9 +30,10 @@ TODAY = date(2026, 10, 7)
 
 
 class MemberCompletionReleaseTests(unittest.TestCase):
+    # D10: an older release cannot read v2 objects, so the current side is its era's release (1c) on v1; test_release_2a and test_release_upgrade cover the new release.
     @classmethod
     def setUpClass(cls):
-        from support_release import ONE_B_REVISION, origin_release, proof_releases
+        from support_release import ONE_B_REVISION, ONE_C_REVISION, origin_release
         from sec_edgar_ingest.runtime import preflight
         project = Path(__file__).resolve().parents[3]
         cache = project / 'releases/artifact-cache'
@@ -39,7 +41,7 @@ class MemberCompletionReleaseTests(unittest.TestCase):
         # SEC_LOCAL_1B_RELEASE to the installed release.json of 9fa189a0… instead.
         installed = os.environ.get('SEC_LOCAL_1B_RELEASE')
         cls.one_b = preflight(Path(installed)) if installed else origin_release(project, cache, revision=ONE_B_REVISION)
-        _, cls.current = proof_releases(project, cache)
+        cls.current = origin_release(project, cache, revision=ONE_C_REVISION)
 
     def scratch(self):
         """A temporary root whose cleanup runs after the harness stores close (addCleanup is LIFO)."""
@@ -56,21 +58,25 @@ class MemberCompletionReleaseTests(unittest.TestCase):
             rows = (('123456', 'Example', '10-K', day, archive), ('123456', 'Changed', '10-K', day, archive))
             replace_pack_body(pack, BASE + f'full-index/2026/QTR{quarter}/master.zip', idx(rows, 'quarterly'))
         settings = fixture_settings(backfill={'start_quarter': '2026Q3', 'end_quarter': 'open'},
-            daily={'start_date': '2026-10-01'}, etl={'parser_version': 'fixture-index-parser-v1'},
+            daily={'start_date': '2026-10-01'},
+            etl={'parser_version': 'fixture-index-parser-v1', 'schema_version': 'sec-index-v1'},
             fixture={'allow_clock_override': True, 'allow_deadline_override': False})
         h = CommandHarness(root, pack, settings)
         self.addCleanup(h.close)
-        code, found = h.invoke('discover', ('--mode', 'quarterly', '--discovery-id', 'l12-shape'), run='l12-find')
-        self.assertEqual(code, 0, h.calls[-1])
-        code, collected = h.invoke('collect', ('--workset', found['source_workset_ref']), run='l12-collect')
-        self.assertEqual(code, 0, h.calls[-1])
-        code, transformed = h.invoke('transform', ('--workset', collected['snapshot_workset_ref']), run='l12-transform')
-        self.assertEqual((code, transformed['outcome']), (7, 'invalid_source'), h.calls[-1])
-        ref = transformed['transformed_workset_ref']
-        workset = decode_transformed(h.objects.read(ref))
-        self.assertEqual((workset.complete, len(workset.observations)), (False, 0))
-        code, published = h.invoke('publish', ('--workset', ref), run='l12-publish')
-        self.assertEqual((code, published['outcome']), (3, 'incomplete'), h.calls[-1])
+        # The 1b and 1c releases write only v1, so the in-process CLI builds their v1 store through the test seam.
+        with v1_writable():
+            code, found = h.invoke('discover', ('--mode', 'quarterly', '--discovery-id', 'l12-shape'), run='l12-find')
+            self.assertEqual(code, 0, h.calls[-1])
+            code, collected = h.invoke('collect', ('--workset', found['source_workset_ref']), run='l12-collect')
+            self.assertEqual(code, 0, h.calls[-1])
+            code, transformed = h.invoke('transform', ('--workset', collected['snapshot_workset_ref']),
+                                         run='l12-transform')
+            self.assertEqual((code, transformed['outcome']), (7, 'invalid_source'), h.calls[-1])
+            ref = transformed['transformed_workset_ref']
+            workset = decode_transformed(h.objects.read(ref))
+            self.assertEqual((workset.complete, len(workset.observations)), (False, 0))
+            code, published = h.invoke('publish', ('--workset', ref), run='l12-publish')
+            self.assertEqual((code, published['outcome']), (3, 'incomplete'), h.calls[-1])
         attempt = next(r.to_mapping()['value'] for r in h.store.scan('Attempt', {})
                        if r.to_mapping()['value']['context']['run_id'] == 'l12-publish')
         self.assertEqual((attempt['result']['outcome'], attempt['result']['quarters']), ('incomplete', []))
@@ -81,8 +87,6 @@ class MemberCompletionReleaseTests(unittest.TestCase):
         """One `daily` workflow parent in the release's own installed interpreter."""
         value = h.settings.to_mapping()
         value['runtime'] = {'kind': 'native', 'release_manifest': str(release.directory / 'release.json')}
-        if release is self.one_b:
-            value['etl']['schema_version'] = 'sec-index-v1'  # Plan 7 P8: an older interpreter writes only v1.
         config = h.root / (run_id + '.json')
         config.write_bytes(canonical_json(to_mapping_value(Settings.from_mapping(value).to_mapping())))
         deadline = datetime.now(timezone.utc) + timedelta(seconds=1800)
