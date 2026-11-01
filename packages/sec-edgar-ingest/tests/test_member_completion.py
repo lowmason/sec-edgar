@@ -16,7 +16,7 @@ from unittest.mock import patch
 
 from support_process import checked_clock, checked_dispatcher, checked_fault
 from support_workflow_evidence import EvidenceFixture, quarterly_bytes
-from support_workflows import CommandHarness, simple_pack
+from support_workflows import CommandHarness, other_filing_date, simple_pack
 
 from sec_edgar_ingest.cli import main
 from sec_edgar_ingest.config import pin_context
@@ -39,10 +39,10 @@ STOCK = 'child completion lacks all affected quarter/repair evidence'
 
 
 def conflicting_bytes(day):
-    """A quarterly body whose two rows share one key with different values, so its transform is quarantined."""
+    """A quarterly body whose two rows share one key with different filing dates, so its transform is quarantined."""
     body = ('CIK|Company Name|Form Type|Date Filed|Filename\r\n-----\r\n'
             f'123456|A|10-K|{day}|edgar/data/123456/a.txt\r\n'
-            f'123456|B|10-K|{day}|edgar/data/123456/a.txt\r\n').encode()
+            f'123456|A|10-K|{other_filing_date(day)}|edgar/data/123456/a.txt\r\n').encode()
     target = io.BytesIO()
     with zipfile.ZipFile(target, 'w') as archive:
         info = zipfile.ZipInfo('master.idx', (2026, 1, 1, 0, 0, 0))

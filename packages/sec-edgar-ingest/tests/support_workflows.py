@@ -102,6 +102,19 @@ class CommandHarness:
             if hasattr(resource, 'close'):
                 resource.close()
 
+def other_filing_date(filed):
+    """Another filing date in the quarter of `filed`, spelt as `filed` is (ISO or compact).
+
+    A repeat of a key that differs in filing date is a non-list conflict, which refuses its source (D3).
+    """
+    from datetime import date
+    compact = '-' not in filed
+    day = date.fromisoformat(f'{filed[:4]}-{filed[4:6]}-{filed[6:]}' if compact else filed)
+    other = day + timedelta(days=1)
+    if (other.year, (other.month - 1) // 3) != (day.year, (day.month - 1) // 3):
+        other = day - timedelta(days=1)
+    return other.strftime('%Y%m%d') if compact else other.isoformat()
+
 def simple_pack(root, *, empty=False, conflicting=False):
     listings, bodies = {}, {}
     for family in ('full-index', 'daily-index'):
@@ -119,7 +132,7 @@ def simple_pack(root, *, empty=False, conflicting=False):
             filed = ('2026-09-30' if quarter == 3 else '2026-10-01') if kind == 'quarterly' else '20261001'
             path = f'edgar/data/123456/0000123456-26-00000{quarter}.txt'
             row = ('123456', 'Example', '10-K', filed, path)
-            rows = (row, ('123456', 'Changed', '10-K', filed, path)) if conflicting else (row,)
+            rows = (row, ('123456', 'Example', '10-K', other_filing_date(filed), path)) if conflicting else (row,)
             bodies[leaf + filename] = idx(rows, kind)
     return build_pack(root, listings, bodies)
 
@@ -145,7 +158,8 @@ def quarter_pack(root, periods, *, empty_daily=False, failed_daily=(), moved=Non
             filed = (moved or {}).get(period, day) if family == 'full-index' else day.replace('-', '')
             archive = 'edgar/data/123456/0000123456-' + year[-2:] + '-00000' + quarter + '.txt'
             row = ('123456', 'Example', '10-K', filed, archive)
-            rows = (row, ('123456', 'Conflict', '10-K', filed, archive)) if period in conflicting else (row,)
+            rows = ((row, ('123456', 'Example', '10-K', other_filing_date(filed), archive))
+                    if period in conflicting else (row,))
             bodies[leaf + filename] = idx(rows, 'quarterly' if family == 'full-index' else 'daily')
     pack = build_pack(root, listings, bodies, repeats=16)
     if failed_daily:
