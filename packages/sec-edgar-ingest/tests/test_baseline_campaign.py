@@ -11,7 +11,7 @@ import tempfile
 import unittest
 
 from support import fixture_settings
-from support_workflows import BASE, CommandHarness, build_pack, idx
+from support_workflows import BASE, CommandHarness, build_pack, idx, other_filing_date
 
 PROJECT = Path(__file__).resolve().parents[3]
 SCRIPT = PROJECT / 'scripts/baseline-campaign.py'
@@ -228,7 +228,7 @@ class FixtureStoreTests(unittest.TestCase):
                              '--start', '2026Q2', '--end', '2026Q4', '--open-quarter', '2026Q4', *check)
 
     def test_integrity_coverage_reads_no_row_and_reports_no_coverage(self):
-        conflict = (row('111111', 'Second', '2026-04-01', 2), row('111111', 'Changed', '2026-04-01', 2))
+        conflict = (row('111111', 'Second', '2026-04-01', 2), row('111111', 'Changed', other_filing_date('2026-04-01'), 2))
         h = self.harness({2: conflict, 3: Q3, 4: Q4})
         code, message = h.invoke('backfill', run='r1', attempt='a1')
         self.assertEqual(code, 3, h.calls[-1])
@@ -271,7 +271,7 @@ class FixtureStoreTests(unittest.TestCase):
         self.assertTrue(all(item['limit'] == 0 for item in report['breaches']))
 
     def test_backfill_units_separate_quarantine_from_quarterly_coverage(self):
-        conflict = (row('111111', 'Second', '2026-04-01', 2), row('111111', 'Changed', '2026-04-01', 2))
+        conflict = (row('111111', 'Second', '2026-04-01', 2), row('111111', 'Changed', other_filing_date('2026-04-01'), 2))
         h = self.harness({2: conflict, 3: Q3, 4: Q4})
         code, message = h.invoke('backfill', run='r1', attempt='a1')
         self.assertEqual(code, 3, h.calls[-1])
@@ -285,7 +285,7 @@ class FixtureStoreTests(unittest.TestCase):
         self.assertIn('baseline_publication_missing', report['units'][0]['last_result_gaps'])
 
     def test_daily_only_generation_never_counts_for_a_quarantined_quarterly_source(self):
-        conflict = (row('111111', 'Second', '2026-04-01', 2), row('111111', 'Changed', '2026-04-01', 2))
+        conflict = (row('111111', 'Second', '2026-04-01', 2), row('111111', 'Changed', other_filing_date('2026-04-01'), 2))
         h = self.harness({2: conflict, 3: Q3, 4: Q4})
         self.assertEqual(h.invoke('daily', run='d1', attempt='a1')[0], 0, h.calls[-1])
         code, message = h.invoke('backfill', run='r1', attempt='a1')
