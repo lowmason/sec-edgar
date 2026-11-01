@@ -22,7 +22,7 @@ class LocalModeTests(unittest.TestCase):
         self.root = Path(self.temp.name)
         self.config = self.root / 'config.json'
         self.mapping = local_config_mapping(root=self.root / 'state')
-        self.mapping['etl']['parser_version'] = 'sec-index-parser-v1'
+        self.mapping['etl']['parser_version'] = 'sec-index-parser-v2'
         self.deadline = (datetime.now(timezone.utc) + timedelta(seconds=1800)).isoformat()
 
     def argv(self, command='discover', *, pack=True):
@@ -85,7 +85,7 @@ class LocalModeTests(unittest.TestCase):
             'pack': 'fixture pack and date override require fixture acquisition',
             'clock': 'fixture pack and date override require fixture acquisition',
             'deadline': 'fixture overrides are permitted only for fixture acquisition',
-            'parser': 'live acquisition requires sec-index-parser-v1',
+            'parser': 'live acquisition requires sec-index-parser-v2',
             'runtime': 'live acquisition requires native runtime',
         }
         original = json.loads(json.dumps(self.mapping))
@@ -134,7 +134,7 @@ class NativeCliTests(unittest.TestCase):
         value = local_config_mapping(root=self.root / 'state')
         value['runtime'] = {'kind': 'native', 'release_manifest': str(self.a.directory / 'release.json')}
         value['backfill'] = {'start_quarter': '2015Q1', 'end_quarter': '2015Q1'}
-        value['etl']['parser_version'] = 'sec-index-parser-v1'
+        value['etl']['parser_version'] = 'sec-index-parser-v2'
         self.config.write_text(json.dumps(value))
         self.argv = [str(self.a.directory / 'venv/bin/sec-edgar-ingest'), 'discover',
             '--config', str(self.config), '--run-id', 'native', '--execution-id', 'e', '--attempt-id', 'a',

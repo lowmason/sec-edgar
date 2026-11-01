@@ -81,6 +81,8 @@ class MemberCompletionReleaseTests(unittest.TestCase):
         """One `daily` workflow parent in the release's own installed interpreter."""
         value = h.settings.to_mapping()
         value['runtime'] = {'kind': 'native', 'release_manifest': str(release.directory / 'release.json')}
+        if release is self.one_b:
+            value['etl']['schema_version'] = 'sec-index-v1'  # Plan 7 P8: an older interpreter writes only v1.
         config = h.root / (run_id + '.json')
         config.write_bytes(canonical_json(to_mapping_value(Settings.from_mapping(value).to_mapping())))
         deadline = datetime.now(timezone.utc) + timedelta(seconds=1800)

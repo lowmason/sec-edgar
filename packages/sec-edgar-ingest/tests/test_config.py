@@ -81,7 +81,7 @@ class ConfigTests(unittest.TestCase):
         value['acquisition'] = {'mode': 'live'}
         value['runtime'] = {'kind': 'native', 'release_manifest':
             '/tmp/releases/sha256=' + 'a' * 64 + '/release.json'}
-        value['etl']['parser_version'] = 'sec-index-parser-v1'
+        value['etl']['parser_version'] = 'sec-index-parser-v2'
         return value
 
     def test_native_live_binding_and_explicit_runtime(self):

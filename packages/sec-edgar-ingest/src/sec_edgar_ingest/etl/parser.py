@@ -13,7 +13,7 @@ from .contracts import IndexRow, IndexRowV2, Observation
 
 PARSER_V1 = 'sec-index-parser-v1'
 PARSER_V2 = 'sec-index-parser-v2'
-PARSER_VERSION = PARSER_V1
+PARSER_VERSION = PARSER_V2
 FIXTURE_PARSERS = frozenset(('fixture-index-parser-v1', 'fixture-index-parser-v2'))
 # A release parser pairs with one schema. A fixture parser pairs with any known schema (plan P2).
 _PARSER_SCHEMA = {PARSER_V1: SCHEMA_V1, PARSER_V2: SCHEMA_V2}

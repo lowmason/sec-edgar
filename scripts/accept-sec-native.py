@@ -498,8 +498,8 @@ def verify_runtime(selection):
         configured = load_config(Path(record['path']))
         if configured.config_sha256 != record['effective_sha256'] or deployment_binding(configured) != selection['issuer_binding']:
             raise ValueError('effective config or deployment binding changed')
-        if (configured.acquisition.mode != 'live' or configured.etl.parser_version != 'sec-index-parser-v1' or
-                configured.etl.schema_version != 'sec-index-v1' or configured.runtime.release_manifest != selection['release']['path'] or
+        if (configured.acquisition.mode != 'live' or configured.etl.parser_version != 'sec-index-parser-v2' or
+                configured.etl.schema_version != 'sec-index-v2' or configured.runtime.release_manifest != selection['release']['path'] or
                 configured.http.max_received_bytes != RECEIVED_CEILING or configured.http.max_expanded_bytes != EXPANDED_CEILING or
                 configured.execution.max_run_seconds != 3600):
             raise ValueError('selected production runtime/parser/byte policy differs')
@@ -894,13 +894,15 @@ class AcceptanceRun:
 def validate_read(capture, objects):
     from sec_edgar_ingest.etl.reader import read_quarter, validated_manifest
     from sec_edgar_ingest.etl.contracts import canonical_schema
-    from sec_edgar_ingest.models import SCHEMA_V1
+    from sec_edgar_ingest.models import SCHEMA_V2
     manifest = validated_manifest(capture, objects)
+    if manifest.schema_version != SCHEMA_V2:
+        raise ValueError('validated generation schema differs from declared production schema')
     keys, count, sources = set(), 0, set()
-    expected_fields = set(canonical_schema(SCHEMA_V1).names)
+    expected_fields = set(canonical_schema(SCHEMA_V2).names)
     for row in read_quarter(capture, objects):
         value = row.to_mapping()
-        if set(value) != expected_fields or row.schema_version != 'sec-index-v1' or row.parser_version != 'sec-index-parser-v1':
+        if set(value) != expected_fields or row.schema_version != 'sec-index-v2' or row.parser_version != 'sec-index-parser-v2':
             raise ValueError('validated row schema/parser differs from declared production schema')
         key = row.cik, row.archive_path
         if key in keys:
@@ -916,7 +918,7 @@ def validate_read(capture, objects):
     return {'quarter': capture.quarter, 'generation_id': capture.generation_id, 'rows': count,
             'validated': True, 'source_count': len(manifest.sources), 'row_source_count': len(sources),
             'manifest_ref': capture.manifest_ref, 'manifest_sha256': capture.manifest_sha256,
-            'manifest_bytes': capture.manifest_bytes, 'schema': str(canonical_schema(SCHEMA_V1)),
+            'manifest_bytes': capture.manifest_bytes, 'schema': str(canonical_schema(SCHEMA_V2)),
             'sources': [item.to_mapping() for item in manifest.sources],
             'files': [item.to_mapping() for item in manifest.files]}
 

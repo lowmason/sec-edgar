@@ -271,7 +271,7 @@ class AcceptanceTests(unittest.TestCase):
         value.pop('fixture', None)
         value['acquisition'] = {'mode': 'live'}
         value['runtime'] = {'kind': 'native', 'release_manifest': str(release)}
-        value['etl'] = {'parser_version': 'sec-index-parser-v1', 'schema_version': 'sec-index-v1'}
+        value['etl'] = {'parser_version': 'sec-index-parser-v2', 'schema_version': 'sec-index-v2'}
         value['daily'] = {'start_date': '2026-10-01'}
         value['storage']['root'] = str(self.root / 'data')
         value['logging']['root'] = str(self.root / 'logs')
@@ -392,7 +392,7 @@ class AcceptanceTests(unittest.TestCase):
         for mode in ('quarterly', 'daily'):
             settings = fixture_settings(root=self.root / 'fixture',
                 backfill={'start_quarter': '2024Q1', 'end_quarter': '2024Q1' if mode == 'quarterly' else 'open'},
-                daily={'start_date': '2026-10-01'}, etl={'parser_version': 'sec-index-parser-v1'},
+                daily={'start_date': '2026-10-01'}, etl={'parser_version': 'sec-index-parser-v2'},
                 fixture={'allow_clock_override': True})
             command_harnesses[mode] = CommandHarness(self.root / 'fixture', pack, settings)
             self.addCleanup(command_harnesses[mode].close)

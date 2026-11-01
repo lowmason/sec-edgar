@@ -44,14 +44,17 @@ def runtime_context(settings, context, runtime):
     return settings, pin_context(settings, context, context.started_at.date())[0]
 
 
-def seed_snapshot(root, source, body):
+def seed_snapshot(root, source, body, *, schema_version=None):
+    """`schema_version=None` keeps the fixture config's schema for the acquisition context."""
     from sec_edgar_ingest.models import Binding
     from sec_edgar_ingest.state import AcquisitionState
     from sec_edgar_ingest.worksets import encode_workset, make_snapshot_workset
     from support import fixture_snapshot, fixture_workset, store_bundle
     store, objects, leases = store_bundle(root)
     leases.close()
-    source_set = fixture_workset(members=(source,), context=fixture_context(settings=fixture_settings(root=root)))
+    etl = {} if schema_version is None else {'etl': {'schema_version': schema_version}}
+    settings = fixture_settings(root=root, **etl)
+    source_set = fixture_workset(members=(source,), context=fixture_context(settings=settings))
     snapshot = fixture_snapshot(source, body)
     objects.put_once(snapshot.raw_path, body)
     objects.put_once(f'worksets/sec/source/sha256={source_set.workset_id}/workset.json',

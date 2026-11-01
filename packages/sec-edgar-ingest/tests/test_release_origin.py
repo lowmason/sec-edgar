@@ -34,6 +34,8 @@ class OriginReleaseTests(unittest.TestCase):
     def configured(self, h, release):
         value = h.settings.to_mapping()
         value['runtime'] = {'kind': 'native', 'release_manifest': str(release.directory / 'release.json')}
+        if release is self.origin:
+            value['etl']['schema_version'] = 'sec-index-v1'  # Plan 7 P8: an older interpreter writes only v1.
         return Settings.from_mapping(value)
 
     def origin_run(self, h, settings, run_id):
@@ -165,6 +167,7 @@ class OriginReleaseTests(unittest.TestCase):
 
     def test_origin_settings_refuse_the_reserve_key(self):
         value = fixture_settings().to_mapping()
+        value['etl']['schema_version'] = 'sec-index-v1'  # Plan 7 P8: an older interpreter writes only v1.
         value['execution']['dispatch_reserve_seconds'] = 600
         script = ('import json, sys\nfrom sec_edgar_ingest.config import Settings\n'
                   'Settings.from_mapping(json.loads(sys.argv[1]))\n')

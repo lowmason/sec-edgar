@@ -51,7 +51,7 @@ class WorkflowCliTests(unittest.TestCase):
         value = local_config_mapping()
         value.pop('fixture', None)
         value['acquisition'] = {'mode': 'live'}
-        value['etl']['parser_version'] = 'sec-index-parser-v1'
+        value['etl']['parser_version'] = 'sec-index-parser-v2'
         value['runtime'] = {'kind': 'native', 'release_manifest': '/missing/releases/sha256=' + 'a' * 64 + '/release.json'}
         value['storage']['root'] = str(self.root / 'live-data')
         value['logging']['root'] = str(self.root / 'live-logs')

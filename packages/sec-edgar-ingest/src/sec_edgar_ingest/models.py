@@ -21,9 +21,9 @@ SCHEMA_V2 = "sec-index-v2"
 # Read versions: stored records of these schemas decode and validate.
 KNOWN_SCHEMAS = (SCHEMA_V1, SCHEMA_V2)
 # Write versions: new work (config, CLI, ETL commands) may use these. Read at call time, so tests can patch it.
-WRITABLE_SCHEMAS = frozenset(KNOWN_SCHEMAS)
+WRITABLE_SCHEMAS = frozenset({SCHEMA_V2})
 # The schema of new work by default.
-SCHEMA_VERSION = SCHEMA_V1
+SCHEMA_VERSION = SCHEMA_V2
 QUARTERLY_ENVELOPE_VERSION = "sec-quarterly-envelope-v1"
 DAILY_ENVELOPE_VERSION = "sec-daily-envelope-v1"
 SHA256_PATTERN = re.compile(r"[0-9a-f]{64}\Z")

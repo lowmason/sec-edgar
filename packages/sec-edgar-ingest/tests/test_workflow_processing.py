@@ -121,10 +121,21 @@ class ProcessingTests(unittest.TestCase):
             finally:
                 h.close()
 
+    @staticmethod
+    def daily_repeat(second):
+        """A pack edit: the daily source lists its one key twice, the second time as `second`."""
+        from support_workflows import idx, replace_pack_body
+        path = 'edgar/data/123456/0000123456-26-000004.txt'
+        rows = (('123456', 'Example', '10-K', '20261001', path), ('123456', *second, path))
+        return lambda pack: replace_pack_body(pack, BASE + 'daily-index/2026/QTR4/master.20261001.idx',
+                                              idx(rows, 'daily'))
+
     def test_refusal_retains_exact_line_and_raw_details(self):
         from sec_edgar_ingest.workflows.checked import read_child_capture
         with tempfile.TemporaryDirectory() as tmp:
-            h, context, dispatcher, value = self.prepare(Path(tmp), conflicting=True)
+            # A non-list conflict: the repeat differs in filing date, so the source is refused.
+            h, context, dispatcher, value = self.prepare(
+                Path(tmp), pack_edit=self.daily_repeat(('Example', '10-K', '20261002')))
             try:
                 processed = process_member(value, context, dispatcher, h.store, h.objects)
                 child = read_child_capture(processed.evidence['calls'][-1], h.objects)
@@ -138,6 +149,23 @@ class ProcessingTests(unittest.TestCase):
                 self.assertEqual(tuple(h.store.scan('Processing', {})), ())
                 self.assertEqual(tuple(h.store.scan('QuarterPublication', {})), ())
                 self.assertFalse(any((Path(tmp) / '.fixture-state/objects/observations').rglob('*.parquet')))
+            finally:
+                h.close()
+
+    def test_form_only_repeat_now_completes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            h, context, dispatcher, value = self.prepare(
+                Path(tmp), pack_edit=self.daily_repeat(('Example', '10-K/A', '20261001')))
+            try:
+                self.assertEqual(context.schema_version, 'sec-index-v2')
+                processed = process_member(value, context, dispatcher, h.store, h.objects)
+                self.assertEqual(processed.result.outcome, 'success')
+                self.assertFalse(processed.result.quarantined)
+                self.assertTrue(processed.result.transformed)
+                self.assertEqual(processed.result.gaps, ())
+                _, rows = h.capture('2026Q4')
+                self.assertEqual([(row['form_types'], row['company_names']) for row in rows],
+                                 [(['10-K', '10-K/A'], ['Example'])])
             finally:
                 h.close()
 

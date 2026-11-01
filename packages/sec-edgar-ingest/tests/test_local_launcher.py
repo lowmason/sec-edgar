@@ -49,7 +49,7 @@ class LauncherPreparationTests(unittest.TestCase):
         from sec_edgar_ingest.config import DISPATCH_RESERVE_FLOOR_SECONDS
         value['execution']['dispatch_reserve_seconds'] = DISPATCH_RESERVE_FLOOR_SECONDS
         value['runtime'] = {'kind': 'native', 'release_manifest': '../releases/sha256=' + digest + '/release.json'}
-        value['etl']['parser_version'] = 'sec-index-parser-v1'
+        value['etl']['parser_version'] = 'sec-index-parser-v2'
         value['storage']['root'] = '../data'
         value['logging']['root'] = '../logs'
         self.config = self.project / 'conf/sec-edgar-local.json'
@@ -411,7 +411,7 @@ class InstalledLauncherTests(unittest.TestCase):
         from sec_edgar_ingest.config import DISPATCH_RESERVE_FLOOR_SECONDS
         value['execution']['dispatch_reserve_seconds'] = DISPATCH_RESERVE_FLOOR_SECONDS
         value['runtime'] = {'kind': 'native', 'release_manifest': str(self.release.directory / 'release.json')}
-        value['etl']['parser_version'] = 'sec-index-parser-v1'
+        value['etl']['parser_version'] = 'sec-index-parser-v2'
         value['storage']['root'] = '../data'
         value['logging']['root'] = '../logs'
         self.config = self.project / 'conf/sec-edgar-local.json'

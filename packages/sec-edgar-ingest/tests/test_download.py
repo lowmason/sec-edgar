@@ -992,7 +992,7 @@ class DurableRequestAuditTests(unittest.TestCase):
         from sec_edgar_ingest.cli import _fixture_pack
         value = local_config_mapping()
         value['acquisition'] = {'mode': 'live'}
-        value['etl']['parser_version'] = 'sec-index-parser-v1'
+        value['etl']['parser_version'] = 'sec-index-parser-v2'
         value['runtime'] = {'kind': 'native', 'release_manifest': '/missing/releases/sha256=' + 'a' * 64 + '/release.json'}
         settings = Settings.from_mapping(value)
         with self.assertRaises(ValueError):

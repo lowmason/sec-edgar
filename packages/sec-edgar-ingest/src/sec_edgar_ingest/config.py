@@ -9,8 +9,8 @@ from pathlib import Path
 from typing import Literal
 
 from .models import (Record, RunContext, canonical_json, parse_json, quarter_for, quarter_value,
-                     record_from_mapping, require_number, require_text, require_writable_schema,
-                     validate_record_fields)
+                     record_from_mapping, require_known_schema, require_number, require_text,
+                     require_writable_schema, validate_record_fields)
 
 CONFIG_VERSION = "sec-local-config-v1"
 COORDINATION_NAMESPACE = "sec-owner-lowell-mason"
@@ -29,6 +29,9 @@ DISPATCH_RESERVE_FLOOR_SECONDS = 480
 MAX_EXCHANGE_SECONDS = 90
 MAX_RECEIVED_BYTES = 67108864
 MAX_EXPANDED_BYTES = 536870912
+# The release parser of new live work. A stored live config may hold an earlier release parser (D9).
+LIVE_PARSER = "sec-index-parser-v2"
+RELEASE_PARSERS = ("sec-index-parser-v1", LIVE_PARSER)
 HTTP_POLICY = {
     "max_attempts": HTTP_ATTEMPT_LIMIT, "retry_base_seconds": 2, "retry_cap_seconds": 120,
     "connect_timeout_seconds": 15, "read_timeout_seconds": 60,
@@ -171,8 +174,9 @@ class Settings(Record):
         require_text(self.etl.parser_version, "etl.parser_version")
         if re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", self.etl.parser_version) is None or self.etl.parser_version.lower() in ("latest", "open"):
             raise ValueError("etl.parser_version must be explicit immutable provenance")
+        # Known, not writable: stored effective configs decode through here (D9). `parse_config` admits new work.
         try:
-            require_writable_schema(self.etl.schema_version)
+            require_known_schema(self.etl.schema_version)
         except ValueError:
             raise ValueError("unsupported etl.schema_version") from None
         if self.reconciliation.require_withdrawal_approval is not True:
@@ -251,8 +255,8 @@ def _validate_live_policy(settings: Settings) -> None:
         raise ValueError("fixture overrides are permitted only for fixture acquisition")
     if settings.runtime.kind != "native":
         raise ValueError("live acquisition requires native runtime")
-    if settings.etl.parser_version != "sec-index-parser-v1":
-        raise ValueError("live acquisition requires sec-index-parser-v1")
+    if settings.etl.parser_version not in RELEASE_PARSERS:
+        raise ValueError(f"live acquisition requires {LIVE_PARSER}")
     if settings.http.to_mapping() != HTTP_POLICY:
         raise ValueError("live HTTP settings must match the accepted acquisition policy")
     if (settings.coordination.lease_seconds != LEASE_SECONDS
@@ -280,12 +284,27 @@ def admit_dispatch_reserve(settings: Settings) -> int | None:
     return reserve
 
 
+def admit_new_work(settings: Settings) -> Settings:
+    """Admit a new invocation's config: it must write the current schema and, when live, use the current parser.
+
+    Call this only on a config file read for new work. Frozen historical configs skip it, so retained v1 objects
+    still decode and validate (D9).
+    """
+    try:
+        require_writable_schema(settings.etl.schema_version)
+    except ValueError:
+        raise ValueError("unsupported etl.schema_version") from None
+    if settings.acquisition.mode == "live" and settings.etl.parser_version != LIVE_PARSER:
+        raise ValueError(f"live acquisition requires {LIVE_PARSER}")
+    return settings
+
+
 def parse_config(text: str) -> Settings:
     try:
         value = parse_json(text)
     except ValueError as error:
         raise ValueError("configuration requires strict JSON syntax (YAML 1.2 subset)") from error
-    return Settings.from_mapping(value)
+    return admit_new_work(Settings.from_mapping(value))
 
 
 def normalize_paths(settings: Settings, config_parent: Path) -> Settings:

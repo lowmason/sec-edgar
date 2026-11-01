@@ -127,7 +127,7 @@ def sequence(output: Path, *, release_manifest=None) -> Mapping[str, object]:
               'exchange_deadline_seconds': settings.http.exchange_deadline_seconds,
               'max_received_bytes': settings.http.max_received_bytes,
               'max_expanded_bytes': settings.http.max_expanded_bytes}
-    expected_guards = {'parser_version': 'fixture-index-parser-v1', 'schema_version': 'sec-index-v1',
+    expected_guards = {'parser_version': 'fixture-index-parser-v1', 'schema_version': 'sec-index-v2',
                        'exchange_deadline_seconds': 90, 'max_received_bytes': 67108864,
                        'max_expanded_bytes': 536870912}
     if guards != expected_guards:
@@ -474,8 +474,12 @@ if __name__ == '__main__':
     raise SystemExit(main())
 
 
-def upgrade_sequence(output, a_manifest, b_manifest):
-    """Run upgrade assertions inside installed B, with copied test support only."""
+def upgrade_sequence(output, a_manifest, b_manifest, *, a_schema: str | None = None):
+    """Run upgrade assertions inside installed B, with copied test support only.
+
+    `a_schema` pins release A's `etl.schema_version` for an older interpreter (plan 7 P8). `None` keeps the
+    current pair for both releases.
+    """
     import tempfile
     from sec_edgar_ingest.release import reconstruct_release
     from sec_edgar_ingest.runtime import preflight, native_python_argv, isolated_environment
@@ -501,7 +505,8 @@ def upgrade_sequence(output, a_manifest, b_manifest):
         code = ('import sys,json;sys.path.insert(0,' + repr(str(harness)) + ');'
                 'from network_guard import install;install();'
                 'from workflow_proof import installed_upgrade_cases;'
-                'print(json.dumps(installed_upgrade_cases(*sys.argv[1:]),sort_keys=True))')
+                'print(json.dumps(installed_upgrade_cases(*sys.argv[1:],a_schema=' + repr(a_schema) + '),'
+                'sort_keys=True))')
         argv = [*native_python_argv(b.python), '-c', code, str(output), str(a_manifest), str(b_manifest)]
         done = subprocess.run(argv, cwd=outside, env=isolated_environment(),
                               capture_output=True, text=True, timeout=600)
@@ -553,8 +558,11 @@ def order_aware_children(scenario, objects, result, checked, a_release_id, b_rel
     return a_first
 
 
-def installed_upgrade_cases(output, a_manifest, b_manifest):
-    """Actual B application checks A-origin backlog/repair and retained read authority."""
+def installed_upgrade_cases(output, a_manifest, b_manifest, *, a_schema=None):
+    """Actual B application checks A-origin backlog/repair and retained read authority.
+
+    When `a_schema` is given, release A's config carries it; release B keeps the current pair.
+    """
     import sys
     from datetime import date, timedelta, timezone
     from sec_edgar_ingest.config import Settings
@@ -593,6 +601,8 @@ def installed_upgrade_cases(output, a_manifest, b_manifest):
         def settings(release):
             value = base.to_mapping()
             value['runtime'] = {'kind': 'native', 'release_manifest': str(release.directory / 'release.json')}
+            if release is a and a_schema is not None:
+                value['etl']['schema_version'] = a_schema
             return Settings.from_mapping(value)
         selected_a, selected_b = settings(a), settings(b)
         deadline = datetime.now(timezone.utc) + timedelta(seconds=1800)

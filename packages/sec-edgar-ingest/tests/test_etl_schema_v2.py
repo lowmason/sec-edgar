@@ -224,8 +224,10 @@ class VersionRegistryTests(unittest.TestCase):
     def test_registry_values(self):
         self.assertEqual((models.SCHEMA_V1, models.SCHEMA_V2), ('sec-index-v1', 'sec-index-v2'))
         self.assertEqual(models.KNOWN_SCHEMAS, ('sec-index-v1', 'sec-index-v2'))
-        self.assertEqual(models.SCHEMA_VERSION, 'sec-index-v1')
+        self.assertEqual(models.WRITABLE_SCHEMAS, frozenset({'sec-index-v2'}))
+        self.assertEqual(models.SCHEMA_VERSION, 'sec-index-v2')
         from sec_edgar_ingest.etl import parser
+        self.assertEqual(parser.PARSER_VERSION, 'sec-index-parser-v2')
         self.assertFalse(hasattr(parser, 'SCHEMA_VERSION'))
 
     def test_writable_schemas_are_read_at_call_time(self):
@@ -271,7 +273,7 @@ class WriteSiteMessageTests(unittest.TestCase):
         from support_etl import etl_context
         from sec_edgar_ingest.etl import commands
         with tempfile.TemporaryDirectory() as directory:
-            settings, context = etl_context(command='publish', root=Path(directory))
+            settings, context = etl_context(command='publish', root=Path(directory), schema_version=SCHEMA_V1)
             ref = 'worksets/sec/transformed/sha256=' + 'a' * 64 + '/workset.json'
             with patch.object(commands, 'pin_context', return_value=(context, None)), \
                  patch.object(models, 'WRITABLE_SCHEMAS', frozenset({SCHEMA_V2})):
@@ -287,13 +289,104 @@ class WriteSiteMessageTests(unittest.TestCase):
         cases = ((cli._validate, ['transform', *common, '--workset',
                                   'worksets/sec/snapshot/sha256=' + 'a' * 64 + '/workset.json']),
                  (cli._validate_workflow, ['backfill', *common]))
-        settings = fixture_settings(etl={'parser_version': 'fixture-index-parser-v1'})
+        settings = fixture_settings(etl={'parser_version': 'fixture-index-parser-v1', 'schema_version': SCHEMA_V1})
         for validate, argv in cases:
             with self.subTest(validate=validate.__name__), \
                  patch.object(cli, 'load_config', return_value=settings), \
                  patch.object(models, 'WRITABLE_SCHEMAS', frozenset({SCHEMA_V2})):
                 args = cli._parser().parse_args(argv)
                 self.assertRefused('unsupported ETL schema version', lambda: validate(args))
+
+
+def live_mapping(parser_version, schema_version=SCHEMA_V2):
+    """A valid live config mapping, with `parser_version` and `schema_version`."""
+    from support import local_config_mapping
+    value = local_config_mapping()
+    value['acquisition'] = {'mode': 'live'}
+    value['runtime'] = {'kind': 'native', 'release_manifest': '/tmp/releases/sha256=' + 'a' * 64 + '/release.json'}
+    value['etl'] = {'parser_version': parser_version, 'schema_version': schema_version}
+    return value
+
+
+class WriteVersionTests(unittest.TestCase):
+    """New work writes only sec-index-v2 (D9). Stored v1 records still decode, and a v1-era snapshot transforms."""
+
+    def assertRefused(self, message, call):
+        with self.assertRaises(ValueError) as caught:
+            call()
+        self.assertEqual(str(caught.exception), message)
+
+    def test_v1_config_is_refused_for_new_work(self):
+        from support import FIXTURE_CONFIG
+        from sec_edgar_ingest.config import load_config
+        value = json.loads(FIXTURE_CONFIG.read_text())
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'config.json'
+            value['etl']['schema_version'] = SCHEMA_V2
+            path.write_text(json.dumps(value))
+            self.assertEqual(load_config(path).etl.schema_version, SCHEMA_V2)
+            value['etl']['schema_version'] = SCHEMA_V1
+            path.write_text(json.dumps(value))
+            self.assertRefused('unsupported etl.schema_version', lambda: load_config(path))
+
+    def test_live_policy_requires_parser_v2(self):
+        from sec_edgar_ingest.config import Settings, parse_config
+        self.assertEqual(parse_config(json.dumps(live_mapping('sec-index-parser-v2'))).etl.parser_version,
+                         'sec-index-parser-v2')
+        for parser_version in ('sec-index-parser-v1', 'fixture-index-parser-v2'):
+            with self.subTest(parser_version=parser_version):
+                self.assertRefused('live acquisition requires sec-index-parser-v2',
+                                   lambda: parse_config(json.dumps(live_mapping(parser_version))))
+        # A stored 1c live config (in a retained context's effective_config) still validates; new work refuses it.
+        stored = live_mapping('sec-index-parser-v1', SCHEMA_V1)
+        self.assertEqual(Settings.from_mapping(stored).etl.to_mapping(),
+                         {'parser_version': 'sec-index-parser-v1', 'schema_version': SCHEMA_V1})
+        self.assertRefused('unsupported etl.schema_version', lambda: parse_config(json.dumps(stored)))
+        self.assertRefused('live acquisition requires sec-index-parser-v2',
+                           lambda: Settings.from_mapping(live_mapping('fixture-index-parser-v2')))
+
+    def test_publish_refuses_a_v1_context(self):
+        from sec_edgar_ingest.etl import commands
+        from sec_edgar_ingest.worksets import decode_snapshot_workset
+        body = idx([listing_row('quarterly', 'SC 13E3')], 'quarterly')
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            # A v1 context and a v1-era store, as the 1c release left them. Neither needs the v1 write seam.
+            settings, context = etl_context(command='publish', root=root, schema_version=SCHEMA_V1)
+            store, objects, stored = seed_snapshot(root, fixture_source('2024Q1', 'quarterly'), body,
+                                                   schema_version=SCHEMA_V1)
+            self.addCleanup(store.close)
+            self.assertEqual((context.schema_version, stored.context.schema_version), (SCHEMA_V1, SCHEMA_V1))
+            ref = 'worksets/sec/transformed/sha256=' + 'a' * 64 + '/workset.json'
+            # `pin_context` accepts the stored v1 config, so the command's own check answers.
+            self.assertRefused('unsupported ETL schema version',
+                               lambda: commands.run_publish(ref, context, settings, objects, store))
+            # The stored v1-era snapshot workset still decodes.
+            decoded = decode_snapshot_workset(
+                objects.read(f'worksets/sec/snapshot/sha256={stored.workset_id}/workset.json'))
+            self.assertEqual(decoded, stored)
+            self.assertEqual(decoded.context.schema_version, SCHEMA_V1)
+
+    def test_v2_transform_of_a_v1_era_snapshot(self):
+        body = idx([listing_row('quarterly', 'SC TO-T'), listing_row('quarterly', 'SC 13E3')], 'quarterly')
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            store, objects, stored = seed_snapshot(root, fixture_source('2024Q1', 'quarterly'), body,
+                                                   schema_version=SCHEMA_V1)
+            self.addCleanup(store.close)
+            self.assertEqual(stored.context.schema_version, SCHEMA_V1)
+            settings, context = etl_context(root=root)  # New work: the fixture config's schema.
+            self.assertEqual(context.schema_version, SCHEMA_V2)
+            path = f'worksets/sec/snapshot/sha256={stored.workset_id}/workset.json'
+            result = transform_workset(path, context, settings, objects, EtlState(store), AcquisitionState(store))
+            self.assertTrue(result.complete, result.failures)
+            self.assertEqual((result.origin_context.schema_version, result.context.schema_version),
+                             (SCHEMA_V1, SCHEMA_V2))
+            [ref] = result.observations
+            self.assertEqual(ref.schema_version, 'sec-index-v2')
+            observed = list(read_observations(ref, objects))
+            self.assertEqual([(type(obs.row), obs.row.schema_version, obs.row.form_types) for obs in observed],
+                             [(IndexRowV2, SCHEMA_V2, ('SC TO-T',)), (IndexRowV2, SCHEMA_V2, ('SC 13E3',))])
 
 
 def listing_row(kind, form, name=NGM_NAME, filed=date(2024, 3, 8), key=NGM):

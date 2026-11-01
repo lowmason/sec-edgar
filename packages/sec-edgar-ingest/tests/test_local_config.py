@@ -34,7 +34,7 @@ def local_mapping(root="../data", *, mode="fixture"):
         "runtime": {"kind": "fixture", "fixture_id": "local-contract-tests-v1"},
         "logging": {"root": "../logs"},
         "execution": {"max_run_seconds": 3600},
-        "etl": {"parser_version": "sec-index-parser-v1", "schema_version": "sec-index-v1"},
+        "etl": {"parser_version": "sec-index-parser-v2", "schema_version": "sec-index-v2"},
         "reconciliation": {"require_withdrawal_approval": True},
     }
 

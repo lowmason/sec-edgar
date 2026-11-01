@@ -168,7 +168,7 @@ def write_config(path: Path, root: Path, manifest: Path, *, start: str, end: str
         'runtime': {'kind': 'native', 'release_manifest': str(manifest)},
         'logging': {'root': str(root / 'logs')},
         'execution': {'max_run_seconds': max_run_seconds},
-        'etl': {'parser_version': 'sec-index-parser-v1', 'schema_version': 'sec-index-v1'},
+        'etl': {'parser_version': 'sec-index-parser-v2', 'schema_version': 'sec-index-v2'},
         'reconciliation': {'require_withdrawal_approval': True},
         'fixture': {'allow_clock_override': True, 'allow_deadline_override': False},
     }
