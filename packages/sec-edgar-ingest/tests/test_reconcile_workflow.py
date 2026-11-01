@@ -10,6 +10,7 @@ from unittest.mock import patch
 from support_approval import GateFixture, row
 from support_etl import etl_context
 from support_reconcile import A, B, C, X, Y, ReconcileFixture
+from support_workflows import other_filing_date
 from support_reconcile import sha
 from sec_edgar_ingest.etl.approval import approve
 from sec_edgar_ingest.etl.contracts import processing_key
@@ -81,7 +82,7 @@ class ReconcileWorkflowTests(ReconcileFixture):
     def test_invalid_correction_keeps_the_prior_generation_and_names_its_quarter(self):
         h, _ = self.baseline()
         before = EtlState(h.store).pointer('2026Q3')
-        conflict = ('123456', 'Conflict', *A[2:])
+        conflict = ('123456', 'Conflict', A[2], other_filing_date(A[3]), A[4])
         code, _, report = self.run_phase(h, 'reconcile', 'invalid', (A, conflict, B))
         self.assertEqual((code, report.outcome), (3, 'incomplete'), h.calls[-1])
         self.assertEqual(report.counts['quarantined_sources'], 1)

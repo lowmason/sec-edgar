@@ -115,6 +115,7 @@ def other_filing_date(filed):
         other = day - timedelta(days=1)
     return other.strftime('%Y%m%d') if compact else other.isoformat()
 
+
 def simple_pack(root, *, empty=False, conflicting=False):
     listings, bodies = {}, {}
     for family in ('full-index', 'daily-index'):
