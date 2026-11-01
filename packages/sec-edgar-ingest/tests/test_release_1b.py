@@ -14,7 +14,9 @@ import test_release_origin as origin_tests
 class D5OriginTests(origin_tests.OriginReleaseTests):
     """Plan 4's two-release proofs with the D5 release as origin. They stay order-aware (plan 4 R2)."""
 
-    # D10: an older release cannot read v2 objects, so the current side is its era's release (1b) on v1; test_release_2a and test_release_upgrade cover the new release.
+    # D10: an older release cannot read v2 objects. The current side's children run its era's release (1b), and its
+    # workflow parent runs in-process from this checkout with a v1 config (inherited `current_run`).
+    # test_release_2a and test_release_upgrade cover the new release.
     @classmethod
     def setUpClass(cls):
         from support_release import D5_REVISION, ONE_B_REVISION, origin_release

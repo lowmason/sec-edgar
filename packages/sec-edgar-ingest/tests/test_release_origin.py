@@ -24,7 +24,9 @@ BLOCKED = BASE + 'full-index/2026/QTR3/master.zip'
 
 
 class OriginReleaseTests(unittest.TestCase):
-    # D10: an older release cannot read v2 objects, so the current side is its era's release (D5) on v1; test_release_2a and test_release_upgrade cover the new release.
+    # D10: an older release cannot read v2 objects. The current side's children run its era's release (D5), and its
+    # workflow parent runs in-process from this checkout with a v1 config. test_release_2a and test_release_upgrade
+    # cover the new release.
     @classmethod
     def setUpClass(cls):
         from support_release import D5_REVISION, origin_release
