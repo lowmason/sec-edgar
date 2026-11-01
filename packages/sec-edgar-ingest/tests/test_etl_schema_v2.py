@@ -1,10 +1,12 @@
 """The sec-index-v2 row contract, its Arrow layouts and the schema version registry (Stage 2a)."""
 import hashlib
+import io
 import itertools
 import json
+import sqlite3
 import tempfile
 import unittest
-from contextlib import closing
+from contextlib import closing, redirect_stderr
 from dataclasses import replace
 from datetime import date
 from pathlib import Path
@@ -280,6 +282,58 @@ class WriteSiteMessageTests(unittest.TestCase):
                 self.assertRefused('unsupported ETL schema version',
                                    lambda: commands.run_publish(ref, context, settings, None, None))
 
+    @staticmethod
+    def written(root):
+        """Every object path and every state record of the store at `root`."""
+        objects = {path.relative_to(root / 'objects').as_posix()
+                   for path in (root / 'objects').rglob('*') if path.is_file()}
+        with closing(sqlite3.connect(root / 'state.sqlite3')) as db:
+            records = db.execute('SELECT * FROM records ORDER BY table_name, partition, key').fetchall()
+        return objects, records
+
+    def test_etl_writes_refuse_an_unwritable_context_before_any_write(self):
+        # `Settings` and `pin_context` accept a stored v1 config (D9), so the shared ETL boundary refuses new v1
+        # work itself. Each call gets a fresh v1-era store: refused with no write, then accepted in the v1 seam.
+        from sec_edgar_ingest.etl import commands
+        from sec_edgar_ingest.etl.transform import transform_member
+        source = fixture_source('2024Q1', 'quarterly')
+        body = idx([listing_row('quarterly', 'SC 13E3')], 'quarterly')
+        accepted = {'transform_member': lambda result: result.schema_version,
+                    'run_transform': lambda result: (result.outcome, result.context.schema_version),
+                    'build_candidate': lambda result: result.manifest.schema_version,
+                    'publish_quarter': lambda result: result.outcome}
+        expected = {'transform_member': SCHEMA_V1, 'run_transform': ('success', SCHEMA_V1),
+                    'build_candidate': SCHEMA_V1, 'publish_quarter': 'published'}
+        for name in accepted:
+            with self.subTest(name), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                store, objects, stored = seed_snapshot(root, source, body, schema_version=SCHEMA_V1)
+                self.addCleanup(store.close)
+                state, [snapshot] = EtlState(store), stored.snapshots
+                settings, context = etl_context(root=root, schema_version=SCHEMA_V1)
+                ref = None
+                if name in ('build_candidate', 'publish_quarter'):
+                    with v1_writable():  # The v1 observation that a v1 build would read.
+                        ref = transform_member(source, snapshot, context, settings, objects, state)
+                snapshot_ref = f'worksets/sec/snapshot/sha256={stored.workset_id}/workset.json'
+                call = {'transform_member': lambda: transform_member(source, snapshot, context, settings, objects, state),
+                        'run_transform': lambda: commands.run_transform(snapshot_ref, context, settings, objects, store),
+                        'build_candidate': lambda: catalog.build_candidate('2024Q1', None, (ref,), context, settings,
+                                                                           objects, state),
+                        'publish_quarter': lambda: publish_quarter('2024Q1', (ref,), context, settings, objects,
+                                                                   state)}[name]
+                before_objects, before_records = self.written(root)
+                with patch.object(models, 'WRITABLE_SCHEMAS', frozenset({SCHEMA_V2})):
+                    self.assertRefused('unsupported ETL schema version', call)
+                after_objects, after_records = self.written(root)
+                self.assertEqual(after_records, before_records)
+                # `transform_member` keeps the error of every refusal under quarantine, as for a stale pin.
+                quarantine = f'quarantine/sec/{context.run_id}/{source.source_id}/transform/{context.attempt_id}/error.json'
+                self.assertEqual(after_objects, before_objects | ({quarantine} if name == 'transform_member' else set()))
+                # Positive control: the same call writes v1 inside the seam. `run_transform` logs to stderr.
+                with v1_writable(), redirect_stderr(io.StringIO()):
+                    self.assertEqual(accepted[name](call()), expected[name])
+
     def test_cli_refuses_an_unwritable_config_with_its_own_text(self):
         from unittest.mock import patch
         from support import fixture_settings
@@ -537,8 +591,9 @@ class ParserV2Tests(unittest.TestCase):
             for differs, other in (('form', listing_row(kind, 'SC TO-T')),
                                    ('name', listing_row(kind, 'SC 13E3', 'OTHER INC'))):
                 with self.subTest(kind=kind, differs=differs):
-                    result, _, _ = self.transform(kind, [listing_row(kind, 'SC 13E3'), other], kind + differs,
-                                                  schema_version=SCHEMA_V1)
+                    with v1_writable():
+                        result, _, _ = self.transform(kind, [listing_row(kind, 'SC 13E3'), other], kind + differs,
+                                                      schema_version=SCHEMA_V1)
                     self.assertFalse(result.complete)
                     self.assertEqual(result.failures[0].details['reason'], 'conflicting duplicate logical key')
                     self.assertEqual(result.failures[0].details['line_number'], 4)

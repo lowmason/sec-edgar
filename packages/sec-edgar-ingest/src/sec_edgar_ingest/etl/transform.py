@@ -16,7 +16,7 @@ import pyarrow.parquet as pq
 
 from ..config import Settings, pin_context
 from ..models import (to_mapping_value, BodyReceipt, Error, RunContext, Snapshot, Source,
-                      canonical_json, error_text, parse_json, quarter_for)
+                      canonical_json, error_text, parse_json, quarter_for, require_writable_schema)
 from ..state import AcquisitionState
 from ..storage.contracts import BoundaryObserver, Conflict, FILE_CHUNK_BYTES, ObjectStore, observe
 from ..validation import validate_envelope
@@ -168,6 +168,10 @@ def _validate_context(context: RunContext, settings: Settings) -> None:
     if context.pinned_on is None or pin_context(settings, context, context.pinned_on)[0] != context:
         raise ValueError('transform requires its exact pinned effective configuration')
     supported_parser(context.parser_version, fixture=settings.acquisition.mode == 'fixture')
+    try:
+        require_writable_schema(context.schema_version)
+    except ValueError:
+        raise ValueError('unsupported ETL schema version') from None
     _check_deadline(context)
 
 
