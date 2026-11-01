@@ -9,6 +9,7 @@ install()
 import hashlib
 import json
 import os
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -118,6 +119,9 @@ class TwoReleaseTests(unittest.TestCase):
             report = upgrade_sequence(Path(directory), self.one_c.directory / 'release.json',
                                       self.current.directory / 'release.json', a_schema='sec-index-v1')
             self.assertEqual(report['exit'], 0)
+            destination = os.environ.get('SEC_LOCAL_2A_UPGRADE_EVIDENCE')
+            if destination:
+                shutil.copytree(Path(directory), destination)
             for case in report['cases']:
                 self.assertEqual(case['b_exit'], 0)
                 self.assertGreater(case['rows'], 0)

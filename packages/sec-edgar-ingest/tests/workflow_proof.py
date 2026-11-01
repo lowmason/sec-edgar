@@ -693,6 +693,18 @@ def installed_upgrade_cases(output, a_manifest, b_manifest, *, a_schema=None):
             current_rows = list(read_quarter(current, objects))
             if len(current_rows) != len(rows) or objects.read(observation.manifest_ref) != before_observation:
                 raise AssertionError('cached upgrade changed source bytes or current reader count')
+            # Plan 7 P8 (owner Q6): B cannot reuse an older-schema A observation, so in repair it re-transforms
+            # A's snapshot and publishes over A's generation (D8, D9). A's producer and bytes are in the base.
+            origin = None
+            if a_schema is not None and scenario == 'repair':
+                from sec_edgar_ingest.etl.manifest import retained_base
+                base = retained_base(manifest, objects)
+                if base is None:
+                    raise AssertionError('B rebuild over an older-schema A has no base generation')
+                base_manifest = read_manifest(base, objects)
+                origin = {'capture': base, 'manifest': base_manifest, 'rows': list(read_quarter(base, objects)),
+                          'observation_ref': base_manifest.sources[0].manifest_ref}
+                origin['observation'] = objects.read(origin['observation_ref'])
             moved = a.directory.with_name(a.directory.name + '-missing')
             a.directory.rename(moved)
             try:
@@ -721,8 +733,18 @@ def installed_upgrade_cases(output, a_manifest, b_manifest, *, a_schema=None):
             finally:
                 moved.rename(a.directory)
             if scenario == 'repair':
-                if json.loads(before_observation)['runtime']['release_sha256'] != a.release_id:
-                    raise AssertionError('B cached transform must retain the original A producer')
+                if origin is None:
+                    if json.loads(before_observation)['runtime']['release_sha256'] != a.release_id:
+                        raise AssertionError('B cached transform must retain the original A producer')
+                else:
+                    if (manifest.schema_version, manifest.runtime['release_sha256'],
+                            json.loads(before_observation)['runtime']['release_sha256']) != (
+                            selected_b.etl.schema_version, b.release_id, b.release_id):
+                        raise AssertionError('B rebuild over an older-schema A must be B-produced at B versions')
+                    if (origin['manifest'].schema_version, origin['manifest'].runtime['release_sha256'],
+                            json.loads(origin['observation'])['runtime']['release_sha256']) != (
+                            a_schema, a.release_id, a.release_id):
+                        raise AssertionError('B rebuild must stand on the original A generation and its A producer')
                 saved_manifest = objects.directory / f'runtime/native/sha256={a.release_id}/release.json'
                 saved_body = saved_manifest.read_bytes()
                 try:
@@ -774,12 +796,22 @@ def installed_upgrade_cases(output, a_manifest, b_manifest, *, a_schema=None):
                 changed = capture_quarter('2026Q3', objects, state)
                 if len(list(read_quarter(changed, objects))) != 1:
                     raise AssertionError('approved B capture count differs')
-                rolled = rollback('2026Q3', changed.generation_id, capture.generation_id,
-                    'Local B operator', 'restore original A generation', objects, state)
-                if rolled.outcome != 'success' or list(read_quarter(capture_quarter('2026Q3', objects, state), objects)) != rows:
-                    raise AssertionError('installed B could not roll back to original A capture')
+                if origin is None:
+                    rolled = rollback('2026Q3', changed.generation_id, capture.generation_id,
+                        'Local B operator', 'restore original A generation', objects, state)
+                    if rolled.outcome != 'success' or list(read_quarter(capture_quarter('2026Q3', objects, state), objects)) != rows:
+                        raise AssertionError('installed B could not roll back to original A capture')
+                    restored = rows
+                else:
+                    rolled = rollback('2026Q3', changed.generation_id, origin['capture'].generation_id,
+                        'Local B operator', 'restore original A generation below the B rebuild', objects, state)
+                    restored = origin['rows']
+                    if rolled.outcome != 'success' or list(read_quarter(capture_quarter('2026Q3', objects, state), objects)) != restored:
+                        raise AssertionError('installed B could not roll back past its rebuild to the original A generation rows')
+                    if objects.read(origin['observation_ref']) != origin['observation']:
+                        raise AssertionError('upgrade reads, probes or operator steps changed original A observation bytes')
                 operator_evidence = {'approval': approval.to_mapping(), 'rollback': rolled.to_mapping(),
-                    'approved_rows': 1, 'restored_rows': len(rows)}
+                    'approved_rows': 1, 'restored_rows': len(restored)}
 
 
             cases.append({'scenario': scenario, 'a_exit': a_exit, 'b_exit': b_exit,
