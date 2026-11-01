@@ -1023,6 +1023,33 @@ class IncrementalV2Tests(unittest.TestCase):
         self.assertEqual((change['change_type'], change['before'], change['after']),
                          ('unresolved_absence', retained, retained))
 
+    def test_incremental_that_touches_a_retained_v1_key_refreshes_its_provenance(self):
+        with v1_writable():
+            self.twin = Twin(schema_version=SCHEMA_V1)
+            self.addCleanup(self.twin.close)
+            first = self.twin.observation('2026-10-01', 'daily', support_catalog.row(number=1)
+                                          + support_catalog.row(number=2))
+            v1, _ = self.twin.build([first])
+        self.assertEqual(v1[0].manifest.schema_version, SCHEMA_V1)
+        for lane in (self.twin.fast, self.twin.full):
+            lane.context = replace(lane.context, parser_version=V2_VERSIONS[0], schema_version=V2_VERSIONS[1])
+            lane.pin(lane.context.pinned_on)
+        # A replacement snapshot of the same source omits key 2, so the v2 rebuild retains its v1 row (D8).
+        base, _ = self.build('2026-10-01', support_catalog.row(number=1), v1, incremental=False, seconds=1)
+        self.assertEqual(base[0].manifest.unresolved_absence, 1)
+        step, _ = self.build('2026-10-02', support_catalog.row(number=3), base)
+        # A new daily source lists key 2 again with the same business fields, so C5 resolves the retained key.
+        (candidate, _), newer = self.build('2026-10-03', support_catalog.row(number=2), step)
+        manifest = candidate.manifest
+        self.assertEqual((manifest.unresolved_absence, manifest.provenance_refreshed, manifest.updated,
+                          manifest.added), (0, 1, 0, 0))
+        self.assertIsNone(manifest.retained_from_generation)
+        [refreshed] = [value for value in self.twin.fast.rows(candidate) if value['archive_path'].endswith('000002.txt')]
+        self.assertEqual((refreshed['parser_version'], refreshed['schema_version']), V2_VERSIONS)
+        self.assertEqual(refreshed['source_id'], newer.source.source_id)
+        # Key 2 was the only re-emitted absence and a provenance refresh writes no change row, so none is left.
+        self.assertEqual(self.twin.fast.rows(candidate, 'changes'), [])
+
 
 if __name__ == '__main__':
     unittest.main()
