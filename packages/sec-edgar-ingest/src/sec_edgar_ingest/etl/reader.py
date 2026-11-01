@@ -7,9 +7,9 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Iterator
 
-from ..models import SCHEMA_V1, Versioned, canonical_json, parse_json, require_hash
+from ..models import Versioned, canonical_json, parse_json, require_hash
 from ..storage.contracts import Conflict, ObjectStore
-from .contracts import Candidate, GenerationCapture, GenerationManifest, IndexRow
+from .contracts import Candidate, GenerationCapture, GenerationManifest, Row, decode_row
 from .manifest import (check_candidate_integrity, gate_ref, generation_base, iter_file_rows, read_approval,
                        read_manifest, validate_candidate)
 from .state import EtlState, POINTER_FIELDS
@@ -63,16 +63,18 @@ def capture_quarter(quarter: str, objects: ObjectStore, state: EtlState) -> Gene
     return capture
 
 
-def read_quarter(capture: GenerationCapture, objects: ObjectStore) -> Iterator[IndexRow]:
+def read_quarter(capture: GenerationCapture, objects: ObjectStore) -> Iterator[Row]:
+    """The generation's rows, as the row type of its manifest's `schema_version` (D7)."""
     manifest = validated_manifest(capture, objects)
+    layout = manifest.schema_version
     # Finish all remote reads before exposing a row, including late count failures.
     # The disk spool keeps this guarantee independent of quarter size.
     with TemporaryDirectory(prefix='sec-quarter-read-') as directory, closing(sqlite3.connect(Path(directory) / 'rows.sqlite')) as db:
         db.execute('CREATE TABLE rows(payload BLOB)')
         for ref in manifest.files:
             if ref.role == 'data':
-                with closing(iter_file_rows(ref, objects, SCHEMA_V1)) as rows:
+                with closing(iter_file_rows(ref, objects, layout)) as rows:
                     for value in rows:
-                        db.execute('INSERT INTO rows VALUES(?)', (canonical_json(IndexRow(**value).to_mapping()),))
+                        db.execute('INSERT INTO rows VALUES(?)', (canonical_json(decode_row(value, layout).to_mapping()),))
         for (payload,) in db.execute('SELECT payload FROM rows ORDER BY rowid'):
-            yield IndexRow.from_mapping(parse_json(payload))
+            yield decode_row(parse_json(payload), layout)

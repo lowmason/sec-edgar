@@ -19,17 +19,22 @@ from support_catalog import Lane
 from support_etl import etl_context, seed_snapshot, v1_writable
 from support_workflows import idx
 from sec_edgar_ingest.etl import catalog
+from sec_edgar_ingest.etl.approval import approve
 from sec_edgar_ingest.etl.columnar import quarter_observations
 from sec_edgar_ingest.etl import parser
-from sec_edgar_ingest.etl.manifest import validate_candidate_content
+from sec_edgar_ingest.etl.history import COUNTS, quarter_history, withdrawal_candidates
+from sec_edgar_ingest.etl.manifest import iter_file_rows, read_manifest, retained_base, validate_candidate_content
 from sec_edgar_ingest.etl.parser import ParseError, iter_observations, parse_fields
+from sec_edgar_ingest.etl.publication import publish_quarter
+from sec_edgar_ingest.etl.reader import capture_quarter, read_quarter, validated_manifest
+from sec_edgar_ingest.etl.rollback import rollback
 from sec_edgar_ingest.etl.state import EtlState
 from sec_edgar_ingest.etl.transform import (BATCH_ROWS, _remember_observation, _seen_database, read_observations,
                                             transform_workset)
 from sec_edgar_ingest.state import AcquisitionState
 from sec_edgar_ingest.etl.contracts import (
-    ORIGINAL_FIELD_COUNT, IndexRow, IndexRowV2, arrow_row, business_fields, canonical_schema, change_schema,
-    conflict_payload, decode_row, merge_rows, observation_schema, row_type, update_fields, upgrade_row,
+    ABSENCE_REASON, ORIGINAL_FIELD_COUNT, IndexRow, IndexRowV2, arrow_row, business_fields, canonical_schema,
+    change_schema, conflict_payload, decode_row, merge_rows, observation_schema, row_type, update_fields, upgrade_row,
 )
 from sec_edgar_ingest import models
 from sec_edgar_ingest.models import SCHEMA_V1, SCHEMA_V2, canonical_json
@@ -624,6 +629,223 @@ class CatalogV2Tests(unittest.TestCase):
         union = self.forge(lane, candidate, generation({**value, 'form_types': ['SC 13E3', 'SC TO-I']}))
         with self.assertRaisesRegex(ValueError, '^canonical row is not a selected observation or exact retained row$'):
             validate_candidate_content(union, lane.objects)
+
+
+# The fixture parser of each layout, so that a row's versions show which build wrote it (as a release flips both).
+V1_VERSIONS = ('fixture-index-parser-v1', SCHEMA_V1)
+V2_VERSIONS = ('fixture-index-parser-v2', SCHEMA_V2)
+OPEN_DAY = '2026-10-01'  # A daily source of the open 2026Q4: the lane is pinned on 2026-10-07.
+
+
+class ReaderV2Tests(unittest.TestCase):
+    """Each generation reads back with the row type of its own manifest's schema (D7), across rollback (D8)."""
+
+    def setUp(self):
+        with v1_writable():
+            self.lane = Lane(command='publish', schema_version=SCHEMA_V1)
+        self.addCleanup(self.lane.close)
+
+    def use(self, versions, day=None):
+        """Point the lane at a parser and schema pair, as a config change does. `day` re-pins the clock."""
+        lane = self.lane
+        lane.context = replace(lane.context, parser_version=versions[0], schema_version=versions[1])
+        lane.pin(day or lane.context.pinned_on)
+
+    def publish(self, rows, period=OPEN_DAY, kind='daily', *, seconds=0, quarter='2026Q4'):
+        """Publish one new observation of `rows`. Returns the observation and the publication result."""
+        lane = self.lane
+        ref = lane.observation(period, kind, rows, seconds=seconds)
+        return ref, publish_quarter(quarter, (ref,), lane.context, lane.settings, lane.objects, lane.state)
+
+    def published(self, rows, period=OPEN_DAY, kind='daily', *, seconds=0, quarter='2026Q4'):
+        """`publish`, which must move the pointer. Returns the quarter's new capture."""
+        _, result = self.publish(rows, period, kind, seconds=seconds, quarter=quarter)
+        self.assertEqual(result.outcome, 'published')
+        return self.capture(quarter)
+
+    def capture(self, quarter='2026Q4'):
+        return capture_quarter(quarter, self.lane.objects, self.lane.state)
+
+    def read(self, capture):
+        return list(read_quarter(capture, self.lane.objects))
+
+    @staticmethod
+    def payloads(rows):
+        return [canonical_json(row.to_mapping()) for row in rows]
+
+    def file_rows(self, capture, role):
+        manifest = read_manifest(capture, self.lane.objects)
+        [ref] = [ref for ref in manifest.files if ref.role == role]
+        return list(iter_file_rows(ref, self.lane.objects, manifest.schema_version))
+
+    def stored(self, capture):
+        """The manifest, data and changes bytes of one generation."""
+        manifest = read_manifest(capture, self.lane.objects)
+        return {'manifest': self.lane.path(capture.manifest_ref).read_bytes(),
+                **{ref.role: self.lane.path(ref.path).read_bytes() for ref in manifest.files}}
+
+    def v1_oracle(self, capture):
+        """Today's (1c) reader: each data row of the v1 layout as an `IndexRow`, in file order."""
+        [ref] = [ref for ref in read_manifest(capture, self.lane.objects).files if ref.role == 'data']
+        table = pq.read_table(self.lane.path(ref.path))
+        self.assertTrue(table.schema.equals(_oracle_canonical_schema()))
+        return [canonical_json(IndexRow(**value).to_mapping()) for value in table.to_pylist()]
+
+    def v2_on_v1(self):
+        """G1: a v1 generation of keys 1 and 2 in the open 2026Q4. G2: a v2 generation on G1, key 1 renamed."""
+        with v1_writable():
+            first = self.published(support_catalog.row(number=1) + support_catalog.row(number=2))
+        self.use(V2_VERSIONS)
+        second = self.published(support_catalog.row('Renamed', 1) + support_catalog.row(number=2), seconds=1)
+        self.assertEqual(read_manifest(second, self.lane.objects).base_generation_id, first.generation_id)
+        return first, second
+
+    def roll_back(self, active, target):
+        outcome = rollback('2026Q4', active.generation_id, target.generation_id, 'Lowell Mason', 'v2 regression',
+                           self.lane.objects, self.lane.state)
+        self.assertEqual((outcome.outcome, self.capture()), ('success', target))
+
+    def test_v1_generation_reads_back_byte_identically(self):
+        with v1_writable():
+            v1 = self.published(support_catalog.row(number=1) + support_catalog.row('Other', 2, form='8-K'))
+        before, stored = self.payloads(self.read(v1)), self.stored(v1)
+        self.assertEqual(before, self.v1_oracle(v1))
+        self.use(V2_VERSIONS)
+        day = '2026-09-15'
+        v2 = self.published(support_catalog.row(number=3, day=day), day, quarter='2026Q3')
+        self.assertEqual(read_manifest(v2, self.lane.objects).schema_version, SCHEMA_V2)
+        rows = self.read(v1)
+        self.assertEqual([type(row) for row in rows], [IndexRow, IndexRow])
+        self.assertEqual(self.payloads(rows), before)
+        self.assertEqual(self.stored(v1), stored)
+        self.assertEqual(self.capture(), v1)
+
+    def test_v2_generation_reads_back_with_lists(self):
+        self.use(V2_VERSIONS)
+        row = support_catalog.row
+        capture = self.published(row(number=1) + row(number=2) + row(number=2, form='10-K/A')
+                                 + row(number=3) + row('Renamed', 3))
+        rows = self.read(capture)
+        self.assertEqual([type(item) for item in rows], [IndexRowV2] * 3)
+        self.assertEqual([(item.company_names, item.form_types) for item in rows],
+                         [(('Example',), ('10-K',)), (('Example',), ('10-K', '10-K/A')),
+                          (('Example', 'Renamed'), ('10-K',))])
+        self.assertEqual({(item.parser_version, item.schema_version) for item in rows}, {V2_VERSIONS})
+        self.assertEqual(rows, [decode_row(value, SCHEMA_V2) for value in self.file_rows(capture, 'data')])
+
+    def test_retained_v1_row_reads_back_with_lists_and_v1_versions(self):
+        with v1_writable():
+            base = self.published(support_catalog.row(number=1) + support_catalog.row(number=2))
+        _, absent = self.read(base)
+        self.use(V2_VERSIONS)
+        # A later snapshot of the same daily source replaces the base's, so the v2 build's sources omit key 2.
+        capture = self.published(support_catalog.row(number=1), seconds=1)
+        manifest = validated_manifest(capture, self.lane.objects)
+        self.assertEqual((manifest.schema_version, manifest.quarter_mode, manifest.membership_source, manifest.gate),
+                         (SCHEMA_V2, 'open', None, 'clear'))
+        self.assertEqual((manifest.unresolved_absence, manifest.provenance_refreshed,
+                          manifest.retained_from_generation), (1, 1, base.generation_id))
+        fresh, retained = self.read(capture)
+        self.assertIs(type(retained), IndexRowV2)
+        self.assertEqual(retained, upgrade_row(absent))
+        self.assertEqual((retained.company_names, retained.form_types), (('Example',), ('10-K',)))
+        self.assertEqual((retained.parser_version, retained.schema_version), V1_VERSIONS)
+        self.assertEqual((type(fresh), fresh.parser_version, fresh.schema_version), (IndexRowV2, *V2_VERSIONS))
+
+    def test_one_process_reads_v1_and_v2_quarters(self):
+        day = '2026-09-15'
+        with v1_writable():
+            q3 = self.published(support_catalog.row(number=1, day=day), day, quarter='2026Q3')
+        self.use(V2_VERSIONS)
+        q4 = self.published(support_catalog.row(number=2) + support_catalog.row(number=2, form='10-K/A'))
+        kinds = {'2026Q3': IndexRow, '2026Q4': IndexRowV2}
+        first = {capture.quarter: self.payloads(self.read(capture)) for capture in (q3, q4)}
+        stored = {capture.quarter: self.stored(capture) for capture in (q3, q4)}
+        self.assertEqual(first['2026Q3'], self.v1_oracle(q3))
+        for order in ((q3, q4), (q4, q3)):
+            for capture in order:
+                with self.subTest(order=[item.quarter for item in order], quarter=capture.quarter):
+                    rows = self.read(capture)
+                    self.assertEqual({type(row) for row in rows}, {kinds[capture.quarter]})
+                    self.assertEqual(self.payloads(rows), first[capture.quarter])
+                    self.assertEqual(self.stored(capture), stored[capture.quarter])
+        self.assertEqual([self.capture('2026Q3'), self.capture('2026Q4')], [q3, q4])
+
+    def test_rollback_from_v2_to_v1_then_v2_publish(self):
+        first, second = self.v2_on_v1()
+        v1_rows = self.payloads(self.read(first))
+        self.roll_back(second, first)
+        rows = self.read(first)
+        self.assertEqual(([type(row) for row in rows], self.payloads(rows)), ([IndexRow, IndexRow], v1_rows))
+        third = self.published(support_catalog.row(number=1) + support_catalog.row('Revised', 2), seconds=2)
+        self.assertEqual(self.capture(), third)
+        self.assertNotIn(third.generation_id, (first.generation_id, second.generation_id))
+        manifest = validated_manifest(third, self.lane.objects)
+        self.assertEqual((manifest.schema_version, manifest.base_generation_id), (SCHEMA_V2, first.generation_id))
+        self.assertEqual(retained_base(manifest, self.lane.objects), first)
+        # Key 1 equals G1's row, not G2's rename, so the build compared against the v1 base.
+        self.assertEqual((manifest.updated, manifest.provenance_refreshed, manifest.added, manifest.unresolved_absence),
+                         (1, 1, 0, 0))
+        rows = self.read(third)
+        self.assertEqual([type(row) for row in rows], [IndexRowV2, IndexRowV2])
+        self.assertEqual([row.company_names for row in rows], [('Example',), ('Revised',)])
+
+    def test_rollback_to_v1_then_v2_rebuild_keeps_retained_absence(self):
+        first, second = self.v2_on_v1()
+        self.roll_back(second, first)
+        absent = self.read(first)[1]
+        third = self.published(support_catalog.row(number=1), seconds=2)
+        manifest = validated_manifest(third, self.lane.objects)
+        self.assertEqual((manifest.base_generation_id, manifest.retained_from_generation, manifest.quarter_mode,
+                          manifest.gate), (first.generation_id, first.generation_id, 'open', 'clear'))
+        self.assertEqual((manifest.unresolved_absence, manifest.provenance_refreshed, manifest.updated,
+                          manifest.added, manifest.withdrawn), (1, 1, 0, 0, 0))
+        [change] = self.file_rows(third, 'changes')
+        self.assertEqual((change['change_type'], change['archive_path'], change['reason']),
+                         ('unresolved_absence', absent.archive_path, ABSENCE_REASON))
+        self.assertEqual(change['before'], change['after'])
+        self.assertEqual((change['before']['parser_version'], change['before']['schema_version'],
+                          change['before']['form_types'], change['before']['company_names']),
+                         (*V1_VERSIONS, ['10-K'], ['Example']))
+        self.assertEqual(self.read(third)[1], upgrade_row(absent))
+
+    def test_history_lists_v1_and_v2_generations(self):
+        def history():
+            return [(entry['generation_id'], entry['base_generation_id'], entry['gate'],
+                     {name: entry[name] for name in COUNTS})
+                    for entry in quarter_history('2026Q4', self.lane.objects, self.lane.state)]
+
+        def counts(row_count, **changes):
+            return {'row_count': row_count, 'added': 0, 'updated': 0, 'withdrawn': 0, 'unresolved_absence': 0,
+                    'provenance_refreshed': 0, **changes}
+
+        first, second = self.v2_on_v1()
+        v1_entry = (first.generation_id, None, 'clear', counts(2, added=2))
+        self.assertEqual(history(), [(second.generation_id, first.generation_id, 'clear',
+                                      counts(2, updated=1, provenance_refreshed=1)), v1_entry])
+        self.roll_back(second, first)
+        self.assertEqual(history(), [v1_entry])
+        third = self.published(support_catalog.row(number=1), seconds=2)
+        self.assertEqual(history(), [(third.generation_id, first.generation_id, 'clear',
+                                      counts(2, unresolved_absence=1, provenance_refreshed=1)), v1_entry])
+
+    def test_withdrawal_candidates_and_approval_of_a_v2_candidate_on_a_v1_base(self):
+        with v1_writable():
+            base = self.published(support_catalog.row(number=1) + support_catalog.row(number=2), '2026Q4', 'quarterly')
+        kept, withdrawn = self.read(base)
+        self.use(V2_VERSIONS, date(2027, 1, 1))
+        revised, result = self.publish(support_catalog.row(number=1), '2026Q4', 'quarterly', seconds=1)
+        self.assertEqual(result.outcome, 'awaiting_approval')
+        [listed] = withdrawal_candidates(self.lane.objects, self.lane.state)
+        self.assertEqual((listed['status'], listed['base_generation_id']), ('pending', base.generation_id))
+        # The candidate's layout decodes its rows: a v1 base row is listed with lists and its v1 versions.
+        self.assertEqual(listed['withdrawn'], [upgrade_row(withdrawn).to_mapping()])
+        approved = approve('2026Q4', listed['generation_id'], revised.snapshot.sha256, 'Lowell Mason',
+                           self.lane.objects, self.lane.state)
+        self.assertEqual(approved.outcome, 'success')
+        [row] = self.read(self.capture())
+        self.assertEqual((type(row), row.archive_path, (row.parser_version, row.schema_version)),
+                         (IndexRowV2, kept.archive_path, V2_VERSIONS))
 
 
 if __name__ == '__main__':
