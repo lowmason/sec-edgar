@@ -900,9 +900,11 @@ def validate_read(capture, objects):
         raise ValueError('validated generation schema differs from declared production schema')
     keys, count, sources = set(), 0, set()
     expected_fields = set(canonical_schema(SCHEMA_V2).names)
+    # D8: a v2 generation on a v1 base keeps the v1 release pair on mapped base rows and retained rows.
+    release_pairs = {('sec-index-v2', 'sec-index-parser-v2'), ('sec-index-v1', 'sec-index-parser-v1')}
     for row in read_quarter(capture, objects):
         value = row.to_mapping()
-        if set(value) != expected_fields or row.schema_version != 'sec-index-v2' or row.parser_version != 'sec-index-parser-v2':
+        if set(value) != expected_fields or (row.schema_version, row.parser_version) not in release_pairs:
             raise ValueError('validated row schema/parser differs from declared production schema')
         key = row.cik, row.archive_path
         if key in keys:

@@ -899,6 +899,88 @@ class AcceptanceTests(unittest.TestCase):
             api['proof_delta'](original, {**corrected, 'bounded': False})
 
 
+class ValidateReadTests(unittest.TestCase):
+    """`validate_read` on a v2 generation built on a v1 base (D8): a retained row keeps the v1 release pair."""
+
+    V1 = ('sec-index-parser-v1', 'sec-index-v1')
+    V2 = ('sec-index-parser-v2', 'sec-index-v2')
+    REFUSED = '^validated row schema/parser differs from declared production schema$'
+
+    def setUp(self):
+        from support_catalog import Lane
+        from support_etl import v1_writable
+        self.validate_read = harness()['validate_read']
+        with v1_writable():
+            self.lane = Lane(command='publish', schema_version='sec-index-v1')
+            self.use(self.V1)
+        self.addCleanup(self.lane.close)
+
+    def use(self, versions):
+        """Point the lane at a release parser and schema pair, as a config change does."""
+        from dataclasses import replace
+        lane = self.lane
+        lane.context = replace(lane.context, parser_version=versions[0], schema_version=versions[1])
+        lane.pin(lane.context.pinned_on)
+
+    def published(self, refs):
+        from sec_edgar_ingest.etl.publication import publish_quarter
+        from sec_edgar_ingest.etl.reader import capture_quarter
+        lane = self.lane
+        result = publish_quarter('2026Q4', tuple(refs), lane.context, lane.settings, lane.objects, lane.state)
+        self.assertEqual(result.outcome, 'published')
+        return capture_quarter('2026Q4', lane.objects, lane.state)
+
+    def retained_v1_row(self):
+        """v1: the quarterly master lists key 1, and a later daily lists keys 1 and 2 (a filing after the master).
+        v2: a new daily adds key 3. Key 2 is not a member of the open quarter, so the v2 generation retains its
+        v1 row, whose source stays selected (catalog.py: `absent` keeps the base payload)."""
+        from support_catalog import row
+        from support_etl import v1_writable
+        from sec_edgar_ingest.etl.reader import read_quarter, validated_manifest
+        lane = self.lane
+        with v1_writable():
+            first = self.published([lane.observation('2026Q4', 'quarterly', row(number=1)),
+                                    lane.observation('2026-10-01', 'daily', row(number=1) + row(number=2))])
+        self.use(self.V2)
+        capture = self.published([lane.observation('2026-10-02', 'daily', row(number=3, day='2026-10-02'))])
+        manifest = validated_manifest(capture, lane.objects)
+        self.assertEqual((manifest.schema_version, manifest.unresolved_absence, manifest.row_count,
+                          manifest.base_generation_id), ('sec-index-v2', 1, 3, first.generation_id))
+        sources = {(item.source.source_id, item.snapshot.sha256) for item in manifest.sources}
+        rows = {item.archive_path[-10:]: item for item in read_quarter(capture, lane.objects)}
+        self.assertEqual({name: (item.parser_version, item.schema_version) for name, item in rows.items()},
+                         {'000001.txt': self.V2, '000002.txt': self.V1, '000003.txt': self.V2})
+        for name, item in rows.items():
+            with self.subTest(provenance=name):
+                self.assertIn((item.source_id, item.source_sha256), sources)
+        return capture, manifest
+
+    def test_a_v2_generation_with_a_retained_v1_row_is_validated(self):
+        capture, manifest = self.retained_v1_row()
+        result = self.validate_read(capture, self.lane.objects)
+        self.assertEqual((result['validated'], result['rows'], result['generation_id']),
+                         (True, manifest.row_count, capture.generation_id))
+
+    def test_a_row_with_a_mixed_release_pair_is_still_refused(self):
+        from dataclasses import replace
+        from unittest.mock import patch
+        import sec_edgar_ingest.etl.reader as reader
+        capture, _ = self.retained_v1_row()
+        original = reader.read_quarter
+        mixed = {
+            'v2 schema, v1 parser': lambda item: (replace(item, parser_version='sec-index-parser-v1')
+                                                  if item.schema_version == 'sec-index-v2' else item),
+            'v1 schema, v2 parser': lambda item: (replace(item, parser_version='sec-index-parser-v2')
+                                                  if item.schema_version == 'sec-index-v1' else item),
+        }
+        for name, mix in mixed.items():
+            def mixed_rows(capture, objects, mix=mix):
+                return (mix(item) for item in original(capture, objects))
+            with self.subTest(name), patch.object(reader, 'read_quarter', mixed_rows):
+                with self.assertRaisesRegex(ValueError, self.REFUSED):
+                    self.validate_read(capture, self.lane.objects)
+
+
 class BytecodePolicyTests(unittest.TestCase):
     """The scripts set the bytecode policy at import; loading them must not leak it."""
 
