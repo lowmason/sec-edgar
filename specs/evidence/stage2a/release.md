@@ -146,6 +146,7 @@ No SEC request was sent. Nothing was written under `data/`.
 This section records plan 7 Task 11 (spec §6 "Live-config selection"). It ran on 2026-11-02 in the main checkout on `main`. The owner approved the selection at the Task 11 checkpoint. The approval authorizes no SEC traffic and no live run.
 
 - **Release ID (`<2A>`):** `e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec`.
+- **Commit:** `4d1f806c70a522ce377b5c0391c9287ba2c246d7` (`chore(config): select the 2a release`).
 - **Changed config values:** `conf/sec-edgar-local.json` changed in three values and nothing else.
   - `runtime.release_manifest`: from the 1c manifest (`releases/sha256=c4de77b8…/release.json`) to `/Users/lowell/Projects/sec-edgar-local/releases/sha256=e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec/release.json`.
   - `etl.parser_version`: from `sec-index-parser-v1` to `sec-index-parser-v2`.

@@ -15,14 +15,16 @@ value['storage'] = {'backend': 'local', 'root': '../data'}
 value['logging'] = {'root': '../logs'}
 value['acquisition'] = {'mode': 'live'}
 value['runtime'] = {'kind': 'native', 'release_manifest': str(pathlib.Path(sys.argv[1]).resolve())}
-value['etl']['parser_version'] = 'sec-index-parser-v1'
+value['etl']['parser_version'] = 'sec-index-parser-v2'
 value['execution']['dispatch_reserve_seconds'] = 1800
 value['backfill'] = {'start_quarter': '2020Q1', 'end_quarter': 'open'}
 with path.open('x') as stream: json.dump(value, stream, indent=2); stream.write('\n')
 PY
 ```
 
-Keep config version `sec-local-config-v1`, schema `sec-index-v1`, withdrawal approval true, backfill `2020Q1` to `open`, daily handoff `2026-10-01`, owner User-Agent `Lowell Mason sec-edgar-ingest mason.lowell@mac.com`, namespace `sec-owner-lowell-mason`, 3 requests/second and one collector. A lower positive rate is permitted; higher rates are refused. Preserve five total attempts, 2-second base/120-second capped jittered backoff honoring longer server delays, 15/60-second connect/read timeouts, 90-second exchange limit, 67,108,864 received-byte/536,870,912 expanded-byte limits, finite 60-second lease, 20-second renewal and 2-second uncertainty bound.
+Keep config version `sec-local-config-v1`, parser `sec-index-parser-v2` and schema `sec-index-v2` (Stage 2a, plan 7, 2026-11-02), withdrawal approval true, backfill `2020Q1` to `open`, daily handoff `2026-10-01`, owner User-Agent `Lowell Mason sec-edgar-ingest mason.lowell@mac.com`, namespace `sec-owner-lowell-mason`, 3 requests/second and one collector. A lower positive rate is permitted; higher rates are refused. Preserve five total attempts, 2-second base/120-second capped jittered backoff honoring longer server delays, 15/60-second connect/read timeouts, 90-second exchange limit, 67,108,864 received-byte/536,870,912 expanded-byte limits, finite 60-second lease, 20-second renewal and 2-second uncertainty bound.
+
+The live config selects the 2a release `e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec` with parser `sec-index-parser-v2` and schema `sec-index-v2`. That release writes only v2 objects. It still reads retained v1 generations, as v1 rows. The 1c release refuses a v2 config. After a v2 run writes to a store, selecting the 1c release for that store is unsupported. (Stage 2a, plan 7, 2026-11-02; [parent spec](../../specs/sec-filing-index-ingestion-spec.md) §§4.8–4.9.)
 
 Paths resolve against the original config parent. The launcher archives normalized absolute paths and hashes that effective config; it records the original input-byte hash separately. Logical object keys remain safe relative POSIX paths. A fresh `sec-local-binding-v1` store binds root, mode, issuer, policies and storage contract, excluding release/parser/range/IDs. Never repoint an existing store to another root, import old state or change mode to reuse a fixture store.
 

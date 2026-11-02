@@ -6,6 +6,8 @@ Before selecting B, stop/confirm old writers and child drain, retain A and its i
 
 A later new-ID invocation under B may continue compatible A-origin pending work and repair A-origin publication evidence through the original checked child authority. A completed exact A attempt replays with A and its unchanged argv/config/IDs/deadline. Do not rewrite retained producer release metadata to B. Captured reads remain bound to exact original manifests even when current pointers change. Unsupported parser/schema transitions must refuse; no old-state import, relocation, force bypass or automatic cleanup is provided.
 
+Selecting the 2a release `e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec` changes three config values together: `runtime.release_manifest`, `etl.parser_version` and `etl.schema_version`. The parser and schema move from `sec-index-parser-v1` / `sec-index-v1` to `sec-index-parser-v2` / `sec-index-v2`. Retained v1 objects stay as written, and the 2a release reads v1 generations as v1 rows. It continues 1c-origin pending work on a store that the 1c release wrote, as tested on fixture stores. The transition is one-way. The 1c release refuses a v2 config, and after a v2 run writes to a store, selecting the 1c release for that store is unsupported. (Stage 2a, plan 7, 2026-11-02; [parent spec](../../specs/sec-filing-index-ingestion-spec.md) §§4.8–4.9.)
+
 If an original environment is missing but all retained artifacts remain valid, reconstruct it at its final new release address using the exact matching supported interpreter. This is explicit setup, offline and outside ingestion. Do not copy or move a venv:
 
 ```sh

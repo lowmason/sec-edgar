@@ -62,7 +62,7 @@ and synchronized data directories need separate validation or design.
 |---|---|---|
 | R1 | Baseline | Ingest an inclusive quarterly range, pinning `open` once per invocation; report coverage gaps. (§4.2) |
 | R2 | Continuation | Discover daily indexes and catch up after outages without abandoning older pending work. (§4.2) |
-| R3 | Processing | Strictly validate and normalize index metadata into `sec-index-v1` rows. (§§4.4–4.6) |
+| R3 | Processing | Strictly validate and normalize index metadata for new work into `sec-index-v2` rows. `sec-index-v1` rows stay readable. (§§4.4–4.6) (Stage 2a, plan 7, 2026-11-02.) |
 | R4 | Platform | Use a verified native installation, local filesystem objects, SQLite state, and local process supervision. (§§4.1, 4.9) |
 | R5 | Shared implementation | Source selection varies by workflow; acquisition, ETL, publication, and checked-command contracts are shared. (§§4.1–4.2) |
 | R6 | Replay and provenance | Retain original bytes and producer identities; exact retries preserve runtime, config, IDs, intent, and deadline. (§§4.5, 4.7, 4.9) |
@@ -168,12 +168,13 @@ Fixture clock/deadline exceptions remain individually explicit and are rejected 
 
 ### 4.4 Rows, identity, and correction rules
 
-The published `sec-index-v1` row has ten fields:
+The published `sec-index-v2` row has ten fields, with `form_types` and `company_names` lists
+(Stage 2a, plan 7, 2026-11-02):
 
 | Field | Contract |
 |---|---|
 | `cik` | Non-null ten-digit normalized decimal string. |
-| `company_name`, `form_type` | Non-null source values; no entity resolution or selected-form filter. |
+| `company_names`, `form_types` | Sorted lists of distinct, non-empty source values, each with at least one item. No entity resolution or selected-form filter. |
 | `filing_date` | Valid date determining the output quarter. |
 | `archive_path` | Safe relative SEC Archives path, consistent with the row CIK where recognized. |
 | `accession_number` | Nullable; extracted only from a recognized supported path. |
@@ -181,9 +182,11 @@ The published `sec-index-v1` row has ten fields:
 | `parser_version`, `schema_version` | Explicit processing versions. |
 
 The logical key is `(cik, archive_path)`. Preserve original field values in observations. Identical
-observations can collapse in the canonical catalog; conflicting duplicate keys within one source
-quarantine the whole source. Amendments with different archive paths remain distinct. No malformed
+observations collapse in the canonical catalog. Observations of one key in one source that differ
+only in form type or company name merge into one row listing every value. Any other conflicting
+duplicate quarantines the whole source. Amendments with different archive paths remain distinct. No malformed
 row, empty source, unsupported ZIP layout, or conflict is silently dropped or assigned a winner.
+(Stage 2a, plan 7, 2026-11-02.)
 
 Choose observations deterministically using quarterly precedence and retained source-period,
 receipt-time, and source-identity rules. Same-source newer snapshots supersede older snapshots;
@@ -222,7 +225,8 @@ Use the closed local formats from the [contract inventory](evidence/local-port/c
 including `sec-local-run-context-v1`, `sec-local-acquisition-v1`, `sec-local-command-result-v1`,
 `sec-local-attempt-admission-v1`, observation/transformed/generation/ETL formats, and local workflow
 formats. Residual workflow envelopes require `contract_version=sec-local-contract-v1`. Preserve
-unchanged source/raw identities, `sec-index-v1` rows, and compatible approval/rollback record shapes.
+unchanged source/raw identities, `sec-index-v1` and `sec-index-v2` rows, and compatible
+approval/rollback record shapes (Stage 2a, plan 7, 2026-11-02).
 Old provider/image-based contracts are refused; no automatic old-store import or record relabeling
 is supported.
 
@@ -326,7 +330,7 @@ from the canonical normalized effective-config hash.
 | Connect / read / exchange limits | 15 / 60 / 90 seconds. |
 | Received / expanded limits | 67,108,864 / 536,870,912 bytes per response. |
 | Coordination | Namespace `sec-owner-lowell-mason`; 60-second lease, 20-second renewal, 2-second uncertainty. |
-| Parser / schema | `sec-index-parser-v1` / `sec-index-v1`. |
+| Parser / schema | `sec-index-parser-v2` / `sec-index-v2` (Stage 2a, plan 7, 2026-11-02). |
 | Withdrawal approval | `reconciliation.require_withdrawal_approval=true`. |
 | Execution | Live maximum 3,600 seconds; launcher default 3,300 seconds. |
 | Dispatch reserve | `execution.dispatch_reserve_seconds=1800`, set from measured member costs (Stage 1b, plan 5; [measurement](evidence/stage1b/measurement.md)). Required for a new live workflow run. The value must be at least the floor of 480 seconds (release constant) and below `max_run_seconds`. The launcher refuses a timeout at or below the reserve. (Stage 1a, plan 4; Stage 1b, plan 5.) |
@@ -335,13 +339,21 @@ from the canonical normalized effective-config hash.
 The selected manifest is:
 
 ```text
-/Users/lowell/Projects/sec-edgar-local/releases/sha256=c4de77b89bb1d8ecc5d094f0e1dc6f8a5f3a7935e3595a9dd086d1e41a6b8aa7/release.json
+/Users/lowell/Projects/sec-edgar-local/releases/sha256=e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec/release.json
 ```
 
-Stage 1c (plan 6) selected the 1c release
+Stage 2a (plan 7) selected the 2a release
+`e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec` at commit
+`4d1f806c70a522ce377b5c0391c9287ba2c246d7`. The same commit set `etl.parser_version` to
+`sec-index-parser-v2` and `etl.schema_version` to `sec-index-v2`. The release's Git revision is
+`32863852ce57f1da99db4720bd1c729727b4ec0c`. The reserve stays at 1800 s. The effective-config SHA-256
+is `f2082322b6fe7838504bbd622cb5a8e702512b482943c28ca9be7164f4755733`, confirmed by offline
+preflight. (Stage 2a, plan 7, 2026-11-02; [release evidence](evidence/stage2a/release.md).)
+
+Before that, Stage 1c (plan 6) selected the 1c release
 `c4de77b89bb1d8ecc5d094f0e1dc6f8a5f3a7935e3595a9dd086d1e41a6b8aa7` at commit
 `f64c212cd1fd11688785442666299270f0103262`. The reserve stays at 1800 s. The effective-config SHA-256
-is `fb93b0e8e05dbc1cbc9bd167ae02ef2d775629905c15938055a6a93c5fb95e96`, confirmed by offline
+was `fb93b0e8e05dbc1cbc9bd167ae02ef2d775629905c15938055a6a93c5fb95e96`, confirmed by offline
 preflight.
 
 Before that, Stage 1b (plan 5) selected the 1b release
@@ -408,6 +420,21 @@ wrote. But on a store that holds a finished publish Attempt with an incomplete i
 store, the 1b release fails the member-completion check. So selecting the 1b release again for that
 store is unsupported. (Stage 1c, plan 6; §4.3 item 7 of the
 [1c spec](completed/sec-filing-index-member-completion.md).)
+
+The 2a release writes only `sec-index-v2` observations and generations. It still validates retained
+`sec-index-v1` objects. A v1 generation reads back exactly as before, as v1 rows, and a v2 generation
+reads back as v2 rows (D7, D9). The 1c release refuses a v2 config, because its settings require
+`sec-index-v1`. After a v2 run has written to a store, selecting the 1c release again for that
+store is unsupported (D10). The 2a release continues 1c-origin pending work on a store that the 1c
+release wrote (D11). (Stage 2a, plan 7, 2026-11-02; D7 and D9–D11 in the
+[2a spec](sec-filing-index-duplicate-key.md).)
+
+`test_release_2a` ran three tests on fixture stores, with a release built from the branch code.
+The 1c release refused the v2 config. The new code continued 1c-origin pending work, repaired a 1c
+publication, and read a 1c generation back unchanged, as v1 rows. These tests ran in the branch gate
+with a 1c build from its revision, and once more with the installed `c4de77b8…` release. No test runs
+the 1c release on a store that holds v2 objects. Continuation on the live store is not tested.
+(Stage 2a, plan 7, 2026-11-02; [gate evidence](evidence/stage2a/gate.md).)
 
 The supervised entry point is `scripts/sec-edgar-local`. The installed engine exposes `discover`,
 `collect`, `transform`, `publish`, `backfill`, `daily`, `reconcile`, `candidates`, `approve`, `history`,
@@ -477,6 +504,13 @@ leases and drained HTTP children; immutable command admission and exact replay; 
 publication and crash repair; approvals/reverts/rollback; captured reads; fixture/live isolation;
 native tamper refusal and reconstruction; two-release continuation/repair; launcher signals,
 logging failure and deadlines; and rejection of old/malformed contracts before mutation.
+
+Duplicate tests now cover merge and refusal. A repeat of one key in one source that differs only in
+form type or company name merges into one row. Any other conflicting repeat, a filing-date conflict
+included, still quarantines the whole source. The older duplicate-quarantine tests were updated, not
+deleted. The Stage 2a branch gate ran 1187 tests in 75 modules, `OK`, on branch commit
+`557028c052b2116b177f28cb18e85eec9ab519f8` in its worktree. (Stage 2a, plan 7, 2026-11-02; §5 items
+1, 2 and 10 of the [2a spec](sec-filing-index-duplicate-key.md); [gate evidence](evidence/stage2a/gate.md).)
 
 The final [completion review](evidence/local-port/completion-review.md) records renewed offline
 L01–L11/L13 passing with **952 tests in 60 modules**. This is retained evidence of the completed
@@ -550,6 +584,13 @@ links and deployment approvals are not dependencies of this checkout.
 The native port is not a new parser policy, state migration, scheduler, or historical backfill
 acceptance. Scheduling is a future extension; any parser/schema/runtime/storage change must
 preserve the existing provenance and reader contracts or propose an explicit versioned transition.
+
+Stage 2a is such an explicit versioned transition. Parser `sec-index-parser-v2` and schema
+`sec-index-v2` replace `sec-index-parser-v1` and `sec-index-v1` for new work (§§4.4, 4.8). Existing v1
+objects are not rewritten, relabeled or migrated, and v1 generations stay readable (§4.9). For a
+store, the transition is one-way: after a v2 run has written to it, selecting the 1c release again is
+unsupported. (Stage 2a, plan 7, 2026-11-02; §§2.2, 4.3 and 4.5 of the
+[2a spec](sec-filing-index-duplicate-key.md).)
 
 ## 10. Rollout note
 
