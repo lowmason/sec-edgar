@@ -141,3 +141,30 @@ The `cmp` of `live-data-before.sha256` and `live-data-after.sha256` printed `dat
 The 2026Q3 candidate was not approved.
 
 No SEC request was sent. Nothing was written under `data/`.
+
+## Live-config selection
+This section records plan 7 Task 11 (spec §6 "Live-config selection"). It ran on 2026-11-02 in the main checkout on `main`. The owner approved the selection at the Task 11 checkpoint. The approval authorizes no SEC traffic and no live run.
+
+- **Release ID (`<2A>`):** `e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec`.
+- **Changed config values:** `conf/sec-edgar-local.json` changed in three values and nothing else.
+  - `runtime.release_manifest`: from the 1c manifest (`releases/sha256=c4de77b8…/release.json`) to `/Users/lowell/Projects/sec-edgar-local/releases/sha256=e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec/release.json`.
+  - `etl.parser_version`: from `sec-index-parser-v1` to `sec-index-parser-v2`.
+  - `etl.schema_version`: from `sec-index-v1` to `sec-index-v2`.
+- **Offline preflight:** it ran the plan 6 Task 7 Step 2 command on the 2a interpreter (`-I -B -X pycache_prefix=/dev/null`). It did not refuse. It printed:
+  - `floor 480`
+  - `reserve 1800`
+  - `release e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec`
+  - `effective f2082322b6fe7838504bbd622cb5a8e702512b482943c28ca9be7164f4755733`
+  - `binding` (below)
+- **Effective-config SHA-256:** `f2082322b6fe7838504bbd622cb5a8e702512b482943c28ca9be7164f4755733`. The earlier value was `fb93b0e8e05dbc1cbc9bd167ae02ef2d775629905c15938055a6a93c5fb95e96`, as recorded in the parent spec and in the baseline-campaign preflight evidence. The two values differ.
+- **Floor:** 480 s (`DISPATCH_RESERVE_FLOOR_SECONDS`).
+- **Reserve:** 1800 s. `execution.dispatch_reserve_seconds` is unchanged.
+- **Binding**, as printed by the preflight. It holds no `execution` field.
+
+```
+{'binding_version': 'sec-local-binding-v1', 'root': '/Users/lowell/Projects/sec-edgar-local/data', 'acquisition_mode': 'live', 'namespace': 'sec-owner-lowell-mason', 'sec': {'user_agent': 'Lowell Mason sec-edgar-ingest mason.lowell@mac.com', 'requests_per_second': 3.0, 'max_active_collectors': 1}, 'coordination': {'lease_seconds': 60.0, 'renew_every_seconds': 20.0, 'namespace': 'sec-owner-lowell-mason', 'clock_uncertainty_seconds': 2.0}, 'storage_contract': 'sec-local-storage-v1'}
+```
+
+The Task 9 "Statement" section above says the live config still selects the 1c release. That was true at Task 9. This selection supersedes it.
+
+No SEC request was sent in this stage.
