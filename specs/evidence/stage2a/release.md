@@ -45,7 +45,7 @@ The verifier ran on the 2a interpreter (`-I -B -X pycache_prefix=/dev/null`) wit
 - `sha256=c4de77b8…` (1c)
 - `sha256=e49d3ba8…` (2a, new)
 
-`releases/` also holds `artifact-cache` and `task14-guard-proofs`. The 1c release and all older releases are kept and stay installable. The build added one release directory and removed none. Selecting the 1c release for a store with v2 objects is unsupported (D10).
+`releases/` also holds `artifact-cache` and `task14-guard-proofs`. The 1c release and all older releases are kept. The build added one release directory and removed none. Selecting the 1c release for a store with v2 objects is unsupported (D10).
 
 ## Network
 No SEC request was sent. Verification used fixture acquisition only.
