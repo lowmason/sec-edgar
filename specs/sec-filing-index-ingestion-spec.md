@@ -183,7 +183,7 @@ The published `sec-index-v2` row has ten fields, with `form_types` and `company_
 
 A retained `sec-index-v1` generation keeps its v1 rows: scalar `company_name` and `form_type` in
 place of the two lists, and every other field the same. (Stage 2a, plan 7, 2026-11-02; D2 and D7
-in the [2a spec](sec-filing-index-duplicate-key.md).)
+in the [2a spec](completed/sec-filing-index-duplicate-key.md).)
 
 The logical key is `(cik, archive_path)`. Preserve original field values in observations. Identical
 observations collapse in the canonical catalog. Observations of one key in one source that differ
@@ -431,7 +431,7 @@ reads back as v2 rows (D7, D9). The 1c release refuses a v2 config, because its 
 `sec-index-v1`. After a v2 run has written to a store, selecting the 1c release again for that
 store is unsupported (D10). The 2a release continues 1c-origin pending work on a store that the 1c
 release wrote (D11). (Stage 2a, plan 7, 2026-11-02; D7 and D9–D11 in the
-[2a spec](sec-filing-index-duplicate-key.md).)
+[2a spec](completed/sec-filing-index-duplicate-key.md).)
 
 `test_release_2a` ran three tests on fixture stores, with a release built from the branch code.
 The 1c release refused the v2 config. The new code continued 1c-origin pending work, repaired a 1c
@@ -514,7 +514,7 @@ form type or company name merges into one row. Any other conflicting repeat, a f
 included, still quarantines the whole source. The older duplicate-quarantine tests were updated, not
 deleted. The Stage 2a branch gate ran 1187 tests in 75 modules, `OK`, on branch commit
 `557028c052b2116b177f28cb18e85eec9ab519f8` in its worktree. (Stage 2a, plan 7, 2026-11-02; §5 items
-1, 2 and 10 of the [2a spec](sec-filing-index-duplicate-key.md); [gate evidence](evidence/stage2a/gate.md).)
+1, 2 and 10 of the [2a spec](completed/sec-filing-index-duplicate-key.md); [gate evidence](evidence/stage2a/gate.md).)
 
 The final [completion review](evidence/local-port/completion-review.md) records renewed offline
 L01–L11/L13 passing with **952 tests in 60 modules**. This is retained evidence of the completed
@@ -594,7 +594,7 @@ Stage 2a is such an explicit versioned transition. Parser `sec-index-parser-v2` 
 objects are not rewritten, relabeled or migrated, and v1 generations stay readable (§4.9). For a
 store, the transition is one-way: after a v2 run has written to it, selecting the 1c release again is
 unsupported. (Stage 2a, plan 7, 2026-11-02; §§2.2, 4.3 and 4.5 of the
-[2a spec](sec-filing-index-duplicate-key.md).)
+[2a spec](completed/sec-filing-index-duplicate-key.md).)
 
 ## 10. Rollout note
 
