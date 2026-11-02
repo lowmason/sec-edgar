@@ -263,7 +263,7 @@ to live execution, not prerequisites to writing the plan that defines them.
   > Stage 2: COMPLETE (2026-10-31) — implemented by plan 2 (specs/plans/completed/2-sec-filing-index-ingestion-spec.md). Its Handoff section names what Stages 3, 4 and 5 consume.
   > Next: resume the roadmap.
 
-- [ ] Stage 2a: Duplicate-key parser/schema design and its release (approved at resume, 2026-10-31)
+- [x] Stage 2a: Duplicate-key parser/schema design and its release (approved at resume, 2026-10-31)
       Objective: Ship a reviewed native release, under an owner-approved versioned design, on which an index source whose rows repeat a logical key no longer quarantines for that reason alone.
       Spec: §3 R3, R5, R9, R12; §§4.4–4.9, 5–6, 9; plan 2, Handoff.
       Gap closed: None directly; removes the duplicate-key quarantine that leaves G2 approved incomplete and gives G4 no quarterly authority.
@@ -271,6 +271,9 @@ to live execution, not prerequisites to writing the plan that defines them.
       Produces: A stage spec and plan; the owner-approved versioned parser/schema design; the change with offline tests; an offline re-transform of the retained duplicate-key sources; a reviewed release with setup, preflight and review evidence; the reviewed live-config selection with its effective-config SHA-256; and a plan Handoff that names every value Stage 2b's plan must use.
       Exit: Offline, on a copy of the retained objects, each of the 28 quarterly sources and 7 daily sources that quarantined with `conflicting duplicate logical key` transforms on the new release or stays quarantined for a reason other than the repeated key alone, which the stage spec names; the provenance and reader contracts hold or an explicit versioned transition is reviewed (§9); the offline checker and preflight pass on the new release, with the 1c release and older releases retained (§4.9); no SEC request was sent and nothing was written under `data/`.
       ROUTING: brainstorming
+
+  > Stage 2a: COMPLETE (2026-11-02) — implemented by plan 7 (specs/plans/completed/7-sec-filing-index-duplicate-key.md). Its Handoff section names what Stages 2b, 3, 4 and 5 consume.
+  > Next: resume the roadmap.
 
 - [ ] Stage 2b: Baseline coverage on the Stage 2a release (approved at resume, 2026-10-31)
       Objective: Produce a revised, owner-accepted G2 finding on the Stage 2a release for the 28 quarterly units and the 7 daily duplicate-key sources.
