@@ -181,6 +181,10 @@ The published `sec-index-v2` row has ten fields, with `form_types` and `company_
 | `source_id`, `source_sha256` | The selected observation's exact source and body provenance. |
 | `parser_version`, `schema_version` | Explicit processing versions. |
 
+A retained `sec-index-v1` generation keeps its v1 rows: scalar `company_name` and `form_type` in
+place of the two lists, and every other field the same. (Stage 2a, plan 7, 2026-11-02; D2 and D7
+in the [2a spec](sec-filing-index-duplicate-key.md).)
+
 The logical key is `(cik, archive_path)`. Preserve original field values in observations. Identical
 observations collapse in the canonical catalog. Observations of one key in one source that differ
 only in form type or company name merge into one row listing every value. Any other conflicting
@@ -432,8 +436,8 @@ release wrote (D11). (Stage 2a, plan 7, 2026-11-02; D7 and D9–D11 in the
 `test_release_2a` ran three tests on fixture stores, with a release built from the branch code.
 The 1c release refused the v2 config. The new code continued 1c-origin pending work, repaired a 1c
 publication, and read a 1c generation back unchanged, as v1 rows. These tests ran in the branch gate
-with a 1c build from its revision, and once more with the installed `c4de77b8…` release. No test runs
-the 1c release on a store that holds v2 objects. Continuation on the live store is not tested.
+with a 1c build from its revision, and once more with the installed `c4de77b8…` release. No test selects
+the 1c release for a store that holds v2 objects. Continuation on the live store is not tested.
 (Stage 2a, plan 7, 2026-11-02; [gate evidence](evidence/stage2a/gate.md).)
 
 The supervised entry point is `scripts/sec-edgar-local`. The installed engine exposes `discover`,
