@@ -5,7 +5,7 @@ Everything here ran offline, on a scratch copy of `data/` under the ignored `log
 No SEC request was made. Nothing was written under `data/`.
 
 **Result: the D2 wall limit is breached.** The longest member wall is 3,239.6 s (step 2, daily 2026-07-01). The limit is 1,440 s.
-Under D2, plan 8 stops here for an owner decision. Task 3 and later tasks have not run.
+Under D2, plan 8 stopped here for an owner decision. The owner chose an exception (see "Owner decision" under "Wall limit (D2)").
 
 ## Store check
 
@@ -114,4 +114,13 @@ Facts that bear on the decision:
 - **At O3 = 3,600 s** (a launcher argument, not a config edit) the margin from a start at time 0 is about 360 s, 11% of the wall, before those overheads. D2 asks for 25%. A start later than about 360 s into the invocation still ends in a deadline kill, and the next invocation then starts the member first.
 - Step 5 (2026Q1) is also close to the cap: 1,398.8 s is 97% of 1,440 s before the excluded overheads. If the cap stays at 1,440, stop rule 7 can halt on this member.
 
-`max_member_wall_seconds` is not set. `campaign.json` and `campaign.md` are not written. The backup is not taken.
+At the time of the run, `max_member_wall_seconds` was not set.
+
+### Owner decision
+
+Recorded 2026-11-06T17:39Z. The owner was shown the breach and two options, and chose the exception, in their words: "Exception, O3 3600".
+
+- The runtime per invocation (O3) is 3,600 s. This is a launcher argument. No config edit.
+- `max_member_wall_seconds` is 3,600 in `campaign.json` (Task 3). D2's 1.25× margin is waived for the daily 2026-07-01 member. The plan records this as D6.
+- This decision covers the wall limit only. It is not the Task 4 live-execution approval. No live invocation has started.
+- Stop rule 2 still halts on a deadline kill. Task 4 asks the owner whether one rerun may follow a halt of that kind.
