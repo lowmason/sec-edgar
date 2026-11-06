@@ -1,6 +1,6 @@
 # Stage 2b baseline campaign: scope, budget and approval
 
-**Status:** Proposed. Not approved for live execution. The `Approval` section is empty.
+**Status:** Approved for live execution within the limits above.
 **Plan:** [plan 8](../../plans/8-sec-filing-index-ingestion-spec.md).
 **Spec:** §§4.2–4.9, 5–6, 7 G2 of the [ingestion spec](../../sec-filing-index-ingestion-spec.md).
 **History:** this campaign repeats the method of [Stage 2](../baseline-campaign/campaign.md) on the 2a release. Stage 2's records stay unchanged. Where this file says "plan 2", it means the [completed plan 2](../../plans/completed/2-sec-filing-index-ingestion-spec.md).
@@ -96,4 +96,16 @@ A halt stops the campaign. The operator reports to the owner and does nothing el
 
 ## Approval
 
-Empty. Task 4 fills this section with the owner's name, the UTC time of recording, and each quoted answer.
+The owner answered each of the 10 items of plan 8 Task 4 as a separate question in the operator session. Quoted text is the option the owner selected. The owner's earlier answer on the D2 breach (D6, "Exception, O3 3600") is recorded in `pre-campaign.md`.
+
+- Owner: Lowell Mason. Approved on (UTC): 2026-11-06T17:49:43Z. The owner gave no timestamp; this is when the operator recorded the answers.
+- 1. Range and units: "Confirm as proposed (Recommended)" (2020Q1–2026Q4, 28 units, and the 7 duplicate-key daily sources).
+- 2. Source scope, budget and stop rules: "Confirm as proposed (Recommended)".
+- 3. Runtime per invocation: "3600 s (Recommended)".
+- 4. Window: "Starts at approval, ends 2026-11-20T13:00:00Z (Recommended)". It starts 2026-11-06T17:49:43Z and ends 2026-11-20T13:00:00Z.
+- 5. Member-wall limit: "3600 s; halt on a deadline kill (Recommended)". Stop rule 2 stays as written. After a deadline kill the operator halts, reports to the owner and follows `docs/runbooks/local-recovery.md` with the owner. No rerun without the owner.
+- 6. The 2026Q3 gate: "Leave gated, no approve (Recommended)" (D3).
+- 7. Other daily sources and bodies after 2026-10-30: "Run as retained work (Recommended)" (O5).
+- 8. A refused incremental candidate: "Halt, remove nothing (Recommended)".
+- 9. The backup: "Accept this backup (Recommended)". Path `backups/stage2b-pre-campaign-20261106T174241Z`, backup `state.sqlite3` SHA-256 `afb9071ae698b7578806b81ba60420c5f866f2262dc33c34971012e2a693cec6`.
+- 10. Sole-issuer declaration: "I make this declaration (Recommended)". The owner selected this drafted wording: "During the campaign window, the launcher on this machine is the only SEC client under my identity. No other machine and not the original sec-edgar Azure project sends SEC requests under it." The declaration starts 2026-11-06T17:49:43Z.
