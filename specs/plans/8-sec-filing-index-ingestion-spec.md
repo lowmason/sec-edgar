@@ -67,7 +67,7 @@ cd "$project"
 
 ## Review Focus
 
-- **A long member that starts near the cutoff.** The owner expects a run that defers cleanly, not a deadline kill with no result. Task 2 measures the largest members in true order, and D2 stops the plan before any live run when one exceeds 1,440 s.
+- **A long member that starts near the cutoff.** The owner expects a run that defers cleanly, not a deadline kill with no result. Task 2 measures the largest members in true order, and D2 stops the plan before any live run when one exceeds 1,440 s. Task 2 found one (3,239.6 s, the daily 2026-07-01). D6 records the owner's exception.
 - **A store that holds v1 and v2 generations at once.** The owner expects the coverage report to read both and say which is which. Task 1's test reads a v1 generation and a v2 generation under the v2 config.
 - **The gated 2026Q3 member on every later run.** The owner expects the campaign to finish while 2026Q3 waits for Stage 4. Task 2 Step 4 measures the gated retry, and stop rule 12 does not count `awaiting_approval` as eligible work.
 - **New daily sources that publish back-dated 2026Q3 rows after the gate.** Their members also end `awaiting_approval` and are re-run on each invocation. The owner expects them to be named, not lost. Task 6 Step 2 lists every daily member that ends `awaiting_approval`, and the finding reports them for Stage 3.
@@ -80,6 +80,7 @@ cd "$project"
 - **D3** (owner, planning, 2026-11-05): Leave 2026Q3 gated. Stage 2b runs no `approve`. Stage 4 reviews and disposes of the gate. Applied in: Global Constraints, Task 3 (stop rules), Task 7.
 - **D4** (owner, planning, 2026-11-05): Take a fresh stopped-writer backup before the first v2 invocation. Applied in: Task 3.
 - **D5** (owner, plan review, 2026-11-06): Approve defaults O1–O6 as written. Task 4 still asks for the window and the budget again. Applied in: Tasks 3–4.
+- **D6** (owner, execution, 2026-11-06): Task 2 measured the daily 2026-07-01 member at 3,239.6 s, above D2's 1,440 s (`specs/evidence/stage2b/pre-campaign.md`). It is the first v2 write to 2026Q3, so the cost is real in the live run. The owner chose the exception ("Exception, O3 3600"). The runtime per invocation (O3) becomes 3,600 s, the live maximum, and `max_member_wall_seconds` becomes 3,600. D2's 1.25× margin is waived for that member. Its margin is about 360 s (11%) from a start at time 0. A start after about 360 s ends in a deadline kill, and stop rule 2 then halts the campaign. Task 4 asks whether one rerun may follow such a halt. The next largest member, 2026Q1, measured 1,398.8 s. Applied in: Tasks 3–4.
 
 ## Defaults for owner review
 
@@ -87,7 +88,7 @@ The owner approved these as written at plan review on 2026-11-06 (D5). Task 4 as
 
 - **O1 — Budget** (`campaign.json`). `max_invocations` 30, `max_request_attempts` 2,500, `max_request_attempts_per_invocation` 700, `max_distinct_urls` 300, `max_received_bytes` 1,073,741,824. Basis: about 13 invocations for the 25 closed quarterly members at about 2 for each run (F2, F4), 2 for the dailies, 3 for 2026Q1–2026Q4, and a margin; about 50 attempts for each run (F9).
 - **O2 — Window.** It starts at the Task 4 approval and ends at 2026-11-20T13:00:00Z. It must end before 2027-01-01T00:00:00Z, so that `open` stays 2026Q4.
-- **O3 — Runtime per invocation.** 3,300 s, the launcher default.
+- **O3 — Runtime per invocation.** 3,600 s, the live maximum (D6). The launcher default of 3,300 s leaves about 60 s of margin for the 2026-07-01 member. At 3,600 s the runner starts no member after 1,800 s.
 - **O4 — Halt on an unexpected gate or quarantine.** Stop rule 9 is new. 2a spec §6 expects no quarantine, and F3 expects 2026Q3 as the only gate.
 - **O5 — Other daily sources.** The other 78 registered daily sources (89 members) and the bodies after 2026-10-30 run as retained work, and the finding reports them for Stage 3. A run that lists bodies after 2026-10-30 meets the revisit condition of deferred item 2 (`specs/deferred_items.md`, section `2-sec-filing-index-ingestion-spec — 2026-10-31`). The finding reports the evidence. Stage 2b does not diagnose it.
 - **O6 — Coverage inputs.** Only Stage 2b's results feed the coverage report. Stage 2's finding stays as history.
@@ -182,7 +183,7 @@ git commit -m "feat(evidence): report each published quarter's schema version"
 
 **Interfaces:**
 - Consumes: F1–F7; the 2a scratch script `specs/evidence/stage2a/scratch/retransform.py` (its store opening, `new_context` and `locate` scan); `evaluate_member` (`workflows/completion.py:812`).
-- Produces: the measured member walls, the convergence result, and `max_member_wall_seconds` (1,440 under D2) for Task 3.
+- Produces: the measured member walls, the convergence result, and `max_member_wall_seconds` (1,440 under D2, 3,600 under D6) for Task 3.
 
 - [ ] **Step 1: Confirm the starting state**
 
@@ -329,14 +330,14 @@ Expected: `exit=0`, and the comparison `{'added': [], 'changed_immutable': [], '
  "format_version": "sec-baseline-campaign-budget-v1",
  "max_distinct_urls": 300,
  "max_invocations": 30,
- "max_member_wall_seconds": 1440,
+ "max_member_wall_seconds": 3600,
  "max_received_bytes": 1073741824,
  "max_request_attempts": 2500,
  "max_request_attempts_per_invocation": 700
 }
 ```
 
-These are D2 and O1. Use the values that the owner confirmed at plan review.
+These are D6 (the member-wall limit, in place of D2's 1,440) and O1. Use the values that the owner confirmed at plan review and in D6.
 
 - [ ] **Step 4: Write `campaign.md`**
 
@@ -344,7 +345,7 @@ Title it `# Stage 2b baseline campaign: scope, budget and approval`, with plan 2
 
 - **Identity:** the release, the live config with both hashes, reserve and floor, the backup path, and the Task 1 commit of the evidence tool.
 - **Release gate:** open on F1, F3, Task 2's member timing, and the Step 2 preflight. Live work still needs the Approval.
-- **Source scope:** the launcher `backfill` workflow with the live config only. The requested units (Global Constraints). The dispatch order (F2). Expected exceptions: 2026Q3 `gated` (F3, D3); its later re-checks (F5); and daily members held `awaiting_approval` by that gate.
+- **Source scope:** the launcher `backfill` workflow with the live config only. The requested units (Global Constraints). The dispatch order (F2). Expected exceptions: 2026Q3 `gated` (F3, D3); its later re-checks (F5); and daily members held `awaiting_approval` by that gate. Also a deadline kill of the 2026-07-01 daily member, when it starts after about 360 s into an invocation (D6). Stop rule 2 still halts on it.
 - **Budget:** plan 2's Budget table with the `campaign.json` values, the runtime (O3), the window (O2), at least 50 GiB free before each invocation, and at most 30 GiB of store growth.
 - **Stop rules:** after each invocation, apply the first rule that matches:
   1. **Halt** on a launcher exit of 2, 6, 8, 9 or 11, or any exit outside 0, 3, 4, 5, 7 and 10.
@@ -387,9 +388,9 @@ git commit -m "docs(evidence): propose the Stage 2b campaign scope, budget and s
 
 1. The range and units: 2020Q1–2026Q4 (28 units) and the 7 duplicate-key daily sources.
 2. The source scope, budget and stop rules in `campaign.md`.
-3. The runtime per invocation: 3,300 s (O3).
+3. The runtime per invocation: 3,600 s (O3, D6).
 4. The window: its UTC start and end (O2).
-5. The member-wall limit: 1,440 s, with Task 2's measured walls.
+5. The member-wall limit: 3,600 s under the D6 exception (D2's limit was 1,440 s), with Task 2's measured walls. Say that a late start of the 2026-07-01 member ends in a deadline kill, and that rule 2 then halts. Ask whether the operator may rerun once, without a new approval, after a halt of that kind.
 6. The 2026Q3 gate: left gated for Stage 4, with no `approve` (D3).
 7. Other daily sources, and bodies after 2026-10-30: run as retained work and reported for Stage 3 (O5).
 8. A refused incremental candidate: halt, remove no objects, Stage 4 disposition (rule 8).
