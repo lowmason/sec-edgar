@@ -11,6 +11,7 @@ import tempfile
 import unittest
 
 from support import fixture_settings
+from support_etl import v1_writable
 from support_workflows import BASE, CommandHarness, build_pack, idx, other_filing_date
 
 PROJECT = Path(__file__).resolve().parents[3]
@@ -206,12 +207,18 @@ class FixtureStoreTests(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
 
-    def harness(self, quarterly, daily_rows=DAILY_ROWS):
+    def harness(self, quarterly, daily_rows=DAILY_ROWS, schema_version=None):
+        etl = {'parser_version': 'fixture-index-parser-v1'}
+        if schema_version is not None:
+            etl['schema_version'] = schema_version
         settings = fixture_settings(backfill={'start_quarter': '2026Q2', 'end_quarter': 'open'},
-            daily={'start_date': '2026-10-01'}, etl={'parser_version': 'fixture-index-parser-v1'},
+            daily={'start_date': '2026-10-01'}, etl=etl,
             http={'retry_base_seconds': 0.001, 'retry_cap_seconds': 0.001},
             fixture={'allow_clock_override': True, 'allow_deadline_override': False})
-        h = CommandHarness(self.root, campaign_pack(self.root / 'pack', quarterly, daily_rows), settings)
+        pack = self.root / 'pack'
+        # One pack for the whole test: a second harness on the same root reuses it.
+        manifest = pack / 'manifest.json' if pack.exists() else campaign_pack(pack, quarterly, daily_rows)
+        h = CommandHarness(self.root, manifest, settings)
         self.addCleanup(h.close)
         return h
 
@@ -245,6 +252,46 @@ class FixtureStoreTests(unittest.TestCase):
         self.assertFalse(report['complete'])
         code, report = self.coverage(h, message['result_ref'])
         self.assertEqual((report['check'], report['units'][1]['verdict']), ('full', 'covered'))
+
+    def publish_standalone(self, h, mode, tag):
+        """discover -> collect -> transform -> publish for one source family, each as its own command.
+
+        Workflow children run in subprocesses, so `v1_writable` (this process only) and the 1c-origin
+        members that a v1 `daily` workflow would register both stay out of reach of a fixture test
+        (plan 8 Task 1, Ruling). The standalone commands run in process, as in test_release_1c.
+        """
+        code, found = h.invoke('discover', ('--mode', mode, '--discovery-id', tag), run=tag + '-find')
+        self.assertEqual(code, 0, h.calls[-1])
+        code, collected = h.invoke('collect', ('--workset', found['source_workset_ref']), run=tag + '-collect')
+        self.assertEqual(code, 0, h.calls[-1])
+        code, transformed = h.invoke('transform', ('--workset', collected['snapshot_workset_ref']), run=tag + '-transform')
+        self.assertEqual(code, 0, h.calls[-1])
+        code, published = h.invoke('publish', ('--workset', transformed['transformed_workset_ref']), run=tag + '-publish')
+        self.assertEqual(code, 0, h.calls[-1])
+
+    def test_coverage_reads_v1_and_v2_generations_and_reports_each_schema(self):
+        quarterly = {2: LATE_KEY_IN_Q2, 3: Q3, 4: Q4}  # Q2 lists the late daily key, so no quarter gates
+        old = self.harness(quarterly, schema_version='sec-index-v1')
+        with v1_writable():
+            self.publish_standalone(old, 'daily', 'v1-daily')
+            self.publish_standalone(old, 'quarterly', 'v1-quarterly')
+        old.close()
+        # The fixture default config (sec-index-v2) reads the v1 generations.
+        h = self.harness(quarterly)
+        code, report = self.coverage(h)
+        views = {unit['quarter']: unit['filing_quarter'] for unit in report['units']}
+        self.assertEqual({quarter: view['status'] for quarter, view in views.items()},
+                         {'2026Q2': 'published', '2026Q3': 'published', '2026Q4': 'published'})
+        self.assertEqual({view['schema_version'] for view in views.values()}, {'sec-index-v1'})
+        for view in views.values():
+            self.assertEqual(view['validated_rows'], view['row_count'])
+        # New work under the v2 config rebuilds only the quarters that its source touches (the daily body: 2026Q2, 2026Q4).
+        self.publish_standalone(h, 'daily', 'v2-daily')
+        code, report = self.coverage(h)
+        schemas = {unit['quarter']: unit['filing_quarter']['schema_version'] for unit in report['units']}
+        self.assertEqual(schemas, {'2026Q2': 'sec-index-v2', '2026Q3': 'sec-index-v1', '2026Q4': 'sec-index-v2'})
+        for unit in report['units']:
+            self.assertEqual(unit['filing_quarter']['validated_rows'], unit['filing_quarter']['row_count'])
 
     def test_timing_times_each_member_and_refuses_a_member_over_the_limit(self):
         h = self.harness({2: (row('111111', 'Second', '2026-04-01', 2),), 3: Q3, 4: Q4})

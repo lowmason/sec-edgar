@@ -180,7 +180,7 @@ def quarter_view(quarter: str, objects, state, check: str = 'full') -> dict:
     membership = manifest.membership_source
     return {'quarter': quarter, 'status': 'published', 'capture': capture.to_mapping(),
             'quarter_mode': manifest.quarter_mode, 'gate': manifest.gate, 'row_count': manifest.row_count,
-            'validated_rows': rows,
+            'schema_version': manifest.schema_version, 'validated_rows': rows,
             'membership_source_id': None if membership is None else membership.source.source_id,
             'membership_snapshot_sha256': None if membership is None else membership.snapshot.sha256,
             'source_kinds': dict(sorted(Counter(ref.source.kind for ref in manifest.sources).items())),
