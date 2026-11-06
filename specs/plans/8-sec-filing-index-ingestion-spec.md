@@ -79,10 +79,11 @@ cd "$project"
 - **D2** (owner, planning, 2026-11-05): Measure the largest members in true dispatch order on a scratch copy. If every predicted member wall is at most 1,440 s (1.25 × wall ≤ the 1,800 s reserve), `max_member_wall_seconds` becomes 1,440, with no config change. If one is above, the plan stops for an owner decision. Applied in: Task 2, Task 3.
 - **D3** (owner, planning, 2026-11-05): Leave 2026Q3 gated. Stage 2b runs no `approve`. Stage 4 reviews and disposes of the gate. Applied in: Global Constraints, Task 3 (stop rules), Task 7.
 - **D4** (owner, planning, 2026-11-05): Take a fresh stopped-writer backup before the first v2 invocation. Applied in: Task 3.
+- **D5** (owner, plan review, 2026-11-06): Approve defaults O1–O6 as written. Task 4 still asks for the window and the budget again. Applied in: Tasks 3–4.
 
 ## Defaults for owner review
 
-The owner confirms or changes these at plan review. Task 4 asks for the window and the budget again, with Task 2's measurements in front of the owner.
+The owner approved these as written at plan review on 2026-11-06 (D5). Task 4 asks for the window and the budget again, with Task 2's measurements in front of the owner.
 
 - **O1 — Budget** (`campaign.json`). `max_invocations` 30, `max_request_attempts` 2,500, `max_request_attempts_per_invocation` 700, `max_distinct_urls` 300, `max_received_bytes` 1,073,741,824. Basis: about 13 invocations for the 25 closed quarterly members at about 2 for each run (F2, F4), 2 for the dailies, 3 for 2026Q1–2026Q4, and a margin; about 50 attempts for each run (F9).
 - **O2 — Window.** It starts at the Task 4 approval and ends at 2026-11-20T13:00:00Z. It must end before 2027-01-01T00:00:00Z, so that `open` stays 2026Q4.
