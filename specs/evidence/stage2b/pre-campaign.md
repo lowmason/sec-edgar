@@ -124,3 +124,22 @@ Recorded 2026-11-06T17:39Z. The owner was shown the breach and two options, and 
 - `max_member_wall_seconds` is 3,600 in `campaign.json` (Task 3). D2's 1.25× margin is waived for the daily 2026-07-01 member. The plan records this as D6.
 - This decision covers the wall limit only. It is not the Task 4 live-execution approval. No live invocation has started.
 - Stop rule 2 still halts on a deadline kill. Task 4 asks the owner whether one rerun may follow a halt of that kind.
+
+## Backup
+
+Task 3, 2026-11-06 (D4). The writer was stopped: `no writer` before Step 1 and before the backup.
+
+| Item | Value |
+| --- | --- |
+| Backup path | `backups/stage2b-pre-campaign-20261106T174241Z` (ignored; 1.0 GiB) |
+| Raw copy | `backups/stage2b-pre-campaign-20261106T174241Z/data-raw`, made with `cp -Rp` |
+| SQLite backup copy | `backups/stage2b-pre-campaign-20261106T174241Z/state.sqlite3`, made with the SQLite backup API |
+| Backup `state.sqlite3` SHA-256 | `afb9071ae698b7578806b81ba60420c5f866f2262dc33c34971012e2a693cec6` |
+| Live `state.sqlite3` SHA-256 | `9dcea9dee400bd47bbb898485897d4ba5e7267619be44b40890734dbd8c9d398`, the same as in the raw copy and as F7 |
+| Size of `data/` (Task 3 Step 1) | 1 GiB (`du -sg`); 5,269 files, 1,044,008,042 bytes. Task 5 checks growth against this size. |
+| Files report before the backup | `pre-campaign/files-before.json`, exit 0 |
+| Files report of the raw copy | `pre-campaign/backup-files.json`, exit 0, comparison `{'added': [], 'changed_immutable': [], 'changed_state': [], 'missing': []}` |
+
+This backup is the only way back to a store that the 1c release can read. After the first v2 write, the 1c release cannot be selected (§4.9).
+
+One side effect of the backup: opening `state.sqlite3` for the SQLite backup created two SQLite side files in `data/`, `state.sqlite3-shm` (32 KiB) and an empty `state.sqlite3-wal`. The database file did not change. The file-list hash of `data/` is therefore `8a20f461…` from now on, and no longer `8f173474…6cfe` (F7). The `files` comparison allows SQLite side files to come and go (plan 2 F14).
