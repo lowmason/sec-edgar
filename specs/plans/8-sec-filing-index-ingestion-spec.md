@@ -28,7 +28,7 @@ The planning scripts and their outputs are in `specs/evidence/stage2b/planning/`
 - **F2 — Dispatch order.** The runner sorts members by `(period, source_id, member_id)` as strings (`workflows/runner.py:261`). `-` sorts before `Q`. So the order is: the quarterly members 2020Q1–2025Q4 (25, two of them for 2024Q1); then the 96 daily members of 85 daily sources, 2026-07-01 to 2026-10-30 (two members each for the 11 business days 2026-10-01 to 2026-10-16); then the quarterly members 2026Q1, 2026Q2 and 2026Q3, and three for 2026Q4. Daily bodies discovered after 2026-10-30 sort after 2026-10-30 and before 2026Q1.
 - **F3 — Predicted withdrawal gates.** `planning/gates.py` compared each quarter's active generation keys with the keys of its retained quarterly `master.idx` (`planning/gates.json`). Its quarterly key counts equal the 2a scratch counts. No closed quarter from 2020Q1 to 2026Q2 has an absent active key, so none should gate. 2026Q3 has 42 absent keys in its v1 base. The 7 duplicate-key dailies publish before the 2026Q3 quarterly member (F2) and hold 5 more absent keys (plan 7, Handoff), so expect about 47 withdrawals and `awaiting_approval`. 2026Q4 has 3 absent keys, but it is the open quarter, so they stay `unresolved_absence` with no gate (§4.4). Not checked: rows that the 7 dailies or new dailies add to 2026Q1 or 2026Q2 before those quarterly members run.
 - **F4 — Member cost estimates** (`specs/evidence/stage2a/release.md`, "Scratch re-transform"). Quarterly transforms took 67.2–293.4 s. The 2023Q1 first publish (348,463 rows, no base) took 733.8 s. The 2026Q3 candidate took 1,306.7 s, including the inline v2 re-transform of 77 v1 daily sources. A workflow member runs both transform and publish, so a full-size closed member takes about 700–1,100 s, and the 2026Q3 member about 1,300–1,550 s. Two members were never measured: the first daily member (2026-07-01), which makes the first v2 rebuild of 2026Q3, and the first daily that touches 2026Q4. Plan 2's member-wall limit of 1,056 s (1.25 × w + 480 ≤ 1,800) would halt on a full-size quarter such as 2024Q1.
-- **F5 — A gated quarter costs time on each later run.** `awaiting_approval` is a pending outcome, so the runner selects the gated member again. Its publish finds the stored candidate, runs the full content check and returns `awaiting_approval` again (`etl/publication.py:97–110`; §4.6). A full read of the 2026Q3 v1 generation (280,965 rows) took 398.2 s in planning. Stop rule 10 counts only `pending`, `deferred` and `throttled`, so a gated member does not keep the campaign running.
+- **F5 — A gated quarter costs time on each later run.** `awaiting_approval` is a pending outcome, so the runner selects the gated member again. Its publish finds the stored candidate, runs the full content check and returns `awaiting_approval` again (`etl/publication.py:97–110`; §4.6). In planning, a full read of the 2026Q3 v1 generation (280,965 rows) together with a parse of its quarterly file took 398.2 s, so the read alone took at most that. Task 2 step 7 measures the retry. Stop rule 10 counts only `pending`, `deferred` and `throttled`, so a gated member does not keep the campaign running.
 - **F6 — Configs.** The live config selects the 2a release with `sec-index-parser-v2` / `sec-index-v2`, range `2020Q1`–`open`. It is the campaign's only config, as in plan 2 from invocation 4 (Revision 4): a run whose pinned end lies before a retained member fails (plan 2, Handoff, Stage 3 trap (a)). The v1 configs under `conf/stage2/` do not load on the 2a release (plan 7, Handoff). They stay as history and are never run.
 - **F7 — Store state.** `data/` holds 5,269 files, the same count as the 2a scratch record. The SHA-256 of its hash list (`hash_data` in the prelude) is `8f1734742943c72d86dccb5988801855cc0bae340190934b35bc7af6e8db6cfe`, with `./state.sqlite3` at `9dcea9dee400bd47bbb898485897d4ba5e7267619be44b40890734dbd8c9d398`. While that SHA-256 holds, F1–F3 stand. The only backup is `backups/stage2-pre-campaign-20261021T180646Z`, from before the Stage 2 campaign. 455 GiB were free.
 - **F8 — Time.** Plan 2's window ended 2026-11-05T13:00:00Z (plan 2 D13), so Stage 2b sets its own window at Task 4. The open quarter stays 2026Q4 until 2027-01-01T00:00:00Z. Daily bodies after 2026-10-30 are not registered yet (plan 2 trap (d)). Each business day adds one.
@@ -176,12 +176,12 @@ git commit -m "feat(evidence): report each published quarter's schema version"
 
 **Files:**
 - Create: `specs/evidence/stage2b/scratch/order-timing.py`
-- Create: `specs/evidence/stage2b/pre-campaign/preflight.json`, `order-timing.jsonl`
-- Create: `specs/evidence/stage2b/pre-campaign.md` (sections `Store check`, `Preflight`, `Member timing`, `Wall limit (D2)`)
+- Create: `specs/evidence/stage2b/pre-campaign/preflight.json`, `order-timing.jsonl`, `convergence.json`
+- Create: `specs/evidence/stage2b/pre-campaign.md` (sections `Store check`, `Preflight`, `Member timing`, `Convergence`, `Wall limit (D2)`)
 
 **Interfaces:**
-- Consumes: F1–F7; the 2a scratch script `specs/evidence/stage2a/scratch/retransform.py` (its store opening, `new_context` and `locate` scan).
-- Produces: the measured member walls and `max_member_wall_seconds` (1,440 under D2) for Task 3.
+- Consumes: F1–F7; the 2a scratch script `specs/evidence/stage2a/scratch/retransform.py` (its store opening, `new_context` and `locate` scan); `evaluate_member` (`workflows/completion.py:812`).
+- Produces: the measured member walls, the convergence result, and `max_member_wall_seconds` (1,440 under D2) for Task 3.
 
 - [ ] **Step 1: Confirm the starting state**
 
@@ -201,27 +201,34 @@ Run plan 2 Task 3c Step 3's block with `$evidence/pre-campaign/rev2` replaced by
 
 Expected: `backfill` `["2020Q1", "open"]`, `dispatch_reserve_seconds` `1800`, `effective_config_sha256` `f2082322…` and `release_id` `e49d3ba8…`. Any difference stops the plan.
 
-- [ ] **Step 3: Write `order-timing.py ROOT CONFIG RESULTS`**
+- [ ] **Step 3: Write `order-timing.py ROOT CONFIG RESULTS CONVERGENCE`**
 
-The script opens ROOT with its stored binding and loads CONFIG, as `retransform.py` does. It creates no network client and never approves. It finds each target's snapshot workset with the `locate` scan of `worksets/sec/snapshot`. Where a source has more than one workset, it takes the one whose snapshot has the latest receipt time, and records every candidate. Then it runs these steps in this order. Each step calls `run_transform` on the snapshot workset and then `run_publish` on the transformed workset, each with a fresh `new_context`. Step 5 calls only `run_publish`, with step 4's transformed workset.
+The script opens ROOT with its stored binding and loads CONFIG, as `retransform.py` does. It creates no network client and never approves. It finds each target's snapshot workset with the `locate` scan of `worksets/sec/snapshot`. Where a source has more than one workset, it takes the one whose snapshot has the latest receipt time, and records every candidate. Before step 1, it reads the 2024Q1 active generation's manifest and picks D: the daily source with the earliest period among that manifest's daily sources.
 
-| Step | Source ID | Why |
+Then it runs the steps below. Steps 2, 3 and 4 run in the ascending period order of their sources, as in F2. Step 3 is skipped when D is the 2026-07-01 source. Each step calls `run_transform` on the snapshot workset and then `run_publish` on the transformed workset, each with a fresh `new_context`. Steps 7 and 9 call only `run_publish`, with the transformed workset of the step before.
+
+| Step | Source | Why |
 | --- | --- | --- |
 | 1 | quarterly 2024Q1 `b2d153963f7d7f903ea8c4d2fcb4b6cf58e8d12ffa633ddc82cb57de0131fd63` | The largest closed quarter before the dailies (F2) |
 | 2 | daily 2026-07-01 `924fd5f5b380e8a8603bab21b91edcd9408962b3a25fe812f067b25777063d58` | The first daily: the first v2 rebuild of 2026Q3 |
-| 3 | quarterly 2026Q1 `f8f05c9fd9e634303de40171631df987c8977b784ebd5919c1896e4e13d2ed12` | The largest quarterly source (370,363 keys) |
-| 4 | quarterly 2026Q3 `5005901a1e8132207ea0cf7a0d4bec1d7b9ca3a6f0371b9e45c9eb2863045086` | The expected gate |
-| 5 | 2026Q3 publish again | The gated retry (F5) |
-| 6 | daily 2026-10-01 `6cf7f339fd98f08d888586fbf41d907cb071d3a54259128e659f51e1f7caaa72` | The first daily in 2026Q4: the first v2 rebuild of 2026Q4 |
-| 7 | quarterly 2026Q4 `d64895140b037ef3df3e0c867437b555053c3a14c33d8c0c3526c9067354d0c7` | The open quarter with a quarterly authority |
+| 3 | daily D | A daily whose 2024Q1 rows meet a v2 quarterly authority (convergence) |
+| 4 | daily 2026-10-01 `6cf7f339fd98f08d888586fbf41d907cb071d3a54259128e659f51e1f7caaa72` | The first daily in 2026Q4: the first v2 rebuild of 2026Q4 |
+| 5 | quarterly 2026Q1 `f8f05c9fd9e634303de40171631df987c8977b784ebd5919c1896e4e13d2ed12` | The largest quarterly source (370,363 keys) |
+| 6 | quarterly 2026Q3 `5005901a1e8132207ea0cf7a0d4bec1d7b9ca3a6f0371b9e45c9eb2863045086` | The expected gate |
+| 7 | 2026Q3 publish again | The gated retry (F5) |
+| 8 | daily 2026-09-24 `d2c80002601d76fb076f7141eb07bb5c0c995f56ffe1f3dbed1a9bd427805dd2` | Proxy, out of order: a daily new to 2026Q3 after the gate, as each body discovered after the gate will be |
+| 9 | 2026-09-24 publish again | That daily's retry on each later run |
+| 10 | quarterly 2026Q4 `d64895140b037ef3df3e0c867437b555053c3a14c33d8c0c3526c9067354d0c7` | The open quarter with a quarterly authority |
 
 For each call, append one JSON line to RESULTS: `step`, `source_id`, `kind`, `period`, `call` (`transform` or `publish`), `outcome`, the per-quarter outcomes, gates and change counts (as `retransform.py` records them for 2026Q3), and `wall_seconds` from `time.monotonic()` around the production call only.
 
-On the copy, the closed quarters stay v1 until a step publishes them. So step 2 also rebuilds the small daily-only quarters that 2026-07-01 touches. In true order, those quarters are already v2 with a quarterly authority. Step 2's wall can therefore only overstate the live cost.
+After step 10, the convergence check: for each stepped source, evaluate every registered member of it with `evaluate_member` under CONFIG's parser and schema versions. Write CONVERGENCE as a JSON list of `step`, `source_id`, `period`, `member_id`, `complete` and the gap codes.
+
+On the copy, the closed quarters other than 2024Q1 stay v1 until a step publishes them. So steps 2–4 also rebuild the small daily-only quarters that they touch. In true order, those quarters are already v2 with a quarterly authority. Those walls can therefore only overstate the live cost.
 
 - [ ] **Step 4: Run it on a scratch copy**
 
-Run it in the background with the agent harness's background mode. Expect about 1.5–2 hours.
+Run it in the background with the agent harness's background mode. Expect about 2–2.5 hours.
 
 ```sh
 # prelude
@@ -237,12 +244,21 @@ value['storage']['root'] = sys.argv[2] + '/data'
 value['logging']['root'] = sys.argv[2] + '/logs'
 print(json.dumps(value, indent=2))
 PY
-native "$evidence/scratch/order-timing.py" "$scratch/data" "$scratch/config.json" "$evidence/pre-campaign/order-timing.jsonl"
+native "$evidence/scratch/order-timing.py" "$scratch/data" "$scratch/config.json" \
+  "$evidence/pre-campaign/order-timing.jsonl" "$evidence/pre-campaign/convergence.json"
 echo "order-timing exit=$?"
 hash_data > "$scratch/after.sha256"; cmp -s "$scratch/before.sha256" "$scratch/after.sha256" && echo data-unchanged
 ```
 
-Expected: `no writer`; `order-timing exit=0`; 13 lines in `order-timing.jsonl` (two for each of steps 1–4, 6 and 7, and one for step 5); no `quarantined` outcome; `awaiting_approval` for 2026Q3 in steps 4 and 5, with at least 42 withdrawals (F3; the 7 dailies did not run on the copy); `data-unchanged`. Then remove the copy: `rm -rf "$scratch"`. Any other result stops the plan: report it to the owner.
+Expected:
+
+- `no writer`, `order-timing exit=0` and `data-unchanged`.
+- 18 lines in `order-timing.jsonl`: two for each of steps 1–6, 8 and 10, and one each for steps 7 and 9. 16 lines when step 3 is skipped.
+- No `quarantined` outcome.
+- 2026Q3 `awaiting_approval` in steps 6 and 7, with at least 42 withdrawals (F3; the 7 duplicate-key dailies did not run before the gate on the copy). Steps 8 and 9 are predicted to end `awaiting_approval` for 2026Q3 as well. A `published` outcome there is also valid evidence: record which.
+- In `convergence.json`, each source of steps 1–5 and 10 has at least one complete member. Each member of the 2026Q3 source is incomplete with only `publication_pending`. The 2026-09-24 members are complete, or incomplete with only `publication_pending` when step 8 ended `awaiting_approval`.
+
+Then remove the copy: `rm -rf "$scratch"`. Any other result stops the plan: report it to the owner. A daily member that stays incomplete after its quarter took a v2 quarterly authority is a feasibility blocker, not a timing matter: rule 10 would halt the campaign.
 
 - [ ] **Step 5: Apply the wall limit (D2)**
 
@@ -261,11 +277,11 @@ print('max', round(max(walls.values()), 1))
 PY
 ```
 
-The member wall of a step is the sum of its calls. If `max` is at most 1,440, Task 3 sets `max_member_wall_seconds` to 1440. Otherwise stop the plan and report the walls to the owner (D2).
+The member wall of a step is the sum of its calls. Every step counts, steps 8 and 9 included, because bodies discovered after the 2026Q3 gate pay those costs in the live run. If `max` is at most 1,440, Task 3 sets `max_member_wall_seconds` to 1440. Otherwise stop the plan and report the walls to the owner (D2).
 
 - [ ] **Step 6: Write `pre-campaign.md` and commit**
 
-Write the four sections. `Store check` gives the Step 1 values. `Preflight` gives the Step 2 values. `Member timing` is a table of each step's calls and walls, with each member wall against 1,440 s and against the 1,800 s reserve, and the step 5 retry cost. `Wall limit (D2)` states the result and the limit.
+Write the five sections. `Store check` gives the Step 1 values. `Preflight` gives the Step 2 values. `Member timing` is a table of each step's calls and walls, with each member wall against 1,440 s and against the 1,800 s reserve. It names D, and the costs of steps 7–9. Each body discovered after the 2026Q3 gate pays the step 8 cost once and the step 9 cost on each later run, before the 2026Q1–2026Q4 members (F2). `Convergence` gives the `convergence.json` result for each source. `Wall limit (D2)` states the result and the limit.
 
 ```bash
 git add specs/evidence/stage2b/scratch/order-timing.py specs/evidence/stage2b/pre-campaign/ specs/evidence/stage2b/pre-campaign.md
