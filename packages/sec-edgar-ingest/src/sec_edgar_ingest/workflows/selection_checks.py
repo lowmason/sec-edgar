@@ -35,6 +35,10 @@ class SelectionChecks:
 
     def parent(self, ref: str) -> SourceWorkset:
         """The parent at `ref`, re-validated by `read_parent`."""
+        if not isinstance(ref, str):
+            # A corrupt row's ref (a JSON array or object) cannot be a key. `read_parent` refuses it with today's
+            # message, so it is never kept.
+            return provenance.read_parent(ref, self.store, self.objects)
         if ref not in self._parents:
             self._parents[ref] = provenance.read_parent(ref, self.store, self.objects)
         return self._parents[ref]

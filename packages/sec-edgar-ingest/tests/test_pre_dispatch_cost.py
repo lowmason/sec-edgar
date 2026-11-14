@@ -18,6 +18,7 @@ from sec_edgar_ingest.state import AcquisitionState
 from sec_edgar_ingest.storage.contracts import Conflict
 from sec_edgar_ingest.storage.local import LocalObjectStore
 from sec_edgar_ingest.workflows import completion, legacy, members, provenance, selection_checks
+from sec_edgar_ingest.workflows.contracts import LOCAL_CONTRACT
 from sec_edgar_ingest.workflows.selection_checks import SelectionChecks
 from support import fixture_context, fixture_source
 from support_process import checked_dispatcher, checked_fault
@@ -299,7 +300,10 @@ class SelectionChecksTests(unittest.TestCase):
         checks.renew()
         refs.append(found.result.source_workset_ref)
         kept = keep()
-        value = provenance.project_member(refs[1], f.source.source_id, f.store, f.objects, checks=checks)
+        # The parent is kept, so a write that takes its read from `checks` computes no `read_parent`.
+        with mock.patch.object(provenance, "read_parent", wraps=provenance.read_parent) as computed:
+            value = provenance.project_member(refs[1], f.source.source_id, f.store, f.objects, checks=checks)
+        self.assertEqual(computed.call_count, 0)
         self.assertEqual(f.store.get("WorkflowMember", value["member_id"]).to_mapping()["value"], value)
         assert_kept_and_fresh(kept)
 
@@ -307,8 +311,10 @@ class SelectionChecksTests(unittest.TestCase):
         acquisition = AcquisitionState(f.store)
         pin = acquisition.binding(f.value["member_id"], f.source.source_id)
         self.assertIsNone(acquisition.binding(value["member_id"], f.source.source_id))
-        provenance.transfer_binding(value, acquisition.snapshot(f.source.source_id, pin.snapshot_sha256),
-                                    f.store, f.objects, checks=checks)
+        snapshot = acquisition.snapshot(f.source.source_id, pin.snapshot_sha256)
+        with mock.patch.object(provenance, "read_parent", wraps=provenance.read_parent) as computed:
+            provenance.transfer_binding(value, snapshot, f.store, f.objects, checks=checks)
+        self.assertEqual(computed.call_count, 0)
         self.assertEqual(acquisition.binding(value["member_id"], f.source.source_id),
                          Binding(value["member_id"], f.source.source_id, pin.snapshot_sha256))
         assert_kept_and_fresh(kept)
@@ -335,7 +341,10 @@ class SelectionChecksTests(unittest.TestCase):
                     checks.parent(ref)
                 refused.append(ref)
             return real_immutable(store, kind, key, value)
+        # `legacy` binds its own `read_parent` name at import: a call site there that bypasses `checks` raises.
+        bypass = AssertionError("a legacy read_parent call site bypassed the kept checks")
         with mock.patch.object(legacy, "immutable", before_recovery_row), \
+                mock.patch.object(legacy, "read_parent", side_effect=bypass), \
                 mock.patch.object(provenance, "read_parent", wraps=provenance.read_parent) as computed:
             self.assertEqual(legacy.bootstrap_legacy(h.store, h.objects, checks=checks), ())
         [ref] = refused
@@ -345,6 +354,37 @@ class SelectionChecksTests(unittest.TestCase):
         self.assertEqual(checks.parent(ref), provenance.read_parent(ref, h.store, h.objects))
         values = tuple(row.to_mapping()["value"] for row in h.store.scan("WorkflowMember", {}))
         self.assertEqual([value["parent_ref"] for value in values], [ref])
+
+        # The session still names no workset, so the next pass calls `reconstruct_parent` again. Its retained-row
+        # branch writes no recovery row, and every read in the pass reuses the kept parent.
+        no_row = AssertionError("the retained-row branch wrote a recovery row")
+        with mock.patch.object(legacy, "immutable", side_effect=no_row), \
+                mock.patch.object(legacy, "read_parent", side_effect=bypass), \
+                mock.patch.object(provenance, "read_parent", wraps=provenance.read_parent) as computed:
+            self.assertEqual(legacy.bootstrap_legacy(h.store, h.objects, checks=checks), ())
+        self.assertEqual(computed.call_count, 0)
+
+    def test_a_non_text_parent_ref_gives_the_same_gaps_with_and_without_checks(self):
+        """H1: a corrupt WorkflowMember row whose `parent_ref` is a JSON array or object is refused with today's
+        message. Such a ref cannot be a key of the kept parents (review round 1, finding 1)."""
+        h = self.harness()
+        values = []
+        for digit, parent_ref in (("1", ["worksets", "corrupt"]), ("2", {"ref": "worksets/corrupt"})):
+            member_id = digit * 64
+            value = {"contract_version": LOCAL_CONTRACT, "member_id": member_id, "source": fixture_source().to_mapping(),
+                     "parent_ref": parent_ref, "member_ref": "worksets/sec/source/sha256=" + member_id + "/workset.json"}
+            h.store.insert("WorkflowMember", member_id, value)
+            values.append(value)
+        registry = members.WorkflowMembers(h.store, h.objects)
+        parser, schema = h.settings.etl.parser_version, h.settings.etl.schema_version
+
+        def run(**checks):
+            return (registry.inventory(**checks), legacy.bootstrap_legacy(h.store, h.objects, **checks),
+                    [completion.evaluate_member(value, parser, schema, h.store, h.objects, **checks) for value in values])
+        today = run()
+        self.assertEqual([(gap.code, gap.message) for gap in today[0][1]],
+                         [("legacy_member_unresolved", "object path must be a nonempty safe string")] * 2)
+        self.assertEqual(run(checks=SelectionChecks(h.store, h.objects)), today)
 
     def test_without_checks_each_call_recomputes(self):
         """H4: without `checks`, every evaluation computes the publish-call authority again."""
