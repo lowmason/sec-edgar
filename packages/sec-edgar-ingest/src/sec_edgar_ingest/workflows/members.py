@@ -12,24 +12,56 @@ from .provenance import immutable, project_member, projection, read_member, read
 if TYPE_CHECKING:
     from .selection_checks import SelectionChecks
 
+# A registered member whose read raises one of these is reported by `inventory()` and skipped by `of_source()`.
+_MEMBER_READ_ERRORS = (ValueError, OSError, Conflict, KeyError, TypeError)
+
+
+def _registry_order(value):
+    return value['source']['period'], value['source']['source_id'], value['member_id']
+
+
+def _unread_member_gap(value, error):
+    """`inventory()`'s gap for a registered member row whose read raised `error`."""
+    from ..models import Error, error_text
+    identity = value.get('member_id') if isinstance(value, dict) else None
+    return Error('legacy_member_unresolved', error_text(error), False, None,
+        {'record_kind': 'WorkflowMember', 'member_id': identity,
+         'record_sha256': __import__('hashlib').sha256(canonical_json(to_mapping_value(value))).hexdigest()})
+
+
 class WorkflowMembers:
     def __init__(self, store, objects):
         self.store, self.objects = store, objects
 
     def inventory(self, *, checks: 'SelectionChecks | None' = None):
-        from ..models import Error, error_text
         valid, gaps = [], []
         for row in self.store.scan('WorkflowMember', {}):
             value = row.to_mapping()['value']
             try:
                 read_member(value, self.store, self.objects, checks=checks)
                 valid.append(value)
-            except (ValueError, OSError, Conflict, KeyError, TypeError) as error:
-                identity = value.get('member_id') if isinstance(value, dict) else None
-                gaps.append(Error('legacy_member_unresolved', error_text(error), False, None,
-                    {'record_kind': 'WorkflowMember', 'member_id': identity,
-                     'record_sha256': __import__('hashlib').sha256(canonical_json(to_mapping_value(value))).hexdigest()}))
-        return tuple(sorted(valid, key=lambda v: (v['source']['period'], v['source']['source_id'], v['member_id']))), tuple(gaps)
+            except _MEMBER_READ_ERRORS as error:
+                gaps.append(_unread_member_gap(value, error))
+        return tuple(sorted(valid, key=_registry_order)), tuple(gaps)
+
+    def of_source(self, source: Mapping, *, checks: 'SelectionChecks | None' = None) -> tuple[Mapping, ...]:
+        """The members of one source that `inventory()` returns, in its order, without reading other sources (H5).
+
+        A row is read only when its value is a dict whose `source` equals `source`. A row that fails its read is
+        skipped: `select_work` reports it through `inventory()`.
+        """
+        valid = []
+        for row in self.store.scan('WorkflowMember', {}):
+            value = row.to_mapping()['value']
+            if not isinstance(value, dict) or value.get('source') != source:
+                continue
+            try:
+                read_member(value, self.store, self.objects, checks=checks)
+                valid.append(value)
+            except _MEMBER_READ_ERRORS as error:
+                # Build and drop the gap as reuse did through inventory(): a row whose gap cannot be built still raises.
+                _unread_member_gap(value, error)
+        return tuple(sorted(valid, key=_registry_order))
 
     def all(self):
         values, gaps = self.inventory()

@@ -20,11 +20,16 @@ from .members import SourceDownloads, WorkflowMembers
 from .processing import ProcessedMember, process_member, validate_member_evidence
 from .provenance import project_member, read_parent, read_member, transfer_binding, immutable
 from .results import freeze_selection
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .selection_checks import SelectionChecks
 
 
-def reuse_exact_binding(value: Mapping, store, objects) -> tuple[Error, ...]:
+def reuse_exact_binding(value: Mapping, store, objects, *,
+                        checks: 'SelectionChecks | None' = None) -> tuple[Error, ...]:
     acquisition = AcquisitionState(store)
-    member = read_member(value, store, objects)
+    member = read_member(value, store, objects, checks=checks)
     identity = value['source']['source_id']
     if acquisition.binding(member.workset_id, identity) is not None or member.acquisition_mode == 'refresh':
         return ()
@@ -39,11 +44,8 @@ def reuse_exact_binding(value: Mapping, store, objects) -> tuple[Error, ...]:
         return (Error('legacy_member_unresolved', 'source reuse evidence is corrupt: ' + error_text(error),
                       False, identity, {'member_id': value['member_id']}),)
     candidates = {}
-    verified, _ = WorkflowMembers(store, objects).inventory()
     # select_work has already retained inventory gaps; reuse cannot hide them.
-    for other in verified:
-        if other['source'] != value['source']:
-            continue
+    for other in WorkflowMembers(store, objects).of_source(value['source'], checks=checks):
         try:
             pin = acquisition.binding(other['member_id'], identity)
             if pin is None:
@@ -57,7 +59,7 @@ def reuse_exact_binding(value: Mapping, store, objects) -> tuple[Error, ...]:
     if len(candidates) != 1:
         return tuple(gaps)  # Ordinary checked collection establishes its exact binding.
     # Keep winner refusal outside candidate isolation; never overwrite a divergent binding.
-    transfer_binding(value, next(iter(candidates.values())), store, objects)
+    transfer_binding(value, next(iter(candidates.values())), store, objects, checks=checks)
     return tuple(gaps)
 
 
