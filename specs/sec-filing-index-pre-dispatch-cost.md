@@ -313,6 +313,7 @@ Owner answers at brainstorming:
 - **Approach** (2026-11-14): "A: once per run". The per-type hints cache plus one computation of each store-wide
   check per selection phase. Under approach A, the deferred item "History-scan cost" stays deferred. Approach B
   would have taken it into this stage.
+- **Spec** (2026-11-14): "Approve the spec". Approval authorizes no SEC request or live run.
 - **Platform** (2026-11-14): "Yes, hold it". The release's locked inputs carry no platform member, as in Stages 1b,
   1c and 2a (H9). Plan 3's Merge gate waits for this release.
 - Roadmap defaults (xiii)–(xvi), approved 2026-11-13: one stage, offline only. This stage settles the platform
