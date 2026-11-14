@@ -87,6 +87,7 @@ Execution environment (planning facts, not spec text):
 
 - **D1** (owner, plan review, 2026-11-14): plan 9 approved as committed at `586b145`, with P1–P5 and P7–P11 as proposed. P6 changes: the band widens by 200 s, from 52.8 s to 252.8 s. So a longest measured wall above 803.2 s and not above 1,056 s also stops the stage for the owner. This is a plan-level change. No spec-level change. Owner's words: "Add an additional 200 s to P6. Otherwise approved." Applied in: P6, Task 11 Step 7, and every task through P1–P11.
 - **D2** (owner, plan review, 2026-11-14): the plan's default for the `.pyc` question stands. The 100 files that the diagnosis left in the 2a and 1c release venvs stay. The 44 older files in the 1b venv are out of scope. Nothing under `releases/` is removed. Owner's words: "Otherwise approved." Applied in: the Handoff (spec §6).
+- **D3** (owner, after plan review, 2026-11-14): Task 11 is fixed to keep two approved Global Constraints. `--validate-only` now runs on a throwaway clone, so the timed run starts from a copy that no command has touched. Step 1 also checks `data/` against the diagnosis's list, so Step 8 has a before list for `data/`. This is a plan-level fix with no new requirement. Owner's words: "Yes, fix it." Applied in: Task 11 Steps 1–4 and 8.
 
 ## Defaults for owner review
 
@@ -466,17 +467,17 @@ Run in the main checkout on `main`. This task reads `data/` once to clone it, an
 Run in the main checkout on `main`.
 
 **Files:**
-- Create: `specs/evidence/stage2a1/walls/` outputs: `results.jsonl`, `member-walls-targets.json`, `convergence.json`, `starts.json`, `config.json`, `backup-before.sha256`, `backup-after.sha256`
+- Create: `specs/evidence/stage2a1/walls/` outputs: `results.jsonl`, `member-walls-targets.json`, `convergence.json`, `starts.json`, `config.json`, `live-data-before.sha256`, `live-data-after.sha256`, `backup-before.sha256`, `backup-after.sha256`
 - Create: `specs/evidence/stage2a1/walls.md`
 
-- [ ] **Step 1: Confirm that no writer runs.** Hash the backup: run `find backups/stage2b-pre-campaign-20261106T174241Z -type f -print0 | LC_ALL=C sort -z | xargs -0 shasum -a 256` into `walls/backup-before.sha256`, and compare it with F10's `backup-before.sha256`, both sorted with `LC_ALL=C sort`. Expected: no output. Then clone the backup's `data-raw` to `$W/data`, with `W=/Users/lowell/Projects/sec-edgar-local/logs/stage2a1-walls-<UTC stamp>`.
-- [ ] **Step 2: Write the scratch config** as in Task 7 Step 2, with `runtime.release_manifest` set to the `<2A1>` manifest. Copy it to `walls/config.json`.
-- [ ] **Step 3: Validate** with `walls --validate-only` on the `<2A1>` interpreter. Expected: as in Task 7 Step 4.
-- [ ] **Step 4: Run `walls`** in the background on the `<2A1>` interpreter. Expected: one result line per production call and per engine term, with no `quarantined`, `failed` or `error`. If the run fails, stop and report.
+- [ ] **Step 1: Confirm that no writer runs, and check `data/` and the backup.** Check `data/` as Task 6 Step 3 does, into `walls/live-data-before.sha256`. Expected: `data-as-diagnosed`. Hash the backup: run `find backups/stage2b-pre-campaign-20261106T174241Z -type f -print0 | LC_ALL=C sort -z | xargs -0 shasum -a 256` into `walls/backup-before.sha256`, and compare it with F10's `backup-before.sha256`, both sorted with `LC_ALL=C sort`. Expected: no output. Then clone the backup's `data-raw` twice, to `$W/data` and `$W/validate`, with `W=/Users/lowell/Projects/sec-edgar-local/logs/stage2a1-walls-<UTC stamp>`.
+- [ ] **Step 2: Write the scratch config** as in Task 7 Step 2, with `runtime.release_manifest` set to the `<2A1>` manifest. Copy it to `walls/config.json`. Write a second copy, `$W/validate-config.json`, whose `storage.root` is `$W/validate`.
+- [ ] **Step 3: Validate on the throwaway clone.** Run `walls --validate-only` on `$W/validate` with `$W/validate-config.json`, on the `<2A1>` interpreter. `--validate-only` writes to its store (`retain_manifest`, and `evaluate_member` in the convergence check), so it never runs on the clone that Step 4 times. Expected: as in Task 7 Step 4. Then `rm -rf "$W/validate"`.
+- [ ] **Step 4: Run `walls`** on `$W/data`, which no command has touched, with `walls/config.json`, in the background on the `<2A1>` interpreter. Expected: one result line per production call and per engine term, with no `quarantined`, `failed` or `error`. If the run fails, stop and report.
 - [ ] **Step 5: Run `starts`** with `walls/config.json`, `walls/origins.json` and `$W`, into `walls/starts.json`. Expected: a median for the new release and for each origin release. If an origin release refuses its config, stop and report.
 - [ ] **Step 6: Compute each member wall.** A wall is the transform plus the publish plus that member's engine terms, the collect body and three child starts. Plan 8's step 3 is a member too. Steps 7 and 9 stay publish-only (P5).
 - [ ] **Step 7: Apply the member-wall stop rule and the P6 band.** If the longest wall is above 1,056 s, stop: report every wall to the owner and ask them to choose one of the three paths (HUMAN). If it is above 803.2 s and not above 1,056 s, stop and ask the same (P6, D1). Log the answer as a Decision. The live-config selection (Task 12) waits for it.
-- [ ] **Step 8: Confirm that `data/` and the backup are unchanged.** Hash `data/` (Task 6 Step 6) and the backup (Step 1) again. Each must equal its before list.
+- [ ] **Step 8: Confirm that `data/` and the backup are unchanged.** Hash `data/` into `walls/live-data-after.sha256` and the backup into `walls/backup-after.sha256`, with Step 1's commands. Compare each with its Step 1 list, both sorted with `LC_ALL=C sort`. Expected: no output.
 - [ ] **Step 9: Record and commit.** Write `walls.md` in the layout of `pre-campaign.md` "Member timing". Include:
   - every wall against 1,056 s, with the 2026-07-01 member in bold, and each wall's terms;
   - the comparison with plan 8's walls;
