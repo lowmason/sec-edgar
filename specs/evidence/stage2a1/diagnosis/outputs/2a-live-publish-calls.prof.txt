@@ -1,0 +1,43 @@
+         45284039 function calls (43401113 primitive calls) in 9.059 seconds
+
+   Ordered by: cumulative time
+   List reduced from 368 to 35 due to restriction <35>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.010    0.010    9.151    9.151 /Users/lowell/Projects/sec-edgar-local/releases/sha256=e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec/venv/lib/python3.14/site-packages/sec_edgar_ingest/workflows/completion.py:551(_publish_calls)
+      328    0.003    0.000    5.015    0.015 /Users/lowell/Projects/sec-edgar-local/releases/sha256=e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec/venv/lib/python3.14/site-packages/sec_edgar_ingest/workflows/checked.py:182(_authority)
+      656    0.006    0.000    4.830    0.007 /Users/lowell/Projects/sec-edgar-local/releases/sha256=e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec/venv/lib/python3.14/site-packages/sec_edgar_ingest/workflows/checked.py:127(_validated)
+27887/3404    0.116    0.000    4.525    0.001 /Users/lowell/Projects/sec-edgar-local/releases/sha256=e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec/venv/lib/python3.14/site-packages/sec_edgar_ingest/models.py:226(record_from_mapping)
+      656    0.006    0.000    4.056    0.006 /Users/lowell/Projects/sec-edgar-local/releases/sha256=e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec/venv/lib/python3.14/site-packages/sec_edgar_ingest/workflows/checked.py:79(make_call)
+      971    0.013    0.000    3.697    0.004 /Users/lowell/Projects/sec-edgar-local/releases/sha256=e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec/venv/lib/python3.14/site-packages/sec_edgar_ingest/config.py:335(pin_context)
+    58146    0.561    0.000    3.127    0.000 /Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/typing.py:2313(get_type_hints)
+       78    0.002    0.000    2.957    0.038 /Users/lowell/Projects/sec-edgar-local/releases/sha256=e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec/venv/lib/python3.14/site-packages/sec_edgar_ingest/workflows/checked.py:229(_transformed_input)
+     1942    0.003    0.000    2.869    0.001 /Users/lowell/Projects/sec-edgar-local/releases/sha256=e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec/venv/lib/python3.14/site-packages/sec_edgar_ingest/config.py:187(from_mapping)
+174038/44058    0.127    0.000    2.720    0.000 /Users/lowell/Projects/sec-edgar-local/releases/sha256=e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec/venv/lib/python3.14/site-packages/sec_edgar_ingest/models.py:179(_decode_value)
+    30415    0.068    0.000    2.666    0.000 /Users/lowell/Projects/sec-edgar-local/releases/sha256=e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec/venv/lib/python3.14/site-packages/sec_edgar_ingest/models.py:279(validate_record_fields)
+      971    0.012    0.000    2.625    0.003 /Users/lowell/Projects/sec-edgar-local/releases/sha256=e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec/venv/lib/python3.14/site-packages/sec_edgar_ingest/runtime.py:90(configured_descriptor)
+      328    0.001    0.000    2.406    0.007 /Users/lowell/Projects/sec-edgar-local/releases/sha256=e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec/venv/lib/python3.14/site-packages/sec_edgar_ingest/workflows/checked.py:157(call_ref)
+       78    0.001    0.000    2.283    0.029 /Users/lowell/Projects/sec-edgar-local/releases/sha256=e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec/venv/lib/python3.14/site-packages/sec_edgar_ingest/workflows/checked.py:210(_snapshot_input)
+      312    0.002    0.000    1.675    0.005 /Users/lowell/Projects/sec-edgar-local/releases/sha256=e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec/venv/lib/python3.14/site-packages/sec_edgar_ingest/worksets.py:68(_validate_common)
+     1462    0.001    0.000    1.660    0.001 /Users/lowell/Projects/sec-edgar-local/releases/sha256=e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec/venv/lib/python3.14/site-packages/sec_edgar_ingest/models.py:298(from_mapping)
+     3093    0.006    0.000    1.524    0.000 <string>:2(__init__)
+     3093    0.019    0.000    1.518    0.000 /Users/lowell/Projects/sec-edgar-local/releases/sha256=e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec/venv/lib/python3.14/site-packages/sec_edgar_ingest/models.py:351(__post_init__)
+845278/149151    0.479    0.000    1.302    0.000 /Users/lowell/Projects/sec-edgar-local/releases/sha256=e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec/venv/lib/python3.14/site-packages/sec_edgar_ingest/models.py:165(to_mapping_value)
+      156    0.001    0.000    1.207    0.008 /Users/lowell/Projects/sec-edgar-local/releases/sha256=e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec/venv/lib/python3.14/site-packages/sec_edgar_ingest/worksets.py:40(_decode)
+    12209    0.035    0.000    1.168    0.000 /Users/lowell/Projects/sec-edgar-local/releases/sha256=e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec/venv/lib/python3.14/site-packages/sec_edgar_ingest/models.py:295(to_mapping)
+ 12658900    0.838    0.000    1.126    0.000 {built-in method builtins.isinstance}
+   249550    0.107    0.000    1.061    0.000 /Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/typing.py:952(_make_forward_ref)
+     1048    0.004    0.000    1.057    0.001 /Users/lowell/Projects/sec-edgar-local/releases/sha256=e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec/venv/lib/python3.14/site-packages/sec_edgar_ingest/runtime.py:208(validate_manifest)
+591733/249550    0.205    0.000    0.962    0.000 /Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/typing.py:433(_eval_type)
+     1048    0.003    0.000    0.933    0.001 /Users/lowell/Projects/sec-edgar-local/releases/sha256=e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec/venv/lib/python3.14/site-packages/sec_edgar_ingest/runtime.py:191(_identity)
+    23304    0.008    0.000    0.928    0.000 /Users/lowell/Projects/sec-edgar-local/releases/sha256=e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec/venv/lib/python3.14/site-packages/sec_edgar_ingest/models.py:292(__post_init__)
+       78    0.000    0.000    0.921    0.012 /Users/lowell/Projects/sec-edgar-local/releases/sha256=e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec/venv/lib/python3.14/site-packages/sec_edgar_ingest/worksets.py:174(make_snapshot_workset)
+   105224    0.201    0.000    0.913    0.000 /Users/lowell/Projects/sec-edgar-local/releases/sha256=e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec/venv/lib/python3.14/site-packages/sec_edgar_ingest/models.py:66(require_text)
+      156    0.003    0.000    0.911    0.006 /Users/lowell/Projects/sec-edgar-local/releases/sha256=e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec/venv/lib/python3.14/site-packages/sec_edgar_ingest/worksets.py:136(_validate_snapshot)
+   287780    0.092    0.000    0.910    0.000 /Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/annotationlib.py:239(__forward_code__)
+532433/85585    0.368    0.000    0.880    0.000 /Users/lowell/Projects/sec-edgar-local/releases/sha256=e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec/venv/lib/python3.14/site-packages/sec_edgar_ingest/models.py:151(freeze)
+   249550    0.250    0.000    0.872    0.000 /Users/lowell/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/typing.py:964(evaluate_forward_ref)
+      156    0.001    0.000    0.867    0.006 /Users/lowell/Projects/sec-edgar-local/releases/sha256=e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec/venv/lib/python3.14/site-packages/sec_edgar_ingest/worksets.py:117(_validate_source)
+273753/137923    0.173    0.000    0.839    0.000 /Users/lowell/Projects/sec-edgar-local/releases/sha256=e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec/venv/lib/python3.14/site-packages/sec_edgar_ingest/models.py:242(_typed_value)
+
+
