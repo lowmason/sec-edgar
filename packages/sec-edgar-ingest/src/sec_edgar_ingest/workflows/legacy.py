@@ -2,6 +2,7 @@ from .contracts import LOCAL_CONTRACT
 from ..models import to_mapping_value
 import hashlib
 from collections.abc import Mapping
+from typing import TYPE_CHECKING
 from ..models import Error, RunContext, Source, canonical_json, error_text, parse_json, require_text
 from ..state import AcquisitionState, attempt_key
 from ..storage.contracts import Conflict
@@ -11,6 +12,9 @@ from ..etl.commands import read_etl_result
 from .provenance import (RECOVERY_FORMAT, immutable, source_ref, read_parent, read_member,
                         project_member, transfer_binding, rebuild_recovered_parent,
                         validate_parent_recovery)
+
+if TYPE_CHECKING:
+    from .selection_checks import SelectionChecks
 
 LEGACY_ERRORS = (ValueError, OSError, Conflict, KeyError, TypeError)
 
@@ -35,7 +39,7 @@ def _validated_frozen_units(session):
     return units
 
 
-def reconstruct_parent(session, store, objects):
+def reconstruct_parent(session, store, objects, *, checks: 'SelectionChecks | None' = None):
     session = {'contract_version': LOCAL_CONTRACT, **to_mapping_value(session)}
     acquisition = AcquisitionState(store)
     progress = []
@@ -54,18 +58,24 @@ def reconstruct_parent(session, store, objects):
         captured = validate_parent_recovery(source_ref(parent), retained.to_mapping()['value'], objects)
         if canonical_json(to_mapping_value(captured['session']['frozen'])) != canonical_json(to_mapping_value(session['frozen'])):
             raise Conflict('retained recovery changes frozen original session')
-        read_parent(source_ref(parent), store, objects)
+        if checks is None:
+            read_parent(source_ref(parent), store, objects)
+        else:
+            checks.parent(source_ref(parent))
         return source_ref(parent)
     objects.put_once(path, body)
     objects.verify(path, digest, len(body))
     descriptor = {'contract_version': LOCAL_CONTRACT, 'ref': path, 'sha256': digest, 'bytes': len(body)}
     validate_parent_recovery(source_ref(parent), descriptor, objects)
     immutable(store, 'WorkflowParentRecovery', parent.workset_id, descriptor)
-    read_parent(source_ref(parent), store, objects)
+    if checks is None:
+        read_parent(source_ref(parent), store, objects)
+    else:
+        checks.parent(source_ref(parent))
     return source_ref(parent)
 
 
-def bootstrap_legacy(store, objects):
+def bootstrap_legacy(store, objects, *, checks: 'SelectionChecks | None' = None):
     gaps, parents, covered = [], {}, set()
     acquisition = AcquisitionState(store)
     registered, projection_refs = {}, set()
@@ -81,7 +91,7 @@ def bootstrap_legacy(store, objects):
         if isinstance(value.get('member_ref'), str):
             projection_refs.add(value['member_ref'])
         try:
-            read_member(value, store, objects)
+            read_member(value, store, objects, checks=checks)
             registered[value['member_ref']] = value
             covered.add(value['source']['source_id'])
         except LEGACY_ERRORS as error:
@@ -92,7 +102,7 @@ def bootstrap_legacy(store, objects):
             if ref not in registered:
                 raise Conflict('corrupt registered projection cannot supply original provenance')
             ref = registered[ref]['parent_ref']
-        parent = read_parent(ref, store, objects)
+        parent = read_parent(ref, store, objects) if checks is None else checks.parent(ref)
         parents[parent.workset_id] = (ref, parent)
 
     for row in store.scan('DiscoverySession', {}):
@@ -123,7 +133,7 @@ def bootstrap_legacy(store, objects):
             except FileNotFoundError:
                 if not recovered:
                     try:
-                        retain(reconstruct_parent(session, store, objects))
+                        retain(reconstruct_parent(session, store, objects, checks=checks))
                         recovered = True
                     except LEGACY_ERRORS as error:
                         unresolved('DiscoverySession', session, error, ref=ref)
@@ -131,7 +141,7 @@ def bootstrap_legacy(store, objects):
                 unresolved('DiscoverySession', session, error, ref=ref)
         if not identities:
             try:
-                retain(reconstruct_parent(session, store, objects))
+                retain(reconstruct_parent(session, store, objects, checks=checks))
             except LEGACY_ERRORS as error:
                 unresolved('DiscoverySession', session, error)
 
@@ -189,10 +199,11 @@ def bootstrap_legacy(store, objects):
     for ref, parent in sorted(parents.values(), key=lambda item: item[0]):
         for source in parent.members:
             try:
-                value = project_member(ref, source.source_id, store, objects)
+                value = project_member(ref, source.source_id, store, objects, checks=checks)
                 pin = acquisition.binding(parent.workset_id, source.source_id)
                 if pin is not None:
-                    transfer_binding(value, acquisition.snapshot(source.source_id, pin.snapshot_sha256), store, objects)
+                    transfer_binding(value, acquisition.snapshot(source.source_id, pin.snapshot_sha256), store, objects,
+                                     checks=checks)
                 covered.add(source.source_id)
             except LEGACY_ERRORS as error:
                 unresolved('SourceWorkset', parent.to_mapping(), error, source.source_id, parent_ref=ref)

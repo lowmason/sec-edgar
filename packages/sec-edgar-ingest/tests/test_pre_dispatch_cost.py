@@ -1,15 +1,28 @@
-"""Stage 2a1 pre-dispatch cost: record type-hints cache (H6)."""
+"""Stage 2a1 pre-dispatch cost: record type-hints cache (H6) and per-phase selection checks (H2, H3)."""
 import dataclasses
 import importlib
+import inspect
 import pkgutil
+import tempfile
 import typing
 import unittest
+from collections import Counter
+from pathlib import Path
 from unittest import mock
 
 import sec_edgar_ingest
 from sec_edgar_ingest import models
-from sec_edgar_ingest.models import CommandResult, Error, RunContext, Source, record_type_hints
+from sec_edgar_ingest.etl.contracts import decode_transformed
+from sec_edgar_ingest.models import Binding, CommandResult, Error, RunContext, Source, record_type_hints
+from sec_edgar_ingest.state import AcquisitionState
+from sec_edgar_ingest.storage.contracts import Conflict
+from sec_edgar_ingest.storage.local import LocalObjectStore
+from sec_edgar_ingest.workflows import completion, legacy, members, provenance, selection_checks
+from sec_edgar_ingest.workflows.selection_checks import SelectionChecks
 from support import fixture_context, fixture_source
+from support_process import checked_dispatcher, checked_fault
+from support_workflow_evidence import EvidenceFixture, quarterly_bytes
+from support_workflows import CommandHarness, simple_pack
 
 
 def package_record_types() -> set[type]:
@@ -96,3 +109,300 @@ class TypeHintsCacheTests(unittest.TestCase):
         self.assertEqual(cold, warm)
         self.assertEqual(cold, "retryable has an invalid type")
         self.assertEqual(counted.call_args_list.count(mock.call(Error)), 1)
+
+
+class Crash(BaseException):
+    pass
+
+
+def fresh_publish_calls(store, objects):
+    """Today's publish-call authority, with each call's decoded transformed input."""
+    return tuple((call, decode_transformed(objects.read(call["input_ref"])))
+                 for call in completion._publish_calls(store, objects))
+
+
+def fails_once(real):
+    """A computation that raises Conflict on its first call and then runs the real one."""
+    failures = [Conflict("fixture: uncertain authority")]
+
+    def compute(*args):
+        if failures:
+            raise failures.pop()
+        return real(*args)
+    return compute
+
+
+class SelectionChecksTests(unittest.TestCase):
+    """Spec §4.1, §4.3 and §5 item 3: kept checks for one phase of one selection (H2, H3, H4)."""
+
+    def harness(self):
+        temp = tempfile.TemporaryDirectory()
+        self.addCleanup(temp.cleanup)
+        root = Path(temp.name)
+        h = CommandHarness(root, simple_pack(root / "pack"))
+        self.addCleanup(h.close)
+        return h
+
+    def discovered(self):
+        """A store with one discovered parent and no publish call."""
+        h = self.harness()
+        code, message = h.invoke("discover", ("--mode", "daily", "--discovery-id", "selection-checks"))
+        self.assertEqual(code, 0, message)
+        return h, message["source_workset_ref"]
+
+    def backfilled(self):
+        """A store with checked publish calls and registered members, from one backfill workflow."""
+        h = self.harness()
+        code, message = h.invoke("backfill", run="r1", attempt="a1")
+        self.assertEqual(code, 0, message)
+        values = tuple(row.to_mapping()["value"] for row in h.store.scan("WorkflowMember", {}))
+        self.assertTrue(values)
+        return h, values
+
+    def test_each_listed_function_takes_an_optional_keyword_only_checks(self):
+        """The `checks` keyword defaults to None, and the signature still resolves for `mock.create_autospec`."""
+        for function in (completion._obligations, completion.outstanding_repairs, completion.evaluate_member,
+                         completion.capture_member_provenance, completion.capture_parent_provenance,
+                         provenance.read_member, provenance.project_member, provenance.transfer_binding,
+                         members.WorkflowMembers.inventory, members.WorkflowMembers.completed,
+                         legacy.reconstruct_parent, legacy.bootstrap_legacy):
+            with self.subTest(function.__qualname__):
+                checks = inspect.signature(function).parameters["checks"]
+                self.assertEqual((checks.kind, checks.default), (inspect.Parameter.KEYWORD_ONLY, None))
+                mock.create_autospec(function)
+
+    def test_publish_calls_are_kept_until_renew(self):
+        h, _ = self.backfilled()
+        expected = fresh_publish_calls(h.store, h.objects)
+        self.assertTrue(expected)
+        checks = SelectionChecks(h.store, h.objects)
+        with mock.patch.object(completion, "_publish_calls", wraps=completion._publish_calls) as computed:
+            kept = checks.publish_calls()
+            self.assertIs(checks.publish_calls(), kept)
+            self.assertEqual(computed.call_count, 1)
+            checks.renew()
+            renewed = checks.publish_calls()
+            self.assertEqual(computed.call_count, 2)
+        self.assertIsNot(renewed, kept)
+        self.assertEqual(kept, expected)
+        self.assertEqual(renewed, expected)
+
+    def test_an_empty_publish_call_list_is_kept_and_reused(self):
+        """Spec §4.4 item 3: a store with no publish calls keeps the empty list and reuses it."""
+        h, _ = self.discovered()
+        checks = SelectionChecks(h.store, h.objects)
+        with mock.patch.object(completion, "_publish_calls", wraps=completion._publish_calls) as computed:
+            self.assertEqual(checks.publish_calls(), ())
+            self.assertEqual(checks.publish_calls(), ())
+        self.assertEqual(computed.call_count, 1)
+
+    def test_parents_are_kept_by_ref_until_renew(self):
+        h, ref = self.discovered()
+        checks = SelectionChecks(h.store, h.objects)
+        with mock.patch.object(provenance, "read_parent", wraps=provenance.read_parent) as computed:
+            kept = checks.parent(ref)
+            self.assertIs(checks.parent(ref), kept)
+            self.assertEqual(computed.call_args_list, [mock.call(ref, h.store, h.objects)])
+            checks.renew()
+            renewed = checks.parent(ref)
+            self.assertEqual(computed.call_args_list, [mock.call(ref, h.store, h.objects)] * 2)
+        self.assertIsNot(renewed, kept)
+        self.assertEqual(kept, provenance.read_parent(ref, h.store, h.objects))
+        self.assertEqual(renewed, kept)
+
+    def test_a_failed_computation_is_not_kept(self):
+        h, values = self.backfilled()
+        ref = values[0]["parent_ref"]
+        checks = SelectionChecks(h.store, h.objects)
+        with self.subTest("publish_calls"), mock.patch.object(
+                completion, "_publish_calls", side_effect=fails_once(completion._publish_calls)) as computed:
+            with self.assertRaisesRegex(Conflict, "^fixture: uncertain authority$"):
+                checks.publish_calls()
+            kept = checks.publish_calls()
+            self.assertIs(checks.publish_calls(), kept)
+            self.assertEqual(computed.call_count, 2)
+        self.assertEqual(kept, fresh_publish_calls(h.store, h.objects))
+
+        checks.renew()
+        with self.subTest("decoded input"), \
+                mock.patch.object(completion, "_publish_calls", wraps=completion._publish_calls) as computed, \
+                mock.patch.object(selection_checks, "decode_transformed",
+                                  side_effect=fails_once(selection_checks.decode_transformed)):
+            with self.assertRaisesRegex(Conflict, "^fixture: uncertain authority$"):
+                checks.publish_calls()
+            kept = checks.publish_calls()
+            self.assertIs(checks.publish_calls(), kept)
+            self.assertEqual(computed.call_count, 2)
+        self.assertEqual(kept, fresh_publish_calls(h.store, h.objects))
+
+        with self.subTest("parent"), mock.patch.object(
+                provenance, "read_parent", side_effect=fails_once(provenance.read_parent)) as computed:
+            with self.assertRaisesRegex(Conflict, "^fixture: uncertain authority$"):
+                checks.parent(ref)
+            kept = checks.parent(ref)
+            self.assertIs(checks.parent(ref), kept)
+            self.assertEqual(computed.call_count, 2)
+        self.assertEqual(kept, provenance.read_parent(ref, h.store, h.objects))
+
+    def test_kept_values_equal_fresh_ones_after_each_write_kind(self):
+        """Spec §4.3 and §5 item 3. Each child execution renews the kept values before the next write."""
+        temp = tempfile.TemporaryDirectory()
+        self.addCleanup(temp.cleanup)
+        f = EvidenceFixture(Path(temp.name) / ".fixture-state")
+        self.addCleanup(f.close)
+        parser, schema = f.workflow.parser_version, f.workflow.schema_version
+        code, _, result = f.invoke("transform", f.snapshot_input(quarterly_bytes("2026-07-01")))
+        self.assertEqual(code, 0)
+        transformed = result.transformed_workset_ref
+        with checked_fault(f.root):
+            code, _, result = f.invoke("publish", transformed)
+        self.assertEqual((code, result), (9, None))
+        checks = SelectionChecks(f.store, f.objects)
+        refs = [f.parent_ref]
+
+        def keep():
+            return checks.publish_calls(), {ref: checks.parent(ref) for ref in refs}
+
+        def assert_kept_and_fresh(kept):
+            calls, parents = kept
+            self.assertIs(checks.publish_calls(), calls)
+            self.assertEqual(calls, fresh_publish_calls(f.store, f.objects))
+            for ref, parent in parents.items():
+                self.assertIs(checks.parent(ref), parent)
+                self.assertEqual(parent, provenance.read_parent(ref, f.store, f.objects))
+
+        # `_obligations` writes the repair authority object and its WorkflowRepairObligation row.
+        kept = keep()
+        self.assertEqual(len(kept[0]), 1)
+        evaluation = completion.evaluate_member(f.value, parser, schema, f.store, f.objects, checks=checks)
+        self.assertEqual(len(evaluation.obligations), 1)
+        self.assertEqual(len(tuple(f.store.scan("WorkflowRepairObligation", {}))), 1)
+        assert_kept_and_fresh(kept)
+
+        # The fresh publish is a child execution, so the kept values are renewed after it.
+        f.workflow = dataclasses.replace(f.workflow, attempt_id="fresh-workflow")
+        code, fresh_call, _ = f.invoke("publish", transformed)
+        self.assertEqual(code, 0)
+        checks.renew()
+        kept = keep()
+        self.assertEqual(len(kept[0]), 2)
+        completion.resolve_repair(evaluation.obligations[0], fresh_call, f.store, f.objects)
+        self.assertEqual(len(tuple(f.store.scan("WorkflowRepairResolution", {}))), 1)
+        assert_kept_and_fresh(kept)
+        self.assertTrue(completion.evaluate_member(f.value, parser, schema, f.store, f.objects, checks=checks).complete)
+        assert_kept_and_fresh(kept)
+
+        # A new discovery is a child execution too. Its parent gives `project_member` a new member to write.
+        dispatcher = checked_dispatcher(f.workflow, f.settings, f.pack, f.root.parent, f.store, f.objects)
+        found = dispatcher.execute("discover", "selection-checks-discovery", f.settings,
+                                   ("--mode", "quarterly", "--discovery-id", "selection-checks-revision", "--refresh"))
+        checks.renew()
+        refs.append(found.result.source_workset_ref)
+        kept = keep()
+        value = provenance.project_member(refs[1], f.source.source_id, f.store, f.objects, checks=checks)
+        self.assertEqual(f.store.get("WorkflowMember", value["member_id"]).to_mapping()["value"], value)
+        assert_kept_and_fresh(kept)
+
+        # `transfer_binding` writes the new member's Binding row.
+        acquisition = AcquisitionState(f.store)
+        pin = acquisition.binding(f.value["member_id"], f.source.source_id)
+        self.assertIsNone(acquisition.binding(value["member_id"], f.source.source_id))
+        provenance.transfer_binding(value, acquisition.snapshot(f.source.source_id, pin.snapshot_sha256),
+                                    f.store, f.objects, checks=checks)
+        self.assertEqual(acquisition.binding(value["member_id"], f.source.source_id),
+                         Binding(value["member_id"], f.source.source_id, pin.snapshot_sha256))
+        assert_kept_and_fresh(kept)
+
+    def test_a_recovered_parent_passes_on_the_next_read(self):
+        """Spec §5 item 3, setup of test_workflow_legacy.test_crash_before_parent_write_recovers_all_original_units."""
+        h = self.harness()
+        original_put = LocalObjectStore.put_once
+
+        def stop_parent(objects, path, body):
+            if path.startswith("worksets/sec/source/"):
+                raise Crash("before original parent-object write")
+            return original_put(objects, path, body)
+        with mock.patch.object(LocalObjectStore, "put_once", stop_parent), self.assertRaises(Crash):
+            h.invoke("discover", ("--mode", "daily", "--discovery-id", "interrupted"))
+        checks = SelectionChecks(h.store, h.objects)
+        refused, real_immutable = [], legacy.immutable
+
+        def before_recovery_row(store, kind, key, value):
+            if kind == "WorkflowParentRecovery":
+                ref = "worksets/sec/source/sha256=" + key + "/workset.json"
+                with self.assertRaisesRegex(
+                        Conflict, "^parent is neither retained discovery revision nor validated recovery$"):
+                    checks.parent(ref)
+                refused.append(ref)
+            return real_immutable(store, kind, key, value)
+        with mock.patch.object(legacy, "immutable", before_recovery_row), \
+                mock.patch.object(provenance, "read_parent", wraps=provenance.read_parent) as computed:
+            self.assertEqual(legacy.bootstrap_legacy(h.store, h.objects, checks=checks), ())
+        [ref] = refused
+        # One refused read before the row, one passing read after it, then every read reuses the kept parent.
+        self.assertEqual(computed.call_args_list, [mock.call(ref, h.store, h.objects)] * 2)
+        self.assertIs(checks.parent(ref), checks.parent(ref))
+        self.assertEqual(checks.parent(ref), provenance.read_parent(ref, h.store, h.objects))
+        values = tuple(row.to_mapping()["value"] for row in h.store.scan("WorkflowMember", {}))
+        self.assertEqual([value["parent_ref"] for value in values], [ref])
+
+    def test_without_checks_each_call_recomputes(self):
+        """H4: without `checks`, every evaluation computes the publish-call authority again."""
+        h, values = self.backfilled()
+        parser, schema = h.settings.etl.parser_version, h.settings.etl.schema_version
+        with mock.patch.object(completion, "_publish_calls", wraps=completion._publish_calls) as computed:
+            first = completion.evaluate_member(values[0], parser, schema, h.store, h.objects)
+            second = completion.evaluate_member(values[0], parser, schema, h.store, h.objects)
+        self.assertEqual(computed.call_count, 2)
+        self.assertTrue(first.complete, first.gaps)
+        self.assertEqual(second, first)
+
+    def test_a_stop_iteration_from_a_decode_is_the_same_gap_on_both_paths(self):
+        """H4 and H1: `evaluate_member` reports a StopIteration as today's state_conflict gap, with or without
+        `checks`. A generator frame around the decode would turn it into a RuntimeError (PEP 479)."""
+        h, values = self.backfilled()
+        parser, schema = h.settings.etl.parser_version, h.settings.etl.schema_version
+        with mock.patch.object(completion, "decode_transformed", side_effect=StopIteration):
+            today = completion.evaluate_member(values[0], parser, schema, h.store, h.objects)
+        self.assertEqual([(gap.code, gap.message, gap.details["type"]) for gap in today.gaps],
+                         [("state_conflict", "StopIteration", "StopIteration")])
+        checks = SelectionChecks(h.store, h.objects)
+        with mock.patch.object(selection_checks, "decode_transformed", side_effect=StopIteration):
+            kept = completion.evaluate_member(values[0], parser, schema, h.store, h.objects, checks=checks)
+        self.assertEqual(kept, today)
+
+    def test_every_threaded_function_takes_its_checks_from_the_kept_values(self):
+        """H2: with `checks`, the listed functions compute the publish calls once and each parent once.
+
+        A call site that bypasses `checks` raises from the patched module names, or counts a second read.
+        """
+        h, values = self.backfilled()
+        parser, schema = h.settings.etl.parser_version, h.settings.etl.schema_version
+        registry = members.WorkflowMembers(h.store, h.objects)
+        parent_refs = {value["parent_ref"] for value in values}
+
+        def run(**checks):
+            return (
+                registry.inventory(**checks),
+                [registry.completed(value, parser, schema, **checks) for value in values],
+                [completion.evaluate_member(value, parser, schema, h.store, h.objects, **checks) for value in values],
+                [completion.outstanding_repairs(value, h.store, h.objects, **checks) for value in values],
+                [completion.capture_member_provenance(value, h.store, h.objects, **checks) for value in values],
+                [completion.capture_parent_provenance(ref, h.store, h.objects, **checks) for ref in sorted(parent_refs)],
+                [provenance.read_member(value, h.store, h.objects, **checks) for value in values],
+                [provenance.project_member(value["parent_ref"], value["source"]["source_id"], h.store, h.objects,
+                                           **checks) for value in values],
+                legacy.bootstrap_legacy(h.store, h.objects, **checks),
+            )
+        expected = run()
+        checks = SelectionChecks(h.store, h.objects)
+        bypass = AssertionError("a read_parent call site bypassed the kept checks")
+        with mock.patch.object(completion, "read_parent", side_effect=bypass), \
+                mock.patch.object(members, "read_parent", side_effect=bypass), \
+                mock.patch.object(legacy, "read_parent", side_effect=bypass), \
+                mock.patch.object(provenance, "read_parent", wraps=provenance.read_parent) as parents, \
+                mock.patch.object(completion, "_publish_calls", wraps=completion._publish_calls) as calls:
+            actual = run(checks=checks)
+        self.assertEqual(actual, expected)
+        self.assertEqual(calls.call_count, 1)
+        self.assertEqual(Counter(call.args[0] for call in parents.call_args_list), Counter(dict.fromkeys(parent_refs, 1)))

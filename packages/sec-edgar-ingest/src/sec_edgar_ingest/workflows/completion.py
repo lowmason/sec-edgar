@@ -6,6 +6,7 @@ import hashlib
 import re
 from collections.abc import Mapping
 from datetime import date
+from typing import TYPE_CHECKING
 
 from ..config import Settings, pin_context
 from ..discovery import reopen_listing
@@ -34,6 +35,9 @@ from .contracts import CompletionEvaluation
 from .provenance import (
     projection as expected_projection, read_member, read_parent, validate_parent_recovery,
 )
+
+if TYPE_CHECKING:
+    from .selection_checks import SelectionChecks
 
 PARENT_PROVENANCE_FORMAT = 'sec-local-workflow-parent-provenance-v1'
 
@@ -98,8 +102,8 @@ def validate_discovery_session(session) -> RunContext:
     return origin
 
 
-def capture_parent_provenance(parent_ref, store, objects) -> Mapping:
-    parent = read_parent(parent_ref, store, objects)
+def capture_parent_provenance(parent_ref, store, objects, *, checks: SelectionChecks | None = None) -> Mapping:
+    parent = read_parent(parent_ref, store, objects) if checks is None else checks.parent(parent_ref)
     evidence = {'contract_version': LOCAL_CONTRACT, 'format_version': PARENT_PROVENANCE_FORMAT, 'parent_ref': parent_ref,
                 'parent': parent.to_mapping(),
                 'discovery': _discovery_snapshot(parent, store, objects)}
@@ -353,8 +357,8 @@ def _validate_discovery(parent, evidence, objects):
         raise Conflict('captured discovery does not reconstruct exact original parent')
 
 
-def capture_member_provenance(value, store, objects) -> Mapping:
-    projection = read_member(value, store, objects)
+def capture_member_provenance(value, store, objects, *, checks: SelectionChecks | None = None) -> Mapping:
+    projection = read_member(value, store, objects, checks=checks)
     parent = _read_set(value['parent_ref'], objects)
     evidence = {'contract_version': LOCAL_CONTRACT, 'format_version': PROVENANCE_FORMAT, 'member': _plain(value),
                 'parent': parent.to_mapping(), 'projection': projection.to_mapping(),
@@ -587,10 +591,15 @@ def _publish_calls(store, objects):
         raise Conflict('duplicate original publication call authority')
     return tuple(calls)
 
-def _obligations(source, store, objects):
+def _obligations(source, store, objects, *, checks: SelectionChecks | None = None):
     found = []
-    for call in _publish_calls(store, objects):
-        workset = decode_transformed(objects.read(call['input_ref']))
+    calls = _publish_calls(store, objects) if checks is None else checks.publish_calls()
+    for entry in calls:
+        if checks is None:
+            # Today's order: each input is decoded as the loop reaches it, outside any generator frame.
+            call, workset = entry, decode_transformed(objects.read(entry['input_ref']))
+        else:
+            call, workset = entry
         if not any(ref.source == source for ref in workset.observations):
             continue
         call_key = hashlib.sha256(canonical_json(to_mapping_value(call))).hexdigest()
@@ -659,9 +668,9 @@ def _obligations(source, store, objects):
             found.append(descriptor)
     return tuple(found)
 
-def outstanding_repairs(value, store, objects) -> tuple[Mapping, ...]:
-    read_member(value, store, objects)
-    return _obligations(Source.from_mapping(value['source']), store, objects)
+def outstanding_repairs(value, store, objects, *, checks: SelectionChecks | None = None) -> tuple[Mapping, ...]:
+    read_member(value, store, objects, checks=checks)
+    return _obligations(Source.from_mapping(value['source']), store, objects, checks=checks)
 
 
 def read_repair_obligation(path, objects):
@@ -809,12 +818,13 @@ def validate_resolution(resolution, store, objects):
             raise Conflict('repair resolution current recoverable indexes differ')
 
 
-def evaluate_member(value, parser_version, schema_version, store, objects) -> CompletionEvaluation:
+def evaluate_member(value, parser_version, schema_version, store, objects, *,
+                    checks: SelectionChecks | None = None) -> CompletionEvaluation:
     source = Source.from_mapping(value['source'])
     obligations = ()
     try:
-        projection = read_member(value, store, objects)
-        obligations = _obligations(source, store, objects)
+        projection = read_member(value, store, objects, checks=checks)
+        obligations = _obligations(source, store, objects, checks=checks)
         acquisition = AcquisitionState(store)
         binding = acquisition.binding(projection.workset_id, source.source_id)
         if binding is None:

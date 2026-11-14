@@ -2,23 +2,27 @@ from .contracts import LOCAL_CONTRACT, require_contract
 import hashlib
 from collections.abc import Iterable, Mapping
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from ..models import RunContext, Snapshot, canonical_json, parse_json, to_mapping_value
 from ..storage.contracts import Conflict
 from .contracts import COMPLETE, CompletionEvaluation, MemberResult, workflow_path
 from .provenance import immutable, project_member, projection, read_member, read_parent, read_source, source_ref
 
+if TYPE_CHECKING:
+    from .selection_checks import SelectionChecks
+
 class WorkflowMembers:
     def __init__(self, store, objects):
         self.store, self.objects = store, objects
 
-    def inventory(self):
+    def inventory(self, *, checks: 'SelectionChecks | None' = None):
         from ..models import Error, error_text
         valid, gaps = [], []
         for row in self.store.scan('WorkflowMember', {}):
             value = row.to_mapping()['value']
             try:
-                read_member(value, self.store, self.objects)
+                read_member(value, self.store, self.objects, checks=checks)
                 valid.append(value)
             except (ValueError, OSError, Conflict, KeyError, TypeError) as error:
                 identity = value.get('member_id') if isinstance(value, dict) else None
@@ -128,12 +132,13 @@ class WorkflowMembers:
         self.record(result, saved_context, evidence)
         return result, evidence
 
-    def completed(self, value, parser_version, schema_version, *, repairs=True) -> Mapping | None:
+    def completed(self, value, parser_version, schema_version, *, repairs=True,
+                  checks: 'SelectionChecks | None' = None) -> Mapping | None:
         from .completion import outstanding_repairs, validate_capture
         from ..state import AcquisitionState
         value = to_mapping_value(value)
-        read_member(value, self.store, self.objects)
-        if repairs and outstanding_repairs(value, self.store, self.objects):
+        read_member(value, self.store, self.objects, checks=checks)
+        if repairs and outstanding_repairs(value, self.store, self.objects, checks=checks):
             return None
         candidates = []
         for row in self.store.scan('WorkflowMemberResult', {'member_id': value['member_id'],

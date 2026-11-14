@@ -8,6 +8,10 @@ from ..storage.contracts import AlreadyExists, Conflict
 from ..worksets import decode_source_workset, encode_workset, make_source_workset
 from ..discovery import reopen_listing
 from ..urls import child_url
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .selection_checks import SelectionChecks
 
 def immutable(store, kind, key, value):
     try:
@@ -184,10 +188,10 @@ def projection(parent, source_id):
                                selected, (directory,), parent.overlap_from,
                                acquisition_mode=parent.acquisition_mode)
 
-def project_member(parent_ref, source_id, store, objects):
+def project_member(parent_ref, source_id, store, objects, *, checks: 'SelectionChecks | None' = None):
     if any(row.value.get('member_ref') == parent_ref for row in store.scan('WorkflowMember', {})):
         raise Conflict('a registered projection cannot become an original parent')
-    parent = read_parent(parent_ref, store, objects)
+    parent = read_parent(parent_ref, store, objects) if checks is None else checks.parent(parent_ref)
     member = projection(parent, source_id)
     body = encode_workset(member)
     ref = source_ref(member)
@@ -198,14 +202,14 @@ def project_member(parent_ref, source_id, store, objects):
     immutable(store, 'WorkflowMember', member.workset_id, value)
     return value
 
-def read_member(value, store, objects):
+def read_member(value, store, objects, *, checks: 'SelectionChecks | None' = None):
     require_contract(value)
     if set(value) != {'contract_version', 'member_id', 'source', 'parent_ref', 'member_ref'}:
         raise Conflict('member record fields differ')
     row = store.get('WorkflowMember', value['member_id'])
     if row is None or canonical_json(to_mapping_value(row.to_mapping()['value'])) != canonical_json(to_mapping_value(dict(value))):
         raise Conflict('member record lacks exact registry binding')
-    parent = read_parent(value['parent_ref'], store, objects)
+    parent = read_parent(value['parent_ref'], store, objects) if checks is None else checks.parent(value['parent_ref'])
     expected = projection(parent, value['source']['source_id'])
     actual = read_source(value['member_ref'], objects)
     if (actual != expected or actual.workset_id != value['member_id'] or
@@ -213,8 +217,8 @@ def read_member(value, store, objects):
         raise Conflict('member changes exact original projection')
     return actual
 
-def transfer_binding(value, snapshot, store, objects):
-    member = read_member(value, store, objects)
+def transfer_binding(value, snapshot, store, objects, *, checks: 'SelectionChecks | None' = None):
+    member = read_member(value, store, objects, checks=checks)
     acquisition = AcquisitionState(store)
     remembered = acquisition.snapshot(snapshot.source_id, snapshot.sha256)
     if remembered != snapshot or snapshot.source_id != member.members[0].source_id:
