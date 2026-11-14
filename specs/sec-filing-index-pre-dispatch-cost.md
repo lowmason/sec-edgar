@@ -59,7 +59,7 @@ Two diagnosis-only spikes bound the effect of a fix:
 - The registry check for a new member reads only that member's source.
 - Offline evidence that, at the growth allowance, the first member starts before the cutoff on the new release and
   not on the 2a release.
-- Offline member walls for the Stage 2b members on the new release, against the owner's member-wall limit (O1, §8).
+- Offline member walls for the Stage 2b members on the new release, against the 1,056 s member-wall limit (O1, §8).
 - A reviewed release, a live-config selection, and a plan Handoff with the values Stage 2b's new plan must use.
 
 ### 2.2 Non-goals
@@ -252,7 +252,7 @@ calls: the member's two completion checks, its replay check and its child starts
 the new release and adds it to each wall. This follows the Stage 1b definition: from the member's entry into the run
 loop to its durable receipt.
 
-**Member-wall stop rule.** The limit is the owner's answer to O1 (§8). If the longest member wall exceeds it, the
+**Member-wall stop rule.** The limit is 1,056 s (O1, §8). If the longest member wall exceeds it, the
 Exit is not met. The stage stops before the live-config selection and asks the owner to choose one of three paths:
 
 - approve a named limit backed by the measured wall
@@ -265,9 +265,9 @@ release is built.
 **Release.** A content-addressed release from `main` with setup, preflight and review evidence under
 `specs/evidence/stage2a1/`, in the 2a layout. The 2a release and older releases stay retained.
 
-**Live-config selection.** Only `release_manifest` changes in `conf/sec-edgar-local.json`, unless the owner's O1
-answer changes the reserve. Offline preflight confirms the new effective-config SHA-256. No workflow runs on the live
-store.
+**Live-config selection.** Only `release_manifest` changes in `conf/sec-edgar-local.json`. The reserve stays at
+1,800 s unless the owner takes the second path of the member-wall stop rule. Offline preflight confirms the new
+effective-config SHA-256. No workflow runs on the live store.
 
 **Handoff to Stage 2b.** The plan's Handoff names at least:
 
@@ -293,7 +293,7 @@ At plan completion:
 
 - **§4.2.** One paragraph: within one selection, the publish-call authority and each parent's re-validation run once
   between child executions. Each dispatched member's own checks still re-validate everything.
-- **§4.8.** The new release, its commit and the effective-config SHA-256. The reserve, unless O1 changes it.
+- **§4.8.** The new release, its commit and the effective-config SHA-256. The reserve stays at 1800 s, unless the second path of the member-wall stop rule changes it.
 - **§4.9.** A paragraph for this release: no format change, and selecting the 2a release again is supported.
 - **§6.** Tests now cover selection equality and the kept-value rules.
 
@@ -316,11 +316,9 @@ Owner answers at brainstorming:
   1c and 2a (H9). Plan 3's Merge gate waits for this release.
 - Roadmap defaults (xiii)–(xvi), approved 2026-11-13: one stage, offline only. This stage settles the platform
   member. Stage 2b gets a new plan against this release. Stages 3–5 consume this release.
-
-Open for the owner:
-
-- **O1 — Member-wall limit.** Must a member that starts just before the cutoff still leave the 480 s finish floor?
-  - **(a) Stage 1b rule (recommended):** 1.25 × wall + 480 s ≤ 1,800 s, so a wall of 1,056 s or less. It keeps the
+- **O1 — Member-wall limit** (2026-11-14): "1,056 s (Stage 1b)". A member that starts just before the cutoff must
+  still leave the 480 s finish floor. Plan 8 D2 does not carry over. The options were:
+  - **(a) Stage 1b rule (picked):** 1.25 × wall + 480 s ≤ 1,800 s, so a wall of 1,056 s or less. It keeps the
     measured floor for the finish step after a 25 % overrun.
   - **(b) Plan 8 D2:** 1.25 × wall ≤ 1,800 s, so a wall of 1,440 s or less. A member at that limit that starts at the
     cutoff ends 360 s before the deadline, which is less than the 480 s floor.
