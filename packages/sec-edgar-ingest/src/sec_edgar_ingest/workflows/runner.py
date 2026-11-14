@@ -20,10 +20,7 @@ from .members import SourceDownloads, WorkflowMembers
 from .processing import ProcessedMember, process_member, validate_member_evidence
 from .provenance import project_member, read_parent, read_member, transfer_binding, immutable
 from .results import freeze_selection
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from .selection_checks import SelectionChecks
+from .selection_checks import SelectionChecks
 
 
 def reuse_exact_binding(value: Mapping, store, objects, *,
@@ -187,14 +184,17 @@ def select_work(context: RunContext, settings: Settings, intent: Mapping, dispat
                 store, objects) -> Mapping:
     validate_invocation(intent)
     acquisition, registry = AcquisitionState(store), WorkflowMembers(store, objects)
+    # The store-wide checks of one phase are computed once and kept (H2). With None from this name, every check
+    # runs as it does without kept values (P7).
+    checks = SelectionChecks(store, objects)
     before = acquisition.daily_boundary()
-    gaps = list(bootstrap_legacy(store, objects))
-    retained, registry_gaps = registry.inventory()
+    gaps = list(bootstrap_legacy(store, objects, checks=checks))
+    retained, registry_gaps = registry.inventory(checks=checks)
     gaps.extend(registry_gaps)
     pending_before, finished, unresolved, corrupt = [], [], [], set()
     for value in retained:
         try:
-            completed = registry.completed(value, context.parser_version, context.schema_version)
+            completed = registry.completed(value, context.parser_version, context.schema_version, checks=checks)
         except (ValueError, OSError, Conflict, KeyError, TypeError) as error:
             gaps.append(Error('legacy_member_unresolved', 'retained completion receipt is corrupt: ' + error_text(error),
                               False, value['source']['source_id'], {'member_id': value['member_id']}))
@@ -203,7 +203,8 @@ def select_work(context: RunContext, settings: Settings, intent: Mapping, dispat
         if completed is not None:
             finished.append(value)
             continue
-        evaluated = evaluate_member(value, context.parser_version, context.schema_version, store, objects)
+        evaluated = evaluate_member(value, context.parser_version, context.schema_version, store, objects,
+                                    checks=checks)
         pending_before.append(value)
         if not evaluated.complete:
             unresolved.append((value, evaluated))
@@ -214,11 +215,15 @@ def select_work(context: RunContext, settings: Settings, intent: Mapping, dispat
     discovery_call = discovery_error = parent_ref = parent = None
     halted = False
     try:
-        child = dispatcher.execute('discover', 'discover', settings, flags)
+        try:
+            child = dispatcher.execute('discover', 'discover', settings, flags)
+        finally:
+            if checks is not None:
+                checks.renew()  # H3: no kept value crosses the discovery child, whether it returned or raised.
         discovery_call = dict(child.call)
         parent_ref = child.result.source_workset_ref
         if parent_ref is not None:
-            parent = read_parent(parent_ref, store, objects)
+            parent = read_parent(parent_ref, store, objects) if checks is None else checks.parent(parent_ref)
         gaps.extend(child.result.gaps)
         for gap in child.result.gaps:
             normalized = HALTING_OUTCOMES.get(gap.code)
@@ -235,8 +240,8 @@ def select_work(context: RunContext, settings: Settings, intent: Mapping, dispat
     current = []
     if parent is not None:
         for source in parent.members:
-            value = project_member(parent_ref, source.source_id, store, objects)
-            gaps.extend(reuse_exact_binding(value, store, objects))
+            value = project_member(parent_ref, source.source_id, store, objects, checks=checks)
+            gaps.extend(reuse_exact_binding(value, store, objects, checks=checks))
             current.append(value)
     # A later completed download of the same source supersedes an older member that only awaits publication.
     # Repair obligations and corrupt evidence (state_conflict gaps) stay exact, so they still fail the run.
@@ -261,7 +266,8 @@ def select_work(context: RunContext, settings: Settings, intent: Mapping, dispat
     combined = {value['member_id']: value for value in (*pending_before, *current) if value['member_id'] not in dropped}
     selected, complete = [], []
     for value in sorted(combined.values(), key=lambda v: (v['source']['period'], v['source']['source_id'], v['member_id'])):
-        evaluation = evaluate_member(value, context.parser_version, context.schema_version, store, objects)
+        evaluation = evaluate_member(value, context.parser_version, context.schema_version, store, objects,
+                                     checks=checks)
         if evaluation.complete:
             complete.append(evaluation.capture)
         else:
@@ -275,14 +281,15 @@ def select_work(context: RunContext, settings: Settings, intent: Mapping, dispat
                               None, {'quarter': quarter}))
     session_row = acquisition.discovery_session('workflow-' + context.command + '-' + context.run_id)
     session = None if session_row is None else {'contract_version': LOCAL_CONTRACT, **session_row.to_mapping()['value']}
-    parent_provenance = None if parent_ref is None else capture_parent_provenance(parent_ref, store, objects)
+    parent_provenance = (None if parent_ref is None else
+                         capture_parent_provenance(parent_ref, store, objects, checks=checks))
     if parent_provenance is not None:
         session = parent_provenance['discovery']['session']
     required = [] if session is None else session['frozen']['units']
     values = sorted(selected, key=lambda v: (v['source']['period'], v['source']['source_id'], v['member_id']))
     return {'contract_version': LOCAL_CONTRACT, 'format_version': 'sec-local-workflow-selection-v1', 'context': context.to_mapping(),
         'invocation': dict(intent), 'members': values, 'jobs': [{'contract_version': LOCAL_CONTRACT, 'member': value, 'aliases': [value]} for value in selected],
-        'member_provenance': [capture_member_provenance(value, store, objects) for value in values],
+        'member_provenance': [capture_member_provenance(value, store, objects, checks=checks) for value in values],
         'already_complete': complete,
         'superseded': sorted(superseded, key=lambda entry: (entry['member']['source']['period'],
                              entry['member']['source']['source_id'], entry['member']['member_id'])),

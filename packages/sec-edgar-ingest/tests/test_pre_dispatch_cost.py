@@ -1,9 +1,10 @@
-"""Stage 2a1 pre-dispatch cost: record type-hints cache (H6), per-phase selection checks (H2, H3) and the
-source filter in reuse (H5)."""
+"""Stage 2a1 pre-dispatch cost: record type-hints cache (H6), per-phase selection checks (H2, H3), the
+source filter in reuse (H5), and `select_work`'s use of the checks (H1, H2, H4)."""
 import contextlib
 import dataclasses
 import importlib
 import inspect
+import json
 import pkgutil
 import shutil
 import sqlite3
@@ -26,12 +27,17 @@ from sec_edgar_ingest.state import AcquisitionState
 from sec_edgar_ingest.storage.contracts import Conflict, deployment_binding, identity, table_for
 from sec_edgar_ingest.storage.local import LocalObjectStore, LocalStateStore
 from sec_edgar_ingest.workflows import completion, legacy, members, provenance, runner, selection_checks
+from sec_edgar_ingest.workflows.checked import Dispatcher
 from sec_edgar_ingest.workflows.contracts import LOCAL_CONTRACT
 from sec_edgar_ingest.workflows.members import WorkflowMembers
 from sec_edgar_ingest.workflows.provenance import read_member, transfer_binding
+from sec_edgar_ingest.workflows.results import freeze_selection, write_workflow_result
 from sec_edgar_ingest.workflows.selection_checks import SelectionChecks
 from support import fixture_context, fixture_snapshot, fixture_source
 from support_process import checked_dispatcher, checked_fault
+import support_selection
+from support_selection import (DISCOVERY_FAILURE, SCENARIOS, refusal_twice, registered_store, scenario,
+                               select_twice, workflow_start)
 from support_workflow_evidence import EvidenceFixture, quarterly_bytes
 from support_workflows import CommandHarness, simple_pack
 
@@ -834,3 +840,282 @@ class ReuseSourceFilterTests(unittest.TestCase):
         self.assertEqual((processed.result.member_id, processed.result.outcome, processed.result.child_refs),
                          (sibling["member_id"], "unchanged", ()))
         self.assertEqual((processed, rows), (expected, expected_rows))
+
+
+def temporary_root(test):
+    temp = tempfile.TemporaryDirectory()
+    test.addCleanup(temp.cleanup)
+    return Path(temp.name)
+
+
+# The command of each scenario's selection. The superseded members are those of a reconcile.
+SCENARIO_COMMANDS = {'superseded': 'reconcile'}
+
+
+def unresolved(selection):
+    """The first 50 characters of each `legacy_member_unresolved` gap message, sorted."""
+    return sorted(gap['message'][:50] for gap in selection['gaps'] if gap['code'] == 'legacy_member_unresolved')
+
+
+# Each case's marker: the feature under test, which both selections must hold, so that equal selections are not
+# equal by both lacking it (D4).
+MARKERS = {
+    ('finished', False): (lambda s: (len(s['members']), s['discovered_sources'], len(s['already_complete'])), (1, 1, 0)),
+    ('pending', False): (lambda s: (len(s['members']), s['discovered_sources']), (3, 1)),
+    ('pending', True): (lambda s: (len(s['members']), s['halted'], s['parent_ref'], s['discovery_error']['code']),
+                        (3, True, None, 'internal_error')),
+    ('superseded', False): (lambda s: len(s['superseded']), 2),
+    ('repair_obligation', False): (lambda s: len(s['jobs']), 2),
+    ('corrupt_member', False): (unresolved, ['retained completion receipt is corrupt: unsupporte',
+                                             *['unsupported local workflow contract'] * 2]),
+    ('corrupt_parent', False): (unresolved, ['parent changes frozen origin'] * 4),
+    ('corrupt_publish_call', False): (unresolved, ['legacy publish frozen command differs from exact A',
+                                                   *['retained completion receipt is corrupt: checked pu'] * 2,
+                                                   'unfinished publish Attempt differs from checked ca']),
+    ('empty', False): (lambda s: (len(s['members']), s['discovered_sources']), (2, 1)),
+}
+
+
+class SelectionEqualityTests(unittest.TestCase):
+    """Spec §5 item 1 (H1): `select_work` returns the same selection with kept values as without them."""
+
+    def harness(self, name):
+        h = scenario(temporary_root(self) / name, name)
+        self.addCleanup(h.close)
+        return h
+
+    def test_selection_equal_with_and_without_kept_values(self):
+        for name, discovery_fails in (*((name, False) for name in SCENARIOS), ('pending', True)):
+            with self.subTest(scenario=name, discovery_fails=discovery_fails):
+                kept, today = select_twice(self.harness(name), SCENARIO_COMMANDS.get(name, 'daily'),
+                                           discovery_fails=discovery_fails)
+                self.assertEqual(kept, today)
+                marker, expected = MARKERS[name, discovery_fails]
+                for path, selection in (('checks', kept), ('NO_CHECKS', today)):
+                    with self.subTest(path=path):
+                        self.assertEqual(marker(json.loads(selection)), expected)
+        with self.subTest(scenario='corrupt_parent', corruption='registered'):
+            # Spec §4.4 item 1: the computation raises as today.
+            kept, today = refusal_twice(self.harness('corrupt_registration'), 'daily')
+            self.assertEqual(kept, today)
+            self.assertEqual(kept, ('Conflict', 'captured discovery session identity or registration differs'))
+
+    def test_daily_and_reconcile_selections_equal_without_kept_values(self):
+        """Review Focus 1: `daily` and `reconcile` run the same `select_work`, and only `backfill` was timed."""
+        h = self.harness('pending')
+        for command in ('daily', 'reconcile'):
+            with self.subTest(command=command):
+                kept, today = select_twice(h, command)
+                self.assertEqual(kept, today)
+                self.assertEqual(json.loads(kept)['context']['command'], command)
+
+
+def phase_tally(events):
+    """The `_publish_calls` computations of one phase, and its `read_parent` calls by ref."""
+    calls = sum(1 for event in events if event[0] == '_publish_calls')
+    return calls, Counter(event[1] for event in events if event[0] == 'read_parent')
+
+
+def phases(events):
+    """One selection's events, split at the dispatcher's `discover` entry and return: before, during and after."""
+    entry, back = events.index(('discover', 'entry')), events.index(('discover', 'return'))
+    return events[:entry], events[entry + 1:back], events[back + 1:]
+
+
+def count_events(patches, events):
+    """Record, in order: the dispatcher's `discover` entry and return, each `_publish_calls` computation, each
+    `read_parent` call by ref in every module that binds it (provenance, completion, members, legacy, runner), each
+    `SelectionChecks.publish_calls()` request and each `renew()`. Returns the spy on `SelectionChecks.renew`."""
+    real_execute, real_calls, real_parent = Dispatcher.execute, completion._publish_calls, provenance.read_parent
+    real_kept, real_renew = SelectionChecks.publish_calls, SelectionChecks.renew
+
+    def execute(dispatcher, command, *args):
+        if command == 'discover':
+            events.append(('discover', 'entry'))
+        try:
+            return real_execute(dispatcher, command, *args)
+        finally:
+            if command == 'discover':
+                events.append(('discover', 'return'))
+
+    def publish_calls(*args):
+        events.append(('_publish_calls',))
+        return real_calls(*args)
+
+    def read_parent(ref, *args):
+        events.append(('read_parent', ref))
+        return real_parent(ref, *args)
+
+    def kept(checks):
+        events.append(('publish_calls',))
+        return real_kept(checks)
+
+    def renew(checks):
+        events.append(('renew',))
+        return real_renew(checks)
+
+    patches.enter_context(mock.patch.object(Dispatcher, 'execute', execute))
+    patches.enter_context(mock.patch.object(completion, '_publish_calls', publish_calls))
+    for module in (provenance, completion, members, legacy, runner):
+        patches.enter_context(mock.patch.object(module, 'read_parent', read_parent))
+    patches.enter_context(mock.patch.object(SelectionChecks, 'publish_calls', autospec=True, side_effect=kept))
+    return patches.enter_context(mock.patch.object(SelectionChecks, 'renew', autospec=True, side_effect=renew))
+
+
+class SelectionCountTests(unittest.TestCase):
+    """Spec §5 item 2 (H2) and H3: one `_publish_calls` computation per phase, and one `read_parent` per parent ref
+    per phase. The phases split at the dispatcher's `discover` entry and return."""
+
+    def counted_selection(self, h, run, *, discovery_fails=False):
+        """One `daily` selection: its events split into before, during and after the discovery child, the selection,
+        and the spy on `SelectionChecks.renew`."""
+        context, intent, dispatcher = workflow_start(h, 'daily', run)
+        events = []
+        with contextlib.ExitStack() as patches:
+            renew = count_events(patches, events)
+            if discovery_fails:
+                patches.enter_context(checked_fault(h.root, point=DISCOVERY_FAILURE))
+            selection = runner.select_work(context, h.settings, intent, dispatcher, h.store, h.objects)
+        self.assertEqual(events.count(('discover', 'entry')), 1)
+        return phases(events), selection, renew
+
+    def assert_once_per_phase(self, split):
+        before, during, after = split
+        self.assertEqual(during, [])
+        for name, events in (('before discovery', before), ('after discovery', after)):
+            with self.subTest(phase=name):
+                calls, parents = phase_tally(events)
+                self.assertEqual(calls, 1)
+                self.assertTrue(parents)
+                self.assertEqual(set(parents.values()), {1}, parents)
+
+    def test_counts_per_phase_at_1_10_50_members(self):
+        totals = {}
+        for size in (1, 10, 50):
+            with self.subTest(members=size):
+                h = registered_store(temporary_root(self) / f'members-{size}', size)
+                self.addCleanup(h.close)
+                split, selection, _ = self.counted_selection(h, 'counted')
+                self.assertEqual(selection['discovered_sources'], size, selection['gaps'])
+                self.assertEqual(len(selection['members']), 2 * size)
+                self.assert_once_per_phase(split)
+                before, _, after = split
+                totals[size] = tuple((calls, sum(parents.values())) for calls, parents in map(phase_tally, (before, after)))
+        # The totals do not grow with the number of members.
+        self.assertEqual(len(set(totals.values())), 1, totals)
+
+    def test_empty_store_selection_equal_and_counted(self):
+        """Review Focus 4: no registered member and no publish history. The empty call list is computed once per
+        phase and reused."""
+        h = scenario(temporary_root(self) / 'empty', 'empty')
+        self.addCleanup(h.close)
+        events = []
+        real_select = support_selection.select_work
+
+        def select(*args):
+            events.append(('select',))
+            return real_select(*args)
+        with contextlib.ExitStack() as patches:
+            count_events(patches, events)
+            patches.enter_context(mock.patch.object(support_selection, 'select_work', select))
+            kept, today = select_twice(h, 'daily')
+        self.assertEqual(kept, today)
+        # The primed discovery runs before the first selection; each selection's events follow its marker.
+        first, second = (index for index, event in enumerate(events) if event == ('select',))
+        checked, unchecked = phases(events[first + 1:second]), phases(events[second + 1:])
+        counts = {'checks': [phase_tally(phase)[0] for phase in checked],
+                  'NO_CHECKS': [phase_tally(phase)[0] for phase in unchecked]}
+        self.assertEqual(counts['checks'], [1, 0, 1], counts)
+        for phase in (checked[0], checked[2]):
+            # Each phase asks for the kept list more than once, and it is the empty list.
+            self.assertGreater(phase.count(('publish_calls',)), 1)
+        self.assertEqual(completion._publish_calls(h.store, h.objects), ())
+        # Without kept values, a phase computes the empty list more than once: the checked run reused it.
+        self.assertTrue(any(calls >= 2 for calls in counts['NO_CHECKS']), counts)
+
+    def test_renew_runs_when_discovery_returns_and_when_it_raises(self):
+        """H3: every kept value is dropped when the discovery child returns or raises."""
+        h = scenario(temporary_root(self) / 'pending', 'pending')
+        self.addCleanup(h.close)
+        for discovery_fails in (False, True):
+            with self.subTest(discovery_fails=discovery_fails):
+                (before, _, after), selection, renew = self.counted_selection(
+                    h, 'renew-raises' if discovery_fails else 'renew-returns', discovery_fails=discovery_fails)
+                self.assertEqual(selection['discovery_error'] is not None, discovery_fails)
+                self.assertEqual(renew.call_count, 1)
+                self.assertEqual(after[:1], [('renew',)])
+                self.assertIn(('_publish_calls',), before)
+                self.assertIn(('publish_calls',), after)
+                first = after.index(('publish_calls',))
+                self.assertEqual(after[first + 1], ('_publish_calls',))
+
+
+RECORDED = ('evaluate_member', 'read_member', '_obligations', 'reuse_exact_binding', 'read_parent')
+
+
+class UnchangedPathTests(unittest.TestCase):
+    """Spec §5 item 4 (H4): outside `select_work`, no check receives a kept value."""
+
+    def record_checks(self, patches, phase):
+        """Wrap each RECORDED function in every module under sec_edgar_ingest.workflows that binds it by name.
+        Each call records the phase it ran in, its name and its `checks` argument."""
+        calls = []
+        homes = {'evaluate_member': completion, '_obligations': completion, 'read_member': provenance,
+                 'read_parent': provenance, 'reuse_exact_binding': runner}
+
+        def recorder(name, real):
+            def record(*args, **kwargs):
+                calls.append((phase[0], name, kwargs.get('checks')))
+                return real(*args, **kwargs)
+            return record
+        for name in RECORDED:
+            real = getattr(homes[name], name)
+            wrapped = recorder(name, real)
+            modules = [module for key, module in sorted(sys.modules.items())
+                       if key.startswith('sec_edgar_ingest.workflows') and getattr(module, '__dict__', {}).get(name) is real]
+            self.assertIn(homes[name], modules)
+            for module in modules:
+                patches.enter_context(mock.patch.object(module, name, wrapped))
+        return calls
+
+    def test_dispatch_and_finish_use_no_kept_value(self):
+        root = temporary_root(self)
+        h = CommandHarness(root, simple_pack(root / 'pack'))
+        self.addCleanup(h.close)
+        context, intent, dispatcher = workflow_start(h, 'backfill', 'unchanged-paths')
+        phase = ['selection']
+
+        def observer(point):
+            if point == 'workflow.after_selection':
+                phase[0] = 'dispatch'
+        with contextlib.ExitStack() as patches:
+            calls = self.record_checks(patches, phase)
+            report = runner.run_workflow(context, h.settings, intent, dispatcher, h.store, h.objects, observer=observer)
+            write_workflow_result(report, h.store, h.objects)
+            self.assertEqual((report.outcome, report.counts['complete_sources']), ('success', 2))
+            phase[0] = 'low-level'
+            member = report.members[0]
+            code, transformed = h.invoke('transform', ('--workset', member.snapshot_ref), run='unchanged-transform')
+            self.assertEqual(code, 0, h.calls[-1])
+            code, _ = h.invoke('publish', ('--workset', transformed['transformed_workset_ref']), run='unchanged-publish')
+            self.assertEqual(code, 0, h.calls[-1])
+        after = [(name, checks) for when, name, checks in calls if when == 'dispatch']
+        self.assertLessEqual({'evaluate_member', 'read_member'}, {name for name, _ in after})
+        self.assertEqual([(name, checks) for name, checks in after if checks is not None], [])
+        low_level = [(name, checks) for when, name, checks in calls if when == 'low-level']
+        self.assertEqual([(name, checks) for name, checks in low_level if checks is not None], [])
+        # Control: the recorder sees a kept value where one is passed, in the selection before the event.
+        self.assertTrue(any(isinstance(checks, SelectionChecks) for when, _, checks in calls if when == 'selection'))
+
+    def test_resumed_attempt_builds_no_selection_checks(self):
+        """Review Focus 2: an attempt whose selection.json exists freezes it and builds no `SelectionChecks`."""
+        root = temporary_root(self)
+        h = CommandHarness(root, simple_pack(root / 'pack'))
+        self.addCleanup(h.close)
+        context, intent, dispatcher = workflow_start(h, 'backfill', 'resumed')
+        selection = runner.select_work(context, h.settings, intent, dispatcher, h.store, h.objects)
+        freeze_selection(context, selection, h.store, h.objects)
+        built = AssertionError('a resumed attempt built SelectionChecks')
+        with mock.patch.object(runner, 'SelectionChecks', side_effect=built):
+            report = runner.run_workflow(context, h.settings, intent, dispatcher, h.store, h.objects)
+        self.assertEqual((report.outcome, report.counts['complete_sources']), ('success', 2))

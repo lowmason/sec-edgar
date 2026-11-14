@@ -323,10 +323,10 @@ class SiblingCompletionTests(unittest.TestCase):
         from sec_edgar_ingest.workflows import runner
         real = runner.reuse_exact_binding
         probes = []
-        def reuse(value, store, objects):
+        def reuse(value, store, objects, **kwargs):
             # The real binding step runs everywhere. Only the skip check also sees an extra gap, so the
             # skip would otherwise succeed: only the P8 refusal sends the member to its child sequence.
-            gaps = real(value, store, objects)
+            gaps = real(value, store, objects, **kwargs)
             if sys._getframe(1).f_code.co_name != 'sibling_completion':
                 return gaps
             probe = Error('legacy_member_unresolved', 'skip-check probe gap', False, value['source']['source_id'],
