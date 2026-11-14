@@ -192,7 +192,9 @@ The daily 2026-07-01 member, rerun on a fresh live copy with the same switch
 
 Same nine quarters published, same call counts (380 `transform_member`, 49,970,107 `get_type_hints` calls, which the
 counter still wraps). This is the worst case: all nine quarters on v1 bases. About 990 s is below the 1,440 s that the
-1,800 s reserve allows under D2's 1.25 factor.
+1,800 s reserve allows under D2's 1.25 factor. It is also below 1,056 s, the limit under the Stage 1b reserve rule
+(1.25 × wall + 480 s ≤ 1,800 s). The other plan 8 members (`pre-campaign.md`, Member timing) were not re-timed with
+the cache. On the 2a release, 2024Q1 (1,126.9 s), 2026Q3 (1,231.6 s) and 2026Q1 (1,398.8 s) are above 1,056 s.
 
 ## 6b. Spike: each store-wide step once, with cached type hints
 
@@ -250,19 +252,18 @@ member instead of once per dispatched member. The member's own completion check 
   skips `__pycache__` (`runtime.py:476`), and every release command runs with `-B -X pycache_prefix=/dev/null`, so
   they change neither verification nor execution. The member runs (§6) passed `preflight_current` on the 2a release
   with the files present. The 1b release venv holds 44 such files from 2026-10-29. The list of the 100 files is in
-  `logs/stage2a1-diag-20261114T031611Z/pyc-created-2026-11-13.txt`. They stay until the owner decides. Later runs used
-  the release flags.
+  `outputs/pyc-created-2026-11-13.txt`. They stay until the owner decides. Later runs used the release flags.
 - **After the runs.** The live `data/` and the backup were hashed again after the member run of §6 and the spike of
   §6a: both lists are identical to the before lists, and `data/` still holds only `objects` and `state.sqlite3`. A
-  final check after the last run is in §12.
+  final check after the last run is in §11.
 
-## 12. Final store check
+## 11. Final store check
 
 After the last run (§6b), with no diagnosis process running: the live `data/` file list and hashes equal
 `outputs/live-data-before.sha256` (5,452 files), `data/` holds only `objects` and `state.sqlite3`, and the backup
 equals `outputs/backup-before.sha256` (5,270 files). No SEC request was sent.
 
-## 11. Files
+## 12. Files
 
 - `scripts/profile_selection.py`: times the selection pieces by phase (`before`, `project`, `after`, `freeze`).
 - `scripts/profile_pieces.py`: one `_publish_calls` pass under cProfile, and the unbound-member reuse path.
