@@ -8,6 +8,7 @@ import types
 from collections.abc import Mapping
 from dataclasses import dataclass, fields, is_dataclass, MISSING, field
 from datetime import date, datetime, timedelta
+from functools import cache
 from pathlib import Path, PurePosixPath
 from typing import Literal, Union, get_args, get_origin, get_type_hints
 
@@ -223,6 +224,12 @@ def _decode_value(annotation: object, value: object, label: str, require_all: bo
     return value
 
 
+@cache
+def record_type_hints(record_type: type) -> Mapping[str, object]:
+    """Resolve a record type's hints once per process; a raise is not cached."""
+    return types.MappingProxyType(get_type_hints(record_type))
+
+
 def record_from_mapping(record_type: type, value: object, *, require_all: bool = True):
     if not isinstance(value, Mapping):
         raise ValueError(f"{record_type.__name__} must be an object")
@@ -235,7 +242,7 @@ def record_from_mapping(record_type: type, value: object, *, require_all: bool =
     }
     if required - set(value):
         raise ValueError(f"{record_type.__name__} missing keys: {sorted(required - set(value))}")
-    annotations = get_type_hints(record_type)
+    annotations = record_type_hints(record_type)
     return record_type(**{key: _decode_value(annotations[key], item, key, require_all) for key, item in value.items()})
 
 
@@ -277,7 +284,7 @@ def _typed_value(annotation: object, value: object, label: str) -> object:
 
 
 def validate_record_fields(record: object) -> None:
-    annotations = get_type_hints(type(record))
+    annotations = record_type_hints(type(record))
     for item in fields(record):
         object.__setattr__(record, item.name, _typed_value(annotations[item.name], getattr(record, item.name), item.name))
 
