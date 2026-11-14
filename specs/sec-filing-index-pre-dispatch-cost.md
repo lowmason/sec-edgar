@@ -91,7 +91,7 @@ The design fails, even if tests pass, when any of these holds:
 | ID | Requirement |
 |---|---|
 | H1 | Selection decides as today. For the same store, intent and discovery result, the new release's selection equals the 2a release's selection, apart from the run context: the same members, jobs, already-complete captures, superseded members, gaps and counts, in the same order. |
-| H2 | Within one selection, the publish-call authority (`_publish_calls`) is computed at most once before the discovery child and once after it. Each parent ref is re-validated (`read_parent`) at most once in each of those two phases. |
+| H2 | Within one selection, while the computation succeeds, the publish-call authority (`_publish_calls`) is computed at most once before the discovery child and once after it. Each parent ref is re-validated (`read_parent`) at most once in each of those two phases. A failed computation runs again for its next caller (H3). |
 | H3 | A kept value never crosses a child execution. Every kept value is dropped when the discovery child returns or raises. A failure is never kept: a failed computation runs again for the next caller, as today. |
 | H4 | Outside `select_work`, every check runs as today. The dispatch loop, `process_member`, `sibling_completion`, the finish step, `freeze_selection` and every low-level command use no kept value. |
 | H5 | `reuse_exact_binding` validates only the registered members of the member's own source. It finds the same candidates, returns the same gaps in the same order, and writes the same binding as today. |
@@ -300,7 +300,8 @@ At plan completion:
 §9 needs no change: no provenance or reader contract changes.
 
 At the roadmap resume after this stage, the Stage 2a1 and 2b entries' wording "Discovery alone took 862 s" changes to
-the 29 s discovery child plus 832 s of member projection (diagnosis §3).
+the 29 s discovery child plus 832 s of member projection (diagnosis §3). The Exit's "a measurement shows" at the
+allowance reads as measured per-phase costs at two member counts, projected to the allowance (§6).
 
 The runbooks `docs/runbooks/release-upgrades.md` and `local-ingestion.md` get the new release.
 
@@ -337,6 +338,10 @@ Calls made in writing this spec, for the owner's review:
 - **Discovery time:** the 29 s discovery child, not plan 8's 862 s (§1.1, §7). Both figures come from plan 8's
   invocation 2. The other 832 s was member projection, which this design changes. With 862 s, the projection at the
   allowance would be about 1,200 s, above the 600 s target, and the stage would stop.
+- **Measurement at the allowance:** the roadmap Exit says "a measurement shows" the first-dispatch result at the
+  allowance. No store with 450 members exists offline. So the spec times both releases on a replay of invocation
+  2, measures the new release's per-phase costs at two real member counts, and projects them to 450 (§6). With
+  this design, the cost grows close to linearly with the member count.
 - **Order of evidence:** merge, build, then time, with both stop rules holding the live-config selection (§6). This
   follows plan 7 P11.
 - **No cost-work task in the plan.** The third path of the member-wall stop rule revises the plan (§6).
