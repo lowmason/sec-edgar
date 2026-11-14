@@ -1,6 +1,6 @@
 # Pre-dispatch cost and its release — Stage 2a1 Design Spec
 
-**Status: Draft for owner review, 2026-11-14.**
+**Status:** Draft for owner review, 2026-11-14.
 **Project:** `/Users/lowell/Projects/sec-edgar-local`.
 **Parent spec:** [SEC filing-index ingestion](sec-filing-index-ingestion-spec.md) (§§3 R1, R5, R6, R12; 4.2, 4.7–4.9; 6; 9).
 **Roadmap:** [ingestion roadmap](sec-filing-index-ingestion-roadmap.md), Stage 2a1.
