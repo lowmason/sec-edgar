@@ -178,6 +178,41 @@ samples (`outputs/2a-live-*-cachedhints.json`):
 The decode cost is about half of every piece. The repetition (§1 items 1–3) remains, so at 208 members the work
 before the first dispatch would still be about 1,200 s.
 
+The daily 2026-07-01 member, rerun on a fresh live copy with the same switch
+(`outputs/2a-member-20260701-cachedhints.json`):
+
+| Step | Plain (§6) | Cached hints |
+| --- | ---: | ---: |
+| Transform | 6.0 s | 1.9 s |
+| Publish, total | 3,453.3 s | 988.5 s |
+| `validate_candidate_content` | 1,649.5 s | 474.8 s |
+| `transform_member` | 913.3 s | 264.0 s |
+| `_load_observations` | 767.5 s | 216.6 s |
+| 2026Q3 `build_candidate` | 867 s | 255 s |
+
+Same nine quarters published, same call counts (380 `transform_member`, 49,970,107 `get_type_hints` calls, which the
+counter still wraps). This is the worst case: all nine quarters on v1 bases. About 990 s is below the 1,440 s that the
+1,800 s reserve allows under D2's 1.25 factor.
+
+## 6b. Spike: each store-wide step once, with cached type hints
+
+A second diagnosis-only spike bounds what removing the repetition (§1 items 1–3) could save. The `--memoize-store-wide`
+switch computes, in the script's process, `_publish_calls` once, `read_parent` once per parent ref and
+`WorkflowMembers.inventory` once. It is not safe across writes and is not a design. `_obligations` still decodes every
+publish input for each member, so the estimate is conservative. All 208 members, fresh live copy
+(`outputs/2a-live-*-memo-cachedhints.json`):
+
+| Piece | Plain (§3) | Cached hints and memo |
+| --- | ---: | ---: |
+| `bootstrap_legacy` + `inventory` | 103.6 s | 4.8 s |
+| `completed` + `evaluate_member`, 208 members | about 1,498 s | 65.7 s (0.32 s each) |
+| `evaluate_member` + `capture_member_provenance`, 208 members | about 817 s | 46.4 s (0.22 s each) |
+
+With `freeze_selection` (25.3 s plain, not re-timed) and the 29 s discovery child, the first member would start at
+about 170 s at 208 members. The projection loop adds about 0.2 s for each new member once `inventory()` runs once. In
+invocation 2 the first dispatch would have been due at 2,715 s or later. The cost per member is then about 0.6 s for
+each run, so the work still grows with registered members, now slowly.
+
 ## 7. Projection
 
 Without a change, at the current history, the work before the first dispatch is about:
@@ -220,6 +255,12 @@ member instead of once per dispatched member. The member's own completion check 
 - **After the runs.** The live `data/` and the backup were hashed again after the member run of §6 and the spike of
   §6a: both lists are identical to the before lists, and `data/` still holds only `objects` and `state.sqlite3`. A
   final check after the last run is in §12.
+
+## 12. Final store check
+
+After the last run (§6b), with no diagnosis process running: the live `data/` file list and hashes equal
+`outputs/live-data-before.sha256` (5,452 files), `data/` holds only `objects` and `state.sqlite3`, and the backup
+equals `outputs/backup-before.sha256` (5,270 files). No SEC request was sent.
 
 ## 11. Files
 
