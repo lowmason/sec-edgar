@@ -1,6 +1,6 @@
 # Pre-Dispatch Cost and Its Release Implementation Plan
 
-**Approval:** Pending the owner's plan review. This plan authorizes no SEC request and no live run.
+**Approval:** Approved by the owner, 2026-11-14, with P1–P5 and P7–P11 as proposed and P6 changed (D1 below), as committed at `586b145`. This plan authorizes no SEC request and no live run.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: implement this plan task-by-task via subagent-driven-development (the default) — or executing-plans when your human partner chose inline execution at the handoff. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -85,7 +85,8 @@ Execution environment (planning facts, not spec text):
 
 ## Decisions
 
-None yet. The owner's plan-review answers are logged here as D1 onward.
+- **D1** (owner, plan review, 2026-11-14): plan 9 approved as committed at `586b145`, with P1–P5 and P7–P11 as proposed. P6 changes: the band widens by 200 s, from 52.8 s to 252.8 s. So a longest measured wall above 803.2 s and not above 1,056 s also stops the stage for the owner. This is a plan-level change. No spec-level change. Owner's words: "Add an additional 200 s to P6. Otherwise approved." Applied in: P6, Task 11 Step 7, and every task through P1–P11.
+- **D2** (owner, plan review, 2026-11-14): the plan's default for the `.pyc` question stands. The 100 files that the diagnosis left in the 2a and 1c release venvs stay. The 44 older files in the 1b venv are out of scope. Nothing under `releases/` is removed. Owner's words: "Otherwise approved." Applied in: the Handoff (spec §6).
 
 ## Defaults for owner review
 
@@ -102,7 +103,7 @@ Planning settled these points. Each is plan-level and is applied in the tasks as
   - three child starts. Each start is the median of five runs of a fixed probe (import the CLI, `load_config`, `preflight_current`). `transform` and `publish` use the new release and the scratch config. `collect` runs on the release that `resolve_child` picks from the member's origin context (`runtime.py:572-580`), with a config built from that origin context's effective config and the scratch storage and logging roots: an older release refuses the v2 scratch config. Member IDs are hashes, so a member that Stage 2b discovers may sort first for its source. So the `collect` start of a target is the largest median over the origin releases of every registered member of its source on a live clone, and the evidence names that release.
 
   Following the brief, the engine work is added once per member. Steps 7 and 9 keep plan 8's publish-only walls. Applied in: Tasks 7 and 11.
-- **P6 — Unmeasured wall terms and a 5 % band.** Three terms cannot be measured offline: the full per-call child-result validation inside `validate_member_evidence` (run twice), the dispatcher's call and execution writes, and `collect`'s attempt bookkeeping. P5 measures the parts it can reach. The 2026-07-01 wall sits within a few percent of the limit (spec §8, O1). So a longest measured wall above 1,003.2 s (95 % of 1,056 s) but not above 1,056 s also stops the stage for the owner, as under the stop rule. The owner may drop the band at plan review. Applied in: Task 11.
+- **P6 — Unmeasured wall terms and a stop band.** Three terms cannot be measured offline: the full per-call child-result validation inside `validate_member_evidence` (run twice), the dispatcher's call and execution writes, and `collect`'s attempt bookkeeping. P5 measures the parts it can reach. The 2026-07-01 wall sits within a few percent of the limit (spec §8, O1). So a longest measured wall above 803.2 s but not above 1,056 s also stops the stage for the owner, as under the stop rule. The band is 252.8 s: 5 % of 1,056 s (52.8 s) plus the 200 s that the owner added at plan review (D1). Applied in: Task 11.
 - **P7 — The kept-value interface and its test seam.** `SelectionChecks` in `workflows/selection_checks.py`, as in Task 2's Interfaces. It looks up `completion._publish_calls` and `provenance.read_parent` at call time, so a counting wrapper sees each computation. `select_work` builds it through the name `runner.SelectionChecks` and accepts `None` from that name. With `None`, every function runs its `checks is None` path, which is today's code. So the oracle "without kept values" of spec §5 items 1–2 is `patch('sec_edgar_ingest.workflows.runner.SelectionChecks', lambda *args: None)`. A test double that keeps nothing would share the new code path and could hide a plumbing fault, so the plan uses none. Applied in: Tasks 2 and 4.
 - **P8 — The package version stays `0.2.0`.** The locked inputs stay byte-identical to the 2a build inputs at revision `32863852ce57f1da99db4720bd1c729727b4ec0c` (H9). The release ID changes through the Git revision and the wheel. Applied in: Tasks 8 and 9.
 - **P9 — The 2a interpreter in gate tests.** `support_release.TWO_A_REVISION = '32863852ce57f1da99db4720bd1c729727b4ec0c'` builds the 2a application with `origin_release`, as plan 7 P9 did for 1c. One extra evidence run uses the installed `e49d3ba8…` through `SEC_LOCAL_2A_RELEASE` (spec §5 item 7). Applied in: Tasks 5 and 8.
@@ -111,7 +112,7 @@ Planning settled these points. Each is plan-level and is applied in the tasks as
 
 ### Question for plan review
 
-- **The `.pyc` files in the release venvs.** The diagnosis left 100 files, 50 each in the 2a and 1c venvs (`diagnosis.md:249-255`; list in `specs/evidence/stage2a1/diagnosis/outputs/pyc-created-2026-11-13.txt`). The 1b venv holds 44 older ones from 2026-10-29. They are older and out of scope unless the owner includes them. Release verification skips `__pycache__` (`runtime.py:476`). Default: leave all of them. A removal deletes files under `releases/`, so it needs the owner's yes. The answer is logged as a Decision and goes into the Handoff (spec §6).
+- **The `.pyc` files in the release venvs.** The diagnosis left 100 files, 50 each in the 2a and 1c venvs (`diagnosis.md:249-255`; list in `specs/evidence/stage2a1/diagnosis/outputs/pyc-created-2026-11-13.txt`). The 1b venv holds 44 older ones from 2026-10-29. They are older and out of scope unless the owner includes them. Release verification skips `__pycache__` (`runtime.py:476`). Default: leave all of them. A removal deletes files under `releases/`, so it needs the owner's yes. Answered at plan review: the default stands (D2). The answer goes into the Handoff (spec §6).
 
 ## Facts established while planning (read-only, 2026-11-14)
 
@@ -153,8 +154,8 @@ All `src` and `tests` paths are under `packages/sec-edgar-ingest/`.
 
 ## Before Task 1
 
-- [ ] **Step 1: Plan review (HUMAN).** The owner reviews the plan, answers P1–P11 and the `.pyc` question. Log each answer in `## Decisions`, in the owner's words. The approval of the plan is D1, in the format of plan 7 D1. Apply each plan-level change, and re-run the writing-plans Self-Review on what changed. Record the approval on the **Approval** line.
-- [ ] **Step 2: Commit the review** on the branch that holds this plan.
+- [x] **Step 1: Plan review (HUMAN).** The owner reviews the plan, answers P1–P11 and the `.pyc` question. Log each answer in `## Decisions`, in the owner's words. The approval of the plan is D1, in the format of plan 7 D1. Apply each plan-level change, and re-run the writing-plans Self-Review on what changed. Record the approval on the **Approval** line.
+- [x] **Step 2: Commit the review** on the branch that holds this plan.
 
 ```bash
 git add specs/plans/9-sec-filing-index-pre-dispatch-cost.md
@@ -474,7 +475,7 @@ Run in the main checkout on `main`.
 - [ ] **Step 4: Run `walls`** in the background on the `<2A1>` interpreter. Expected: one result line per production call and per engine term, with no `quarantined`, `failed` or `error`. If the run fails, stop and report.
 - [ ] **Step 5: Run `starts`** with `walls/config.json`, `walls/origins.json` and `$W`, into `walls/starts.json`. Expected: a median for the new release and for each origin release. If an origin release refuses its config, stop and report.
 - [ ] **Step 6: Compute each member wall.** A wall is the transform plus the publish plus that member's engine terms, the collect body and three child starts. Plan 8's step 3 is a member too. Steps 7 and 9 stay publish-only (P5).
-- [ ] **Step 7: Apply the member-wall stop rule and the P6 band.** If the longest wall is above 1,056 s, stop: report every wall to the owner and ask them to choose one of the three paths (HUMAN). If it is above 1,003.2 s and not above 1,056 s, stop and ask the same (P6). Log the answer as a Decision. The live-config selection (Task 12) waits for it.
+- [ ] **Step 7: Apply the member-wall stop rule and the P6 band.** If the longest wall is above 1,056 s, stop: report every wall to the owner and ask them to choose one of the three paths (HUMAN). If it is above 803.2 s and not above 1,056 s, stop and ask the same (P6, D1). Log the answer as a Decision. The live-config selection (Task 12) waits for it.
 - [ ] **Step 8: Confirm that `data/` and the backup are unchanged.** Hash `data/` (Task 6 Step 6) and the backup (Step 1) again. Each must equal its before list.
 - [ ] **Step 9: Record and commit.** Write `walls.md` in the layout of `pre-campaign.md` "Member timing". Include:
   - every wall against 1,056 s, with the 2026-07-01 member in bold, and each wall's terms;
