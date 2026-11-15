@@ -1,5 +1,7 @@
 # Pre-Dispatch Cost and Its Release Implementation Plan
 
+**Status: COMPLETE (2026-11-15)** — executed via subagent-driven-development; deferred items in specs/deferred_items.md
+
 **Approval:** Approved by the owner, 2026-11-14, with P1–P5 and P7–P11 as proposed and P6 changed (D1 below), as committed at `586b145`. This plan authorizes no SEC request and no live run.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: implement this plan task-by-task via subagent-driven-development (the default) — or executing-plans when your human partner chose inline execution at the handoff. Steps use checkbox (`- [ ]`) syntax for tracking.
@@ -22,7 +24,7 @@ Code and the two scripts land on a feature branch in a worktree. They merge to `
 
 **Tech Stack:** Python 3.14 (CPython 3.14.0, macOS arm64). PyArrow 25.0.1 Parquet. SQLite through `sqlite3`. Stdlib `unittest` under `packages/sec-edgar-ingest/tests/network_guard.py`. `uv` offline and locked. Installed releases under `releases/sha256=<id>/`.
 
-**Spec:** [specs/sec-filing-index-pre-dispatch-cost.md](../sec-filing-index-pre-dispatch-cost.md) (Stage 2a1, committed at `003c516`). Its status line reads "Draft for owner review". The owner's approval is recorded in its §8, "Spec" (`:316`). Parent spec: [specs/sec-filing-index-ingestion-spec.md](../sec-filing-index-ingestion-spec.md). Inputs: the [diagnosis](../evidence/stage2a1/diagnosis/diagnosis.md), [plan 8](8-sec-filing-index-ingestion-spec.md) (halted evidence; Handoff, bullet "Task 5 halt (2026-11-06)"), [plan 7](completed/7-sec-filing-index-duplicate-key.md) (the release pattern), and the [Stage 2b evidence](../evidence/stage2b/pre-campaign.md).
+**Spec:** [specs/sec-filing-index-pre-dispatch-cost.md](../../completed/sec-filing-index-pre-dispatch-cost.md) (Stage 2a1, committed at `003c516`). Its status line reads "Draft for owner review". The owner's approval is recorded in its §8, "Spec" (`:316`). Parent spec: [specs/sec-filing-index-ingestion-spec.md](../../sec-filing-index-ingestion-spec.md). Inputs: the [diagnosis](../../evidence/stage2a1/diagnosis/diagnosis.md), [plan 8](../8-sec-filing-index-ingestion-spec.md) (halted evidence; Handoff, bullet "Task 5 halt (2026-11-06)"), [plan 7](7-sec-filing-index-duplicate-key.md) (the release pattern), and the [Stage 2b evidence](../../evidence/stage2b/pre-campaign.md).
 
 ## Global Constraints
 
@@ -97,6 +99,7 @@ Execution environment (planning facts, not spec text):
 - **D10** (owner, Task 11 Step 7, 2026-11-15): the longest measured member wall is 1,074.9 s (step 2, the 2026-07-01 daily), above the 1,056 s limit by 18.9 s. So the member-wall stop rule applied (spec §6). The owner takes the second path, to raise the reserve under the Stage 1b rule. At this wall the rule gives 1.25 × 1,074.9 s + 480 s = 1,823.7 s, so the reserve must be at least 1,824 s. The cutoff, which is the 3,300 s launcher default minus the reserve, is then at most 1,476 s. The owner gave no figure. The figure is set in Task 12 Step 2 (not below 1,824 s), and the owner approves it at Task 12 Step 4 with the config diff. The bars of Task 10 hold against the lower cutoff (the new release's bound is 281.2 s, and the 2a release's measured time is 3,197.5 s). Owner's words: "Raise reserve". Applied in: Task 11 Step 9 (`walls.md`), Task 12 Steps 1–5, Task 13 (§4.8).
 - **D11** (owner, Task 12 Step 4, 2026-11-15): the live-config selection of the 2a1 release `f414caf89eaac416f8b6a27330773eb0d398cc5caedb881a37cf228379f7fa18` is approved, with `execution.dispatch_reserve_seconds` raised from 1,800 to 1,824 (D10, the Stage 1b minimum for the measured wall). The offline preflight gave floor 480, reserve 1824, the 2a1 release and the effective-config SHA-256 `74be83552796e73d20a78cf38cc297d4aac0b3962f875e4f1a5308a837851ba9` (before: `f2082322…`). The approval authorizes no SEC traffic. Owner's words: "Approve selection". Applied in: Task 12 Step 5.
 - **D12** (owner, Task 13 Step 3, 2026-11-15): the wording of the parent-spec amendments (§§4.2, 4.8, 4.9 and 6), the two runbooks and the selection-commit line of `release.md` is approved as shown. That includes two points beyond spec §7: the 2a release needs about 3,200 s to select work on the live store, so it can dispatch no member there (§4.9 and both runbooks), and the runbook's fresh-config example writes a reserve of 1824. It also approves the one-line fix of the 2a1 spec §4.4 item 1: "the same `state_conflict` gap as today" becomes "the same gap as today, `legacy_member_unresolved`", because today's code gives `legacy_member_unresolved` and the tests follow it. Owner's words: "Approve wording". Applied in: Task 13 Step 4.
+- **D13** (owner, Plan Completion Protocol gate, 2026-11-15): the partition of the leftovers is approved. Three items are deferred, under `## 9-sec-filing-index-pre-dispatch-cost — 2026-11-15` in `specs/deferred_items.md`: registered-member accumulation (consumer Stage 5), the path guards of the evidence scripts, and three test-gap Minors → item: 9-sec-filing-index-pre-dispatch-cost — 2026-11-15. The 14 rulings of the ledger need no further work. Ruling "Task 3 concern 1" is tagged `contradicts spec: §4.4 item 7` and goes into `specs/history.md` in place of a spec amendment. The final review had no Declined-to-judge line. Owner's words: "Approve partition". Applied in: Plan Completion Protocol steps 2–5.
 
 ## Defaults for owner review
 
@@ -172,7 +175,9 @@ git add specs/plans/9-sec-filing-index-pre-dispatch-cost.md
 git commit -m "docs(plans): record the owner review of plan 9"
 ```
 
-- [ ] **Step 3: Create the worktree and the shadow venv.** Use the using-git-worktrees skill for branch `stage2a1-pre-dispatch-cost` at `.claude/worktrees/stage2a1-pre-dispatch-cost`, from `main` with this plan merged. Then run the shadow-venv commands in Global Constraints.
+- [x] **Step 3: Create the worktree and the shadow venv.** Use the using-git-worktrees skill for branch `stage2a1-pre-dispatch-cost` at `.claude/worktrees/stage2a1-pre-dispatch-cost`, from `main` with this plan merged. Then run the shadow-venv commands in Global Constraints.
+
+> Deviation: The worktree was made with `git worktree add` (the using-git-worktrees method) on the branch `stage2a1-pre-dispatch-cost`, not with `EnterWorktree`.
 
 ---
 
@@ -185,15 +190,15 @@ git commit -m "docs(plans): record the owner review of plan 9"
 **Interfaces:**
 - Produces: `models.record_type_hints(record_type: type) -> Mapping[str, object]`. It is wrapped in `functools.cache`, and it returns `types.MappingProxyType(get_type_hints(record_type))`. It calls `get_type_hints` through the module global, so a test can count calls. A raise is not cached. `record_from_mapping` and `validate_record_fields` use it in place of their `get_type_hints` calls.
 
-- [ ] **Step 1: Write the failing tests** in class `TypeHintsCacheTests`:
+- [x] **Step 1: Write the failing tests** in class `TypeHintsCacheTests`:
   - `test_cached_hints_equal_get_type_hints_for_every_record_type`: import every module under `sec_edgar_ingest` with `pkgutil.walk_packages`. Collect each class that `dataclasses.is_dataclass` accepts and whose `__module__` is that module. For each, `dict(record_type_hints(t)) == typing.get_type_hints(t)`. Assert that more than 30 types were checked.
   - `test_cached_hints_cannot_be_changed`: assigning to `record_type_hints(Source)['x']` raises `TypeError`.
   - `test_hints_are_computed_once_per_type`: call `record_type_hints.cache_clear()`, patch `models.get_type_hints` with `wraps=` the original, and decode one `Source` mapping three times with `Source.from_mapping`. The wrapper saw `Source` once.
   - `test_refusal_text_is_unchanged_after_the_cache_is_warm` (Review Focus 5): after `cache_clear()`, decode a `RunContext` mapping with one wrong field type, and a `CommandResult` mapping whose nested `Error` has an unknown key. Record each `ValueError` text. Decode both again. Each text is equal.
-- [ ] **Step 2: Run** `test_pre_dispatch_cost.TypeHintsCacheTests` and confirm that it fails with `ImportError` on `record_type_hints`.
-- [ ] **Step 3: Implement the Interfaces above.**
-- [ ] **Step 4: Run** `test_pre_dispatch_cost test_state test_worksets test_etl_contracts test_workflow_contracts test_validation test_config`. Expected: `OK`.
-- [ ] **Step 5: Commit.**
+- [x] **Step 2: Run** `test_pre_dispatch_cost.TypeHintsCacheTests` and confirm that it fails with `ImportError` on `record_type_hints`.
+- [x] **Step 3: Implement the Interfaces above.**
+- [x] **Step 4: Run** `test_pre_dispatch_cost test_state test_worksets test_etl_contracts test_workflow_contracts test_validation test_config`. Expected: `OK`.
+- [x] **Step 5: Commit.**
 
 ```bash
 git add packages/sec-edgar-ingest/src/sec_edgar_ingest/models.py packages/sec-edgar-ingest/tests/test_pre_dispatch_cost.py
@@ -222,16 +227,16 @@ git commit -m "perf(models): cache record type hints once per type"
 - Produces: a keyword-only `checks: SelectionChecks | None = None` on `_obligations`, `outstanding_repairs`, `evaluate_member`, `capture_member_provenance`, `capture_parent_provenance`, `read_member`, `project_member`, `transfer_binding`, `WorkflowMembers.inventory`, `WorkflowMembers.completed`, `reconstruct_parent` and `bootstrap_legacy`. Each passes it on to the calls listed here. With `checks`, every `read_parent` call becomes `checks.parent(ref)`, and `_obligations` iterates `checks.publish_calls()` in place of `_publish_calls` and its per-call decode. With `None`, each function runs today's code unchanged: `_obligations` still decodes each input lazily inside its loop (H4).
 - Import `selection_checks` in `completion.py` only under `TYPE_CHECKING`, so there is no import cycle.
 
-- [ ] **Step 1: Write the failing tests** in class `SelectionChecksTests`. Build stores with `support_workflows.CommandHarness` and `simple_pack`, plus the setups of the existing tests named below.
+- [x] **Step 1: Write the failing tests** in class `SelectionChecksTests`. Build stores with `support_workflows.CommandHarness` and `simple_pack`, plus the setups of the existing tests named below.
   - `test_publish_calls_are_kept_until_renew`: with `completion._publish_calls` patched `wraps=`, two `publish_calls()` calls make one computation. After `renew()`, the next call makes a second. The kept tuple equals `tuple((c, decode_transformed(objects.read(c['input_ref']))) for c in completion._publish_calls(store, objects))`.
   - `test_a_failed_computation_is_not_kept`: patch `completion._publish_calls` to raise `Conflict` once and then return. The first `publish_calls()` raises. The second returns, after two computations. Do the same for `parent` with `provenance.read_parent`.
   - `test_kept_values_equal_fresh_ones_after_each_write_kind` (spec §4.3, §5 item 3): keep `publish_calls()` and `parent(ref)`. Then make, in turn, the writes of `_obligations` (repair rows and a resolution, from the setup of `test_workflow_completion.test_fresh_attempt_resolves_repair_without_rewriting_original_attempt`), `project_member` and `transfer_binding`. After each, the kept values equal a fresh `completion._publish_calls` with decoded inputs and a fresh `provenance.read_parent`.
   - `test_a_recovered_parent_passes_on_the_next_read` (spec §5 item 3): use the setup of `test_workflow_legacy.test_crash_before_parent_write_recovers_all_original_units`. `checks.parent(ref)` raises before `reconstruct_parent` writes its `WorkflowParentRecovery` row. After the write, the same `checks` returns the parent.
   - `test_without_checks_each_call_recomputes`: two `evaluate_member` calls with no `checks` make two `_publish_calls` computations (H4).
-- [ ] **Step 2: Run** `test_pre_dispatch_cost.SelectionChecksTests` and confirm the failures.
-- [ ] **Step 3: Implement the Interfaces above.**
-- [ ] **Step 4: Run** `test_pre_dispatch_cost test_workflow_completion test_member_completion test_workflow_provenance test_workflow_legacy test_workflow_runner`. Expected: `OK`. Apply P10 to any other failure.
-- [ ] **Step 5: Commit.**
+- [x] **Step 2: Run** `test_pre_dispatch_cost.SelectionChecksTests` and confirm the failures.
+- [x] **Step 3: Implement the Interfaces above.**
+- [x] **Step 4: Run** `test_pre_dispatch_cost test_workflow_completion test_member_completion test_workflow_provenance test_workflow_legacy test_workflow_runner`. Expected: `OK`. Apply P10 to any other failure.
+- [x] **Step 5: Commit.**
 
 ```bash
 git add packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows packages/sec-edgar-ingest/tests/test_pre_dispatch_cost.py
@@ -252,7 +257,7 @@ git commit -m "perf(workflows): add per-phase selection checks behind an optiona
   - `WorkflowMembers.of_source(self, source: Mapping, *, checks: SelectionChecks | None = None) -> tuple[Mapping, ...]`. It scans `WorkflowMember` rows. It reads a row's `source` only when the row's value is a `dict`, and skips the row unless that `source` equals `source`. It validates each remaining row with `read_member` (with `checks`), skips a row that raises one of `inventory()`'s error types, and sorts by `inventory()`'s key.
   - `reuse_exact_binding(value: Mapping, store, objects, *, checks: SelectionChecks | None = None) -> tuple[Error, ...]` uses `of_source(value['source'], checks=checks)` in place of `inventory()` and its source filter. Its `read_member` and `transfer_binding` calls get `checks`. Nothing else changes. `sibling_completion` keeps calling it without `checks`.
 
-- [ ] **Step 1: Write the failing tests** in class `ReuseSourceFilterTests`. The oracle is `_reuse_today`, a copy in the test module of `reuse_exact_binding` at `003c516` (`runner.py:25-61`). Each case runs the oracle and the new function on two copies of one fixture store (`shutil.copytree`). It compares the gap mappings in order and the `Binding` rows after the call. Corrupt rows as `test_workflow_runner.test_corrupt_retained_registry_and_receipt_do_not_block_valid_siblings` does.
+- [x] **Step 1: Write the failing tests** in class `ReuseSourceFilterTests`. The oracle is `_reuse_today`, a copy in the test module of `reuse_exact_binding` at `003c516` (`runner.py:25-61`). Each case runs the oracle and the new function on two copies of one fixture store (`shutil.copytree`). It compares the gap mappings in order and the `Binding` rows after the call. Corrupt rows as `test_workflow_runner.test_corrupt_retained_registry_and_receipt_do_not_block_valid_siblings` does.
   - `test_same_result_with_a_corrupt_member_of_another_source` (spec §5 item 5).
   - `test_same_result_with_a_corrupt_member_of_the_same_source` (spec §5 item 5).
   - `test_same_result_with_a_corrupt_reuse_pin` (spec §5 item 5): the gap text is `retained reuse pin is corrupt: …` in both.
@@ -260,10 +265,10 @@ git commit -m "perf(workflows): add per-phase selection checks behind an optiona
   - `test_two_pins_of_one_source_bind_nothing_as_today` (Review Focus 3): two members of one source pinned to different snapshots, and a third unbound member. Neither function writes a binding, and the gaps are equal.
   - `test_reuse_validates_only_its_own_source`: with every module's `read_member` wrapped to count, a store with 3 members of the value's source and 5 of other sources makes 4 `read_member` calls (the value itself plus 3).
   - `test_sibling_completion_never_runs_the_full_inventory`: with `WorkflowMembers.inventory` patched to raise `AssertionError`, `sibling_completion` for a complete sibling returns its processed member.
-- [ ] **Step 2: Run** `test_pre_dispatch_cost.ReuseSourceFilterTests` and confirm the failures.
-- [ ] **Step 3: Implement the Interfaces above.**
-- [ ] **Step 4: Run** `test_pre_dispatch_cost test_workflow_runner test_workflow_drain test_reconcile_workflow test_workflow_provenance`. Expected: `OK`.
-- [ ] **Step 5: Commit.**
+- [x] **Step 2: Run** `test_pre_dispatch_cost.ReuseSourceFilterTests` and confirm the failures.
+- [x] **Step 3: Implement the Interfaces above.**
+- [x] **Step 4: Run** `test_pre_dispatch_cost test_workflow_runner test_workflow_drain test_reconcile_workflow test_workflow_provenance`. Expected: `OK`.
+- [x] **Step 5: Commit.**
 
 ```bash
 git add packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows packages/sec-edgar-ingest/tests/test_pre_dispatch_cost.py
@@ -288,7 +293,7 @@ git commit -m "perf(workflows): validate only the member's own source in reuse"
   - `support_selection.registered_store(root: Path, members: int) -> CommandHarness`: a fixture `daily` run over `members` daily sources whose deadline leaves no dispatch time, as `test_workflow_runner.test_deadline_after_selection_records_undispatched_units_without_child_work` does. Every member is registered, and none is processed.
   - `support_selection.select_twice(harness, command: str, *, discovery_fails: bool = False) -> tuple[bytes, bytes]`: two copies of the harness store, one `select_work` with real checks and one under `NO_CHECKS`, under the same pinned context and intent and the fixture `Dispatcher`. Both run inside `support_process.checked_clock(root, <one fixed instant>)`, so their discovery children see the same clock. It returns `canonical_json` of each selection. With `discovery_fails`, the dispatcher's `discover` raises the `ChildUnfinished` of `test_workflow_runner.test_no_result_discovery_keeps_required_ledger_and_older_pending_jobs`. If the two selections differ only in a value that a discovery child takes from the wall clock, stop and ask (P10).
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
   - `SelectionEqualityTests.test_selection_equal_with_and_without_kept_values` (spec §5 item 1): one `subTest` per scenario name, plus `pending` with `discovery_fails=True`. The two byte strings are equal. The test fails until `select_work` builds `runner.SelectionChecks`.
   - `SelectionEqualityTests.test_daily_and_reconcile_selections_equal_without_kept_values` (Review Focus 1): `select_twice` on `scenario(root, 'pending')` for `daily` and for `reconcile`.
   - `SelectionCountTests.test_counts_per_phase_at_1_10_50_members` (spec §5 item 2): on `registered_store(root, n)` for n in 1, 10 and 50, one more `daily` selection. Count `completion._publish_calls` and, by ref, each module's `read_parent` (`provenance`, `completion`, `members`, `legacy`, `runner`). Split the counts at the dispatcher's `discover` entry and return. Each phase has at most one `_publish_calls` and at most one `read_parent` per ref, and the totals do not grow with n.
@@ -296,10 +301,14 @@ git commit -m "perf(workflows): validate only the member's own source in reuse"
   - `SelectionCountTests.test_renew_runs_when_discovery_returns_and_when_it_raises` (H3): a spy on `SelectionChecks.renew` is called once in each case, and the first phase-2 `publish_calls` recomputes.
   - `UnchangedPathTests.test_dispatch_and_finish_use_no_kept_value` (spec §5 item 4): wrap `evaluate_member`, `read_member`, `_obligations`, `reuse_exact_binding` and `read_parent` to record the `checks` argument. Patch each name in every module under `sec_edgar_ingest.workflows` that binds it, because these functions are imported by name. Run `run_workflow` on `simple_pack` with members that dispatch, as `RunnerTests.run_parent` does, then `write_workflow_result`. At least one `evaluate_member` call and one `read_member` call are recorded after the observer event `workflow.after_selection`, and every call recorded after it has `checks is None`. So does every call under `CommandHarness.invoke('transform', …)` and `invoke('publish', …)`.
   - `UnchangedPathTests.test_resumed_attempt_builds_no_selection_checks` (Review Focus 2): patch `runner.SelectionChecks` to raise `AssertionError`. `run_workflow` on an attempt whose `selection.json` exists completes.
-- [ ] **Step 2: Run** the three classes and confirm the failures.
-- [ ] **Step 3: Implement the Interfaces above.**
-- [ ] **Step 4: Run** `test_pre_dispatch_cost test_workflow_runner test_workflow_drain test_workflow_selection_v1 test_reconcile_workflow test_workflow_results test_workflow_acceptance test_local_workflow_contracts` in the background. Expected: `OK`.
-- [ ] **Step 5: Commit.**
+
+> Deviation: Decision D4. `select_twice` primes the selection's own discovery child once before it copies the store, because `checked_clock` cannot freeze the child's monotonic clock. Scenario markers are asserted in both selections. The equality tests cover a primed discovery only.
+- [x] **Step 2: Run** the three classes and confirm the failures.
+- [x] **Step 3: Implement the Interfaces above.**
+- [x] **Step 4: Run** `test_pre_dispatch_cost test_workflow_runner test_workflow_drain test_workflow_selection_v1 test_reconcile_workflow test_workflow_results test_workflow_acceptance test_local_workflow_contracts` in the background. Expected: `OK`.
+
+> Deviation: Decision D5. The drain test's stand-in `reuse` takes `**kwargs`, because `select_work` now passes `checks` to it.
+- [x] **Step 5: Commit.**
 
 ```bash
 git add packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/runner.py packages/sec-edgar-ingest/tests/support_selection.py packages/sec-edgar-ingest/tests/test_pre_dispatch_cost.py
@@ -318,11 +327,11 @@ git commit -m "perf(workflows): compute selection's store-wide checks once per p
 - Consumes: Task 4. `support_release.origin_release(project, cache, revision)`, `support_release.proof_releases(project, cache)` (its second release is the current code) and `workflow_proof.upgrade_sequence(output, a_manifest, b_manifest)`.
 - Produces: `TWO_A_REVISION = '32863852ce57f1da99db4720bd1c729727b4ec0c'  # source revision of the 2a release e49d3ba8…`. The env var `SEC_LOCAL_2A_RELEASE` replaces the built 2a release with the installed `release.json`.
 
-- [ ] **Step 1: Write the tests** in class `TwoReleaseTests`, set up as `test_release_2a.TwoReleaseTests.setUpClass` with the 2a release in place of the 1c release:
+- [x] **Step 1: Write the tests** in class `TwoReleaseTests`, set up as `test_release_2a.TwoReleaseTests.setUpClass` with the 2a release in place of the 1c release:
   - `test_new_release_continues_2a_origin_pending_work`: `upgrade_sequence` with the 2a release as A and the current release as B, with no `a_schema`. Assert what `test_release_2a.test_v2_release_continues_1c_origin_pending_work` asserts (`:117-147`): `exit == 0`; each case `b_exit == 0` and `rows > 0`; the A-child expectation; the process and checkout-guard records.
   - `test_2a_release_continues_new_origin_pending_work`: the same, with the current release as A and the 2a release as B.
-- [ ] **Step 2: Run** `test_release_2a1` in the background. Expected: 2 tests, `OK`. If a continuation fails, stop and ask: H7 is a requirement, and a fix is not planned.
-- [ ] **Step 3: Commit.**
+- [x] **Step 2: Run** `test_release_2a1` in the background. Expected: 2 tests, `OK`. If a continuation fails, stop and ask: H7 is a requirement, and a fix is not planned.
+- [x] **Step 3: Commit.**
 
 ```bash
 git add packages/sec-edgar-ingest/tests/support_release.py packages/sec-edgar-ingest/tests/test_release_2a1.py
@@ -343,9 +352,11 @@ git commit -m "test(release): prove two-way continuation between the 2a release 
   - `replay.py run <root> <saved-rows.json> {1,2} <out.json> [--branch]`: unless `--branch`, it calls `preflight_current(Path(sys.prefix).parent / 'release.json')`, the manifest of the release whose venv runs it. It loads the context from the attempt's `intent.json`, the intent from the same file, and `settings = Settings.from_mapping(context.to_mapping()['effective_config'])`. Its dispatcher accepts exactly one call, `execute('discover', 'discover', settings, flags)`, with the flags of the recorded call's intent. That call inserts the saved discovery rows with `store.insert` and returns `CheckedChild(call, call['result_ref'], read_child(call, store, objects))` for the recorded `call.json` (F7 for invocation 2). Any other call raises. It calls `run_workflow` with an observer that raises a private `Stop` at `workflow.after_selection`. It records phase marks: run start; `discover` entry and return; the last return of `runner.reuse_exact_binding`; `runner.freeze_selection` entry; and the observer event. Each mark is a wrapper on the module attribute. From the marks it gives five phases: before discovery, discovery (replayed), projection, after discovery and freeze. Inside the phases it records each call time of `WorkflowMembers.completed`, `evaluate_member`, `project_member`, `reuse_exact_binding` and `capture_member_provenance`, through wrappers on the module attributes. It also records: the registered count at the start and after projection; the new members; the new members that reached the registry check (`WorkflowMembers.inventory` calls inside reuse on the 2a release, `WorkflowMembers.of_source` on the new release); the `os.getloadavg()` at start and end; the release ID or `branch`; the frozen `selection.json` SHA-256 and byte count; and whether it equals the saved selection. If it does not, the script writes the top-level fields that differ. It then exits 3 for invocation 2, and 0 for invocation 1, whose comparison is recorded only (P3). The time to the first dispatch is 1 s plus the sum of the five phases, with the replayed discovery replaced by 29 s. The 1 s is the launcher's time from `started_at` to `run_workflow`, which the replay does not run: in invocation 2, `started_at` was 18:31:08.26Z (F1) and `intent.json` was written at 18:31:08Z (diagnosis §3).
   - `replay.py project <new-1.json> <new-2.json> <2a-2.json> <projection.json>`: the P4 fits, with each slope clamped at zero or above. For each fitted phase it compares the slope with the median per-member call time of that phase. If they differ by more than a factor of 2, it exits 4 and projects nothing. Otherwise it gives the figure at the allowance (450 registered, 55 new, 29 s discovery, 1 s launcher) for the new release, and the 2a release's measured and ratio-scaled figures. It compares each with 1,500 s, and the new release with 600 s.
 
-- [ ] **Step 1: Write `replay.py`** to the Interfaces above. Then run `releases/sha256=e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec/venv/bin/python -I -B -X pycache_prefix=/dev/null <worktree>/specs/evidence/stage2a1/predispatch/replay.py --help` from the main checkout. Expected: exit 0, so the script imports on the 2a release. Fix any import here, on the branch.
-- [ ] **Step 2: Confirm that no writer runs.** Run `pgrep -fl -- '-m sec_edgar_ingest|scripts/sec-edgar-local|local-bootstrap|local_bootstrap|order-timing|member-walls|replay.py'`. Expected: no output. If a writer runs, stop and ask.
-- [ ] **Step 3: Check `data/` against the diagnosis's list, then make the clones.**
+- [x] **Step 1: Write `replay.py`** to the Interfaces above. Then run `releases/sha256=e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec/venv/bin/python -I -B -X pycache_prefix=/dev/null <worktree>/specs/evidence/stage2a1/predispatch/replay.py --help` from the main checkout. Expected: exit 0, so the script imports on the 2a release. Fix any import here, on the branch.
+
+> Deviation: After the task review, the freeze phase got a sixth timed function pair (`results.validate_member_provenance`, `results.validate_capture`), and the path refusal compares file identity (`os.path.samefile`) as well as the resolved prefix.
+- [x] **Step 2: Confirm that no writer runs.** Run `pgrep -fl -- '-m sec_edgar_ingest|scripts/sec-edgar-local|local-bootstrap|local_bootstrap|order-timing|member-walls|replay.py'`. Expected: no output. If a writer runs, stop and ask.
+- [x] **Step 3: Check `data/` against the diagnosis's list, then make the clones.**
 
 ```bash
 cd /Users/lowell/Projects/sec-edgar-local
@@ -358,10 +369,12 @@ echo "$W"
 ```
 
 Expected: `data-as-diagnosed`. If the lists differ, stop and ask.
-- [ ] **Step 4: Run `diff`** from the worktree root, with the branch interpreter and Step 3's `$W`: `replay.py diff "$W/live" "$W/backup" specs/evidence/stage2a1/predispatch/diff.json`. Expected: exit 0. Invocation 1 has 28 `WorkflowMember` and 28 `Binding` rows, and invocation 2 has 53 and 48 (F4). Each has one `DiscoverySession`, one `WorkflowAttempt`, one `WorkflowChildCall` and one discover `Attempt`.
-- [ ] **Step 5: Branch check (P11).** Run `cut "$W/replay-2" … 2 "$W/rows-2.json"`, then `run "$W/replay-2" "$W/rows-2.json" 2 specs/evidence/stage2a1/predispatch/branch-check.json --branch`. Expected: exit 0, with the selection byte-equal to the saved one. If the script exits 3, stop. Show the owner the differing fields (HUMAN), and log the answer as a Decision. These times are a check, not evidence.
-- [ ] **Step 6: Confirm `data/` is unchanged.** Hash `data/` again with Step 3's `find` command into `$W/live-data-after.sha256`, and compare it with the before list as Step 3 does, both sorted with `LC_ALL=C sort`. Expected: no output. Then `rm -rf "$W"`.
-- [ ] **Step 7: Commit.**
+- [x] **Step 4: Run `diff`** from the worktree root, with the branch interpreter and Step 3's `$W`: `replay.py diff "$W/live" "$W/backup" specs/evidence/stage2a1/predispatch/diff.json`. Expected: exit 0. Invocation 1 has 28 `WorkflowMember` and 28 `Binding` rows, and invocation 2 has 53 and 48 (F4). Each has one `DiscoverySession`, one `WorkflowAttempt`, one `WorkflowChildCall` and one discover `Attempt`.
+
+> Deviation: Decision D6. `diff` assigns the 3 added `Failure` rows of invocation 1's discovery child by `run_id` plus `discovery_id`.
+- [x] **Step 5: Branch check (P11).** Run `cut "$W/replay-2" … 2 "$W/rows-2.json"`, then `run "$W/replay-2" "$W/rows-2.json" 2 specs/evidence/stage2a1/predispatch/branch-check.json --branch`. Expected: exit 0, with the selection byte-equal to the saved one. If the script exits 3, stop. Show the owner the differing fields (HUMAN), and log the answer as a Decision. These times are a check, not evidence.
+- [x] **Step 6: Confirm `data/` is unchanged.** Hash `data/` again with Step 3's `find` command into `$W/live-data-after.sha256`, and compare it with the before list as Step 3 does, both sorted with `LC_ALL=C sort`. Expected: no output. Then `rm -rf "$W"`.
+- [x] **Step 7: Commit.**
 
 ```bash
 git add specs/evidence/stage2a1/predispatch
@@ -382,12 +395,12 @@ git commit -m "feat(evidence): add the Stage 2a1 pre-dispatch replay and its bra
   - `member-walls.py origins <live-root> <origins.json>`: read-only on a fresh live clone. For each target source, it records every registered member, its parent, and the release ID in its origin context's runtime, with the lowest `member_id` marked. For each distinct origin release it keeps one origin effective config.
   - `member-walls.py starts <scratch-config> <origins.json> <scratch-root> <starts.json>`: for the new release with `<scratch-config>`, and for each origin release in `<origins.json>` with a config made from its origin effective config, with `storage.root` and `logging.root` set under `<scratch-root>`, it runs the P5 child-start probe five times. Each probe is a child process started with `native_python_argv(<release python>)`. It records each wall, the median per release, and per target the largest `collect` median and its release.
 
-- [ ] **Step 1: Write `member-walls.py`** to the Interfaces above.
-- [ ] **Step 2: Make fresh clones and a scratch config.** Use Task 6 Steps 2–3 with `W=/Users/lowell/Projects/sec-edgar-local/logs/stage2a1-walls-branch-<UTC stamp>`, cloning `data` to `$W/live` and the backup's `data-raw` to `$W/data`. Copy `conf/sec-edgar-local.json` to `$W/config.json`, and set `storage.root` to `$W/data` and `logging.root` to `$W/logs`. Change nothing else.
-- [ ] **Step 3: Run `origins`** with the branch interpreter on `$W/live` into `specs/evidence/stage2a1/walls/origins.json`. Expected: one entry per target source, each with release IDs from F8. Then run `starts` with `$W/config.json`, `origins.json` and `$W` into `$W/starts.json`. Expected: a median for each release. This checks the probe on the branch. Its config still selects the 2a release, so the evidence run is Task 11.
-- [ ] **Step 4: Run `walls --validate-only --branch`** on `$W/data`. Expected: exit 0. The same D and targets as `specs/evidence/stage2b/pre-campaign.md` ("Member timing"), and one member per non-repeat step. If an `Anomaly` is printed, stop and report it.
-- [ ] **Step 5: Confirm `data/` is unchanged** (Task 6 Step 6), and `rm -rf "$W"`.
-- [ ] **Step 6: Commit.**
+- [x] **Step 1: Write `member-walls.py`** to the Interfaces above.
+- [x] **Step 2: Make fresh clones and a scratch config.** Use Task 6 Steps 2–3 with `W=/Users/lowell/Projects/sec-edgar-local/logs/stage2a1-walls-branch-<UTC stamp>`, cloning `data` to `$W/live` and the backup's `data-raw` to `$W/data`. Copy `conf/sec-edgar-local.json` to `$W/config.json`, and set `storage.root` to `$W/data` and `logging.root` to `$W/logs`. Change nothing else.
+- [x] **Step 3: Run `origins`** with the branch interpreter on `$W/live` into `specs/evidence/stage2a1/walls/origins.json`. Expected: one entry per target source, each with release IDs from F8. Then run `starts` with `$W/config.json`, `origins.json` and `$W` into `$W/starts.json`. Expected: a median for each release. This checks the probe on the branch. Its config still selects the 2a release, so the evidence run is Task 11.
+- [x] **Step 4: Run `walls --validate-only --branch`** on `$W/data`. Expected: exit 0. The same D and targets as `specs/evidence/stage2b/pre-campaign.md` ("Member timing"), and one member per non-repeat step. If an `Anomaly` is printed, stop and report it.
+- [x] **Step 5: Confirm `data/` is unchanged** (Task 6 Step 6), and `rm -rf "$W"`.
+- [x] **Step 6: Commit.**
 
 ```bash
 git add specs/evidence/stage2a1/walls
@@ -401,16 +414,18 @@ git commit -m "feat(evidence): add the Stage 2a1 member-wall timing"
 **Files:**
 - Create: `specs/evidence/stage2a1/gate.md`
 
-- [ ] **Step 1: Run the full gate in the background,** from the worktree root, with plan 7 Task 8 Step 1's commands. Use `/tmp/s2a1-venv` and the log `/Users/lowell/Projects/sec-edgar-local/fixture-data/stage2a1-gate.log`. Expected: the log ends with `exit 0`, and unittest prints `OK`. The count is F11's 1,187 plus the new tests, in 77 modules (75 plus `test_pre_dispatch_cost` and `test_release_2a1`). Record the exact count. Then `rm .venv`.
-- [ ] **Step 2: Evidence run on the installed 2a release (P9).**
+- [x] **Step 1: Run the full gate in the background,** from the worktree root, with plan 7 Task 8 Step 1's commands. Use `/tmp/s2a1-venv` and the log `/Users/lowell/Projects/sec-edgar-local/fixture-data/stage2a1-gate.log`. Expected: the log ends with `exit 0`, and unittest prints `OK`. The count is F11's 1,187 plus the new tests, in 77 modules (75 plus `test_pre_dispatch_cost` and `test_release_2a1`). Record the exact count. Then `rm .venv`.
+
+> Deviation: The `.venv` link pointed at `/tmp/s2a1-venv`, as in plan 7, so the gate tested the worktree's code (`gate.md`).
+- [x] **Step 2: Evidence run on the installed 2a release (P9).**
 
 ```bash
 SEC_LOCAL_2A_RELEASE=/Users/lowell/Projects/sec-edgar-local/releases/sha256=e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec/release.json SEC_LOCAL_PROOF_CACHE=/Users/lowell/Projects/sec-edgar-local/releases/artifact-cache /tmp/s2a1-venv/bin/python packages/sec-edgar-ingest/tests/network_guard.py test_release_2a1 -v > /Users/lowell/Projects/sec-edgar-local/fixture-data/stage2a1-installed-2a.log 2>&1; echo "exit $?" >> /Users/lowell/Projects/sec-edgar-local/fixture-data/stage2a1-installed-2a.log
 ```
 
 Expected: 2 tests, `OK`, `exit 0`.
-- [ ] **Step 3: Record the gate.** `gate.md` holds what `specs/evidence/stage2a/gate.md` holds: the branch, the gated commit, the command, the start and end times, `Ran N tests in S s`, `OK`, the module count and the Step 2 result. Add the Task 6 branch check, and a table that maps spec §5 items 1–7 and Review Focus 1–5 to their test names. Commit: `docs(evidence): record the Stage 2a1 branch gate`.
-- [ ] **Step 4: Whole-branch review.** Use the requesting-code-review skill on `main..stage2a1-pre-dispatch-cost`, against the spec, this plan and its Decisions. Name these focuses:
+- [x] **Step 3: Record the gate.** `gate.md` holds what `specs/evidence/stage2a/gate.md` holds: the branch, the gated commit, the command, the start and end times, `Ran N tests in S s`, `OK`, the module count and the Step 2 result. Add the Task 6 branch check, and a table that maps spec §5 items 1–7 and Review Focus 1–5 to their test names. Commit: `docs(evidence): record the Stage 2a1 branch gate`.
+- [x] **Step 4: Whole-branch review.** Use the requesting-code-review skill on `main..stage2a1-pre-dispatch-cost`, against the spec, this plan and its Decisions. Name these focuses:
   - the anti-goals of spec §2.3;
   - every `read_parent` and `_publish_calls` site in phase 1 and phase 2 of `select_work`;
   - `renew()` on both discovery outcomes;
@@ -419,9 +434,11 @@ Expected: 2 tests, `OK`, `exit 0`.
   - the two scripts' root guard and their row cut.
 
   Fix each accepted finding with a test. If a fix changes `src`, run Step 1 again and update `gate.md`. Record the review in `gate.md` under `## Review`: the reviewer, the commit range, each finding and its fix or ruling.
-- [ ] **Step 5: Check the locked inputs and the platform member (P8, H9)** with plan 7 Task 8 Step 5's commands, using revision `32863852ce57f1da99db4720bd1c729727b4ec0c` and branch `stage2a1-pre-dispatch-cost`. Expected: `members = ["packages/sec-edgar-ingest"]`, and no diff output.
-- [ ] **Step 6: Owner checkpoint (HUMAN).** Show `gate.md`, the review result and `git log --oneline main..stage2a1-pre-dispatch-cost`. Ask for approval to merge. Stop until the owner answers. Log the answer as a Decision.
-- [ ] **Step 7: Merge** in the main checkout with plan 6 Task 4 Step 8's commands, branch `stage2a1-pre-dispatch-cost`, message `merge: Stage 2a1 pre-dispatch cost`. Both `git status --porcelain --untracked-files=all` calls print nothing. Keep the worktree until Task 13 ends.
+
+> Deviation: The final review found one Important test gap, in the H4 test. It was fixed in `20ac48b` (a test only, so the gate was not run again, and `test_pre_dispatch_cost` ran again). Codex found nothing (Decision D7).
+- [x] **Step 5: Check the locked inputs and the platform member (P8, H9)** with plan 7 Task 8 Step 5's commands, using revision `32863852ce57f1da99db4720bd1c729727b4ec0c` and branch `stage2a1-pre-dispatch-cost`. Expected: `members = ["packages/sec-edgar-ingest"]`, and no diff output.
+- [x] **Step 6: Owner checkpoint (HUMAN).** Show `gate.md`, the review result and `git log --oneline main..stage2a1-pre-dispatch-cost`. Ask for approval to merge. Stop until the owner answers. Log the answer as a Decision.
+- [x] **Step 7: Merge** in the main checkout with plan 6 Task 4 Step 8's commands, branch `stage2a1-pre-dispatch-cost`, message `merge: Stage 2a1 pre-dispatch cost`. Both `git status --porcelain --untracked-files=all` calls print nothing. Keep the worktree until Task 13 ends.
 
 ---
 
@@ -435,12 +452,14 @@ Run in the main checkout on `main`.
 **Interfaces:**
 - Produces: `releases/sha256=<2A1>/`. Its ID, manifest path and `git_revision` feed Tasks 10–13 and the Handoff.
 
-- [ ] **Step 1: Confirm a clean tree** (`git status --porcelain --untracked-files=all` prints nothing), and record `git rev-parse HEAD`.
-- [ ] **Step 2: Build** with plan 6 Task 5 Step 2's command. Record `<2A1>`.
-- [ ] **Step 3: Check identity, lock and export against the 2a inputs.** Run plan 6 Task 5 Step 3's commands with `C=releases/sha256=<2A1>`, `B=releases/sha256=e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec` and revision `32863852ce57f1da99db4720bd1c729727b4ec0c`. Expected: `lock-identical`, `export-lines-identical`, `inputs-identical`, version `0.2.0` in both, the `<2A1>` `git_revision` equal to Step 1's revision, and equal dependency lists with no platform package.
-- [ ] **Step 4: Offline verification** with plan 6 Task 5 Step 4's commands on `releases/sha256=<2A1>`. Copy the evidence to `fixture-data/s2a1-verify-evidence`. Expected: verifier JSON with `"exit": 0` and `"release_id": "<2A1>"`, and `preflight_current` printing `<2A1>`.
-- [ ] **Step 5: Confirm retention.** `ls releases` lists F8's eight releases and `sha256=<2A1>`, plus `artifact-cache` and `task14-guard-proofs`.
-- [ ] **Step 6: Write `release.md`** in the 2a layout (`## Release`, `## Locked inputs`, `## Offline verification`, retention), with the line "No SEC request was sent. Verification used fixture acquisition only." Commit: `docs(evidence): record the 2a1 release build and offline verification`.
+- [x] **Step 1: Confirm a clean tree** (`git status --porcelain --untracked-files=all` prints nothing), and record `git rev-parse HEAD`.
+- [x] **Step 2: Build** with plan 6 Task 5 Step 2's command. Record `<2A1>`.
+- [x] **Step 3: Check identity, lock and export against the 2a inputs.** Run plan 6 Task 5 Step 3's commands with `C=releases/sha256=<2A1>`, `B=releases/sha256=e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec` and revision `32863852ce57f1da99db4720bd1c729727b4ec0c`. Expected: `lock-identical`, `export-lines-identical`, `inputs-identical`, version `0.2.0` in both, the `<2A1>` `git_revision` equal to Step 1's revision, and equal dependency lists with no platform package.
+- [x] **Step 4: Offline verification** with plan 6 Task 5 Step 4's commands on `releases/sha256=<2A1>`. Copy the evidence to `fixture-data/s2a1-verify-evidence`. Expected: verifier JSON with `"exit": 0` and `"release_id": "<2A1>"`, and `preflight_current` printing `<2A1>`.
+
+> Deviation: The commands ran from a temporary script, `/tmp/s2a1-task9-step4.sh`, with `set -e`, so that they could run in the background. The commands are the same.
+- [x] **Step 5: Confirm retention.** `ls releases` lists F8's eight releases and `sha256=<2A1>`, plus `artifact-cache` and `task14-guard-proofs`.
+- [x] **Step 6: Write `release.md`** in the 2a layout (`## Release`, `## Locked inputs`, `## Offline verification`, retention), with the line "No SEC request was sent. Verification used fixture acquisition only." Commit: `docs(evidence): record the 2a1 release build and offline verification`.
 
 ---
 
@@ -452,14 +471,18 @@ Run in the main checkout on `main`. This task reads `data/` once to clone it, an
 - Create: `specs/evidence/stage2a1/predispatch/` outputs: `2a-2.json`, `new-2.json`, `new-1.json`, `projection.json`, `live-data-before.sha256`, `live-data-after.sha256`. The saved rows and saved selections stay in `$W`.
 - Create: `specs/evidence/stage2a1/predispatch.md`
 
-- [ ] **Step 1: Confirm that no writer runs, check `data/` and make three fresh live clones,** as in Task 6 Steps 2–3, with `W=/Users/lowell/Projects/sec-edgar-local/logs/stage2a1-predispatch-<UTC stamp>` and clones `$W/r-2a-2`, `$W/r-new-2` and `$W/r-new-1`. Expected: `data-as-diagnosed`.
-- [ ] **Step 2: Cut each clone.** Run `cut` with invocation 2 on `r-2a-2` and `r-new-2`, and with invocation 1 on `r-new-1`, with the new release's interpreter (`releases/sha256=<2A1>/venv/bin/python -I -B -X pycache_prefix=/dev/null`) and the committed `diff.json`. Expected: each exits 0, with 155, 155 and 127 registered.
-- [ ] **Step 3: Time the 2a release.** Run `run "$W/r-2a-2" … 2 …/2a-2.json` on the 2a interpreter (`releases/sha256=e49d3ba8…/venv/bin/python -I -B -X pycache_prefix=/dev/null`), in the background. One timing runs at a time. Expected: exit 0, byte-equal to the saved selection, and a time to the first dispatch above 1,500 s. If the run exits 3, stop and show the owner the differing fields (HUMAN).
-- [ ] **Step 4: Time the new release.** Run `run` for invocation 2 into `new-2.json`, then for invocation 1 into `new-1.json`, on the `<2A1>` interpreter. Expected: exit 0 for both. `new-2.json` has the same selection SHA-256 as `2a-2.json`. That is H1 between the releases. If the SHA-256s differ, stop: H1 fails, and the release must not be selected.
-- [ ] **Step 5: Project** with `project new-1.json new-2.json 2a-2.json projection.json`. Expected: exit 0. Exit 4 means that a slope and its per-member median disagree. Stop and show the owner both values for each phase (HUMAN).
-- [ ] **Step 6: Apply the pre-dispatch bar.** If the new release's projection is at or above 1,500 s, the Exit is not met. If it is above 600 s, stop: the stage stops before the live-config selection and reports to the owner (HUMAN). Log the answer as a Decision.
-- [ ] **Step 7: Confirm `data/` is unchanged** (Task 6 Step 6), into `predispatch/live-data-after.sha256`.
-- [ ] **Step 8: Record and commit.** Write `predispatch.md` with:
+- [x] **Step 1: Confirm that no writer runs, check `data/` and make three fresh live clones,** as in Task 6 Steps 2–3, with `W=/Users/lowell/Projects/sec-edgar-local/logs/stage2a1-predispatch-<UTC stamp>` and clones `$W/r-2a-2`, `$W/r-new-2` and `$W/r-new-1`. Expected: `data-as-diagnosed`.
+- [x] **Step 2: Cut each clone.** Run `cut` with invocation 2 on `r-2a-2` and `r-new-2`, and with invocation 1 on `r-new-1`, with the new release's interpreter (`releases/sha256=<2A1>/venv/bin/python -I -B -X pycache_prefix=/dev/null`) and the committed `diff.json`. Expected: each exits 0, with 155, 155 and 127 registered.
+- [x] **Step 3: Time the 2a release.** Run `run "$W/r-2a-2" … 2 …/2a-2.json` on the 2a interpreter (`releases/sha256=e49d3ba8…/venv/bin/python -I -B -X pycache_prefix=/dev/null`), in the background. One timing runs at a time. Expected: exit 0, byte-equal to the saved selection, and a time to the first dispatch above 1,500 s. If the run exits 3, stop and show the owner the differing fields (HUMAN).
+- [x] **Step 4: Time the new release.** Run `run` for invocation 2 into `new-2.json`, then for invocation 1 into `new-1.json`, on the `<2A1>` interpreter. Expected: exit 0 for both. `new-2.json` has the same selection SHA-256 as `2a-2.json`. That is H1 between the releases. If the SHA-256s differ, stop: H1 fails, and the release must not be selected.
+
+> Deviation: Steps 3 and 4 ran as one background chain (`/tmp/s2a1-task10-timings.sh`) that stops at the first non-zero exit. One timing ran at a time. The load average was 9 to 22 (another project's tests).
+- [x] **Step 5: Project** with `project new-1.json new-2.json 2a-2.json projection.json`. Expected: exit 0. Exit 4 means that a slope and its per-member median disagree. Stop and show the owner both values for each phase (HUMAN).
+
+> Deviation: `project` exited 4: the `before_discovery` slope was −0.0199 s/member (clamped to 0) against a median of 0.2187 s. The owner accepted a stated bound of 281.2 s, worked out by hand (Decision D9).
+- [x] **Step 6: Apply the pre-dispatch bar.** If the new release's projection is at or above 1,500 s, the Exit is not met. If it is above 600 s, stop: the stage stops before the live-config selection and reports to the owner (HUMAN). Log the answer as a Decision.
+- [x] **Step 7: Confirm `data/` is unchanged** (Task 6 Step 6), into `predispatch/live-data-after.sha256`.
+- [x] **Step 8: Record and commit.** Write `predispatch.md` with:
   - the clone path, the interpreters, the cut counts, the load averages and each phase per run;
   - both releases' times to the first dispatch on invocation 2's replay, and H1;
   - the per-phase cost of each registered member and of each new member on the new release;
@@ -479,15 +502,19 @@ Run in the main checkout on `main`.
 - Create: `specs/evidence/stage2a1/walls/` outputs: `results.jsonl`, `member-walls-targets.json`, `convergence.json`, `starts.json`, `config.json`, `live-data-before.sha256`, `live-data-after.sha256`, `backup-before.sha256`, `backup-after.sha256`
 - Create: `specs/evidence/stage2a1/walls.md`
 
-- [ ] **Step 1: Confirm that no writer runs, and check `data/` and the backup.** Check `data/` as Task 6 Step 3 does, into `walls/live-data-before.sha256`. Expected: `data-as-diagnosed`. Hash the backup: run `find backups/stage2b-pre-campaign-20261106T174241Z -type f -print0 | LC_ALL=C sort -z | xargs -0 shasum -a 256` into `walls/backup-before.sha256`, and compare it with F10's `backup-before.sha256`, both sorted with `LC_ALL=C sort`. Expected: no output. Then clone the backup's `data-raw` twice, to `$W/data` and `$W/validate`, with `W=/Users/lowell/Projects/sec-edgar-local/logs/stage2a1-walls-<UTC stamp>`.
-- [ ] **Step 2: Write the scratch config** as in Task 7 Step 2, with `runtime.release_manifest` set to the `<2A1>` manifest. Copy it to `walls/config.json`. Write a second copy, `$W/validate-config.json`, whose `storage.root` is `$W/validate`.
-- [ ] **Step 3: Validate on the throwaway clone.** Run `walls --validate-only` on `$W/validate` with `$W/validate-config.json`, on the `<2A1>` interpreter. `--validate-only` writes to its store (`retain_manifest`, and `evaluate_member` in the convergence check), so it never runs on the clone that Step 4 times. Expected: as in Task 7 Step 4. Then `rm -rf "$W/validate"`.
-- [ ] **Step 4: Run `walls`** on `$W/data`, which no command has touched, with `walls/config.json`, in the background on the `<2A1>` interpreter. Expected: one result line per production call and per engine term, with no `quarantined`, `failed` or `error`. If the run fails, stop and report.
-- [ ] **Step 5: Run `starts`** with `walls/config.json`, `walls/origins.json` and `$W`, into `walls/starts.json`. Expected: a median for the new release and for each origin release. If an origin release refuses its config, stop and report.
-- [ ] **Step 6: Compute each member wall.** A wall is the transform plus the publish plus that member's engine terms, the collect body and three child starts. Plan 8's step 3 is a member too. Steps 7 and 9 stay publish-only (P5).
-- [ ] **Step 7: Apply the member-wall stop rule and the P6 band.** If the longest wall is above 1,056 s, stop: report every wall to the owner and ask them to choose one of the three paths (HUMAN). If it is above 803.2 s and not above 1,056 s, stop and ask the same (P6, D1). Log the answer as a Decision. The live-config selection (Task 12) waits for it.
-- [ ] **Step 8: Confirm that `data/` and the backup are unchanged.** Hash `data/` into `walls/live-data-after.sha256` and the backup into `walls/backup-after.sha256`, with Step 1's commands. Compare each with its Step 1 list, both sorted with `LC_ALL=C sort`. Expected: no output.
-- [ ] **Step 9: Record and commit.** Write `walls.md` in the layout of `pre-campaign.md` "Member timing". Include:
+- [x] **Step 1: Confirm that no writer runs, and check `data/` and the backup.** Check `data/` as Task 6 Step 3 does, into `walls/live-data-before.sha256`. Expected: `data-as-diagnosed`. Hash the backup: run `find backups/stage2b-pre-campaign-20261106T174241Z -type f -print0 | LC_ALL=C sort -z | xargs -0 shasum -a 256` into `walls/backup-before.sha256`, and compare it with F10's `backup-before.sha256`, both sorted with `LC_ALL=C sort`. Expected: no output. Then clone the backup's `data-raw` twice, to `$W/data` and `$W/validate`, with `W=/Users/lowell/Projects/sec-edgar-local/logs/stage2a1-walls-<UTC stamp>`.
+- [x] **Step 2: Write the scratch config** as in Task 7 Step 2, with `runtime.release_manifest` set to the `<2A1>` manifest. Copy it to `walls/config.json`. Write a second copy, `$W/validate-config.json`, whose `storage.root` is `$W/validate`.
+- [x] **Step 3: Validate on the throwaway clone.** Run `walls --validate-only` on `$W/validate` with `$W/validate-config.json`, on the `<2A1>` interpreter. `--validate-only` writes to its store (`retain_manifest`, and `evaluate_member` in the convergence check), so it never runs on the clone that Step 4 times. Expected: as in Task 7 Step 4. Then `rm -rf "$W/validate"`.
+- [x] **Step 4: Run `walls`** on `$W/data`, which no command has touched, with `walls/config.json`, in the background on the `<2A1>` interpreter. Expected: one result line per production call and per engine term, with no `quarantined`, `failed` or `error`. If the run fails, stop and report.
+
+> Deviation: `walls` ran from a temporary script (`/tmp/s2a1-task11-walls.sh`) that sampled the load every 5 minutes. The command is the same.
+- [x] **Step 5: Run `starts`** with `walls/config.json`, `walls/origins.json` and `$W`, into `walls/starts.json`. Expected: a median for the new release and for each origin release. If an origin release refuses its config, stop and report.
+- [x] **Step 6: Compute each member wall.** A wall is the transform plus the publish plus that member's engine terms, the collect body and three child starts. Plan 8's step 3 is a member too. Steps 7 and 9 stay publish-only (P5).
+- [x] **Step 7: Apply the member-wall stop rule and the P6 band.** If the longest wall is above 1,056 s, stop: report every wall to the owner and ask them to choose one of the three paths (HUMAN). If it is above 803.2 s and not above 1,056 s, stop and ask the same (P6, D1). Log the answer as a Decision. The live-config selection (Task 12) waits for it.
+
+> Deviation: The longest wall, 1,074.9 s, is above 1,056 s. The owner raised the reserve under the Stage 1b rule (Decision D10).
+- [x] **Step 8: Confirm that `data/` and the backup are unchanged.** Hash `data/` into `walls/live-data-after.sha256` and the backup into `walls/backup-after.sha256`, with Step 1's commands. Compare each with its Step 1 list, both sorted with `LC_ALL=C sort`. Expected: no output.
+- [x] **Step 9: Record and commit.** Write `walls.md` in the layout of `pre-campaign.md` "Member timing". Include:
   - every wall against 1,056 s, with the 2026-07-01 member in bold, and each wall's terms;
   - the comparison with plan 8's walls;
   - the unmeasured terms (P6);
@@ -504,11 +531,15 @@ Run in the main checkout on `main`.
 - Modify: `conf/sec-edgar-local.json` (`runtime.release_manifest`)
 - Modify: `specs/evidence/stage2a1/release.md`
 
-- [ ] **Step 1: Confirm that both stop rules let the stage go on**, from Tasks 10 and 11 and their Decisions.
-- [ ] **Step 2: Edit the config.** Set `runtime.release_manifest` to `/Users/lowell/Projects/sec-edgar-local/releases/sha256=<2A1>/release.json`. Change nothing else, unless the owner took the second stop-rule path: then the reserve changes as decided.
-- [ ] **Step 3: Offline preflight** with plan 6 Task 7 Step 2's command on the `<2A1>` interpreter. Expected: `floor 480`, `reserve 1800`, `release <2A1>`, and a new `effective` SHA-256 (before: `f2082322…`, F9). `git diff` shows one changed value. Run no launcher command.
-- [ ] **Step 4: Owner checkpoint (HUMAN).** Show the diff, the Step 3 output, `predispatch.md` and `walls.md`. Ask for approval of the selection. Stop until the owner answers. Log the answer as a Decision. The approval authorizes no SEC traffic.
-- [ ] **Step 5: Record and commit.** Append `## Live-config selection` to `release.md`, with the effective-config SHA-256, floor, reserve and binding, and the line "No SEC request was sent in this stage." Commit: `chore(config): select the 2a1 release`.
+- [x] **Step 1: Confirm that both stop rules let the stage go on**, from Tasks 10 and 11 and their Decisions.
+- [x] **Step 2: Edit the config.** Set `runtime.release_manifest` to `/Users/lowell/Projects/sec-edgar-local/releases/sha256=<2A1>/release.json`. Change nothing else, unless the owner took the second stop-rule path: then the reserve changes as decided.
+
+> Deviation: Decision D10. `execution.dispatch_reserve_seconds` changed from 1800 to 1824, so Step 3 shows `reserve 1824`, not `reserve 1800`.
+- [x] **Step 3: Offline preflight** with plan 6 Task 7 Step 2's command on the `<2A1>` interpreter. Expected: `floor 480`, `reserve 1800`, `release <2A1>`, and a new `effective` SHA-256 (before: `f2082322…`, F9). `git diff` shows one changed value. Run no launcher command.
+- [x] **Step 4: Owner checkpoint (HUMAN).** Show the diff, the Step 3 output, `predispatch.md` and `walls.md`. Ask for approval of the selection. Stop until the owner answers. Log the answer as a Decision. The approval authorizes no SEC traffic.
+- [x] **Step 5: Record and commit.** Append `## Live-config selection` to `release.md`, with the effective-config SHA-256, floor, reserve and binding, and the line "No SEC request was sent in this stage." Commit: `chore(config): select the 2a1 release`.
+
+> Deviation: `release.md` shows the binding with `sec.user_agent` elided, because that value holds the owner's contact address.
 
 ---
 
@@ -519,19 +550,47 @@ Run in the main checkout on `main`.
 - Modify: `docs/runbooks/local-ingestion.md`, `docs/runbooks/release-upgrades.md`
 - Modify: `specs/evidence/stage2a1/release.md` (the Task 12 commit hash)
 
-- [ ] **Step 1: Write the amendments** that spec §7 lists, each tagged `(Stage 2a1, plan 9, <date>)`:
+- [x] **Step 1: Write the amendments** that spec §7 lists, each tagged `(Stage 2a1, plan 9, <date>)`:
   - §4.2: one paragraph, in the spec's words, on one computation per phase between child executions;
   - §4.8: `<2A1>`, its commit and the effective-config SHA-256, and the reserve;
   - §4.9: no format change, and selecting the 2a release again is supported;
   - §6: the tests now cover selection equality and the kept-value rules.
 
   §9 needs no change.
-- [ ] **Step 2: Update the runbooks** with the new release.
-- [ ] **Step 3: Owner review of the wording (HUMAN).** Show the diff. Apply the answer and log it as a Decision.
-- [ ] **Step 4: Commit:** `docs(specs): amend the parent spec and runbooks for the 2a1 release`.
+
+> Deviation: Decision D12. Beyond spec §7's list: §4.9 and both runbooks say that the 2a release needs about 3,200 s to select work on the live store, the runbook's fresh-config example writes a reserve of 1824, and the 2a1 spec §4.4 item 1 names `legacy_member_unresolved`.
+- [x] **Step 2: Update the runbooks** with the new release.
+- [x] **Step 3: Owner review of the wording (HUMAN).** Show the diff. Apply the answer and log it as a Decision.
+- [x] **Step 4: Commit:** `docs(specs): amend the parent spec and runbooks for the 2a1 release`.
 
 ---
 
 ## After the last task
 
 Run the writing-plans Plan Completion Protocol, step 3a included. Do not edit the roadmap before then. The "862 s" and Exit wording change at the roadmap resume after this stage (spec §7). The Handoff to Stage 2b names at least the items of spec §6, "Handoff to Stage 2b", and the `.pyc` decision. Append the deferred item on registered-member accumulation (spec §2.2), with Stage 5 as its consumer. The item "History-scan cost" and item 1 of section `2-sec-filing-index-ingestion-spec — 2026-10-31` stay open. Leave plan 8 unedited. Then remove the worktree and `/tmp/s2a1-venv`.
+
+
+## Handoff to later stages
+
+Stage 2a1 shipped what its roadmap `Produces` lists: the stage spec and this plan, a profiled diagnosis of the work before the first dispatch, the change with offline tests, a reviewed release with setup, preflight and review evidence, and the reviewed live-config selection with its effective-config SHA-256. The bullets name what each later stage consumes as built, the traps found in execution, and the deferred items. They cite the stage spec (`specs/completed/sec-filing-index-pre-dispatch-cost.md`) and do not restate it. Three items were deferred, in section `9-sec-filing-index-pre-dispatch-cost — 2026-11-15` of `specs/deferred_items.md` → item: 9-sec-filing-index-pre-dispatch-cost — 2026-11-15. "History-scan cost" and item 1 of section `2-sec-filing-index-ingestion-spec — 2026-10-31` stay open.
+
+- **Stage 2b (baseline coverage on the Stage 2a release).**
+  - Consumes as built:
+    - Release `f414caf89eaac416f8b6a27330773eb0d398cc5caedb881a37cf228379f7fa18`, built at Git revision `e899d79a82fd4229558a3a42ac9fa532293d23e1`. Manifest: `/Users/lowell/Projects/sec-edgar-local/releases/sha256=f414caf89eaac416f8b6a27330773eb0d398cc5caedb881a37cf228379f7fa18/release.json`. Build and verification: `specs/evidence/stage2a1/release.md`. The parser and schema stay `sec-index-parser-v2` / `sec-index-v2`.
+    - The live config `conf/sec-edgar-local.json` selects that release at commit `818066b6ca596dbe292627bf285f293f190ff073`. The effective-config SHA-256 is `74be83552796e73d20a78cf38cc297d4aac0b3962f875e4f1a5308a837851ba9` (before: `f2082322…`). The floor is 480 s. **The reserve is 1,824 s, not 1,800 s.** The member-wall stop rule required it (Decisions D10 and D11). The run length is the 3,300 s launcher default, so the cutoff is 1,476 s after the run starts, not 1,500 s. A Stage 2b campaign config must carry a reserve of at least 1,824 s.
+    - Pre-dispatch times (`specs/evidence/stage2a1/predispatch.md`), from replays of plan 8's invocations on clones of the live store. Invocation 2 (155 registered members, 53 new): the 2a release reaches its first dispatch after 3,197.5 s (measured under machine load), and the new release after **126.2 s**. Invocation 1 (127 registered, 28 new): 116.0 s on the new release. The new release freezes the same selection as the 2a release, byte for byte. The new release's phases for invocation 2 are 42.7 s before discovery, 2.1 s of projection, 39.5 s after discovery and 11.9 s of freeze, plus the 29 s discovery child and 1 s of launcher time. The median cost of a registered member is 0.186 s before discovery, 0.105 s after it and 0.064 s in the freeze, and 0.035 s for a new member's projection.
+    - The projection to the growth allowance (450 registered members, 55 new): `replay.py project` exited 4 for `before_discovery`, so it projected nothing. The owner accepted a stated bound (D9): **281.2 s**, with every phase scaled by count from zero. Fits give 181.9 s and 237.6 s. The first dispatch is therefore about 2 to 5 minutes after the start, against the 1,476 s cutoff.
+    - Member growth: about 55 new members for each business day with a new listing, and none for a run that finds the same listings. Each registered member costs about 0.5 s in each run (deferred item "Registered-member accumulation").
+    - Member walls (`specs/evidence/stage2a1/walls.md`), measured on a clone of `backups/stage2b-pre-campaign-20261106T174241Z` in plan 8's fixed order. **The longest is the daily 2026-07-01 member, at 1,074.9 s** (1,065.9 s of publish), which is 18.9 s above the 1,056 s limit. Every other wall is at most 470.3 s. The walls are lower bounds: P6's three terms and the terms listed in `walls.md` are not measured. The reserve of 1,824 s is the Stage 1b rule (`1.25 × wall + 480 s`) at that wall.
+  - Traps:
+    - The diagnosis §6 hypothesis about the 2026-07-01 member in the real order is still unchecked. In the campaign's real order, the quarterly members 2020Q1 to 2025Q4 run before it. If they publish clear and its pinned snapshot is the one that its v2 base holds, it finds those quarters unchanged. The wall above is for plan 8's fixed order. Measure the real order, or let the Stage 2b plan fix an order.
+    - Each dispatched member still runs its own history passes and checks (H4; deferred item "History-scan cost").
+    - Selecting the 2a release again is supported (H7). But on the live store it needs about 3,200 s to select work, so it can dispatch no member there.
+    - The diagnosis left 100 `.pyc` files in the 2a and 1c release venvs. The owner decided that they stay (D2).
+    - Plan 8's Handoff traps that still apply: the state database holds members registered under the v2 parser and schema, so selecting the 1c release again is unsupported. Plan 8's Task 4 approval stays on record, and its stop rule 10 halted the campaign, so a new plan needs its own live gate. Item 1 of section `2-sec-filing-index-ingestion-spec — 2026-10-31` has no `→ done` note. The retained-quarantine count in `docs/runbooks/local-ingestion.md` is unchanged. The gaps `baseline_publication_missing` (2022Q4 and 2023Q1) and `legacy_member_unresolved` (one, no source named) were seen in invocation 1 and not followed up. Daily bodies after 2026-10-30 are discovered, which meets the revisit condition of the item about the `daily-index/index.json` refusal.
+    - Plan 2's campaign configs (`conf/stage2/*.json`) do not load on a v2 release, and plan 2's Stage 3 traps (a), (b) and (d) still apply (plan 7, Handoff, Stage 2b bullet).
+    - Plan 8 stays halted and unedited. The Stage 2b plan is new (roadmap default (xv)).
+- **Stages 3, 4 and 5.**
+  - Consume the Stage 2a1 release wherever their roadmap entries name the 2a release, with the config values above. The cutoff is 1,476 s, and a member's overrun limit under the Stage 1b rule uses the 1,824 s reserve.
+  - The selection gain applies to `daily` and `reconcile`: they run the same `select_work`. The tests show an equal selection with and without kept values (spec §4.4 item 5). Only `backfill` was timed.
+  - Deferred into Stage 5: "Registered-member accumulation" (section `9-sec-filing-index-pre-dispatch-cost — 2026-11-15`). Registered members never retire. A year of daily runs adds about 13,750, which would cost about 6,900 s before the first dispatch. Stage 5's design must retire or stop evaluating old members.

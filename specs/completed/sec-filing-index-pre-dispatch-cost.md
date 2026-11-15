@@ -1,14 +1,17 @@
 # Pre-dispatch cost and its release — Stage 2a1 Design Spec
 
-**Status:** Draft for owner review, 2026-11-14.
+**Status: COMPLETE (2026-11-15)** — implemented by plan 9
+([completed pre-dispatch-cost plan](../plans/completed/9-sec-filing-index-pre-dispatch-cost.md)); three items deferred, in
+section `9-sec-filing-index-pre-dispatch-cost — 2026-11-15` of `specs/deferred_items.md`. The owner approved the spec on
+2026-11-14 (decision "Spec", §8). Before that, this line read "Draft for owner review, 2026-11-14".
 **Project:** `/Users/lowell/Projects/sec-edgar-local`.
-**Parent spec:** [SEC filing-index ingestion](sec-filing-index-ingestion-spec.md) (§§3 R1, R5, R6, R12; 4.2, 4.7–4.9; 6; 9).
-**Roadmap:** [ingestion roadmap](sec-filing-index-ingestion-roadmap.md), Stage 2a1.
+**Parent spec:** [SEC filing-index ingestion](../sec-filing-index-ingestion-spec.md) (§§3 R1, R5, R6, R12; 4.2, 4.7–4.9; 6; 9).
+**Roadmap:** [ingestion roadmap](../sec-filing-index-ingestion-roadmap.md), Stage 2a1.
 **Inputs:** the 2a release `e49d3ba8…` and its evidence (`specs/evidence/stage2a/`); plan 8, Handoff, bullet "Task 5
 halt (2026-11-06)" (`specs/plans/8-sec-filing-index-ingestion-spec.md`); the Stage 2b evidence
 (`specs/evidence/stage2b/`: `startup-overhead.md`, `invocations/*.json`, `pre-campaign.md`); the
-[Stage 2a1 diagnosis](evidence/stage2a1/diagnosis/diagnosis.md); `specs/deferred_items.md`, item "History-scan cost";
-the Stage 1b reserve rule ([1b spec](completed/sec-filing-index-per-member-cost.md) §6); `config.py` (the fixed
+[Stage 2a1 diagnosis](../evidence/stage2a1/diagnosis/diagnosis.md); `specs/deferred_items.md`, item "History-scan cost";
+the Stage 1b reserve rule ([1b spec](sec-filing-index-per-member-cost.md) §6); `config.py` (the fixed
 run length).
 
 ## 1. Purpose
@@ -26,7 +29,7 @@ release in Stage 2b.
 
 ### 1.1 What the diagnosis found
 
-The [diagnosis](evidence/stage2a1/diagnosis/diagnosis.md) profiled the work on scratch copies of the live store
+The [diagnosis](../evidence/stage2a1/diagnosis/diagnosis.md) profiled the work on scratch copies of the live store
 (208 members) and of the plan 8 Task 3 backup (127 members). Its main findings:
 
 - **Repetition.** `runner.select_work` repeats store-wide checks once for each registered member (§1 of the
@@ -311,7 +314,7 @@ Owner answers at brainstorming:
 
 - **Profiling** (2026-11-13): "Yes, profile now". Read-only, on scratch copies of the store.
 - **Approach** (2026-11-14): "A: once per run". The per-type hints cache plus one computation of each store-wide
-  check per selection phase. Under approach A, the deferred item "History-scan cost" stays deferred. Approach B
+  check per selection phase. Under approach A, the deferred item "History-scan cost" stays deferred → item: 5-sec-filing-index-per-member-cost — 2026-10-28. Approach B
   would have taken it into this stage.
 - **Spec** (2026-11-14): "Approve the spec". Approval authorizes no SEC request or live run.
 - **Platform** (2026-11-14): "Yes, hold it". The release's locked inputs carry no platform member, as in Stages 1b,

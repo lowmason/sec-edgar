@@ -295,3 +295,28 @@
       packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/runner.py `select_work` and
       worksets.py `_validate_source_directory`. Size: design. Revisit if: Stage 3 or Stage 5 needs
       a bounded-end command on a store that holds quarantined members.
+
+## 9-sec-filing-index-pre-dispatch-cost — 2026-11-15
+- [ ] Registered-member accumulation (spec §2.2 of `specs/completed/sec-filing-index-pre-dispatch-cost.md`;
+      plan 9 Handoff, owner ruled defer to Stage 5): registered members never retire. They grow by about 55 for each
+      business day with a new listing, which is about 13,750 members in a year of daily runs. On the 2a1 release each
+      registered member costs about 0.5 s in each run before the first dispatch (measured at 155 to 208 members: 38.1 s
+      before discovery, 39.4 s after it and 10.2 s in the freeze phase). That is enough for Stage 2b (bounded at
+      281.2 s for 450 registered members), but 13,750 members would cost about 6,900 s, above the 1,476 s cutoff. See
+      `specs/evidence/stage2a1/predispatch.md`; touches `workflows/runner.py` (`select_work`) and
+      `workflows/members.py`. Size: design. Done when: Stage 5's design retires old registered members or stops
+      evaluating them, and an offline measurement at the resulting member count shows the first dispatch before the
+      cutoff.
+- [ ] Path guards of the Stage 2a1 evidence scripts (plan 9 Task 6 and Task 7 reviews, owner ruled defer):
+      `specs/evidence/stage2a1/predispatch/replay.py` and `specs/evidence/stage2a1/walls/member-walls.py` refuse a path
+      under `data/` or `backups/` by directory identity (`os.path.samefile`). They do not refuse a scratch file that is
+      hard-linked to a live file in `data/`, and `walls` and `starts` do not refuse an output or scratch path under
+      `releases/`. The plans' clone commands (`cp -c -R`) and the rule that scratch folders live under `logs/` avoid
+      both cases. Size: quick-fix. Revisit if: a later plan names `replay.py` or `member-walls.py` in a step.
+- [ ] Test-gap Minors from plan 9 (Task 1 and Task 5 reviews, owner ruled defer): (1) no test that
+      `record_type_hints` does not cache a raised decode error (`functools.cache` stores no exception, and the
+      `SelectionChecks` tests cover the rule for the new kept values); (2) `tests/test_release_2a1.py` omits the check
+      at the end of `test_release_2a` that the published pending manifest has `schema_version` `sec-index-v2`; (3) in
+      its pending scenario a hash-ordered member sort can leave no cross-release child (the repair case always runs
+      one). Touches `packages/sec-edgar-ingest/tests/test_pre_dispatch_cost.py` and `test_release_2a1.py`.
+      Size: quick-fix. Done when: each gap has a test, or the owner drops it with a reason.

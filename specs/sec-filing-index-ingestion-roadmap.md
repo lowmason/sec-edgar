@@ -333,7 +333,7 @@ to live execution, not prerequisites to writing the plan that defines them.
   > Stage 2a: COMPLETE (2026-11-02) — implemented by plan 7 (specs/plans/completed/7-sec-filing-index-duplicate-key.md). Its Handoff section names what Stages 2b, 3, 4 and 5 consume.
   > Next: resume the roadmap.
 
-- [ ] Stage 2a1: Pre-dispatch cost and its release (approved at resume, 2026-11-13)
+- [x] Stage 2a1: Pre-dispatch cost and its release (approved at resume, 2026-11-13)
       Objective: Ship a reviewed native release on which an invocation at the live store's registered-member count starts its first member before the dispatch cutoff, and the longest Stage 2b member fits one invocation.
       Spec: §3 R1, R2, R5, R6, R12; §§4.2, 4.7–4.9, 5–6, 9; plan 8, Handoff.
       Gap closed: None directly. It removes the plan 8 pre-dispatch limit that keeps G2 and G3 open.
@@ -341,6 +341,9 @@ to live execution, not prerequisites to writing the plan that defines them.
       Produces: A stage spec and plan. A profiled diagnosis of the work before the first dispatch, including its rise from the 1c release to the 2a release. The change with offline tests. A reviewed release with setup, preflight and review evidence. The reviewed live-config selection with its effective-config SHA-256. A plan Handoff that names every value Stage 2b's new plan must use, including the growth in registered members per business day and the 2026-07-01 member's fit or its named limit.
       Exit: Offline, at a registered-member count that the stage spec fixes from the live store (208 at plan 8's halt) plus a growth allowance, and with discovery time taken from plan 8's measurements, a measurement shows no member starting before the dispatch cutoff on the 2a release and the first member starting before it on the new release. The longest Stage 2b member fits one invocation on the new release, or the owner approves a named, measured limit. The offline checker and preflight pass on the new release, with the 2a release and older releases retained (§4.9). The provenance and reader contracts hold, or an explicit versioned transition is reviewed (§9). No SEC request was sent and nothing was written under `data/`.
       ROUTING: brainstorming
+
+  > Stage 2a1: COMPLETE (2026-11-15) — implemented by plan 9 (specs/plans/completed/9-sec-filing-index-pre-dispatch-cost.md). Its Handoff section names what Stages 2b, 3, 4 and 5 consume.
+  > Next: resume the roadmap.
 
 - [ ] Stage 2b: Baseline coverage on the Stage 2a release (approved at resume, 2026-10-31)
       Objective: Produce a revised, owner-accepted G2 finding on the Stage 2a release for the 28 quarterly units and the 7 daily duplicate-key sources.
