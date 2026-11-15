@@ -258,11 +258,10 @@ class AcceptanceTests(unittest.TestCase):
 
     def test_native_child_refuses_changed_call_before_budget_creation(self):
         import subprocess
-        release = PROJECT / 'releases/sha256=fc68adef9eb5909e4c97e1fb4cf5bb96915721d5bf4a533bbc782e5cc551f7ec/release.json'
-        if not release.exists():
-            from support_release import proof_releases
-            native, _ = proof_releases(PROJECT, PROJECT / 'releases/artifact-cache')
-            release = native.directory / 'release.json'
+        from support_release import proof_releases
+        # A proof release built from source writes the current schema; a retained release may predate it.
+        native, _ = proof_releases(PROJECT, PROJECT / 'releases/artifact-cache')
+        release = native.directory / 'release.json'
         from sec_edgar_ingest.config import Settings
         from sec_edgar_ingest.storage.contracts import deployment_binding
         from sec_edgar_ingest.models import canonical_json, to_mapping_value
