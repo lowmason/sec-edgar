@@ -18,7 +18,8 @@ the recorded child. An observer stops the run at `workflow.after_selection`, bef
 
 The script imports only names that the 2a release has. It looks up the new code's names (`WorkflowMembers.of_source`,
 `runner.SelectionChecks`) with getattr. It opens a store only by explicit path and its stored binding. Every path
-argument, and every store root, must not resolve under the live `data/` or `backups/`.
+argument, and every store root, must not be or be below the live `data/` or `backups/`, by resolved prefix or by
+file identity of the path or an existing parent (so other spellings of the same directory are refused too).
 """
 import argparse
 import hashlib
@@ -40,7 +41,7 @@ from sec_edgar_ingest.runtime import preflight_current
 from sec_edgar_ingest.storage import local as storage_local
 from sec_edgar_ingest.storage.contracts import REGISTRY_PATH, identity, payload_bytes, table_for
 from sec_edgar_ingest.storage.local import LocalObjectStore, LocalStateStore
-from sec_edgar_ingest.workflows import runner
+from sec_edgar_ingest.workflows import results as workflow_results, runner
 from sec_edgar_ingest.workflows.checked import CheckedChild, call_ref, read_child
 from sec_edgar_ingest.workflows.contracts import workflow_path
 from sec_edgar_ingest.workflows.members import WorkflowMembers
@@ -80,11 +81,15 @@ ASSIGNMENT_RULES = {
 REGISTERED_AFTER_CUT = {1: 127, 2: 155}
 PROJECTED_ROW_COUNTS = {1: {'WorkflowMember': 28, 'Binding': 28}, 2: {'WorkflowMember': 53, 'Binding': 48}}  # F4
 PHASES = ('before_discovery', 'discovery_replayed', 'projection', 'after_discovery', 'freeze')
-# The calls that make up one member's cost in each phase. Freeze has no per-member call among the timed ones.
+# Freeze's per-member calls: `_validate_selection` (results.py, unchanged since 2a) calls each once per selected
+# member or per already-complete capture, by module-global name. A wrapper on the `results` attribute sees only
+# results.py's calls, not `completion.capture_member_provenance`'s own call to `validate_member_provenance`.
+FREEZE_FUNCTIONS = ('validate_member_provenance', 'validate_capture')
+# The calls that make up one member's cost in each phase.
 PER_MEMBER_FUNCTIONS = {'before_discovery': ('WorkflowMembers.completed', 'evaluate_member'),
                         'projection': ('project_member', 'reuse_exact_binding'),
                         'after_discovery': ('evaluate_member', 'capture_member_provenance'),
-                        'freeze': ()}
+                        'freeze': tuple('results.' + name for name in FREEZE_FUNCTIONS)}
 LAUNCHER_S = 1.0  # invocation 2: started_at 18:31:08.26Z to intent.json at 18:31:08Z (F1, diagnosis §3)
 DISCOVERY_S = 29.0  # invocation 2's discovery child (diagnosis §3)
 CUTOFF_S, TARGET_S = 1500.0, 600.0
@@ -119,11 +124,28 @@ class UnexpectedCall(RuntimeError):
 # ---------------------------------------------------------------------------------------------------------- helpers
 
 def refuse_forbidden(path, label: str) -> Path:
+    """Refuse `path` when it is, or is below, the live data/ or backups/, in any spelling.
+
+    The prefix check after `resolve()` misses spellings that name the same directory: the volume is
+    case-insensitive and `resolve()` keeps the typed case, and the `/System/Volumes/Data` firmlink keeps its prefix.
+    So the resolved path and each existing parent are also compared by file identity (`os.path.samefile`). That only
+    stats; it opens no file. A path that does not exist yet is checked through its nearest existing parent.
+    """
     resolved = Path(path).resolve()
-    for root in FORBIDDEN_ROOTS:
-        base = root.resolve()
+    bases = [root.resolve() for root in FORBIDDEN_ROOTS]
+    for base in bases:
         if resolved == base or resolved.is_relative_to(base):
             raise Refused(f'{label} {path} resolves to {resolved}, under {base}')
+    for candidate in (resolved, *resolved.parents):
+        for base in bases:
+            try:
+                same = os.path.samefile(candidate, base)
+            except (FileNotFoundError, NotADirectoryError):
+                continue  # this spelling does not exist (yet): its parents decide
+            except OSError as error:
+                raise Refused(f'{label} {path}: cannot compare {candidate} with {base}: {error}') from error
+            if same:
+                raise Refused(f'{label} {path} resolves to {resolved}, and {candidate} is the same directory as {base}')
     return resolved
 
 
@@ -623,9 +645,18 @@ def instrument(recorder: Recorder) -> dict:
     def no_member(args, result):
         return None
 
+    def captured_member(args, result):  # args[0] is a member provenance or completion capture
+        return member_id(args[0].get('member')) if args and isinstance(args[0], Mapping) else None
+
     for name, member_of in (('evaluate_member', first_argument), ('capture_member_provenance', first_argument),
                             ('project_member', returned), ('bootstrap_legacy', no_member)):
         setattr(runner, name, recorder.timed(name, getattr(runner, name), member_of))
+    freeze_wrapped = []
+    for name in FREEZE_FUNCTIONS:
+        target = getattr(workflow_results, name, None)
+        if target is not None:
+            setattr(workflow_results, name, recorder.timed('results.' + name, target, captured_member))
+            freeze_wrapped.append('results.' + name)
     runner.reuse_exact_binding = recorder.reuse(runner.reuse_exact_binding)
     runner.freeze_selection = recorder.freeze(runner.freeze_selection)
     WorkflowMembers.completed = recorder.timed('WorkflowMembers.completed', WorkflowMembers.completed, method_argument)
@@ -633,7 +664,7 @@ def instrument(recorder: Recorder) -> dict:
     if has_of_source:
         WorkflowMembers.of_source = recorder.registry('WorkflowMembers.of_source', getattr(WorkflowMembers, 'of_source'))
     return {'runner_file': runner.__file__, 'has_of_source': has_of_source,
-            'has_selection_checks': has_selection_checks,
+            'has_selection_checks': has_selection_checks, 'freeze_functions_wrapped': freeze_wrapped,
             'registry_check_function': 'WorkflowMembers.of_source' if has_of_source else 'WorkflowMembers.inventory'}
 
 
@@ -872,7 +903,8 @@ def command_project(args) -> int:
         entry.update(slope_raw=round(raw, 6), slope=round(slope, 6), clamped=raw < 0, anchor=[anchor_x, anchor_y],
                      at_allowance_s=round(anchor_y + slope * (allowance - anchor_x), 6))
         if not times:
-            entry.update(check='not_applicable', reason='no per-member call is timed in this phase')
+            entry.update(check='fail', reason='no per-member call is timed in this phase, so the slope is unchecked')
+            failed.append(phase)
         else:
             ratio = factor(slope, statistics.median(times))
             entry.update(factor=None if ratio == float('inf') else round(ratio, 6),
