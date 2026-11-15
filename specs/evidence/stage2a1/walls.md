@@ -81,7 +81,17 @@ Three terms cannot be measured offline:
 - the dispatcher's call and execution writes;
 - `collect`'s attempt bookkeeping.
 
-`resolve_child` is also not in the walls. The start probe measured it at 0.19 s for each child (0.186 s on the new release, 0.186 to 0.191 s on the origin releases). Three children add about 0.6 s to a member. So every wall above is a lower bound. The Stage 1b rule's 25 % overrun margin is 268.7 s for step 2.
+`resolve_child` is also not in the walls. The start probe measured it at 0.19 s for each child (0.186 s on the new release, 0.186 to 0.191 s on the origin releases). Three children add about 0.6 s to a member.
+
+The Task 7 review found more per-member terms that P5 does not measure and P6 does not name. Each is probably small:
+- the parent's read of each child result (`_check_exit`, then `read_child`), three times per member;
+- `process_member`'s decode of the collected snapshot workset, and its `transfer_binding`;
+- `registry.record`: its context validation, the receipt `put_once` and `verify`, and its index write;
+- the transform and publish children's own bookkeeping after their start (open the stores, `retain_manifest`, the begun Attempt, `write_etl_result` with `finish_attempt`, log events). P6 names only `collect`'s attempt bookkeeping.
+
+So every wall above is a lower bound. The Stage 1b rule's 25 % overrun margin is 268.7 s for step 2.
+
+In steps 3 and 4 the transform was `unchanged` with `processing_existed_before` true, as in plan 8. Their before-transform `evaluate_member` shows no `transform_pending` gap (step 3 shows none, step 4 shows `publication_pending`). The other steps show `transform_pending` there.
 
 ## Members and origin releases
 `walls/origins.json` lists, for each of the 8 target sources, every registered member, its parent and the release in its origin context: 21 members, 4 origin releases (`9fa189a0…`, `c4de77b8…`, `e49d3ba8…`, `fc68adef…`), all in the F8 list, with no stop. The member that a step times is the lowest `member_id` of its source that passes `read_member`. A member that Stage 2b discovers may sort first for its source. So the `collect` start of a target is the largest median over the origin releases of all registered members of its source. `walls/starts.json` holds the five runs of each release. The medians are 0.601 s for the new release, and 0.545 to 0.594 s for the origin releases. No origin release refused its config.
