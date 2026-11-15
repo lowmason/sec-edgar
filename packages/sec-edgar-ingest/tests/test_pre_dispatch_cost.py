@@ -38,6 +38,8 @@ from support_process import checked_dispatcher, checked_fault
 import support_selection
 from support_selection import (DISCOVERY_FAILURE, SCENARIOS, refusal_twice, registered_store, scenario,
                                select_twice, workflow_start)
+# A module object, so that the loader does not collect its test cases here.
+import test_workflow_drain as drain
 from support_workflow_evidence import EvidenceFixture, quarterly_bytes
 from support_workflows import CommandHarness, simple_pack
 
@@ -1106,6 +1108,101 @@ class UnchangedPathTests(unittest.TestCase):
         self.assertEqual([(name, checks) for name, checks in low_level if checks is not None], [])
         # Control: the recorder sees a kept value where one is passed, in the selection before the event.
         self.assertTrue(any(isinstance(checks, SelectionChecks) for when, _, checks in calls if when == 'selection'))
+
+    def watch_kept_values(self, patches):
+        """Label each use of a kept value with the path that it ran in.
+
+        Every use of a kept value goes through `SelectionChecks.parent` or `SelectionChecks.publish_calls`, so a spy
+        on each class attribute sees a kept value in any path, a new `SelectionChecks` included. The label is
+        'selection' while `runner.select_work` runs and 'after' once it returns or raises. `freeze_selection`,
+        `process_member` and `sibling_completion` set their own name while they run, and the caller sets a label for
+        each low-level command. Each call of a watched runner name is recorded as (label at entry, name, result).
+        Child commands run in their own processes, so the spies see the parent process only.
+        """
+        seen = SimpleNamespace(label=['before'], uses=[], calls=[])
+
+        def spy(name, real):
+            def use(checks, *args):
+                seen.uses.append((seen.label[0], name))
+                return real(checks, *args)
+            return use
+        for name in ('parent', 'publish_calls'):
+            patches.enter_context(mock.patch.object(SelectionChecks, name, spy(name, getattr(SelectionChecks, name))))
+
+        def watch(name, real, label):
+            def call(*args, **kwargs):
+                outer = seen.label[0]
+                if label is not None:
+                    seen.label[0] = label
+                try:
+                    result = real(*args, **kwargs)
+                finally:
+                    if label is not None:
+                        seen.label[0] = 'after' if name == 'select_work' else outer
+                seen.calls.append((outer, name, result))
+                return result
+            return call
+        for name, label in (('select_work', 'selection'), ('freeze_selection', 'freeze_selection'),
+                            ('process_member', 'process_member'), ('sibling_completion', 'sibling_completion'),
+                            ('reuse_exact_binding', None), ('evaluate_member', None)):
+            patches.enter_context(mock.patch.object(runner, name, watch(name, getattr(runner, name), label)))
+        return seen
+
+    def assert_no_kept_value_after_select_work(self, seen):
+        self.assertEqual([use for use in seen.uses if use[0] != 'selection'], [])
+        # Control: the spies see both kept values in use while `select_work` runs.
+        self.assertEqual({name for label, name in seen.uses if label == 'selection'}, {'parent', 'publish_calls'})
+
+    def test_no_path_after_select_work_uses_a_kept_value(self):
+        """Spec §5 item 4 (H4): this test fails if `freeze_selection`, `process_member`, `sibling_completion`, the
+        finish step or a low-level command uses a kept value. It also proves that each of these paths runs.
+
+        The drain fixture of test_workflow_drain.SiblingCompletionTests.pair gives each source a retained and a new
+        member. The first member of each source runs `process_member`. The second one completes in
+        `sibling_completion` through `reuse_exact_binding` and `evaluate_member`, with no child work. The `superseded`
+        scenario gives `freeze_selection` and the finish step two superseded entries to validate.
+        """
+        def watched(seen, name):
+            return [(label, result) for label, called, result in seen.calls if called == name]
+
+        root = temporary_root(self)
+        held = scenario(root / 'superseded', 'superseded')
+        self.addCleanup(held.close)
+        (root / 'drain').mkdir()
+        h = drain.harness(root / 'drain', drain.widen(simple_pack(root / 'drain' / 'pack'), 4))
+        self.addCleanup(h.close)
+        drain.run(h, 'h4-0', allowed=0)
+
+        with self.subTest(fixture='drain'):
+            with contextlib.ExitStack() as patches:
+                seen = self.watch_kept_values(patches)
+                report, _ = drain.run(h, 'h4-1', allowed=10)
+                member = next(member for member in report.members if member.snapshot_ref is not None)
+                seen.label[0] = 'transform'
+                code, transformed = h.invoke('transform', ('--workset', member.snapshot_ref), run='h4-transform')
+                self.assertEqual(code, 0, h.calls[-1])
+                seen.label[0] = 'publish'
+                code, _ = h.invoke('publish', ('--workset', transformed['transformed_workset_ref']), run='h4-publish')
+                self.assertEqual(code, 0, h.calls[-1])
+            self.assertEqual([label for label, _ in watched(seen, 'select_work')], ['before'])
+            self.assertEqual([label for label, _ in watched(seen, 'freeze_selection')], ['after'])
+            self.assertEqual([label for label, _ in watched(seen, 'process_member')], ['after'] * 2)
+            skipped = [label for label, processed in watched(seen, 'sibling_completion') if processed is not None]
+            self.assertEqual(skipped, ['after'] * 2)
+            self.assertEqual(len([member for member in report.members if not member.child_refs]), 2)
+            inside = Counter(name for label, name, _ in seen.calls if label == 'sibling_completion')
+            self.assertEqual(inside, Counter({'reuse_exact_binding': 2, 'evaluate_member': 2}))
+            self.assert_no_kept_value_after_select_work(seen)
+
+        with self.subTest(fixture='superseded'):
+            context, intent, dispatcher = workflow_start(held, 'reconcile', 'h4-superseded')
+            with contextlib.ExitStack() as patches:
+                seen = self.watch_kept_values(patches)
+                report = runner.run_workflow(context, held.settings, intent, dispatcher, held.store, held.objects)
+                write_workflow_result(report, held.store, held.objects)
+            [(label, frozen)] = watched(seen, 'freeze_selection')
+            self.assertEqual((label, len(frozen['superseded'])), ('after', 2))
+            self.assert_no_kept_value_after_select_work(seen)
 
     def test_resumed_attempt_builds_no_selection_checks(self):
         """Review Focus 2: an attempt whose selection.json exists freezes it and builds no `SelectionChecks`."""
