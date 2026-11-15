@@ -56,3 +56,29 @@ No SEC request was sent. Verification used fixture acquisition only.
 
 ## Statement
 No SEC request was sent in this task. Nothing was written under `data/` or `backups/`. The 5,452 files of `data/` still match `specs/evidence/stage2a1/diagnosis/outputs/live-data-before.sha256` (`shasum -a 256 -c`: 5,452 OK, 0 not OK). The live config (`conf/sec-edgar-local.json`) still selects the 2a release. The selection moves in Task 12.
+
+## Live-config selection
+The statement above (the live config still selects the 2a release) was true when Task 9 ran. Task 12 changed it, on 2026-11-15, after the owner's approval (plan 9, Decision D11, "Approve selection").
+
+The change in `conf/sec-edgar-local.json` is two values:
+- `runtime.release_manifest` was `/Users/lowell/Projects/sec-edgar-local/releases/sha256=e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec/release.json`. It is now `/Users/lowell/Projects/sec-edgar-local/releases/sha256=f414caf89eaac416f8b6a27330773eb0d398cc5caedb881a37cf228379f7fa18/release.json`.
+- `execution.dispatch_reserve_seconds` was `1800`. It is now `1824`. This follows the member-wall stop rule (spec §6): the owner chose to raise the reserve under the Stage 1b rule (Decision D10, `walls.md`). The rule gives `1.25 × 1,074.9 s + 480 s = 1,823.7 s`, so 1,824 s is the least whole-second reserve that the measured wall allows. The cutoff is now 3,300 s − 1,824 s = 1,476 s after the run starts.
+
+Offline preflight on the 2a1 interpreter (`releases/sha256=f414caf8…/venv/bin/python -I -B -X pycache_prefix=/dev/null`), with the plan 6 Task 7 command. The `sec.user_agent` value of the binding is elided here, because it holds the owner's contact address. It is unchanged from the config.
+
+```
+floor 480
+reserve 1824
+release f414caf89eaac416f8b6a27330773eb0d398cc5caedb881a37cf228379f7fa18
+effective 74be83552796e73d20a78cf38cc297d4aac0b3962f875e4f1a5308a837851ba9
+binding {'binding_version': 'sec-local-binding-v1', 'root': '/Users/lowell/Projects/sec-edgar-local/data', 'acquisition_mode': 'live', 'namespace': 'sec-owner-lowell-mason', 'sec': {'user_agent': '<elided>', 'requests_per_second': 3.0, 'max_active_collectors': 1}, 'coordination': {'lease_seconds': 60.0, 'renew_every_seconds': 20.0, 'namespace': 'sec-owner-lowell-mason', 'clock_uncertainty_seconds': 2.0}, 'storage_contract': 'sec-local-storage-v1'}
+```
+
+- **Effective-config SHA-256:** `74be83552796e73d20a78cf38cc297d4aac0b3962f875e4f1a5308a837851ba9`. Before the change it was `f2082322b6fe7838504bbd622cb5a8e702512b482943c28ca9be7164f4755733` (the 2a release, reserve 1,800 s).
+- **Floor:** 480 s. **Reserve:** 1,824 s.
+- **Binding:** it has no `execution` field, so the reserve change does not alter the store binding.
+- `git diff` showed those two changed values and no other change. No launcher command was run.
+
+The approval authorizes no SEC traffic.
+
+No SEC request was sent in this stage.
