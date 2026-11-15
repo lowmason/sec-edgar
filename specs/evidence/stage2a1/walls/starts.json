@@ -1,0 +1,682 @@
+{
+ "commands": {
+  "publish": {
+   "median_s": 0.600903,
+   "release_id": "f414caf89eaac416f8b6a27330773eb0d398cc5caedb881a37cf228379f7fa18"
+  },
+  "transform": {
+   "median_s": 0.600903,
+   "release_id": "f414caf89eaac416f8b6a27330773eb0d398cc5caedb881a37cf228379f7fa18"
+  }
+ },
+ "created_at": "2026-11-15T18:30:55.065994+00:00",
+ "exit": 0,
+ "format": "stage2a1-member-walls-starts-v1",
+ "interpreter": {
+  "dont_write_bytecode": true,
+  "executable": "/Users/lowell/Projects/sec-edgar-local/releases/sha256=f414caf89eaac416f8b6a27330773eb0d398cc5caedb881a37cf228379f7fa18/venv/bin/python",
+  "isolated": true,
+  "prefix": "/Users/lowell/Projects/sec-edgar-local/releases/sha256=f414caf89eaac416f8b6a27330773eb0d398cc5caedb881a37cf228379f7fa18/venv",
+  "pycache_prefix": "/dev/null",
+  "version": "3.14.0"
+ },
+ "origins": {
+  "path": "/Users/lowell/Projects/sec-edgar-local/specs/evidence/stage2a1/walls/origins.json",
+  "sha256": "f7021e9a10d1ebe3b761234ea2790dc3256b4105bcf70bc5f7e51325a7f05124"
+ },
+ "probe": {
+  "argv": "native_python_argv(<release python>) -c <code> <config>",
+  "code": "import json, sys, time\nstarted = time.perf_counter()\nimport sec_edgar_ingest.cli\nfrom pathlib import Path\nfrom sec_edgar_ingest.config import load_config\nfrom sec_edgar_ingest.runtime import preflight_current\nimported = time.perf_counter()\nsettings = load_config(Path(sys.argv[1]))\nloaded = time.perf_counter()\nverified = preflight_current(Path(settings.runtime.release_manifest))\ndone = time.perf_counter()\nprint(json.dumps({\"release_id\": verified.release_id, \"import_s\": imported - started,\n                  \"load_config_s\": loaded - imported, \"preflight_current_s\": done - loaded}))\n",
+  "code_sha256": "a8750c0313d2c9f850898f6e1b2d1cad70900ba9db89e0d36b6cac96f1101068",
+  "environment": "runtime.isolated_environment()",
+  "runs": 5
+ },
+ "refused": [],
+ "releases": [
+  {
+   "config": "/Users/lowell/Projects/sec-edgar-local/specs/evidence/stage2a1/walls/config.json",
+   "config_sha256": "6c454910a3a0df04569ee6d98a5785226daa11720907075df2789dc79c4203f9",
+   "logging_root": "/Users/lowell/Projects/sec-edgar-local/logs/stage2a1-walls-20261115T173751Z/logs",
+   "median_s": 0.600903,
+   "parser_version": "sec-index-parser-v2",
+   "python": "/Users/lowell/Projects/sec-edgar-local/releases/sha256=f414caf89eaac416f8b6a27330773eb0d398cc5caedb881a37cf228379f7fa18/venv/bin/python",
+   "refused": 0,
+   "release_id": "f414caf89eaac416f8b6a27330773eb0d398cc5caedb881a37cf228379f7fa18",
+   "resolve_child_median_s": 0.186302,
+   "resolve_child_s": [
+    0.194747,
+    0.186302,
+    0.185067,
+    0.185735,
+    0.189884
+   ],
+   "role": "new",
+   "runs": [
+    {
+     "child": {
+      "import_s": 0.34005587501451373,
+      "load_config_s": 0.0014012078754603863,
+      "preflight_current_s": 0.20118387509137392,
+      "release_id": "f414caf89eaac416f8b6a27330773eb0d398cc5caedb881a37cf228379f7fa18"
+     },
+     "loadavg": [
+      8.5771484375,
+      10.25439453125,
+      11.10205078125
+     ],
+     "returncode": 0,
+     "wall_s": 0.606122
+    },
+    {
+     "child": {
+      "import_s": 0.3364323331043124,
+      "load_config_s": 0.001331792213022709,
+      "preflight_current_s": 0.20088083297014236,
+      "release_id": "f414caf89eaac416f8b6a27330773eb0d398cc5caedb881a37cf228379f7fa18"
+     },
+     "loadavg": [
+      8.5771484375,
+      10.25439453125,
+      11.10205078125
+     ],
+     "returncode": 0,
+     "wall_s": 0.599992
+    },
+    {
+     "child": {
+      "import_s": 0.3428673753514886,
+      "load_config_s": 0.0014172918163239956,
+      "preflight_current_s": 0.19399975007399917,
+      "release_id": "f414caf89eaac416f8b6a27330773eb0d398cc5caedb881a37cf228379f7fa18"
+     },
+     "loadavg": [
+      8.5771484375,
+      10.25439453125,
+      11.10205078125
+     ],
+     "returncode": 0,
+     "wall_s": 0.600903
+    },
+    {
+     "child": {
+      "import_s": 0.3555076662451029,
+      "load_config_s": 0.0015235836617648602,
+      "preflight_current_s": 0.19438370829448104,
+      "release_id": "f414caf89eaac416f8b6a27330773eb0d398cc5caedb881a37cf228379f7fa18"
+     },
+     "loadavg": [
+      8.5771484375,
+      10.25439453125,
+      11.10205078125
+     ],
+     "returncode": 0,
+     "wall_s": 0.613019
+    },
+    {
+     "child": {
+      "import_s": 0.3388422909192741,
+      "load_config_s": 0.0014263340272009373,
+      "preflight_current_s": 0.19147545797750354,
+      "release_id": "f414caf89eaac416f8b6a27330773eb0d398cc5caedb881a37cf228379f7fa18"
+     },
+     "loadavg": [
+      8.5771484375,
+      10.25439453125,
+      11.10205078125
+     ],
+     "returncode": 0,
+     "wall_s": 0.590276
+    }
+   ],
+   "schema_version": "sec-index-v2",
+   "storage_root": "/Users/lowell/Projects/sec-edgar-local/logs/stage2a1-walls-20261115T173751Z/data"
+  },
+  {
+   "config": "/Users/lowell/Projects/sec-edgar-local/logs/stage2a1-walls-20261115T173751Z/starts-configs/origin-9fa189a0bea3c6545e7bce5b82d266d601abe2c3a35a66a58a8b8378d2bc283b.json",
+   "config_sha256": "24759ec46295f6d7df511a97d58a800efba75faa5e4ca9b098af3646969cdfb8",
+   "effective_config_sha256": "aab50ee232bfe0c062931593ea976cec485c82335e8a1e03503678b7d4d6573d",
+   "logging_root": "/Users/lowell/Projects/sec-edgar-local/logs/stage2a1-walls-20261115T173751Z/logs",
+   "median_s": 0.589619,
+   "parser_version": "sec-index-parser-v1",
+   "python": "/Users/lowell/Projects/sec-edgar-local/releases/sha256=9fa189a0bea3c6545e7bce5b82d266d601abe2c3a35a66a58a8b8378d2bc283b/venv/bin/python",
+   "refused": 0,
+   "release_id": "9fa189a0bea3c6545e7bce5b82d266d601abe2c3a35a66a58a8b8378d2bc283b",
+   "resolve_child_median_s": 0.190777,
+   "resolve_child_s": [
+    0.203956,
+    0.188761,
+    0.190777,
+    0.191261,
+    0.182915
+   ],
+   "role": "origin",
+   "runs": [
+    {
+     "child": {
+      "import_s": 0.46659037470817566,
+      "load_config_s": 0.0022554579190909863,
+      "preflight_current_s": 0.19153616717085242,
+      "release_id": "9fa189a0bea3c6545e7bce5b82d266d601abe2c3a35a66a58a8b8378d2bc283b"
+     },
+     "loadavg": [
+      8.5771484375,
+      10.25439453125,
+      11.10205078125
+     ],
+     "returncode": 0,
+     "wall_s": 0.724797
+    },
+    {
+     "child": {
+      "import_s": 0.3374971249140799,
+      "load_config_s": 0.0022345418110489845,
+      "preflight_current_s": 0.19034908339381218,
+      "release_id": "9fa189a0bea3c6545e7bce5b82d266d601abe2c3a35a66a58a8b8378d2bc283b"
+     },
+     "loadavg": [
+      9.41162109375,
+      10.3994140625,
+      11.14794921875
+     ],
+     "returncode": 0,
+     "wall_s": 0.590663
+    },
+    {
+     "child": {
+      "import_s": 0.33355108415707946,
+      "load_config_s": 0.002440915908664465,
+      "preflight_current_s": 0.19075812492519617,
+      "release_id": "9fa189a0bea3c6545e7bce5b82d266d601abe2c3a35a66a58a8b8378d2bc283b"
+     },
+     "loadavg": [
+      9.41162109375,
+      10.3994140625,
+      11.14794921875
+     ],
+     "returncode": 0,
+     "wall_s": 0.587724
+    },
+    {
+     "child": {
+      "import_s": 0.3377207089215517,
+      "load_config_s": 0.002370665781199932,
+      "preflight_current_s": 0.191257833968848,
+      "release_id": "9fa189a0bea3c6545e7bce5b82d266d601abe2c3a35a66a58a8b8378d2bc283b"
+     },
+     "loadavg": [
+      9.41162109375,
+      10.3994140625,
+      11.14794921875
+     ],
+     "returncode": 0,
+     "wall_s": 0.589619
+    },
+    {
+     "child": {
+      "import_s": 0.33022999996319413,
+      "load_config_s": 0.0023782080970704556,
+      "preflight_current_s": 0.19279204169288278,
+      "release_id": "9fa189a0bea3c6545e7bce5b82d266d601abe2c3a35a66a58a8b8378d2bc283b"
+     },
+     "loadavg": [
+      9.41162109375,
+      10.3994140625,
+      11.14794921875
+     ],
+     "returncode": 0,
+     "wall_s": 0.587307
+    }
+   ],
+   "schema_version": "sec-index-v1",
+   "storage_root": "/Users/lowell/Projects/sec-edgar-local/logs/stage2a1-walls-20261115T173751Z/data"
+  },
+  {
+   "config": "/Users/lowell/Projects/sec-edgar-local/logs/stage2a1-walls-20261115T173751Z/starts-configs/origin-c4de77b89bb1d8ecc5d094f0e1dc6f8a5f3a7935e3595a9dd086d1e41a6b8aa7.json",
+   "config_sha256": "a7acb9a65960a7f36ae931d3faf0069498336091aa20e6b20652d9ea81ebdd82",
+   "effective_config_sha256": "fb93b0e8e05dbc1cbc9bd167ae02ef2d775629905c15938055a6a93c5fb95e96",
+   "logging_root": "/Users/lowell/Projects/sec-edgar-local/logs/stage2a1-walls-20261115T173751Z/logs",
+   "median_s": 0.594122,
+   "parser_version": "sec-index-parser-v1",
+   "python": "/Users/lowell/Projects/sec-edgar-local/releases/sha256=c4de77b89bb1d8ecc5d094f0e1dc6f8a5f3a7935e3595a9dd086d1e41a6b8aa7/venv/bin/python",
+   "refused": 0,
+   "release_id": "c4de77b89bb1d8ecc5d094f0e1dc6f8a5f3a7935e3595a9dd086d1e41a6b8aa7",
+   "resolve_child_median_s": 0.185545,
+   "resolve_child_s": [
+    0.207004,
+    0.185545,
+    0.194167,
+    0.181541,
+    0.184976
+   ],
+   "role": "origin",
+   "runs": [
+    {
+     "child": {
+      "import_s": 0.4681217079050839,
+      "load_config_s": 0.0023536253720521927,
+      "preflight_current_s": 0.19481145776808262,
+      "release_id": "c4de77b89bb1d8ecc5d094f0e1dc6f8a5f3a7935e3595a9dd086d1e41a6b8aa7"
+     },
+     "loadavg": [
+      9.41162109375,
+      10.3994140625,
+      11.14794921875
+     ],
+     "returncode": 0,
+     "wall_s": 0.733537
+    },
+    {
+     "child": {
+      "import_s": 0.33341916697099805,
+      "load_config_s": 0.0026333751156926155,
+      "preflight_current_s": 0.1990517908707261,
+      "release_id": "c4de77b89bb1d8ecc5d094f0e1dc6f8a5f3a7935e3595a9dd086d1e41a6b8aa7"
+     },
+     "loadavg": [
+      9.41162109375,
+      10.3994140625,
+      11.14794921875
+     ],
+     "returncode": 0,
+     "wall_s": 0.597513
+    },
+    {
+     "child": {
+      "import_s": 0.3391386247240007,
+      "load_config_s": 0.002316208090633154,
+      "preflight_current_s": 0.19208399998024106,
+      "release_id": "c4de77b89bb1d8ecc5d094f0e1dc6f8a5f3a7935e3595a9dd086d1e41a6b8aa7"
+     },
+     "loadavg": [
+      9.41162109375,
+      10.3994140625,
+      11.14794921875
+     ],
+     "returncode": 0,
+     "wall_s": 0.594122
+    },
+    {
+     "child": {
+      "import_s": 0.3210263750515878,
+      "load_config_s": 0.002185915596783161,
+      "preflight_current_s": 0.18706424999982119,
+      "release_id": "c4de77b89bb1d8ecc5d094f0e1dc6f8a5f3a7935e3595a9dd086d1e41a6b8aa7"
+     },
+     "loadavg": [
+      9.05810546875,
+      10.3095703125,
+      11.11181640625
+     ],
+     "returncode": 0,
+     "wall_s": 0.569602
+    },
+    {
+     "child": {
+      "import_s": 0.33915412472561,
+      "load_config_s": 0.002225333359092474,
+      "preflight_current_s": 0.18928791675716639,
+      "release_id": "c4de77b89bb1d8ecc5d094f0e1dc6f8a5f3a7935e3595a9dd086d1e41a6b8aa7"
+     },
+     "loadavg": [
+      9.05810546875,
+      10.3095703125,
+      11.11181640625
+     ],
+     "returncode": 0,
+     "wall_s": 0.590896
+    }
+   ],
+   "schema_version": "sec-index-v1",
+   "storage_root": "/Users/lowell/Projects/sec-edgar-local/logs/stage2a1-walls-20261115T173751Z/data"
+  },
+  {
+   "config": "/Users/lowell/Projects/sec-edgar-local/logs/stage2a1-walls-20261115T173751Z/starts-configs/origin-e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec.json",
+   "config_sha256": "6d3830edf5721d6166146a77be529f434d1d793c7a17428a217355f0b5584852",
+   "effective_config_sha256": "f2082322b6fe7838504bbd622cb5a8e702512b482943c28ca9be7164f4755733",
+   "logging_root": "/Users/lowell/Projects/sec-edgar-local/logs/stage2a1-walls-20261115T173751Z/logs",
+   "median_s": 0.58964,
+   "parser_version": "sec-index-parser-v2",
+   "python": "/Users/lowell/Projects/sec-edgar-local/releases/sha256=e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec/venv/bin/python",
+   "refused": 0,
+   "release_id": "e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec",
+   "resolve_child_median_s": 0.188114,
+   "resolve_child_s": [
+    0.196561,
+    0.182879,
+    0.188114,
+    0.184059,
+    0.192727
+   ],
+   "role": "origin",
+   "runs": [
+    {
+     "child": {
+      "import_s": 0.4650518340058625,
+      "load_config_s": 0.002346999943256378,
+      "preflight_current_s": 0.1942973332479596,
+      "release_id": "e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec"
+     },
+     "loadavg": [
+      9.05810546875,
+      10.3095703125,
+      11.11181640625
+     ],
+     "returncode": 0,
+     "wall_s": 0.726862
+    },
+    {
+     "child": {
+      "import_s": 0.3275228329002857,
+      "load_config_s": 0.0022935839369893074,
+      "preflight_current_s": 0.18614516593515873,
+      "release_id": "e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec"
+     },
+     "loadavg": [
+      9.05810546875,
+      10.3095703125,
+      11.11181640625
+     ],
+     "returncode": 0,
+     "wall_s": 0.573483
+    },
+    {
+     "child": {
+      "import_s": 0.3249140828847885,
+      "load_config_s": 0.002182208001613617,
+      "preflight_current_s": 0.19147100020200014,
+      "release_id": "e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec"
+     },
+     "loadavg": [
+      9.05810546875,
+      10.3095703125,
+      11.11181640625
+     ],
+     "returncode": 0,
+     "wall_s": 0.579231
+    },
+    {
+     "child": {
+      "import_s": 0.34408412501215935,
+      "load_config_s": 0.0022674999199807644,
+      "preflight_current_s": 0.19332175003364682,
+      "release_id": "e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec"
+     },
+     "loadavg": [
+      9.05810546875,
+      10.3095703125,
+      11.11181640625
+     ],
+     "returncode": 0,
+     "wall_s": 0.600933
+    },
+    {
+     "child": {
+      "import_s": 0.3342652078717947,
+      "load_config_s": 0.002423959318548441,
+      "preflight_current_s": 0.1929301656782627,
+      "release_id": "e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec"
+     },
+     "loadavg": [
+      8.97314453125,
+      10.27099609375,
+      11.09326171875
+     ],
+     "returncode": 0,
+     "wall_s": 0.58964
+    }
+   ],
+   "schema_version": "sec-index-v2",
+   "storage_root": "/Users/lowell/Projects/sec-edgar-local/logs/stage2a1-walls-20261115T173751Z/data"
+  },
+  {
+   "config": "/Users/lowell/Projects/sec-edgar-local/logs/stage2a1-walls-20261115T173751Z/starts-configs/origin-fc68adef9eb5909e4c97e1fb4cf5bb96915721d5bf4a533bbc782e5cc551f7ec.json",
+   "config_sha256": "cfe20fc9faa2710d8c1d480cc805f84d8e285f611ed63a9257873a2c239c484b",
+   "effective_config_sha256": "32b4da638464758c2926fc9040e207696a081d452b2af3813ddd36d179441740",
+   "logging_root": "/Users/lowell/Projects/sec-edgar-local/logs/stage2a1-walls-20261115T173751Z/logs",
+   "median_s": 0.544971,
+   "parser_version": "sec-index-parser-v1",
+   "python": "/Users/lowell/Projects/sec-edgar-local/releases/sha256=fc68adef9eb5909e4c97e1fb4cf5bb96915721d5bf4a533bbc782e5cc551f7ec/venv/bin/python",
+   "refused": 0,
+   "release_id": "fc68adef9eb5909e4c97e1fb4cf5bb96915721d5bf4a533bbc782e5cc551f7ec",
+   "resolve_child_median_s": 0.186148,
+   "resolve_child_s": [
+    0.198521,
+    0.183604,
+    0.182892,
+    0.190737,
+    0.186148
+   ],
+   "role": "origin",
+   "runs": [
+    {
+     "child": {
+      "import_s": 0.39823616575449705,
+      "load_config_s": 0.0020970841869711876,
+      "preflight_current_s": 0.18903579097241163,
+      "release_id": "fc68adef9eb5909e4c97e1fb4cf5bb96915721d5bf4a533bbc782e5cc551f7ec"
+     },
+     "loadavg": [
+      8.97314453125,
+      10.27099609375,
+      11.09326171875
+     ],
+     "returncode": 0,
+     "wall_s": 0.651408
+    },
+    {
+     "child": {
+      "import_s": 0.2896487503312528,
+      "load_config_s": 0.002326291985809803,
+      "preflight_current_s": 0.19603133294731379,
+      "release_id": "fc68adef9eb5909e4c97e1fb4cf5bb96915721d5bf4a533bbc782e5cc551f7ec"
+     },
+     "loadavg": [
+      8.97314453125,
+      10.27099609375,
+      11.09326171875
+     ],
+     "returncode": 0,
+     "wall_s": 0.544971
+    },
+    {
+     "child": {
+      "import_s": 0.2900960841216147,
+      "load_config_s": 0.002147790975868702,
+      "preflight_current_s": 0.19108945922926068,
+      "release_id": "fc68adef9eb5909e4c97e1fb4cf5bb96915721d5bf4a533bbc782e5cc551f7ec"
+     },
+     "loadavg": [
+      8.97314453125,
+      10.27099609375,
+      11.09326171875
+     ],
+     "returncode": 0,
+     "wall_s": 0.540494
+    },
+    {
+     "child": {
+      "import_s": 0.29417591728270054,
+      "load_config_s": 0.002165207639336586,
+      "preflight_current_s": 0.19366495916619897,
+      "release_id": "fc68adef9eb5909e4c97e1fb4cf5bb96915721d5bf4a533bbc782e5cc551f7ec"
+     },
+     "loadavg": [
+      8.97314453125,
+      10.27099609375,
+      11.09326171875
+     ],
+     "returncode": 0,
+     "wall_s": 0.552671
+    },
+    {
+     "child": {
+      "import_s": 0.28629795787855983,
+      "load_config_s": 0.0023369169794023037,
+      "preflight_current_s": 0.19611954083666205,
+      "release_id": "fc68adef9eb5909e4c97e1fb4cf5bb96915721d5bf4a533bbc782e5cc551f7ec"
+     },
+     "loadavg": [
+      8.97314453125,
+      10.27099609375,
+      11.09326171875
+     ],
+     "returncode": 0,
+     "wall_s": 0.543887
+    }
+   ],
+   "schema_version": "sec-index-v1",
+   "storage_root": "/Users/lowell/Projects/sec-edgar-local/logs/stage2a1-walls-20261115T173751Z/data"
+  }
+ ],
+ "scratch_config": {
+  "path": "/Users/lowell/Projects/sec-edgar-local/specs/evidence/stage2a1/walls/config.json",
+  "sha256": "6c454910a3a0df04569ee6d98a5785226daa11720907075df2789dc79c4203f9"
+ },
+ "scratch_root": "/Users/lowell/Projects/sec-edgar-local/logs/stage2a1-walls-20261115T173751Z",
+ "targets": [
+  {
+   "collect": {
+    "median_s": 0.594122,
+    "release_id": "c4de77b89bb1d8ecc5d094f0e1dc6f8a5f3a7935e3595a9dd086d1e41a6b8aa7"
+   },
+   "collect_medians_s": {
+    "c4de77b89bb1d8ecc5d094f0e1dc6f8a5f3a7935e3595a9dd086d1e41a6b8aa7": 0.594122,
+    "e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec": 0.58964,
+    "fc68adef9eb5909e4c97e1fb4cf5bb96915721d5bf4a533bbc782e5cc551f7ec": 0.544971
+   },
+   "kind": "quarterly",
+   "origin_releases": [
+    "c4de77b89bb1d8ecc5d094f0e1dc6f8a5f3a7935e3595a9dd086d1e41a6b8aa7",
+    "e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec",
+    "fc68adef9eb5909e4c97e1fb4cf5bb96915721d5bf4a533bbc782e5cc551f7ec"
+   ],
+   "period": "2024Q1",
+   "source_id": "b2d153963f7d7f903ea8c4d2fcb4b6cf58e8d12ffa633ddc82cb57de0131fd63",
+   "step": 1
+  },
+  {
+   "collect": {
+    "median_s": 0.544971,
+    "release_id": "fc68adef9eb5909e4c97e1fb4cf5bb96915721d5bf4a533bbc782e5cc551f7ec"
+   },
+   "collect_medians_s": {
+    "fc68adef9eb5909e4c97e1fb4cf5bb96915721d5bf4a533bbc782e5cc551f7ec": 0.544971
+   },
+   "kind": "daily",
+   "origin_releases": [
+    "fc68adef9eb5909e4c97e1fb4cf5bb96915721d5bf4a533bbc782e5cc551f7ec"
+   ],
+   "period": "2026-07-01",
+   "source_id": "924fd5f5b380e8a8603bab21b91edcd9408962b3a25fe812f067b25777063d58",
+   "step": 2
+  },
+  {
+   "collect": {
+    "median_s": 0.544971,
+    "release_id": "fc68adef9eb5909e4c97e1fb4cf5bb96915721d5bf4a533bbc782e5cc551f7ec"
+   },
+   "collect_medians_s": {
+    "fc68adef9eb5909e4c97e1fb4cf5bb96915721d5bf4a533bbc782e5cc551f7ec": 0.544971
+   },
+   "kind": "daily",
+   "origin_releases": [
+    "fc68adef9eb5909e4c97e1fb4cf5bb96915721d5bf4a533bbc782e5cc551f7ec"
+   ],
+   "period": "2026-08-07",
+   "source_id": "4ecf5916aec04a1bbe5e0a6e1a9adb68a8948a769dbe949972c34b87aa4529d1",
+   "step": 3
+  },
+  {
+   "collect": {
+    "median_s": 0.594122,
+    "release_id": "c4de77b89bb1d8ecc5d094f0e1dc6f8a5f3a7935e3595a9dd086d1e41a6b8aa7"
+   },
+   "collect_medians_s": {
+    "c4de77b89bb1d8ecc5d094f0e1dc6f8a5f3a7935e3595a9dd086d1e41a6b8aa7": 0.594122,
+    "e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec": 0.58964,
+    "fc68adef9eb5909e4c97e1fb4cf5bb96915721d5bf4a533bbc782e5cc551f7ec": 0.544971
+   },
+   "kind": "daily",
+   "origin_releases": [
+    "c4de77b89bb1d8ecc5d094f0e1dc6f8a5f3a7935e3595a9dd086d1e41a6b8aa7",
+    "e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec",
+    "fc68adef9eb5909e4c97e1fb4cf5bb96915721d5bf4a533bbc782e5cc551f7ec"
+   ],
+   "period": "2026-10-01",
+   "source_id": "6cf7f339fd98f08d888586fbf41d907cb071d3a54259128e659f51e1f7caaa72",
+   "step": 4
+  },
+  {
+   "collect": {
+    "median_s": 0.594122,
+    "release_id": "c4de77b89bb1d8ecc5d094f0e1dc6f8a5f3a7935e3595a9dd086d1e41a6b8aa7"
+   },
+   "collect_medians_s": {
+    "c4de77b89bb1d8ecc5d094f0e1dc6f8a5f3a7935e3595a9dd086d1e41a6b8aa7": 0.594122,
+    "e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec": 0.58964
+   },
+   "kind": "quarterly",
+   "origin_releases": [
+    "c4de77b89bb1d8ecc5d094f0e1dc6f8a5f3a7935e3595a9dd086d1e41a6b8aa7",
+    "e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec"
+   ],
+   "period": "2026Q1",
+   "source_id": "f8f05c9fd9e634303de40171631df987c8977b784ebd5919c1896e4e13d2ed12",
+   "step": 5
+  },
+  {
+   "collect": {
+    "median_s": 0.594122,
+    "release_id": "c4de77b89bb1d8ecc5d094f0e1dc6f8a5f3a7935e3595a9dd086d1e41a6b8aa7"
+   },
+   "collect_medians_s": {
+    "c4de77b89bb1d8ecc5d094f0e1dc6f8a5f3a7935e3595a9dd086d1e41a6b8aa7": 0.594122,
+    "e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec": 0.58964
+   },
+   "kind": "quarterly",
+   "origin_releases": [
+    "c4de77b89bb1d8ecc5d094f0e1dc6f8a5f3a7935e3595a9dd086d1e41a6b8aa7",
+    "e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec"
+   ],
+   "period": "2026Q3",
+   "source_id": "5005901a1e8132207ea0cf7a0d4bec1d7b9ca3a6f0371b9e45c9eb2863045086",
+   "step": 6
+  },
+  {
+   "collect": {
+    "median_s": 0.544971,
+    "release_id": "fc68adef9eb5909e4c97e1fb4cf5bb96915721d5bf4a533bbc782e5cc551f7ec"
+   },
+   "collect_medians_s": {
+    "fc68adef9eb5909e4c97e1fb4cf5bb96915721d5bf4a533bbc782e5cc551f7ec": 0.544971
+   },
+   "kind": "daily",
+   "origin_releases": [
+    "fc68adef9eb5909e4c97e1fb4cf5bb96915721d5bf4a533bbc782e5cc551f7ec"
+   ],
+   "period": "2026-09-24",
+   "source_id": "d2c80002601d76fb076f7141eb07bb5c0c995f56ffe1f3dbed1a9bd427805dd2",
+   "step": 8
+  },
+  {
+   "collect": {
+    "median_s": 0.594122,
+    "release_id": "c4de77b89bb1d8ecc5d094f0e1dc6f8a5f3a7935e3595a9dd086d1e41a6b8aa7"
+   },
+   "collect_medians_s": {
+    "9fa189a0bea3c6545e7bce5b82d266d601abe2c3a35a66a58a8b8378d2bc283b": 0.589619,
+    "c4de77b89bb1d8ecc5d094f0e1dc6f8a5f3a7935e3595a9dd086d1e41a6b8aa7": 0.594122,
+    "e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec": 0.58964
+   },
+   "kind": "quarterly",
+   "origin_releases": [
+    "9fa189a0bea3c6545e7bce5b82d266d601abe2c3a35a66a58a8b8378d2bc283b",
+    "c4de77b89bb1d8ecc5d094f0e1dc6f8a5f3a7935e3595a9dd086d1e41a6b8aa7",
+    "e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec"
+   ],
+   "period": "2026Q4",
+   "source_id": "d64895140b037ef3df3e0c867437b555053c3a14c33d8c0c3526c9067354d0c7",
+   "step": 10
+  }
+ ]
+}

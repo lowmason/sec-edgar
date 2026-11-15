@@ -1,0 +1,480 @@
+{
+ "d": {
+  "daily_sources_in_manifest": 5,
+  "generation_id": "b14de2bd61743e4490cca6d84c61880a8568731aed712db87862c3ca3bdce982",
+  "period": "2026-08-07",
+  "schema_version": "sec-index-v1",
+  "source_id": "4ecf5916aec04a1bbe5e0a6e1a9adb68a8948a769dbe949972c34b87aa4529d1"
+ },
+ "expected_lines": 18,
+ "order": [
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7,
+  8,
+  9,
+  10
+ ],
+ "run": {
+  "config": "/Users/lowell/Projects/sec-edgar-local/specs/evidence/stage2a1/walls/config.json",
+  "config_sha256": "6c454910a3a0df04569ee6d98a5785226daa11720907075df2789dc79c4203f9",
+  "engine_terms_per_member": 13,
+  "expected_engine_lines": 104,
+  "expected_result_lines": 122,
+  "format": "stage2a1-member-walls-targets-v1",
+  "interpreter": {
+   "dont_write_bytecode": true,
+   "executable": "/Users/lowell/Projects/sec-edgar-local/releases/sha256=f414caf89eaac416f8b6a27330773eb0d398cc5caedb881a37cf228379f7fa18/venv/bin/python",
+   "isolated": true,
+   "prefix": "/Users/lowell/Projects/sec-edgar-local/releases/sha256=f414caf89eaac416f8b6a27330773eb0d398cc5caedb881a37cf228379f7fa18/venv",
+   "pycache_prefix": "/dev/null",
+   "version": "3.14.0"
+  },
+  "loadavg_start": [
+   24.1142578125,
+   14.6943359375,
+   11.75390625
+  ],
+  "release": "f414caf89eaac416f8b6a27330773eb0d398cc5caedb881a37cf228379f7fa18",
+  "root": "/Users/lowell/Projects/sec-edgar-local/logs/stage2a1-walls-20261115T173751Z/data",
+  "started_at": "2026-11-15T17:39:21.027290+00:00"
+ },
+ "skipped_steps": [],
+ "targets": {
+  "1": {
+   "candidates": [
+    {
+     "period": "2024Q1",
+     "raw_sha256": "ba4aa3d405d4d603c5e881c2db023070b9b9f8eebc80a361dc61d831353453cb",
+     "received_at": "2026-10-18T23:23:36.900338+00:00",
+     "snapshots": 1,
+     "source_workset_id": "982a0eb4064265dafa70ff844e624e48aaa729cce08b3435908903afb193c4e8",
+     "workset_id": "cf28e1555fd18af92ce72816c5df6f0fb297fc98684107bb699d5cc9b0eaebdf",
+     "workset_ref": "worksets/sec/snapshot/sha256=cf28e1555fd18af92ce72816c5df6f0fb297fc98684107bb699d5cc9b0eaebdf/workset.json"
+    },
+    {
+     "period": "2024Q1",
+     "raw_sha256": "ba4aa3d405d4d603c5e881c2db023070b9b9f8eebc80a361dc61d831353453cb",
+     "received_at": "2026-10-18T23:23:36.900338+00:00",
+     "snapshots": 1,
+     "source_workset_id": "efa526dda92a9b441ed0a37924583f415b2fdad3676b4cc189381bea2edaf738",
+     "workset_id": "f33d5257e1d869690626d9b13d97f9f8b6dbf527769a4ec39eadd823ed8acf00",
+     "workset_ref": "worksets/sec/snapshot/sha256=f33d5257e1d869690626d9b13d97f9f8b6dbf527769a4ec39eadd823ed8acf00/workset.json"
+    }
+   ],
+   "chosen": {
+    "period": "2024Q1",
+    "raw_sha256": "ba4aa3d405d4d603c5e881c2db023070b9b9f8eebc80a361dc61d831353453cb",
+    "received_at": "2026-10-18T23:23:36.900338+00:00",
+    "snapshots": 1,
+    "source_workset_id": "efa526dda92a9b441ed0a37924583f415b2fdad3676b4cc189381bea2edaf738",
+    "workset_id": "f33d5257e1d869690626d9b13d97f9f8b6dbf527769a4ec39eadd823ed8acf00",
+    "workset_ref": "worksets/sec/snapshot/sha256=f33d5257e1d869690626d9b13d97f9f8b6dbf527769a4ec39eadd823ed8acf00/workset.json"
+   },
+   "kind": "quarterly",
+   "member": {
+    "member_id": "982a0eb4064265dafa70ff844e624e48aaa729cce08b3435908903afb193c4e8",
+    "origin_config_sha256": "fb93b0e8e05dbc1cbc9bd167ae02ef2d775629905c15938055a6a93c5fb95e96",
+    "origin_release": "c4de77b89bb1d8ecc5d094f0e1dc6f8a5f3a7935e3595a9dd086d1e41a6b8aa7",
+    "pin_is_chosen": true,
+    "pinned_sha256": "ba4aa3d405d4d603c5e881c2db023070b9b9f8eebc80a361dc61d831353453cb",
+    "refused_lower": [],
+    "registered": [
+     "982a0eb4064265dafa70ff844e624e48aaa729cce08b3435908903afb193c4e8",
+     "efa526dda92a9b441ed0a37924583f415b2fdad3676b4cc189381bea2edaf738"
+    ],
+    "unbound": false,
+    "value": {
+     "contract_version": "sec-local-contract-v1",
+     "member_id": "982a0eb4064265dafa70ff844e624e48aaa729cce08b3435908903afb193c4e8",
+     "member_ref": "worksets/sec/source/sha256=982a0eb4064265dafa70ff844e624e48aaa729cce08b3435908903afb193c4e8/workset.json",
+     "parent_ref": "worksets/sec/source/sha256=c0ac8a468ce869b2405fc26ebe0c95aecbc9a3b1a7e31efa81edf21696194f8d/workset.json",
+     "source": {
+      "canonical_url": "https://www.sec.gov/Archives/edgar/full-index/2024/QTR1/master.zip",
+      "kind": "quarterly",
+      "period": "2024Q1",
+      "representation": "zip",
+      "source_id": "b2d153963f7d7f903ea8c4d2fcb4b6cf58e8d12ffa633ddc82cb57de0131fd63"
+     }
+    }
+   },
+   "period": "2024Q1",
+   "source_id": "b2d153963f7d7f903ea8c4d2fcb4b6cf58e8d12ffa633ddc82cb57de0131fd63"
+  },
+  "2": {
+   "candidates": [
+    {
+     "period": "2026-07-01",
+     "raw_sha256": "0429bd0fc7d37caa5ee29208139df827666683fd893a5b61a9fe9b9be3a7d3f9",
+     "received_at": "2026-10-29T13:41:13.960002+00:00",
+     "snapshots": 1,
+     "source_workset_id": "3554e8efb093532572ea5a35a1bf627a175784f0eac74b92e0777cb2e5d461ff",
+     "workset_id": "03feff9d57bd5146178700bfd73101e482864df588cb779f0cd4964250eaf86b",
+     "workset_ref": "worksets/sec/snapshot/sha256=03feff9d57bd5146178700bfd73101e482864df588cb779f0cd4964250eaf86b/workset.json"
+    }
+   ],
+   "chosen": {
+    "period": "2026-07-01",
+    "raw_sha256": "0429bd0fc7d37caa5ee29208139df827666683fd893a5b61a9fe9b9be3a7d3f9",
+    "received_at": "2026-10-29T13:41:13.960002+00:00",
+    "snapshots": 1,
+    "source_workset_id": "3554e8efb093532572ea5a35a1bf627a175784f0eac74b92e0777cb2e5d461ff",
+    "workset_id": "03feff9d57bd5146178700bfd73101e482864df588cb779f0cd4964250eaf86b",
+    "workset_ref": "worksets/sec/snapshot/sha256=03feff9d57bd5146178700bfd73101e482864df588cb779f0cd4964250eaf86b/workset.json"
+   },
+   "kind": "daily",
+   "member": {
+    "member_id": "3554e8efb093532572ea5a35a1bf627a175784f0eac74b92e0777cb2e5d461ff",
+    "origin_config_sha256": "088403cb55f5b6541502cb07678c5757ffdb13b92fac52a52b6aa663177b7d4d",
+    "origin_release": "fc68adef9eb5909e4c97e1fb4cf5bb96915721d5bf4a533bbc782e5cc551f7ec",
+    "pin_is_chosen": true,
+    "pinned_sha256": "0429bd0fc7d37caa5ee29208139df827666683fd893a5b61a9fe9b9be3a7d3f9",
+    "refused_lower": [],
+    "registered": [
+     "3554e8efb093532572ea5a35a1bf627a175784f0eac74b92e0777cb2e5d461ff"
+    ],
+    "unbound": false,
+    "value": {
+     "contract_version": "sec-local-contract-v1",
+     "member_id": "3554e8efb093532572ea5a35a1bf627a175784f0eac74b92e0777cb2e5d461ff",
+     "member_ref": "worksets/sec/source/sha256=3554e8efb093532572ea5a35a1bf627a175784f0eac74b92e0777cb2e5d461ff/workset.json",
+     "parent_ref": "worksets/sec/source/sha256=0d56c6ca86e98723191810135e92528111e8d9214ce9e96c7484862753322295/workset.json",
+     "source": {
+      "canonical_url": "https://www.sec.gov/Archives/edgar/daily-index/2026/QTR3/master.20260701.idx",
+      "kind": "daily",
+      "period": "2026-07-01",
+      "representation": "idx",
+      "source_id": "924fd5f5b380e8a8603bab21b91edcd9408962b3a25fe812f067b25777063d58"
+     }
+    }
+   },
+   "period": "2026-07-01",
+   "source_id": "924fd5f5b380e8a8603bab21b91edcd9408962b3a25fe812f067b25777063d58"
+  },
+  "3": {
+   "candidates": [
+    {
+     "period": "2026-08-07",
+     "raw_sha256": "209ffb02327c19bf193e549937a7d3cacd372ce6a63af264e69c9de132fee0cf",
+     "received_at": "2026-10-31T16:37:12.419916+00:00",
+     "snapshots": 1,
+     "source_workset_id": "951996f63cf08f74439430ea80b8b1b7402fb4b353375c5dc6c7aaaa6aa84baf",
+     "workset_id": "7d989a4c01158ab80ab5857b108f0539feedde090cd24b574f5f676be0f84ffc",
+     "workset_ref": "worksets/sec/snapshot/sha256=7d989a4c01158ab80ab5857b108f0539feedde090cd24b574f5f676be0f84ffc/workset.json"
+    }
+   ],
+   "chosen": {
+    "period": "2026-08-07",
+    "raw_sha256": "209ffb02327c19bf193e549937a7d3cacd372ce6a63af264e69c9de132fee0cf",
+    "received_at": "2026-10-31T16:37:12.419916+00:00",
+    "snapshots": 1,
+    "source_workset_id": "951996f63cf08f74439430ea80b8b1b7402fb4b353375c5dc6c7aaaa6aa84baf",
+    "workset_id": "7d989a4c01158ab80ab5857b108f0539feedde090cd24b574f5f676be0f84ffc",
+    "workset_ref": "worksets/sec/snapshot/sha256=7d989a4c01158ab80ab5857b108f0539feedde090cd24b574f5f676be0f84ffc/workset.json"
+   },
+   "kind": "daily",
+   "member": {
+    "member_id": "951996f63cf08f74439430ea80b8b1b7402fb4b353375c5dc6c7aaaa6aa84baf",
+    "origin_config_sha256": "088403cb55f5b6541502cb07678c5757ffdb13b92fac52a52b6aa663177b7d4d",
+    "origin_release": "fc68adef9eb5909e4c97e1fb4cf5bb96915721d5bf4a533bbc782e5cc551f7ec",
+    "pin_is_chosen": true,
+    "pinned_sha256": "209ffb02327c19bf193e549937a7d3cacd372ce6a63af264e69c9de132fee0cf",
+    "refused_lower": [],
+    "registered": [
+     "951996f63cf08f74439430ea80b8b1b7402fb4b353375c5dc6c7aaaa6aa84baf"
+    ],
+    "unbound": false,
+    "value": {
+     "contract_version": "sec-local-contract-v1",
+     "member_id": "951996f63cf08f74439430ea80b8b1b7402fb4b353375c5dc6c7aaaa6aa84baf",
+     "member_ref": "worksets/sec/source/sha256=951996f63cf08f74439430ea80b8b1b7402fb4b353375c5dc6c7aaaa6aa84baf/workset.json",
+     "parent_ref": "worksets/sec/source/sha256=0d56c6ca86e98723191810135e92528111e8d9214ce9e96c7484862753322295/workset.json",
+     "source": {
+      "canonical_url": "https://www.sec.gov/Archives/edgar/daily-index/2026/QTR3/master.20260807.idx",
+      "kind": "daily",
+      "period": "2026-08-07",
+      "representation": "idx",
+      "source_id": "4ecf5916aec04a1bbe5e0a6e1a9adb68a8948a769dbe949972c34b87aa4529d1"
+     }
+    }
+   },
+   "period": "2026-08-07",
+   "source_id": "4ecf5916aec04a1bbe5e0a6e1a9adb68a8948a769dbe949972c34b87aa4529d1"
+  },
+  "4": {
+   "candidates": [
+    {
+     "period": "2026-10-01",
+     "raw_sha256": "529aabd8111461c373b409da01e106a75662af200ac75f9545106a55b4d8ba17",
+     "received_at": "2026-10-31T16:49:16.506131+00:00",
+     "snapshots": 1,
+     "source_workset_id": "4c2da1274f452848aa2bcfc05a8a2ae0f2a8a06d3edf75d148ad8a0a83494f0b",
+     "workset_id": "ccd3880e1486e92ce9541170bf9657a268d9035e00cdf9ff68c93b727aa2b0f4",
+     "workset_ref": "worksets/sec/snapshot/sha256=ccd3880e1486e92ce9541170bf9657a268d9035e00cdf9ff68c93b727aa2b0f4/workset.json"
+    }
+   ],
+   "chosen": {
+    "period": "2026-10-01",
+    "raw_sha256": "529aabd8111461c373b409da01e106a75662af200ac75f9545106a55b4d8ba17",
+    "received_at": "2026-10-31T16:49:16.506131+00:00",
+    "snapshots": 1,
+    "source_workset_id": "4c2da1274f452848aa2bcfc05a8a2ae0f2a8a06d3edf75d148ad8a0a83494f0b",
+    "workset_id": "ccd3880e1486e92ce9541170bf9657a268d9035e00cdf9ff68c93b727aa2b0f4",
+    "workset_ref": "worksets/sec/snapshot/sha256=ccd3880e1486e92ce9541170bf9657a268d9035e00cdf9ff68c93b727aa2b0f4/workset.json"
+   },
+   "kind": "daily",
+   "member": {
+    "member_id": "4ba976d236cc4c9686d3e8c1587d063e2fc46c53826dbda4220173ba076d9fc1",
+    "origin_config_sha256": "fb93b0e8e05dbc1cbc9bd167ae02ef2d775629905c15938055a6a93c5fb95e96",
+    "origin_release": "c4de77b89bb1d8ecc5d094f0e1dc6f8a5f3a7935e3595a9dd086d1e41a6b8aa7",
+    "pin_is_chosen": true,
+    "pinned_sha256": "529aabd8111461c373b409da01e106a75662af200ac75f9545106a55b4d8ba17",
+    "refused_lower": [],
+    "registered": [
+     "4ba976d236cc4c9686d3e8c1587d063e2fc46c53826dbda4220173ba076d9fc1",
+     "4c2da1274f452848aa2bcfc05a8a2ae0f2a8a06d3edf75d148ad8a0a83494f0b"
+    ],
+    "unbound": false,
+    "value": {
+     "contract_version": "sec-local-contract-v1",
+     "member_id": "4ba976d236cc4c9686d3e8c1587d063e2fc46c53826dbda4220173ba076d9fc1",
+     "member_ref": "worksets/sec/source/sha256=4ba976d236cc4c9686d3e8c1587d063e2fc46c53826dbda4220173ba076d9fc1/workset.json",
+     "parent_ref": "worksets/sec/source/sha256=c0ac8a468ce869b2405fc26ebe0c95aecbc9a3b1a7e31efa81edf21696194f8d/workset.json",
+     "source": {
+      "canonical_url": "https://www.sec.gov/Archives/edgar/daily-index/2026/QTR4/master.20261001.idx",
+      "kind": "daily",
+      "period": "2026-10-01",
+      "representation": "idx",
+      "source_id": "6cf7f339fd98f08d888586fbf41d907cb071d3a54259128e659f51e1f7caaa72"
+     }
+    }
+   },
+   "period": "2026-10-01",
+   "source_id": "6cf7f339fd98f08d888586fbf41d907cb071d3a54259128e659f51e1f7caaa72"
+  },
+  "5": {
+   "candidates": [
+    {
+     "period": "2026Q1",
+     "raw_sha256": "d2655b50ae65bc8f02d3be5abeb34ae56b129bae47aa8d4281f9ec695995ab51",
+     "received_at": "2026-10-31T17:53:45.283016+00:00",
+     "snapshots": 1,
+     "source_workset_id": "c55de5207c1d3691117d2da02bcea58103eac3543d187d281f10ea05b8b857ba",
+     "workset_id": "1c57fd2bd54fbfe34f0b8df2ab7207b3e0f57f5603fea67af02759e46746fa37",
+     "workset_ref": "worksets/sec/snapshot/sha256=1c57fd2bd54fbfe34f0b8df2ab7207b3e0f57f5603fea67af02759e46746fa37/workset.json"
+    }
+   ],
+   "chosen": {
+    "period": "2026Q1",
+    "raw_sha256": "d2655b50ae65bc8f02d3be5abeb34ae56b129bae47aa8d4281f9ec695995ab51",
+    "received_at": "2026-10-31T17:53:45.283016+00:00",
+    "snapshots": 1,
+    "source_workset_id": "c55de5207c1d3691117d2da02bcea58103eac3543d187d281f10ea05b8b857ba",
+    "workset_id": "1c57fd2bd54fbfe34f0b8df2ab7207b3e0f57f5603fea67af02759e46746fa37",
+    "workset_ref": "worksets/sec/snapshot/sha256=1c57fd2bd54fbfe34f0b8df2ab7207b3e0f57f5603fea67af02759e46746fa37/workset.json"
+   },
+   "kind": "quarterly",
+   "member": {
+    "member_id": "c55de5207c1d3691117d2da02bcea58103eac3543d187d281f10ea05b8b857ba",
+    "origin_config_sha256": "fb93b0e8e05dbc1cbc9bd167ae02ef2d775629905c15938055a6a93c5fb95e96",
+    "origin_release": "c4de77b89bb1d8ecc5d094f0e1dc6f8a5f3a7935e3595a9dd086d1e41a6b8aa7",
+    "pin_is_chosen": true,
+    "pinned_sha256": "d2655b50ae65bc8f02d3be5abeb34ae56b129bae47aa8d4281f9ec695995ab51",
+    "refused_lower": [],
+    "registered": [
+     "c55de5207c1d3691117d2da02bcea58103eac3543d187d281f10ea05b8b857ba"
+    ],
+    "unbound": false,
+    "value": {
+     "contract_version": "sec-local-contract-v1",
+     "member_id": "c55de5207c1d3691117d2da02bcea58103eac3543d187d281f10ea05b8b857ba",
+     "member_ref": "worksets/sec/source/sha256=c55de5207c1d3691117d2da02bcea58103eac3543d187d281f10ea05b8b857ba/workset.json",
+     "parent_ref": "worksets/sec/source/sha256=c0ac8a468ce869b2405fc26ebe0c95aecbc9a3b1a7e31efa81edf21696194f8d/workset.json",
+     "source": {
+      "canonical_url": "https://www.sec.gov/Archives/edgar/full-index/2026/QTR1/master.zip",
+      "kind": "quarterly",
+      "period": "2026Q1",
+      "representation": "zip",
+      "source_id": "f8f05c9fd9e634303de40171631df987c8977b784ebd5919c1896e4e13d2ed12"
+     }
+    }
+   },
+   "period": "2026Q1",
+   "source_id": "f8f05c9fd9e634303de40171631df987c8977b784ebd5919c1896e4e13d2ed12"
+  },
+  "6": {
+   "candidates": [
+    {
+     "period": "2026Q3",
+     "raw_sha256": "526d2dbf2dd2e4c6ac4b1b6e0b383476997e74c5a5c243dcf71dfeaff7cc9150",
+     "received_at": "2026-10-31T17:54:33.039228+00:00",
+     "snapshots": 1,
+     "source_workset_id": "32fe89cf323487e8aa9398a2403a3e999a1a08a7af0d7828139c97729b93283b",
+     "workset_id": "50de26a90c7a6d924f80a1b36c92f575b90d095daeff22afa8a9e4ea33a0799f",
+     "workset_ref": "worksets/sec/snapshot/sha256=50de26a90c7a6d924f80a1b36c92f575b90d095daeff22afa8a9e4ea33a0799f/workset.json"
+    }
+   ],
+   "chosen": {
+    "period": "2026Q3",
+    "raw_sha256": "526d2dbf2dd2e4c6ac4b1b6e0b383476997e74c5a5c243dcf71dfeaff7cc9150",
+    "received_at": "2026-10-31T17:54:33.039228+00:00",
+    "snapshots": 1,
+    "source_workset_id": "32fe89cf323487e8aa9398a2403a3e999a1a08a7af0d7828139c97729b93283b",
+    "workset_id": "50de26a90c7a6d924f80a1b36c92f575b90d095daeff22afa8a9e4ea33a0799f",
+    "workset_ref": "worksets/sec/snapshot/sha256=50de26a90c7a6d924f80a1b36c92f575b90d095daeff22afa8a9e4ea33a0799f/workset.json"
+   },
+   "kind": "quarterly",
+   "member": {
+    "member_id": "32fe89cf323487e8aa9398a2403a3e999a1a08a7af0d7828139c97729b93283b",
+    "origin_config_sha256": "fb93b0e8e05dbc1cbc9bd167ae02ef2d775629905c15938055a6a93c5fb95e96",
+    "origin_release": "c4de77b89bb1d8ecc5d094f0e1dc6f8a5f3a7935e3595a9dd086d1e41a6b8aa7",
+    "pin_is_chosen": true,
+    "pinned_sha256": "526d2dbf2dd2e4c6ac4b1b6e0b383476997e74c5a5c243dcf71dfeaff7cc9150",
+    "refused_lower": [],
+    "registered": [
+     "32fe89cf323487e8aa9398a2403a3e999a1a08a7af0d7828139c97729b93283b"
+    ],
+    "unbound": false,
+    "value": {
+     "contract_version": "sec-local-contract-v1",
+     "member_id": "32fe89cf323487e8aa9398a2403a3e999a1a08a7af0d7828139c97729b93283b",
+     "member_ref": "worksets/sec/source/sha256=32fe89cf323487e8aa9398a2403a3e999a1a08a7af0d7828139c97729b93283b/workset.json",
+     "parent_ref": "worksets/sec/source/sha256=c0ac8a468ce869b2405fc26ebe0c95aecbc9a3b1a7e31efa81edf21696194f8d/workset.json",
+     "source": {
+      "canonical_url": "https://www.sec.gov/Archives/edgar/full-index/2026/QTR3/master.zip",
+      "kind": "quarterly",
+      "period": "2026Q3",
+      "representation": "zip",
+      "source_id": "5005901a1e8132207ea0cf7a0d4bec1d7b9ca3a6f0371b9e45c9eb2863045086"
+     }
+    }
+   },
+   "period": "2026Q3",
+   "source_id": "5005901a1e8132207ea0cf7a0d4bec1d7b9ca3a6f0371b9e45c9eb2863045086"
+  },
+  "8": {
+   "candidates": [
+    {
+     "period": "2026-09-24",
+     "raw_sha256": "ecaccf53678375e2ff3b7cc3209fa693c4222bb8bd71a27c4b3b04b1ce10eacd",
+     "received_at": "2026-10-31T16:47:49.278566+00:00",
+     "snapshots": 1,
+     "source_workset_id": "ffecd154b132dd65672a5d085b9ad7c63e50b5303b497f2330f0373c5dfc575b",
+     "workset_id": "e97fd0dc3bdd56ed1fc4028eda8e5765d346adaedb46d7058e0217ed0ffc8fda",
+     "workset_ref": "worksets/sec/snapshot/sha256=e97fd0dc3bdd56ed1fc4028eda8e5765d346adaedb46d7058e0217ed0ffc8fda/workset.json"
+    }
+   ],
+   "chosen": {
+    "period": "2026-09-24",
+    "raw_sha256": "ecaccf53678375e2ff3b7cc3209fa693c4222bb8bd71a27c4b3b04b1ce10eacd",
+    "received_at": "2026-10-31T16:47:49.278566+00:00",
+    "snapshots": 1,
+    "source_workset_id": "ffecd154b132dd65672a5d085b9ad7c63e50b5303b497f2330f0373c5dfc575b",
+    "workset_id": "e97fd0dc3bdd56ed1fc4028eda8e5765d346adaedb46d7058e0217ed0ffc8fda",
+    "workset_ref": "worksets/sec/snapshot/sha256=e97fd0dc3bdd56ed1fc4028eda8e5765d346adaedb46d7058e0217ed0ffc8fda/workset.json"
+   },
+   "kind": "daily",
+   "member": {
+    "member_id": "ffecd154b132dd65672a5d085b9ad7c63e50b5303b497f2330f0373c5dfc575b",
+    "origin_config_sha256": "088403cb55f5b6541502cb07678c5757ffdb13b92fac52a52b6aa663177b7d4d",
+    "origin_release": "fc68adef9eb5909e4c97e1fb4cf5bb96915721d5bf4a533bbc782e5cc551f7ec",
+    "pin_is_chosen": true,
+    "pinned_sha256": "ecaccf53678375e2ff3b7cc3209fa693c4222bb8bd71a27c4b3b04b1ce10eacd",
+    "refused_lower": [],
+    "registered": [
+     "ffecd154b132dd65672a5d085b9ad7c63e50b5303b497f2330f0373c5dfc575b"
+    ],
+    "unbound": false,
+    "value": {
+     "contract_version": "sec-local-contract-v1",
+     "member_id": "ffecd154b132dd65672a5d085b9ad7c63e50b5303b497f2330f0373c5dfc575b",
+     "member_ref": "worksets/sec/source/sha256=ffecd154b132dd65672a5d085b9ad7c63e50b5303b497f2330f0373c5dfc575b/workset.json",
+     "parent_ref": "worksets/sec/source/sha256=0d56c6ca86e98723191810135e92528111e8d9214ce9e96c7484862753322295/workset.json",
+     "source": {
+      "canonical_url": "https://www.sec.gov/Archives/edgar/daily-index/2026/QTR3/master.20260924.idx",
+      "kind": "daily",
+      "period": "2026-09-24",
+      "representation": "idx",
+      "source_id": "d2c80002601d76fb076f7141eb07bb5c0c995f56ffe1f3dbed1a9bd427805dd2"
+     }
+    }
+   },
+   "period": "2026-09-24",
+   "source_id": "d2c80002601d76fb076f7141eb07bb5c0c995f56ffe1f3dbed1a9bd427805dd2"
+  },
+  "10": {
+   "candidates": [
+    {
+     "period": "2026Q4",
+     "raw_sha256": "c3756b31f860ff8a3690bad2da9f4528c19cefcae9119bbf47f4c3dedcf97b84",
+     "received_at": "2026-10-31T16:52:08.164959+00:00",
+     "snapshots": 1,
+     "source_workset_id": "5eb08c0be23efd9df556413dac9685cc3d6eb5a36dc8edb9aa0e9f5d8a6548be",
+     "workset_id": "66be1a76f066ee981c4f1c82f9ec6436c5bdfc52e4ea09bde09ae06fb1e796d2",
+     "workset_ref": "worksets/sec/snapshot/sha256=66be1a76f066ee981c4f1c82f9ec6436c5bdfc52e4ea09bde09ae06fb1e796d2/workset.json"
+    },
+    {
+     "period": "2026Q4",
+     "raw_sha256": "c3756b31f860ff8a3690bad2da9f4528c19cefcae9119bbf47f4c3dedcf97b84",
+     "received_at": "2026-10-31T16:52:08.164959+00:00",
+     "snapshots": 1,
+     "source_workset_id": "38148f770df37a1d5bdb8f6d9280ebf672365b3079ac7a16ffaae20354c91a98",
+     "workset_id": "e575217ad31fd3a70d9067d00383635cb29ae8a581f86ae42f19d497a7025476",
+     "workset_ref": "worksets/sec/snapshot/sha256=e575217ad31fd3a70d9067d00383635cb29ae8a581f86ae42f19d497a7025476/workset.json"
+    },
+    {
+     "period": "2026Q4",
+     "raw_sha256": "c3756b31f860ff8a3690bad2da9f4528c19cefcae9119bbf47f4c3dedcf97b84",
+     "received_at": "2026-10-31T16:52:08.164959+00:00",
+     "snapshots": 1,
+     "source_workset_id": "3a65004fc6eae753225fcaf1e5f6545267f577934f0f77d391d85113832afc3b",
+     "workset_id": "f8e94c982a8b23812d716edcb5a300bcd0d95b1b00594085556f617de11cd33b",
+     "workset_ref": "worksets/sec/snapshot/sha256=f8e94c982a8b23812d716edcb5a300bcd0d95b1b00594085556f617de11cd33b/workset.json"
+    }
+   ],
+   "chosen": {
+    "period": "2026Q4",
+    "raw_sha256": "c3756b31f860ff8a3690bad2da9f4528c19cefcae9119bbf47f4c3dedcf97b84",
+    "received_at": "2026-10-31T16:52:08.164959+00:00",
+    "snapshots": 1,
+    "source_workset_id": "3a65004fc6eae753225fcaf1e5f6545267f577934f0f77d391d85113832afc3b",
+    "workset_id": "f8e94c982a8b23812d716edcb5a300bcd0d95b1b00594085556f617de11cd33b",
+    "workset_ref": "worksets/sec/snapshot/sha256=f8e94c982a8b23812d716edcb5a300bcd0d95b1b00594085556f617de11cd33b/workset.json"
+   },
+   "kind": "quarterly",
+   "member": {
+    "member_id": "38148f770df37a1d5bdb8f6d9280ebf672365b3079ac7a16ffaae20354c91a98",
+    "origin_config_sha256": "dc3a45ee4eeb45e32e5c1560b2ce1532848cd35bc8296bbdc0d7eaa91cd10621",
+    "origin_release": "c4de77b89bb1d8ecc5d094f0e1dc6f8a5f3a7935e3595a9dd086d1e41a6b8aa7",
+    "pin_is_chosen": true,
+    "pinned_sha256": "c3756b31f860ff8a3690bad2da9f4528c19cefcae9119bbf47f4c3dedcf97b84",
+    "refused_lower": [],
+    "registered": [
+     "38148f770df37a1d5bdb8f6d9280ebf672365b3079ac7a16ffaae20354c91a98",
+     "3a65004fc6eae753225fcaf1e5f6545267f577934f0f77d391d85113832afc3b",
+     "5eb08c0be23efd9df556413dac9685cc3d6eb5a36dc8edb9aa0e9f5d8a6548be"
+    ],
+    "unbound": false,
+    "value": {
+     "contract_version": "sec-local-contract-v1",
+     "member_id": "38148f770df37a1d5bdb8f6d9280ebf672365b3079ac7a16ffaae20354c91a98",
+     "member_ref": "worksets/sec/source/sha256=38148f770df37a1d5bdb8f6d9280ebf672365b3079ac7a16ffaae20354c91a98/workset.json",
+     "parent_ref": "worksets/sec/source/sha256=7fee60652232b203b1ab55b6b7f71b0a7a66a26e354e041722c6b8aea2dae05d/workset.json",
+     "source": {
+      "canonical_url": "https://www.sec.gov/Archives/edgar/full-index/2026/QTR4/master.zip",
+      "kind": "quarterly",
+      "period": "2026Q4",
+      "representation": "zip",
+      "source_id": "d64895140b037ef3df3e0c867437b555053c3a14c33d8c0c3526c9067354d0c7"
+     }
+    }
+   },
+   "period": "2026Q4",
+   "source_id": "d64895140b037ef3df3e0c867437b555053c3a14c33d8c0c3526c9067354d0c7"
+  }
+ }
+}
