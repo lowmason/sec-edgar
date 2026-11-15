@@ -81,4 +81,6 @@ binding {'binding_version': 'sec-local-binding-v1', 'root': '/Users/lowell/Proje
 
 The approval authorizes no SEC traffic.
 
+**Selection commit:** `818066b6ca596dbe292627bf285f293f190ff073` (`chore(config): select the 2a1 release`).
+
 No SEC request was sent in this stage.

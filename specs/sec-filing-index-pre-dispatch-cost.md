@@ -172,7 +172,7 @@ member's own checks at dispatch, which use no kept value (H4), or by the next ru
 ### 4.4 Errors and edge cases
 
 1. **A corrupt publish call or parent.** The computation raises as today and nothing is kept. Each member that needs
-   it gets the same `state_conflict` gap as today. That case costs what it costs today.
+   it gets the same gap as today, `legacy_member_unresolved`. That case costs what it costs today.
 2. **The discovery child fails** (`ChildUnfinished`). `renew()` still runs. The rest of selection is unchanged.
 3. **A store with no publish calls.** The kept list is empty and is reused.
 4. **A resumed attempt** whose `selection.json` exists. `run_workflow` calls only `freeze_selection`, which uses no

@@ -136,6 +136,11 @@ discovery. Quarterly discovery can therefore include daily sources retained in t
 `backfill` does not promise exactly one body per requested quarter. Reuse validated completed work
 without hiding unresolved earlier units. Exact origin and repair contexts remain authoritative.
 
+**Selection cost.** Within one selection, the publish-call authority and each parent's re-validation run
+once between child executions. Each dispatched member's own checks still re-validate everything.
+(Stage 2a1, plan 9, 2026-11-15; §4 of the
+[2a1 spec](completed/sec-filing-index-pre-dispatch-cost.md).)
+
 **Reconcile.** Discover supported quarterly sources and refresh their bytes instead of ordinary
 accepted-snapshot reuse. Unchanged bytes and matching parser/schema avoid unnecessary processing;
 changed bytes use the same strict parser and publication path. No automatic reconciliation schedule
@@ -337,16 +342,28 @@ from the canonical normalized effective-config hash.
 | Parser / schema | `sec-index-parser-v2` / `sec-index-v2` (Stage 2a, plan 7, 2026-11-02). |
 | Withdrawal approval | `reconciliation.require_withdrawal_approval=true`. |
 | Execution | Live maximum 3,600 seconds; launcher default 3,300 seconds. |
-| Dispatch reserve | `execution.dispatch_reserve_seconds=1800`, set from measured member costs (Stage 1b, plan 5; [measurement](evidence/stage1b/measurement.md)). Required for a new live workflow run. The value must be at least the floor of 480 seconds (release constant) and below `max_run_seconds`. The launcher refuses a timeout at or below the reserve. (Stage 1a, plan 4; Stage 1b, plan 5.) |
+| Dispatch reserve | `execution.dispatch_reserve_seconds=1824`. Stage 1b (plan 5) set 1800 from measured member costs ([measurement](evidence/stage1b/measurement.md)). Stage 2a1 (plan 9) raised it to 1824 under the same rule, from the longest measured member wall ([member walls](evidence/stage2a1/walls.md)). Required for a new live workflow run. The value must be at least the floor of 480 seconds (release constant) and below `max_run_seconds`. The launcher refuses a timeout at or below the reserve. (Stage 1a, plan 4; Stage 1b, plan 5.) |
 | Runtime | `kind=native`; explicit content-addressed `release_manifest`. |
 
 The selected manifest is:
 
 ```text
-/Users/lowell/Projects/sec-edgar-local/releases/sha256=e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec/release.json
+/Users/lowell/Projects/sec-edgar-local/releases/sha256=f414caf89eaac416f8b6a27330773eb0d398cc5caedb881a37cf228379f7fa18/release.json
 ```
 
-Stage 2a (plan 7) selected the 2a release
+Stage 2a1 (plan 9) selected the 2a1 release
+`f414caf89eaac416f8b6a27330773eb0d398cc5caedb881a37cf228379f7fa18` at commit
+`818066b6ca596dbe292627bf285f293f190ff073`. The release's Git revision is
+`e899d79a82fd4229558a3a42ac9fa532293d23e1`. The same commit raised `execution.dispatch_reserve_seconds`
+from 1800 s to 1824 s, because the member-wall stop rule required it. The longest measured member wall is
+1,074.9 s, above the 1,056 s limit, and `1.25 × 1,074.9 s + 480 s` is 1,823.7 s (owner, plan 9, D10 and D11).
+The cutoff is now 1,476 s after the run starts. The parser and schema stay `sec-index-parser-v2` /
+`sec-index-v2`. The effective-config SHA-256 is
+`74be83552796e73d20a78cf38cc297d4aac0b3962f875e4f1a5308a837851ba9`, confirmed by offline preflight.
+(Stage 2a1, plan 9, 2026-11-15; [release evidence](evidence/stage2a1/release.md);
+[member walls](evidence/stage2a1/walls.md).)
+
+Before that, Stage 2a (plan 7) selected the 2a release
 `e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec` at commit
 `4d1f806c70a522ce377b5c0391c9287ba2c246d7`. The same commit set `etl.parser_version` to
 `sec-index-parser-v2` and `etl.schema_version` to `sec-index-v2`. The release's Git revision is
@@ -440,6 +457,19 @@ with a 1c build from its revision, and once more with the installed `c4de77b8…
 the 1c release for a store that holds v2 objects. Continuation on the live store is not tested.
 (Stage 2a, plan 7, 2026-11-02; [gate evidence](evidence/stage2a/gate.md).)
 
+The 2a1 release changes no format (H7). The parser and schema stay `sec-index-parser-v2` / `sec-index-v2`
+(H8). It continues 2a-origin pending work, and the 2a release continues work that the 2a1 release left
+pending. So selecting the 2a release again is supported. On the live store, though, the 2a release reaches its
+first dispatch 3,197.5 s after the run starts (a replay of invocation 2's selection, measured under machine
+load). That is above the 1,476 s cutoff, so a run on the 2a release can dispatch no member there. (Stage 2a1,
+plan 9, 2026-11-15; H7 and H8 in the [2a1 spec](completed/sec-filing-index-pre-dispatch-cost.md);
+[pre-dispatch timings](evidence/stage2a1/predispatch.md).)
+
+`test_release_2a1` ran two tests on fixture stores. The new code continued 2a-origin pending work, and the
+2a release continued work that the new code left pending. These tests ran in the branch gate with a 2a build
+from its revision, and once more with the installed `e49d3ba8…` release. Continuation on the live store is not
+tested. (Stage 2a1, plan 9, 2026-11-15; [gate evidence](evidence/stage2a1/gate.md).)
+
 The supervised entry point is `scripts/sec-edgar-local`. The installed engine exposes `discover`,
 `collect`, `transform`, `publish`, `backfill`, `daily`, `reconcile`, `candidates`, `approve`, `history`,
 and `rollback`. Low-level execution requires explicit config, IDs, deadline, and applicable exact
@@ -515,6 +545,13 @@ included, still quarantines the whole source. The older duplicate-quarantine tes
 deleted. The Stage 2a branch gate ran 1187 tests in 75 modules, `OK`, on branch commit
 `557028c052b2116b177f28cb18e85eec9ab519f8` in its worktree. (Stage 2a, plan 7, 2026-11-02; §5 items
 1, 2 and 10 of the [2a spec](completed/sec-filing-index-duplicate-key.md); [gate evidence](evidence/stage2a/gate.md).)
+
+Selection tests now cover selection equality and the kept-value rules. The selection of the new code equals the
+selection of the code without kept values. A kept value is dropped when the discovery child returns or raises,
+and a failure is never kept. The Stage 2a1 branch gate ran 1222 tests in 77 modules, `OK`, on branch commit
+`bb8b99067db8ea27b509a2b87351564ec1a7afb1` in its worktree. The final review added one test (`20ac48b`), and its
+module ran again, `OK`. (Stage 2a1, plan 9, 2026-11-15; §5 items 1–7 of the
+[2a1 spec](completed/sec-filing-index-pre-dispatch-cost.md); [gate evidence](evidence/stage2a1/gate.md).)
 
 The final [completion review](evidence/local-port/completion-review.md) records renewed offline
 L01–L11/L13 passing with **952 tests in 60 modules**. This is retained evidence of the completed
