@@ -1,0 +1,171 @@
+{
+ "created_at": "2026-11-15T17:34:55.960831+00:00",
+ "cutoff_s": 1500.0,
+ "exit": 4,
+ "failed_checks": [
+  "before_discovery"
+ ],
+ "format": "stage2a1-predispatch-projection-v1",
+ "inputs": {
+  "new_1": {
+   "first_dispatch_s": 116.019412,
+   "invocation": 1,
+   "path": "/Users/lowell/Projects/sec-edgar-local/specs/evidence/stage2a1/predispatch/new-1.json",
+   "release": "f414caf89eaac416f8b6a27330773eb0d398cc5caedb881a37cf228379f7fa18",
+   "selection_equal": true,
+   "sha256": "fe5cabe4b6ad9b533b22558baf8a40e6fb3cd8fc97e090e8e2ca1e90e0880acf"
+  },
+  "new_2": {
+   "first_dispatch_s": 126.213713,
+   "invocation": 2,
+   "path": "/Users/lowell/Projects/sec-edgar-local/specs/evidence/stage2a1/predispatch/new-2.json",
+   "release": "f414caf89eaac416f8b6a27330773eb0d398cc5caedb881a37cf228379f7fa18",
+   "selection_equal": true,
+   "sha256": "cd6d922544b8a3c848a7b313f7df9ae15e0285d64d0efef5e171f0410d463b99"
+  },
+  "release_2a_2": {
+   "first_dispatch_s": 3197.549445,
+   "invocation": 2,
+   "path": "/Users/lowell/Projects/sec-edgar-local/specs/evidence/stage2a1/predispatch/2a-2.json",
+   "release": "e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec",
+   "selection_equal": true,
+   "sha256": "ece7c50968c45d86de357adb673d401bfbfc6686c55cee827b51a7237647a886"
+  }
+ },
+ "model": {
+  "allowance": {
+   "members_reaching_registry_check": 55,
+   "registered_after_projection": 505,
+   "registered_at_start": 450
+  },
+  "discovery_s": 29.0,
+  "fit": "line through the two new-release runs, slope clamped at 0, anchored at the run with the larger count; each slope must be within a factor of 2 of the median per-member call time of its phase (pooled over both runs; projection: members that reached the registry check)",
+  "launcher_s": 1.0,
+  "ratio_scaled_2a": "each 2a phase time times (allowance count / the 2a run's count of the same field), a phase with a zero count kept unscaled"
+ },
+ "new_release": null,
+ "phases": {
+  "after_discovery": {
+   "anchor": [
+    208,
+    39.521682
+   ],
+   "at_allowance_s": 74.254594,
+   "check": "pass",
+   "clamped": false,
+   "factor": 1.03288,
+   "median_per_member_s": 0.120791,
+   "per_member_count": 363,
+   "per_member_functions": [
+    "evaluate_member",
+    "capture_member_provenance"
+   ],
+   "points": [
+    [
+     155,
+     33.323553
+    ],
+    [
+     208,
+     39.521682
+    ]
+   ],
+   "slope": 0.116946,
+   "slope_raw": 0.116946,
+   "x_at_allowance": 505,
+   "x_field": "registered_after_projection"
+  },
+  "before_discovery": {
+   "anchor": [
+    155,
+    42.690767
+   ],
+   "at_allowance_s": 42.690767,
+   "check": "fail",
+   "clamped": true,
+   "factor": null,
+   "median_per_member_s": 0.218703,
+   "per_member_count": 282,
+   "per_member_functions": [
+    "WorkflowMembers.completed",
+    "evaluate_member"
+   ],
+   "points": [
+    [
+     127,
+     43.247249
+    ],
+    [
+     155,
+     42.690767
+    ]
+   ],
+   "slope": 0.0,
+   "slope_raw": -0.019874,
+   "x_at_allowance": 450,
+   "x_field": "registered_at_start"
+  },
+  "freeze": {
+   "anchor": [
+    208,
+    11.878479
+   ],
+   "at_allowance_s": 32.515255,
+   "check": "pass",
+   "clamped": false,
+   "factor": 1.11815,
+   "median_per_member_s": 0.062142,
+   "per_member_count": 363,
+   "per_member_functions": [
+    "results.validate_member_provenance",
+    "results.validate_capture"
+   ],
+   "points": [
+    [
+     155,
+     8.195822
+    ],
+    [
+     208,
+     11.878479
+    ]
+   ],
+   "slope": 0.069484,
+   "slope_raw": 0.069484,
+   "x_at_allowance": 505,
+   "x_field": "registered_after_projection"
+  },
+  "projection": {
+   "anchor": [
+    48,
+    2.122785
+   ],
+   "at_allowance_s": 2.427284,
+   "check": "pass",
+   "clamped": false,
+   "factor": 1.218261,
+   "median_per_member_s": 0.035707,
+   "per_member_count": 76,
+   "per_member_functions": [
+    "project_member",
+    "reuse_exact_binding"
+   ],
+   "points": [
+    [
+     28,
+     1.252788
+    ],
+    [
+     48,
+     2.122785
+    ]
+   ],
+   "slope": 0.0435,
+   "slope_raw": 0.0435,
+   "x_at_allowance": 55,
+   "x_field": "members_reaching_registry_check"
+  }
+ },
+ "release_2a": null,
+ "target_s": 600.0
+}
