@@ -8,7 +8,7 @@ SEC request.
 
 ## Gap analysis
 
-**Project:** `/Users/lowell/Projects/sec-edgar-local`.
+**Project:** `/Users/lowell/Projects/sec-edgar`.
 **Source:** [Filing platform spec](sec-filing-platform.md) at `25f8c57`, which the owner approved on
 2026-10-21. IDs R1–R31 and V1–V17 are its Requirements and Verification items. Locators `(M …)` and
 `(C …)` keep the spec's meaning.

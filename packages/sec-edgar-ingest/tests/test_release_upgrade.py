@@ -32,7 +32,7 @@ class ReleaseUpgradeTests(unittest.TestCase):
             guard = report['checkout_guard']
             self.assertEqual(guard['policy']['releases'], [str(self.b.directory)])
             self.assertFalse(guard['application_imported'])
-            self.assertEqual(guard['denied'], [True] * 6)
+            self.assertEqual(guard['denied'], [True] * 3)
 
     def test_installed_http_spawn_guards_main_before_transport_class_unpickle(self):
         import subprocess
@@ -89,7 +89,7 @@ if __name__=='__main__':
             self.assertEqual(child['pid'], target['pid'])
             self.assertFalse(main['application_imported'])
             self.assertFalse(child['application_imported'])
-            self.assertEqual(child['denied'], [True] * 6)
+            self.assertEqual(child['denied'], [True] * 3)
             self.assertEqual(target['policy']['releases'], [str(self.b.directory)])
             self.assertTrue(Path(target['origin']).is_relative_to(self.b.directory))
             destination = os.environ.get('SEC_EDGAR_TASK14_HTTP_EVIDENCE')
@@ -156,5 +156,5 @@ if __name__=='__main__':
                     guard = record['checkout_guard']
                     self.assertEqual(guard['pid'], record['pid'])
                     self.assertFalse(guard['application_imported'])
-                    self.assertEqual(guard['denied'], [True] * 6)
+                    self.assertEqual(guard['denied'], [True] * 3)
                     self.assertEqual(guard['policy']['releases'], case['release_directories'])

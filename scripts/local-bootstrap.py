@@ -60,22 +60,24 @@ def main(argv=None) -> int:
     try:
         if any(argument == '--project-root' or argument.startswith('--project-root=') for argument in original):
             raise ValueError('--project-root is an internal bootstrap argument')
-        parser = argparse.ArgumentParser(prog='sec-edgar-local', allow_abbrev=False)
+        parser = argparse.ArgumentParser(prog='sec-edgar', allow_abbrev=False)
         parser.add_argument('command', choices=('backfill', 'daily', 'reconcile'))
-        parser.add_argument('--config', type=Path, default=PROJECT_ROOT / 'conf/sec-edgar-local.json')
+        parser.add_argument('--config', type=Path)
         parser.add_argument('--timeout-seconds', type=float, default=3300)
         try:
             args = parser.parse_args(original)
         except SystemExit as error:
             return int(error.code)
-        config_path = args.config.expanduser().resolve()
+        config_path = (args.config or PROJECT_ROOT / 'conf/sec-edgar.json').expanduser().resolve()
         python = _release_python(config_path)
+        # Forward the default explicitly: installed releases may predate the current config name.
+        forwarded = original if args.config is not None else [*original, '--config', str(config_path)]
         environment = {key: value for key, value in os.environ.items()
                        if not key.startswith(('PYTHON', 'UV_')) and key not in {'VIRTUAL_ENV', 'CONDA_PREFIX'}}
         # Match runtime.native_python_argv without importing the application from this bootstrap.
         native_argv = [str(python), '-I', '-B', '-X', 'pycache_prefix=' + os.devnull]
         os.execve(str(python), [*native_argv, '-m', 'sec_edgar_ingest.local_cli',
-                               '--project-root', str(PROJECT_ROOT), *original], environment)
+                               '--project-root', str(PROJECT_ROOT), *forwarded], environment)
     except (OSError, ValueError, TypeError) as error:
         sys.stderr.write(json.dumps({'outcome': 'configuration', 'error': str(error)},
                                     sort_keys=True, separators=(',', ':')) + '\n')

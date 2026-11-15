@@ -1,4 +1,4 @@
-# sec-edgar-local
+# sec-edgar
 
 A native local fork of SEC filing-index ingestion, distribution/import `sec-edgar-ingest` / `sec_edgar_ingest` version 0.2.0. It retains immutable SEC index originals, transforms validated observations, and publishes captured per-quarter Parquet generations with reconciliation, withdrawal approval and recorded rollback.
 

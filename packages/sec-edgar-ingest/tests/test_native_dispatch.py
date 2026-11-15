@@ -265,7 +265,7 @@ class PinnedNativeDispatchTests(unittest.TestCase):
                 audits = [json.loads(line) for line in audit_log.read_text().splitlines()]
                 self.assertEqual([item['pid'] for item in audits], [item['pid'] for item in records])
                 self.assertTrue(all(not item['application_imported'] for item in audits), audits)
-                self.assertTrue(all(item['denied'] == [True] * 6 for item in audits), audits)
+                self.assertTrue(all(item['denied'] == [True] * 3 for item in audits), audits)
                 self.assertTrue(all(item['policy']['releases'] == [str(release.directory)] for item in audits))
                 destination = os.environ.get('SEC_EDGAR_TASK14_NATIVE_EVIDENCE')
                 if destination:

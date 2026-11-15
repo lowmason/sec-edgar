@@ -4,7 +4,7 @@
 
 ## Gap analysis
 
-**Project:** `/Users/lowell/Projects/sec-edgar-local`.
+**Project:** `/Users/lowell/Projects/sec-edgar`.
 **Rewritten:** 2026-10-18, replacing the copied Azure roadmap in place.
 **Source:** [Local filing-index spec](sec-filing-index-ingestion-spec.md). Requirement and gate IDs
 below refer to its §§3 and 7. **Status:** local stage partition proposed for review; no remaining
@@ -47,13 +47,13 @@ report establishing that gate was found here, not that the underlying command is
 | R5 | implemented-as-specified | [Workflow processing](../packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/processing.py), [checked child tests](../packages/sec-edgar-ingest/tests/test_workflow_checked.py) | Shared checked acquisition/transform/publish sequence. |
 | R6 | implemented-as-specified | [Runtime](../packages/sec-edgar-ingest/src/sec_edgar_ingest/runtime.py), [native dispatch tests](../packages/sec-edgar-ingest/tests/test_native_dispatch.py), [completion review](evidence/local-port/completion-review.md) | Exact replay, original producers, two-release continuation/repair verified. |
 | R7 | implemented-as-specified | [Reconciliation tests](../packages/sec-edgar-ingest/tests/test_reconcile_workflow.py), [catalog](../packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/catalog.py) | Corrections/reverts supported; G4 is separate. |
-| R8 | implemented-as-specified | [Coordinator](../packages/sec-edgar-ingest/src/sec_edgar_ingest/coordination.py), [coordination tests](../packages/sec-edgar-ingest/tests/test_coordination.py), [live config](../conf/sec-edgar-local.json) | Local pacing/fencing/drain; external sole issuer remains an owner operating fact. |
+| R8 | implemented-as-specified | [Coordinator](../packages/sec-edgar-ingest/src/sec_edgar_ingest/coordination.py), [coordination tests](../packages/sec-edgar-ingest/tests/test_coordination.py), [live config](../conf/sec-edgar.json) | Local pacing/fencing/drain; external sole issuer remains an owner operating fact. |
 | R9 | implemented-as-specified | [Publisher](../packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/publication.py), [reader](../packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/reader.py), [workflow completion tests](../packages/sec-edgar-ingest/tests/test_workflow_completion.py) | Per-quarter CAS and validated captures; no global historical-completeness claim. |
 | R10 | implemented-as-specified | [Operator commands](../packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/commands.py), [reconciliation acceptance tests](../packages/sec-edgar-ingest/tests/test_reconcile_acceptance.py) | Exact approval, supersession/reverts, and recorded rollback. |
-| R11 | implemented-as-specified | [Config tests](../packages/sec-edgar-ingest/tests/test_local_config.py), [launcher tests](../packages/sec-edgar-ingest/tests/test_local_launcher.py), [live config](../conf/sec-edgar-local.json) | Bound paths/policies and archived native invocation evidence. |
+| R11 | implemented-as-specified | [Config tests](../packages/sec-edgar-ingest/tests/test_local_config.py), [launcher tests](../packages/sec-edgar-ingest/tests/test_local_launcher.py), [live config](../conf/sec-edgar.json) | Bound paths/policies and archived native invocation evidence. |
 | R12 | implemented-as-specified | [Final completion review](evidence/local-port/completion-review.md), [recovery runbook](../docs/runbooks/local-recovery.md) | Renewed offline gate and separate reviewed L12 supplement; originals remain incomplete/exit 12. |
-| R13 | missing | [Completed design scope](completed/sec-edgar-local-spec.md#1-outcome-and-boundaries), [launcher](../scripts/sec-edgar-local); no scheduler definitions found in `scripts/` or config | Future local scheduling was outside the port; user now requests a future phase. |
-| G1 | implemented-as-specified | [Completed local plan](plans/completed/1-sec-edgar-local-spec.md), [completion review](evidence/local-port/completion-review.md), [current config](../conf/sec-edgar-local.json) | Reviewed release selected; offline preflight passed. No broad coverage inferred. |
+| R13 | missing | [Completed design scope](completed/sec-edgar-local-spec.md#1-outcome-and-boundaries), [launcher](../scripts/sec-edgar); no scheduler definitions found in `scripts/` or config | Future local scheduling was outside the port; user now requests a future phase. |
+| G1 | implemented-as-specified | [Completed local plan](plans/completed/1-sec-edgar-local-spec.md), [completion review](evidence/local-port/completion-review.md), [current config](../conf/sec-edgar.json) | Reviewed release selected; offline preflight passed. No broad coverage inferred. |
 | G2 | missing | [Bounded acceptance](evidence/local-port/sec-acceptance.md); no broad accepted baseline report found | Quarterly 2024Q1 quarantine and 73 pending discoveries remain explicit acceptance limits. |
 | G3 | missing | [Bounded acceptance](evidence/local-port/sec-acceptance.md); no full handoff-to-current catch-up acceptance found | Two selected daily bodies do not establish complete daily catch-up. |
 | G4 | missing | [Offline renewal](evidence/local-port/offline-renewal-task15.md); no broad operational reconciliation acceptance found | Fixture/recovery tests establish behavior, not operational range acceptance. |

@@ -251,7 +251,7 @@ class CheckoutPolicyTests(unittest.TestCase):
     def test_explicit_policy_denies_both_source_roots_and_code_attributed_execution(self):
         proof = self.isolated_probe('''
 import importlib.util,importlib.machinery,json,os,pathlib,subprocess,network_guard
-roots = ('/Users/lowell/Projects/sec-edgar', '/Users/lowell/Projects/sec-edgar-local')
+roots = ('/Users/lowell/Projects/sec-edgar',)
 precompiled = [compile('pass', root+'/audit-sentinel.py','exec') for root in roots]
 installer = getattr(network_guard,'install_checkout_policy',None)
 denied=[]
@@ -264,14 +264,14 @@ if installer:
         for operation in (lambda:path.read_bytes(), lambda:exec(code,{}),
                 lambda:compile('pass',root+'/sentinel.py','exec'),
                 lambda:loader.exec_module(importlib.util.module_from_spec(spec)),
-                lambda:subprocess.run([root+'/scripts/sec-edgar-local'],check=False)):
+                lambda:subprocess.run([root+'/scripts/sec-edgar'],check=False)):
             try: operation()
             except PermissionError: denied.append(True)
             else: denied.append(False)
 print(json.dumps({'available':bool(installer),'denied':denied}))
 ''')
         self.assertTrue(proof['available'], 'explicit checkout-denial audit policy is required')
-        self.assertEqual(proof['denied'], [True] * 10)
+        self.assertEqual(proof['denied'], [True] * 5)
 
     def test_path_aliases_cannot_escape_and_only_exact_selected_release_is_allowed(self):
         project = TESTS.resolve().parents[2]
@@ -283,7 +283,7 @@ print(json.dumps({'available':bool(installer),'denied':denied}))
 import importlib.util,json,pathlib,network_guard,sys
 selected=pathlib.Path(SELECTED)
 alias=pathlib.Path('alias')
-alias.symlink_to('/Users/lowell/Projects/sec-edgar-local')
+alias.symlink_to('/Users/lowell/Projects/sec-edgar')
 (selected/'escape').symlink_to('/Users/lowell/Projects/sec-edgar/.git')
 installer=getattr(network_guard,'install_checkout_policy',None)
 denied=[]; allowed=[]
@@ -315,7 +315,7 @@ print(json.dumps({'available':bool(installer),'denied':denied,'allowed':allowed}
         app_module = '''
 import json,os,sys,pathlib
 denied=[]
-for root in ('/Users/lowell/Projects/sec-edgar','/Users/lowell/Projects/sec-edgar-local'):
+for root in ('/Users/lowell/Projects/sec-edgar',):
     try:(pathlib.Path(root)/'.git/HEAD').read_bytes()
     except PermissionError:denied.append(True)
     else:denied.append(False)
@@ -328,7 +328,7 @@ def exchange(transport,cancellation,channel):
         body = '''
 import json,os,pathlib,network_guard,multiprocessing,functools
 denied=[]
-for root in ('/Users/lowell/Projects/sec-edgar','/Users/lowell/Projects/sec-edgar-local'):
+for root in ('/Users/lowell/Projects/sec-edgar',):
     try:(pathlib.Path(root)/'.git/HEAD').read_bytes()
     except PermissionError:denied.append(True)
     else:denied.append(False)
@@ -350,12 +350,12 @@ if __name__=='__main__':
         child = [item for item in proof['records'] if item['pid'] == proof['child']['pid']]
         self.assertEqual([item['event'] for item in child],
                          ['main-before-application', 'application-class-import'])
-        self.assertTrue(all(item['denied'] == [True, True] for item in proof['records']), proof)
+        self.assertTrue(all(item['denied'] == [True] for item in proof['records']), proof)
 
     def test_default_source_harness_has_no_checkout_policy(self):
         proof = self.isolated_probe('''
 import json,pathlib,network_guard
-print(json.dumps({'readable':bool(pathlib.Path('/Users/lowell/Projects/sec-edgar-local/.git/HEAD').read_bytes())}))
+print(json.dumps({'readable':bool(pathlib.Path('/Users/lowell/Projects/sec-edgar/.git/HEAD').read_bytes())}))
 ''')
         self.assertTrue(proof['readable'])
 
@@ -364,7 +364,7 @@ print(json.dumps({'readable':bool(pathlib.Path('/Users/lowell/Projects/sec-edgar
 import json,pathlib,network_guard
 alias=pathlib.Path('releases')/('sha256='+'a'*64)
 alias.parent.mkdir()
-alias.symlink_to('/Users/lowell/Projects/sec-edgar-local')
+alias.symlink_to('/Users/lowell/Projects/sec-edgar')
 refused=[]
 for releases in ((str(alias.absolute()),),('/Users/lowell/Projects/sec-edgar',)):
     try:network_guard.install_checkout_policy(releases)
@@ -384,8 +384,8 @@ print(json.dumps({'refused':refused}))
         proof = self.isolated_probe('''
 import json,network_guard
 refused=[]
-for path in ('/Users/lowell/Projects/sec-edgar-local/releases',
-             '/Users/lowell/Projects/sec-edgar-local/releases/artifact-cache'):
+for path in ('/Users/lowell/Projects/sec-edgar/releases',
+             '/Users/lowell/Projects/sec-edgar/releases/artifact-cache'):
     try:network_guard.install_checkout_policy((path,))
     except ValueError:refused.append(True)
     else:refused.append(False)
@@ -399,9 +399,9 @@ import json,os,pathlib,network_guard
 outside=pathlib.Path.cwd()
 (outside/'locks').write_text('outside fixture')
 allowed_fd=os.open(outside,os.O_RDONLY)
-denied_fd=os.open('/Users/lowell/Projects/sec-edgar-local',os.O_RDONLY)
+denied_fd=os.open('/Users/lowell/Projects/sec-edgar',os.O_RDONLY)
 network_guard.install_checkout_policy(())
-os.chdir('/Users/lowell/Projects/sec-edgar-local')
+os.chdir('/Users/lowell/Projects/sec-edgar')
 try:
     try:
         fd=os.open('locks',os.O_RDONLY,dir_fd=allowed_fd)
@@ -421,7 +421,7 @@ finally:os.close(allowed_fd);os.close(denied_fd)
         proof = self.isolated_probe('''
 import json,pathlib,subprocess,network_guard
 outside=pathlib.Path.cwd();denied=[]
-roots=('/Users/lowell/Projects/sec-edgar','/Users/lowell/Projects/sec-edgar-local')
+roots=('/Users/lowell/Projects/sec-edgar',)
 for index,root in enumerate(roots):
     (outside/str(index)).symlink_to(root)
     (outside/(str(index)+'-git')).symlink_to(pathlib.Path(root)/'.git')
@@ -433,7 +433,7 @@ for index,root in enumerate(roots):
         else:denied.append(False)
 print(json.dumps({'denied':denied}))
 ''')
-        self.assertEqual(proof['denied'], [True] * 8)
+        self.assertEqual(proof['denied'], [True] * 4)
 
     def test_subprocess_paths_follow_child_cwd_and_path_with_exact_release_exception(self):
         project = TESTS.resolve().parents[2]
@@ -447,7 +447,7 @@ print(json.dumps({'denied':denied}))
             body = '''
 import json,os,pathlib,subprocess,sys,network_guard
 outside=pathlib.Path.cwd();child=outside/'child';child.mkdir()
-(child/'source').symlink_to('/Users/lowell/Projects/sec-edgar-local')
+(child/'source').symlink_to('/Users/lowell/Projects/sec-edgar')
 selected=pathlib.Path(SELECTED)
 (child/'selected').symlink_to(selected)
 (child/'bin').mkdir()
@@ -475,7 +475,7 @@ for argv,cwd,environment in (
     done=subprocess.run(argv,cwd=cwd,env=environment,capture_output=True,text=True)
     allowed.append({'exit':done.returncode,'stdout':done.stdout.strip()})
 direct=outside/'verify-native-release.py';direct.write_text('#!/bin/sh\\nexit 0\\n');direct.chmod(0o755)
-try:pid=os.posix_spawn('verify-native-release.py',['verify-native-release.py'],{'PATH':'/Users/lowell/Projects/sec-edgar-local/scripts'})
+try:pid=os.posix_spawn('verify-native-release.py',['verify-native-release.py'],{'PATH':'/Users/lowell/Projects/sec-edgar/scripts'})
 except PermissionError:direct_spawn=False
 else:direct_spawn=os.waitpid(pid,0)[1]==0
 print(json.dumps({'denied':denied,'allowed':allowed,'parent_cwd':str(pathlib.Path.cwd()),'outside':str(outside),'direct_spawn':direct_spawn}))
@@ -512,7 +512,7 @@ selected=pathlib.Path(SELECTED)
 network_guard.install_checkout_policy((str(selected),))
 denied=[];outcomes=[]
 for first in (bad,good):
-    environment={'PATH':str(first)+':/Users/lowell/Projects/sec-edgar-local/scripts:/usr/bin:/bin'}
+    environment={'PATH':str(first)+':/Users/lowell/Projects/sec-edgar/scripts:/usr/bin:/bin'}
     try:done=subprocess.run(['verify-native-release.py','--help'],cwd=outside,env=environment,capture_output=True,text=True)
     except PermissionError:denied.append(True);outcomes.append({'denied':True})
     else:denied.append(False);outcomes.append({'exit':done.returncode,'help':'usage:' in done.stdout})

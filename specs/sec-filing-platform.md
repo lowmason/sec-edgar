@@ -5,7 +5,7 @@
 
 **Status:** Synthesized 2026-10-21. The owner approved it on 2026-10-21 for roadmap derivation.
 Nothing is implemented. This spec authorizes no live SEC traffic.
-**Project:** `/Users/lowell/Projects/sec-edgar-local`.
+**Project:** `/Users/lowell/Projects/sec-edgar`.
 **Roadmap:** none yet. derive-roadmap writes `specs/sec-filing-platform-roadmap.md`. Platform work
 never adds stages to the [ingestion roadmap](sec-filing-index-ingestion-roadmap.md).
 

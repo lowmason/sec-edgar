@@ -52,7 +52,7 @@ class LauncherPreparationTests(unittest.TestCase):
         value['etl']['parser_version'] = 'sec-index-parser-v2'
         value['storage']['root'] = '../data'
         value['logging']['root'] = '../logs'
-        self.config = self.project / 'conf/sec-edgar-local.json'
+        self.config = self.project / 'conf/sec-edgar.json'
         self.config.write_text(json.dumps(value, indent=3) + '\n')
         self.preflight = self.enterContext(patch.object(self.launcher, 'preflight_current', return_value=self.verified))
         self.engine = self.enterContext(patch('subprocess.Popen', side_effect=AssertionError('preparation dispatched engine')))
@@ -154,7 +154,7 @@ class LauncherPreparationTests(unittest.TestCase):
             os.chdir(self.project)
             with patch.object(self.launcher, 'prepare_invocation', wraps=self.launcher.prepare_invocation) as prepare, \
                     patch.object(self.launcher, 'run_invocation', create=True, return_value=10):
-                self.assertEqual(self.main('reconcile', '--config', 'conf/sec-edgar-local.json'), 10)
+                self.assertEqual(self.main('reconcile', '--config', 'conf/sec-edgar.json'), 10)
             self.assertEqual(prepare.call_args.args[0], self.config)
         finally:
             os.chdir(old)
@@ -351,6 +351,18 @@ class BootstrapTests(unittest.TestCase):
                                '--project-root', str(PROJECT), *original])
         self.assertFalse(any(key.startswith(('PYTHON', 'UV_')) for key in environment))
 
+    def test_bootstrap_forwards_its_default_config_so_releases_need_no_default(self):
+        (self.root / 'conf').mkdir()
+        default = self.root / 'conf/sec-edgar.json'
+        default.write_bytes(self.config.read_bytes())
+        with patch.object(self.bootstrap, 'PROJECT_ROOT', self.root), \
+                patch.object(self.bootstrap.os, 'execve') as execute:
+            self.main('daily', '--timeout-seconds', '23.5')
+        python, argv, _ = execute.call_args.args
+        self.assertEqual(argv, [*native_python_argv(Path(python)), '-m', 'sec_edgar_ingest.local_cli',
+                               '--project-root', str(self.root), 'daily', '--timeout-seconds', '23.5',
+                               '--config', str(default)])
+
     def test_malformed_and_ambiguous_selection_never_executes(self):
         bodies = ['[]', '{}', '{"runtime":NaN}',
             '{"runtime":{},"runtime":{}}',
@@ -381,7 +393,7 @@ class BootstrapTests(unittest.TestCase):
                                     for alias in node.names))
             if isinstance(node, ast.ImportFrom):
                 self.assertIn(node.module.split('.')[0], __import__('sys').stdlib_module_names)
-        shell = (PROJECT / 'scripts/sec-edgar-local').read_text()
+        shell = (PROJECT / 'scripts/sec-edgar').read_text()
         self.assertNotIn('uv ', shell)
         self.assertNotIn('pip ', shell)
 
@@ -395,7 +407,7 @@ class InstalledLauncherTests(unittest.TestCase):
         cls.release, _ = proof_releases(PROJECT, PROJECT / 'releases/artifact-cache')
 
     def setUp(self):
-        self.assertTrue((PROJECT / 'scripts/sec-edgar-local').is_file(),
+        self.assertTrue((PROJECT / 'scripts/sec-edgar').is_file(),
                         'Task 11 requires project shell launcher')
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
@@ -403,7 +415,7 @@ class InstalledLauncherTests(unittest.TestCase):
         self.project = self.root / 'project'
         (self.project / 'scripts').mkdir(parents=True)
         (self.project / 'conf').mkdir()
-        for name in ('sec-edgar-local', 'local-bootstrap.py'):
+        for name in ('sec-edgar', 'local-bootstrap.py'):
             shutil.copy2(PROJECT / 'scripts' / name, self.project / 'scripts' / name)
         (self.project / '.venv').symlink_to(PROJECT / '.venv', target_is_directory=True)
         value = fixture_settings().to_mapping()
@@ -414,7 +426,7 @@ class InstalledLauncherTests(unittest.TestCase):
         value['etl']['parser_version'] = 'sec-index-parser-v2'
         value['storage']['root'] = '../data'
         value['logging']['root'] = '../logs'
-        self.config = self.project / 'conf/sec-edgar-local.json'
+        self.config = self.project / 'conf/sec-edgar.json'
         self.config.write_text(json.dumps(value))
         self.poison = self.root / 'poison'
         self.poison.mkdir()
@@ -433,7 +445,7 @@ class InstalledLauncherTests(unittest.TestCase):
         value['acquisition'] = {'mode': 'fixture'}
         value['execution'].pop('dispatch_reserve_seconds')
         self.config.write_text(json.dumps(value))
-        result = subprocess.run([str(self.project / 'scripts/sec-edgar-local'), 'backfill',
+        result = subprocess.run([str(self.project / 'scripts/sec-edgar'), 'backfill',
             '--timeout-seconds', '0.000001'],
             cwd=self.poison, env=self.environment, capture_output=True, text=True, timeout=30)
         self.assertEqual(result.returncode, 2, result.stderr)
@@ -458,7 +470,7 @@ class InstalledLauncherTests(unittest.TestCase):
         original = receipt.read_bytes()
         try:
             receipt.write_bytes(b'{}')
-            result = subprocess.run([str(self.project / 'scripts/sec-edgar-local'), 'backfill', '--config', str(self.config)],
+            result = subprocess.run([str(self.project / 'scripts/sec-edgar'), 'backfill', '--config', str(self.config)],
                 cwd=self.poison, env=self.environment, capture_output=True, text=True, timeout=30)
         finally:
             receipt.write_bytes(original)
@@ -483,7 +495,7 @@ class InstalledLauncherTests(unittest.TestCase):
         value = json.loads(self.config.read_bytes())
         value['runtime']['release_manifest'] = str(self.root / 'releases' / ('sha256=' + 'b' * 64) / 'release.json')
         self.config.write_text(json.dumps(value))
-        result = subprocess.run([str(self.project / 'scripts/sec-edgar-local'), 'daily'],
+        result = subprocess.run([str(self.project / 'scripts/sec-edgar'), 'daily'],
             cwd=self.poison, env=self.environment, capture_output=True, text=True, timeout=30)
         self.assertEqual(result.returncode, 2, result.stderr)
         self.assertEqual(json.loads(result.stderr)['outcome'], 'configuration')

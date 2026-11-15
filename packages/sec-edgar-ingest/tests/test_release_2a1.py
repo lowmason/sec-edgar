@@ -47,7 +47,7 @@ class TwoReleaseTests(unittest.TestCase):
                     guard = record['checkout_guard']
                     self.assertEqual(guard['pid'], record['pid'])
                     self.assertFalse(guard['application_imported'])
-                    self.assertEqual(guard['denied'], [True] * 6)
+                    self.assertEqual(guard['denied'], [True] * 3)
                     self.assertEqual(guard['policy']['releases'], case['release_directories'])
 
     def test_new_release_continues_2a_origin_pending_work(self):

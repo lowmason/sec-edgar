@@ -470,7 +470,7 @@ def run_invocation(invocation: Invocation) -> int:
 
 
 def _parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog='sec-edgar-local')
+    parser = argparse.ArgumentParser(prog='sec-edgar')
     parser.add_argument('command', choices=WORKFLOW_COMMANDS)
     parser.add_argument('--config', type=Path)
     parser.add_argument('--timeout-seconds', type=float, default=DEFAULT_TIMEOUT_SECONDS)
@@ -485,7 +485,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         return int(error.code)
     try:
         project_root = args.project_root.expanduser().resolve()
-        config_path = (args.config or project_root / 'conf/sec-edgar-local.json').expanduser().resolve()
+        config_path = (args.config or project_root / 'conf/sec-edgar.json').expanduser().resolve()
         invocation = prepare_invocation(config_path, args.command, args.timeout_seconds,
                                         project_root=project_root)
     except (OSError, ValueError, TypeError, subprocess.CalledProcessError) as error:

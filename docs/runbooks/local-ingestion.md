@@ -2,15 +2,15 @@
 
 Finish [native setup](native-setup.md) first. Live execution uses a non-editable installed wheel in `releases/sha256=<release-id>/venv`. Each native application process must use `-I -B -X pycache_prefix=/dev/null` before its first application import. No checkout imports, application PYTHONPATH, dependency sync/resolution/install or interpreter download occurs during a run.
 
-Only after the release ID exists, create `conf/sec-edgar-local.json` from the checked fixture config. This prepares configuration and performs no ingestion:
+Only after the release ID exists, create `conf/sec-edgar.json` from the checked fixture config. This prepares configuration and performs no ingestion:
 
 ```sh
 project=$(pwd -P)
 release="$project/releases/sha256=RELEASE_ID"
 .venv/bin/python - "$release/release.json" <<'PY'
 import json, pathlib, sys
-path = pathlib.Path('conf/sec-edgar-local.json')
-value = json.loads(pathlib.Path('conf/sec-edgar-local-fixture.json').read_text())
+path = pathlib.Path('conf/sec-edgar.json')
+value = json.loads(pathlib.Path('conf/sec-edgar-fixture.json').read_text())
 value['storage'] = {'backend': 'local', 'root': '../data'}
 value['logging'] = {'root': '../logs'}
 value['acquisition'] = {'mode': 'live'}
@@ -33,9 +33,9 @@ The owner has declared this the sole live issuer externally. The launcher cannot
 Manual launcher workflows:
 
 ```sh
-scripts/sec-edgar-local backfill --config "$project/conf/sec-edgar-local.json"
-scripts/sec-edgar-local daily --config "$project/conf/sec-edgar-local.json" --timeout-seconds 3300
-scripts/sec-edgar-local reconcile --config "$project/conf/sec-edgar-local.json"
+scripts/sec-edgar backfill --config "$project/conf/sec-edgar.json"
+scripts/sec-edgar daily --config "$project/conf/sec-edgar.json" --timeout-seconds 3300
+scripts/sec-edgar reconcile --config "$project/conf/sec-edgar.json"
 ```
 
 The default config is located relative to the launcher project from any cwd; an explicit relative `--config` resolves from the calling cwd. Default timeout is 3300 seconds; require `0 < N <= execution.max_run_seconds`, whose live value is 3600. The launcher also refuses `N <= execution.dispatch_reserve_seconds` (D5 and 1b releases). Admission refuses a live config with no `execution.dispatch_reserve_seconds`. It also refuses a value outside `floor <= value < execution.max_run_seconds`. The floor is 480 s and the live reserve is 1824 s, set from measured member costs (Stage 1b set 1800 s, and Stage 2a1 raised it to 1824 s). The launcher generates fresh IDs/deadline each invocation and pins its supplementary range. The engine's saved context/result is authoritative. No automatic scheduling is supplied. Workflow backfill freezes an inclusive range; `open` resolves once per invocation. Daily catches up from the configured handoff with retained unresolved exact work. Reconcile refreshes supported quarterly originals and uses the same validation/approval rules.
@@ -48,7 +48,7 @@ For low-level manual workflows, use the same explicitly selected runtime/config 
 deadline=$("$release/venv/bin/python" -I -B -X pycache_prefix=/dev/null -c \
   'from datetime import datetime,timedelta,timezone; print((datetime.now(timezone.utc)+timedelta(seconds=3300)).isoformat())')
 "$release/venv/bin/python" -I -B -X pycache_prefix=/dev/null -m sec_edgar_ingest backfill \
-  --config "$project/conf/sec-edgar-local.json" --run-id manual-backfill-1 \
+  --config "$project/conf/sec-edgar.json" --run-id manual-backfill-1 \
   --execution-id manual-1 --attempt-id attempt-1 --deadline "$deadline"
 ```
 
@@ -57,10 +57,10 @@ Choose a fresh valid deadline within the live run allowance at execution time. `
 Operator commands open an existing store verify-only; labels are explicit audit text, not authentication:
 
 ```sh
-"$release/venv/bin/python" -I -B -X pycache_prefix=/dev/null -m sec_edgar_ingest candidates --config "$project/conf/sec-edgar-local.json"
-"$release/venv/bin/python" -I -B -X pycache_prefix=/dev/null -m sec_edgar_ingest history --config "$project/conf/sec-edgar-local.json" --quarter 2026Q3
-"$release/venv/bin/python" -I -B -X pycache_prefix=/dev/null -m sec_edgar_ingest approve --config "$project/conf/sec-edgar-local.json" --quarter 2026Q3 --generation GENERATION_ID --quarterly-sha256 QUARTERLY_SHA256 --approver 'Lowell Mason'
-"$release/venv/bin/python" -I -B -X pycache_prefix=/dev/null -m sec_edgar_ingest rollback --config "$project/conf/sec-edgar-local.json" --quarter 2026Q3 --from-generation CURRENT_ID --to-generation RETAINED_ID --reason 'Reviewed source reversion' --operator 'Lowell Mason'
+"$release/venv/bin/python" -I -B -X pycache_prefix=/dev/null -m sec_edgar_ingest candidates --config "$project/conf/sec-edgar.json"
+"$release/venv/bin/python" -I -B -X pycache_prefix=/dev/null -m sec_edgar_ingest history --config "$project/conf/sec-edgar.json" --quarter 2026Q3
+"$release/venv/bin/python" -I -B -X pycache_prefix=/dev/null -m sec_edgar_ingest approve --config "$project/conf/sec-edgar.json" --quarter 2026Q3 --generation GENERATION_ID --quarterly-sha256 QUARTERLY_SHA256 --approver 'Lowell Mason'
+"$release/venv/bin/python" -I -B -X pycache_prefix=/dev/null -m sec_edgar_ingest rollback --config "$project/conf/sec-edgar.json" --quarter 2026Q3 --from-generation CURRENT_ID --to-generation RETAINED_ID --reason 'Reviewed source reversion' --operator 'Lowell Mason'
 ```
 
 Review exact candidate rows, withdrawal reason, current history and hashes before approval/rollback. First approval binds one exact candidate generation; newer bytes require new review. A repeated older body can produce `source_reverted` rather than publish. No force bypass, duplicate winner or zero-row exception is supported. Retained whole-source quarantines remain 21 conflicting observations in 2010Q1, 24 in 2015Q1 and 6 in 2026Q3, total 51.

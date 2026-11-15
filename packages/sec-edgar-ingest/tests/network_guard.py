@@ -22,8 +22,7 @@ _INSTALLED = False
 _ORIGINS: Counter[tuple[str, int]] = Counter()
 _LOCK = RLock()
 _CHECKOUT_POLICY = None
-_CHECKOUT_ROOTS = tuple(Path(value) for value in
-    ('/Users/lowell/Projects/sec-edgar', '/Users/lowell/Projects/sec-edgar-local'))
+_CHECKOUT_ROOTS = (Path('/Users/lowell/Projects/sec-edgar'),)
 _POLICY_FILE = 'checkout-policy.json'
 
 
@@ -70,10 +69,8 @@ def install_checkout_policy(releases):
         return
     exceptions = tuple((Path(os.path.abspath(path)), Path(path).resolve()) for path in selected)
     roots = tuple((root, root.resolve()) for root in _CHECKOUT_ROOTS)
-    original, real_original = roots[0]
-    if any(path.is_relative_to(original) or resolved.is_relative_to(real_original)
-           or any(root.is_relative_to(path) or real.is_relative_to(resolved) for root, real in roots)
-           for path, resolved in exceptions):
+    if any(root.is_relative_to(path) or real.is_relative_to(resolved)
+           for path, resolved in exceptions for root, real in roots):
         raise ValueError('checkout policy cannot exempt a source root')
 
     def require_path(raw, *, cwd=None):

@@ -1,8 +1,8 @@
-# SEC filing-index ingestion for sec-edgar-local — Design Spec
+# SEC filing-index ingestion for sec-edgar — Design Spec
 
 **Status:** Local documentation rewrite, 2026-10-18. The native implementation is complete;
 operational coverage and the future scheduling phase have separate acceptance gates.
-**Project:** `/Users/lowell/Projects/sec-edgar-local`.
+**Project:** `/Users/lowell/Projects/sec-edgar`.
 **Roadmap:** [Local ingestion roadmap](sec-filing-index-ingestion-roadmap.md).
 
 This document adapts the filing-index design from `sec-edgar` to the native local fork. It describes
@@ -83,7 +83,7 @@ R13 is future work; no scheduler, schedule config fields, or notifications are i
 
 | Component | Owns |
 |---|---|
-| `scripts/sec-edgar-local` and `scripts/local-bootstrap.py` | Config-based native release selection without checkout application imports. |
+| `scripts/sec-edgar` and `scripts/local-bootstrap.py` | Config-based native release selection without checkout application imports. |
 | Installed `sec_edgar_ingest.local_cli` | Preflight, fresh correlation IDs/deadline, normalized invocation snapshot, stream archives, and engine supervision. |
 | Installed `sec-edgar-ingest` / `python -m sec_edgar_ingest` | Low-level commands and composed backfill/daily/reconciliation workflows. |
 | `workflows/` | Frozen selections, checked child calls/results, source completion, unresolved work, and publication repair. |
@@ -321,7 +321,7 @@ and required releases. See [recovery](../docs/runbooks/local-recovery.md) and
 
 ### 4.8 Current configuration and limits
 
-The live default is [conf/sec-edgar-local.json](../conf/sec-edgar-local.json), strict JSON with
+The live default is [conf/sec-edgar.json](../conf/sec-edgar.json), strict JSON with
 `config_version=sec-local-config-v1`. Unknown/duplicate keys, invalid types/versions, disallowed
 live overrides, or incompatible bindings fail before gaining store/network authority. Resolve
 filesystem paths against the original config parent; retain the original byte hash separately
@@ -330,8 +330,8 @@ from the canonical normalized effective-config hash.
 | Setting | Current value |
 |---|---|
 | Storage / acquisition | `storage.backend=local`; `acquisition.mode=live`. |
-| Data root | `../data`, resolving to `/Users/lowell/Projects/sec-edgar-local/data`. |
-| Logging root | `../logs`, resolving to `/Users/lowell/Projects/sec-edgar-local/logs`. |
+| Data root | `../data`, resolving to `/Users/lowell/Projects/sec-edgar/data`. |
+| Logging root | `../logs`, resolving to `/Users/lowell/Projects/sec-edgar/logs`. |
 | Backfill / handoff | `2020Q1` through `open`; daily handoff `2026-10-01` (owner, plan 2, 2026-10-29). |
 | SEC identity | `Lowell Mason sec-edgar-ingest mason.lowell@mac.com`. |
 | Request policy | 3 requests/second, one active collector. A lower positive rate is allowed. |
@@ -348,7 +348,7 @@ from the canonical normalized effective-config hash.
 The selected manifest is:
 
 ```text
-/Users/lowell/Projects/sec-edgar-local/releases/sha256=f414caf89eaac416f8b6a27330773eb0d398cc5caedb881a37cf228379f7fa18/release.json
+/Users/lowell/Projects/sec-edgar/releases/sha256=f414caf89eaac416f8b6a27330773eb0d398cc5caedb881a37cf228379f7fa18/release.json
 ```
 
 Stage 2a1 (plan 9) selected the 2a1 release
@@ -470,7 +470,7 @@ plan 9, 2026-11-15; H7 and H8 in the [2a1 spec](completed/sec-filing-index-pre-d
 from its revision, and once more with the installed `e49d3ba8…` release. Continuation on the live store is not
 tested. (Stage 2a1, plan 9, 2026-11-15; [gate evidence](evidence/stage2a1/gate.md).)
 
-The supervised entry point is `scripts/sec-edgar-local`. The installed engine exposes `discover`,
+The supervised entry point is `scripts/sec-edgar`. The installed engine exposes `discover`,
 `collect`, `transform`, `publish`, `backfill`, `daily`, `reconcile`, `candidates`, `approve`, `history`,
 and `rollback`. Low-level execution requires explicit config, IDs, deadline, and applicable exact
 workset references. Use [manual ingestion](../docs/runbooks/local-ingestion.md) for invocation syntax
@@ -636,7 +636,7 @@ unsupported. (Stage 2a, plan 7, 2026-11-02; §§2.2, 4.3 and 4.5 of the
 ## 10. Rollout note
 
 This spec and [roadmap](sec-filing-index-ingestion-roadmap.md) replace the copied parent documents
-in place for `sec-edgar-local`. They are a local description and proposed operational roadmap,
+in place for `sec-edgar`. They are a local description and proposed operational roadmap,
 not a new implementation plan or retroactive acceptance stamp. The completed port design/plan
 and all original acceptance evidence stay retired and unchanged.
 

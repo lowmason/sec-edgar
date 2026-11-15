@@ -45,7 +45,7 @@ from sec_edgar_ingest.storage import open_stores
 from sec_edgar_ingest.etl.state import EtlState
 from sec_edgar_ingest.etl.reader import capture_quarter, read_quarter
 
-settings = load_config(Path('/absolute/conf/sec-edgar-local.json'))
+settings = load_config(Path('/absolute/conf/sec-edgar.json'))
 store, objects, _ = open_stores(settings, access='operator')
 try:
     capture = capture_quarter('2026Q3', objects, EtlState(store))
