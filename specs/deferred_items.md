@@ -88,7 +88,7 @@
       `PrePointerRefusalTests.test_a_wrong_incremental_row_is_refused_before_the_pointer` shows
       that a retry also raises and the pointer does not move. Documented in
       specs/completed/sec-filing-index-per-member-cost.md §4.3 item 5, the parent spec
-      (specs/sec-filing-index-ingestion-spec.md) §4.6 and docs/runbooks/local-recovery.md (row
+      (specs/completed/sec-filing-index-ingestion-spec.md) §4.6 and docs/runbooks/local-recovery.md (row
       "Refused incremental candidate"). The code fix is larger: run C6 on the local Parquet files
       before anything is staged or stored, so a refused candidate leaves no object. That changes
       C6's input and the incremental stage order, and it needs the full gate, a release build and

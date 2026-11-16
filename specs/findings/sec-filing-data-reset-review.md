@@ -26,10 +26,11 @@ Read-only review of 2026-11-16, made before the reset to the
    answer. Real filings came first at platform Stage 6, and published facts at Stage 12.
 3. **Scope: the full range under strict rules.** The first campaign targeted 28 quarters, and one
    rule against repeated keys quarantined all 28. Registered members never retire. They grew from 127
-   to 208, and the work before the first dispatch grew from 1,809 s to 2,715 s, against a 1,500 s
-   cutoff.
-4. **Process: the cost of each stage.** After the port, `specs/` gained 25,828 Markdown lines,
-   against 1,437 source lines and 6,836 test lines. `main` holds 163 `docs(specs|plans|evidence)`
+   to 208, and the work before the first dispatch grew from 1,809 s to 2,715 s, against the 1,800 s
+   cutoff of those runs.
+4. **Process: the cost of each stage.** After the port, `specs/` gained 26,721 Markdown lines,
+   against 1,437 source lines and 6,836 test lines (lines added after `5ae708b`, by
+   `git log --numstat`). `main` holds 163 `docs(specs|plans|evidence)`
    commits and 101 `feat|fix|test` commits. The ingestion roadmap had 10 resume passes, and 4 of them
    added no stamp.
 5. **External: limits outside the project were not binding.** The SEC allows 10 requests per second

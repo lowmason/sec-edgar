@@ -1,8 +1,8 @@
 # Stage 2b baseline campaign: scope, budget and approval
 
 **Status:** Approved for live execution within the limits above.
-**Plan:** [plan 8](../../plans/8-sec-filing-index-ingestion-spec.md).
-**Spec:** §§4.2–4.9, 5–6, 7 G2 of the [ingestion spec](../../sec-filing-index-ingestion-spec.md).
+**Plan:** [plan 8](../../plans/completed/8-sec-filing-index-ingestion-spec.md).
+**Spec:** §§4.2–4.9, 5–6, 7 G2 of the [ingestion spec](../../completed/sec-filing-index-ingestion-spec.md).
 **History:** this campaign repeats the method of [Stage 2](../baseline-campaign/campaign.md) on the 2a release. Stage 2's records stay unchanged. Where this file says "plan 2", it means the [completed plan 2](../../plans/completed/2-sec-filing-index-ingestion-spec.md).
 
 ## Identity
