@@ -1,5 +1,7 @@
 # SEC EDGAR filing-index ingestion methodology
 
+**PARKED (2026-11-16)** with [its roadmap](sec-filing-index-ingestion-roadmap.md). The live roadmap is [sec-filing-data](../sec-filing-data-roadmap.md).
+
 > For agentic workers: when specs/sec-filing-index-ingestion-critique.md exists beside this
 > file, REQUIRED SKILL: describe-critique-methodology (synthesize mode) —
 > do not draft a spec directly.

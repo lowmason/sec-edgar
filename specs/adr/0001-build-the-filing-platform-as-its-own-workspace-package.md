@@ -10,12 +10,12 @@
 
 The workspace has one member, `packages/sec-edgar-ingest` (version 0.2.0, about 13,300 lines of
 source). It is the filing-index catalog. It is implemented and tested offline, and its native
-releases are owner-reviewed. Stage 2 of the [ingestion roadmap](../sec-filing-index-ingestion-roadmap.md),
+releases are owner-reviewed. Stage 2 of the [ingestion roadmap](../completed/sec-filing-index-ingestion-roadmap.md),
 the baseline campaign, is in progress.
 
-The [platform spec](../sec-filing-platform.md) (commits `4b0450b` and `580c48f`) defines a second
+The [platform spec](../completed/sec-filing-platform.md) (commits `4b0450b` and `580c48f`) defines a second
 system above the catalog, with its own roadmap. It shares the catalog's governor, lease record and
-stores ([methodology](../sec-filing-platform-methodology.md), cross-component assumptions 2 and
+stores ([methodology](../completed/sec-filing-platform-methodology.md), cross-component assumptions 2 and
 7). It reuses the catalog's publication protocol (spec R26). The spec says nothing about code
 layout.
 

@@ -1,5 +1,7 @@
 # SEC filing-index ingestion for sec-edgar — Design Spec
 
+**PARKED (2026-11-16)** with [its roadmap](sec-filing-index-ingestion-roadmap.md). The live roadmap is [sec-filing-data](../sec-filing-data-roadmap.md).
+
 **Status:** Local documentation rewrite, 2026-10-18. The native implementation is complete;
 operational coverage and the future scheduling phase have separate acceptance gates.
 **Project:** `/Users/lowell/Projects/sec-edgar`.
@@ -10,9 +12,9 @@ the shipped manual ingestion contract and the remaining operational goals. The o
 future local scheduling phase; its mechanism and operating policy still require design. This rewrite
 does not implement or enable that phase, authorize live traffic, or reopen the retired port plan.
 
-The [completed local design](completed/sec-edgar-local-spec.md),
-[completed implementation plan](plans/completed/1-sec-edgar-local-spec.md), and
-[final completion review](evidence/local-port/completion-review.md) establish the delivered baseline.
+The [completed local design](sec-edgar-local-spec.md),
+[completed implementation plan](../plans/completed/1-sec-edgar-local-spec.md), and
+[final completion review](../evidence/local-port/completion-review.md) establish the delivered baseline.
 The final completion review controls status where dated intermediate evidence still says pending.
 Accepted source-project Azure stages and approvals are not local completion evidence. Historical
 acceptance records remain unchanged; current configuration is described separately in §4.8.
@@ -139,7 +141,7 @@ without hiding unresolved earlier units. Exact origin and repair contexts remain
 **Selection cost.** Within one selection, the publish-call authority and each parent's re-validation run
 once between child executions. Each dispatched member's own checks still re-validate everything.
 (Stage 2a1, plan 9, 2026-11-15; §4 of the
-[2a1 spec](completed/sec-filing-index-pre-dispatch-cost.md).)
+[2a1 spec](sec-filing-index-pre-dispatch-cost.md).)
 
 **Reconcile.** Discover supported quarterly sources and refresh their bytes instead of ordinary
 accepted-snapshot reuse. Unchanged bytes and matching parser/schema avoid unnecessary processing;
@@ -188,7 +190,7 @@ The published `sec-index-v2` row has ten fields, with `form_types` and `company_
 
 A retained `sec-index-v1` generation keeps its v1 rows: scalar `company_name` and `form_type` in
 place of the two lists, and every other field the same. (Stage 2a, plan 7, 2026-11-02; D2 and D7
-in the [2a spec](completed/sec-filing-index-duplicate-key.md).)
+in the [2a spec](sec-filing-index-duplicate-key.md).)
 
 The logical key is `(cik, archive_path)`. Preserve original field values in observations. Identical
 observations collapse in the canonical catalog. Observations of one key in one source that differ
@@ -230,7 +232,7 @@ identity, command attempt, generation pointer, and approval/rollback authority. 
 transformed, and published states remain distinct. An Attempt is admitted against its canonical
 immutable command identity before it can gain execution authority.
 
-Use the closed local formats from the [contract inventory](evidence/local-port/contract-inventory.json),
+Use the closed local formats from the [contract inventory](../evidence/local-port/contract-inventory.json),
 including `sec-local-run-context-v1`, `sec-local-acquisition-v1`, `sec-local-command-result-v1`,
 `sec-local-attempt-admission-v1`, observation/transformed/generation/ETL formats, and local workflow
 formats. Residual workflow envelopes require `contract_version=sec-local-contract-v1`. Preserve
@@ -275,7 +277,7 @@ it reports `invalid_source`, even after a code fix, unless that fix changes the 
 Otherwise the quarter recovers only when its source set or base changes. Removing the candidate's
 objects is not a supported recovery step. §4.7 forbids deleting objects to reset state, and no
 command exists for it. Such a removal needs a separately reviewed operational decision.
-(Stage 1b, plan 5; C1–C6 and C11 in the [1b spec](completed/sec-filing-index-per-member-cost.md).)
+(Stage 1b, plan 5; C1–C6 and C11 in the [1b spec](sec-filing-index-per-member-cost.md).)
 
 ### 4.7 Invocation evidence, recovery, and operators
 
@@ -316,12 +318,12 @@ code release. Neither erases history or retracts downstream exports.
 Preserve evidence before recovery. Never manually edit pointers, relax parsing, delete partial
 objects to reset state, or treat quarantine as successful coverage. Backups require stopped writers,
 confirmed child drain, a consistent SQLite backup, matching immutable objects/binding, configs/logs,
-and required releases. See [recovery](../docs/runbooks/local-recovery.md) and
-[release upgrades](../docs/runbooks/release-upgrades.md).
+and required releases. See [recovery](../../docs/runbooks/local-recovery.md) and
+[release upgrades](../../docs/runbooks/release-upgrades.md).
 
 ### 4.8 Current configuration and limits
 
-The live default is [conf/sec-edgar.json](../conf/sec-edgar.json), strict JSON with
+The live default is [conf/sec-edgar.json](../../conf/sec-edgar.json), strict JSON with
 `config_version=sec-local-config-v1`. Unknown/duplicate keys, invalid types/versions, disallowed
 live overrides, or incompatible bindings fail before gaining store/network authority. Resolve
 filesystem paths against the original config parent; retain the original byte hash separately
@@ -342,7 +344,7 @@ from the canonical normalized effective-config hash.
 | Parser / schema | `sec-index-parser-v2` / `sec-index-v2` (Stage 2a, plan 7, 2026-11-02). |
 | Withdrawal approval | `reconciliation.require_withdrawal_approval=true`. |
 | Execution | Live maximum 3,600 seconds; launcher default 3,300 seconds. |
-| Dispatch reserve | `execution.dispatch_reserve_seconds=1824`. Stage 1b (plan 5) set 1800 from measured member costs ([measurement](evidence/stage1b/measurement.md)). Stage 2a1 (plan 9) raised it to 1824 under the same rule, from the longest measured member wall ([member walls](evidence/stage2a1/walls.md)). Required for a new live workflow run. The value must be at least the floor of 480 seconds (release constant) and below `max_run_seconds`. The launcher refuses a timeout at or below the reserve. (Stage 1a, plan 4; Stage 1b, plan 5.) |
+| Dispatch reserve | `execution.dispatch_reserve_seconds=1824`. Stage 1b (plan 5) set 1800 from measured member costs ([measurement](../evidence/stage1b/measurement.md)). Stage 2a1 (plan 9) raised it to 1824 under the same rule, from the longest measured member wall ([member walls](../evidence/stage2a1/walls.md)). Required for a new live workflow run. The value must be at least the floor of 480 seconds (release constant) and below `max_run_seconds`. The launcher refuses a timeout at or below the reserve. (Stage 1a, plan 4; Stage 1b, plan 5.) |
 | Runtime | `kind=native`; explicit content-addressed `release_manifest`. |
 
 The selected manifest is:
@@ -360,8 +362,8 @@ from 1800 s to 1824 s, because the member-wall stop rule required it. The longes
 The cutoff is now 1,476 s after the run starts. The parser and schema stay `sec-index-parser-v2` /
 `sec-index-v2`. The effective-config SHA-256 is
 `74be83552796e73d20a78cf38cc297d4aac0b3962f875e4f1a5308a837851ba9`, confirmed by offline preflight.
-(Stage 2a1, plan 9, 2026-11-15; [release evidence](evidence/stage2a1/release.md);
-[member walls](evidence/stage2a1/walls.md).)
+(Stage 2a1, plan 9, 2026-11-15; [release evidence](../evidence/stage2a1/release.md);
+[member walls](../evidence/stage2a1/walls.md).)
 
 Before that, Stage 2a (plan 7) selected the 2a release
 `e49d3ba87f7d4eb3082c5bfbfce44bb02ade6a4acd8dfc1a595d3dc424c67eec` at commit
@@ -369,7 +371,7 @@ Before that, Stage 2a (plan 7) selected the 2a release
 `sec-index-parser-v2` and `etl.schema_version` to `sec-index-v2`. The release's Git revision is
 `32863852ce57f1da99db4720bd1c729727b4ec0c`. The reserve stays at 1800 s. The effective-config SHA-256
 is `f2082322b6fe7838504bbd622cb5a8e702512b482943c28ca9be7164f4755733`, confirmed by offline
-preflight. (Stage 2a, plan 7, 2026-11-02; [release evidence](evidence/stage2a/release.md).)
+preflight. (Stage 2a, plan 7, 2026-11-02; [release evidence](../evidence/stage2a/release.md).)
 
 Before that, Stage 1c (plan 6) selected the 1c release
 `c4de77b89bb1d8ecc5d094f0e1dc6f8a5f3a7935e3595a9dd086d1e41a6b8aa7` at commit
@@ -380,7 +382,7 @@ preflight.
 Before that, Stage 1b (plan 5) selected the 1b release
 `9fa189a0bea3c6545e7bce5b82d266d601abe2c3a35a66a58a8b8378d2bc283b` at commit
 `6d80da4d9e1f30461c45a826fecbf8eefc899201`. The reserve stays at 1800 s, which Stage 1a set. The
-Stage 1b [measurement](evidence/stage1b/measurement.md) now backs it. The effective-config SHA-256 was
+Stage 1b [measurement](../evidence/stage1b/measurement.md) now backs it. The effective-config SHA-256 was
 `db62e7fb8c941f125f84992c5bccfdbb65d6461231d899054af505700e9004b1`, confirmed by offline preflight.
 Plan 2 Revision 2 moved the backfill start to `2020Q1`. The effective-config SHA-256 was then
 `2512fdcb999a302d93de84315d45e4e44d0bb942d5165698b64c371fc42b5be5`, confirmed by offline preflight
@@ -425,7 +427,7 @@ unknown `execution.dispatch_reserve_seconds` key, and it reports a D5 sibling-co
 a D5 live run carry the D5 config, so `fc68adef…` probably cannot validate them either. That is an
 untested inference. After a D5 live run has written to a store, selecting `fc68adef…` again for that
 store is unsupported. The D5 release continues `fc68adef…`-origin pending work. (Stage 1a, plan 4;
-[two-release evidence](evidence/d5-release/two-release.md).)
+[two-release evidence](../evidence/d5-release/two-release.md).)
 
 The 1b release changes no generation, manifest, receipt, selection or config format (C7). It continues
 D5-origin pending work. Selecting the D5 release again is supported for a store that holds 1b
@@ -433,14 +435,14 @@ first-generation (full-rebuild) generations and 1b and sibling-completion receip
 once, on fixture packs. D5 reading an incremental 1b generation is not tested. It rests on the byte
 identity of an incremental generation with the full rebuild (C5). A D5 publish on top of a 1b
 generation is also not tested. (Stage 1b, plan 5; C5 and C7 in the
-[1b spec](completed/sec-filing-index-per-member-cost.md); [two-release evidence](evidence/stage1b/two-release.md).)
+[1b spec](sec-filing-index-per-member-cost.md); [two-release evidence](../evidence/stage1b/two-release.md).)
 
 The 1c release changes no generation, manifest, receipt, member evidence, selection, Attempt or config
 format, and no outcome or exit-code format (M6). The 1b release can still read a store that the 1c release
 wrote. But on a store that holds a finished publish Attempt with an incomplete input, such as the live
 store, the 1b release fails the member-completion check. So selecting the 1b release again for that
 store is unsupported. (Stage 1c, plan 6; §4.3 item 7 of the
-[1c spec](completed/sec-filing-index-member-completion.md).)
+[1c spec](sec-filing-index-member-completion.md).)
 
 The 2a release writes only `sec-index-v2` observations and generations. It still validates retained
 `sec-index-v1` objects. A v1 generation reads back exactly as before, as v1 rows, and a v2 generation
@@ -448,33 +450,33 @@ reads back as v2 rows (D7, D9). The 1c release refuses a v2 config, because its 
 `sec-index-v1`. After a v2 run has written to a store, selecting the 1c release again for that
 store is unsupported (D10). The 2a release continues 1c-origin pending work on a store that the 1c
 release wrote (D11). (Stage 2a, plan 7, 2026-11-02; D7 and D9–D11 in the
-[2a spec](completed/sec-filing-index-duplicate-key.md).)
+[2a spec](sec-filing-index-duplicate-key.md).)
 
 `test_release_2a` ran three tests on fixture stores, with a release built from the branch code.
 The 1c release refused the v2 config. The new code continued 1c-origin pending work, repaired a 1c
 publication, and read a 1c generation back unchanged, as v1 rows. These tests ran in the branch gate
 with a 1c build from its revision, and once more with the installed `c4de77b8…` release. No test selects
 the 1c release for a store that holds v2 objects. Continuation on the live store is not tested.
-(Stage 2a, plan 7, 2026-11-02; [gate evidence](evidence/stage2a/gate.md).)
+(Stage 2a, plan 7, 2026-11-02; [gate evidence](../evidence/stage2a/gate.md).)
 
 The 2a1 release changes no format (H7). The parser and schema stay `sec-index-parser-v2` / `sec-index-v2`
 (H8). It continues 2a-origin pending work, and the 2a release continues work that the 2a1 release left
 pending. So selecting the 2a release again is supported. On the live store, though, the 2a release reaches its
 first dispatch 3,197.5 s after the run starts (a replay of invocation 2's selection, measured under machine
 load). That is above the 1,476 s cutoff, so a run on the 2a release can dispatch no member there. (Stage 2a1,
-plan 9, 2026-11-15; H7 and H8 in the [2a1 spec](completed/sec-filing-index-pre-dispatch-cost.md);
-[pre-dispatch timings](evidence/stage2a1/predispatch.md).)
+plan 9, 2026-11-15; H7 and H8 in the [2a1 spec](sec-filing-index-pre-dispatch-cost.md);
+[pre-dispatch timings](../evidence/stage2a1/predispatch.md).)
 
 `test_release_2a1` ran two tests on fixture stores. The new code continued 2a-origin pending work, and the
 2a release continued work that the new code left pending. These tests ran in the branch gate with a 2a build
 from its revision, and once more with the installed `e49d3ba8…` release. Continuation on the live store is not
-tested. (Stage 2a1, plan 9, 2026-11-15; [gate evidence](evidence/stage2a1/gate.md).)
+tested. (Stage 2a1, plan 9, 2026-11-15; [gate evidence](../evidence/stage2a1/gate.md).)
 
 The supervised entry point is `scripts/sec-edgar`. The installed engine exposes `discover`,
 `collect`, `transform`, `publish`, `backfill`, `daily`, `reconcile`, `candidates`, `approve`, `history`,
 and `rollback`. Low-level execution requires explicit config, IDs, deadline, and applicable exact
-workset references. Use [manual ingestion](../docs/runbooks/local-ingestion.md) for invocation syntax
-and [native setup](../docs/runbooks/native-setup.md) for explicit offline build/verification setup.
+workset references. Use [manual ingestion](../../docs/runbooks/local-ingestion.md) for invocation syntax
+and [native setup](../../docs/runbooks/native-setup.md) for explicit offline build/verification setup.
 
 ### 4.10 Future local scheduling
 
@@ -527,7 +529,7 @@ older gaps. Acceptance-harness exit 12 is separate from this production CLI tabl
 
 ## 6. Verification and existing evidence
 
-The default checker [scripts/check-sec-edgar-ingest.sh](../scripts/check-sec-edgar-ingest.sh) is
+The default checker [scripts/check-sec-edgar-ingest.sh](../../scripts/check-sec-edgar-ingest.sh) is
 offline: guard network access before test imports, use committed/synthetic/retained fixtures and
 explicit loopback boundaries, verify installed native releases, build wheel/sdist, check CLI
 interfaces, and validate source syntax. Explicit artifact setup precedes the gate; absent artifacts
@@ -544,22 +546,22 @@ form type or company name merges into one row. Any other conflicting repeat, a f
 included, still quarantines the whole source. The older duplicate-quarantine tests were updated, not
 deleted. The Stage 2a branch gate ran 1187 tests in 75 modules, `OK`, on branch commit
 `557028c052b2116b177f28cb18e85eec9ab519f8` in its worktree. (Stage 2a, plan 7, 2026-11-02; §5 items
-1, 2 and 10 of the [2a spec](completed/sec-filing-index-duplicate-key.md); [gate evidence](evidence/stage2a/gate.md).)
+1, 2 and 10 of the [2a spec](sec-filing-index-duplicate-key.md); [gate evidence](../evidence/stage2a/gate.md).)
 
 Selection tests now cover selection equality and the kept-value rules. The selection of the new code equals the
 selection of the code without kept values. A kept value is dropped when the discovery child returns or raises,
 and a failure is never kept. The Stage 2a1 branch gate ran 1222 tests in 77 modules, `OK`, on branch commit
 `bb8b99067db8ea27b509a2b87351564ec1a7afb1` in its worktree. The final review added one test (`20ac48b`), and its
 module ran again, `OK`. (Stage 2a1, plan 9, 2026-11-15; §5 items 1–7 of the
-[2a1 spec](completed/sec-filing-index-pre-dispatch-cost.md); [gate evidence](evidence/stage2a1/gate.md).)
+[2a1 spec](sec-filing-index-pre-dispatch-cost.md); [gate evidence](../evidence/stage2a1/gate.md).)
 
-The final [completion review](evidence/local-port/completion-review.md) records renewed offline
+The final [completion review](../evidence/local-port/completion-review.md) records renewed offline
 L01–L11/L13 passing with **952 tests in 60 modules**. This is retained evidence of the completed
 payload, not a suite run performed for this rewrite. Intermediate dated records retain their
 original pending-review/L12-not-run statements.
 
-The [genuine acceptance record](evidence/local-port/sec-acceptance.md) and
-[machine evidence](evidence/local-port/sec-acceptance.json) establish L12 through a separately
+The [genuine acceptance record](../evidence/local-port/sec-acceptance.md) and
+[machine evidence](../evidence/local-port/sec-acceptance.json) establish L12 through a separately
 reviewed offline adjudication of the same preserved bounded genuine attempt:
 
 - Original driver run and original verification remain **incomplete, exit 12**.
@@ -600,9 +602,9 @@ code, latest filing date, directory presence, or one nonempty captured quarter.
 
 ## 8. Documentation and project boundaries
 
-The [README](../README.md), [native setup](../docs/runbooks/native-setup.md),
-[manual ingestion](../docs/runbooks/local-ingestion.md), [recovery](../docs/runbooks/local-recovery.md),
-and [release upgrades](../docs/runbooks/release-upgrades.md) are operator entry points. Where older
+The [README](../../README.md), [native setup](../../docs/runbooks/native-setup.md),
+[manual ingestion](../../docs/runbooks/local-ingestion.md), [recovery](../../docs/runbooks/local-recovery.md),
+and [release upgrades](../../docs/runbooks/release-upgrades.md) are operator entry points. Where older
 status paragraphs describe the preselection default, use §4.8 for current selection and the final
 completion review for acceptance status. Historical evidence is not edited to follow later state.
 
@@ -631,7 +633,7 @@ Stage 2a is such an explicit versioned transition. Parser `sec-index-parser-v2` 
 objects are not rewritten, relabeled or migrated, and v1 generations stay readable (§4.9). For a
 store, the transition is one-way: after a v2 run has written to it, selecting the 1c release again is
 unsupported. (Stage 2a, plan 7, 2026-11-02; §§2.2, 4.3 and 4.5 of the
-[2a spec](completed/sec-filing-index-duplicate-key.md).)
+[2a spec](sec-filing-index-duplicate-key.md).)
 
 ## 10. Rollout note
 

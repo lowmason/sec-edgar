@@ -1,5 +1,7 @@
 # Stage 2b Baseline Coverage on the 2a Release Implementation Plan
 
+**Status: SUPERSEDED (2026-11-16)** — halted at Task 5 on 2026-11-06 (stop rule 10). The owner chose "Stop, new plan", and no new plan was written. The roadmap reset of 2026-11-16 parked Stage 2b, and [the sec-filing-data roadmap](../../sec-filing-data-roadmap.md) replaced the old roadmaps. The Handoff below stays as the record. The Stage 2b item in `specs/deferred_items.md`, section `sec-filing-index-ingestion-roadmap — 2026-11-16`, cites it.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: implement this plan task-by-task via subagent-driven-development (the default) — or executing-plans when your human partner chose inline execution at the handoff. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 > Roadmap: specs/sec-filing-index-ingestion-roadmap.md, Stage 2b — on plan completion, tick the stage and re-validate later stages against what shipped.
@@ -10,7 +12,7 @@
 
 **Tech Stack:** Installed native release `e49d3ba8…` (application 0.2.0, CPython 3.14.0, `git_revision` `32863852…`). Stdlib `unittest` under `packages/sec-edgar-ingest/tests/network_guard.py`. SQLite backup API. Launcher `scripts/sec-edgar-local`. Evidence tool `scripts/baseline-campaign.py`.
 
-**Spec:** [specs/sec-filing-index-ingestion-spec.md](../sec-filing-index-ingestion-spec.md) §§4.2–4.9, 5–6, 7 G2. Stage 2b has no stage spec. Its inputs are the roadmap entry's `Consumes`; plan 7, Handoff, Stage 2b bullet (`specs/plans/completed/7-sec-filing-index-duplicate-key.md`); plan 2, Handoff, and its campaign files (`specs/plans/completed/2-sec-filing-index-ingestion-spec.md`, `specs/evidence/baseline-campaign/`); and the [2a spec](../completed/sec-filing-index-duplicate-key.md) §6.
+**Spec:** [specs/sec-filing-index-ingestion-spec.md](../../completed/sec-filing-index-ingestion-spec.md) §§4.2–4.9, 5–6, 7 G2. Stage 2b has no stage spec. Its inputs are the roadmap entry's `Consumes`; plan 7, Handoff, Stage 2b bullet (`specs/plans/completed/7-sec-filing-index-duplicate-key.md`); plan 2, Handoff, and its campaign files (`specs/plans/completed/2-sec-filing-index-ingestion-spec.md`, `specs/evidence/baseline-campaign/`); and the [2a spec](../../completed/sec-filing-index-duplicate-key.md) §6.
 
 ## Status of authority
 
@@ -524,7 +526,7 @@ git commit -m "docs(evidence): record final Stage 2b coverage"
 - Modify: `docs/runbooks/local-ingestion.md:66`
 
 **Interfaces:**
-- Consumes: Task 6 outputs, `invocations.md`, `campaign.md`, `pre-campaign.md`, Stage 2's [coverage finding](../evidence/baseline-campaign/coverage-finding.md), and `specs/deferred_items.md`, section `2-sec-filing-index-ingestion-spec — 2026-10-31`.
+- Consumes: Task 6 outputs, `invocations.md`, `campaign.md`, `pre-campaign.md`, Stage 2's [coverage finding](../../evidence/baseline-campaign/coverage-finding.md), and `specs/deferred_items.md`, section `2-sec-filing-index-ingestion-spec — 2026-10-31`.
 - Produces: the revised G2 finding that the Stage 2b Exit requires, and that Stages 3–5 consume.
 
 - [ ] **Step 1: Write the finding**
@@ -534,7 +536,7 @@ Title it `# Stage 2b baseline coverage finding (G2, revised)`. Use plan 2 Task 7
 - **§1 Result** names Stage 2's finding as history that this one revises.
 - **§2 Campaign as run** reports the first v2 write (k = 1) and the re-run of all 127 members (F1).
 - **§3 Baseline units** adds a `Schema` column from `filing_quarter.schema_version`.
-- **§4 Exceptions** gives 2026Q3's gate with its change counts and the proposed disposition "deferred to Stage 4 manual reconciliation (D3)", and each other exception.
+- **§4 Exceptions** gives 2026Q3's gate with its change counts and the proposed disposition "deferred to Stage 4 manual reconciliation (D3)", and each other exception. → item: sec-filing-index-ingestion-roadmap — 2026-11-16
 - **§5 Other output** lists the retained daily sources for Stage 3, the bodies after 2026-10-30, the daily members held by the gate (Task 6 Step 2), and the open-quarter daily members that ran after the 2026Q4 quarterly publish (the A1 class), with their walls.
 - **§7 Evidence integrity** names the Task 3 backup.
 - **§8 Deferred items** gives item 1's "Done when" verdict, and the revisit conditions of items 2 and 3 in the same section, with evidence.

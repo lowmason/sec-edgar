@@ -1,5 +1,7 @@
 # SEC EDGAR filing platform — Design Spec
 
+**PARKED (2026-11-16)** with [its roadmap](sec-filing-platform-roadmap.md). The live roadmap is [sec-filing-data](../sec-filing-data-roadmap.md).
+
 > For agentic workers: REQUIRED NEXT SKILL: derive-roadmap — do not plan
 > this spec directly and do not split it into per-subsystem plans.
 
@@ -454,7 +456,7 @@ Every methodology evaluation criterion holds (R1). These checks are added:
 - **The governor change comes next.** R4 changes the catalog's shared governor. The platform
   roadmap stages that change as its own work, with a stated dependency on the catalog. No stage is
   added to the ingestion roadmap. The owner approves the change to the shared governor.
-- **Package boundary.** See [ADR 0001](adr/0001-build-the-filing-platform-as-its-own-workspace-package.md) (Accepted).
+- **Package boundary.** See [ADR 0001](../adr/0001-build-the-filing-platform-as-its-own-workspace-package.md) (Accepted).
 - **The storage gate blocks backfill.** V17 must hold before the first backfill.
 - **Catalog coverage bounds platform coverage.** The platform covers a quarter only after the
   catalog accepts it (R2). The catalog's baseline campaign is Stage 2 of the ingestion roadmap.

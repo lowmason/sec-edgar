@@ -6,13 +6,13 @@ plan 7. Item 1 of `specs/deferred_items.md`, section `2-sec-filing-index-ingesti
 open for Stage 2b. The owner approved plan 7 with P1–P12 on 2026-10-31 (plan D1). Before that, this line read
 "Draft for owner review, 2026-10-31".
 **Project:** `/Users/lowell/Projects/sec-edgar-local`.
-**Parent spec:** [SEC filing-index ingestion](../sec-filing-index-ingestion-spec.md) (§§3 R3, R5, R9, R12; 4.4–4.9; 5–6; 9).
-**Roadmap:** [ingestion roadmap](../sec-filing-index-ingestion-roadmap.md), Stage 2a.
+**Parent spec:** [SEC filing-index ingestion](sec-filing-index-ingestion-spec.md) (§§3 R3, R5, R9, R12; 4.4–4.9; 5–6; 9).
+**Roadmap:** [ingestion roadmap](sec-filing-index-ingestion-roadmap.md), Stage 2a.
 **Inputs:** the 1c release `c4de77b8…` and its evidence (`specs/evidence/stage1c/`); Stage 2's accepted
 [coverage finding](../evidence/baseline-campaign/coverage-finding.md) §§4.1–4.2, its `quarantine/` enumerations and
 `final/coverage.json`; the [submissions findings](../findings/sec-filing-submissions-findings.md) §5;
 `specs/deferred_items.md`, section `2-sec-filing-index-ingestion-spec — 2026-10-31`, item 1; plan 2, Handoff
-(`specs/plans/completed/2-sec-filing-index-ingestion-spec.md`); the [platform spec](../sec-filing-platform.md) R8.
+(`specs/plans/completed/2-sec-filing-index-ingestion-spec.md`); the [platform spec](sec-filing-platform.md) R8.
 
 ## 1. Purpose
 

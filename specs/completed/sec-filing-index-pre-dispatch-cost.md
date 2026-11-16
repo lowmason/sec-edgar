@@ -5,8 +5,8 @@
 section `9-sec-filing-index-pre-dispatch-cost — 2026-11-15` of `specs/deferred_items.md`. The owner approved the spec on
 2026-11-14 (decision "Spec", §8). Before that, this line read "Draft for owner review, 2026-11-14".
 **Project:** `/Users/lowell/Projects/sec-edgar-local`.
-**Parent spec:** [SEC filing-index ingestion](../sec-filing-index-ingestion-spec.md) (§§3 R1, R5, R6, R12; 4.2, 4.7–4.9; 6; 9).
-**Roadmap:** [ingestion roadmap](../sec-filing-index-ingestion-roadmap.md), Stage 2a1.
+**Parent spec:** [SEC filing-index ingestion](sec-filing-index-ingestion-spec.md) (§§3 R1, R5, R6, R12; 4.2, 4.7–4.9; 6; 9).
+**Roadmap:** [ingestion roadmap](sec-filing-index-ingestion-roadmap.md), Stage 2a1.
 **Inputs:** the 2a release `e49d3ba8…` and its evidence (`specs/evidence/stage2a/`); plan 8, Handoff, bullet "Task 5
 halt (2026-11-06)" (`specs/plans/8-sec-filing-index-ingestion-spec.md`); the Stage 2b evidence
 (`specs/evidence/stage2b/`: `startup-overhead.md`, `invocations/*.json`, `pre-campaign.md`); the

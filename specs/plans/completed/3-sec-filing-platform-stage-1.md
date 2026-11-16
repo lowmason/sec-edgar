@@ -1,5 +1,7 @@
 # Platform Stage 1: Package and Envelope Parser Implementation Plan
 
+**Status: SUPERSEDED (2026-11-16)** — executed on branch `platform-stage1` (`12cb8e0`, 13 commits, 60 fixture tests) and never merged. The owner retired it unmerged at the roadmap reset, and [the sec-filing-data roadmap](../../sec-filing-data-roadmap.md) does not consume it. The executed copy, with its deviation notes, is on the branch. Its stage is an item in `specs/deferred_items.md`, section `sec-filing-platform-roadmap — 2026-11-16`.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: implement this plan task-by-task via subagent-driven-development (the default) — or executing-plans when your human partner chose inline execution at the handoff. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 > Roadmap: specs/sec-filing-platform-roadmap.md, Stage 1 — on plan completion, tick the stage and re-validate later stages against what shipped.
@@ -12,7 +14,7 @@
 
 **Tech Stack:** CPython 3.14 (stdlib only: `xml.etree.ElementTree` pull parser, `zoneinfo`, `binascii`, `hashlib`). Build backend `uv_build>=0.12.15,<0.13.0` (the ingest package's pin). Stdlib `unittest`, run through `packages/sec-edgar-ingest/tests/network_guard.py`, which denies sockets.
 
-**Spec:** [specs/sec-filing-platform.md](../sec-filing-platform.md), through the roadmap's Stage 1 entry ([specs/sec-filing-platform-roadmap.md:189-196](../sec-filing-platform-roadmap.md)). Its `Spec` line cites R1 (M P3), R8 (P3 cross-check), R9 (header state), R15, R16, and ADR 0001 Decision and Consequences. This plan covers only that entry's `Gap closed`, `Produces` and `Exit`. The spec is shared by all 13 stages. Retiring this plan leaves the spec in place (roadmap Completion).
+**Spec:** [specs/sec-filing-platform.md](../../completed/sec-filing-platform.md), through the roadmap's Stage 1 entry ([specs/sec-filing-platform-roadmap.md:189-196](../../completed/sec-filing-platform-roadmap.md)). Its `Spec` line cites R1 (M P3), R8 (P3 cross-check), R9 (header state), R15, R16, and ADR 0001 Decision and Consequences. This plan covers only that entry's `Gap closed`, `Produces` and `Exit`. The spec is shared by all 13 stages. Retiring this plan leaves the spec in place (roadmap Completion).
 
 ## Owner gates (read first)
 

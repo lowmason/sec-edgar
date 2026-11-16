@@ -320,3 +320,84 @@
       its pending scenario a hash-ordered member sort can leave no cross-release child (the repair case always runs
       one). Touches `packages/sec-edgar-ingest/tests/test_pre_dispatch_cost.py` and `test_release_2a1.py`.
       Size: quick-fix. Done when: each gap has a test, or the owner drops it with a reason.
+
+## sec-filing-index-ingestion-roadmap — 2026-11-16
+- [ ] Stage 2b, baseline coverage on the 2a1 release (parked roadmap `specs/completed/sec-filing-index-ingestion-roadmap.md`,
+      Stage 2b entry; parked at the roadmap reset, 2026-11-16): a revised G2 finding for the 28 quarterly units
+      2020Q1–2026Q4 and the 7 daily duplicate-key sources, on release `f414caf8…`. It is blocked. The 2026-11-15 folder
+      rename blocks every registered member, because each stored config names the old storage root
+      (`workflows/checked.py:414–415`; `specs/evidence/stage2b/planning/rename-check.md` on branch
+      `claude/sec-filing-index-stage-2b-0111b6`). Repair routes, none tested: (A) move the folder back and undo the
+      rename's rewrites of the config, `binding.json` and the release launch files; (B) a link from the old path, which
+      fails alone at the console-script check, with the old paths put back in the four origin releases (not analyzed);
+      (C) compare bindings by store identity and look up releases from the current folder (under the current code, no
+      proof on a cloned store passes). The owner chose (D) on 2026-11-16: leave the store parked. Plan 8's Handoff
+      (`specs/plans/completed/8-sec-filing-index-ingestion-spec.md`) and plan 9's Handoff hold the inputs.
+      Size: design. Done when: the owner accepts a revised G2 finding that accounts for each of the 28 quarterly units
+      and the 7 daily duplicate-key sources by validated publication or by a named gap with an owner disposition.
+- [ ] Stage 3, daily catch-up acceptance (parked roadmap, Stage 3 entry, G3): accepted manual daily continuation from
+      the handoff to the current date over the retained pending inventory. It needs the Stage 2b finding. The `daily`
+      command shares the cost before the first dispatch (plan 9, Handoff, "Stages 3, 4 and 5" bullet). Size: plan.
+      Done when: a dated catch-up report accounts for the daily discovery and pending units from the handoff to the
+      current date, and the owner accepts its coverage and limits.
+- [ ] Stage 4, manual reconciliation acceptance (parked roadmap, Stage 4 entry, G4): accepted operational
+      reconciliation with change, gate, revert, quarantine and recovery dispositions. It needs the Stage 2b finding and
+      a quarterly authority to compare with. Plan 8 F3 predicted a 2026Q3 withdrawal gate of about 47 keys, which waits
+      here. Size: plan. Done when: a reconciliation report gives each unresolved candidate and gap an explicit
+      disposition, and each approval names its exact authority.
+- [ ] Stage 5, local scheduling and observed-operation acceptance (parked roadmap, Stage 5 entry, R13, G5): a reviewed
+      scheduler for unattended runs, with enable and disable records and observed scheduled runs. Its design retires
+      old registered members or stops evaluating them (item "Registered-member accumulation", section
+      `9-sec-filing-index-pre-dispatch-cost — 2026-11-15`). Size: design. Done when: R13 has scheduler-specific
+      verification, and accepted scheduled daily and reconciliation runs link to durable results.
+
+## sec-filing-platform-roadmap — 2026-11-16
+- [ ] Stage 1, platform package and envelope parser (parked roadmap `specs/completed/sec-filing-platform-roadmap.md`,
+      Stage 1 entry; plan 3, `specs/plans/completed/3-sec-filing-platform-stage-1.md`): the work ran to the end on
+      branch `platform-stage1` (`12cb8e0`, 13 commits, package `sec-edgar-filings`, 60 fixture tests). The owner retired
+      plan 3 unmerged at the roadmap reset (2026-11-16), and the new roadmap does not consume it. Merge gate items 2–4
+      of plan 3 were never met. Size: plan. Done when: the `sec-edgar-filings` package is on `main` with its
+      import-direction test and a recorded ingest export diff, or the owner drops the branch.
+- [ ] Stage 2, XBRL fact extraction over fixtures (parked roadmap, Stage 2 entry; platform spec
+      `specs/completed/sec-filing-platform.md` R18–R20, V13): a draft extractor with inline XBRL document sets, R18 fact
+      keys, R19 duplicate classes and the cover record. Stage 1 of `specs/sec-filing-data-roadmap.md` parses as-filed
+      facts on real filings without this design. Size: plan. Done when: each V13 case passes as a fixture test.
+- [ ] Stage 3, ownership records over fixtures (parked roadmap, Stage 3 entry; platform spec R22–R24, V15): typed
+      ownership records with the R23 13F rules and the R24 amendment row set. Size: plan. Done when: each V15 case
+      passes as a fixture test.
+- [ ] Stage 4, platform catalog release (parked roadmap, Stage 4 entry; platform spec R4–R7; ADR 0001): a release of
+      the shared governor with a bulk lane, three priorities, a protocol version, platform URL classes and
+      multi-application build and verify, plus ADR 0002 on shared code. Size: design. Done when: the owner approves the
+      governor change and the release, and ADR 0002 is Accepted.
+- [ ] Stage 5, governed retrieval and retention (parked roadmap, Stage 5 entry; platform spec R3 rules 1, 2 and 5,
+      R5–R7, R26): governed fetch and retention of Feed archives, complete submission files and `submissions.zip`.
+      Size: plan. Done when: offline tests show members mapped by header accession, snapshot records with their
+      encoding and decoded-byte hashes, and oversize routing to the bulk lane, and the owner reviews the release.
+- [ ] Stage 6, evidence campaign and finding (parked roadmap, Stage 6 entry; platform spec V1–V12, R30): a bounded live
+      campaign that retains a real-submission sample and gives a result for each of V1–V12. Size: plan. Done when:
+      each of V1–V12 has a recorded result or a named open item with an owner disposition, and the sample manifest is
+      committed.
+- [ ] Stage 7, parser freeze (parked roadmap, Stage 7 entry; platform spec R14–R16, R18–R20, R22–R24): revise the
+      envelope, fact and ownership parsers against the retained sample and freeze their versions. Size: plan.
+      Done when: each frozen version parses the whole sample, with a recorded reason for each refusal.
+- [ ] Stage 8, point-in-time store and views (parked roadmap, Stage 8 entry; platform spec R9–R13, R26, R28, V14):
+      per-quarter platform generations with four times, tombstones and both view clocks. Stages 2–4 of
+      `specs/sec-filing-data-roadmap.md` cover point-in-time awareness for that roadmap's sample. Size: plan.
+      Done when: each V14 sequence passes, and a generation publishes by conditional replace in a fixture store.
+- [ ] Stage 9, entity history and events (parked roadmap, Stage 9 entry; platform spec R17, R25): ticker and name
+      histories from as-filed sources, and 8-K item events. Size: plan. Done when: tests show ticker observations from
+      both R17 sources, an item crosswalk with effective date ranges, and one event row per item.
+- [ ] Stage 10, publication quality gates (parked roadmap, Stage 10 entry; platform spec R21, R27, V16): fact accuracy
+      against SEC reference data, and a review policy for level-B fields. Size: design. Done when: a version of the
+      fact extractor meets the V16 conditions, or is recorded as not fit with its residuals.
+- [ ] Stage 11, run composition and accounting (parked roadmap, Stage 11 entry; platform spec R2, R3 rules 3, 4 and 6,
+      R29, R31): backfill, daily, audit and replay runs with coverage accounting per quarter. Size: plan. Done when:
+      fixture runs show selection from the pinned catalog only, a recorded gap for each unlisted Feed member, and a
+      reported audit detection bound.
+- [ ] Stage 12, storage gate and first backfill (parked roadmap, Stage 12 entry; platform spec R30, V17): the owner's
+      storage budget and the first platform backfill over catalog-accepted quarters, at about 1.0–1.9 TB per quarter
+      uncompressed. Size: plan. Done when: the measured volume and the owner's budget are recorded before the first
+      backfill request, and each requested quarter is covered or named as a gap.
+- [ ] Stage 13, daily continuation acceptance (parked roadmap, Stage 13 entry; platform spec R29, R31): accepted daily
+      platform runs after the catalog's daily run. Size: plan. Done when: daily runs take each evening's Feed archive
+      after the catalog's daily run, and the audit's detection bound is recorded.

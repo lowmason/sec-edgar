@@ -6,8 +6,8 @@
 **Approval:** Approved by the owner, 2026-10-22, as committed at `1a6c3ad`. Owner's words: "I approve the
 written Stage 1a spec as committed."
 **Project:** `/Users/lowell/Projects/sec-edgar-local`.
-**Parent spec:** [SEC filing-index ingestion](../sec-filing-index-ingestion-spec.md) (§§3 R2, R5–R6, R12; 4.2, 4.7–4.9; 5–6; 9).
-**Roadmap:** [ingestion roadmap](../sec-filing-index-ingestion-roadmap.md), Stage 1a.
+**Parent spec:** [SEC filing-index ingestion](sec-filing-index-ingestion-spec.md) (§§3 R2, R5–R6, R12; 4.2, 4.7–4.9; 5–6; 9).
+**Roadmap:** [ingestion roadmap](sec-filing-index-ingestion-roadmap.md), Stage 1a.
 
 ## 1. Purpose
 
@@ -174,7 +174,7 @@ and the §4.8 coordination values (expected unchanged).
 
 ## 8. Parent-spec amendments
 
-The plan's last task applies these to [the parent spec](../sec-filing-index-ingestion-spec.md):
+The plan's last task applies these to [the parent spec](sec-filing-index-ingestion-spec.md):
 
 - §4.7: a run stops dispatch at `deadline − reserve`, and a deadline deferral reports exit 3 or 4.
 - §4.8: a table row for `execution.dispatch_reserve_seconds`, the D5 manifest path and the new

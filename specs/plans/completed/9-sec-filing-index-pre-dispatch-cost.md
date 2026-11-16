@@ -24,7 +24,7 @@ Code and the two scripts land on a feature branch in a worktree. They merge to `
 
 **Tech Stack:** Python 3.14 (CPython 3.14.0, macOS arm64). PyArrow 25.0.1 Parquet. SQLite through `sqlite3`. Stdlib `unittest` under `packages/sec-edgar-ingest/tests/network_guard.py`. `uv` offline and locked. Installed releases under `releases/sha256=<id>/`.
 
-**Spec:** [specs/sec-filing-index-pre-dispatch-cost.md](../../completed/sec-filing-index-pre-dispatch-cost.md) (Stage 2a1, committed at `003c516`). Its status line reads "Draft for owner review". The owner's approval is recorded in its §8, "Spec" (`:316`). Parent spec: [specs/sec-filing-index-ingestion-spec.md](../../sec-filing-index-ingestion-spec.md). Inputs: the [diagnosis](../../evidence/stage2a1/diagnosis/diagnosis.md), [plan 8](../8-sec-filing-index-ingestion-spec.md) (halted evidence; Handoff, bullet "Task 5 halt (2026-11-06)"), [plan 7](7-sec-filing-index-duplicate-key.md) (the release pattern), and the [Stage 2b evidence](../../evidence/stage2b/pre-campaign.md).
+**Spec:** [specs/sec-filing-index-pre-dispatch-cost.md](../../completed/sec-filing-index-pre-dispatch-cost.md) (Stage 2a1, committed at `003c516`). Its status line reads "Draft for owner review". The owner's approval is recorded in its §8, "Spec" (`:316`). Parent spec: [specs/sec-filing-index-ingestion-spec.md](../../completed/sec-filing-index-ingestion-spec.md). Inputs: the [diagnosis](../../evidence/stage2a1/diagnosis/diagnosis.md), [plan 8](8-sec-filing-index-ingestion-spec.md) (halted evidence; Handoff, bullet "Task 5 halt (2026-11-06)"), [plan 7](7-sec-filing-index-duplicate-key.md) (the release pattern), and the [Stage 2b evidence](../../evidence/stage2b/pre-campaign.md).
 
 ## Global Constraints
 

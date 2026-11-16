@@ -1,5 +1,7 @@
 # First-pass methodological review: SEC EDGAR filing platform methodology
 
+**PARKED (2026-11-16)** with [its roadmap](sec-filing-platform-roadmap.md). The live roadmap is [sec-filing-data](../sec-filing-data-roadmap.md).
+
 The design's provenance discipline is better than most published EDGAR pipelines, but its acquisition plan rests on a request ceiling about 6.7 times lower than the SEC's published limit, it ignores the SEC's daily bulk Feed, and it misreads three SEC formats that would corrupt XBRL extraction (inline XBRL document sets, the `<XBRL>` wrapper, and SEC-generated "processed XBRL" documents). Those should be fixed before any parser is frozen.
 
 ## TL;DR

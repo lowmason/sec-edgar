@@ -27,7 +27,7 @@ Code lands on a feature branch in a worktree. It merges to `main` after the full
 
 **Tech Stack:** Python 3.14 (CPython 3.14.0, macOS arm64). PyArrow 25.0.1 Parquet. SQLite through `sqlite3`. Stdlib `unittest` under `packages/sec-edgar-ingest/tests/network_guard.py`. `uv` offline and locked. Installed releases under `releases/sha256=<id>/`.
 
-**Spec:** [specs/sec-filing-index-duplicate-key.md](../../completed/sec-filing-index-duplicate-key.md) (Stage 2a, committed at `e99b184`; its status line reads "Draft for owner review"). Parent spec: [specs/sec-filing-index-ingestion-spec.md](../../sec-filing-index-ingestion-spec.md). Inputs: the [1c release evidence](../../evidence/stage1c/release.md), [plan 6](6-sec-filing-index-member-completion.md) (the release pattern), [plan 2](2-sec-filing-index-ingestion-spec.md), Handoff, and the [quarantine enumerations](../../evidence/baseline-campaign/quarantine/).
+**Spec:** [specs/sec-filing-index-duplicate-key.md](../../completed/sec-filing-index-duplicate-key.md) (Stage 2a, committed at `e99b184`; its status line reads "Draft for owner review"). Parent spec: [specs/sec-filing-index-ingestion-spec.md](../../completed/sec-filing-index-ingestion-spec.md). Inputs: the [1c release evidence](../../evidence/stage1c/release.md), [plan 6](6-sec-filing-index-member-completion.md) (the release pattern), [plan 2](2-sec-filing-index-ingestion-spec.md), Handoff, and the [quarantine enumerations](../../evidence/baseline-campaign/quarantine/).
 
 ## Global Constraints
 

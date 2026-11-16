@@ -1,3 +1,5 @@
+**PARKED (2026-11-16) — 0 of 13 stages complete.** The live roadmap is [sec-filing-data](../sec-filing-data-roadmap.md). The unticked stages (1–13) are deferred items in `specs/deferred_items.md`, section `sec-filing-platform-roadmap — 2026-11-16`.
+
 > For agentic workers: REQUIRED SKILL: derive-roadmap — resume via its
 > reconcile step; route each unticked stage per its ROUTING line; never plan
 > this document wholesale.
@@ -12,7 +14,7 @@ SEC request.
 **Source:** [Filing platform spec](sec-filing-platform.md) at `25f8c57`, which the owner approved on
 2026-10-21. IDs R1–R31 and V1–V17 are its Requirements and Verification items. Locators `(M …)` and
 `(C …)` keep the spec's meaning.
-**Package boundary:** [ADR 0001](adr/0001-build-the-filing-platform-as-its-own-workspace-package.md)
+**Package boundary:** [ADR 0001](../adr/0001-build-the-filing-platform-as-its-own-workspace-package.md)
 (Accepted). Its required safeguards and follow-on items are rows below, because stages must discharge
 them.
 **Separate roadmap:** This roadmap stands alone. It adds no stage to the
@@ -25,7 +27,7 @@ platform package exists. No code there handles Feed archives, inline XBRL docume
 nothing is implemented. `specs/deferred_items.md` does not exist. Other facts found:
 
 - The live store holds catalog generations for 16 filing quarters of 2021–2026 only
-  ([findings](findings/sec-filing-submissions-findings.md) §2).
+  ([findings](../findings/sec-filing-submissions-findings.md) §2).
 - The manual 2026-10-15 Feed download (findings §4.2) is no longer at `/tmp/sec-filings` (checked
   2026-10-21).
 - Plan 2's Handoff calls this spec "awaiting owner review"

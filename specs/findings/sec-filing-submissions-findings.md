@@ -4,7 +4,7 @@
 §4.5 was corrected and §4.6–4.7 were added on 2026-10-20 after a second check of the extracted feed.
 §5 was added on 2026-10-21 from the stored 2024Q1 quarterly file.
 **Project:** `/Users/lowell/Projects/sec-edgar-local`.
-**Related:** [Filing-index ingestion spec](../sec-filing-index-ingestion-spec.md),
+**Related:** [Filing-index ingestion spec](../completed/sec-filing-index-ingestion-spec.md),
 [completed local design](../completed/sec-edgar-local-spec.md) §5.
 
 This document records one session of exploration. The session examined the live local store, checked

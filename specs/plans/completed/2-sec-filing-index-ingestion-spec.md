@@ -26,7 +26,7 @@ Revision 3 (2026-10-30) moves the campaign to the 1c release `c4de77b8…` after
 
 **Tech Stack:** Installed native release `c4de77b8…` (CPython 3.14.0, macOS arm64, Requests 2.34.2, PyArrow 25.0.1, application version 0.2.0; its locked inputs equal the 1b release's). Tasks 1–3 ran on release `fc68adef…`, and Tasks 3a–3c and invocation 1 on `9fa189a0…`. Stdlib `unittest` under `packages/sec-edgar-ingest/tests/network_guard.py`. SQLite backup API. Launcher `scripts/sec-edgar-local`.
 
-**Spec:** [specs/sec-filing-index-ingestion-spec.md](../../sec-filing-index-ingestion-spec.md). This plan implements Stage 2 only: §§4.2–4.9, 5–6 and 7 G2. It plans no work for Stages 3–5.
+**Spec:** [specs/sec-filing-index-ingestion-spec.md](../../completed/sec-filing-index-ingestion-spec.md). This plan implements Stage 2 only: §§4.2–4.9, 5–6 and 7 G2. It plans no work for Stages 3–5.
 
 ## Revision 4 after the halt at invocation 3 (approved by the owner, D15)
 
