@@ -277,6 +277,7 @@ class SecClient:
             answer = self._record(request_id, key, received, verdict)
             if verdict.outcome == "ok":
                 part.replace(dest)
+                _fsync_folder(dest.parent)
             elif verdict.outcome == "budget":
                 raise BudgetExhausted(verdict.reason)
             elif verdict.outcome == "forbidden":
@@ -318,7 +319,11 @@ class SecClient:
     def _copy_body(
         self, received: _Received, decoder: _Decoder, out: BinaryIO, usage: Usage
     ) -> _Verdict:
-        """Stream raw pieces, count them as wire bytes, and write the decoded bytes."""
+        """Stream raw pieces, count them as wire bytes, and write the decoded bytes.
+
+        A complete body is fsynced before the `ok` verdict, so its ledger record and
+        the rename cannot outlive its bytes after a crash.
+        """
         digest = hashlib.sha256()
         pieces = received.response.raw.stream(PIECE_BYTES, decode_content=False)
         while True:
@@ -336,6 +341,8 @@ class SecClient:
                 out.write(block)
         if not decoder.complete:
             return _Verdict("retry", f"{decoder.encoding} body ends before its stream ends")
+        out.flush()
+        os.fsync(out.fileno())
         return _Verdict("ok", sha256=digest.hexdigest())
 
     def _record(
@@ -373,6 +380,15 @@ def _next_piece(pieces: Iterator[bytes]) -> bytes | None:
         raise requests.exceptions.ConnectionError(error) from error
     except _URLLIB3_ERRORS.SSLError as error:
         raise requests.exceptions.SSLError(error) from error
+
+
+def _fsync_folder(folder: Path) -> None:
+    """Make a rename in `folder` durable."""
+    descriptor = os.open(folder, os.O_RDONLY)
+    try:
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
 
 
 def _result(url: str, attempts: int, answer: _Answer) -> FetchResult:

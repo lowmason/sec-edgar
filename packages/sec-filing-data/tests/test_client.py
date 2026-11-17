@@ -3,6 +3,7 @@ import hashlib
 import http.client
 import io
 import json
+import os
 import random
 import tempfile
 import unittest
@@ -730,6 +731,47 @@ class BodyTests(ClientTestCase):
 
         self.assertEqual(self.dest.read_bytes(), b"fresh\n")
         self.assertFalse(self.part.exists())
+
+    def fetch_recording_fsyncs(self, body: bytes) -> list[dict]:
+        """Fetch `body`, and note at each fsync what the fd is and what exists on disk."""
+        syncs = []
+        real_fsync = client.os.fsync
+
+        def recording_fsync(fd: int) -> None:
+            synced = os.fstat(fd)
+            syncs.append(
+                {
+                    "is_part": self.part.exists()
+                    and os.stat(self.part).st_ino == synced.st_ino,
+                    "is_folder": os.stat(self.dest.parent).st_ino == synced.st_ino,
+                    "size": synced.st_size,
+                    "responses": len(self.records("response")),
+                    "dest_exists": self.dest.exists(),
+                }
+            )
+            real_fsync(fd)
+
+        with mock.patch.object(client.os, "fsync", side_effect=recording_fsync):
+            self.fetch(ok_response(body))
+        return syncs
+
+    def test_fetched_file_is_fsynced_before_its_ok_record(self):
+        body = b"durable filing text\n" * 100
+
+        syncs = self.fetch_recording_fsyncs(body)
+
+        [part_sync] = [sync for sync in syncs if sync["is_part"]]
+        self.assertEqual(part_sync["size"], len(body))
+        self.assertEqual(part_sync["responses"], 0)
+        self.assertFalse(part_sync["dest_exists"])
+        self.assertEqual(self.dest.read_bytes(), body)
+
+    def test_folder_is_fsynced_after_the_rename(self):
+        syncs = self.fetch_recording_fsyncs(b"durable filing text\n")
+
+        self.assertTrue(syncs[-1]["is_folder"])
+        self.assertTrue(syncs[-1]["dest_exists"])
+        self.assertEqual(syncs[-1]["responses"], 1)
 
 
 class RealUrllib3Tests(ClientTestCase):
