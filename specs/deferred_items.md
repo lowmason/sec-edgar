@@ -426,11 +426,13 @@
       correction. 1 SEC request, which needs the owner's budget for that stage. The owner carried it into Stage 2 of
       `specs/sec-filing-data-roadmap.md` (2026-11-17). Size: quick-fix. Done when: a Stage 2 record gives the refetch's
       SHA-256 beside the Stage 1 SHA-256.
+      → planned 2026-11-17: specs/plans/11-sec-filing-data-stage-2-provenance-and-timing.md
 - [ ] SEC documentation checks for V7 and V8 (plan 10 findings, Platform checks; parked platform spec V7, V8): what the
       `<PRIVATE-TO-PUBLIC>` tag means, and whether a late acceptance is disseminated that evening or the next business
       day. Stage 2 of `specs/sec-filing-data-roadmap.md` decides when each filing became public and needs both answers.
       The owner carried them into Stage 2 (2026-11-17). Size: design. Done when: Stage 2's spec or findings cite the SEC
       documentation for both answers.
+      → planned 2026-11-17: specs/plans/11-sec-filing-data-stage-2-provenance-and-timing.md
 - [ ] XBRL guide checks V11 and V12 (plan 10 findings, Platform checks; parked platform spec V11, V12, R18–R20): the
       EDGAR Filer Manual's exhibit and Transformation Registry tables, and the EDGAR XBRL Guide's per-class and
       legal-entity axis conventions. They matter only to an inline XBRL parser, which plan 10's D2 leaves out (Stage 1
