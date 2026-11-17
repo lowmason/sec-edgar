@@ -1,5 +1,7 @@
 # Stage 1: Filing Data Mechanics on the 2026Q3 Sample — Implementation Plan
 
+**Status: COMPLETE (2026-11-17)** — executed via subagent-driven-development; deferred items in specs/deferred_items.md
+
 > **For agentic workers:** REQUIRED SUB-SKILL: implement this plan task-by-task via subagent-driven-development (the default) — or executing-plans when your human partner chose inline execution at the handoff. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 > Roadmap: specs/sec-filing-data-roadmap.md, Stage 1 — on plan completion, tick the
@@ -86,15 +88,15 @@ A sampled `form_type` that joins several types with `;` (stratum `repeated`) is 
 - `index.py`: `INDEX_SHA256`, `INDEX_SIZE` (the Global Constraints values); `read_index(zip_path: Path, *, sha256: str, size: int) -> list[dict]`.
 - `cli.py`: `main(argv: list[str] | None = None) -> int`. Subcommand `index --zip PATH --out ROOT` writes `index` and prints `rows: <n>`.
 
-- [ ] **Step 1: Write the failing tests** in `tests/test_index.py`, over a `master.zip` built in a temporary folder from `fixtures/master-fixture.idx`. The fixture holds the real file's 11 header lines and 6 data rows. The test writes the zip member with `\r\n` line endings, as the real file has. Two rows share path `edgar/data/1326200/0001104659-26-081696.txt`, under `SC 13D/A` and `SC TO-T/A`.
+- [x] **Step 1: Write the failing tests** in `tests/test_index.py`, over a `master.zip` built in a temporary folder from `fixtures/master-fixture.idx`. The fixture holds the real file's 11 header lines and 6 data rows. The test writes the zip member with `\r\n` line endings, as the real file has. Two rows share path `edgar/data/1326200/0001104659-26-081696.txt`, under `SC 13D/A` and `SC TO-T/A`.
   - `test_keeps_every_row`: 6 rows; each `line_number` is the row's line in the file; that path gives `accession_number` `0001104659-26-081696`; `date_filed` is a `datetime.date`.
   - `test_refuses_wrong_hash_or_size`: `ValueError` for either.
   - `test_bad_row_names_line`: a 4-field row raises `ValueError` naming its line number.
   - `test_index_command_writes_only_under_out`: with `INDEX_SHA256` and `INDEX_SIZE` patched to the fixture's values, `main(["index", "--zip", z, "--out", root])` writes 6 rows and leaves the zip's folder unchanged.
-- [ ] **Step 2: Run the test command.** Expected: failures, `sec_filing_data` not found.
-- [ ] **Step 3: Implement.** `read_index` checks size and SHA-256 before it parses. It reads member `master.idx` as strict UTF-8, requires `CIK|Company Name|Form Type|Date Filed|Filename` and then a dashed line, and splits each later non-empty line into exactly 5 fields, with no dedupe. `tests/__init__.py` replaces `socket.socket.connect`, `socket.socket.connect_ex` and `socket.getaddrinfo` with functions that raise `OSError`. Run `uv lock`.
-- [ ] **Step 4: Run the test command.** Expected: `OK`.
-- [ ] **Step 5: Commit:** `git add pyproject.toml uv.lock packages/sec-filing-data`, then `feat(filing-data): add the package and the 2026Q3 index table`
+- [x] **Step 2: Run the test command.** Expected: failures, `sec_filing_data` not found.
+- [x] **Step 3: Implement.** `read_index` checks size and SHA-256 before it parses. It reads member `master.idx` as strict UTF-8, requires `CIK|Company Name|Form Type|Date Filed|Filename` and then a dashed line, and splits each later non-empty line into exactly 5 fields, with no dedupe. `tests/__init__.py` replaces `socket.socket.connect`, `socket.socket.connect_ex` and `socket.getaddrinfo` with functions that raise `OSError`. Run `uv lock`.
+- [x] **Step 4: Run the test command.** Expected: `OK`.
+- [x] **Step 5: Commit:** `git add pyproject.toml uv.lock packages/sec-filing-data`, then `feat(filing-data): add the package and the 2026Q3 index table`
 
 ### Task 2: The sample
 
@@ -109,15 +111,15 @@ Rule. `rng = random.Random(seed)`. Sort candidates by `accession_number` before 
 4. Uniform: `rng.sample` of the remaining count up to `size`, from the undrawn rest. `form_type` comes from the first row.
 5. `draw` is the 1-based position in this order. `url` is `https://www.sec.gov/Archives/` + `filename`.
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
   - `test_quota_then_repeated_then_uniform`: rows with 3 `10-K` accessions, 1 `5`, 1 accession under `SC 13D/A` and `SC TO-T/A`, and 30 `8-K`. `size=10, quota=2` gives strata `["quota"] * 3 + ["repeated"] + ["uniform"] * 6`, unique accessions, and the `repeated` `form_type` `SC 13D/A;SC TO-T/A`.
   - `test_one_row_per_accession`: an accession under 2 CIKs is drawn once, with the CIK of its first line.
   - `test_seed_is_deterministic`: the same seed gives equal lists; another seed gives a different list.
   - `test_sample_command`: `main(["sample", "--out", root])` over a written `index` writes `sample`.
-- [ ] **Step 2: Run the test command.** Expected: failures.
-- [ ] **Step 3: Implement** the rule.
-- [ ] **Step 4: Run the test command.** Expected: `OK`.
-- [ ] **Step 5: Commit:** `feat(filing-data): draw the 500-filing sample`
+- [x] **Step 2: Run the test command.** Expected: failures.
+- [x] **Step 3: Implement** the rule.
+- [x] **Step 4: Run the test command.** Expected: `OK`.
+- [x] **Step 5: Commit:** `feat(filing-data): draw the 500-filing sample`
 
 ### Task 3: The ledger and the SEC client
 
@@ -140,7 +142,7 @@ Client rules:
 - 404 gives `not_found`. 403: record `forbidden`, then raise `AccessDenied`. Statuses 429, 500, 502, 503 and 504, `requests.ConnectionError`, `requests.Timeout` and `requests.exceptions.ChunkedEncodingError` give `retry`, then `failed` after the fifth attempt. Other statuses give `failed`. No outcome leaves a `.part` file.
 - `exclusive_lock` takes `fcntl.flock(LOCK_EX | LOCK_NB)`. A held lock raises `RuntimeError("another fetch holds <path>")`.
 
-- [ ] **Step 1: Write the failing tests.** A fake session's `get(url, headers=..., stream=..., timeout=...)` returns scripted fake responses (`status_code`, `headers`, `iter_content`, `raw.tell()`, `close()`). Fake `monotonic`, `sleep` and `utcnow` record calls. Pre-filled ledgers hold matched request and response records.
+- [x] **Step 1: Write the failing tests.** A fake session's `get(url, headers=..., stream=..., timeout=...)` returns scripted fake responses (`status_code`, `headers`, `iter_content`, `raw.tell()`, `close()`). Fake `monotonic`, `sleep` and `utcnow` record calls. Pre-filled ledgers hold matched request and response records.
   - `test_ok_writes_bytes_hash_and_ledger`: the file equals the body; `sha256 == hashlib.sha256(body).hexdigest()`; one request and one response record. With headers `Content-Encoding: gzip` and `ETag: "e1"` and no `Last-Modified`, the response record holds `gzip`, `"e1"` and null.
   - `test_sends_declared_user_agent`
   - `test_spacing_between_requests`: two fetches at fake time 0 give `sleep(0.34)`.
@@ -154,10 +156,12 @@ Client rules:
   - `test_budget_stops_inside_stream`: the recorded total stays at most `MAX_WIRE_BYTES`.
   - `test_unmatched_request_counts_full_response`: one request record alone gives `Usage(1, 268_435_456)`.
   - `test_second_lock_fails`
-- [ ] **Step 2: Run the test command.** Expected: failures.
-- [ ] **Step 3: Implement** the rules.
-- [ ] **Step 4: Run the test command.** Expected: `OK`.
-- [ ] **Step 5: Commit:** `feat(filing-data): add the SEC client and its request ledger`
+> Deviation: the fake responses expose `raw.stream(...)` in place of `iter_content` and `raw.tell()`, because Step 3 counts wire bytes from raw pieces.
+- [x] **Step 2: Run the test command.** Expected: failures.
+- [x] **Step 3: Implement** the rules.
+> Deviation: wire bytes are the summed lengths of the `raw.stream(1 MiB, decode_content=False)` pieces, not `raw.tell()`, which urllib3 2.8 leaves at 0 on a chunked response (the budget counts bytes on the wire). Redirects are off, and a 3xx gives `failed`. A body that fails to decode gives `failed` with no retry (`970ce75`). After the final review, the client fsyncs each fetched file before its `ok` record, and its folder after the rename (`b8a84d1`, the owner's "Fix now (Recommended)").
+- [x] **Step 4: Run the test command.** Expected: `OK`.
+- [x] **Step 5: Commit:** `feat(filing-data): add the SEC client and its request ledger`
 
 ### Task 4: The submission parser
 
@@ -174,7 +178,7 @@ Grammar of the complete submission file, parsed as bytes:
 - A document runs from a line-initial `<DOCUMENT>` to the next line-initial `</DOCUMENT>`. Its `<TYPE>`, `<SEQUENCE>`, `<FILENAME>` and `<DESCRIPTION>` lines before `<TEXT>` give its values (the rest of the line, stripped). Its text is the bytes after the `<TEXT>` line, up to the line-initial `</TEXT>`. `text_offset` and `text_length` are byte positions in `raw`. No `</TEXT>` raises `EnvelopeError`.
 - `document_text` returns the text without surrounding whitespace and without one outer `<XML>…</XML>` or `<XBRL>…</XBRL>` wrapper.
 
-- [ ] **Step 1: Write the fixture and the failing tests.** The fixture is hand-built in this grammar. It has 6 header fields (`ACCESSION NUMBER: 0001000097-26-000006`, `CONFORMED SUBMISSION TYPE: 13F-HR`, `PUBLIC DOCUMENT COUNT: 2`, `CONFORMED PERIOD OF REPORT: 20260630`, `FILED AS OF DATE: 20260814`, `DATE AS OF CHANGE: 20260814`), `<ACCEPTANCE-DATETIME>20260814160523`, and one `FILER` party (`KINGDON CAPITAL MANAGEMENT, L.L.C.`, `0001000097`). It has 2 `<XML>`-wrapped documents: `13F-HR`, sequence 1, `primary_doc.xml`, and `INFORMATION TABLE`, sequence 2, `infotable.xml`. The second text holds a line `  </TEXT> not at line start`.
+- [x] **Step 1: Write the fixture and the failing tests.** The fixture is hand-built in this grammar. It has 6 header fields (`ACCESSION NUMBER: 0001000097-26-000006`, `CONFORMED SUBMISSION TYPE: 13F-HR`, `PUBLIC DOCUMENT COUNT: 2`, `CONFORMED PERIOD OF REPORT: 20260630`, `FILED AS OF DATE: 20260814`, `DATE AS OF CHANGE: 20260814`), `<ACCEPTANCE-DATETIME>20260814160523`, and one `FILER` party (`KINGDON CAPITAL MANAGEMENT, L.L.C.`, `0001000097`). It has 2 `<XML>`-wrapped documents: `13F-HR`, sequence 1, `primary_doc.xml`, and `INFORMATION TABLE`, sequence 2, `infotable.xml`. The second text holds a line `  </TEXT> not at line start`.
   - `test_header_fields_and_acceptance`
   - `test_private_to_public_tag`: the fixture gives `False`; with a `<PRIVATE-TO-PUBLIC>` line added after `<ACCEPTANCE-DATETIME>`, `True`.
   - `test_parties`
@@ -183,10 +187,10 @@ Grammar of the complete submission file, parsed as bytes:
   - `test_closing_tag_must_start_a_line`
   - `test_missing_header_raises`
   - `test_non_utf8_header_bytes`: a company name holding byte `\xe9` parses, and the name contains `"�"`.
-- [ ] **Step 2: Run the test command.** Expected: failures.
-- [ ] **Step 3: Implement** the grammar.
-- [ ] **Step 4: Run the test command.** Expected: `OK`.
-- [ ] **Step 5: Commit:** `feat(filing-data): parse submission headers and document lists`
+- [x] **Step 2: Run the test command.** Expected: failures.
+- [x] **Step 3: Implement** the grammar.
+- [x] **Step 4: Run the test command.** Expected: `OK`.
+- [x] **Step 5: Commit:** `feat(filing-data): parse submission headers and document lists`
 
 ### Task 5: The fetch, envelopes and report commands
 
@@ -201,7 +205,7 @@ Grammar of the complete submission file, parsed as bytes:
   - `report.run_report(layout: Layout) -> str` returns Markdown: index rows; the sample per stratum and per quota form; fetch outcomes; requests and wire bytes from `ledger_usage`, and decoded bytes; envelope parse errors; filings with no party, and filings with a null `submission_type`, `acceptance_datetime`, `filed_as_of_date` or `public_document_count`; wall time per step and in total, from `runs.jsonl`; disk use, as the sum of file sizes under the root. It ends with a `Platform checks` section (D5): V3, the `ok` responses per `content_encoding` value, and those with an `etag` or a `last_modified`; V5, each `repeated` filing's `form_type`, `submission_type` and `document_count`; V6, the filings whose `date_as_of_change` is later than `filed_as_of_date`; V7, the filings with `private_to_public`; V9, the filings with a null `acceptance_datetime`; V10, the filings that hold documents described `IDEA: XBRL DOCUMENT`, split by whether `public_document_count` equals `document_count`, equals `document_count` minus that number, or neither.
   - `cli.py`: `fetch --out ROOT [--per-form N]` returns 2 when `SEC_USER_AGENT` is unset, and imports `fetch` inside its handler. Also `envelopes --out ROOT` and `report --out ROOT`. Each command runs inside `record_step`.
 
-- [ ] **Step 1: Write the failing tests,** with a fake session that serves `fixtures/submission-13f.txt` for every URL.
+- [x] **Step 1: Write the failing tests,** with a fake session that serves `fixtures/submission-13f.txt` for every URL.
   - `test_fetch_walks_draw_order_and_writes_fetches`
   - `test_per_form_limits_the_pilot`: `per_form=1` fetches one filing per quota form and no `uniform` row.
   - `test_resume_after_interrupt`: given one finished filing, a `.part` file for the next and an unmatched request record, a second run sends no request for the finished filing, refetches the other, and leaves no `.part` file. `ledger_usage(...).wire_bytes` is at least 268,435,456.
@@ -211,10 +215,11 @@ Grammar of the complete submission file, parsed as bytes:
   - `test_offline_modules_never_import_requests`: a subprocess (`sys.executable`) imports every `sec_filing_data` module except `client` and `fetch` (found with `pkgutil.iter_modules`) and prints `"requests" in sys.modules`. Expected: `False`.
   - `test_report_lists_cost`: lines for requests, wire bytes, wall time, disk use and filings with no party.
   - `test_report_lists_platform_checks`: the `Platform checks` section names V3, V5, V6, V7, V9 and V10. The V6 count is 0, because the fixture's two dates are equal.
-- [ ] **Step 2: Run the test command.** Expected: failures.
-- [ ] **Step 3: Implement** the interfaces.
-- [ ] **Step 4: Run the test command.** Expected: `OK`.
-- [ ] **Step 5: Commit:** `feat(filing-data): add the fetch, envelopes and report commands`
+- [x] **Step 2: Run the test command.** Expected: failures.
+- [x] **Step 3: Implement** the interfaces.
+> Deviation: when the last response is `ok` but the file is missing, `build_fetches` gives `failed` with reason `ok response, but <path> is missing`, not `ok`. The roadmap Exit ("a recorded reason why not") governs here.
+- [x] **Step 4: Run the test command.** Expected: `OK`.
+- [x] **Step 5: Commit:** `feat(filing-data): add the fetch, envelopes and report commands`
 
 ### Task 6: Live pilot and checkpoint
 
@@ -228,25 +233,26 @@ export SEC_USER_AGENT="$(python3 -c 'import json; print(json.load(open("conf/sec
 
 Commands below are short for `uv run --package sec-filing-data sec-filing-data <command> --out "$ROOT"`.
 
-- [ ] **Step 1: Check the preconditions.** `pgrep -fl '[s]ec-edgar-ingest|[s]ec-filing-data fetch'` prints nothing. `git -C /Users/lowell/Projects/sec-edgar check-ignore -q filing-data/x` exits 0. If it does not, the plan commit's `.gitignore` line has not reached `main`: append `/filing-data/` to `/Users/lowell/Projects/sec-edgar/.git/info/exclude` and check again.
-- [ ] **Step 2: Build O1 and the sample.** `index --zip "$ZIP"`. Expected: `rows: 302499`. Then `sample`. Expected: 160 `quota` (20 for each of the 8 forms), 5 `repeated`, 335 `uniform`.
-- [ ] **Step 3: Run the pilot:** `fetch --per-form 2`, then `envelopes` and `report`. Expected: exit 0, 16 filings `ok`, about 16 requests.
-- [ ] **Step 4: Read the checkpoint** from `filings`, `parties` and `documents` for the 16 pilot filings, and record:
+- [x] **Step 1: Check the preconditions.** `pgrep -fl '[s]ec-edgar-ingest|[s]ec-filing-data fetch'` prints nothing. `git -C /Users/lowell/Projects/sec-edgar check-ignore -q filing-data/x` exits 0. If it does not, the plan commit's `.gitignore` line has not reached `main`: append `/filing-data/` to `/Users/lowell/Projects/sec-edgar/.git/info/exclude` and check again.
+- [x] **Step 2: Build O1 and the sample.** `index --zip "$ZIP"`. Expected: `rows: 302499`. Then `sample`. Expected: 160 `quota` (20 for each of the 8 forms), 5 `repeated`, 335 `uniform`.
+- [x] **Step 3: Run the pilot:** `fetch --per-form 2`, then `envelopes` and `report`. Expected: exit 0, 16 filings `ok`, about 16 requests.
+- [x] **Step 4: Read the checkpoint** from `filings`, `parties` and `documents` for the 16 pilot filings, and record:
   - Header: `submission_type` equals the sample's `form_type`. `acceptance_datetime`, `filed_as_of_date` and `public_document_count` are not null. Each filing has at least one party with a role and a CIK. Forms 3, 4 and 5 have both `REPORTING-OWNER` and `ISSUER`. Record `public_document_count` against `document_count`.
   - For each 10-K and 10-Q: whether a document of type `EX-101.INS` or a filename ending `_htm.xml` is present, and how many documents carry the description `IDEA: XBRL DOCUMENT`.
   - For each Form 3, 4 and 5, `SCHEDULE 13D`, `SCHEDULE 13G` and `13F-HR`: the type, filename and XML root element of the document that holds the records.
 
   A failed header check is a problem to fix (D1) before Task 7. If every pilot 10-K and 10-Q has an instance inside, Task 8 skips its Step 0. Otherwise Task 8 runs Step 0.
-- [ ] **Step 5: Pin the parser to real bytes.** Trim a pilot Form 4 submission (its header and first document) into `tests/fixtures/submission-form4.txt`. Add `test_real_form4_header` to `tests/test_envelope.py`: it asserts the fixture's `CONFORMED SUBMISSION TYPE`, `acceptance_datetime`, and its `REPORTING-OWNER` and `ISSUER` parties with their CIKs. Run the test command. Expected: `OK`, after any fix the test calls for.
-- [ ] **Step 6: Start `specs/sec-filing-data-stage-1-findings.md`** with the sections `Run record` (root, commit), `O1`, `Sample`, `Pilot checkpoint`, `O2`, `O3`, `O4`, `Platform checks` (D5), `Problems found and fixed`, `Measured cost`, `Exit check` and `Sample list` (D5). Fill O1, Sample and Pilot checkpoint. Fix each problem the pilot finds in place (D1), record it, and re-run the pilot.
-- [ ] **Step 7: Commit:** `test(filing-data): pin the submission parser to a real Form 4` and `docs(specs): record the Stage 1 pilot checkpoint`
+- [x] **Step 5: Pin the parser to real bytes.** Trim a pilot Form 4 submission (its header and first document) into `tests/fixtures/submission-form4.txt`. Add `test_real_form4_header` to `tests/test_envelope.py`: it asserts the fixture's `CONFORMED SUBMISSION TYPE`, `acceptance_datetime`, and its `REPORTING-OWNER` and `ISSUER` parties with their CIKs. Run the test command. Expected: `OK`, after any fix the test calls for.
+- [x] **Step 6: Start `specs/sec-filing-data-stage-1-findings.md`** with the sections `Run record` (root, commit), `O1`, `Sample`, `Pilot checkpoint`, `O2`, `O3`, `O4`, `Platform checks` (D5), `Problems found and fixed`, `Measured cost`, `Exit check` and `Sample list` (D5). Fill O1, Sample and Pilot checkpoint. Fix each problem the pilot finds in place (D1), record it, and re-run the pilot.
+- [x] **Step 7: Commit:** `test(filing-data): pin the submission parser to a real Form 4` and `docs(specs): record the Stage 1 pilot checkpoint`
 
 ### Task 7: Live full fetch (O2)
 
-- [ ] **Step 1: Fetch.** With the Task 6 variables, run `fetch` in the background. Then run `envelopes` and `report`.
-- [ ] **Step 2: Check O2.** `filings` has 500 rows. Each row has parsed header fields, or a `reason` or `parse_error`. Each quota form has at least one `ok` filing. Requests are at most 1,500, and wire bytes at most 5,000,000,000.
-- [ ] **Step 3: Record** O2 in the findings: outcomes per kind, parse errors, and requests, wire bytes, decoded bytes and wall time so far. Copy the report's V3, V5, V6, V7, V9 and V10 lines under `Platform checks`. Fix and record each problem found (D1).
-- [ ] **Step 4: Commit:** `docs(specs): record the Stage 1 fetch`
+- [x] **Step 1: Fetch.** With the Task 6 variables, run `fetch` in the background. Then run `envelopes` and `report`.
+- [x] **Step 2: Check O2.** `filings` has 500 rows. Each row has parsed header fields, or a `reason` or `parse_error`. Each quota form has at least one `ok` filing. Requests are at most 1,500, and wire bytes at most 5,000,000,000.
+- [x] **Step 3: Record** O2 in the findings: outcomes per kind, parse errors, and requests, wire bytes, decoded bytes and wall time so far. Copy the report's V3, V5, V6, V7, V9 and V10 lines under `Platform checks`. Fix and record each problem found (D1).
+- [x] **Step 4: Commit:** `docs(specs): record the Stage 1 fetch`
+> Deviation: committed as `82a2b39`, after Task 8's code commit `ea21c64`. Task 8's code was built while the full fetch ran.
 
 ### Task 8: XBRL facts (O3)
 
@@ -269,7 +275,8 @@ Rules:
 - Step 0: for each `ok` filing in `FACT_FORMS` with no instance, the primary document is the first whose type equals the form type and whose filename ends `.htm`. Fetch `https://www.sec.gov/Archives/edgar/data/<cik>/<accession without dashes>/<primary stem>_htm.xml` to `layout.instance(accession)` with `key = <accession>/instance`. A 404 is recorded. `run_facts` then reads that file.
 
 - [ ] **Step 0, only when Task 6 found no instance inside a pilot 10-K or 10-Q:** write `test_fetch_instances_builds_folder_url`, see it fail, implement `run_fetch_instances`, see `OK`, and commit `feat(filing-data): fetch SEC-extracted instances separately`. Then the controller, not the implementer, runs `fetch-instances` live.
-- [ ] **Step 1: Write the fixture and the failing tests.** Trim the fixture from a pilot 10-Q instance. Keep the root with its namespace declarations, 2 contexts (an instant, and a duration with one explicit member), 2 units (`usd` and a `divide` unit), and 4 facts: an instant number, a duration number in the dimensional context, a `dei:` text fact and an `xsi:nil` fact. Assert the fixture's values.
+> Deviation: not run, because its condition did not hold. The pilot found the SEC-extracted `*_htm.xml` instance inside every 10-K and 10-Q (Task 6 checkpoint). No `fetch-instances` code, subcommand or live run exists.
+- [x] **Step 1: Write the fixture and the failing tests.** Trim the fixture from a pilot 10-Q instance. Keep the root with its namespace declarations, 2 contexts (an instant, and a duration with one explicit member), 2 units (`usd` and a `divide` unit), and 4 facts: an instant number, a duration number in the dimensional context, a `dei:` text fact and an `xsi:nil` fact. Assert the fixture's values.
   - `test_parses_numeric_text_and_nil_facts`
   - `test_periods_and_dimensions`
   - `test_units_including_divide`
@@ -281,11 +288,13 @@ Rules:
   - `test_instance_counted_once` (V13, D5): `run_facts` over a 10-Q submission that holds the fixture both as `EX-101.INS` and as a `*_htm.xml` writes each fact once, and `source_document` is the `EX-101.INS` filename.
 
   These tests build their submissions in the test, in the Task 4 grammar.
-- [ ] **Step 2: Run the test command.** Expected: failures.
-- [ ] **Step 3: Implement** the rules, the `facts --out ROOT` subcommand, and a facts section in `run_report`: filings, fact rows, source documents, and the filings that gave none, per reason.
-- [ ] **Step 4: Run the test command.** Expected: `OK`.
-- [ ] **Step 5: Run live:** `facts`, then `report`. Record O3 in the findings. Fix and record each problem found (D1).
-- [ ] **Step 6: Commit:** `feat(filing-data): extract as-filed XBRL facts`
+> Deviation: `test_instance_with_default_namespace` runs the other way. The pilot instances already use the instance namespace as the default, so the test rewrites the fixture to an `xbrli:` prefix and compares the facts. The fixture also moves 2 real facts (a `divide`-unit par value and `dei:DocumentType`) into the 2 kept contexts, with their values as filed.
+- [x] **Step 2: Run the test command.** Expected: failures.
+- [x] **Step 3: Implement** the rules, the `facts --out ROOT` subcommand, and a facts section in `run_report`: filings, fact rows, source documents, and the filings that gave none, per reason.
+- [x] **Step 4: Run the test command.** Expected: `OK`.
+- [x] **Step 5: Run live:** `facts`, then `report`. Record O3 in the findings. Fix and record each problem found (D1).
+- [x] **Step 6: Commit:** `feat(filing-data): extract as-filed XBRL facts`
+> Deviation: the code commit (`ea21c64`) came before the live run of Step 5. The O3 findings went into a separate commit, `docs(specs): record the Stage 1 XBRL facts` (`db3d5b6`).
 
 ### Task 9: Ownership records from Forms 3, 4 and 5
 
@@ -303,16 +312,18 @@ Mapping, by local name (`a/b` is a child path):
 - `security_title` = `securityTitle/value`; `transaction_date` = `transactionDate/value`; `transaction_code` = `transactionCoding/transactionCode`; `shares` = `transactionAmounts/transactionShares/value`; `price_per_share` = `transactionAmounts/transactionPricePerShare/value`; `acquired_disposed` = `transactionAmounts/transactionAcquiredDisposedCode/value`; `shares_after` = `postTransactionAmounts/sharesOwnedFollowingTransaction/value`; `direct_indirect` = `ownershipNature/directOrIndirectOwnership/value`. A missing element gives null.
 - Status: no `ownershipDocument` gives `reason = "no ownership XML document"`. The schedule and 13F forms give `reason = "parser not built"` until Task 10.
 
-- [ ] **Step 1: Write the fixtures and the failing tests.** The fixtures are the `ownershipDocument` of a pilot Form 4 and a pilot Form 3, trimmed to at most 2 rows per table. Assert the fixtures' values.
+- [x] **Step 1: Write the fixtures and the failing tests.** The fixtures are the `ownershipDocument` of a pilot Form 4 and a pilot Form 3, trimmed to at most 2 rows per table. Assert the fixtures' values.
   - `test_form4_transactions`: one record per row; the first record's fields equal the fixture's values.
   - `test_form3_holdings`
   - `test_two_reporting_owners`: the Form 4 fixture with a second `reportingOwner` gives `owner_count == 2` and keeps the first owner.
   - `test_no_ownership_xml_gives_reason`
-- [ ] **Step 2: Run the test command.** Expected: failures.
-- [ ] **Step 3: Implement** the mapping, the `ownership --out ROOT` subcommand, and an ownership section in `run_report`: records per `record_kind`, and the filings that gave none, per reason.
-- [ ] **Step 4: Run the test command.** Expected: `OK`.
-- [ ] **Step 5: Run live:** `ownership`. Forms 3, 4 and 5 give records. Fix and record each problem found (D1).
-- [ ] **Step 6: Commit:** `feat(filing-data): extract Form 3, 4 and 5 ownership records`
+- [x] **Step 2: Run the test command.** Expected: failures.
+- [x] **Step 3: Implement** the mapping, the `ownership --out ROOT` subcommand, and an ownership section in `run_report`: records per `record_kind`, and the filings that gave none, per reason.
+> Deviation: a filing whose `ownershipDocument` declares `noSecuritiesOwned` gives `reason = "no securities owned"`, a reason the plan does not name (18 live filings).
+- [x] **Step 4: Run the test command.** Expected: `OK`.
+- [x] **Step 5: Run live:** `ownership`. Forms 3, 4 and 5 give records. Fix and record each problem found (D1).
+- [x] **Step 6: Commit:** `feat(filing-data): extract Form 3, 4 and 5 ownership records`
+> Deviation: the code commit (`65b4c1f`) came before the live run of Step 5. The findings went into a separate commit, `docs(specs): record the Stage 1 Form 3, 4 and 5 records` (`402b84d`).
 
 ### Task 10: Schedules 13D and 13G, Form 13F, and the findings
 
@@ -326,17 +337,18 @@ Mapping:
 - Schedules (root `edgarSubmission`): one record per reporting person, `record_kind = "schedule13_reporting_person"`. The cover page gives `issuer_cik`, `issuer_name`, `issuer_cusip` and `security_title`. Each person gives `owner_name`, `owner_cik` where present, `shares` (the aggregate amount beneficially owned) and `percent_of_class`. The 13D and 13G schemas name these elements differently. Read the names from the pilot's documents, match by local name, and list the names used in the findings.
 - Form 13F (root `informationTable`): one record per `infoTable`, `record_kind = "form13f_holding"`. `issuer_name` = `nameOfIssuer`, `issuer_cusip` = `cusip`, `security_title` = `titleOfClass`, `value_usd` = `value`, `shares` = `shrsOrPrnAmt/sshPrnamt`, `shares_kind` = `shrsOrPrnAmt/sshPrnamtType`, `put_call` = `putCall`. The owner is the submission's `FILER` party, with `owner_count` 1.
 
-- [ ] **Step 1: Write the fixtures and the failing tests.** Trim the fixtures from pilot documents: at most 2 reporting persons, at most 3 holdings. Assert the fixtures' values.
+- [x] **Step 1: Write the fixtures and the failing tests.** Trim the fixtures from pilot documents: at most 2 reporting persons, at most 3 holdings. Assert the fixtures' values.
   - `test_schedule13d_reporting_persons`
   - `test_schedule13g_reporting_persons`
   - `test_13f_holdings`
   - `test_13f_prefixed_namespace`: the information table rewritten with an `ns1:` prefix gives the same records.
   - `test_legacy_text_schedule_gives_reason`: an `SC 13D/A` submission with only a text document gets `reason = "no ownership XML document"`.
-- [ ] **Step 2: Run the test command.** Expected: failures.
-- [ ] **Step 3: Implement** the mapping, and remove the `parser not built` reason.
-- [ ] **Step 4: Run the test command.** Expected: `OK`.
-- [ ] **Step 5: Run live:** `ownership`, then `report`.
-- [ ] **Step 6: Complete the findings file:**
+- [x] **Step 2: Run the test command.** Expected: failures.
+- [x] **Step 3: Implement** the mapping, and remove the `parser not built` reason.
+> Deviation: after the final review (a Codex finding), `xml_document` also removes a leading UTF-8 byte-order mark before it parses (`e7b3775`). The live re-run gave the same 6,847 records.
+- [x] **Step 4: Run the test command.** Expected: `OK`.
+- [x] **Step 5: Run live:** `ownership`, then `report`.
+- [x] **Step 6: Complete the findings file:**
   - O1: 302,499 rows. O2: the results.
   - O3 and O4: counts, and the filings that gave none, with their reasons.
   - Problems found and fixed.
@@ -346,6 +358,19 @@ Mapping:
   - Sample list (D5): one row per sampled filing, with `draw`, `accession_number`, `form_type`, `outcome` and `sha256`.
 
   Then ask the owner, in one question, for a disposition on each open item, and record the answers.
-- [ ] **Step 7: Run the test command** (expected: `OK`), **then commit** `feat(filing-data): extract Schedule 13D/G and Form 13F records` and `docs(specs): record the Stage 1 findings`.
+- [x] **Step 7: Run the test command** (expected: `OK`), **then commit** `feat(filing-data): extract Schedule 13D/G and Form 13F records` and `docs(specs): record the Stage 1 findings`.
+> Deviation: the code commit (`6d7504b`) came before the live run of Step 5, and the findings commit (`1204d30`) after it. The owner's dispositions went into a third commit, `docs(specs): record the owner's dispositions of V1-V12` (`41c48f4`).
 
 Then run the Plan Completion Protocol of writing-plans, step 3a included: a Handoff section for Stages 2–4, and the roadmap's tick and stamp. Its step 3 ticks the platform Stage 6 item (D5) when each V1–V12 line has a result or an owner disposition and the sample list is committed.
+
+## Handoff to later stages
+
+- **Stage 2 (Provenance and timing)** consumes Stage 1's root, tables, bytes, ledger, code and findings, as built:
+  - Root `/Users/lowell/Projects/sec-edgar/filing-data/2026Q3`, outside every worktree. `tables/<name>.parquet` holds `index`, `sample`, `fetches`, `filings`, `parties`, `documents`, `facts`, `facts_status`, `ownership` and `ownership_status`. Their schemas are `SCHEMAS` in `packages/sec-filing-data/src/sec_filing_data/tables.py`. `bytes/<accession>.txt` holds each complete submission file as fetched. `fetch-log.jsonl` is the request ledger, `runs.jsonl` holds the step times, and `fetch.lock` is the fetch lock. Paths come from `Layout` in `layout.py`.
+  - Ledger records: `request` (`id`, `key`, `url`, `attempt`, `at`) and `response` (`id`, `key`, `status`, `wire_bytes`, `body_bytes`, `sha256`, `outcome`, `reason`, `content_encoding`, `etag`, `last_modified`, `at`). Each `at` is UTC.
+  - Times as built: `filings.acceptance_datetime` is the header text as filed, with no time zone. `filed_as_of_date` and `date_as_of_change` are `YYYYMMDD` text as filed. `fetched_at` (in `fetches` and `filings`) is UTC and is set on `ok` rows only. The UTC time of every other attempt is in the ledger only. The ledger keeps `Last-Modified`. No `ok` response had an `ETag` (V3 in `specs/sec-filing-data-stage-1-findings.md`).
+  - Differences from the roadmap's Produces: the facts come from the SEC-extracted `*_htm.xml` instance inside each submission (D2), not from the filer's inline XBRL document. Stage 2's source for a fact is that instance. Wire bytes are counted from the raw response pieces, not `raw.tell()` (Task 3 deviation). No `fetch-instances` code exists (Task 8 Step 0 not run).
+  - Traps: the SEC sends some responses chunked (the 181 MB DEFR14A retry in O2), and `raw.tell()` reads 0 on those. A re-run of `fetch` re-requests each filing that is not `ok`, so it spends budget. Any live request in Stage 2 needs the owner's budget for that stage, because Stage 1's budget covered Stage 1 only.
+  - Deferred into Stage 2: `specs/deferred_items.md`, section `10-sec-filing-data-stage-1 — 2026-11-17`, the V6 refetch and the V7 and V8 SEC documentation checks.
+
+Stages 3 and 4 consume Stage 1 only through Stage 2. For Stage 3: `runs.jsonl` records no code version, and the findings' Run record names only the pilot's commit (`4facfd6`).
