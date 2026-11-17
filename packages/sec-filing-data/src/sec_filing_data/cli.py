@@ -1,13 +1,18 @@
 """The `sec-filing-data` command. Each subcommand is one step of the run."""
 
 import argparse
+import os
+import sys
 from collections import Counter
 from collections.abc import Sequence
 from pathlib import Path
 
-from sec_filing_data import index, sample
+from sec_filing_data import index, report, sample, submissions
 from sec_filing_data.layout import Layout, record_step
+from sec_filing_data.ledger import FETCH_OUTCOMES
 from sec_filing_data.tables import read_table, write_table
+
+USER_AGENT_VARIABLE = "SEC_USER_AGENT"
 
 
 def _run_index(args: argparse.Namespace) -> int:
@@ -35,6 +40,41 @@ def _run_sample(args: argparse.Namespace) -> int:
     return 0
 
 
+def _run_fetch(args: argparse.Namespace) -> int:
+    user_agent = os.environ.get(USER_AGENT_VARIABLE, "")
+    if not user_agent.strip():
+        print(f"error: {USER_AGENT_VARIABLE} is not set", file=sys.stderr)
+        return 2
+    # Only this command loads the SEC client, so the other commands never import requests.
+    from sec_filing_data import fetch
+
+    layout = Layout(Path(args.out))
+    with record_step(layout, "fetch"):
+        code = fetch.run_fetch(layout, user_agent=user_agent, per_form=args.per_form)
+    outcomes = Counter(row["outcome"] for row in read_table(layout, "fetches").to_pylist())
+    for outcome in FETCH_OUTCOMES:
+        if outcomes[outcome]:
+            print(f"{outcome}: {outcomes[outcome]}")
+    return code
+
+
+def _run_envelopes(args: argparse.Namespace) -> int:
+    layout = Layout(Path(args.out))
+    with record_step(layout, "envelopes"):
+        code = submissions.run_envelopes(layout)
+    for name in ("filings", "parties", "documents"):
+        print(f"{name}: {read_table(layout, name).num_rows}")
+    return code
+
+
+def _run_report(args: argparse.Namespace) -> int:
+    layout = Layout(Path(args.out))
+    with record_step(layout, "report"):
+        text = report.run_report(layout)
+    sys.stdout.write(text)
+    return 0
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="sec-filing-data")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -47,6 +87,25 @@ def _build_parser() -> argparse.ArgumentParser:
     sample_parser = commands.add_parser("sample", help="draw the sample from the index table")
     sample_parser.add_argument("--out", required=True, help="output root")
     sample_parser.set_defaults(run=_run_sample)
+
+    fetch_parser = commands.add_parser(
+        "fetch", help=f"fetch the sampled submission files (needs {USER_AGENT_VARIABLE})"
+    )
+    fetch_parser.add_argument("--out", required=True, help="output root")
+    fetch_parser.add_argument(
+        "--per-form", type=int, help="fetch only the first N quota filings of each form"
+    )
+    fetch_parser.set_defaults(run=_run_fetch)
+
+    envelopes_parser = commands.add_parser(
+        "envelopes", help="write the filings, parties and documents tables"
+    )
+    envelopes_parser.add_argument("--out", required=True, help="output root")
+    envelopes_parser.set_defaults(run=_run_envelopes)
+
+    report_parser = commands.add_parser("report", help="print the Markdown report of the root")
+    report_parser.add_argument("--out", required=True, help="output root")
+    report_parser.set_defaults(run=_run_report)
     return parser
 
 
