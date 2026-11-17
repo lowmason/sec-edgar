@@ -262,6 +262,9 @@ disposition, for the owner to decide.
 | V11 Filer Manual tables | Open | Needs the EDGAR Filer Manual. It matters only to an inline XBRL parser, which D2 leaves out. | Defer with the parked platform Stage 2 item (XBRL fact extraction). |
 | V12 Axis conventions | Open | Needs the EDGAR XBRL Guide. It matters only to the R19 fact keys of an inline XBRL parser. | Defer with V11. |
 
+The owner accepted every proposed disposition on 2026-11-17. Owner's words: "Accept all (Recommended)".
+So each of V1–V12 has a result or an owner disposition.
+
 ### V13 and V15 cases tested
 
 - V13, `<XBRL>`-wrapped traditional instance: `test_xbrl_wrapped_instance`.
