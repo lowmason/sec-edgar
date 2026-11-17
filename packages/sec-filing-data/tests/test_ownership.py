@@ -1,22 +1,29 @@
 import contextlib
 import io
 import json
+import re
 import unittest
 from dataclasses import asdict, fields, replace
 from pathlib import Path
 
 from sec_filing_data import cli
 from sec_filing_data.envelope import parse_submission
+from sec_filing_data.form13f import parse_form13f_table
 from sec_filing_data.forms345 import no_securities_owned, parse_form345
 from sec_filing_data.ownership import OWNERSHIP_FORMS, OwnershipRecord, run_ownership, xml_document
 from sec_filing_data.report import run_report
+from sec_filing_data.schedule13 import parse_schedule13
 from sec_filing_data.tables import SCHEMAS, read_table
 from tests.test_commands import section
+from tests.test_envelope import build_document, build_submission
 from tests.test_xbrl import FactsRootTestCase, submission_with, wrapped
 
 FIXTURES = Path(__file__).parent / "fixtures"
 FORM4 = (FIXTURES / "form4.xml").read_bytes()
 FORM3 = (FIXTURES / "form3.xml").read_bytes()
+SCHEDULE13D = (FIXTURES / "schedule13d.xml").read_bytes()
+SCHEDULE13G = (FIXTURES / "schedule13g.xml").read_bytes()
+INFOTABLE = (FIXTURES / "infotable.xml").read_bytes()
 
 # form4.xml is the ownershipDocument of the pilot Form 4 0001628280-26-047997 as filed: both
 # non-derivative rows and its derivative row. form3.xml is the ownershipDocument of the pilot
@@ -36,6 +43,37 @@ FORM3_PARTIES = {
     "owner_name": "Gibney Dennis E.",
     "owner_count": 1,
 }
+
+# schedule13d.xml is the primary document of the pilot SCHEDULE 13D 0000912282-26-001247 with
+# only whole elements removed: authorizedPersons, items 2 to 7 of items1To7, and signatureInfo.
+# Both reporting persons stay. The first has a reportingPersonCIK. The second has none.
+# schedule13g.xml is the primary document of the pilot SCHEDULE 13G 0000093751-26-000557 with
+# only whole elements removed: items 2, 3 and 5 to 10 of items. Both reporting persons, item 4
+# (it repeats classPercent) and the signatureInformation elements (they repeat
+# reportingPersonName) stay. infotable.xml is the INFORMATION TABLE document of the pilot
+# 13F-HR 0001051359-26-000008 with 45 of its 48 infoTable rows removed: its first row and its
+# fifth and sixth rows (the fifth has a putCall).
+SCHEDULE_KIND = "schedule13_reporting_person"
+SCHEDULE13D_ISSUER = {
+    "record_kind": SCHEDULE_KIND,
+    "issuer_cik": "0001833141",
+    "issuer_name": "Cybin Inc.",
+    "issuer_cusip": "23256X407",
+    "owner_count": 2,
+    "security_title": "Common Shares, No Par Value",
+}
+SCHEDULE13G_ISSUER = {
+    "record_kind": SCHEDULE_KIND,
+    "issuer_cik": "0001706946",
+    "issuer_name": "VIRGIN GALACTIC HOLDINGS INC",
+    "issuer_cusip": "92766K403",
+    "owner_count": 2,
+    "security_title": "COMMON STOCK",
+}
+PAR = ("FILER", "0001051359", "PAR CAPITAL MANAGEMENT INC")
+FORM13F_OWNER = {"owner_cik": "0001051359", "owner_name": "PAR CAPITAL MANAGEMENT INC"}
+FORM13F_KIND = "form13f_holding"
+COVER_13F = b'<?xml version="1.0"?>\n<edgarSubmission xmlns="urn:example:cover"/>'
 UNMAPPED = ("issuer_cusip", "shares_kind", "put_call", "percent_of_class", "value_usd")
 OTHER_DOCUMENT = b'<?xml version="1.0"?>\n<otherDocument/>'
 
@@ -48,6 +86,36 @@ def record(**values) -> OwnershipRecord:
 
 def ownership_xml(body: str, namespace: str = "") -> bytes:
     return f'<?xml version="1.0"?>\n<ownershipDocument{namespace}>\n{body}\n</ownershipDocument>'.encode()
+
+
+def schedule_xml(body: str) -> bytes:
+    return f'<?xml version="1.0"?>\n<edgarSubmission>\n{body}\n</edgarSubmission>'.encode()
+
+
+def submission_13f(table: bytes | None, *parties: tuple[str, str, str]) -> bytes:
+    """A 13F-HR submission: a cover document, the information table (if any), the parties.
+
+    A party is `(role, cik, name)`. The header holds one party block for each.
+    """
+    header = "CONFORMED SUBMISSION TYPE:\t13F-HR\n" + "".join(
+        f"{role}:\n\tCOMPANY DATA:\n\t\tCOMPANY CONFORMED NAME:\t{name}\n"
+        f"\t\tCENTRAL INDEX KEY:\t{cik}\n\n"
+        for role, cik, name in parties
+    )
+    documents = [("13F-HR", "primary_doc.xml", wrapped(COVER_13F, "XML"))]
+    if table is not None:
+        documents.append(("INFORMATION TABLE", "infotable.xml", wrapped(table, "XML")))
+    return build_submission(
+        header=header,
+        documents=tuple(
+            build_document(
+                text,
+                type_line=f"<TYPE>{type_}\n",
+                extra=f"<SEQUENCE>{number}\n<FILENAME>{filename}\n",
+            )
+            for number, (type_, filename, text) in enumerate(documents, start=1)
+        ),
+    )
 
 
 class RecordTests(unittest.TestCase):
@@ -287,6 +355,238 @@ class ParseForm345Tests(unittest.TestCase):
         self.assertIs(no_securities_owned(FORM3), False)  # the fixture says 0
 
 
+class ParseSchedule13Tests(unittest.TestCase):
+    def test_schedule13d_reporting_persons(self):
+        records = parse_schedule13(SCHEDULE13D)
+
+        self.assertEqual(
+            records,
+            [
+                record(
+                    **SCHEDULE13D_ISSUER,
+                    owner_cik="0002118509",
+                    owner_name="Glavine Paul",
+                    shares="4407456",
+                    percent_of_class="5.8",
+                ),
+                # The second person is filed with reportingPersonNoCIK Y and no reportingPersonCIK.
+                record(
+                    **SCHEDULE13D_ISSUER,
+                    owner_cik=None,
+                    owner_name="PLG Family Trust",
+                    shares="336204",
+                    percent_of_class="0.4",
+                ),
+            ],
+        )
+
+    def test_schedule13g_reporting_persons(self):
+        records = parse_schedule13(SCHEDULE13G)
+
+        # A 13G person has no CIK element. Item 4 repeats the first person's classPercent
+        # (7.9), and signatureInformation repeats reportingPersonName, so the second record
+        # shows that the person's own elements are read, and that the count is of persons.
+        self.assertEqual(
+            records,
+            [
+                record(
+                    **SCHEDULE13G_ISSUER,
+                    owner_cik=None,
+                    owner_name="STATE STREET CORPORATION",
+                    shares="7931674.00",
+                    percent_of_class="7.9",
+                ),
+                record(
+                    **SCHEDULE13G_ISSUER,
+                    owner_cik=None,
+                    owner_name="SSGA FUNDS MANAGEMENT, INC.",
+                    shares="6177392.00",
+                    percent_of_class="6.1",
+                ),
+            ],
+        )
+
+    def test_columns_outside_the_mapping_are_null(self):
+        unmapped = [
+            name
+            for name in SCHEMAS["ownership"].names[2:]
+            if name
+            not in {
+                "record_kind", "issuer_cik", "issuer_name", "issuer_cusip", "owner_cik",
+                "owner_name", "owner_count", "security_title", "shares", "percent_of_class",
+            }
+        ]  # fmt: skip
+        for records in (parse_schedule13(SCHEDULE13D), parse_schedule13(SCHEDULE13G)):
+            for row in records:
+                self.assertEqual([getattr(row, name) for name in unmapped], [None] * len(unmapped))
+
+    def test_several_issuer_cusips_join_in_document_order(self):
+        two = SCHEDULE13D.replace(
+            b"</issuerCusipNumber>",
+            b"</issuerCusipNumber><issuerCusipNumber> 99999Z999 </issuerCusipNumber>",
+        )
+
+        self.assertEqual(
+            {r.issuer_cusip for r in parse_schedule13(two)}, {"23256X407;99999Z999"}
+        )
+
+    def test_no_issuer_cusip_gives_none(self):
+        without = SCHEDULE13G.replace(b"92766K403", b"  ")
+
+        self.assertEqual({r.issuer_cusip for r in parse_schedule13(without)}, {None})
+
+    def test_both_spellings_of_the_issuer_cik_are_read(self):
+        # The 13D fixture spells it issuerCIK and the 13G fixture spells it issuerCik.
+        self.assertEqual(parse_schedule13(SCHEDULE13D)[0].issuer_cik, "0001833141")
+        self.assertEqual(parse_schedule13(SCHEDULE13G)[0].issuer_cik, "0001706946")
+
+    def test_text_is_stripped_and_empty_is_null_and_nothing_is_converted(self):
+        xml = schedule_xml(
+            "<formData><coverPageHeader><securitiesClassTitle>  </securitiesClassTitle>"
+            "<issuerInfo><issuerCik> 0001 </issuerCik><issuerName></issuerName></issuerInfo>"
+            "</coverPageHeader><reportingPersons><reportingPersonInfo>"
+            "<reportingPersonName>\n N \n</reportingPersonName>"
+            "<aggregateAmountOwned> 0012.50 </aggregateAmountOwned>"
+            "</reportingPersonInfo></reportingPersons></formData>"
+        )
+
+        (row,) = parse_schedule13(xml)
+
+        self.assertEqual(
+            (row.issuer_cik, row.issuer_name, row.security_title, row.owner_name),
+            ("0001", None, None, "N"),
+        )
+        self.assertEqual((row.shares, row.percent_of_class, row.owner_cik), ("0012.50", None, None))
+
+    def test_a_document_with_no_reporting_person_gives_no_records(self):
+        xml = schedule_xml("<formData><coverPageHeader/></formData>")
+
+        self.assertEqual(parse_schedule13(xml), [])
+
+    def test_elements_match_by_local_name_in_any_namespace(self):
+        body = (
+            "<s:formData><s:coverPageHeader><s:issuerInfo><s:issuerCIK>1</s:issuerCIK>"
+            "</s:issuerInfo></s:coverPageHeader>"
+            "<s:reportingPersons><s:reportingPersonInfo><s:reportingPersonName>N"
+            "</s:reportingPersonName><s:percentOfClass>5</s:percentOfClass>"
+            "</s:reportingPersonInfo></s:reportingPersons></s:formData>"
+        )
+        xml = f'<s:edgarSubmission xmlns:s="urn:example:s">{body}</s:edgarSubmission>'.encode()
+
+        (row,) = parse_schedule13(xml)
+
+        self.assertEqual(
+            (row.issuer_cik, row.owner_name, row.owner_count, row.percent_of_class),
+            ("1", "N", 1, "5"),
+        )
+
+
+class ParseForm13fTests(unittest.TestCase):
+    OWNER = {"owner_cik": "0001051359", "owner_name": "PAR CAPITAL MANAGEMENT INC"}
+
+    def parse(self, xml: bytes = INFOTABLE) -> list[OwnershipRecord]:
+        return parse_form13f_table(xml, **self.OWNER)
+
+    def test_13f_holdings(self):
+        common = {
+            "record_kind": FORM13F_KIND,
+            **FORM13F_OWNER,
+            "owner_count": 1,
+            "shares_kind": "SH",
+        }
+
+        self.assertEqual(
+            self.parse(),
+            [
+                record(
+                    **common,
+                    issuer_name="AFFIRM HLDGS INC",
+                    issuer_cusip="00827B106",
+                    security_title="COM CL A",
+                    value_usd="326200",
+                    shares="4000",
+                    put_call=None,
+                ),
+                record(
+                    **common,
+                    issuer_name="ALPHABET INC",
+                    issuer_cusip="02079K107",
+                    security_title="CAP STK CL C",
+                    value_usd="883325",
+                    shares="2500",
+                    put_call="Put",
+                ),
+                record(
+                    **common,
+                    issuer_name="ALPHABET INC",
+                    issuer_cusip="02079K107",
+                    security_title="CAP STK CL C",
+                    value_usd="8903916",
+                    shares="25200",
+                    put_call=None,
+                ),
+            ],
+        )
+
+    def test_13f_prefixed_namespace(self):
+        # The SEC files of some filers hold `<ns1:informationTable xmlns:ns1="...">` with an
+        # ns1 prefix on every element. This rewrites the fixture the same way, with its own
+        # namespace bound to the prefix instead of being the default.
+        text = INFOTABLE.decode()
+        prefixed = re.sub(r"<(/?)([A-Za-z])", r"<\1ns1:\2", text).replace(
+            ' xmlns="', ' xmlns:ns1="', 1
+        )
+        self.assertIn("<ns1:informationTable ", prefixed)
+        self.assertIn("<ns1:putCall>Put</ns1:putCall>", prefixed)
+        self.assertNotIn(" xmlns=", prefixed)
+
+        self.assertEqual(self.parse(prefixed.encode()), self.parse())
+        self.assertEqual(len(self.parse(prefixed.encode())), 3)
+
+    def test_the_owner_comes_from_the_arguments_and_may_be_none(self):
+        rows = parse_form13f_table(INFOTABLE, owner_cik=None, owner_name=None)
+
+        self.assertEqual({(r.owner_cik, r.owner_name, r.owner_count) for r in rows}, {(None, None, 1)})
+
+    def test_columns_outside_the_mapping_are_null(self):
+        unmapped = [
+            "issuer_cik", "transaction_date", "transaction_code", "acquired_disposed",
+            "price_per_share", "shares_after", "direct_indirect", "percent_of_class",
+        ]  # fmt: skip
+        for row in self.parse():
+            self.assertEqual([getattr(row, name) for name in unmapped], [None] * len(unmapped))
+
+    def test_text_is_stripped_and_empty_or_missing_is_null_and_nothing_is_converted(self):
+        xml = (
+            b"<informationTable><infoTable><nameOfIssuer>  A B  </nameOfIssuer>"
+            b"<titleOfClass></titleOfClass><value> 0001.50 </value>"
+            b"<shrsOrPrnAmt><sshPrnamt>\n 0007 \n</sshPrnamt></shrsOrPrnAmt>"
+            b"<putCall>  </putCall></infoTable>"
+            b"<infoTable><cusip>X</cusip></infoTable></informationTable>"
+        )
+
+        first, second = self.parse(xml)
+
+        self.assertEqual(
+            (first.issuer_name, first.security_title, first.value_usd, first.shares),
+            ("A B", None, "0001.50", "0007"),
+        )
+        self.assertEqual((first.shares_kind, first.put_call, first.issuer_cusip), (None, None, None))
+        self.assertEqual(
+            (second.issuer_cusip, second.issuer_name, second.shares, second.shares_kind),
+            ("X", None, None, None),
+        )
+
+    def test_only_the_info_table_children_of_the_root_are_records(self):
+        xml = (
+            b"<informationTable><other><infoTable/></other><infoTable/><note/>"
+            b"<infoTable/></informationTable>"
+        )
+
+        self.assertEqual(len(self.parse(xml)), 2)
+        self.assertEqual(self.parse(b"<informationTable/>"), [])
+
+
 class XmlDocumentTests(unittest.TestCase):
     def submission(self, *documents: tuple[str, str, str]) -> tuple[bytes, object]:
         raw = submission_with(*documents, form="4")
@@ -454,9 +754,10 @@ class RunOwnershipTests(RunOwnershipTestCase):
                     0,
                     "submission parse error: no <SEC-HEADER> ... </SEC-HEADER> block",
                 ),
-                (schedule, "SCHEDULE 13D", 0, "parser not built"),
-                (repeated, "SC 13D/A;SC TO-T/A", 0, "parser not built"),
-                (joined, "4;SC 13D", 0, "parser not built"),
+                (schedule, "SCHEDULE 13D", 0, "no ownership XML document"),
+                (repeated, "SC 13D/A;SC TO-T/A", 0, "no ownership XML document"),
+                # The first part in sorted order that is an ownership form is "4".
+                (joined, "4;SC 13D", 3, None),
                 (thirteen_f_missing, "13F-HR", 0, "not_found"),
                 (
                     thirteen_f_corrupt,
@@ -475,7 +776,7 @@ class RunOwnershipTests(RunOwnershipTestCase):
         )
         self.assertEqual(
             [(row["accession_number"], row["form_type"]) for row in rows],
-            [(good, "4")] * 3 + [(last, "4")] * 4,
+            [(good, "4")] * 3 + [(joined, "4;SC 13D")] * 3 + [(last, "4")] * 4,
         )
 
     def test_fetches_are_built_from_the_ledger_when_the_table_is_missing(self):
@@ -487,6 +788,156 @@ class RunOwnershipTests(RunOwnershipTestCase):
         self.assertFalse(self.layout.table("fetches").exists())
         self.assertEqual(len(rows), 3)
         self.assertEqual([row["reason"] for row in status], [None, "not_attempted"])
+
+
+class RunScheduleAnd13fTests(RunOwnershipTestCase):
+    def add_13f(self, table: bytes | None, *parties: tuple[str, str, str], form="13F-HR") -> str:
+        return self.add(form, submission_13f(table, *parties))
+
+    def test_schedule_and_13f_rows_follow_the_sample_and_the_records(self):
+        schedule_d = self.add_filing("SCHEDULE 13D", SCHEDULE13D)
+        schedule_g = self.add_filing("SCHEDULE 13G/A", SCHEDULE13G)
+        old_style = self.add_filing("SC 13G", SCHEDULE13G)
+        thirteen_f = self.add_13f(INFOTABLE, PAR)
+
+        rows, status = self.run_ownership()
+
+        self.assertEqual(
+            rows,
+            [ownership_row(schedule_d, "SCHEDULE 13D", r) for r in parse_schedule13(SCHEDULE13D)]
+            + [ownership_row(schedule_g, "SCHEDULE 13G/A", r) for r in parse_schedule13(SCHEDULE13G)]
+            + [ownership_row(old_style, "SC 13G", r) for r in parse_schedule13(SCHEDULE13G)]
+            + [
+                ownership_row(thirteen_f, "13F-HR", r)
+                for r in parse_form13f_table(INFOTABLE, **FORM13F_OWNER)
+            ],
+        )
+        self.assertEqual(
+            [(row["form_type"], row["record_count"], row["reason"]) for row in status],
+            [
+                ("SCHEDULE 13D", 2, None),
+                ("SCHEDULE 13G/A", 2, None),
+                ("SC 13G", 2, None),
+                ("13F-HR", 3, None),
+            ],
+        )
+        self.assertEqual(
+            [row["record_kind"] for row in rows],
+            [SCHEDULE_KIND] * 6 + [FORM13F_KIND] * 3,
+        )
+
+    def test_the_13f_owner_is_the_first_filer_party(self):
+        other = ("FILED BY", "0000000007", "NOT THE FILER")
+        second = ("FILER", "0000000009", "SECOND FILER")
+        with_filer = self.add_13f(INFOTABLE, other, PAR, second)
+        no_filer = self.add_13f(INFOTABLE, other, form="13F-HR/A")
+        no_party = self.add_13f(INFOTABLE)
+
+        rows, status = self.run_ownership()
+
+        owners = {
+            accession: {
+                (row["owner_cik"], row["owner_name"], row["owner_count"])
+                for row in rows
+                if row["accession_number"] == accession
+            }
+            for accession in (with_filer, no_filer, no_party)
+        }
+        self.assertEqual(
+            owners,
+            {
+                with_filer: {("0001051359", "PAR CAPITAL MANAGEMENT INC", 1)},
+                no_filer: {(None, None, 1)},
+                no_party: {(None, None, 1)},
+            },
+        )
+        self.assertEqual([row["record_count"] for row in status], [3, 3, 3])
+
+    def test_the_13f_cover_document_gives_no_records(self):
+        cover_only = self.add_13f(None, PAR)
+
+        rows, status = self.run_ownership()
+
+        self.assertEqual(rows, [])
+        self.assertEqual(
+            [(row["accession_number"], row["record_count"], row["reason"]) for row in status],
+            [(cover_only, 0, "no ownership XML document")],
+        )
+
+    def test_a_filing_whose_documents_belong_to_another_form_has_no_ownership_document(self):
+        self.add_filing("SCHEDULE 13G", INFOTABLE)
+        self.add_filing("SC 13D/A", FORM4)
+        self.add_13f(SCHEDULE13D, PAR)
+        self.add_13f(FORM4, PAR)
+
+        rows, status = self.run_ownership()
+
+        self.assertEqual(rows, [])
+        self.assertEqual(
+            [row["reason"] for row in status], ["no ownership XML document"] * 4
+        )
+
+    def test_a_document_with_no_records_gives_the_reason(self):
+        self.add_filing("SCHEDULE 13D", schedule_xml("<formData><coverPageHeader/></formData>"))
+        self.add_13f(b"<informationTable/>", PAR)
+        # noSecuritiesOwned is a Form 3, 4 and 5 element. It does not explain an empty schedule.
+        self.add_filing(
+            "SCHEDULE 13G", schedule_xml("<noSecuritiesOwned>1</noSecuritiesOwned>")
+        )
+
+        rows, status = self.run_ownership()
+
+        self.assertEqual(rows, [])
+        self.assertEqual(
+            [(row["record_count"], row["reason"]) for row in status],
+            [(0, "no records in the ownership document")] * 3,
+        )
+
+    def test_a_joined_form_goes_to_its_first_ownership_part_in_sorted_order(self):
+        # "10-K" is not an ownership form, so "SCHEDULE 13D" is the first part that is.
+        schedule = self.add_filing("SCHEDULE 13D;10-K", SCHEDULE13D)
+        # "13F-HR" sorts before "SCHEDULE 13D".
+        thirteen_f = self.add_13f(INFOTABLE, PAR, form="SCHEDULE 13D;13F-HR")
+        wrong = self.add_filing("SCHEDULE 13D;13F-HR", SCHEDULE13D)
+
+        rows, status = self.run_ownership()
+
+        self.assertEqual(
+            [(row["accession_number"], row["record_count"], row["reason"]) for row in status],
+            [
+                (schedule, 2, None),
+                (thirteen_f, 3, None),
+                (wrong, 0, "no ownership XML document"),
+            ],
+        )
+        self.assertEqual(
+            {row["record_kind"] for row in rows if row["accession_number"] == thirteen_f},
+            {FORM13F_KIND},
+        )
+
+    def test_legacy_text_schedule_gives_reason(self):
+        text = (
+            "SCHEDULE 13D\nUnder the Securities Exchange Act of 1934\n(Amendment No. 3)\n"
+            "CUSIP No. 23256X407\n1. NAME OF REPORTING PERSON\n   Glavine Paul\n"
+        )
+        legacy = self.add(
+            "SC 13D/A", submission_with(("SC 13D/A", "d.txt", text), form="SC 13D/A")
+        )
+
+        rows, status = self.run_ownership()
+
+        self.assertEqual(rows, [])
+        self.assertEqual(
+            status,
+            [
+                {
+                    "accession_number": legacy,
+                    "form_type": "SC 13D/A",
+                    "record_count": 0,
+                    "reason": "no ownership XML document",
+                }
+            ],
+        )
 
 
 class OwnershipCommandTests(RunOwnershipTestCase):
@@ -515,9 +966,9 @@ class OwnershipCommandTests(RunOwnershipTestCase):
             stdout,
             "ownership: 7\n"
             "status ok: 2\n"
+            "status no ownership XML document: 1\n"
             "status no securities owned: 1\n"
-            "status not_found: 1\n"
-            "status parser not built: 1\n",
+            "status not_found: 1\n",
         )
         steps = [
             json.loads(line)["step"]
@@ -544,9 +995,9 @@ class OwnershipCommandTests(RunOwnershipTestCase):
                 "  - non_derivative_transaction: 2",
                 "- filings with records: 2",
                 "- filings with no records: 3",
+                "  - no ownership XML document: 1",
                 "  - no securities owned: 1",
                 "  - not_found: 1",
-                "  - parser not built: 1",
             ],
         )
 

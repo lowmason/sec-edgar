@@ -138,7 +138,10 @@ def _build_parser() -> argparse.ArgumentParser:
 
     ownership_parser = commands.add_parser(
         "ownership",
-        help="write the ownership and ownership_status tables from the Forms 3, 4 and 5",
+        help=(
+            "write the ownership and ownership_status tables from the Forms 3, 4 and 5,"
+            " Schedules 13D and 13G, and Form 13F"
+        ),
     )
     ownership_parser.add_argument("--out", required=True, help="output root")
     ownership_parser.set_defaults(run=_run_ownership)

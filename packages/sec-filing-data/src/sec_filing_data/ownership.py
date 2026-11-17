@@ -1,4 +1,5 @@
-"""The `ownership` command: the ownership records of each sampled Form 3, 4 and 5.
+"""The `ownership` command: the ownership records of each sampled Form 3, 4 and 5, Schedule 13D
+and 13G, and Form 13F.
 
 A filing that gave no records gets a status row with a `reason`. Values stay as filed
 text, with no numeric conversion. Elements are matched by local name.
@@ -6,6 +7,7 @@ text, with no numeric conversion. Elements are matched by local name.
 
 import xml.etree.ElementTree as ET
 from dataclasses import asdict, dataclass, field
+from functools import partial
 from operator import itemgetter
 
 from sec_filing_data.envelope import EnvelopeError, Submission, document_text, parse_submission
@@ -14,8 +16,7 @@ from sec_filing_data.ledger import build_fetches
 from sec_filing_data.tables import read_table, write_table
 
 FORMS_345 = frozenset({"3", "3/A", "4", "4/A", "5", "5/A"})
-# Task 10 builds the parsers of these forms. Until then they give PARSER_NOT_BUILT.
-UNBUILT_FORMS = frozenset(
+SCHEDULE_FORMS = frozenset(
     {
         "SCHEDULE 13D",
         "SCHEDULE 13D/A",
@@ -25,15 +26,16 @@ UNBUILT_FORMS = frozenset(
         "SC 13D/A",
         "SC 13G",
         "SC 13G/A",
-        "13F-HR",
-        "13F-HR/A",
     }
 )
-OWNERSHIP_FORMS = FORMS_345 | UNBUILT_FORMS
+FORMS_13F = frozenset({"13F-HR", "13F-HR/A"})
+OWNERSHIP_FORMS = FORMS_345 | SCHEDULE_FORMS | FORMS_13F
 
 FORM345_ROOT = "ownershipDocument"
+SCHEDULE_ROOT = "edgarSubmission"
+FORM13F_ROOT = "informationTable"
+FILER_ROLE = "FILER"
 
-PARSER_NOT_BUILT = "parser not built"
 NO_DOCUMENT = "no ownership XML document"
 NO_SECURITIES = "no securities owned"
 NO_RECORDS = "no records in the ownership document"
@@ -79,6 +81,23 @@ def local_name(tag: str) -> str:
     return tag.rpartition("}")[2]
 
 
+def element_at(parent: ET.Element | None, *path: str) -> ET.Element | None:
+    """The element at `path`, each step the first direct child with that local name."""
+    for name in path:
+        if parent is None:
+            return None
+        parent = next((kid for kid in parent if local_name(kid.tag) == name), None)
+    return parent
+
+
+def text_at(parent: ET.Element | None, *path: str) -> str | None:
+    """The stripped text of the element at `path`, or None when it is missing or empty."""
+    element = element_at(parent, *path)
+    if element is None:
+        return None
+    return (element.text or "").strip() or None
+
+
 def xml_document(raw: bytes, submission: Submission, root: str) -> bytes | None:
     """The text of the first document that parses as XML with a root named `root`, or None.
 
@@ -109,10 +128,11 @@ def run_ownership(layout: Layout) -> int:
     records, statuses = [], []
     for sampled in sample:
         form_type = sampled["form_type"]
-        if not _in_forms(form_type, OWNERSHIP_FORMS):
+        form = _ownership_form(form_type)
+        if form is None:
             continue
         accession = sampled["accession_number"]
-        extraction = _extract(layout, accession, form_type, fetches[accession]["outcome"])
+        extraction = _extract(layout, accession, form, fetches[accession]["outcome"])
         statuses.append(
             {
                 "accession_number": accession,
@@ -136,15 +156,21 @@ def _read_fetches(layout: Layout) -> list[dict]:
     return build_fetches(layout)
 
 
-def _in_forms(form_type: str, forms: frozenset[str]) -> bool:
-    """A form type that joins several types with `;` is in the set when any of them is."""
-    return any(part in forms for part in form_type.split(";"))
+def _ownership_form(form_type: str) -> str | None:
+    """The form that decides how a filing is read, or None for a filing outside the forms.
+
+    A form type that joins several types with `;` uses its first part, in sorted order,
+    that is in OWNERSHIP_FORMS.
+    """
+    return next((part for part in sorted(form_type.split(";")) if part in OWNERSHIP_FORMS), None)
 
 
-def _extract(layout: Layout, accession: str, form_type: str, outcome: str) -> _Extraction:
+def _extract(layout: Layout, accession: str, form: str, outcome: str) -> _Extraction:
     """Read the records of one filing. The checks run in the order of the `reason` values."""
-    # forms345 imports OwnershipRecord from this module, so it is imported here.
+    # The parser modules import OwnershipRecord from this module, so they are imported here.
+    from sec_filing_data.form13f import parse_form13f_table
     from sec_filing_data.forms345 import no_securities_owned, parse_form345
+    from sec_filing_data.schedule13 import parse_schedule13
 
     if outcome != "ok":
         return _Extraction(outcome)
@@ -153,12 +179,21 @@ def _extract(layout: Layout, accession: str, form_type: str, outcome: str) -> _E
         submission = parse_submission(raw)
     except EnvelopeError as error:
         return _Extraction(f"submission parse error: {error}")
-    if _in_forms(form_type, UNBUILT_FORMS):
-        return _Extraction(PARSER_NOT_BUILT)
-    xml = xml_document(raw, submission, FORM345_ROOT)
+    if form in FORMS_345:
+        root, parse = FORM345_ROOT, parse_form345
+    elif form in SCHEDULE_FORMS:
+        root, parse = SCHEDULE_ROOT, parse_schedule13
+    else:
+        # The owner of a 13F holding is the filing manager: the first FILER party.
+        filer = next((party for party in submission.parties if party.role == FILER_ROLE), None)
+        owner_cik, owner_name = (filer.cik, filer.name) if filer else (None, None)
+        root = FORM13F_ROOT
+        parse = partial(parse_form13f_table, owner_cik=owner_cik, owner_name=owner_name)
+    xml = xml_document(raw, submission, root)
     if xml is None:
         return _Extraction(NO_DOCUMENT)
-    records = parse_form345(xml)
+    records = parse(xml)
     if records:
         return _Extraction(None, records)
-    return _Extraction(NO_SECURITIES if no_securities_owned(xml) else NO_RECORDS)
+    owns_nothing = form in FORMS_345 and no_securities_owned(xml)
+    return _Extraction(NO_SECURITIES if owns_nothing else NO_RECORDS)

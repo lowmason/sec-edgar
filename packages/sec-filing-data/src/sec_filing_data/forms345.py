@@ -8,7 +8,7 @@ None. There is no numeric conversion.
 
 import xml.etree.ElementTree as ET
 
-from sec_filing_data.ownership import OwnershipRecord, local_name
+from sec_filing_data.ownership import OwnershipRecord, element_at, local_name, text_at
 
 RECORD_KINDS = {
     "nonDerivativeTransaction": "non_derivative_transaction",
@@ -28,32 +28,32 @@ def parse_form345(xml: bytes) -> list[OwnershipRecord]:
     Raises ET.ParseError for XML that does not parse.
     """
     root = ET.fromstring(xml)
-    issuer = _child(root, "issuer")
+    issuer = element_at(root, "issuer")
     owners = [child for child in root if local_name(child.tag) == "reportingOwner"]
-    owner_id = _child(owners[0], "reportingOwnerId") if owners else None
+    owner_id = element_at(owners[0], "reportingOwnerId") if owners else None
     return [
         OwnershipRecord(
             record_kind=RECORD_KINDS[local_name(row.tag)],
-            issuer_cik=_text(issuer, "issuerCik"),
-            issuer_name=_text(issuer, "issuerName"),
+            issuer_cik=text_at(issuer, "issuerCik"),
+            issuer_name=text_at(issuer, "issuerName"),
             issuer_cusip=None,
-            owner_cik=_text(owner_id, "rptOwnerCik"),
-            owner_name=_text(owner_id, "rptOwnerName"),
+            owner_cik=text_at(owner_id, "rptOwnerCik"),
+            owner_name=text_at(owner_id, "rptOwnerName"),
             owner_count=len(owners),
-            security_title=_text(row, "securityTitle", "value"),
-            shares=_text(row, "transactionAmounts", "transactionShares", "value"),
+            security_title=text_at(row, "securityTitle", "value"),
+            shares=text_at(row, "transactionAmounts", "transactionShares", "value"),
             shares_kind=None,
             put_call=None,
-            transaction_date=_text(row, "transactionDate", "value"),
-            transaction_code=_text(row, "transactionCoding", "transactionCode"),
-            acquired_disposed=_text(
+            transaction_date=text_at(row, "transactionDate", "value"),
+            transaction_code=text_at(row, "transactionCoding", "transactionCode"),
+            acquired_disposed=text_at(
                 row, "transactionAmounts", "transactionAcquiredDisposedCode", "value"
             ),
-            price_per_share=_text(row, "transactionAmounts", "transactionPricePerShare", "value"),
-            shares_after=_text(
+            price_per_share=text_at(row, "transactionAmounts", "transactionPricePerShare", "value"),
+            shares_after=text_at(
                 row, "postTransactionAmounts", "sharesOwnedFollowingTransaction", "value"
             ),
-            direct_indirect=_text(row, "ownershipNature", "directOrIndirectOwnership", "value"),
+            direct_indirect=text_at(row, "ownershipNature", "directOrIndirectOwnership", "value"),
             percent_of_class=None,
             value_usd=None,
         )
@@ -64,20 +64,4 @@ def parse_form345(xml: bytes) -> list[OwnershipRecord]:
 
 def no_securities_owned(xml: bytes) -> bool:
     """True when the document's `noSecuritiesOwned` flag is `1` or `true`."""
-    return _text(ET.fromstring(xml), "noSecuritiesOwned") in _TRUE
-
-
-def _child(parent: ET.Element | None, *path: str) -> ET.Element | None:
-    """The element at `path`, each step the first direct child with that local name."""
-    for name in path:
-        if parent is None:
-            return None
-        parent = next((child for child in parent if local_name(child.tag) == name), None)
-    return parent
-
-
-def _text(parent: ET.Element | None, *path: str) -> str | None:
-    element = _child(parent, *path)
-    if element is None:
-        return None
-    return (element.text or "").strip() or None
+    return text_at(ET.fromstring(xml), "noSecuritiesOwned") in _TRUE
