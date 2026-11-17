@@ -129,7 +129,10 @@ The full `fetch` ran on 2026-11-17 from 17:53:30Z to 18:04:42Z at commit `c0f5ee
   | `0001213900-26-098236` | DEFR14A (`uniform`) | status 200, then `ChunkedEncodingError: Response ended prematurely` mid-body | `ok` |
 
   The third case is the largest filing of the sample (181,664,551 decoded bytes). It shows on real data
-  that a broken body is retried, as Problems found and fixed item 1 requires.
+  that a broken body is retried, as Problems found and fixed item 1 requires. urllib3 2.8.0 raises
+  "Response ended prematurely" only while it reads a chunked body (`urllib3/response.py:1383`), so the SEC
+  sent this response with `Transfer-Encoding: chunked`. Under the plan's first rule (`raw.tell()`), a
+  chunked response counts 0 wire bytes. This filing's successful attempt carried 114,609,809 wire bytes.
 - Sizes per stratum, in bytes:
 
   | Stratum or quota form | Filings | Decoded, total | Decoded, median | Decoded, largest | Wire, total |
@@ -309,7 +312,8 @@ Found while building, before any SEC request:
    record would then be blind. Global Constraints define 5 GB as bytes on the wire, so the client now
    reads `raw.stream(..., decode_content=False)`, counts each raw piece as wire bytes, and decodes gzip
    and deflate itself, with a bound on each decode step. Test `RealUrllib3Tests` pins a chunked gzip
-   body to its compressed length. Commit `52b1f65`.
+   body to its compressed length. Commit `52b1f65`. The full fetch later showed that the SEC does send
+   chunked responses (O2, the DEFR14A retry).
 2. **Redirects.** `requests` follows redirects by default. Each hop would be an SEC request with no
    ledger record and no spacing. The client now sends `allow_redirects=False`, and a 3xx status gives
    `failed`. Commit `52b1f65`.
@@ -321,6 +325,13 @@ Found while building, before any SEC request:
 
 Found by the live run: none. Each live step ran once and gave its expected result, with no code fix. The
 three retried fetches behaved as designed.
+
+Found by the final review:
+
+5. **An ownership document that starts with a byte-order mark.** `xml_document` skipped a document
+   whose text starts with a UTF-8 byte-order mark, so such a filing would read `no ownership XML document`
+   and lose its records. The parser now removes one leading mark. No sampled document starts with one, and
+   a re-run of `ownership` gave the same 6,847 records. Commit `e7b3775`.
 
 ## Measured cost
 
