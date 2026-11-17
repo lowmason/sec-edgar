@@ -1,12 +1,13 @@
 """The `sec-filing-data` command. Each subcommand is one step of the run."""
 
 import argparse
+from collections import Counter
 from collections.abc import Sequence
 from pathlib import Path
 
-from sec_filing_data import index
+from sec_filing_data import index, sample
 from sec_filing_data.layout import Layout, record_step
-from sec_filing_data.tables import write_table
+from sec_filing_data.tables import read_table, write_table
 
 
 def _run_index(args: argparse.Namespace) -> int:
@@ -20,6 +21,20 @@ def _run_index(args: argparse.Namespace) -> int:
     return 0
 
 
+def _run_sample(args: argparse.Namespace) -> int:
+    layout = Layout(Path(args.out))
+    with record_step(layout, "sample"):
+        rows = sample.draw_sample(read_table(layout, "index").to_pylist())
+        write_table(layout, "sample", rows)
+    strata = Counter(row["stratum"] for row in rows)
+    quota_forms = Counter(row["form_type"] for row in rows if row["stratum"] == "quota")
+    for name in sample.STRATA:
+        print(f"{name}: {strata[name]}")
+    for name in sample.QUOTA_FORMS:
+        print(f"{name}: {quota_forms[name]}")
+    return 0
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="sec-filing-data")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -28,6 +43,10 @@ def _build_parser() -> argparse.ArgumentParser:
     index_parser.add_argument("--zip", required=True, help="path of the quarter's master.zip")
     index_parser.add_argument("--out", required=True, help="output root")
     index_parser.set_defaults(run=_run_index)
+
+    sample_parser = commands.add_parser("sample", help="draw the sample from the index table")
+    sample_parser.add_argument("--out", required=True, help="output root")
+    sample_parser.set_defaults(run=_run_sample)
     return parser
 
 
