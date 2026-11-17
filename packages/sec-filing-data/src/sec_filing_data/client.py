@@ -310,7 +310,10 @@ class SecClient:
             return _Verdict("failed", f"unexpected Content-Encoding {encoding!r}")
         received.body_bytes = 0
         with part.open("wb") as out:
-            return self._copy_body(received, _Decoder(encoding), out, usage)
+            try:
+                return self._copy_body(received, _Decoder(encoding), out, usage)
+            except zlib.error as error:
+                return _Verdict("failed", f"{encoding} body does not decode: {error}")
 
     def _copy_body(
         self, received: _Received, decoder: _Decoder, out: BinaryIO, usage: Usage

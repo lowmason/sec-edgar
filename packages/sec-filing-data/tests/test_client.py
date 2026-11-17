@@ -669,21 +669,31 @@ class BodyTests(ClientTestCase):
         self.assertEqual(len(session.calls), 1)
         self.assert_no_files()
 
-    def test_corrupt_gzip_is_recorded_and_propagates(self):
+    def test_corrupt_gzip_fails_without_retry(self):
         wire = bytearray(gzip.compress(b"corrupt me\n" * 100))
         wire[20:30] = b"\xff" * 10
-        session = FakeSession(
+        result, session = self.fetch(
             FakeResponse(200, [bytes(wire)], {"Content-Encoding": "gzip"}),
             ok_response(),
         )
 
-        with self.assertRaises(zlib.error):
-            self.make_client(session).fetch(URL, self.dest, key=KEY)
-
+        self.assertEqual(result.outcome, "failed")
+        self.assertEqual(result.attempts, 1)
+        self.assertIn("gzip body does not decode", result.reason)
         [response] = self.records("response")
         self.assertEqual(response["outcome"], "failed")
         self.assertEqual(response["wire_bytes"], len(wire))
         self.assertEqual(len(session.calls), 1)
+        self.assert_no_files()
+
+    def test_data_after_a_deflate_stream_fails(self):
+        wire = zlib.compress(b"deflate body\n") + b"trailing bytes"
+        result, _ = self.fetch(
+            FakeResponse(200, [wire], {"Content-Encoding": "deflate"})
+        )
+
+        self.assertEqual(result.outcome, "failed")
+        self.assertIn("deflate body does not decode", result.reason)
         self.assert_no_files()
 
     def test_body_at_the_limit_is_kept(self):
