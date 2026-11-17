@@ -11,6 +11,7 @@ from sec_filing_data.envelope import (
 )
 
 FIXTURE = Path(__file__).parent / "fixtures" / "submission-13f.txt"
+FORM4_FIXTURE = Path(__file__).parent / "fixtures" / "submission-form4.txt"
 
 PRIMARY_TEXT = (
     b"<XML>\n"
@@ -399,6 +400,30 @@ class DocumentTextTests(unittest.TestCase):
             text_length=5,
         )
         self.assertEqual(document_text(b"abc<a/>def", doc), b"<a/>d")
+
+
+class RealSubmissionTests(unittest.TestCase):
+    """A pilot Form 4 as the SEC filed it: public data, so its names and values stay as filed."""
+
+    def test_real_form4_header(self):
+        raw = FORM4_FIXTURE.read_bytes()
+        submission = parse_submission(raw)
+
+        self.assertEqual(submission.field("CONFORMED SUBMISSION TYPE"), "4")
+        self.assertEqual(submission.acceptance_datetime, "20260702172241")
+        self.assertIn(
+            Party(role="REPORTING-OWNER", name="HUSTON BENJAMIN E.", cik="0001700537"),
+            submission.parties,
+        )
+        self.assertIn(
+            Party(role="ISSUER", name="CARVANA CO.", cik="0001690820"),
+            submission.parties,
+        )
+
+        (document,) = submission.documents
+        self.assertEqual(document.type, "4")
+        self.assertEqual(document.filename, "wk-form4_1783027358.xml")
+        self.assertTrue(document_text(raw, document).startswith(b"<?xml"))
 
 
 class SubmissionTests(unittest.TestCase):
