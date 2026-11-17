@@ -152,7 +152,24 @@ The full `fetch` ran on 2026-11-17 from 17:53:30Z to 18:04:42Z at commit `c0f5ee
 
 ## O3
 
-To be filled at Task 8.
+`facts` ran at commit `ea21c64`, then `report`. Wall time: 1.3 s. It sent no SEC request.
+
+- Filings in the fact forms (`10-K`, `10-K/A`, `10-Q`, `10-Q/A`): 46. These are the 20 quota `10-K`, the
+  20 quota `10-Q` and 6 `uniform` `10-Q`. The sample has no `/A` filing of these forms.
+- All 46 gave facts. 0 filings gave none, so no reason is listed.
+- Source document (D2): all 46 instances are the SEC-extracted `*_htm.xml` inside the submission. 0 came
+  from an `EX-101.INS`. Task 8 Step 0 (`fetch-instances`) was not needed and was not built.
+- `facts` has 45,358 rows. Facts per filing: 215 at least, 924 median, 2,365 at most.
+- Check without the parser: in each of the 46 instances, the count of `contextRef` attributes in the raw
+  text equals `fact_count`.
+- Concepts: 4,325 distinct. Every concept has a prefix, so none fell back to `{namespace}local`. The most
+  frequent prefixes are `us-gaap` (38,170), `dei` (1,582) and `ecd` (301). The rest are company prefixes.
+- Periods: 16,734 instant and 28,624 duration facts. Every fact has a period.
+- Dimensions: 22,481 facts (50%) have at least one dimension member.
+- Units: `iso4217:USD` 31,424, `shares` 4,129, `pure` 2,211, `iso4217:USD/shares` 2,029 (a divide unit).
+  5,111 facts have no unit (text facts).
+- `xsi:nil` facts: 1,341. Their `value` is null.
+- Values are stored as filed text, with no numeric conversion.
 
 ## O4
 
