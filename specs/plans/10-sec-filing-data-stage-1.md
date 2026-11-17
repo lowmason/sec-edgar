@@ -206,7 +206,7 @@ Grammar of the complete submission file, parsed as bytes:
   - `test_resume_after_interrupt`: given one finished filing, a `.part` file for the next and an unmatched request record, a second run sends no request for the finished filing, refetches the other, and leaves no `.part` file. `ledger_usage(...).wire_bytes` is at least 268,435,456.
   - `test_budget_stop_marks_the_rest`: a ledger of 1,499 matched request and response records gives one fetched filing, the rest `budget`, and exit 5.
   - `test_forbidden_returns_6`
-  - `test_envelopes_one_row_per_sampled_filing`: `ok` rows hold parsed fields and the fetch's `fetched_at` and `sha256`. A corrupt file gives `parse_error`. A row that is not `ok` gives `reason`.
+  - `test_envelopes_one_row_per_sampled_filing`: `ok` rows hold parsed fields and the fetch's `fetched_at` and `sha256`, with `date_as_of_change == "20260814"` and `private_to_public` false. A corrupt file gives `parse_error`. A row that is not `ok` gives `reason`.
   - `test_offline_modules_never_import_requests`: a subprocess (`sys.executable`) imports every `sec_filing_data` module except `client` and `fetch` (found with `pkgutil.iter_modules`) and prints `"requests" in sys.modules`. Expected: `False`.
   - `test_report_lists_cost`: lines for requests, wire bytes, wall time, disk use and filings with no party.
   - `test_report_lists_platform_checks`: the `Platform checks` section names V3, V5, V6, V7, V9 and V10. The V6 count is 0, because the fixture's two dates are equal.
