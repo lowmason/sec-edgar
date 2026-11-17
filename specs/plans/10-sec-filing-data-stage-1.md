@@ -11,7 +11,7 @@
 
 **Tech Stack:** Python 3.14, uv, `requests` 2.34.2 and `pyarrow` 25.0.1 (both already locked), and the standard library (`zipfile`, `hashlib`, `xml.etree.ElementTree`, `fcntl`, `unittest`).
 
-**Spec:** none. The plan implements Stage 1 of `specs/sec-filing-data-roadmap.md`: its entry, and "Choices made" under Outcomes. Read both. `specs/completed/sec-filing-platform.md` (parked) is background for facts only.
+**Spec:** none. The plan implements Stage 1 of `specs/sec-filing-data-roadmap.md`: its entry, and "Choices made" under Outcomes. Read both. `specs/completed/sec-filing-platform.md` (parked) is background for facts, and its Verification section defines the checks V1–V13 and V15 that D5 names.
 
 ## Global Constraints
 
@@ -48,6 +48,7 @@
 - **D2** (owner, plan review, 2026-11-16): O3 reads one XBRL instance per filing: an `EX-101.INS` document, else the SEC-extracted `*_htm.xml`. Never both, and no inline XBRL parser in Stage 1. This departs from R16 of the parked platform spec, which is background only. Owner's words: "XBRL instance (Recommended)". Applied in: Tasks 6, 8.
 - **D3** (owner, plan review, 2026-11-16): the live root `/Users/lowell/Projects/sec-edgar/filing-data/2026Q3`, in the main checkout and git-ignored. The plan commit adds `filing-data/` to `.gitignore`, and local `main` fast-forwards to it. Owner's words: "Main checkout (Recommended)" and "Fast-forward local main (Recommended)". Applied in: Global Constraints, Task 6.
 - **D4** (plan default, stated at the plan review on 2026-11-16, no change asked): "each form type that O3 and O4 name" means the original types `10-K`, `10-Q`, `3`, `4`, `5`, `SCHEDULE 13D`, `SCHEDULE 13G` and `13F-HR`. No `/A` strata. Form 13F is `13F-HR`, not `13F-NT`. The legacy `SC 13D/A` enters only through the 5 repeated-key accessions. Applied in: Task 2.
+- **D5** (owner, plan review, 2026-11-17): plan 10 takes in the parts of the parked platform items Stages 2, 3 and 6 (`specs/deferred_items.md`, section `sec-filing-platform-roadmap — 2026-11-16`) that fit Stage 1, D2 and D4, with no extra SEC request. These parts are: the response headers for V3; header checks over all sampled filings for V5, V6, V7, V9 and V10; the V13 cases of an `<XBRL>`-wrapped instance and of an instance counted once; and, in the findings file, a result or an open item for each of V1–V12, and the sampled filings with their SHA-256 as the committed sample manifest. Platform Stage 6 is planned here. Stages 2 and 3 stay deferred, because their other V13 and V15 cases need an inline XBRL parser (D2) or amendment handling (roadmap Stage 4). This edit is committed, and local `main` fast-forwards to it. Owner's words: "What fits Stage 1 (Recommended)" and "Commit and fast-forward (Recommended)". Applied in: Tasks 3–8 and 10.
 
 ## Root layout and tables
 
@@ -60,7 +61,7 @@ Schemas, all in `tables.py`. Columns are strings unless typed:
 | `index` | `line_number` int64 (1-based line in `master.idx`), `cik` int64, `company_name`, `form_type`, `date_filed` date32, `filename`, `accession_number` |
 | `sample` | `draw` int32, `stratum` (`quota`, `repeated`, `uniform`), `accession_number`, `form_type`, `cik` int64, `company_name`, `date_filed` date32, `filename`, `url` |
 | `fetches` | `accession_number`, `form_type`, `outcome` (`ok`, `not_found`, `too_large`, `forbidden`, `failed`, `budget`, `not_attempted`), `reason`, `status` int32, `attempts` int32, `wire_bytes` int64, `body_bytes` int64, `sha256`, `fetched_at` timestamp[us, UTC], `path` |
-| `filings` | `accession_number`, `form_type`, `outcome`, `reason`, `fetched_at` timestamp[us, UTC], `sha256`, `submission_type`, `acceptance_datetime`, `filed_as_of_date`, `period_of_report`, `public_document_count`, `document_count` int32, `parse_error` |
+| `filings` | `accession_number`, `form_type`, `outcome`, `reason`, `fetched_at` timestamp[us, UTC], `sha256`, `submission_type`, `acceptance_datetime`, `filed_as_of_date`, `date_as_of_change`, `private_to_public` bool, `period_of_report`, `public_document_count`, `document_count` int32, `parse_error` |
 | `parties` | `accession_number`, `role`, `name`, `cik` |
 | `documents` | `accession_number`, `sequence` int32, `type`, `filename`, `description`, `text_offset` int64, `text_length` int64 |
 | `facts` | `accession_number`, `source_document`, `concept`, `value`, `unit`, `period_start`, `period_end`, `period_instant`, `decimals`, `context_id`, `dimensions`, `is_nil` bool |
@@ -127,7 +128,7 @@ Rule. `rng = random.Random(seed)`. Sort candidates by `accession_number` before 
 
 Ledger records:
 - Before each attempt: `{"event": "request", "id", "key", "url", "attempt", "at"}`.
-- After each attempt, also one that raised: `{"event": "response", "id", "key", "status", "wire_bytes", "body_bytes", "sha256", "outcome", "reason", "at"}`. `outcome` is `ok`, `not_found`, `too_large`, `forbidden`, `budget`, `retry` (another attempt follows) or `failed`. `at` is UTC ISO 8601 with `Z`.
+- After each attempt, also one that raised: `{"event": "response", "id", "key", "status", "wire_bytes", "body_bytes", "sha256", "outcome", "reason", "content_encoding", "etag", "last_modified", "at"}`. `outcome` is `ok`, `not_found`, `too_large`, `forbidden`, `budget`, `retry` (another attempt follows) or `failed`. `content_encoding`, `etag` and `last_modified` are the response's `Content-Encoding`, `ETag` and `Last-Modified` headers, or null (V3, D5). `at` is UTC ISO 8601 with `Z`.
 - `ledger_usage` counts request records and sums response `wire_bytes`. A request with no response counts as `MAX_RESPONSE_BYTES`.
 
 Client rules:
@@ -139,7 +140,7 @@ Client rules:
 - `exclusive_lock` takes `fcntl.flock(LOCK_EX | LOCK_NB)`. A held lock raises `RuntimeError("another fetch holds <path>")`.
 
 - [ ] **Step 1: Write the failing tests.** A fake session's `get(url, headers=..., stream=..., timeout=...)` returns scripted fake responses (`status_code`, `headers`, `iter_content`, `raw.tell()`, `close()`). Fake `monotonic`, `sleep` and `utcnow` record calls. Pre-filled ledgers hold matched request and response records.
-  - `test_ok_writes_bytes_hash_and_ledger`: the file equals the body; `sha256 == hashlib.sha256(body).hexdigest()`; one request and one response record.
+  - `test_ok_writes_bytes_hash_and_ledger`: the file equals the body; `sha256 == hashlib.sha256(body).hexdigest()`; one request and one response record. With headers `Content-Encoding: gzip` and `ETag: "e1"` and no `Last-Modified`, the response record holds `gzip`, `"e1"` and null.
   - `test_sends_declared_user_agent`
   - `test_spacing_between_requests`: two fetches at fake time 0 give `sleep(0.34)`.
   - `test_retries_then_succeeds`: 503, then 200 gives `attempts == 2` and a sleep of at least 2 s. With `Retry-After: 30`, a sleep of at least 30 s.
@@ -161,18 +162,20 @@ Client rules:
 
 **Files:** Create `src/sec_filing_data/envelope.py`, `tests/test_envelope.py`, `tests/fixtures/submission-13f.txt`.
 
-**Interfaces (produces):** frozen dataclasses `Party(role: str, name: str | None, cik: str | None)`, `Document(sequence: int | None, type: str, filename: str | None, description: str | None, text_offset: int, text_length: int)` and `Submission(fields: tuple[tuple[str, str], ...], acceptance_datetime: str | None, parties: tuple[Party, ...], documents: tuple[Document, ...])`, with `Submission.field(label: str) -> str | None` (first value); `EnvelopeError(ValueError)`; `parse_submission(raw: bytes) -> Submission`; `document_text(raw: bytes, doc: Document) -> bytes`.
+**Interfaces (produces):** frozen dataclasses `Party(role: str, name: str | None, cik: str | None)`, `Document(sequence: int | None, type: str, filename: str | None, description: str | None, text_offset: int, text_length: int)` and `Submission(fields: tuple[tuple[str, str], ...], acceptance_datetime: str | None, private_to_public: bool, parties: tuple[Party, ...], documents: tuple[Document, ...])`, with `Submission.field(label: str) -> str | None` (first value); `EnvelopeError(ValueError)`; `parse_submission(raw: bytes) -> Submission`; `document_text(raw: bytes, doc: Document) -> bytes`.
 
 Grammar of the complete submission file, parsed as bytes:
 - The header is the text between line-initial `<SEC-HEADER>` and `</SEC-HEADER>`, decoded as UTF-8 with `errors="replace"`. The `<SEC-HEADER>` line can carry text after the tag. No header raises `EnvelopeError`.
 - Values are stripped. A label followed only by whitespace, such as `REPORTING-OWNER:` and a tab, has no value.
 - The `<ACCEPTANCE-DATETIME>` line gives `acceptance_datetime` as filed, such as `20260814160523`.
+- `private_to_public` is true when a header line contains `PRIVATE-TO-PUBLIC` (V7, D5).
 - A line with no leading whitespace, `LABEL:`, tabs and a value, is a field. With no value, it starts a party with `role = LABEL`, such as `FILER`, `REPORTING-OWNER`, `ISSUER`, `SUBJECT COMPANY` or `FILED BY`. In a party, the first indented `COMPANY CONFORMED NAME:` and `CENTRAL INDEX KEY:` give its name and CIK. Other lines are skipped.
 - A document runs from a line-initial `<DOCUMENT>` to the next line-initial `</DOCUMENT>`. Its `<TYPE>`, `<SEQUENCE>`, `<FILENAME>` and `<DESCRIPTION>` lines before `<TEXT>` give its values (the rest of the line, stripped). Its text is the bytes after the `<TEXT>` line, up to the line-initial `</TEXT>`. `text_offset` and `text_length` are byte positions in `raw`. No `</TEXT>` raises `EnvelopeError`.
 - `document_text` returns the text without surrounding whitespace and without one outer `<XML>…</XML>` or `<XBRL>…</XBRL>` wrapper.
 
 - [ ] **Step 1: Write the fixture and the failing tests.** The fixture is hand-built in this grammar. It has 6 header fields (`ACCESSION NUMBER: 0001000097-26-000006`, `CONFORMED SUBMISSION TYPE: 13F-HR`, `PUBLIC DOCUMENT COUNT: 2`, `CONFORMED PERIOD OF REPORT: 20260630`, `FILED AS OF DATE: 20260814`, `DATE AS OF CHANGE: 20260814`), `<ACCEPTANCE-DATETIME>20260814160523`, and one `FILER` party (`KINGDON CAPITAL MANAGEMENT, L.L.C.`, `0001000097`). It has 2 `<XML>`-wrapped documents: `13F-HR`, sequence 1, `primary_doc.xml`, and `INFORMATION TABLE`, sequence 2, `infotable.xml`. The second text holds a line `  </TEXT> not at line start`.
   - `test_header_fields_and_acceptance`
+  - `test_private_to_public_tag`: the fixture gives `False`; with a `<PRIVATE-TO-PUBLIC>` line added after `<ACCEPTANCE-DATETIME>`, `True`.
   - `test_parties`
   - `test_document_list_and_offsets`: types, sequences and filenames as above; `raw[o:o + n]` equals each text.
   - `test_document_text_strips_xml_wrapper`: the result starts with `b"<?xml"`.
@@ -194,7 +197,7 @@ Grammar of the complete submission file, parsed as bytes:
   - `ledger.build_fetches(layout: Layout) -> list[dict]`: one `fetches` row per sampled filing. It is `ok` when `submission(accession)` exists, with the values of its last `ok` record. Else it takes its last response record's outcome, reading `retry` as `failed`. Else it is `budget` when `ledger_usage` has reached a limit, and `not_attempted` otherwise. `attempts` counts all its request records.
   - `fetch.run_fetch(layout: Layout, *, user_agent: str, per_form: int | None = None, session=None) -> int`. It holds `exclusive_lock(layout.lock)` and walks `sample` in `draw` order, with `key = accession_number`. With `per_form`, it takes only the first `per_form` rows of each quota form. It skips filings on disk and deletes a stale `.part` file. `BudgetExhausted` stops the walk and returns 5, `AccessDenied` returns 6, and a full walk returns 0. Every exit path writes `fetches` from `build_fetches`.
   - `submissions.run_envelopes(layout: Layout) -> int` writes `filings` (one row per sampled filing), `parties` and `documents`. A fetch that is not `ok` sets `reason` to its outcome. An `EnvelopeError` sets `parse_error`.
-  - `report.run_report(layout: Layout) -> str` returns Markdown: index rows; the sample per stratum and per quota form; fetch outcomes; requests and wire bytes from `ledger_usage`, and decoded bytes; envelope parse errors; filings with no party, and filings with a null `submission_type`, `acceptance_datetime`, `filed_as_of_date` or `public_document_count`; wall time per step and in total, from `runs.jsonl`; disk use, as the sum of file sizes under the root.
+  - `report.run_report(layout: Layout) -> str` returns Markdown: index rows; the sample per stratum and per quota form; fetch outcomes; requests and wire bytes from `ledger_usage`, and decoded bytes; envelope parse errors; filings with no party, and filings with a null `submission_type`, `acceptance_datetime`, `filed_as_of_date` or `public_document_count`; wall time per step and in total, from `runs.jsonl`; disk use, as the sum of file sizes under the root. It ends with a `Platform checks` section (D5): V3, the `ok` responses per `content_encoding` value, and those with an `etag` or a `last_modified`; V5, each `repeated` filing's `form_type`, `submission_type` and `document_count`; V6, the filings whose `date_as_of_change` is later than `filed_as_of_date`; V7, the filings with `private_to_public`; V9, the filings with a null `acceptance_datetime`; V10, the filings that hold documents described `IDEA: XBRL DOCUMENT`, split by whether `public_document_count` equals `document_count`, equals `document_count` minus that number, or neither.
   - `cli.py`: `fetch --out ROOT [--per-form N]` returns 2 when `SEC_USER_AGENT` is unset, and imports `fetch` inside its handler. Also `envelopes --out ROOT` and `report --out ROOT`. Each command runs inside `record_step`.
 
 - [ ] **Step 1: Write the failing tests,** with a fake session that serves `fixtures/submission-13f.txt` for every URL.
@@ -206,6 +209,7 @@ Grammar of the complete submission file, parsed as bytes:
   - `test_envelopes_one_row_per_sampled_filing`: `ok` rows hold parsed fields and the fetch's `fetched_at` and `sha256`. A corrupt file gives `parse_error`. A row that is not `ok` gives `reason`.
   - `test_offline_modules_never_import_requests`: a subprocess (`sys.executable`) imports every `sec_filing_data` module except `client` and `fetch` (found with `pkgutil.iter_modules`) and prints `"requests" in sys.modules`. Expected: `False`.
   - `test_report_lists_cost`: lines for requests, wire bytes, wall time, disk use and filings with no party.
+  - `test_report_lists_platform_checks`: the `Platform checks` section names V3, V5, V6, V7, V9 and V10. The V6 count is 0, because the fixture's two dates are equal.
 - [ ] **Step 2: Run the test command.** Expected: failures.
 - [ ] **Step 3: Implement** the interfaces.
 - [ ] **Step 4: Run the test command.** Expected: `OK`.
@@ -233,14 +237,14 @@ Commands below are short for `uv run --package sec-filing-data sec-filing-data <
 
   A failed header check is a problem to fix (D1) before Task 7. If every pilot 10-K and 10-Q has an instance inside, Task 8 skips its Step 0. Otherwise Task 8 runs Step 0.
 - [ ] **Step 5: Pin the parser to real bytes.** Trim a pilot Form 4 submission (its header and first document) into `tests/fixtures/submission-form4.txt`. Add `test_real_form4_header` to `tests/test_envelope.py`: it asserts the fixture's `CONFORMED SUBMISSION TYPE`, `acceptance_datetime`, and its `REPORTING-OWNER` and `ISSUER` parties with their CIKs. Run the test command. Expected: `OK`, after any fix the test calls for.
-- [ ] **Step 6: Start `specs/sec-filing-data-stage-1-findings.md`** with the sections `Run record` (root, commit), `O1`, `Sample`, `Pilot checkpoint`, `O2`, `O3`, `O4`, `Problems found and fixed`, `Measured cost` and `Exit check`. Fill O1, Sample and Pilot checkpoint. Fix each problem the pilot finds in place (D1), record it, and re-run the pilot.
+- [ ] **Step 6: Start `specs/sec-filing-data-stage-1-findings.md`** with the sections `Run record` (root, commit), `O1`, `Sample`, `Pilot checkpoint`, `O2`, `O3`, `O4`, `Platform checks` (D5), `Problems found and fixed`, `Measured cost`, `Exit check` and `Sample list` (D5). Fill O1, Sample and Pilot checkpoint. Fix each problem the pilot finds in place (D1), record it, and re-run the pilot.
 - [ ] **Step 7: Commit:** `test(filing-data): pin the submission parser to a real Form 4` and `docs(specs): record the Stage 1 pilot checkpoint`
 
 ### Task 7: Live full fetch (O2)
 
 - [ ] **Step 1: Fetch.** With the Task 6 variables, run `fetch` in the background. Then run `envelopes` and `report`.
 - [ ] **Step 2: Check O2.** `filings` has 500 rows. Each row has parsed header fields, or a `reason` or `parse_error`. Each quota form has at least one `ok` filing. Requests are at most 1,500, and wire bytes at most 5,000,000,000.
-- [ ] **Step 3: Record** O2 in the findings: outcomes per kind, parse errors, and requests, wire bytes, decoded bytes and wall time so far. Fix and record each problem found (D1).
+- [ ] **Step 3: Record** O2 in the findings: outcomes per kind, parse errors, and requests, wire bytes, decoded bytes and wall time so far. Copy the report's V3, V5, V6, V7, V9 and V10 lines under `Platform checks`. Fix and record each problem found (D1).
 - [ ] **Step 4: Commit:** `docs(specs): record the Stage 1 fetch`
 
 ### Task 8: XBRL facts (O3)
@@ -272,6 +276,10 @@ Rules:
   - `test_find_instance_prefers_ex101_ins`
   - `test_doctype_refused`
   - `test_no_instance_gives_reason`: `run_facts` over a 10-Q submission with no instance writes that reason and no facts.
+  - `test_xbrl_wrapped_instance` (V13, D5): `run_facts` over a 10-K submission whose `EX-101.INS` text is the fixture wrapped in `<XBRL>` gives the fixture's facts.
+  - `test_instance_counted_once` (V13, D5): `run_facts` over a 10-Q submission that holds the fixture both as `EX-101.INS` and as a `*_htm.xml` writes each fact once, and `source_document` is the `EX-101.INS` filename.
+
+  These tests build their submissions in the test, in the Task 4 grammar.
 - [ ] **Step 2: Run the test command.** Expected: failures.
 - [ ] **Step 3: Implement** the rules, the `facts --out ROOT` subcommand, and a facts section in `run_report`: filings, fact rows, source documents, and the filings that gave none, per reason.
 - [ ] **Step 4: Run the test command.** Expected: `OK`.
@@ -333,6 +341,10 @@ Mapping:
   - Problems found and fixed.
   - Measured cost: SEC requests and wire bytes (inside 1,500 and 5,000,000,000), decoded bytes, wall time per step and in total, and disk use of `ROOT`.
   - Exit check: one line per outcome against the roadmap's Stage 1 Exit, each with its evidence.
+  - Platform checks (D5): one line for each of V1–V12 of `specs/completed/sec-filing-platform.md`, with its result and evidence, or an open item with a proposed disposition. V3, V9 and V10 have results. V5, V6 and V7 have a 2026Q3 result, and an open item for their part outside the sample: the 2024Q1 pairs, the refetches and the 2026-10-15 submissions. V1, V2, V4, V8, V11 and V12 need Feed archives, `submissions.zip` or SEC documentation, so each is an open item. Then name the V13 and V15 cases that Tasks 8 and 10 test, by test name. Legacy `SC 13G` has no 2026Q3 filing (0 in the index): a named gap.
+  - Sample list (D5): one row per sampled filing, with `draw`, `accession_number`, `form_type`, `outcome` and `sha256`.
+
+  Then ask the owner, in one question, for a disposition on each open item, and record the answers.
 - [ ] **Step 7: Run the test command** (expected: `OK`), **then commit** `feat(filing-data): extract Schedule 13D/G and Form 13F records` and `docs(specs): record the Stage 1 findings`.
 
-Then run the Plan Completion Protocol of writing-plans, step 3a included: a Handoff section for Stages 2–4, and the roadmap's tick and stamp.
+Then run the Plan Completion Protocol of writing-plans, step 3a included: a Handoff section for Stages 2–4, and the roadmap's tick and stamp. Its step 3 ticks the platform Stage 6 item (D5) when each V1–V12 line has a result or an owner disposition and the sample list is committed.

@@ -377,6 +377,7 @@
       campaign that retains a real-submission sample and gives a result for each of V1–V12. Size: plan. Done when:
       each of V1–V12 has a recorded result or a named open item with an owner disposition, and the sample manifest is
       committed.
+      → planned 2026-11-17: specs/plans/10-sec-filing-data-stage-1.md
 - [ ] Stage 7, parser freeze (parked roadmap, Stage 7 entry; platform spec R14–R16, R18–R20, R22–R24): revise the
       envelope, fact and ownership parsers against the retained sample and freeze their versions. Size: plan.
       Done when: each frozen version parses the whole sample, with a recorded reason for each refusal.
