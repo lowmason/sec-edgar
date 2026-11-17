@@ -52,16 +52,16 @@ consumes the output of the stage before it.
 - [ ] Stage 2: Provenance and timing
       Objective: Give each record of O1–O4 its source and the times that point-in-time use needs, such as when the SEC accepted the filing, when it became public and when this project fetched it.
       Outcomes: O1, O2, O3, O4
-      Consumes: Stage 1's tables, retained bytes and fetch times, code and findings file.
-      Produces: The O1–O4 tables with provenance (source URL, accession number, raw-byte SHA-256) and the chosen times on each record.
-      Exit: For the Stage 1 sample, each record of O1–O4 names its source, its raw-byte SHA-256 and its times. A rebuild from the retained bytes reproduces the tables and sends no SEC request.
+      Consumes: Stage 1's tables, retained bytes, request ledger, fetch times, code and findings file, as built (plan 10, Handoff). (Resolved at resume, 2026-11-17)
+      Produces: The O1–O4 tables with provenance (source URL, accession number, raw-byte SHA-256) and the chosen times on each record. The source of an O3 fact is the SEC-extracted `*_htm.xml` instance inside the complete submission file, not the filer's inline XBRL document (plan 10, D2 and Handoff). (Resolved at resume, 2026-11-17)
+      Exit: For the Stage 1 sample, each record of O1–O4 names its source, its raw-byte SHA-256 and its times. A rebuild from the retained bytes reproduces the tables and sends no SEC request. Apart from the rebuild, each item that the owner carried into Stage 2 meets its `Done when`: the V6 refetch, and the SEC documentation checks for V7 and V8 (`specs/deferred_items.md`, section `10-sec-filing-data-stage-1 — 2026-11-17`; plan 10, Handoff). Each live request, the refetch included, is inside an SEC budget that the owner sets for Stage 2 (plan 10, Handoff). (Resolved at resume, 2026-11-17)
       Leaves out: Manifests, hash-bound evidence, release pinning and versioned record formats: Stage 3. As-of views and amendment handling: Stage 4.
       ROUTING: brainstorming
 
 - [ ] Stage 3: Manifests, hash-bound evidence and release pinning
       Objective: Make each output of O1–O4 checkable and reproducible. Each output set gets a manifest, each parsed value is bound to the hash of the bytes it came from, and each run is tied to the code version that made it.
       Outcomes: O1, O2, O3, O4
-      Consumes: Stage 2's tables with provenance and times.
+      Consumes: Stage 2's tables with provenance and times. Stage 1's runs record no code version, and its findings name only the pilot's commit (plan 10, Handoff). (Resolved at resume, 2026-11-17)
       Produces: Manifests, hash-bound evidence for parsed values, versioned record formats, and a pinned code version for each run.
       Exit: A check re-derives a sample of parsed values from the retained bytes through their hashes. Each manifest lists every output file with its SHA-256. Each output names the code version that made it, and the outputs of two code versions are told apart.
       Leaves out: As-of views and amendment handling: Stage 4.
