@@ -43,6 +43,8 @@ class _Root:
     parties: list[dict] | None
     documents: list[dict] | None
     facts_status: list[dict] | None
+    ownership: list[dict] | None
+    ownership_status: list[dict] | None
 
     @classmethod
     def load(cls, layout: Layout) -> _Root:
@@ -63,6 +65,8 @@ class _Root:
             parties=rows("parties"),
             documents=rows("documents"),
             facts_status=rows("facts_status"),
+            ownership=rows("ownership"),
+            ownership_status=rows("ownership_status"),
         )
 
     @property
@@ -210,6 +214,26 @@ def _instance_kind(source_document: str | None) -> str:
     return INSTANCE_KINDS[0]
 
 
+def _ownership(root: _Root) -> list[str]:
+    """The filings in the ownership forms, their records per kind, and why some gave none."""
+    for name, rows in (("ownership_status", root.ownership_status), ("ownership", root.ownership)):
+        if rows is None:
+            return [f"- {_no_table(name)}"]
+    kinds = Counter(row["record_kind"] for row in root.ownership)
+    reasons = Counter(
+        status["reason"] for status in root.ownership_status if status["reason"] is not None
+    )
+    with_records = sum(1 for status in root.ownership_status if status["reason"] is None)
+    return [
+        f"- filings in the ownership forms: {len(root.ownership_status)}",
+        f"- records: {len(root.ownership)}",
+        *(f"  - {kind}: {count}" for kind, count in sorted(kinds.items())),
+        f"- filings with records: {with_records}",
+        f"- filings with no records: {len(root.ownership_status) - with_records}",
+        *(f"  - {reason}: {count}" for reason, count in sorted(reasons.items())),
+    ]
+
+
 def _platform_checks(root: _Root) -> list[str]:
     """The D5 checks V3, V5, V6, V7, V9 and V10. Each line starts with its label."""
     lines = _v3(root)
@@ -333,5 +357,6 @@ _SECTIONS: tuple[tuple[str, Callable[[_Root], list[str]]], ...] = (
     ("Wall time", _wall_time),
     ("Disk use", _disk_use),
     ("Facts", _facts),
+    ("Ownership", _ownership),
     ("Platform checks", _platform_checks),
 )

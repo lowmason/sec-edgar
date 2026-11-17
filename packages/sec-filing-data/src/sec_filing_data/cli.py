@@ -7,7 +7,7 @@ from collections import Counter
 from collections.abc import Sequence
 from pathlib import Path
 
-from sec_filing_data import facts, index, report, sample, submissions
+from sec_filing_data import facts, index, ownership, report, sample, submissions
 from sec_filing_data.layout import Layout, record_step
 from sec_filing_data.ledger import FETCH_OUTCOMES
 from sec_filing_data.tables import read_table, write_table
@@ -72,12 +72,26 @@ def _run_facts(args: argparse.Namespace) -> int:
     with record_step(layout, "facts"):
         code = facts.run_facts(layout)
     print(f"facts: {read_table(layout, 'facts').num_rows}")
-    reasons = Counter(row["reason"] for row in read_table(layout, "facts_status").to_pylist())
-    # A filing that gave facts has no reason. It prints first, as `ok`.
+    _print_status_counts(layout, "facts_status")
+    return code
+
+
+def _run_ownership(args: argparse.Namespace) -> int:
+    layout = Layout(Path(args.out))
+    with record_step(layout, "ownership"):
+        code = ownership.run_ownership(layout)
+    print(f"ownership: {read_table(layout, 'ownership').num_rows}")
+    _print_status_counts(layout, "ownership_status")
+    return code
+
+
+def _print_status_counts(layout: Layout, table: str) -> None:
+    """Print `status ok: n`, then `status <reason>: n` for each reason, sorted."""
+    reasons = Counter(row["reason"] for row in read_table(layout, table).to_pylist())
+    # A filing that gave rows has no reason. It prints first, as `ok`.
     print(f"status ok: {reasons.pop(None, 0)}")
     for reason, count in sorted(reasons.items()):
         print(f"status {reason}: {count}")
-    return code
 
 
 def _run_report(args: argparse.Namespace) -> int:
@@ -121,6 +135,13 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     facts_parser.add_argument("--out", required=True, help="output root")
     facts_parser.set_defaults(run=_run_facts)
+
+    ownership_parser = commands.add_parser(
+        "ownership",
+        help="write the ownership and ownership_status tables from the Forms 3, 4 and 5",
+    )
+    ownership_parser.add_argument("--out", required=True, help="output root")
+    ownership_parser.set_defaults(run=_run_ownership)
 
     report_parser = commands.add_parser("report", help="print the Markdown report of the root")
     report_parser.add_argument("--out", required=True, help="output root")
