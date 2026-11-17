@@ -109,7 +109,46 @@ Documents that hold the ownership records:
 
 ## O2
 
-To be filled at Task 7.
+The full `fetch` ran on 2026-11-17 from 17:53:30Z to 18:04:42Z at commit `c0f5ee0`, then `envelopes` and
+`report`. It skipped the 16 pilot filings already on disk.
+
+- Fetch: exit 0. All 500 sampled filings are `ok`, with their bytes on disk under `bytes/`, and no `.part`
+  file is left. No filing is `not_found`, `too_large`, `forbidden`, `failed` or `budget`.
+- Each quota form has 20 `ok` filings. The 5 `repeated` and the 335 `uniform` filings are all `ok` too.
+- `filings` has 500 rows. Each row has its parsed header fields: 0 parse errors, and no null
+  `submission_type`, `acceptance_datetime`, `filed_as_of_date` or `public_document_count`. Each filing
+  has at least one party. `parties` has 757 rows and `documents` 5,756.
+- For each filing outside the `repeated` stratum, `submission_type` equals the sampled `form_type` (495 of
+  495).
+- Requests: 503 for 500 filings. 3 filings needed a second attempt:
+
+  | Accession | Form | First attempt | Second attempt |
+  |---|---|---|---|
+  | `0000310354-26-000049` | 5 | SEC `503` | `ok` |
+  | `0001839882-26-043407` | `uniform` | SEC `503` | `ok` |
+  | `0001213900-26-098236` | DEFR14A (`uniform`) | status 200, then `ChunkedEncodingError: Response ended prematurely` mid-body | `ok` |
+
+  The third case is the largest filing of the sample (181,664,551 decoded bytes). It shows on real data
+  that a broken body is retried, as Problems found and fixed item 1 requires.
+- Sizes per stratum, in bytes:
+
+  | Stratum or quota form | Filings | Decoded, total | Decoded, median | Decoded, largest | Wire, total |
+  |---|---|---|---|---|---|
+  | 10-K | 20 | 189,093,302 | 7,820,184 | 29,357,244 | 38,503,120 |
+  | 10-Q | 20 | 181,683,045 | 8,778,858 | 18,700,337 | 18,051,445 |
+  | 3 | 20 | 779,585 | 11,173 | 361,260 | 440,023 |
+  | 4 | 20 | 781,212 | 9,250 | 357,156 | 385,279 |
+  | 5 | 20 | 131,860 | 6,116 | 15,137 | 35,588 |
+  | SCHEDULE 13D | 20 | 1,206,504 | 19,530 | 371,293 | 490,811 |
+  | SCHEDULE 13G | 20 | 229,997 | 10,915 | 22,995 | 70,255 |
+  | 13F-HR | 20 | 2,130,646 | 62,305 | 530,007 | 169,001 |
+  | `repeated` | 5 | 4,762,126 | 81,038 | 4,439,006 | 2,839,744 |
+  | `uniform` | 335 | 749,820,628 | 62,783 | 181,664,551 | 233,470,387 |
+
+- The 3 largest filings are `uniform`: a DEFR14A (181,664,551 decoded, 114,609,809 wire) and two ABS-EE
+  (about 125 MB decoded and 4.5 MB wire each). The DEFR14A alone is 36% of all wire bytes.
+- The most frequent `uniform` form types are `4` (57), `424B2` (55), `NPORT-P` (24), `8-K` (23), `D` (23)
+  and `13F-HR` (17).
 
 ## O3
 
@@ -121,7 +160,28 @@ To be filled at Tasks 9 and 10.
 
 ## Platform checks
 
-To be filled at Tasks 7 and 10 (D5).
+The report's lines over all 500 sampled filings (D5). Task 10 adds one line for each of V1–V12 of the
+[parked platform spec](completed/sec-filing-platform.md).
+
+- V3: 500 `ok` responses. All 500 have `Content-Encoding: gzip`. 0 have an `ETag`. 500 have a
+  `Last-Modified`.
+- V5: the 5 repeated-key filings:
+
+  | Accession | Sampled `form_type` | `submission_type` | `document_count` |
+  |---|---|---|---|
+  | `0001104659-26-081696` | `SC 13D/A;SC TO-T/A` | `SC TO-T/A` | 2 |
+  | `0001104659-26-081818` | `SC 13D/A;SC TO-T/A` | `SC TO-T/A` | 2 |
+  | `0001104659-26-082921` | `SC 13D/A;SC TO-T/A` | `SC TO-T/A` | 2 |
+  | `0001104659-26-086886` | `SC 13D/A;SC TO-T/A` | `SC TO-T/A` | 2 |
+  | `0001654954-26-008429` | `SC 13E3;SC TO-I` | `SC TO-I` | 33 |
+
+  Each is one submission. Its header gives one of the index's two form types.
+- V6: 1 filing has a `date_as_of_change` later than its `filed_as_of_date`: `9999999995-26-002992`, form
+  `EFFECT` (`uniform`), filed `20260917`, changed `20260918`, accepted `20260918001512`.
+- V7: 0 filings carry `PRIVATE-TO-PUBLIC`.
+- V9: 0 filings have a null `acceptance_datetime`.
+- V10: 112 filings hold documents described `IDEA: XBRL DOCUMENT`. In all 112, `public_document_count`
+  equals `document_count`. So the count includes the SEC-generated XBRL documents.
 
 ## Problems found and fixed
 
@@ -148,15 +208,19 @@ Found by the live run: none so far.
 
 ## Measured cost
 
-So far (pilot, before Task 7):
+So far (after Task 7, the full fetch):
 
 | Measure | Value |
 |---|---|
-| SEC requests | 17 of 1,500 |
-| Wire bytes | 2,489,212 of 5,000,000,000 |
-| Decoded bytes | 26,632,991 |
-| Wall time | `index` 0.4 s, `sample` 0.7 s, `fetch` 29.2 s, `envelopes` 0.1 s |
-| Disk use of the root | 35,427,496 bytes |
+| SEC requests | 503 of 1,500 |
+| Wire bytes | 321,729,304 of 5,000,000,000 |
+| Decoded bytes | 1,130,618,905 |
+| Wall time | `index` 0.4 s, `sample` 0.7 s, `fetch` 700.1 s (pilot and full run), `envelopes` 1.4 s, `report` 0.05 s |
+| Disk use of the root | 1,139,936,818 bytes |
+
+The roadmap estimated 2–4 GB at 4–8 MB a filing. The sample measured 2.26 MB decoded and 0.64 MB on the
+wire a filing, on average. The median filing is far smaller, and a few large `uniform` filings carry most
+of the bytes.
 
 ## Exit check
 
