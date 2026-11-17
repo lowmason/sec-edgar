@@ -1,0 +1,13 @@
+[project]
+name = "sec-filing-data"
+version = "0.1.0"
+description = "Plain tables from the SEC filings of one quarter"
+requires-python = ">=3.14"
+dependencies = ["pyarrow", "requests"]
+
+[project.scripts]
+sec-filing-data = "sec_filing_data.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.12.15,<0.13.0"]
+build-backend = "uv_build"

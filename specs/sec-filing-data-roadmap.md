@@ -37,7 +37,7 @@ after, in the order the owner listed its parts: provenance, timing, manifests, h
 pinning, as-of views. No spec ranks these outcomes, so the order departs from no spec ranking. Each stage
 consumes the output of the stage before it.
 
-- [ ] Stage 1: Filing data mechanics on the 2026Q3 sample
+- [x] Stage 1: Filing data mechanics on the 2026Q3 sample
       Objective: Deliver the 2026Q3 filing index, the documents of about 500 filings sampled from it, and their as-filed XBRL facts and ownership records, end to end on real data, from the working tree.
       Outcomes: O1, O2, O3, O4
       Consumes: The 2026Q3 quarterly index file `/Users/lowell/Projects/sec-edgar/data/objects/raw/sec/indexes/kind=quarterly/period=2026Q3/sha256=526d2dbf2dd2e4c6ac4b1b6e0b383476997e74c5a5c243dcf71dfeaff7cc9150/master.zip` (3,505,445 bytes; `data/` is git-ignored, so it exists only in the main checkout), read in place as a plain file, not through the old store. The old engine found repeated keys in every quarterly file, 5 in 2026Q3 (`specs/evidence/stage2a/release.md`, "Per-source results"). The SEC budget and the client rules under Choices made. No other built piece (owner, 2026-11-16).
@@ -45,6 +45,9 @@ consumes the output of the stage before it.
       Exit: O1: the index table holds every row of the 2026Q3 file, and the findings file gives the row count. O2: the sample holds filings of each form type that O3 and O4 name, where the 2026Q3 index lists one. Each of about 500 sampled filings has its original documents on disk, with a parsed header and document list, or a recorded reason why not. O3: a facts table holds as-filed XBRL facts for the sample's 10-K and 10-Q filings, and the findings file counts the filings that gave none. O4: an ownership table holds records from the sample's Forms 3, 4 and 5, Schedules 13D and 13G and Form 13F, and the findings file counts the filings that gave none. The findings file records the measured cost of the real run: SEC requests and bytes received (inside the budget), wall time and disk use.
       Leaves out: Provenance and timing beyond the fetch time: Stage 2. Manifests, hash-bound evidence, release pinning and versioned record formats: Stage 3. As-of views and amendment handling: Stage 4. Checks against SEC reference data, other quarters, daily currency, scheduling and deployment: not in this roadmap (owner, 2026-11-16), and the parked roadmaps' deferred items keep them. Per-run deadlines, reserves, member walls, the shared coordinator and whole-file refusal: dropped (owner, 2026-11-16).
       ROUTING: writing-plans
+
+> Stage 1: COMPLETE (2026-11-17) — implemented by plan 10 (specs/plans/completed/10-sec-filing-data-stage-1.md). Its Handoff section names what Stage 2 consumes.
+> Next: resume the roadmap.
 
 - [ ] Stage 2: Provenance and timing
       Objective: Give each record of O1–O4 its source and the times that point-in-time use needs, such as when the SEC accepted the filing, when it became public and when this project fetched it.

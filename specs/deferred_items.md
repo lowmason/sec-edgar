@@ -373,11 +373,12 @@
       R5–R7, R26): governed fetch and retention of Feed archives, complete submission files and `submissions.zip`.
       Size: plan. Done when: offline tests show members mapped by header accession, snapshot records with their
       encoding and decoded-byte hashes, and oversize routing to the bulk lane, and the owner reviews the release.
-- [ ] Stage 6, evidence campaign and finding (parked roadmap, Stage 6 entry; platform spec V1–V12, R30): a bounded live
+- [x] Stage 6, evidence campaign and finding (parked roadmap, Stage 6 entry; platform spec V1–V12, R30): a bounded live
       campaign that retains a real-submission sample and gives a result for each of V1–V12. Size: plan. Done when:
       each of V1–V12 has a recorded result or a named open item with an owner disposition, and the sample manifest is
       committed.
       → planned 2026-11-17: specs/plans/10-sec-filing-data-stage-1.md
+      → done 2026-11-17 (plan 10): V1–V12 each have a result or an owner disposition, and the sample manifest is committed, in specs/sec-filing-data-stage-1-findings.md. The open parts carry on → item: 10-sec-filing-data-stage-1 — 2026-11-17
 - [ ] Stage 7, parser freeze (parked roadmap, Stage 7 entry; platform spec R14–R16, R18–R20, R22–R24): revise the
       envelope, fact and ownership parsers against the retained sample and freeze their versions. Size: plan.
       Done when: each frozen version parses the whole sample, with a recorded reason for each refusal.
@@ -402,3 +403,37 @@
 - [ ] Stage 13, daily continuation acceptance (parked roadmap, Stage 13 entry; platform spec R29, R31): accepted daily
       platform runs after the catalog's daily run. Size: plan. Done when: daily runs take each evening's Feed archive
       after the catalog's daily run, and the audit's detection bound is recorded.
+
+## 10-sec-filing-data-stage-1 — 2026-11-17
+- [ ] Feed archive checks V1, V2 and the `.corrNN` part of V6 (plan 10, findings `specs/sec-filing-data-stage-1-findings.md`,
+      Platform checks; parked platform spec `specs/completed/sec-filing-platform.md`, Verification): reconcile Feed archive
+      members with complete submission files, test range requests on a Feed archive, and read what a `.corrNN` member
+      means. Stage 1 fetched complete submission files only, and the sec-filing-data roadmap fetches no Feed archive. The
+      owner chose to defer (2026-11-17, "Accept all (Recommended)"). Size: plan. Revisit if: a roadmap stage or a plan
+      adds a fetch of EDGAR Feed archives.
+- [ ] Submissions metadata check V4 (plan 10 findings, Platform checks; parked platform spec V4): one `submissions.zip`
+      snapshot shows the `items` format and the precision of old acceptance times. It is SEC reference data, which the
+      sec-filing-data roadmap leaves out. The owner chose to defer (2026-11-17). Size: plan. Revisit if: a roadmap stage
+      adds checks against SEC reference data.
+- [ ] Other-quarter parts of V5 and V7 (plan 10 findings, Platform checks; parked platform spec V5, V7): the headers of
+      the three 2024Q1 key pairs with two form types (V5), and the acceptance lines and complete submission files of the
+      101 `PRIVATE-TO-PUBLIC` submissions of 2026-10-15 (V7). Stage 1's sample is 2026Q3 only, and the roadmap leaves
+      out other quarters. The owner chose to defer (2026-11-17). Size: plan. Revisit if: a roadmap stage covers a
+      quarter other than 2026Q3.
+- [ ] Refetch for V6 (plan 10 findings, Platform checks, V6 line): refetch `9999999995-26-002992` (form `EFFECT`, filed
+      `20260917`, `DATE AS OF CHANGE` `20260918`) and compare its SHA-256 with the Stage 1 copy under
+      `/Users/lowell/Projects/sec-edgar/filing-data/2026Q3/bytes/`, to show whether the archive copy changes after a
+      correction. 1 SEC request, which needs the owner's budget for that stage. The owner carried it into Stage 2 of
+      `specs/sec-filing-data-roadmap.md` (2026-11-17). Size: quick-fix. Done when: a Stage 2 record gives the refetch's
+      SHA-256 beside the Stage 1 SHA-256.
+- [ ] SEC documentation checks for V7 and V8 (plan 10 findings, Platform checks; parked platform spec V7, V8): what the
+      `<PRIVATE-TO-PUBLIC>` tag means, and whether a late acceptance is disseminated that evening or the next business
+      day. Stage 2 of `specs/sec-filing-data-roadmap.md` decides when each filing became public and needs both answers.
+      The owner carried them into Stage 2 (2026-11-17). Size: design. Done when: Stage 2's spec or findings cite the SEC
+      documentation for both answers.
+- [ ] XBRL guide checks V11 and V12 (plan 10 findings, Platform checks; parked platform spec V11, V12, R18–R20): the
+      EDGAR Filer Manual's exhibit and Transformation Registry tables, and the EDGAR XBRL Guide's per-class and
+      legal-entity axis conventions. They matter only to an inline XBRL parser, which plan 10's D2 leaves out (Stage 1
+      reads the SEC-extracted instance). The owner chose to defer them with the parked platform Stage 2 item, section
+      `sec-filing-platform-roadmap — 2026-11-16` (2026-11-17). Size: design. Revisit if: a plan builds an inline XBRL
+      parser.

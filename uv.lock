@@ -6,6 +6,7 @@ requires-python = ">=3.14"
 members = [
     "sec-edgar",
     "sec-edgar-ingest",
+    "sec-filing-data",
 ]
 constraints = [
     { name = "pyarrow", specifier = "==25.0.1" },
@@ -185,6 +186,21 @@ dependencies = [
 requires-dist = [
     { name = "pyarrow", specifier = "==25.0.1" },
     { name = "requests", specifier = "==2.34.2" },
+]
+
+[[package]]
+name = "sec-filing-data"
+version = "0.1.0"
+source = { editable = "packages/sec-filing-data" }
+dependencies = [
+    { name = "pyarrow" },
+    { name = "requests" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "pyarrow" },
+    { name = "requests" },
 ]
 
 [[package]]
