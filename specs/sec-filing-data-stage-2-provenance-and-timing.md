@@ -1,6 +1,6 @@
 # Stage 2: Provenance and timing — Design Spec
 
-**Status:** Draft for owner review, 2026-11-17.
+**Status:** Approved by the owner, 2026-11-17. Owner's words: "Approve spec".
 **Project:** `/Users/lowell/Projects/sec-edgar`, package `packages/sec-filing-data`.
 **Roadmap:** [sec-filing-data roadmap](sec-filing-data-roadmap.md), Stage 2.
 **Inputs:** Stage 1 as built: [plan 10](plans/completed/10-sec-filing-data-stage-1.md) (its Handoff section),
