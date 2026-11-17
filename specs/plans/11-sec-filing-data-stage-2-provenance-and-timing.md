@@ -243,16 +243,17 @@ Values, for each `filings` row:
       - `- filings with a null last_modified_at: <n>`;
       - `- gap from public_at to last_modified_at: least <a> s, median <b> s, largest <c> s`;
       - `- filings with a gap above 1 hour: <n>`, with one `  - <accession>: <s> s` line each;
-      - `- filings with public_at after last_modified_at: <n>`, with one line per accession.
-    - **Provenance**: one line per records table (`index`, `filings`, `parties`, `documents`, `facts`, `ownership`): `- <table>: <n> rows with a null source_url or source_sha256, <m> rows of ok filings with a null accepted_at or fetched_at`. For `filings`, the SHA-256 column is `sha256`. It reads only the columns it needs.
+      - `- filings with public_at after last_modified_at: <n>`, with one line per accession;
+      - `- filings with public_at before accepted_at: <n>`, with one line per accession (an anti-goal, expected 0).
+    - **Provenance**: one line per records table (`index`, `filings`, `parties`, `documents`, `facts`, `ownership`): `- <table>: <n> rows with a null source_url or source_sha256, <m> rows of ok filings with a null accepted_at or fetched_at`. For `filings`, the SHA-256 column is `sha256`. Then `- index rows with filing times: <n>` (rows with a non-null `fetched_at`). It reads only the columns it needs.
     - **Refetches**: one line for each `refetches` row, with all of its columns. Then `- Stage 2 requests: <n> of 20` and `- Stage 2 wire bytes: <n> of 50000000`, from `ledger_usage(layout.stage2_ledger)` and `STAGE2_LIMITS`. `_cost` stays as it is.
   - `tests/test_report.py`: `build_fixture_root(case: CommandTestCase) -> Path`, which Task 8 uses too.
 
 - [ ] **Step 1: Write the failing tests** in `tests/test_report.py`.
   - Add the helper `build_fixture_root(case: CommandTestCase) -> Path`. It writes a zip from `fixtures/master-fixture.idx`, and patches `index.INDEX_SHA256` and `INDEX_SIZE` to that zip until the test ends (`case.enterContext`). Then it runs `run_index`, `run_sample`, `run_fetch` (`FixtureSession`), `run_envelopes`, `run_facts`, `run_ownership`, a `run_refetch` of the first sampled accession, and `run_compare_refetches`. It returns the zip path.
-  - `test_report_times_section`: write `filings` directly with four parsed `ok` filings: `acceptance` with a gap of 12 s, `next_opening` with 186 s, `acceptance` with 1,102,799 s, and one whose `public_at` comes 5 s after its `last_modified_at` (a gap of -5 s). Assert the exact section lines: least -5 s, median 12 s, largest 1102799 s. The 1,102,799 s filing is the only one above 1 hour, and the -5 s filing is the only one after.
-  - `test_report_provenance_section` (Review Focus 4): from `build_fixture_root`, every table reads `0 rows ... 0 rows`. After an `ok` filing's `accepted_at` is set to null, the `filings` line reads `1 rows of ok filings`, and a `parties` row with a null `source_url` gives `1 rows with a null source_url`.
-  - `test_index_rerun_after_envelopes_shows_in_provenance` (Review Focus 5): after `build_fixture_root`, `run_index` runs again. The `index` line counts every index row of a sampled accession under `rows of ok filings with a null accepted_at or fetched_at`.
+  - `test_report_times_section`: write `filings` directly with four parsed `ok` filings: `acceptance` with a gap of 12 s, `next_opening` with 186 s, `acceptance` with 1,102,799 s, and one whose `public_at` comes 5 s after its `last_modified_at` (a gap of -5 s). Add a fifth whose `public_at` is 1 s before its `accepted_at`, with a null `last_modified_at`. Assert the exact section lines: a null `last_modified_at` 1; least -5 s, median 12 s, largest 1102799 s (over the four with both times); the 1,102,799 s filing is the only one above 1 hour; the -5 s filing is the only one after; the fifth is the only one before.
+  - `test_report_provenance_section` (Review Focus 4): from `build_fixture_root`, every table reads `0 rows ... 0 rows`, and `- index rows with filing times: 6`. After an `ok` filing's `accepted_at` is set to null, the `filings` line reads `1 rows of ok filings`, and a `parties` row with a null `source_url` gives `1 rows with a null source_url`.
+  - `test_index_rerun_after_envelopes_shows_in_provenance` (Review Focus 5): after `build_fixture_root`, `run_index` runs again. The `index` line counts all 6 index rows under `rows of ok filings with a null accepted_at or fetched_at`, and `- index rows with filing times: 0`.
   - `test_report_refetches_section`: from `build_fixture_root`, there is one row line and `- Stage 2 requests: 1 of 20`.
 - [ ] **Step 2: Run the test command.** Expected: failures in `test_report`.
 - [ ] **Step 3: Implement.**
@@ -301,16 +302,18 @@ export SEC_USER_AGENT="$(python3 -c 'import json; print(json.load(open("conf/sec
 
 The commands below are short for `uv run --package sec-filing-data sec-filing-data <command> --out "$ROOT"`.
 
-- [ ] **Step 1: Check the preconditions** (spec 6.5 step 1). `pgrep -fl '[s]ec-edgar-ingest|[s]ec-filing-data (fetch|refetch)'` prints nothing. `git -C /Users/lowell/Projects/sec-edgar check-ignore -q filing-data/x` exits 0. The test command gives `OK`. Record `wc -l "$ROOT/fetch-log.jsonl"` (expected 1006).
+- [ ] **Step 1: Check the preconditions** (spec 6.5 step 1). `pgrep -fl '[s]ec-edgar-ingest|[s]ec-filing-data (fetch|refetch)'` prints nothing. `git -C /Users/lowell/Projects/sec-edgar check-ignore -q filing-data/x` exits 0. The test command gives `OK`. Record `wc -l "$ROOT/fetch-log.jsonl"` (expected 1006), `shasum -a 256 "$ROOT/fetch-log.jsonl"`, and one digest over the Stage 1 bytes: `(cd "$ROOT/bytes" && find . -type f | sort | xargs shasum -a 256 | shasum -a 256)`.
 - [ ] **Step 2: Freeze the Stage 1 tables** (step 2). Run `test ! -e "$ROOT/tables-stage1" && cp -Rp "$ROOT/tables" "$ROOT/tables-stage1"`. It refuses when the folder exists. Expected: the 10 Stage 1 Parquet files.
 - [ ] **Step 3: Refetch** (step 3): `refetch --accession 9999999995-26-002992`. Expected: exit 0, `stage 2 requests: 1 of 20`, and about 1 KB on the wire (Stage 1 took 881 wire bytes). The Stage 1 ledger still has 1006 lines. Any other result follows spec 6.3, "Known effect": stop and ask the owner before any further request.
 - [ ] **Step 4: Re-run the offline steps** (step 4): `index --zip "$ZIP"` (expected `rows: 302499`), `envelopes`, `facts`, `ownership`, `compare-refetches` (expected `refetches: 1`), then `report`. The expected report, from spec 6.1:
-  - Times: `acceptance: 477`, `next_opening: 23`, `private_to_public: 0`, `no_acceptance: 0`; a null `last_modified_at` 0; least gap 12 s; largest gap 1102799 s; one filing above 1 hour, `0001836875-26-000073`; `public_at` after `last_modified_at` 0. The `EFFECT` filing `9999999995-26-002992` has `next_opening` and a gap of 186 s.
-  - Provenance: `0 rows ... 0 rows` for each records table. 740 `index` rows carry filing times.
+  - Times: `acceptance: 477`, `next_opening: 23`, `private_to_public: 0`, `no_acceptance: 0`; a null `last_modified_at` 0; least gap 12 s; largest gap 1102799 s; one filing above 1 hour, `0001836875-26-000073`; `public_at` after `last_modified_at` 0; `public_at` before `accepted_at` 0.
+  - Provenance: `0 rows ... 0 rows` for each records table, and `- index rows with filing times: 740`.
   - Refetches: the row of `9999999995-26-002992`, with Stage 1 SHA-256 `740252a6178e54e6121c7701084949adabb113f5d002d00814ca9ec098f431f3` and Stage 1 `Last-Modified` 2026-09-18 10:03:06 UTC; then `Stage 2 requests: 1 of 20`.
+  - The `EFFECT` row: `uv run --package sec-filing-data python -c "import pyarrow.parquet as pq; r = next(x for x in pq.read_table('$ROOT/tables/filings.parquet').to_pylist() if x['accession_number'] == '9999999995-26-002992'); print(r['public_rule'], r['public_at'].isoformat(), int((r['last_modified_at'] - r['public_at']).total_seconds()))"`. Expected: `next_opening 2026-09-18T10:00:00+00:00 186`.
+
   A result that differs is a problem to fix and record (D1 of plan 10, carried by spec section 3). Then re-run the offline steps.
 - [ ] **Step 5: Check the Stage 1 columns** (step 5): `check-stage1`. Expected: exit 0 and 10 lines `equal`.
-- [ ] **Step 6: Rebuild** (step 6): `rebuild --zip "$ZIP"`. `$ROOT` must be the same absolute path that Stage 1 used, because `fetches.path` holds paths under it. Expected: exit 0 and 11 lines `equal`. Both ledgers' `wc -l` match Steps 1 and 3.
+- [ ] **Step 6: Rebuild** (step 6): `rebuild --zip "$ZIP"`. `$ROOT` must be the same absolute path that Stage 1 used, because `fetches.path` holds paths under it. Expected: exit 0 and 11 lines `equal`. Both ledgers' `wc -l` match Steps 1 and 3. The Stage 1 ledger's SHA-256 and the digest over `bytes/` equal their Step 1 values (spec section 2: no Stage 1 byte file or ledger line changed).
 - [ ] **Step 7: Write `specs/sec-filing-data-stage-2-findings.md`** (step 7, spec section 8). Its sections:
   - Run record: root and commit.
   - SEC documentation: spec section 4, repeated with its URLs.
@@ -321,7 +324,7 @@ The commands below are short for `uv run --package sec-filing-data sec-filing-da
   - Rebuild.
   - Measured cost: requests and wire bytes against the Stage 2 limits, wall time from `runs.jsonl`, and disk use.
   - Problems found and fixed.
-  - Exit check: spec section 8's table, filled.
+  - Exit check: spec section 8's table, filled, and the anti-goal checks of Steps 4 and 6 (`public_at` before `accepted_at` 0, and the Stage 1 ledger and bytes unchanged).
 - [ ] **Step 8: Commit:** `docs(specs): record the Stage 2 run`
 
 The Plan Completion Protocol then ticks the V6 refetch item and the V7 and V8 item in `specs/deferred_items.md`, section `10-sec-filing-data-stage-1 — 2026-11-17`. It also appends the D6 item with spec section 11's wording and `Revisit if`.
