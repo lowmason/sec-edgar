@@ -14,6 +14,7 @@ from sec_filing_data.layout import Layout
 from sec_filing_data.ledger import FETCH_OUTCOMES, ledger_usage, read_ledger
 from sec_filing_data.sample import QUOTA_FORMS, STRATA
 from sec_filing_data.tables import read_table
+from sec_filing_data.xbrl import INSTANCE_TYPE, SEC_EXTRACTED_SUFFIX
 
 IDEA_XBRL = "IDEA: XBRL DOCUMENT"
 NULL_CHECKED = (
@@ -22,6 +23,7 @@ NULL_CHECKED = (
     "filed_as_of_date",
     "public_document_count",
 )
+INSTANCE_KINDS = (INSTANCE_TYPE, f"*{SEC_EXTRACTED_SUFFIX}")
 V10_CASES = {
     "equal": "public_document_count equals document_count",
     "minus": "public_document_count equals document_count minus those documents",
@@ -40,6 +42,7 @@ class _Root:
     filings: list[dict] | None
     parties: list[dict] | None
     documents: list[dict] | None
+    facts_status: list[dict] | None
 
     @classmethod
     def load(cls, layout: Layout) -> _Root:
@@ -59,6 +62,7 @@ class _Root:
             filings=rows("filings"),
             parties=rows("parties"),
             documents=rows("documents"),
+            facts_status=rows("facts_status"),
         )
 
     @property
@@ -178,6 +182,32 @@ def _wall_time(root: _Root) -> list[str]:
 def _disk_use(root: _Root) -> list[str]:
     files = (path for path in root.layout.root.rglob("*") if path.is_file())
     return [f"- disk use: {sum(path.stat().st_size for path in files)} bytes"]
+
+
+def _facts(root: _Root) -> list[str]:
+    """The filings in the fact forms, their fact rows, and why some gave none."""
+    if root.facts_status is None:
+        return [f"- {_no_table('facts_status')}"]
+    with_facts = [status for status in root.facts_status if status["reason"] is None]
+    kinds = Counter(_instance_kind(status["source_document"]) for status in with_facts)
+    reasons = Counter(
+        status["reason"] for status in root.facts_status if status["reason"] is not None
+    )
+    return [
+        f"- filings in the fact forms: {len(root.facts_status)}",
+        f"- fact rows: {sum(status['fact_count'] for status in with_facts)}",
+        f"- filings with facts: {len(with_facts)}",
+        *(f"  - {kind}: {kinds[kind]}" for kind in INSTANCE_KINDS),
+        f"- filings with no facts: {len(root.facts_status) - len(with_facts)}",
+        *(f"  - {reason}: {count}" for reason, count in sorted(reasons.items())),
+    ]
+
+
+def _instance_kind(source_document: str | None) -> str:
+    """`*_htm.xml` for an SEC-extracted instance, else the `EX-101.INS` the filer sent."""
+    if source_document is not None and source_document.endswith(SEC_EXTRACTED_SUFFIX):
+        return INSTANCE_KINDS[1]
+    return INSTANCE_KINDS[0]
 
 
 def _platform_checks(root: _Root) -> list[str]:
@@ -302,5 +332,6 @@ _SECTIONS: tuple[tuple[str, Callable[[_Root], list[str]]], ...] = (
     ("Header checks", _header_checks),
     ("Wall time", _wall_time),
     ("Disk use", _disk_use),
+    ("Facts", _facts),
     ("Platform checks", _platform_checks),
 )

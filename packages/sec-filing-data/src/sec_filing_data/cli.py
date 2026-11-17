@@ -7,7 +7,7 @@ from collections import Counter
 from collections.abc import Sequence
 from pathlib import Path
 
-from sec_filing_data import index, report, sample, submissions
+from sec_filing_data import facts, index, report, sample, submissions
 from sec_filing_data.layout import Layout, record_step
 from sec_filing_data.ledger import FETCH_OUTCOMES
 from sec_filing_data.tables import read_table, write_table
@@ -67,6 +67,19 @@ def _run_envelopes(args: argparse.Namespace) -> int:
     return code
 
 
+def _run_facts(args: argparse.Namespace) -> int:
+    layout = Layout(Path(args.out))
+    with record_step(layout, "facts"):
+        code = facts.run_facts(layout)
+    print(f"facts: {read_table(layout, 'facts').num_rows}")
+    reasons = Counter(row["reason"] for row in read_table(layout, "facts_status").to_pylist())
+    # A filing that gave facts has no reason. It prints first, as `ok`.
+    print(f"status ok: {reasons.pop(None, 0)}")
+    for reason, count in sorted(reasons.items()):
+        print(f"status {reason}: {count}")
+    return code
+
+
 def _run_report(args: argparse.Namespace) -> int:
     layout = Layout(Path(args.out))
     with record_step(layout, "report"):
@@ -102,6 +115,12 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     envelopes_parser.add_argument("--out", required=True, help="output root")
     envelopes_parser.set_defaults(run=_run_envelopes)
+
+    facts_parser = commands.add_parser(
+        "facts", help="write the facts and facts_status tables from the XBRL instances"
+    )
+    facts_parser.add_argument("--out", required=True, help="output root")
+    facts_parser.set_defaults(run=_run_facts)
 
     report_parser = commands.add_parser("report", help="print the Markdown report of the root")
     report_parser.add_argument("--out", required=True, help="output root")
