@@ -173,7 +173,23 @@ The full `fetch` ran on 2026-11-17 from 17:53:30Z to 18:04:42Z at commit `c0f5ee
 
 ## O4
 
-To be filled at Tasks 9 and 10.
+### Forms 3, 4 and 5
+
+`ownership` ran at commit `65b4c1f`. It sent no SEC request.
+
+- Filings of Forms 3, 4 and 5 in the sample: 127. These are 20 quota each, 57 `uniform` Form 4, 7
+  `uniform` Form 3 and 3 `uniform` Form 4/A.
+- 108 of them gave records: 76 Form 4, 20 Form 5, 9 Form 3 and 3 Form 4/A. They gave 309 records:
+  232 from Form 4, 41 from Form 5, 30 from Form 3 and 6 from Form 4/A.
+- Records per kind: 195 `non_derivative_transaction`, 46 `derivative_transaction`, 43
+  `non_derivative_holding` and 25 `derivative_holding`.
+- 19 filings gave none:
+  - `no securities owned`: 18 Form 3 filings, each filed with `noSecuritiesOwned` set to 1.
+  - `no records in the ownership document`: 1 Form 4, `0001801444-26-000001`. Its document has no
+    transaction or holding table, and it is filed with `notSubjectToSection16` set to 1.
+- Every record has an issuer CIK and an owner CIK. Every transaction record has a transaction date.
+- 18 records come from filings with more than one reporting owner. Each record keeps the first owner,
+  and `owner_count` gives the number of owners.
 
 ## Platform checks
 
