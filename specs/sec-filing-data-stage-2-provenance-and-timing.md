@@ -21,8 +21,8 @@ Stage 2 gives every record of O1–O4 its source, the SHA-256 of its source byte
 use needs. Stage 4 builds as-of views on these times. Stage 3 builds manifests and hash-bound evidence on this
 provenance. So Stage 2 decides the clocks that later stages read, and it must not present one clock as another.
 
-Stage 2 also proves that the tables re-derive from the kept bytes with no SEC request, and it closes the three
-items that the owner carried in from Stage 1.
+Stage 2 also proves that the tables re-derive from the kept bytes with no SEC request. It meets the Done-when of
+the three items that the owner carried in from Stage 1. The question behind the V6 refetch stays open (D6).
 
 ## 2. Scope
 
@@ -67,7 +67,7 @@ items that the owner carried in from Stage 1.
   tests. Only the client and fetch code import `requests`.
 - SEC budget for Stage 2 (owner, D2): at most 20 requests and 50,000,000 wire bytes, at most 3 requests a second,
   and no other SEC client running. Every attempt counts, retries included. Stage 1's ledger and its 1,500-request
-  limit stay as they are. Stage 2 counts in its own ledger.
+  limit stay as they are. Stage 2 counts in its own ledger. Planned use: 1 request, the V6 refetch (D6).
 - Documentation reads (D2): at most 10 SEC documentation pages, read by hand in the browser, outside the data
   budget. This spec used 2 of them (section 4). eCFR is not an SEC host and is not counted.
 - The lighter process of Stage 1 continues (my call, section 9). Code runs from the working tree, a fix needs no
@@ -234,8 +234,8 @@ A new command, `rebuild --out ROOT --zip PATH`:
   seed), `fetches`, `filings`, `parties`, `documents`, `facts`, `facts_status`, `ownership`, `ownership_status` and
   `refetches`.
 - Its inputs are `master.zip`, `ROOT/bytes/`, `ROOT/fetch-log.jsonl`, `ROOT/stage2/refetch/` and
-  `ROOT/stage2/fetch-log.jsonl`, and the committed constants of 6.2. It reads them in place and does not copy the bytes. The ledgers are inputs because
-  `fetched_at` and `Last-Modified` exist only there.
+  `ROOT/stage2/fetch-log.jsonl`, and the committed constants of 6.2. It reads them in place and does not copy the
+  bytes. The ledgers are inputs because `fetched_at` and `Last-Modified` exist only there.
 - It compares each table with the live table: schema, row count, and every row in order. It does not compare the
   Parquet file bytes.
 - It prints one line per table, `equal` or the first difference. It exits 0 when every table is equal, and 1
@@ -348,3 +348,7 @@ The next step is writing-plans, in a fresh session, against this file. The plan'
 and the V7 and V8 items in `specs/deferred_items.md`, section `10-sec-filing-data-stage-1 — 2026-11-17`. It also adds
 one deferred item (D6): whether an EDGAR archive copy changes after a correction. That needs a copy fetched before a
 correction and another after it. Revisit if: a roadmap stage fetches filings on the day they are filed.
+
+One departure from the roadmap's Stage 2 entry: its Consumes line names Stage 1's outputs only, and D5 adds one
+record of the parked store, the `master.zip` receipt, as committed constants. The re-validation at plan completion
+should note it.
