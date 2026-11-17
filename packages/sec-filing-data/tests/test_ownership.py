@@ -76,6 +76,7 @@ FORM13F_KIND = "form13f_holding"
 COVER_13F = b'<?xml version="1.0"?>\n<edgarSubmission xmlns="urn:example:cover"/>'
 UNMAPPED = ("issuer_cusip", "shares_kind", "put_call", "percent_of_class", "value_usd")
 OTHER_DOCUMENT = b'<?xml version="1.0"?>\n<otherDocument/>'
+BOM = b"\xef\xbb\xbf"
 
 
 def record(**values) -> OwnershipRecord:
@@ -628,6 +629,32 @@ class XmlDocumentTests(unittest.TestCase):
             xml_document(raw, submission, "ownershipDocument"), b"<ownershipDocument/>"
         )
 
+    def test_a_utf8_byte_order_mark_before_the_xml_is_removed(self):
+        # The text comes back without the mark, and without any whitespace after it. A
+        # byte-order mark and then whitespace and then `<?xml` is not XML as filed.
+        for prefix in (BOM, BOM + b"\n  "):
+            with self.subTest(prefix=prefix):
+                raw, submission = self.submission(("4", "a.xml", wrapped(prefix + FORM4, "XML")))
+
+                self.assertEqual(xml_document(raw, submission, "ownershipDocument"), FORM4)
+
+    def test_only_one_byte_order_mark_is_removed(self):
+        raw, submission = self.submission(("4", "a.xml", wrapped(BOM + BOM + FORM4, "XML")))
+
+        self.assertIsNone(xml_document(raw, submission, "ownershipDocument"))
+
+    def test_a_byte_order_mark_does_not_change_the_other_rules(self):
+        doctype = b'<!DOCTYPE ownershipDocument [<!ENTITY x "y">]>\n<ownershipDocument>&x;</ownershipDocument>'
+        raw, submission = self.submission(
+            ("4", "a.xml", wrapped(BOM + doctype, "XML")),
+            ("4", "b.xml", wrapped(BOM + b"<ownershipDocument><unclosed>", "XML")),
+            ("4", "c.xml", wrapped(BOM + OTHER_DOCUMENT, "XML")),
+            ("4", "d.xml", wrapped(BOM + FORM3, "XML")),
+            ("4", "e.xml", wrapped(BOM + FORM4, "XML")),
+        )
+
+        self.assertEqual(xml_document(raw, submission, "ownershipDocument"), FORM3)
+
     def test_a_doctype_is_refused(self):
         doctype = b'<!DOCTYPE ownershipDocument [<!ENTITY x "y">]>\n<ownershipDocument>&x;</ownershipDocument>'
         raw, submission = self.submission(("4", "a.xml", wrapped(doctype, "XML")))
@@ -702,6 +729,16 @@ class RunOwnershipTests(RunOwnershipTestCase):
                     "reason": "no ownership XML document",
                 }
             ],
+        )
+
+    def test_a_byte_order_mark_does_not_hide_the_ownership_document(self):
+        marked = self.add_filing("4", BOM + FORM4)
+
+        rows, status = self.run_ownership()
+
+        self.assertEqual(rows, [ownership_row(marked, "4", r) for r in parse_form345(FORM4)])
+        self.assertEqual(
+            status, [{"accession_number": marked, "form_type": "4", "record_count": 3, "reason": None}]
         )
 
     def test_a_submission_with_no_document_gives_the_same_reason(self):

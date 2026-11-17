@@ -41,6 +41,7 @@ NO_SECURITIES = "no securities owned"
 NO_RECORDS = "no records in the ownership document"
 
 _DOCTYPE = b"<!DOCTYPE"
+_BYTE_ORDER_MARK = b"\xef\xbb\xbf"
 
 
 @dataclass(frozen=True)
@@ -101,11 +102,13 @@ def text_at(parent: ET.Element | None, *path: str) -> str | None:
 def xml_document(raw: bytes, submission: Submission, root: str) -> bytes | None:
     """The text of the first document that parses as XML with a root named `root`, or None.
 
-    A document is skipped when its text does not start with `<`, when it has a DOCTYPE
-    declaration, and when it is not well-formed XML. The root matches by local name.
+    One leading UTF-8 byte-order mark is removed, with any whitespace after it, and the text
+    that comes back does not hold it. A document is skipped when its text does not start with
+    `<`, when it has a DOCTYPE declaration, and when it is not well-formed XML. The root
+    matches by local name.
     """
     for document in submission.documents:
-        text = document_text(raw, document)
+        text = document_text(raw, document).removeprefix(_BYTE_ORDER_MARK).lstrip()
         if not text.startswith(b"<") or _DOCTYPE in text:
             continue
         try:
