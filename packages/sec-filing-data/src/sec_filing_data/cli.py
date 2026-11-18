@@ -7,7 +7,7 @@ from collections import Counter
 from collections.abc import Sequence
 from pathlib import Path
 
-from sec_filing_data import facts, index, ownership, refetches, report, sample, submissions
+from sec_filing_data import facts, index, ownership, rebuild, refetches, report, sample, submissions
 from sec_filing_data.layout import Layout, record_step
 from sec_filing_data.ledger import FETCH_OUTCOMES, STAGE2_LIMITS, ledger_usage
 from sec_filing_data.tables import read_table
@@ -140,6 +140,27 @@ def _run_report(args: argparse.Namespace) -> int:
     return 0
 
 
+def _run_rebuild(args: argparse.Namespace) -> int:
+    layout = Layout(Path(args.out))
+    with record_step(layout, "rebuild"):
+        code, lines = rebuild.run_rebuild(layout, Path(args.zip))
+    _print_lines(lines)
+    return code
+
+
+def _run_check_stage1(args: argparse.Namespace) -> int:
+    layout = Layout(Path(args.out))
+    with record_step(layout, "check-stage1"):
+        code, lines = rebuild.check_stage1(layout)
+    _print_lines(lines)
+    return code
+
+
+def _print_lines(lines: list[str]) -> None:
+    for line in lines:
+        print(line)
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="sec-filing-data")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -206,6 +227,21 @@ def _build_parser() -> argparse.ArgumentParser:
     report_parser = commands.add_parser("report", help="print the Markdown report of the root")
     report_parser.add_argument("--out", required=True, help="output root")
     report_parser.set_defaults(run=_run_report)
+
+    rebuild_parser = commands.add_parser(
+        "rebuild",
+        help="build every table again in a temporary folder and compare it with the live table",
+    )
+    rebuild_parser.add_argument("--zip", required=True, help="path of the quarter's master.zip")
+    rebuild_parser.add_argument("--out", required=True, help="output root")
+    rebuild_parser.set_defaults(run=_run_rebuild)
+
+    check_parser = commands.add_parser(
+        "check-stage1",
+        help="compare the Stage 1 columns of each live table with tables-stage1",
+    )
+    check_parser.add_argument("--out", required=True, help="output root")
+    check_parser.set_defaults(run=_run_check_stage1)
     return parser
 
 

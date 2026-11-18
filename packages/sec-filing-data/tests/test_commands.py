@@ -811,7 +811,7 @@ class OkResponsesTests(CommandTestCase):
 class OfflineTests(unittest.TestCase):
     def test_offline_modules_never_import_requests(self):
         names = {module.name for module in pkgutil.iter_modules(sec_filing_data.__path__)}
-        self.assertLessEqual({"cli", "client", "fetch", "ledger", "provenance", "refetches", "report", "submissions", "times"}, names)
+        self.assertLessEqual({"cli", "client", "fetch", "ledger", "provenance", "rebuild", "refetches", "report", "submissions", "times"}, names)
         code = (
             "import importlib, pkgutil, sys\n"
             "import sec_filing_data\n"
