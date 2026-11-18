@@ -1,7 +1,7 @@
 import unittest
 from datetime import UTC, datetime, timedelta
 
-from sec_filing_data.times import accepted_at, last_modified_at, public_time
+from sec_filing_data.times import accepted_at, last_modified_at, public_time, readable_date
 
 
 def utc(*parts: int) -> datetime:
@@ -74,6 +74,12 @@ class TimeRuleTest(unittest.TestCase):
         for filed in (None, "2026-08-14"):
             with self.subTest(filed=filed):
                 self.assertEqual(pt(accepted, filed), (utc(2026, 8, 15, 10, 0), "next_opening"))
+
+    def test_readable_date(self):
+        self.assertTrue(readable_date("20260814"))
+        for text in ("2026-08-14", "2026081", "", None, "20261332", "２０２６０８１４"):
+            with self.subTest(text=text):
+                self.assertFalse(readable_date(text))
 
     def test_public_time_is_never_before_acceptance(self):
         for hour in range(24):

@@ -21,7 +21,7 @@ from sec_filing_data.layout import Layout
 from sec_filing_data.ledger import FETCH_OUTCOMES, STAGE2_LIMITS, ledger_usage, read_ledger
 from sec_filing_data.sample import QUOTA_FORMS, STRATA
 from sec_filing_data.tables import read_table
-from sec_filing_data.times import PUBLIC_RULES
+from sec_filing_data.times import PUBLIC_RULES, readable_date
 from sec_filing_data.xbrl import INSTANCE_TYPE, SEC_EXTRACTED_SUFFIX
 
 IDEA_XBRL = "IDEA: XBRL DOCUMENT"
@@ -363,7 +363,8 @@ def _times(root: _Root) -> list[str]:
     """The `public_rule` counts, and the gap from `public_at` to `last_modified_at`.
 
     Every line is over the parsed `ok` filings. A gap is in whole seconds and is negative
-    when the filing was last modified before the earliest time it could be public.
+    when the filing was last modified before the earliest time it could be public. A null
+    `filed_as_of_date` shows in Header checks, so only a non-null unreadable one is listed.
     """
     if root.filings is None:
         return [f"- {_no_table('filings')}"]
@@ -395,6 +396,15 @@ def _times(root: _Root) -> list[str]:
                 if filing["public_at"] is not None
                 and filing["accepted_at"] is not None
                 and filing["public_at"] < filing["accepted_at"]
+            ],
+        ),
+        *_counted(
+            "filings with an unreadable filed_as_of_date",
+            [
+                filing["accession_number"]
+                for filing in parsed
+                if filing["filed_as_of_date"] is not None
+                and not readable_date(filing["filed_as_of_date"])
             ],
         ),
     ]

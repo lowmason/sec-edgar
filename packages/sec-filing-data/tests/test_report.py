@@ -117,6 +117,7 @@ class ReportTimesTests(CommandTestCase):
                 f"  - {accession_of(4)}",
                 "- filings with public_at before accepted_at: 1",
                 f"  - {accession_of(5)}",
+                "- filings with an unreadable filed_as_of_date: 0",
             ],
         )
 
@@ -144,6 +145,7 @@ class ReportTimesTests(CommandTestCase):
                 f"  - {accession_of(2)}: 3601 s",
                 "- filings with public_at after last_modified_at: 0",
                 "- filings with public_at before accepted_at: 0",
+                "- filings with an unreadable filed_as_of_date: 0",
             ],
         )
 
@@ -174,7 +176,27 @@ class ReportTimesTests(CommandTestCase):
                 "- filings with a gap above 1 hour: 0",
                 "- filings with public_at after last_modified_at: 0",
                 "- filings with public_at before accepted_at: 0",
+                "- filings with an unreadable filed_as_of_date: 0",
             ],
+        )
+
+    def test_report_times_show_an_unreadable_filed_as_of_date(self):
+        noon = utc(2026, 8, 14, 16, 0, 0)
+        rows = [
+            {**times_row(n, "acceptance", accepted=noon, public=noon, modified=noon)}
+            | {"filed_as_of_date": filed}
+            for n, filed in ((1, "2026-08-14"), (2, None), (3, "20260814"))
+        ] + [
+            # Not a parsed `ok` filing, so its date does not count.
+            {**times_row(4, "acceptance", accepted=noon, public=noon, modified=noon)}
+            | {"filed_as_of_date": "14/08/2026", "outcome": "failed"},
+        ]
+
+        lines = self.times_section(rows)
+
+        self.assertEqual(
+            lines[-2:],
+            ["- filings with an unreadable filed_as_of_date: 1", f"  - {accession_of(1)}"],
         )
 
     def test_report_times_with_no_gap_to_measure(self):

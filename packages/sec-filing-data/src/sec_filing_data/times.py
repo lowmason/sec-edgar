@@ -55,6 +55,11 @@ def public_time(
     return result, rule
 
 
+def readable_date(text: str | None) -> bool:
+    """True when `text` is a real calendar date written as `YYYYMMDD`."""
+    return _day_of(text) is not None
+
+
 def last_modified_at(header: str | None) -> datetime | None:
     """An HTTP date such as `Fri, 18 Sep 2026 10:03:06 GMT`, in UTC; None if unreadable."""
     if header is None:
@@ -81,10 +86,14 @@ def _at_opening(day: date) -> datetime:
 
 def _opening_on(yyyymmdd: str | None) -> datetime | None:
     """06:00 New York time on a `YYYYMMDD` date, in UTC; None if unreadable."""
+    day = _day_of(yyyymmdd)
+    return None if day is None else _at_opening(day)
+
+
+def _day_of(yyyymmdd: str | None) -> date | None:
     if yyyymmdd is None or not _is_digits(yyyymmdd, 8):
         return None
     try:
-        day = date(int(yyyymmdd[:4]), int(yyyymmdd[4:6]), int(yyyymmdd[6:]))
+        return date(int(yyyymmdd[:4]), int(yyyymmdd[4:6]), int(yyyymmdd[6:]))
     except ValueError:
         return None
-    return _at_opening(day)
