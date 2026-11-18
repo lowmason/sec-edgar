@@ -63,3 +63,13 @@ Differences from the design:
 Closed earlier deferred items:
 - "Refetch for V6 (plan 10 findings, Platform checks, V6 line): refetch `9999999995-26-002992` (form `EFFECT`, filed" (deferred by 10-sec-filing-data-stage-1).
 - "SEC documentation checks for V7 and V8 (plan 10 findings, Platform checks; parked platform spec V7, V8): what the" (deferred by 10-sec-filing-data-stage-1).
+
+## 12-remove-parked-sec-edgar-ingest — 2026-11-18
+Plan: specs/plans/completed/12-remove-parked-sec-edgar-ingest.md · Spec: specs/deferred_items.md (live)
+
+Differences from the design:
+- Ruling (final review): README wording differs from Task 2 Step 2 and D2 ("out of the files on main") — the plan's own Task 3 Step 3 check excludes specs/, so the intent was outside specs/; the plan text overclaimed — if wrong, the README is less absolute than the owner's D2 wording, and nothing else changes.
+- Deviation (Task 2): the README clause says "outside `specs/`", because 16 tracked files under `specs/` hold the value (`4b85cfb`). Source: plan, Task 2.
+
+Closed earlier deferred items:
+- "Remove the parked `sec-edgar-ingest` engine from `main` (tech-debt triage 2026-11-18, row 4): tag the last commit" (deferred by tech-debt-triage).
