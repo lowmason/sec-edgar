@@ -205,6 +205,19 @@ class RefetchTests(RefetchTestCase):
         self.assertEqual(self.layout.stage2_ledger.read_bytes(), before)
         self.assertEqual(build_refetches(self.layout), [no_refetch(self.a, "no_response")])
 
+    def test_interrupted_refetch_refuses_a_rerun_of_the_same_accession(self):
+        self.fetch_stage1()
+        self.layout.stage2.mkdir()
+        append(self.layout.stage2_ledger, request_record("r1", self.a))
+        before = self.layout.stage2_ledger.read_bytes()
+        session = FixtureSession()
+
+        code = self.refetch(session, self.a)
+
+        self.assertEqual(code, 5)
+        self.assertEqual(session.urls, [])
+        self.assertEqual(self.layout.stage2_ledger.read_bytes(), before)
+
     def test_each_refetch_happens_once(self):
         self.fetch_stage1()
         session = FixtureSession()

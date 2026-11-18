@@ -11,7 +11,13 @@ from operator import itemgetter
 
 from sec_filing_data.client import AccessDenied, BudgetExhausted, SecClient, exclusive_lock
 from sec_filing_data.layout import Layout
-from sec_filing_data.ledger import STAGE2_LIMITS, build_fetches, read_ledger
+from sec_filing_data.ledger import (
+    STAGE2_LIMITS,
+    budget_spent,
+    build_fetches,
+    ledger_usage,
+    read_ledger,
+)
 from sec_filing_data.tables import read_table, write_table
 
 BUDGET_SPENT_EXIT = 5
@@ -94,8 +100,10 @@ def run_refetch(
     to the Stage 1 ledger. An accession that is not in `sample` raises `UnknownAccession`
     (a ValueError) before the lock is taken and before any request. An accession is skipped
     when its refetch file exists or the Stage 2 ledger holds a request for it, so a failed
-    refetch is never sent again. Returns 0 after the walk, 5 when the Stage 2 budget is
-    spent and 6 when SEC answers 403. A held lock raises RuntimeError and writes nothing.
+    refetch is never sent again. Returns 5 at once when the Stage 2 budget is already spent,
+    a request killed before its response included. Returns 0 after the walk, 5 when the
+    budget runs out during it and 6 when SEC answers 403. A held lock raises RuntimeError
+    and writes nothing.
     """
     urls = {row["accession_number"]: row["url"] for row in read_table(layout, "sample").to_pylist()}
     for accession in accessions:
@@ -103,6 +111,8 @@ def run_refetch(
             raise UnknownAccession(f"{accession} is not in sample")
     with exclusive_lock(layout.lock):
         layout.stage2.mkdir(exist_ok=True)
+        if budget_spent(ledger_usage(layout.stage2_ledger), STAGE2_LIMITS):
+            return BUDGET_SPENT_EXIT
         sec = SecClient(
             user_agent,
             layout.stage2_ledger,
