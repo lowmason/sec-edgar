@@ -160,6 +160,18 @@ SCHEMAS: dict[str, pa.Schema] = {
         ("record_count", pa.int32()),
         "reason",
     ),
+    "refetches": _schema(
+        "accession_number",
+        "outcome",
+        "stage1_sha256",
+        "refetch_sha256",
+        ("sha256_equal", pa.bool_()),
+        ("stage1_last_modified_at", _TIMESTAMP),
+        ("refetch_last_modified_at", _TIMESTAMP),
+        ("refetched_at", _TIMESTAMP),
+        "changed_header_fields",
+        "changed_documents",
+    ),
 }
 
 

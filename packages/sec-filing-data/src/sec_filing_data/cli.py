@@ -7,12 +7,21 @@ from collections import Counter
 from collections.abc import Sequence
 from pathlib import Path
 
-from sec_filing_data import facts, index, ownership, report, sample, submissions
+from sec_filing_data import facts, index, ownership, refetches, report, sample, submissions
 from sec_filing_data.layout import Layout, record_step
-from sec_filing_data.ledger import FETCH_OUTCOMES
+from sec_filing_data.ledger import FETCH_OUTCOMES, STAGE2_LIMITS, ledger_usage
 from sec_filing_data.tables import read_table
 
 USER_AGENT_VARIABLE = "SEC_USER_AGENT"
+
+
+def _user_agent() -> str | None:
+    """The User-Agent from the environment. When it is not set, print an error and give None."""
+    user_agent = os.environ.get(USER_AGENT_VARIABLE, "")
+    if not user_agent.strip():
+        print(f"error: {USER_AGENT_VARIABLE} is not set", file=sys.stderr)
+        return None
+    return user_agent
 
 
 def _run_index(args: argparse.Namespace) -> int:
@@ -37,11 +46,11 @@ def _run_sample(args: argparse.Namespace) -> int:
 
 
 def _run_fetch(args: argparse.Namespace) -> int:
-    user_agent = os.environ.get(USER_AGENT_VARIABLE, "")
-    if not user_agent.strip():
-        print(f"error: {USER_AGENT_VARIABLE} is not set", file=sys.stderr)
+    user_agent = _user_agent()
+    if user_agent is None:
         return 2
-    # Only this command loads the SEC client, so the other commands never import requests.
+    # Only `fetch` and `refetch` load the SEC client, so the other commands never import
+    # requests.
     from sec_filing_data import fetch
 
     layout = Layout(Path(args.out))
@@ -51,6 +60,37 @@ def _run_fetch(args: argparse.Namespace) -> int:
     for outcome in FETCH_OUTCOMES:
         if outcomes[outcome]:
             print(f"{outcome}: {outcomes[outcome]}")
+    return code
+
+
+def _run_refetch(args: argparse.Namespace) -> int:
+    user_agent = _user_agent()
+    if user_agent is None:
+        return 2
+    # As in `fetch`: only this command and `fetch` load the SEC client.
+    from sec_filing_data import fetch
+
+    layout = Layout(Path(args.out))
+    try:
+        with record_step(layout, "refetch"):
+            code = fetch.run_refetch(layout, user_agent=user_agent, accessions=args.accession)
+    except ValueError as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 2
+    rows = refetches.build_refetches(layout)
+    outcomes = {row["accession_number"]: row["outcome"] for row in rows}
+    for accession in dict.fromkeys(args.accession):
+        print(f"{accession}: {outcomes.get(accession, 'not refetched')}")
+    requests_sent = ledger_usage(layout.stage2_ledger).requests
+    print(f"stage 2 requests: {requests_sent} of {STAGE2_LIMITS.requests}")
+    return code
+
+
+def _run_compare_refetches(args: argparse.Namespace) -> int:
+    layout = Layout(Path(args.out))
+    with record_step(layout, "compare-refetches"):
+        code = refetches.run_compare_refetches(layout)
+    print(f"refetches: {read_table(layout, 'refetches').num_rows}")
     return code
 
 
@@ -119,6 +159,25 @@ def _build_parser() -> argparse.ArgumentParser:
         "--per-form", type=int, help="fetch only the first N quota filings of each form"
     )
     fetch_parser.set_defaults(run=_run_fetch)
+
+    refetch_parser = commands.add_parser(
+        "refetch",
+        help=f"fetch named sampled filings again, under stage2/ (needs {USER_AGENT_VARIABLE})",
+    )
+    refetch_parser.add_argument("--out", required=True, help="output root")
+    refetch_parser.add_argument(
+        "--accession",
+        action="append",
+        required=True,
+        help="accession number of a sampled filing; repeat it for more",
+    )
+    refetch_parser.set_defaults(run=_run_refetch)
+
+    compare_parser = commands.add_parser(
+        "compare-refetches", help="write the refetches table from both ledgers and copies"
+    )
+    compare_parser.add_argument("--out", required=True, help="output root")
+    compare_parser.set_defaults(run=_run_compare_refetches)
 
     envelopes_parser = commands.add_parser(
         "envelopes", help="write the filings, parties and documents tables"

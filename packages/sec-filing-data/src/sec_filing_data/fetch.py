@@ -1,16 +1,17 @@
-"""The `fetch` command: fetch each sampled submission file once, in draw order.
+"""The `fetch` command: fetch each sampled submission file once, in draw order. The
+`refetch` command: fetch named sampled filings once more, in Stage 2.
 
 This module and `client.py` are the only ones that send SEC requests.
 """
 
 import time
 from collections import Counter
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from operator import itemgetter
 
 from sec_filing_data.client import AccessDenied, BudgetExhausted, SecClient, exclusive_lock
 from sec_filing_data.layout import Layout
-from sec_filing_data.ledger import build_fetches
+from sec_filing_data.ledger import STAGE2_LIMITS, build_fetches, read_ledger
 from sec_filing_data.tables import read_table, write_table
 
 BUDGET_SPENT_EXIT = 5
@@ -71,4 +72,54 @@ def _walk(layout: Layout, sec: SecClient, rows: list[dict]) -> int:
             return BUDGET_SPENT_EXIT
         except AccessDenied:
             return ACCESS_DENIED_EXIT
+    return 0
+
+
+def run_refetch(
+    layout: Layout,
+    *,
+    user_agent: str,
+    accessions: Sequence[str],
+    session=None,
+    monotonic: Callable[[], float] = time.monotonic,
+    sleep: Callable[[float], None] = time.sleep,
+) -> int:
+    """Fetch each named sampled filing from its `sample.url` into `stage2/refetch/`, once.
+
+    The Stage 2 ledger and limits count the requests. Nothing is written under `bytes/` or
+    to the Stage 1 ledger. An accession that is not in `sample` raises ValueError before
+    the lock is taken and before any request. An accession is skipped when its refetch
+    file exists or the Stage 2 ledger holds a request for it, so a failed refetch is never
+    sent again. Returns 0 after the walk, 5 when the Stage 2 budget is spent and 6 when SEC
+    answers 403. A held lock raises RuntimeError and writes nothing.
+    """
+    urls = {row["accession_number"]: row["url"] for row in read_table(layout, "sample").to_pylist()}
+    for accession in accessions:
+        if accession not in urls:
+            raise ValueError(f"{accession} is not in sample")
+    with exclusive_lock(layout.lock):
+        layout.stage2.mkdir(exist_ok=True)
+        sec = SecClient(
+            user_agent,
+            layout.stage2_ledger,
+            session=session,
+            monotonic=monotonic,
+            sleep=sleep,
+            limits=STAGE2_LIMITS,
+        )
+        requested = {
+            record["key"]
+            for record in read_ledger(layout.stage2_ledger)
+            if record["event"] == "request"
+        }
+        for accession in dict.fromkeys(accessions):
+            dest = layout.refetched(accession)
+            if dest.exists() or accession in requested:
+                continue
+            try:
+                sec.fetch(urls[accession], dest, key=accession)
+            except BudgetExhausted:
+                return BUDGET_SPENT_EXIT
+            except AccessDenied:
+                return ACCESS_DENIED_EXIT
     return 0

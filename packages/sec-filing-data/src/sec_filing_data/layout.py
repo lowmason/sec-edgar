@@ -33,6 +33,18 @@ class Layout:
     def runs(self) -> Path:
         return self.root / "runs.jsonl"
 
+    @property
+    def stage2(self) -> Path:
+        return self.root / "stage2"
+
+    @property
+    def stage2_ledger(self) -> Path:
+        return self.stage2 / "fetch-log.jsonl"
+
+    @property
+    def refetch_dir(self) -> Path:
+        return self.stage2 / "refetch"
+
     def table(self, name: str) -> Path:
         return self.tables / f"{name}.parquet"
 
@@ -41,6 +53,9 @@ class Layout:
 
     def instance(self, accession: str) -> Path:
         return self.bytes_dir / f"{accession}_htm.xml"
+
+    def refetched(self, accession: str) -> Path:
+        return self.refetch_dir / f"{accession}.txt"
 
 
 @contextmanager
