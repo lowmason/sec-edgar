@@ -33,6 +33,7 @@ REBUILT_TABLES = (
 EQUAL = "equal"
 NO_LIVE_TABLE = "no live table"
 NO_STAGE1_FOLDER = "no tables-stage1 folder"
+NO_STAGE1_TABLES = "no tables in tables-stage1"
 
 
 def compare_table(expected: pa.Table, actual: pa.Table) -> str:
@@ -102,20 +103,26 @@ def _compare_with_live(live: Layout, rebuilt: Layout, name: str) -> str:
 def check_stage1(layout: Layout) -> tuple[int, list[str]]:
     """Compare each table of `tables-stage1`, by name, with the same columns of the live table.
 
-    Gives one line per frozen table and exit 0 when every table is equal.
+    Gives one line per frozen table and exit 0 when every table is equal. A missing or empty
+    `tables-stage1` gives one line and exit 1, as it compares nothing.
     """
     if not layout.tables_stage1.is_dir():
         return 1, [NO_STAGE1_FOLDER]
     frozen = Layout(layout.root, tables_dir=layout.tables_stage1)
     names = sorted(path.stem for path in layout.tables_stage1.glob("*.parquet"))
+    if not names:
+        return 1, [NO_STAGE1_TABLES]
     return _outcome([(name, _compare_frozen(frozen, layout, name)) for name in names])
 
 
 def _compare_frozen(frozen: Layout, live: Layout, name: str) -> str:
     if not live.table(name).exists():
         return NO_LIVE_TABLE
-    expected = read_table(frozen, name)
-    return compare_table(expected, read_table(live, name).select(expected.column_names))
+    expected, actual = read_table(frozen, name), read_table(live, name)
+    missing = [column for column in expected.column_names if column not in actual.column_names]
+    if missing:
+        return f"missing columns {', '.join(missing)}"
+    return compare_table(expected, actual.select(expected.column_names))
 
 
 def _outcome(results: list[tuple[str, str]]) -> tuple[int, list[str]]:

@@ -429,6 +429,32 @@ class CheckStage1Tests(FixtureRootTestCase):
     def test_no_tables_stage1_folder(self):
         self.assertEqual(check_stage1(self.layout), (1, ["no tables-stage1 folder"]))
 
+    def test_an_empty_tables_stage1_folder_fails(self):
+        self.layout.tables_stage1.mkdir()
+        # A leftover partial write is not a table.
+        (self.layout.tables_stage1 / "documents.parquet.part").write_bytes(b"")
+
+        self.assertEqual(check_stage1(self.layout), (1, ["no tables in tables-stage1"]))
+        self.assertEqual(
+            run_cli("check-stage1", "--out", str(self.layout.root)),
+            (1, ["no tables in tables-stage1"]),
+        )
+
+    def test_a_live_table_without_a_frozen_column(self):
+        self.freeze_stage1()
+        # `documents` sorts first, so every other table comes after the short one.
+        live = read_table(self.layout, "documents")
+        pq.write_table(live.drop_columns(["description", "type"]), self.layout.table("documents"))
+        expected = [
+            "documents: missing columns type, description",
+            *[f"{name}: equal" for name in sorted(STAGE1_COLUMNS) if name != "documents"],
+        ]
+
+        self.assertEqual(check_stage1(self.layout), (1, expected))
+        self.assertEqual(run_cli("check-stage1", "--out", str(self.layout.root)), (1, expected))
+        steps = [json.loads(line)["step"] for line in self.layout.runs.read_text().splitlines()]
+        self.assertEqual(steps, ["check-stage1"])
+
     def test_a_frozen_table_with_no_live_table(self):
         self.freeze_stage1()
         self.layout.table("facts").unlink()
