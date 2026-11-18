@@ -5,7 +5,6 @@ requires-python = ">=3.14"
 [manifest]
 members = [
     "sec-edgar",
-    "sec-edgar-ingest",
     "sec-filing-data",
 ]
 constraints = [
@@ -166,27 +165,6 @@ wheels = [
 name = "sec-edgar"
 version = "0.1.0"
 source = { virtual = "." }
-dependencies = [
-    { name = "sec-edgar-ingest" },
-]
-
-[package.metadata]
-requires-dist = [{ name = "sec-edgar-ingest", editable = "packages/sec-edgar-ingest" }]
-
-[[package]]
-name = "sec-edgar-ingest"
-version = "0.2.0"
-source = { editable = "packages/sec-edgar-ingest" }
-dependencies = [
-    { name = "pyarrow" },
-    { name = "requests" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "pyarrow", specifier = "==25.0.1" },
-    { name = "requests", specifier = "==2.34.2" },
-]
 
 [[package]]
 name = "sec-filing-data"
