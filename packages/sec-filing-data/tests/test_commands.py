@@ -618,6 +618,52 @@ class EnvelopeTests(CommandTestCase):
                 self.assertEqual(child["source_sha256"], FIXTURE_SHA256)
                 self.assertEqual({key: child[key] for key in times}, times)
 
+    def test_last_modified_is_kept_for_an_ok_filing_that_does_not_parse(self):
+        rows = self.write_sample(standard_sample()[:1])
+        reply = FakeResponse(
+            200, [b"not a submission\n"], {"Last-Modified": "Fri, 14 Aug 2026 20:06:00 GMT"}
+        )
+        self.fetch(FixtureSession({rows[0]["url"]: reply}))
+
+        run_envelopes(self.layout)
+
+        (filing,) = read_table(self.layout, "filings").to_pylist()
+        self.assertEqual(filing["outcome"], "ok")
+        self.assertIsNotNone(filing["parse_error"])
+        self.assertEqual(filing["last_modified_at"], utc(2026, 8, 14, 20, 6))
+        for column in ("accepted_at", "public_at", "public_rule"):
+            self.assertIsNone(filing[column])
+
+    def test_public_rule_follows_the_header(self):
+        rows = self.write_sample(standard_sample()[:3])
+        # The change date (20260820) is later than the filed date (20260814): only the filed
+        # date counts, so the filing is public at its acceptance.
+        later_change = xbrl_submission("1", ["a"], date_as_of_change="20260820")
+        private = xbrl_submission("1", ["a"], date_as_of_change="20260820", private_to_public=True)
+        self.fetch(
+            FixtureSession(
+                {
+                    rows[0]["url"]: FakeResponse(200, [later_change]),
+                    rows[1]["url"]: FakeResponse(200, [private]),
+                    rows[2]["url"]: FakeResponse(200, [NO_PARTY]),
+                }
+            )
+        )
+
+        run_envelopes(self.layout)
+
+        filings = read_table(self.layout, "filings").to_pylist()
+        times = [(row["accepted_at"], row["public_at"], row["public_rule"]) for row in filings]
+        self.assertEqual(
+            times,
+            [
+                (utc(2026, 8, 14, 20, 5, 23), utc(2026, 8, 14, 20, 5, 23), "acceptance"),
+                (utc(2026, 8, 14, 20, 5, 23), None, "private_to_public"),
+                (None, None, "no_acceptance"),
+            ],
+        )
+        self.assertEqual([row["private_to_public"] for row in filings], [False, True, False])
+
     def test_the_stage_1_ledger_alone_gives_last_modified(self):
         rows = self.write_sample(standard_sample()[:2])
         first, second = (row["accession_number"] for row in rows)
