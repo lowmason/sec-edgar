@@ -30,6 +30,18 @@ class Usage:
     wire_bytes: int
 
 
+@dataclass(frozen=True)
+class Limits:
+    """The request and wire-byte limits that a ledger is counted against."""
+
+    requests: int
+    wire_bytes: int
+
+
+STAGE1_LIMITS = Limits(MAX_REQUESTS, MAX_WIRE_BYTES)
+STAGE2_LIMITS = Limits(20, 50_000_000)
+
+
 def append(path: Path, record: dict) -> None:
     """Append one JSON line, and flush and fsync it before returning."""
     line = json.dumps(record) + "\n"
@@ -67,9 +79,9 @@ def _usage(records: list[dict]) -> Usage:
     return Usage(len(sent), wire_bytes + unanswered * MAX_RESPONSE_BYTES)
 
 
-def budget_spent(usage: Usage) -> bool:
+def budget_spent(usage: Usage, limits: Limits = STAGE1_LIMITS) -> bool:
     """The client's rule before each attempt: no request is left, or less than the margin."""
-    return usage.requests >= MAX_REQUESTS or MAX_WIRE_BYTES - usage.wire_bytes < BUDGET_MARGIN
+    return usage.requests >= limits.requests or limits.wire_bytes - usage.wire_bytes < BUDGET_MARGIN
 
 
 def build_fetches(layout: Layout) -> list[dict]:

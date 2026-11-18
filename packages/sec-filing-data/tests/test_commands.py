@@ -23,6 +23,7 @@ from sec_filing_data.layout import Layout
 from sec_filing_data.ledger import (
     MAX_REQUESTS,
     MAX_WIRE_BYTES,
+    STAGE2_LIMITS,
     Usage,
     append,
     budget_spent,
@@ -438,6 +439,11 @@ class BuildFetchesTests(CommandTestCase):
         self.assertFalse(budget_spent(Usage(MAX_REQUESTS - 1, room)))
         self.assertTrue(budget_spent(Usage(MAX_REQUESTS, 0)))
         self.assertTrue(budget_spent(Usage(0, room + 1)))
+        self.assertFalse(budget_spent(Usage(19, 0), STAGE2_LIMITS))
+        self.assertTrue(budget_spent(Usage(20, 0), STAGE2_LIMITS))
+        self.assertTrue(
+            budget_spent(Usage(0, 50_000_000 - ledger.BUDGET_MARGIN + 1), STAGE2_LIMITS)
+        )
 
 
 class EnvelopeTests(CommandTestCase):
