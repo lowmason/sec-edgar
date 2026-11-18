@@ -8,15 +8,22 @@ from pathlib import Path
 
 from sec_filing_data import cli
 from sec_filing_data.envelope import parse_submission
+from sec_filing_data.facts import run_facts
 from sec_filing_data.form13f import parse_form13f_table
 from sec_filing_data.forms345 import no_securities_owned, parse_form345
-from sec_filing_data.ownership import OWNERSHIP_FORMS, OwnershipRecord, run_ownership, xml_document
+from sec_filing_data.ownership import (
+    OWNERSHIP_FORMS,
+    OwnershipRecord,
+    XmlDocument,
+    run_ownership,
+    xml_document,
+)
 from sec_filing_data.report import run_report
 from sec_filing_data.schedule13 import parse_schedule13
 from sec_filing_data.tables import SCHEMAS, read_table
 from tests.test_commands import section
 from tests.test_envelope import build_document, build_submission
-from tests.test_xbrl import FactsRootTestCase, submission_with, wrapped
+from tests.test_xbrl import PRIMARY, FactsRootTestCase, submission_with, wrapped
 
 FIXTURES = Path(__file__).parent / "fixtures"
 FORM4 = (FIXTURES / "form4.xml").read_bytes()
@@ -119,10 +126,27 @@ def submission_13f(table: bytes | None, *parties: tuple[str, str, str]) -> bytes
     )
 
 
+_OWNERSHIP_NAMES = SCHEMAS["ownership"].names
+RECORD_COLUMNS = _OWNERSHIP_NAMES[2 : _OWNERSHIP_NAMES.index("value_usd") + 1]
+
+
 class RecordTests(unittest.TestCase):
     def test_fields_are_the_ownership_columns_from_record_kind_to_value_usd(self):
+        self.assertEqual([field.name for field in fields(OwnershipRecord)], RECORD_COLUMNS)
+
+    def test_the_provenance_columns_follow_the_record_columns(self):
         self.assertEqual(
-            [field.name for field in fields(OwnershipRecord)], SCHEMAS["ownership"].names[2:]
+            _OWNERSHIP_NAMES[len(RECORD_COLUMNS) + 2 :],
+            [
+                "source_url",
+                "source_sha256",
+                "source_document",
+                "accepted_at",
+                "public_at",
+                "public_rule",
+                "last_modified_at",
+                "fetched_at",
+            ],
         )
 
     def test_record_is_frozen(self):
@@ -410,7 +434,7 @@ class ParseSchedule13Tests(unittest.TestCase):
     def test_columns_outside_the_mapping_are_null(self):
         unmapped = [
             name
-            for name in SCHEMAS["ownership"].names[2:]
+            for name in RECORD_COLUMNS
             if name
             not in {
                 "record_kind", "issuer_cik", "issuer_name", "issuer_cusip", "owner_cik",
@@ -601,12 +625,12 @@ class XmlDocumentTests(unittest.TestCase):
             ("4", "second.xml", wrapped(FORM3, "XML")),
         )
 
-        self.assertEqual(xml_document(raw, submission, "ownershipDocument"), FORM4)
+        self.assertEqual(xml_document(raw, submission, "ownershipDocument").text, FORM4)
 
     def test_a_document_that_is_not_xml_with_that_root_gives_none(self):
         raw, submission = self.submission(("4", "a.xml", wrapped(OTHER_DOCUMENT, "XML")))
         self.assertIsNone(xml_document(raw, submission, "ownershipDocument"))
-        self.assertEqual(xml_document(raw, submission, "otherDocument"), OTHER_DOCUMENT)
+        self.assertEqual(xml_document(raw, submission, "otherDocument").text, OTHER_DOCUMENT)
 
         raw, submission = self.submission()
         self.assertIsNone(xml_document(raw, submission, "ownershipDocument"))
@@ -617,7 +641,7 @@ class XmlDocumentTests(unittest.TestCase):
         for text in (default, prefixed):
             with self.subTest(text=text):
                 raw, submission = self.submission(("4", "a.xml", wrapped(text, "XML")))
-                self.assertEqual(xml_document(raw, submission, "ownershipDocument"), text)
+                self.assertEqual(xml_document(raw, submission, "ownershipDocument").text, text)
 
     def test_text_that_does_not_start_with_an_angle_bracket_is_skipped(self):
         raw, submission = self.submission(
@@ -626,7 +650,7 @@ class XmlDocumentTests(unittest.TestCase):
         )
 
         self.assertEqual(
-            xml_document(raw, submission, "ownershipDocument"), b"<ownershipDocument/>"
+            xml_document(raw, submission, "ownershipDocument").text, b"<ownershipDocument/>"
         )
 
     def test_a_utf8_byte_order_mark_before_the_xml_is_removed(self):
@@ -636,7 +660,7 @@ class XmlDocumentTests(unittest.TestCase):
             with self.subTest(prefix=prefix):
                 raw, submission = self.submission(("4", "a.xml", wrapped(prefix + FORM4, "XML")))
 
-                self.assertEqual(xml_document(raw, submission, "ownershipDocument"), FORM4)
+                self.assertEqual(xml_document(raw, submission, "ownershipDocument").text, FORM4)
 
     def test_only_one_byte_order_mark_is_removed(self):
         raw, submission = self.submission(("4", "a.xml", wrapped(BOM + BOM + FORM4, "XML")))
@@ -653,7 +677,7 @@ class XmlDocumentTests(unittest.TestCase):
             ("4", "e.xml", wrapped(BOM + FORM4, "XML")),
         )
 
-        self.assertEqual(xml_document(raw, submission, "ownershipDocument"), FORM3)
+        self.assertEqual(xml_document(raw, submission, "ownershipDocument").text, FORM3)
 
     def test_a_doctype_is_refused(self):
         doctype = b'<!DOCTYPE ownershipDocument [<!ENTITY x "y">]>\n<ownershipDocument>&x;</ownershipDocument>'
@@ -661,13 +685,37 @@ class XmlDocumentTests(unittest.TestCase):
 
         self.assertIsNone(xml_document(raw, submission, "ownershipDocument"))
 
+    def test_xml_document_gives_its_filename(self):
+        raw, submission = self.submission(
+            ("4", "poa.xml", wrapped(OTHER_DOCUMENT, "XML")),
+            ("4", "first.xml", wrapped(FORM4, "XML")),
+            ("4", "second.xml", wrapped(FORM3, "XML")),
+        )
+
+        document = xml_document(raw, submission, "ownershipDocument")
+
+        self.assertEqual(document, XmlDocument("first.xml", FORM4))
+        self.assertEqual(
+            xml_document(raw, submission, "otherDocument"), XmlDocument("poa.xml", OTHER_DOCUMENT)
+        )
+
+    def test_a_document_with_no_filename_gives_none_as_its_filename(self):
+        raw = build_submission(
+            header="CONFORMED SUBMISSION TYPE:\t4\n",
+            documents=(build_document(wrapped(FORM4, "XML"), type_line="<TYPE>4\n"),),
+        )
+
+        document = xml_document(raw, parse_submission(raw), "ownershipDocument")
+
+        self.assertEqual(document, XmlDocument(None, FORM4))
+
     def test_a_document_that_does_not_parse_is_skipped_not_raised(self):
         raw, submission = self.submission(
             ("4", "a.xml", "<ownershipDocument><unclosed>\n"),
             ("4", "b.xml", wrapped(FORM3, "XML")),
         )
 
-        self.assertEqual(xml_document(raw, submission, "ownershipDocument"), FORM3)
+        self.assertEqual(xml_document(raw, submission, "ownershipDocument").text, FORM3)
 
 
 class RunOwnershipTestCase(FactsRootTestCase):
@@ -689,8 +737,19 @@ class RunOwnershipTestCase(FactsRootTestCase):
         return records.to_pylist(), status.to_pylist()
 
 
-def ownership_row(accession: str, form_type: str, row: OwnershipRecord) -> dict:
-    return {"accession_number": accession, "form_type": form_type} | asdict(row)
+def ownership_row(
+    accession: str,
+    form_type: str,
+    row: OwnershipRecord,
+    provenance: dict,
+    source_document: str | None,
+) -> dict:
+    return (
+        {"accession_number": accession, "form_type": form_type}
+        | asdict(row)
+        | {"source_document": source_document}
+        | provenance
+    )
 
 
 class RunOwnershipTests(RunOwnershipTestCase):
@@ -702,8 +761,14 @@ class RunOwnershipTests(RunOwnershipTestCase):
 
         self.assertEqual(
             rows,
-            [ownership_row(form3, "3", r) for r in parse_form345(FORM3)]
-            + [ownership_row(form4, "4", r) for r in parse_form345(FORM4)],
+            [
+                ownership_row(form3, "3", r, self.provenance(form3), "doc.xml")
+                for r in parse_form345(FORM3)
+            ]
+            + [
+                ownership_row(form4, "4", r, self.provenance(form4), "doc.xml")
+                for r in parse_form345(FORM4)
+            ],
         )
         self.assertEqual(
             status,
@@ -712,6 +777,44 @@ class RunOwnershipTests(RunOwnershipTestCase):
                 {"accession_number": form4, "form_type": "4", "record_count": 3, "reason": None},
             ],
         )
+
+    def test_ownership_names_its_source_document(self):
+        # The first document is not ownership XML, and the third has the root but comes second.
+        raw = submission_with(
+            ("4", "poa.xml", wrapped(OTHER_DOCUMENT, "XML")),
+            ("4", "form4.xml", wrapped(FORM4, "XML")),
+            ("4", "other-form4.xml", wrapped(FORM3, "XML")),
+            form="4",
+        )
+        first = self.add("4", raw)
+        second = self.add_filing("4", FORM4)
+
+        rows, _ = self.run_ownership()
+
+        records = parse_form345(FORM4)
+        self.assertEqual(len(rows), 2 * len(records))
+        self.assertEqual(
+            rows,
+            [ownership_row(first, "4", r, self.provenance(first), "form4.xml") for r in records]
+            + [ownership_row(second, "4", r, self.provenance(second), "doc.xml") for r in records],
+        )
+        self.assertEqual({row["source_document"] for row in rows[: len(records)]}, {"form4.xml"})
+        self.assertEqual(rows[0]["source_url"], self.sampled[0]["url"])
+        self.assertEqual(rows[0]["source_sha256"], "sha-1")
+        self.assertEqual(rows[-1]["source_sha256"], "sha-2")
+        self.assertNotEqual(rows[0]["accepted_at"], rows[-1]["accepted_at"])
+
+    def test_facts_and_ownership_need_filings(self):
+        self.add_filing("4", FORM4)
+        self.add("10-Q", submission_with(PRIMARY))
+        self.write_tables(filings=False)
+
+        for run in (run_facts, run_ownership):
+            with self.subTest(run=run.__name__):
+                with self.assertRaises(FileNotFoundError) as caught:
+                    run(self.layout)
+                self.assertIn("envelopes", str(caught.exception))
+                self.assertIn("filings", str(caught.exception))
 
     def test_no_ownership_xml_gives_reason(self):
         other = self.add_filing("4", OTHER_DOCUMENT)
@@ -736,7 +839,13 @@ class RunOwnershipTests(RunOwnershipTestCase):
 
         rows, status = self.run_ownership()
 
-        self.assertEqual(rows, [ownership_row(marked, "4", r) for r in parse_form345(FORM4)])
+        self.assertEqual(
+            rows,
+            [
+                ownership_row(marked, "4", r, self.provenance(marked), "doc.xml")
+                for r in parse_form345(FORM4)
+            ],
+        )
         self.assertEqual(
             status, [{"accession_number": marked, "form_type": "4", "record_count": 3, "reason": None}]
         )
@@ -841,11 +950,24 @@ class RunScheduleAnd13fTests(RunOwnershipTestCase):
 
         self.assertEqual(
             rows,
-            [ownership_row(schedule_d, "SCHEDULE 13D", r) for r in parse_schedule13(SCHEDULE13D)]
-            + [ownership_row(schedule_g, "SCHEDULE 13G/A", r) for r in parse_schedule13(SCHEDULE13G)]
-            + [ownership_row(old_style, "SC 13G", r) for r in parse_schedule13(SCHEDULE13G)]
+            [
+                ownership_row(schedule_d, "SCHEDULE 13D", r, self.provenance(schedule_d), "doc.xml")
+                for r in parse_schedule13(SCHEDULE13D)
+            ]
             + [
-                ownership_row(thirteen_f, "13F-HR", r)
+                ownership_row(
+                    schedule_g, "SCHEDULE 13G/A", r, self.provenance(schedule_g), "doc.xml"
+                )
+                for r in parse_schedule13(SCHEDULE13G)
+            ]
+            + [
+                ownership_row(old_style, "SC 13G", r, self.provenance(old_style), "doc.xml")
+                for r in parse_schedule13(SCHEDULE13G)
+            ]
+            + [
+                ownership_row(
+                    thirteen_f, "13F-HR", r, self.provenance(thirteen_f), "infotable.xml"
+                )
                 for r in parse_form13f_table(INFOTABLE, **FORM13F_OWNER)
             ],
         )
@@ -1020,7 +1142,7 @@ class OwnershipCommandTests(RunOwnershipTestCase):
         report = run_report(self.layout)
 
         titles = [line for line in report.split("\n") if line.startswith("## ")]
-        self.assertEqual(titles[-3:], ["## Facts", "## Ownership", "## Platform checks"])
+        self.assertEqual(titles[-6:-3], ["## Facts", "## Ownership", "## Platform checks"])
         self.assertEqual(
             section(report, "Ownership"),
             [

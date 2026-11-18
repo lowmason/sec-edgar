@@ -6,6 +6,7 @@ from operator import itemgetter
 from sec_filing_data.envelope import EnvelopeError, document_text, parse_submission
 from sec_filing_data.layout import Layout
 from sec_filing_data.ledger import build_fetches
+from sec_filing_data.provenance import read_provenance
 from sec_filing_data.tables import read_table, write_table
 from sec_filing_data.xbrl import Fact, XbrlError, find_instance, parse_instance
 
@@ -28,8 +29,11 @@ def run_facts(layout: Layout) -> int:
     """Write `facts` and `facts_status` (one row per sampled filing in FACT_FORMS).
 
     It reads `fetches` from its table, or builds it from the ledger when the table is
-    missing. A filing that gave no facts has a `reason` and no `fact_count`.
+    missing. A filing that gave no facts has a `reason` and no `fact_count`. Each fact carries
+    the source and the times of its filing, from `filings`: without that table it raises
+    FileNotFoundError.
     """
+    provenance = read_provenance(layout)
     sample = sorted(read_table(layout, "sample").to_pylist(), key=itemgetter("draw"))
     fetches = {row["accession_number"]: row for row in _read_fetches(layout)}
     facts, statuses = [], []
@@ -50,6 +54,7 @@ def run_facts(layout: Layout) -> int:
         facts.extend(
             {"accession_number": accession, "source_document": extraction.source_document}
             | asdict(fact)
+            | provenance[accession]
             for fact in extraction.facts
         )
     write_table(layout, "facts", facts)

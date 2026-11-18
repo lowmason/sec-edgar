@@ -25,9 +25,9 @@ from typing import BinaryIO
 import requests
 
 from sec_filing_data.ledger import (
-    MAX_REQUESTS,
     MAX_RESPONSE_BYTES,
-    MAX_WIRE_BYTES,
+    STAGE1_LIMITS,
+    Limits,
     Usage,
     append,
     ledger_usage,
@@ -188,6 +188,7 @@ class SecClient:
         sleep: Callable[[float], None] = time.sleep,
         utcnow: Callable[[], datetime] = lambda: datetime.now(UTC),
         rng: random.Random | None = None,
+        limits: Limits = STAGE1_LIMITS,
     ) -> None:
         if not user_agent.strip():
             raise ValueError("user_agent is empty")
@@ -198,6 +199,7 @@ class SecClient:
         self._sleep = sleep
         self._utcnow = utcnow
         self._rng = rng if rng is not None else random.Random()
+        self._limits = limits
         self._last_start: float | None = None
 
     def fetch(self, url: str, dest: Path, *, key: str) -> FetchResult:
@@ -221,11 +223,14 @@ class SecClient:
 
     def _usage_with_room(self) -> Usage:
         usage = ledger_usage(self._ledger)
-        if usage.requests >= MAX_REQUESTS:
-            raise BudgetExhausted(f"{usage.requests} requests sent, the limit is {MAX_REQUESTS}")
-        if MAX_WIRE_BYTES - usage.wire_bytes < BUDGET_MARGIN:
+        limits = self._limits
+        if usage.requests >= limits.requests:
             raise BudgetExhausted(
-                f"{usage.wire_bytes} wire bytes received, the limit is {MAX_WIRE_BYTES}"
+                f"{usage.requests} requests sent, the limit is {limits.requests}"
+            )
+        if limits.wire_bytes - usage.wire_bytes < BUDGET_MARGIN:
+            raise BudgetExhausted(
+                f"{usage.wire_bytes} wire bytes received, the limit is {limits.wire_bytes}"
             )
         return usage
 
@@ -327,8 +332,13 @@ class SecClient:
         digest = hashlib.sha256()
         pieces = received.response.raw.stream(PIECE_BYTES, decode_content=False)
         while True:
-            if MAX_WIRE_BYTES - (usage.wire_bytes + received.wire_bytes) < BUDGET_MARGIN:
-                return _Verdict("budget", f"fewer than {BUDGET_MARGIN} wire bytes of budget remain")
+            spent = usage.wire_bytes + received.wire_bytes
+            if self._limits.wire_bytes - spent < BUDGET_MARGIN:
+                return _Verdict(
+                    "budget",
+                    f"fewer than {BUDGET_MARGIN} wire bytes of budget remain"
+                    f" under the limit of {self._limits.wire_bytes}",
+                )
             piece = _next_piece(pieces)
             if piece is None:
                 break

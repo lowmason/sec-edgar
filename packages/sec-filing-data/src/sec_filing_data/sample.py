@@ -3,6 +3,9 @@
 import random
 from dataclasses import dataclass
 
+from sec_filing_data.layout import Layout
+from sec_filing_data.tables import read_table, write_table
+
 QUOTA_FORMS = ("10-K", "10-Q", "3", "4", "5", "SCHEDULE 13D", "SCHEDULE 13G", "13F-HR")
 STRATA = ("quota", "repeated", "uniform")
 
@@ -60,6 +63,13 @@ def draw_sample(
         _sample_row(draw, stratum, form_type, filings[accession].first)
         for draw, (stratum, form_type, accession) in enumerate(chosen, start=1)
     ]
+
+
+def run_sample(layout: Layout) -> list[dict]:
+    """Write the `sample` table, drawn from the `index` table, and return its rows."""
+    rows = draw_sample(read_table(layout, "index").to_pylist())
+    write_table(layout, "sample", rows)
+    return rows
 
 
 def _group_by_accession(index_rows: list[dict]) -> dict[str, _Filing]:

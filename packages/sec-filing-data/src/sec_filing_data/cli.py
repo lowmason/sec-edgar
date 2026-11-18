@@ -7,21 +7,27 @@ from collections import Counter
 from collections.abc import Sequence
 from pathlib import Path
 
-from sec_filing_data import facts, index, ownership, report, sample, submissions
+from sec_filing_data import facts, index, ownership, rebuild, refetches, report, sample, submissions
 from sec_filing_data.layout import Layout, record_step
-from sec_filing_data.ledger import FETCH_OUTCOMES
-from sec_filing_data.tables import read_table, write_table
+from sec_filing_data.ledger import FETCH_OUTCOMES, STAGE2_LIMITS, ledger_usage
+from sec_filing_data.tables import read_table
 
 USER_AGENT_VARIABLE = "SEC_USER_AGENT"
+
+
+def _user_agent() -> str | None:
+    """The User-Agent from the environment. When it is not set, print an error and give None."""
+    user_agent = os.environ.get(USER_AGENT_VARIABLE, "")
+    if not user_agent.strip():
+        print(f"error: {USER_AGENT_VARIABLE} is not set", file=sys.stderr)
+        return None
+    return user_agent
 
 
 def _run_index(args: argparse.Namespace) -> int:
     layout = Layout(Path(args.out))
     with record_step(layout, "index"):
-        rows = index.read_index(
-            Path(args.zip), sha256=index.INDEX_SHA256, size=index.INDEX_SIZE
-        )
-        write_table(layout, "index", rows)
+        rows = index.run_index(layout, Path(args.zip))
     print(f"rows: {len(rows)}")
     return 0
 
@@ -29,8 +35,7 @@ def _run_index(args: argparse.Namespace) -> int:
 def _run_sample(args: argparse.Namespace) -> int:
     layout = Layout(Path(args.out))
     with record_step(layout, "sample"):
-        rows = sample.draw_sample(read_table(layout, "index").to_pylist())
-        write_table(layout, "sample", rows)
+        rows = sample.run_sample(layout)
     strata = Counter(row["stratum"] for row in rows)
     quota_forms = Counter(row["form_type"] for row in rows if row["stratum"] == "quota")
     for name in sample.STRATA:
@@ -41,11 +46,11 @@ def _run_sample(args: argparse.Namespace) -> int:
 
 
 def _run_fetch(args: argparse.Namespace) -> int:
-    user_agent = os.environ.get(USER_AGENT_VARIABLE, "")
-    if not user_agent.strip():
-        print(f"error: {USER_AGENT_VARIABLE} is not set", file=sys.stderr)
+    user_agent = _user_agent()
+    if user_agent is None:
         return 2
-    # Only this command loads the SEC client, so the other commands never import requests.
+    # Only `fetch` and `refetch` load the SEC client, so the other commands never import
+    # requests.
     from sec_filing_data import fetch
 
     layout = Layout(Path(args.out))
@@ -55,6 +60,39 @@ def _run_fetch(args: argparse.Namespace) -> int:
     for outcome in FETCH_OUTCOMES:
         if outcomes[outcome]:
             print(f"{outcome}: {outcomes[outcome]}")
+    return code
+
+
+def _run_refetch(args: argparse.Namespace) -> int:
+    user_agent = _user_agent()
+    if user_agent is None:
+        return 2
+    # As in `fetch`: only this command and `fetch` load the SEC client.
+    from sec_filing_data import fetch
+
+    layout = Layout(Path(args.out))
+    try:
+        with record_step(layout, "refetch"):
+            code = fetch.run_refetch(layout, user_agent=user_agent, accessions=args.accession)
+    except fetch.UnknownAccession as error:
+        # Only this refusal sends and writes nothing. Any other error propagates, because
+        # a request record may already be in the Stage 2 ledger.
+        print(f"error: {error}", file=sys.stderr)
+        return 2
+    rows = refetches.build_refetches(layout)
+    outcomes = {row["accession_number"]: row["outcome"] for row in rows}
+    for accession in dict.fromkeys(args.accession):
+        print(f"{accession}: {outcomes.get(accession, 'not refetched')}")
+    requests_sent = ledger_usage(layout.stage2_ledger).requests
+    print(f"stage 2 requests: {requests_sent} of {STAGE2_LIMITS.requests}")
+    return code
+
+
+def _run_compare_refetches(args: argparse.Namespace) -> int:
+    layout = Layout(Path(args.out))
+    with record_step(layout, "compare-refetches"):
+        code = refetches.run_compare_refetches(layout)
+    print(f"refetches: {read_table(layout, 'refetches').num_rows}")
     return code
 
 
@@ -102,6 +140,27 @@ def _run_report(args: argparse.Namespace) -> int:
     return 0
 
 
+def _run_rebuild(args: argparse.Namespace) -> int:
+    layout = Layout(Path(args.out))
+    with record_step(layout, "rebuild"):
+        code, lines = rebuild.run_rebuild(layout, Path(args.zip))
+    _print_lines(lines)
+    return code
+
+
+def _run_check_stage1(args: argparse.Namespace) -> int:
+    layout = Layout(Path(args.out))
+    with record_step(layout, "check-stage1"):
+        code, lines = rebuild.check_stage1(layout)
+    _print_lines(lines)
+    return code
+
+
+def _print_lines(lines: list[str]) -> None:
+    for line in lines:
+        print(line)
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="sec-filing-data")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -123,6 +182,25 @@ def _build_parser() -> argparse.ArgumentParser:
         "--per-form", type=int, help="fetch only the first N quota filings of each form"
     )
     fetch_parser.set_defaults(run=_run_fetch)
+
+    refetch_parser = commands.add_parser(
+        "refetch",
+        help=f"fetch named sampled filings again, under stage2/ (needs {USER_AGENT_VARIABLE})",
+    )
+    refetch_parser.add_argument("--out", required=True, help="output root")
+    refetch_parser.add_argument(
+        "--accession",
+        action="append",
+        required=True,
+        help="accession number of a sampled filing; repeat it for more",
+    )
+    refetch_parser.set_defaults(run=_run_refetch)
+
+    compare_parser = commands.add_parser(
+        "compare-refetches", help="write the refetches table from both ledgers and copies"
+    )
+    compare_parser.add_argument("--out", required=True, help="output root")
+    compare_parser.set_defaults(run=_run_compare_refetches)
 
     envelopes_parser = commands.add_parser(
         "envelopes", help="write the filings, parties and documents tables"
@@ -149,6 +227,21 @@ def _build_parser() -> argparse.ArgumentParser:
     report_parser = commands.add_parser("report", help="print the Markdown report of the root")
     report_parser.add_argument("--out", required=True, help="output root")
     report_parser.set_defaults(run=_run_report)
+
+    rebuild_parser = commands.add_parser(
+        "rebuild",
+        help="build every table again in a temporary folder and compare it with the live table",
+    )
+    rebuild_parser.add_argument("--zip", required=True, help="path of the quarter's master.zip")
+    rebuild_parser.add_argument("--out", required=True, help="output root")
+    rebuild_parser.set_defaults(run=_run_rebuild)
+
+    check_parser = commands.add_parser(
+        "check-stage1",
+        help="compare the Stage 1 columns of each live table with tables-stage1",
+    )
+    check_parser.add_argument("--out", required=True, help="output root")
+    check_parser.set_defaults(run=_run_check_stage1)
     return parser
 
 

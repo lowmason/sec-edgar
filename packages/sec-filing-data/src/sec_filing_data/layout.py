@@ -11,11 +11,24 @@ from pathlib import Path
 
 @dataclass(frozen=True)
 class Layout:
+    """The paths of one output root.
+
+    With `tables_dir`, the tables are read and written there, and every other path stays
+    under `root`. The rebuild uses it to write its tables to a temporary folder while it
+    reads the bytes and the ledgers in place.
+    """
+
     root: Path
+    tables_dir: Path | None = None
 
     @property
     def tables(self) -> Path:
-        return self.root / "tables"
+        return self.root / "tables" if self.tables_dir is None else self.tables_dir
+
+    @property
+    def tables_stage1(self) -> Path:
+        """The copy of the tables that the Stage 1 findings rest on."""
+        return self.root / "tables-stage1"
 
     @property
     def bytes_dir(self) -> Path:
@@ -33,6 +46,18 @@ class Layout:
     def runs(self) -> Path:
         return self.root / "runs.jsonl"
 
+    @property
+    def stage2(self) -> Path:
+        return self.root / "stage2"
+
+    @property
+    def stage2_ledger(self) -> Path:
+        return self.stage2 / "fetch-log.jsonl"
+
+    @property
+    def refetch_dir(self) -> Path:
+        return self.stage2 / "refetch"
+
     def table(self, name: str) -> Path:
         return self.tables / f"{name}.parquet"
 
@@ -41,6 +66,9 @@ class Layout:
 
     def instance(self, accession: str) -> Path:
         return self.bytes_dir / f"{accession}_htm.xml"
+
+    def refetched(self, accession: str) -> Path:
+        return self.refetch_dir / f"{accession}.txt"
 
 
 @contextmanager

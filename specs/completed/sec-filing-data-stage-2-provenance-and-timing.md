@@ -1,14 +1,16 @@
 # Stage 2: Provenance and timing — Design Spec
 
+**COMPLETE (2026-11-18)**, implemented by [plan 11](../plans/completed/11-sec-filing-data-stage-2-provenance-and-timing.md). Results: [Stage 2 findings](../sec-filing-data-stage-2-findings.md).
+
 **Status:** Approved by the owner, 2026-11-17. Owner's words: "Approve spec".
 **Project:** `/Users/lowell/Projects/sec-edgar`, package `packages/sec-filing-data`.
-**Roadmap:** [sec-filing-data roadmap](sec-filing-data-roadmap.md), Stage 2.
-**Inputs:** Stage 1 as built: [plan 10](plans/completed/10-sec-filing-data-stage-1.md) (its Handoff section),
-the [Stage 1 findings](sec-filing-data-stage-1-findings.md), and the live root
+**Roadmap:** [sec-filing-data roadmap](../sec-filing-data-roadmap.md), Stage 2.
+**Inputs:** Stage 1 as built: [plan 10](../plans/completed/10-sec-filing-data-stage-1.md) (its Handoff section),
+the [Stage 1 findings](../sec-filing-data-stage-1-findings.md), and the live root
 `/Users/lowell/Projects/sec-edgar/filing-data/2026Q3` (tables, bytes, `fetch-log.jsonl`). The items that the owner
 carried into Stage 2: `specs/deferred_items.md`, section `10-sec-filing-data-stage-1 — 2026-11-17` (the V6 refetch,
 and the SEC documentation checks for V7 and V8). Background only: the parked
-[platform spec](completed/sec-filing-platform.md), R9 and R11–R12. One record of the parked store, cited by owner
+[platform spec](sec-filing-platform.md), R9 and R11–R12. One record of the parked store, cited by owner
 decision D5 and copied as constants: the receipt of `master.zip` (section 6.2).
 
 ## 1. Purpose

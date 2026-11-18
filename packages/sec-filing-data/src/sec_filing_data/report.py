@@ -1,19 +1,27 @@
-"""The `report` command: a Markdown summary of one output root, its cost and its platform checks.
+"""The `report` command: a Markdown summary of one output root: its cost, its platform checks,
+its filing times, its sources and its refetches.
 
 The report sends no request and writes nothing. A table that an earlier step has not
 written yet makes its section say so.
 """
 
 import json
+import statistics
 from collections import Counter
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from operator import itemgetter
 
+import pyarrow as pa
+import pyarrow.compute as pc
+import pyarrow.parquet as pq
+
 from sec_filing_data.layout import Layout
-from sec_filing_data.ledger import FETCH_OUTCOMES, ledger_usage, read_ledger
+from sec_filing_data.ledger import FETCH_OUTCOMES, STAGE2_LIMITS, ledger_usage, read_ledger
 from sec_filing_data.sample import QUOTA_FORMS, STRATA
 from sec_filing_data.tables import read_table
+from sec_filing_data.times import PUBLIC_RULES, readable_date
 from sec_filing_data.xbrl import INSTANCE_TYPE, SEC_EXTRACTED_SUFFIX
 
 IDEA_XBRL = "IDEA: XBRL DOCUMENT"
@@ -24,6 +32,8 @@ NULL_CHECKED = (
     "public_document_count",
 )
 INSTANCE_KINDS = (INSTANCE_TYPE, f"*{SEC_EXTRACTED_SUFFIX}")
+LONG_GAP = timedelta(hours=1)
+RECORDS_TABLES = ("index", "filings", "parties", "documents", "facts", "ownership")
 V10_CASES = {
     "equal": "public_document_count equals document_count",
     "minus": "public_document_count equals document_count minus those documents",
@@ -45,6 +55,7 @@ class _Root:
     facts_status: list[dict] | None
     ownership: list[dict] | None
     ownership_status: list[dict] | None
+    refetches: list[dict] | None
 
     @classmethod
     def load(cls, layout: Layout) -> _Root:
@@ -67,6 +78,7 @@ class _Root:
             facts_status=rows("facts_status"),
             ownership=rows("ownership"),
             ownership_status=rows("ownership_status"),
+            refetches=rows("refetches"),
         )
 
     @property
@@ -347,6 +359,141 @@ def _filed_count(value: str | None) -> int | None:
     return int(value) if value is not None and value.isascii() and value.isdigit() else None
 
 
+def _times(root: _Root) -> list[str]:
+    """The `public_rule` counts, and the gap from `public_at` to `last_modified_at`.
+
+    Every line is over the parsed `ok` filings. A gap is in whole seconds and is negative
+    when the filing was last modified before the earliest time it could be public. A null
+    `filed_as_of_date` shows in Header checks, so only a non-null unreadable one is listed.
+    """
+    if root.filings is None:
+        return [f"- {_no_table('filings')}"]
+    parsed = root.parsed
+    rules = Counter(filing["public_rule"] for filing in parsed)
+    gaps = {
+        filing["accession_number"]: _seconds(filing["last_modified_at"] - filing["public_at"])
+        for filing in parsed
+        if filing["public_at"] is not None and filing["last_modified_at"] is not None
+    }
+    unmodified = sum(1 for filing in parsed if filing["last_modified_at"] is None)
+    return [
+        *(f"- {rule}: {rules[rule]}" for rule in PUBLIC_RULES),
+        f"- filings with a null last_modified_at: {unmodified}",
+        _gap_summary(list(gaps.values())),
+        *_gap_lines(
+            "filings with a gap above 1 hour",
+            {accession: gap for accession, gap in gaps.items() if gap > _seconds(LONG_GAP)},
+        ),
+        *_counted(
+            "filings with public_at after last_modified_at",
+            [accession for accession, gap in gaps.items() if gap < 0],
+        ),
+        *_counted(
+            "filings with public_at before accepted_at",
+            [
+                filing["accession_number"]
+                for filing in parsed
+                if filing["public_at"] is not None
+                and filing["accepted_at"] is not None
+                and filing["public_at"] < filing["accepted_at"]
+            ],
+        ),
+        *_counted(
+            "filings with an unreadable filed_as_of_date",
+            [
+                filing["accession_number"]
+                for filing in parsed
+                if filing["filed_as_of_date"] is not None
+                and not readable_date(filing["filed_as_of_date"])
+            ],
+        ),
+    ]
+
+
+def _seconds(delta: timedelta) -> int:
+    return int(delta.total_seconds())
+
+
+def _gap_summary(gaps: list[int]) -> str:
+    label = "gap from public_at to last_modified_at"
+    if not gaps:
+        return f"- {label}: no filing has both times"
+    return (
+        f"- {label}: least {min(gaps)} s, median {statistics.median_low(gaps)} s,"
+        f" largest {max(gaps)} s"
+    )
+
+
+def _gap_lines(label: str, gaps: dict[str, int]) -> list[str]:
+    return [
+        f"- {label}: {len(gaps)}",
+        *(f"  - {accession}: {gap} s" for accession, gap in gaps.items()),
+    ]
+
+
+def _provenance(root: _Root) -> list[str]:
+    """Per records table, the rows without a source and the rows of `ok` filings without times.
+
+    Each table is read for the columns it counts and no more: `index`, `facts` and
+    `ownership` have too many rows to hold as Python values.
+    """
+    ok_accessions = (
+        None
+        if root.filings is None
+        else [f["accession_number"] for f in root.filings if f["outcome"] == "ok"]
+    )
+    lines = [_provenance_line(root.layout, name, ok_accessions) for name in RECORDS_TABLES]
+    if not root.layout.table("index").exists():
+        return [*lines, f"- index rows with filing times: {_no_table('index')}"]
+    with_times = _columns(root.layout, "index", ["fetched_at"])["fetched_at"]
+    return [*lines, f"- index rows with filing times: {len(with_times) - with_times.null_count}"]
+
+
+def _provenance_line(layout: Layout, name: str, ok_accessions: list[str] | None) -> str:
+    if not layout.table(name).exists():
+        return f"- {name}: {_no_table(name)}"
+    checksum = "sha256" if name == "filings" else "source_sha256"
+    table = _columns(
+        layout, name, ["accession_number", "source_url", checksum, "accepted_at", "fetched_at"]
+    )
+    no_source = pc.or_(pc.is_null(table["source_url"]), pc.is_null(table[checksum]))
+    count = f"{table.filter(no_source).num_rows} rows with a null source_url or source_sha256"
+    if ok_accessions is None:
+        return f"- {name}: {count}, rows of ok filings: {_no_table('filings')}"
+    ok = pc.is_in(table["accession_number"], value_set=pa.array(ok_accessions, pa.string()))
+    no_time = pc.or_(pc.is_null(table["accepted_at"]), pc.is_null(table["fetched_at"]))
+    no_times = table.filter(pc.and_(ok, no_time)).num_rows
+    return f"- {name}: {count}, {no_times} rows of ok filings with a null accepted_at or fetched_at"
+
+
+def _columns(layout: Layout, name: str, columns: list[str]) -> pa.Table:
+    return pq.read_table(layout.table(name), columns=columns)
+
+
+def _refetches(root: _Root) -> list[str]:
+    usage = ledger_usage(root.layout.stage2_ledger)
+    rows = (
+        [f"- {_no_table('refetches')}"]
+        if root.refetches is None
+        else [_refetch_line(row) for row in root.refetches]
+    )
+    return [
+        *rows,
+        f"- Stage 2 requests: {usage.requests} of {STAGE2_LIMITS.requests}",
+        f"- Stage 2 wire bytes: {usage.wire_bytes} of {STAGE2_LIMITS.wire_bytes}",
+    ]
+
+
+def _refetch_line(row: dict) -> str:
+    """A `refetches` row with all its columns, as `<accession>: <column> <value>, ...`."""
+    values = (
+        f"{column} {value.isoformat() if isinstance(value, datetime) else _text(value)}"
+        for column, value in row.items()
+        if column != "accession_number"
+    )
+    return f"- {row['accession_number']}: {', '.join(values)}"
+
+
 _SECTIONS: tuple[tuple[str, Callable[[_Root], list[str]]], ...] = (
     ("Index", _index),
     ("Sample", _sample),
@@ -359,4 +506,7 @@ _SECTIONS: tuple[tuple[str, Callable[[_Root], list[str]]], ...] = (
     ("Facts", _facts),
     ("Ownership", _ownership),
     ("Platform checks", _platform_checks),
+    ("Times", _times),
+    ("Provenance", _provenance),
+    ("Refetches", _refetches),
 )

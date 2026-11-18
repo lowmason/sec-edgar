@@ -23,6 +23,7 @@ from sec_filing_data.ledger import (
     MAX_REQUESTS,
     MAX_RESPONSE_BYTES,
     MAX_WIRE_BYTES,
+    STAGE2_LIMITS,
     Usage,
     ledger_usage,
     read_ledger,
@@ -179,7 +180,7 @@ class ClientTestCase(unittest.TestCase):
         self.clock = FakeClock()
         self.utcnow = FakeUtcNow()
 
-    def make_client(self, session: FakeSession) -> SecClient:
+    def make_client(self, session: FakeSession, **options) -> SecClient:
         return SecClient(
             USER_AGENT,
             self.ledger,
@@ -188,6 +189,7 @@ class ClientTestCase(unittest.TestCase):
             sleep=self.clock.sleep,
             utcnow=self.utcnow,
             rng=random.Random(7),
+            **options,
         )
 
     def fetch(self, *replies):
@@ -331,6 +333,39 @@ class PlanTests(ClientTestCase):
         self.assertLessEqual(ledger_usage(self.ledger).wire_bytes, MAX_WIRE_BYTES)
         self.assertEqual(self.records("response")[-1]["outcome"], "budget")
         self.assert_no_files()
+
+    def test_stage2_limits_refuse_the_21st_request(self):
+        fill_ledger(self.ledger, [0] * 20)
+        session = FakeSession(ok_response())
+
+        with self.assertRaises(BudgetExhausted):
+            self.make_client(session, limits=STAGE2_LIMITS).fetch(URL, self.dest, key=KEY)
+
+        self.assertEqual(session.calls, [])
+
+    def test_stage2_limits_stop_inside_the_stream(self):
+        fill_ledger(self.ledger, [50_000_000 - 3 * MIB])
+        session = FakeSession(FakeResponse(200, [bytes(MIB)] * 10))
+
+        with self.assertRaises(BudgetExhausted):
+            self.make_client(session, limits=STAGE2_LIMITS).fetch(URL, self.dest, key=KEY)
+
+        self.assertLessEqual(ledger_usage(self.ledger).wire_bytes, 50_000_000)
+        self.assertEqual(self.records("response")[-1]["outcome"], "budget")
+        self.assert_no_files()
+
+    def test_the_budget_messages_name_the_limits_in_force(self):
+        fill_ledger(self.ledger, [0] * 20)
+        with self.assertRaises(BudgetExhausted) as raised:
+            self.make_client(FakeSession(), limits=STAGE2_LIMITS).fetch(URL, self.dest, key=KEY)
+        self.assertIn("the limit is 20", str(raised.exception))
+
+        fill_ledger(self.ledger, [50_000_000 - 3 * MIB])
+        session = FakeSession(FakeResponse(200, [bytes(MIB)] * 10))
+        with self.assertRaises(BudgetExhausted) as raised:
+            self.make_client(session, limits=STAGE2_LIMITS).fetch(URL, self.dest, key=KEY)
+        self.assertEqual(self.records("response")[-1]["outcome"], "budget")
+        self.assertIn(str(1_048_576), self.records("response")[-1]["reason"])
 
     def test_unmatched_request_counts_full_response(self):
         self.ledger.write_text(json.dumps(matched_pair(0, 10)[0]) + "\n")

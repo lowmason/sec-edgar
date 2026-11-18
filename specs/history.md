@@ -46,3 +46,20 @@ Differences from the design:
 
 Closed earlier deferred items:
 - "Stage 6, evidence campaign and finding (parked roadmap, Stage 6 entry; platform spec V1–V12, R30): a bounded live" (deferred by sec-filing-platform-roadmap).
+
+## 11-sec-filing-data-stage-2-provenance-and-timing — 2026-11-18
+Plan: specs/plans/completed/11-sec-filing-data-stage-2-provenance-and-timing.md · Spec: specs/completed/sec-filing-data-stage-2-provenance-and-timing.md (retired) · Roadmap: specs/sec-filing-data-roadmap.md, Stage 2
+
+Differences from the design:
+- Ruling (final review): a re-run of `refetch` for an accession whose request has no response returns exit 5 before it walks the accessions, not exit 0 — spec 6.3: "So a refetch interrupted mid-request spends the whole Stage 2 byte budget in the count, and later refetches are refused." — after a kill, a re-run would print a request line that looks like a good run if wrong.
+- Ruling (final review): the report's Times section has one more line, `- filings with an unreadable filed_as_of_date: <n>`, with one sub-line per accession — plan C9: "The report shows each of these cases." conflicts with Task 7's shorter line list; C9 is a requirement and the extra line removes no listed line — a later quarter's fallback to `accepted_at` alone is invisible if wrong. The expected Times lines of the plan tests gained exactly that line.
+- Deviation (Task 3): two extra tests for `last_modified_at` on an unparsed `ok` filing and for the `private_to_public` and `no_acceptance` rules. Source: plan, Task 3.
+- Deviation (Task 6): the CLI refuses only on a new `UnknownAccession` error, so an error after a request record exists is not reported as a refusal. Source: plan, Task 6.
+- Deviation (Task 7): three existing tests moved their section index by one line (C11). Source: plan, Task 7.
+- Deviation (Task 8): `check_stage1` exits 1 for an empty `tables-stage1` folder and names the missing frozen columns instead of raising. Source: plan, Task 8.
+- Deviation (Task 9): the live run came before the final review, so two review fixes landed after it and `report` was run again. Source: plan, Task 9.
+- Deferred: 4 items. Source: specs/deferred_items.md, § 11-sec-filing-data-stage-2-provenance-and-timing.
+
+Closed earlier deferred items:
+- "Refetch for V6 (plan 10 findings, Platform checks, V6 line): refetch `9999999995-26-002992` (form `EFFECT`, filed" (deferred by 10-sec-filing-data-stage-1).
+- "SEC documentation checks for V7 and V8 (plan 10 findings, Platform checks; parked platform spec V7, V8): what the" (deferred by 10-sec-filing-data-stage-1).

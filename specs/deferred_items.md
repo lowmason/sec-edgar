@@ -420,19 +420,21 @@
       101 `PRIVATE-TO-PUBLIC` submissions of 2026-10-15 (V7). Stage 1's sample is 2026Q3 only, and the roadmap leaves
       out other quarters. The owner chose to defer (2026-11-17). Size: plan. Revisit if: a roadmap stage covers a
       quarter other than 2026Q3.
-- [ ] Refetch for V6 (plan 10 findings, Platform checks, V6 line): refetch `9999999995-26-002992` (form `EFFECT`, filed
+- [x] Refetch for V6 (plan 10 findings, Platform checks, V6 line): refetch `9999999995-26-002992` (form `EFFECT`, filed
       `20260917`, `DATE AS OF CHANGE` `20260918`) and compare its SHA-256 with the Stage 1 copy under
       `/Users/lowell/Projects/sec-edgar/filing-data/2026Q3/bytes/`, to show whether the archive copy changes after a
       correction. 1 SEC request, which needs the owner's budget for that stage. The owner carried it into Stage 2 of
       `specs/sec-filing-data-roadmap.md` (2026-11-17). Size: quick-fix. Done when: a Stage 2 record gives the refetch's
       SHA-256 beside the Stage 1 SHA-256.
       → planned 2026-11-17: specs/plans/11-sec-filing-data-stage-2-provenance-and-timing.md
-- [ ] SEC documentation checks for V7 and V8 (plan 10 findings, Platform checks; parked platform spec V7, V8): what the
+      → done 2026-11-18 (plan 11): the refetch SHA-256 equals the Stage 1 SHA-256 (`specs/sec-filing-data-stage-2-findings.md`, V6 refetch). Both copies were taken after the correction, so it cannot show whether a copy changes after a correction → item: 11-sec-filing-data-stage-2-provenance-and-timing — 2026-11-18
+- [x] SEC documentation checks for V7 and V8 (plan 10 findings, Platform checks; parked platform spec V7, V8): what the
       `<PRIVATE-TO-PUBLIC>` tag means, and whether a late acceptance is disseminated that evening or the next business
       day. Stage 2 of `specs/sec-filing-data-roadmap.md` decides when each filing became public and needs both answers.
       The owner carried them into Stage 2 (2026-11-17). Size: design. Done when: Stage 2's spec or findings cite the SEC
       documentation for both answers.
       → planned 2026-11-17: specs/plans/11-sec-filing-data-stage-2-provenance-and-timing.md
+      → done 2026-11-18 (plan 11): the spec and the findings cite the SEC documentation for both answers (`specs/sec-filing-data-stage-2-findings.md`, SEC documentation)
 - [ ] XBRL guide checks V11 and V12 (plan 10 findings, Platform checks; parked platform spec V11, V12, R18–R20): the
       EDGAR Filer Manual's exhibit and Transformation Registry tables, and the EDGAR XBRL Guide's per-class and
       legal-entity axis conventions. They matter only to an inline XBRL parser, which plan 10's D2 leaves out (Stage 1
@@ -452,3 +454,25 @@
       it parked now and remove it after Stage 2 (2026-11-18, "Label now, delete after Stage 2 (Recommended)"). Size:
       plan. Done when: `main` holds no `sec-edgar-ingest` code, a tag marks the last commit that held it, and
       `scripts/check-sec-filing-data.sh` passes.
+
+## 11-sec-filing-data-stage-2-provenance-and-timing — 2026-11-18
+- [ ] Whether an EDGAR archive copy changes after a correction (spec `specs/completed/sec-filing-data-stage-2-provenance-and-timing.md`,
+      section 11, owner decision D6): the V6 refetch compared two copies of `9999999995-26-002992` that were both taken
+      after its `DATE AS OF CHANGE`, so equal hashes show only that the copy did not change between 2026-11-17 and
+      2026-11-18. The question needs one copy fetched before a correction and another after it. Findings:
+      `specs/sec-filing-data-stage-2-findings.md`, V6 refetch. Size: plan. Revisit if: a roadmap stage fetches filings
+      on the day they are filed.
+- [ ] Re-hash the kept files in `refetches` (plan 11 final review, Codex review; `src/sec_filing_data/refetches.py`):
+      `sha256_equal` takes both SHA-256 values from the ledgers and never hashes the stored files again, as plan C8
+      says. An edit to a kept file after its `ok` record would not show. Stage 3's manifests are meant to cover byte
+      integrity. Size: quick-fix. Revisit if: Stage 3's manifest check does not list the files under `ROOT/stage2/refetch/`.
+- [ ] Command robustness on an old or busy root (plan 11 final review; `src/sec_filing_data/report.py`, `cli.py`, `rebuild.py`):
+      `report` raises a `KeyError` on a `filings` table that has no Stage 2 columns. A refused `refetch` of an unknown
+      accession still writes one `runs.jsonl` line. `refetch` exits 0 after a 404 or a failed fetch, and prints the
+      outcome. `rebuild` and `check-stage1` take no `fetch.lock`, so a running fetch could change the root under them.
+      Size: quick-fix. Revisit if: a roadmap stage builds a second root, or runs a quarter other than 2026Q3.
+- [ ] Input hardening for other data (plan 11 final review; `src/sec_filing_data/times.py`, `refetches.py`, `fetch.py`):
+      `accepted_at` raises an `OverflowError` for an acceptance in the year 9999. A User-Agent that `requests` rejects
+      after the request record is written spends the one refetch of that accession. `compare-refetches` raises a
+      `FileNotFoundError` when the SHA-256 values differ and a Stage 1 byte file is missing. No sampled filing or live
+      value meets any of these. Size: quick-fix. Revisit if: a roadmap stage reads a quarter other than 2026Q3.

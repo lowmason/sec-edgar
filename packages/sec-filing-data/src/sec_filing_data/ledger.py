@@ -30,6 +30,18 @@ class Usage:
     wire_bytes: int
 
 
+@dataclass(frozen=True)
+class Limits:
+    """The request and wire-byte limits that a ledger is counted against."""
+
+    requests: int
+    wire_bytes: int
+
+
+STAGE1_LIMITS = Limits(MAX_REQUESTS, MAX_WIRE_BYTES)
+STAGE2_LIMITS = Limits(20, 50_000_000)
+
+
 def append(path: Path, record: dict) -> None:
     """Append one JSON line, and flush and fsync it before returning."""
     line = json.dumps(record) + "\n"
@@ -67,9 +79,22 @@ def _usage(records: list[dict]) -> Usage:
     return Usage(len(sent), wire_bytes + unanswered * MAX_RESPONSE_BYTES)
 
 
-def budget_spent(usage: Usage) -> bool:
+def budget_spent(usage: Usage, limits: Limits = STAGE1_LIMITS) -> bool:
     """The client's rule before each attempt: no request is left, or less than the margin."""
-    return usage.requests >= MAX_REQUESTS or MAX_WIRE_BYTES - usage.wire_bytes < BUDGET_MARGIN
+    return usage.requests >= limits.requests or limits.wire_bytes - usage.wire_bytes < BUDGET_MARGIN
+
+
+def ok_responses(path: Path) -> dict[str, dict]:
+    """The last `ok` response record of each key. A key with no `ok` response is absent."""
+    return _last_ok(read_ledger(path))
+
+
+def _last_ok(records: list[dict]) -> dict[str, dict]:
+    last_ok: dict[str, dict] = {}
+    for record in records:
+        if record["event"] == "response" and record["outcome"] == "ok":
+            last_ok[record["key"]] = record
+    return last_ok
 
 
 def build_fetches(layout: Layout) -> list[dict]:
@@ -83,14 +108,12 @@ def build_fetches(layout: Layout) -> list[dict]:
     spent = budget_spent(_usage(records))
     attempts: Counter[str] = Counter()
     last_response: dict[str, dict] = {}
-    last_ok: dict[str, dict] = {}
     for record in records:
         if record["event"] == "request":
             attempts[record["key"]] += 1
         elif record["event"] == "response":
             last_response[record["key"]] = record
-            if record["outcome"] == "ok":
-                last_ok[record["key"]] = record
+    last_ok = _last_ok(records)
     sample = sorted(read_table(layout, "sample").to_pylist(), key=itemgetter("draw"))
     rows = []
     for sampled in sample:
