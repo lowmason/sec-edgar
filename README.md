@@ -54,7 +54,7 @@ Stage 2 added four commands:
 
 `facts` and `ownership` read the `filings` table, so run them after `envelopes`. `envelopes` also writes the filing times on the sampled rows of `index`, so a later `index` run alone resets them to null.
 
-The `fetch` command needs the `SEC_USER_AGENT` environment variable. The SEC asks for a User-Agent that names the requester and gives a contact address. Without the variable, `fetch` exits with code 2. Live runs take the value from `sec.user_agent` in `conf/sec-edgar.json` at tag `ingest-parked-2026-11-16`, so the value stays out of the files on `main`. This command sets it in any checkout or worktree:
+The `fetch` command needs the `SEC_USER_AGENT` environment variable. The SEC asks for a User-Agent that names the requester and gives a contact address. Without the variable, `fetch` exits with code 2. Live runs take the value from `sec.user_agent` in `conf/sec-edgar.json` at tag `ingest-parked-2026-11-16`, so the value stays out of the files on `main` outside `specs/`. This command sets it in any checkout or worktree:
 
 ```bash
 export SEC_USER_AGENT="$(git show ingest-parked-2026-11-16:conf/sec-edgar.json | python3 -I -c 'import json, sys; print(json.load(sys.stdin)["sec"]["user_agent"])')"
