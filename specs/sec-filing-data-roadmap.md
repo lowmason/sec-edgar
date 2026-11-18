@@ -52,7 +52,7 @@ consumes the output of the stage before it.
 - [x] Stage 2: Provenance and timing
       Objective: Give each record of O1–O4 its source and the times that point-in-time use needs, such as when the SEC accepted the filing, when it became public and when this project fetched it.
       Outcomes: O1, O2, O3, O4
-      Consumes: Stage 1's tables, retained bytes, request ledger, fetch times, code and findings file, as built (plan 10, Handoff). (Resolved at resume, 2026-11-17)
+      Consumes: Stage 1's tables, retained bytes, request ledger, fetch times, code and findings file, as built (plan 10, Handoff). (Resolved at resume, 2026-11-17) Stage 2 also used one record of the parked store, the `master.zip` receipt, as three committed constants in `index.py`. No code or test reads the receipt (spec D5; plan 11, Handoff). (Resolved at resume, 2026-11-18)
       Produces: The O1–O4 tables with provenance (source URL, accession number, raw-byte SHA-256) and the chosen times on each record. The source of an O3 fact is the SEC-extracted `*_htm.xml` instance inside the complete submission file, not the filer's inline XBRL document (plan 10, D2 and Handoff). (Resolved at resume, 2026-11-17)
       Exit: For the Stage 1 sample, each record of O1–O4 names its source, its raw-byte SHA-256 and its times. A rebuild from the retained bytes reproduces the tables and sends no SEC request. Apart from the rebuild, each item that the owner carried into Stage 2 meets its `Done when`: the V6 refetch, and the SEC documentation checks for V7 and V8 (`specs/deferred_items.md`, section `10-sec-filing-data-stage-1 — 2026-11-17`; plan 10, Handoff). Each live request, the refetch included, is inside an SEC budget that the owner sets for Stage 2 (plan 10, Handoff). (Resolved at resume, 2026-11-17)
       Leaves out: Manifests, hash-bound evidence, release pinning and versioned record formats: Stage 3. As-of views and amendment handling: Stage 4.
@@ -64,16 +64,16 @@ consumes the output of the stage before it.
 - [ ] Stage 3: Manifests, hash-bound evidence and release pinning
       Objective: Make each output of O1–O4 checkable and reproducible. Each output set gets a manifest, each parsed value is bound to the hash of the bytes it came from, and each run is tied to the code version that made it.
       Outcomes: O1, O2, O3, O4
-      Consumes: Stage 2's tables with provenance and times. Stage 1's runs record no code version, and its findings name only the pilot's commit (plan 10, Handoff). (Resolved at resume, 2026-11-17)
+      Consumes: Stage 2's tables with provenance and times. Stage 1's runs record no code version, and its findings name only the pilot's commit (plan 10, Handoff). (Resolved at resume, 2026-11-17) Stage 2's tables, ledger and refetch copy, the frozen Stage 1 tables, `check-stage1` and `rebuild`, as built (plan 11, Handoff). Stage 2's runs record no code version either. Its findings name commits in prose only: the tables came from `140062a`, and `report` ran again at a later commit (plan 11, Handoff; Stage 2 findings, Run record). The re-hash of the kept refetch files waits on this stage's manifests (`specs/deferred_items.md`, section `11-sec-filing-data-stage-2-provenance-and-timing — 2026-11-18`). (Resolved at resume, 2026-11-18)
       Produces: Manifests, hash-bound evidence for parsed values, versioned record formats, and a pinned code version for each run.
-      Exit: A check re-derives a sample of parsed values from the retained bytes through their hashes. Each manifest lists every output file with its SHA-256. Each output names the code version that made it, and the outputs of two code versions are told apart.
+      Exit: A check re-derives a sample of parsed values from the retained bytes through their hashes. Each manifest lists every output file with its SHA-256. Each output names the code version that made it, and the outputs of two code versions are told apart. The manifests also list, each with its SHA-256, the inputs that `rebuild` reads in place: the retained bytes, both ledgers and the refetch copies under `stage2/refetch/` (plan 11, Handoff). (Resolved at resume, 2026-11-18)
       Leaves out: As-of views and amendment handling: Stage 4.
       ROUTING: brainstorming
 
 - [ ] Stage 4: As-of views
       Objective: Answer what was known about each filing, fact and ownership record of the sample on any date, amendments included.
       Outcomes: O1, O2, O3, O4
-      Consumes: Stage 2's times, and Stage 3's manifests, evidence and pinned versions.
+      Consumes: Stage 2's times, and Stage 3's manifests, evidence and pinned versions. Stage 2's times, as built: two bounds for each sampled filing, `public_at` by rule and `last_modified_at` from the stored copy, and four `public_rule` values. Times exist for the 500 sampled accessions only. A view that must never show a filing early reads `last_modified_at`. The 10-Q `0001836875-26-000073` changed after acceptance with no sign in its header: accepted 2026-08-14, its kept copy last modified 2026-08-27 (plan 11, Handoff). Whether an archive copy changes after a correction stays deferred (D6; `specs/deferred_items.md`, section `11-sec-filing-data-stage-2-provenance-and-timing — 2026-11-18`). No stage of this roadmap fetches a filing on the day it is filed, so its `Revisit if` does not fire. (Resolved at resume, 2026-11-18)
       Produces: As-of views over O1–O4, with amendment handling.
       Exit: For the 2026Q3 sample, an as-of query for any date returns only what was public by that date, and each answer traces to its manifest and its source bytes. Where a sampled filing has an amendment, the original and the amendment each answer at their own dates.
       Leaves out: nothing
