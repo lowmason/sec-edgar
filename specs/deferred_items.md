@@ -457,7 +457,7 @@ Plan 12 removed the parked engine from `main`. The paths that these items name u
       parser.
 
 ## tech-debt-triage — 2026-11-18
-- [ ] Remove the parked `sec-edgar-ingest` engine from `main` (tech-debt triage 2026-11-18, row 4): tag the last commit
+- [x] Remove the parked `sec-edgar-ingest` engine from `main` (tech-debt triage 2026-11-18, row 4): tag the last commit
       that holds it (for example `ingest-parked-2026-11-16`), then remove `packages/sec-edgar-ingest/`, `scripts/` other
       than `check-sec-filing-data.sh`, `conf/`, `docs/runbooks/` and `.sdd/`, and repoint the old-engine items in this
       file at the tag. Keep all of `specs/`, and keep the root `constraint-dependencies` (it pins PyArrow 25.0.1 and
@@ -469,6 +469,7 @@ Plan 12 removed the parked engine from `main`. The paths that these items name u
       plan. Done when: `main` holds no `sec-edgar-ingest` code, a tag marks the last commit that held it, and
       `scripts/check-sec-filing-data.sh` passes.
       → planned 2026-11-18: specs/plans/12-remove-parked-sec-edgar-ingest.md
+      → done 2026-11-18 (plan 12): the engine, `conf/`, its scripts, `docs/runbooks/` and `.sdd/` are removed from `main`, and tag `ingest-parked-2026-11-16` holds their last state
 
 ## 11-sec-filing-data-stage-2-provenance-and-timing — 2026-11-18
 - [ ] Whether an EDGAR archive copy changes after a correction (spec `specs/completed/sec-filing-data-stage-2-provenance-and-timing.md`,
