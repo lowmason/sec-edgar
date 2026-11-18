@@ -25,7 +25,7 @@
 - `write_table` builds rows with `pa.Table.from_pylist(rows, schema=...)`, which writes null for a missing key and drops an unknown key. So a misspelled column name is silently null. Tests assert the new columns by value.
 - Tests that assert whole rows (`filings`, `parties` and `documents` in `test_commands.py`, `fact_row` in `test_xbrl.py`, `ownership_row` in `test_ownership.py`, and `test_keeps_every_row` in `test_index.py`) gain the new columns. Never weaken one to a subset of keys.
 - Lighter process (spec section 3): code runs from the working tree, a fix needs no release, and the run fixes each problem it finds. `specs/sec-filing-data-stage-2-findings.md` is the only evidence record. Only the controller runs Task 9. Implementer subagents and review loops never run a live command. Only `refetch` sends SEC requests.
-- Test command, from the worktree root: `uv run --package sec-filing-data python -m unittest discover -s packages/sec-filing-data/tests -t packages/sec-filing-data`. The baseline is `Ran 220 tests` and `OK`. In each code task, Step 2 sees the new tests fail and Step 4 sees `OK`.
+- Test command, from the worktree root: `uv run --package sec-filing-data python -m unittest discover -s packages/sec-filing-data/tests -t packages/sec-filing-data`. The baseline is `Ran 222 tests` and `OK`. In each code task, Step 2 sees the new tests fail and Step 4 sees `OK`.
 
 ## Review Focus
 

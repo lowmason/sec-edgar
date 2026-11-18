@@ -439,3 +439,16 @@
       reads the SEC-extracted instance). The owner chose to defer them with the parked platform Stage 2 item, section
       `sec-filing-platform-roadmap — 2026-11-16` (2026-11-17). Size: design. Revisit if: a plan builds an inline XBRL
       parser.
+
+## tech-debt-triage — 2026-11-18
+- [ ] Remove the parked `sec-edgar-ingest` engine from `main` (tech-debt triage 2026-11-18, row 4): tag the last commit
+      that holds it (for example `ingest-parked-2026-11-16`), then remove `packages/sec-edgar-ingest/`, `scripts/` other
+      than `check-sec-filing-data.sh`, `conf/`, `docs/runbooks/` and `.sdd/`, and repoint the old-engine items in this
+      file at the tag. Keep all of `specs/`, and keep the root `constraint-dependencies` (it pins PyArrow 25.0.1 and
+      Requests 2.34.2 for `sec-filing-data` too). Do not touch `data/` or `backups/` in the main checkout. Before `conf/`
+      goes, give `SEC_USER_AGENT` another documented source, because plans 10 and 11 read it from
+      `conf/sec-edgar.json`. Later plans read the input from `filing-data/inputs/2026Q3/master.zip`, a byte-equal copy
+      made on 2026-11-18, not from the parked store. No current output depends on the engine. The owner chose to label
+      it parked now and remove it after Stage 2 (2026-11-18, "Label now, delete after Stage 2 (Recommended)"). Size:
+      plan. Done when: `main` holds no `sec-edgar-ingest` code, a tag marks the last commit that held it, and
+      `scripts/check-sec-filing-data.sh` passes.
