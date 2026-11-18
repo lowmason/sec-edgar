@@ -5,7 +5,7 @@ This repository is one uv workspace with two Python packages:
 - `sec-filing-data` (live): makes plain tables from the SEC filings of one quarter, 2026Q3.
 - `sec-edgar-ingest` (parked on 2026-11-16): the older filing-index ingestion engine. No current output depends on it. It will be removed from `main` under a git tag after Stage 2.
 
-The work follows the [roadmap](specs/sec-filing-data-roadmap.md). Stage 1 is complete. Its results are in the [Stage 1 findings](specs/sec-filing-data-stage-1-findings.md). Stage 2 adds provenance and filing times. Its [spec](specs/sec-filing-data-stage-2-provenance-and-timing.md) and [plan](specs/plans/11-sec-filing-data-stage-2-provenance-and-timing.md) are in `specs/`.
+The work follows the [roadmap](specs/sec-filing-data-roadmap.md). Stages 1 and 2 are complete. Their results are in the [Stage 1 findings](specs/sec-filing-data-stage-1-findings.md) and the [Stage 2 findings](specs/sec-filing-data-stage-2-findings.md). Stage 2 added the source, the SHA-256 and the filing times to each record. Its [spec](specs/completed/sec-filing-data-stage-2-provenance-and-timing.md) and [plan](specs/plans/completed/11-sec-filing-data-stage-2-provenance-and-timing.md) are retired.
 
 ## sec-filing-data
 
@@ -48,6 +48,15 @@ Run the steps in this order. Each one is `uv run --package sec-filing-data sec-f
 6. `ownership` writes the `ownership` and `ownership_status` tables.
 7. `report` prints a Markdown report of the root.
 
+Stage 2 added four commands:
+
+- `refetch --accession A [--accession A ...]` fetches a sampled submission file a second time, once for each accession. It writes under `ROOT/stage2/` only, and counts in its own ledger, `ROOT/stage2/fetch-log.jsonl`, against 20 requests and 50,000,000 wire bytes. It needs `SEC_USER_AGENT` like `fetch`. It never retries, and a refetch that was interrupted makes the next one exit with code 5.
+- `compare-refetches` writes the `refetches` table from the Stage 2 ledger and the refetched files. It sends no request.
+- `check-stage1` compares the Stage 1 columns of each table with the frozen copy in `ROOT/tables-stage1/`. It sends no request.
+- `rebuild --zip PATH` re-creates every table in a temporary folder from `master.zip`, the kept bytes and both ledgers, and compares each one with the live table. It exits 0 only when every table is equal. It sends no request and leaves the root unchanged, except for one `runs.jsonl` line.
+
+`facts` and `ownership` read the `filings` table, so run them after `envelopes`. `envelopes` also writes the filing times on the sampled rows of `index`, so a later `index` run alone resets them to null.
+
 The `fetch` command needs the `SEC_USER_AGENT` environment variable. The SEC asks for a User-Agent that names the requester and gives a contact address. Without the variable, `fetch` exits with code 2. The live runs take the value from `sec.user_agent` in `conf/sec-edgar.json`.
 
 The `fetch` command keeps the Stage 1 budget. It sends at most 1,500 requests and 5 GB, and it starts each request at least 0.34 s after the one before. It records each request in `ROOT/fetch-log.jsonl`.
@@ -59,6 +68,8 @@ All output is under `ROOT`:
 - `tables/<name>.parquet`: one Parquet file for each table. The schemas are `SCHEMAS` in `packages/sec-filing-data/src/sec_filing_data/tables.py`.
 - `bytes/`: each fetched submission file, as fetched.
 - `fetch-log.jsonl`: the request ledger.
+- `stage2/`: the Stage 2 ledger, `fetch-log.jsonl`, and the refetched files in `refetch/`.
+- `tables-stage1/`: the Stage 1 tables, copied once before Stage 2 changed them.
 - `runs.jsonl`: the start and end time of each step.
 - `fetch.lock`: the lock that stops two `fetch` runs at the same time.
 

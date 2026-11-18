@@ -49,7 +49,7 @@ consumes the output of the stage before it.
 > Stage 1: COMPLETE (2026-11-17) — implemented by plan 10 (specs/plans/completed/10-sec-filing-data-stage-1.md). Its Handoff section names what Stage 2 consumes.
 > Next: resume the roadmap.
 
-- [ ] Stage 2: Provenance and timing
+- [x] Stage 2: Provenance and timing
       Objective: Give each record of O1–O4 its source and the times that point-in-time use needs, such as when the SEC accepted the filing, when it became public and when this project fetched it.
       Outcomes: O1, O2, O3, O4
       Consumes: Stage 1's tables, retained bytes, request ledger, fetch times, code and findings file, as built (plan 10, Handoff). (Resolved at resume, 2026-11-17)
@@ -57,6 +57,9 @@ consumes the output of the stage before it.
       Exit: For the Stage 1 sample, each record of O1–O4 names its source, its raw-byte SHA-256 and its times. A rebuild from the retained bytes reproduces the tables and sends no SEC request. Apart from the rebuild, each item that the owner carried into Stage 2 meets its `Done when`: the V6 refetch, and the SEC documentation checks for V7 and V8 (`specs/deferred_items.md`, section `10-sec-filing-data-stage-1 — 2026-11-17`; plan 10, Handoff). Each live request, the refetch included, is inside an SEC budget that the owner sets for Stage 2 (plan 10, Handoff). (Resolved at resume, 2026-11-17)
       Leaves out: Manifests, hash-bound evidence, release pinning and versioned record formats: Stage 3. As-of views and amendment handling: Stage 4.
       ROUTING: brainstorming
+
+> Stage 2: COMPLETE (2026-11-18) — implemented by plan 11 (specs/plans/completed/11-sec-filing-data-stage-2-provenance-and-timing.md). Its Handoff section names what Stage 3 and Stage 4 consume.
+> Next: resume the roadmap.
 
 - [ ] Stage 3: Manifests, hash-bound evidence and release pinning
       Objective: Make each output of O1–O4 checkable and reproducible. Each output set gets a manifest, each parsed value is bound to the hash of the bytes it came from, and each run is tied to the code version that made it.

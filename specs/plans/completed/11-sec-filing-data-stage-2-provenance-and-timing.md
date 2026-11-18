@@ -1,5 +1,7 @@
 # Stage 2: Provenance and Timing — Implementation Plan
 
+**Status: COMPLETE (2026-11-18)** — executed via subagent-driven-development; deferred items in specs/deferred_items.md
+
 > **For agentic workers:** REQUIRED SUB-SKILL: implement this plan task-by-task via subagent-driven-development (the default) — or executing-plans when your human partner chose inline execution at the handoff. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 > Roadmap: specs/sec-filing-data-roadmap.md, Stage 2 — on plan completion, tick the
@@ -11,7 +13,7 @@
 
 **Tech Stack:** Python 3.14, uv, `requests` and `pyarrow` (already locked), and the standard library (`zoneinfo`, `email.utils`, `zipfile`, `struct`, `tempfile`, `unittest`).
 
-**Spec:** `specs/sec-filing-data-stage-2-provenance-and-timing.md` (approved 2026-11-17). Its section 9 holds D1–D6. Background: plan 10 (`specs/plans/completed/10-sec-filing-data-stage-1.md`), its Handoff section, and its "Root layout and tables". Roadmap departure (spec section 11): D5 adds the `master.zip` receipt, as committed constants, to Stage 2's Consumes. The completion's Handoff section notes it.
+**Spec:** `specs/completed/sec-filing-data-stage-2-provenance-and-timing.md` (approved 2026-11-17). Its section 9 holds D1–D6. Background: plan 10 (`specs/plans/completed/10-sec-filing-data-stage-1.md`), its Handoff section, and its "Root layout and tables". Roadmap departure (spec section 11): D5 adds the `master.zip` receipt, as committed constants, to Stage 2's Consumes. The completion's Handoff section notes it.
 
 ## Global Constraints
 
@@ -81,7 +83,7 @@ Columns are strings unless typed. `ts` is `timestamp[us, UTC]`. The five filing 
 - `public_time(accepted: datetime | None, filed_as_of_date: str | None, *, private_to_public: bool) -> tuple[datetime | None, str]`: steps 1–5 of spec 6.1, in that order, so `private_to_public` wins over a missing acceptance. A null or unreadable `YYYYMMDD` makes step 3 use `accepted` alone (C9). The result is UTC.
 - `last_modified_at(header: str | None) -> datetime | None`: an HTTP date, by `email.utils.parsedate_to_datetime`, in UTC. None for None or unreadable text.
 
-- [ ] **Step 1: Write the failing tests** in `tests/test_times.py`, with `utc(*parts)` short for `datetime(*parts, tzinfo=UTC)` and `pt(accepted, filed)` for `public_time(accepted, filed, private_to_public=False)`. Add `times` to the name set in `test_offline_modules_never_import_requests`.
+- [x] **Step 1: Write the failing tests** in `tests/test_times.py`, with `utc(*parts)` short for `datetime(*parts, tzinfo=UTC)` and `pt(accepted, filed)` for `public_time(accepted, filed, private_to_public=False)`. Add `times` to the name set in `test_offline_modules_never_import_requests`.
   - `test_same_day_acceptance`: `accepted_at("20260814160523") == utc(2026, 8, 14, 20, 5, 23)`; `pt(that, "20260814") == (utc(2026, 8, 14, 20, 5, 23), "acceptance")`.
   - `test_date_moved_to_the_next_weekday`: `pt(accepted_at("20260813173512"), "20260814") == (utc(2026, 8, 14, 10, 0), "next_opening")`.
   - `test_date_moved_past_a_weekend`: `pt(accepted_at("20260814190000"), "20260817") == (utc(2026, 8, 17, 10, 0), "next_opening")` (Friday to Monday).
@@ -93,10 +95,10 @@ Columns are strings unless typed. `ts` is `timestamp[us, UTC]`. The five filing 
   - `test_last_modified_parse`: `last_modified_at("Fri, 18 Sep 2026 10:03:06 GMT") == utc(2026, 9, 18, 10, 3, 6)`; `None` and `"not a date"` give None.
   - `test_unreadable_acceptance_and_filing_date` (Review Focus 4): `accepted_at` gives None for `"2026081416052"`, `"20261332160523"`, `"2026-08-14 16:05"` and `""`. `pt(utc(2026, 8, 15, 3, 10), None)` and `pt(utc(2026, 8, 15, 3, 10), "2026-08-14")` both give `(utc(2026, 8, 15, 10, 0), "next_opening")`.
   - `test_public_time_is_never_before_acceptance`: for each hour 0–23 of 2026-08-14 New York time and each filing date `"20260813"`, `"20260814"` and `"20260817"`, `public_at >= accepted`.
-- [ ] **Step 2: Run the test command.** Expected: errors, `sec_filing_data.times` not found.
-- [ ] **Step 3: Implement** `times.py`.
-- [ ] **Step 4: Run the test command.** Expected: `OK`.
-- [ ] **Step 5: Commit:** `feat(filing-data): add the filing time rule`
+- [x] **Step 2: Run the test command.** Expected: errors, `sec_filing_data.times` not found.
+- [x] **Step 3: Implement** `times.py`.
+- [x] **Step 4: Run the test command.** Expected: `OK`.
+- [x] **Step 5: Commit:** `feat(filing-data): add the filing time rule`
 
 ### Task 2: Client limits as parameters
 
@@ -106,14 +108,14 @@ Columns are strings unless typed. `ts` is `timestamp[us, UTC]`. The five filing 
 - `ledger.py`: `Limits(requests: int, wire_bytes: int)` (frozen dataclass); `STAGE1_LIMITS = Limits(MAX_REQUESTS, MAX_WIRE_BYTES)`; `STAGE2_LIMITS = Limits(20, 50_000_000)`; `budget_spent(usage: Usage, limits: Limits = STAGE1_LIMITS) -> bool`. `MAX_REQUESTS` and `MAX_WIRE_BYTES` stay, so the Stage 1 tests keep their imports.
 - `client.py`: `SecClient(..., limits: Limits = STAGE1_LIMITS)`. `_usage_with_room` (before each attempt) and `_copy_body` (between body pieces) read the instance's limits, and their messages name them (brief T1).
 
-- [ ] **Step 1: Write the failing tests.** `ClientTestCase.make_client(session, **options)` passes `options` to `SecClient`.
+- [x] **Step 1: Write the failing tests.** `ClientTestCase.make_client(session, **options)` passes `options` to `SecClient`.
   - `test_stage2_limits_refuse_the_21st_request`: `fill_ledger(self.ledger, [0] * 20)`; a client with `limits=STAGE2_LIMITS` raises `BudgetExhausted`; `session.calls == []`.
   - `test_stage2_limits_stop_inside_the_stream`: `fill_ledger(self.ledger, [50_000_000 - 3 * MIB])`; a 10 × 1 MiB body raises `BudgetExhausted`; `ledger_usage(self.ledger).wire_bytes <= 50_000_000`; no `dest` and no `.part` file.
   - In `test_budget_rule_matches_the_client`, add: `budget_spent(Usage(19, 0), STAGE2_LIMITS)` is False; `Usage(20, 0)` and `Usage(0, 50_000_000 - ledger.BUDGET_MARGIN + 1)` are True.
-- [ ] **Step 2: Run the test command.** Expected: failures for the three tests.
-- [ ] **Step 3: Implement.**
-- [ ] **Step 4: Run the test command.** Expected: `OK`, with every Stage 1 client test unchanged.
-- [ ] **Step 5: Commit:** `feat(filing-data): take the request and byte limits as parameters`
+- [x] **Step 2: Run the test command.** Expected: failures for the three tests.
+- [x] **Step 3: Implement.**
+- [x] **Step 4: Run the test command.** Expected: `OK`, with every Stage 1 client test unchanged.
+- [x] **Step 5: Commit:** `feat(filing-data): take the request and byte limits as parameters`
 
 ### Task 3: Filing times and provenance in `envelopes`
 
@@ -135,14 +137,15 @@ Values, for each `filings` row:
 - `accepted_at`, `public_at` and `public_rule` come from `accepted_at` and `public_time`, on `ok` rows with a parsed header. On every other row they are null.
 - `parties` and `documents` rows add `record_provenance(filing)` of their filing.
 
-- [ ] **Step 1: Write the failing tests** in `EnvelopeTests`.
+- [x] **Step 1: Write the failing tests** in `EnvelopeTests`.
   - `test_envelopes_one_row_per_sampled_filing` gains the new keys. The parsed row has `source_url` = its `url`, `accepted_at` and `public_at` = `utc(2026, 8, 14, 20, 5, 23)`, `public_rule` `"acceptance"` and `last_modified_at` None (the fixture session sends no `Last-Modified`). The corrupt row has its `source_url`, null times and `public_rule` None. The `not_found` row has its `source_url` and null times. The `parties` and `documents` rows gain `record_provenance` of the parsed filing.
   - `test_filing_times_come_from_the_header_and_the_ledger`: the fetch reply is `FakeResponse(200, [FIXTURE_BYTES], {"Last-Modified": "Fri, 14 Aug 2026 20:06:00 GMT"})`. The filing has `last_modified_at == utc(2026, 8, 14, 20, 6)` and `fetched_at` equal to its `fetches` row. Each `parties` and `documents` row of it has `source_url` = its `url`, `source_sha256 == FIXTURE_SHA256`, and the filing's five times.
   - `test_read_provenance_needs_filings`: with no `filings` table, `read_provenance` raises `FileNotFoundError`, and the message holds `envelopes`. Add `provenance` to the name set of the import test.
-- [ ] **Step 2: Run the test command.** Expected: failures in `EnvelopeTests`.
-- [ ] **Step 3: Implement.**
-- [ ] **Step 4: Run the test command.** Expected: `OK`.
-- [ ] **Step 5: Commit:** `feat(filing-data): add filing times and sources to the envelope tables`
+- [x] **Step 2: Run the test command.** Expected: failures in `EnvelopeTests`.
+- [x] **Step 3: Implement.**
+- [x] **Step 4: Run the test command.** Expected: `OK`.
+- [x] **Step 5: Commit:** `feat(filing-data): add filing times and sources to the envelope tables`
+  > Deviation: the task review added two tests, one for `last_modified_at` on an `ok` filing that does not parse and one for the `private_to_public` and `no_acceptance` rules (`1b56c1b`).
 
 ### Task 4: The index columns
 
@@ -160,15 +163,15 @@ Values, for each `filings` row:
   - `index.run_index(layout: Layout, zip_path: Path) -> list[dict]` writes `index` (with `INDEX_SHA256` and `INDEX_SIZE`) and returns its rows. `sample.run_sample(layout: Layout) -> list[dict]` writes `sample` and returns its rows. The CLI's `index` and `sample` commands call them and print what they printed before.
   - `run_envelopes` re-writes `index` when the table exists. The rows of an accession in `filings` take `filing_times` of that filing. Every other row and column stays as it is, in the same order.
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
   - `test_keeps_every_row` gains `source_url` `INDEX_URL`, `source_sha256` the fixture zip's SHA-256, `index_built_at` None, `index_data_through` `"September 30, 2026"`, and the two receipt constants.
   - `test_extended_timestamp_gives_the_built_time`: write `master.idx` with `ZipInfo("master.idx", date_time=(2026, 10, 31, 3, 49, 36))` and `extra = struct.pack("<HHBI", 0x5455, 5, 3, 1793432975)`. `index_built_at == datetime(2026, 10, 31, 7, 49, 35, tzinfo=UTC)`. With no `extra`, it is None.
   - `test_envelopes_writes_filing_times_on_sampled_index_rows` (in `test_commands.py`): `index` has two rows for sampled accession A (two CIKs) and one row for an accession that was not sampled. After `fetch` and `envelopes`, both A rows carry `filing_times` of A's `filings` row. The other row has null filing times. Every other column and the row order equal the table written before.
   - The existing `index` and `sample` command tests pass through `run_index` and `run_sample`.
-- [ ] **Step 2: Run the test command.** Expected: failures in the new and extended tests.
-- [ ] **Step 3: Implement.**
-- [ ] **Step 4: Run the test command.** Expected: `OK`.
-- [ ] **Step 5: Commit:** `feat(filing-data): add the index source and build times`
+- [x] **Step 2: Run the test command.** Expected: failures in the new and extended tests.
+- [x] **Step 3: Implement.**
+- [x] **Step 4: Run the test command.** Expected: `OK`.
+- [x] **Step 5: Commit:** `feat(filing-data): add the index source and build times`
 
 ### Task 5: Facts and ownership provenance
 
@@ -180,16 +183,16 @@ Values, for each `filings` row:
   - `ownership.py`: `XmlDocument(filename: str | None, text: bytes)` (frozen dataclass). `xml_document(raw, submission, root) -> XmlDocument | None` gives the document that it finds today, now with that document's filename.
   - `facts` rows add `read_provenance(layout)[accession]`. `ownership` rows add the same, plus `source_document` (the `XmlDocument.filename`). Both commands read `filings` (C4).
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
   - `FactsRootTestCase.write_tables` also writes a `filings` table, with one row for each added filing. Each row has `source_url` = its `url`, `sha256` = `f"sha-{draw}"`, and five distinct fixed times. `FactsRootTestCase.provenance(accession) -> dict` returns `record_provenance` of that row. `fact_row(accession, source, fact, provenance)` and `ownership_row(accession, form_type, row, provenance, source_document)` merge their extra arguments, and each call site passes `self.provenance(...)` (and `"doc.xml"` for ownership).
   - `test_facts_carry_their_filing_provenance`: two filings with different times; each fact row carries its own filing's `source_url`, `source_sha256` and five times.
   - `test_ownership_names_its_source_document`: a Form 4 row has `source_document == "doc.xml"` and its filing's provenance.
   - `test_xml_document_gives_its_filename`: `xml_document(...).filename` is the found document's `<FILENAME>`. The 11 existing calls of `xml_document` read `.text`.
   - `test_facts_and_ownership_need_filings`: with no `filings` table, `run_facts` and `run_ownership` each raise `FileNotFoundError`, and the message holds `envelopes`.
-- [ ] **Step 2: Run the test command.** Expected: failures in `test_xbrl` and `test_ownership`.
-- [ ] **Step 3: Implement.**
-- [ ] **Step 4: Run the test command.** Expected: `OK`.
-- [ ] **Step 5: Commit:** `feat(filing-data): add sources and filing times to facts and ownership`
+- [x] **Step 2: Run the test command.** Expected: failures in `test_xbrl` and `test_ownership`.
+- [x] **Step 3: Implement.**
+- [x] **Step 4: Run the test command.** Expected: `OK`.
+- [x] **Step 5: Commit:** `feat(filing-data): add sources and filing times to facts and ownership`
 
 ### Task 6: Refetch and the `refetches` table
 
@@ -214,7 +217,7 @@ Values, for each `filings` row:
     - `refetch --out ROOT --accession A [--accession A ...]` needs `SEC_USER_AGENT` (exit 2 without it, as `fetch` does) and imports `fetch` only inside its handler. An unknown accession prints `error: …` to stderr and exits 2. After the walk it prints `<accession>: <outcome>` for each named accession (`not refetched` when it has no `refetches` row), then `stage 2 requests: <n> of 20`.
     - `compare-refetches --out ROOT` prints `refetches: <rows>`.
 
-- [ ] **Step 1: Write the failing tests** in `tests/test_refetch.py`. They use `CommandTestCase`, `FixtureSession` and `sample_row` from `test_commands.py`, and `fill_ledger` and `FakeResponse` from `test_client.py`. Each test first fetches a two-row sample (A and B) in Stage 1. Add `refetches` to the name set of the import test.
+- [x] **Step 1: Write the failing tests** in `tests/test_refetch.py`. They use `CommandTestCase`, `FixtureSession` and `sample_row` from `test_commands.py`, and `fill_ledger` and `FakeResponse` from `test_client.py`. Each test first fetches a two-row sample (A and B) in Stage 1. Add `refetches` to the name set of the import test.
   - `test_refetch_writes_only_under_stage2`: refetch A. `refetched(A)` holds the fixture bytes. The Stage 2 ledger holds 1 request and 1 response. The Stage 1 ledger's bytes, and the names and SHA-256 of the files under `bytes/`, equal what they were before.
   - `test_refetch_refuses_an_unknown_accession`: it raises `ValueError`, the session got no call, and no `stage2` folder exists.
   - `test_refetch_refuses_the_21st_request`: `fill_ledger(layout.stage2_ledger, [0] * 20)`. The refetch of A returns 5 with no session call.
@@ -225,10 +228,11 @@ Values, for each `filings` row:
   - `test_a_failed_refetch_gives_a_row`: a 404 gives `outcome` `not_found`, with null `refetch_sha256` and `sha256_equal`.
   - `test_stage2_never_reaches_the_stage1_tables`: after a refetch with another `Last-Modified`, `envelopes` gives the same `filings` rows as before.
   - CLI: `test_refetch_needs_a_user_agent` (exit 2 and nothing written), and `test_refetch_and_compare_refetches_print`, which uses `FixtureSession` through a patched `fetch.run_refetch`, as `test_commands_print_counts_and_record_steps` does.
-- [ ] **Step 2: Run the test command.** Expected: failures in `test_refetch`.
-- [ ] **Step 3: Implement.**
-- [ ] **Step 4: Run the test command.** Expected: `OK`.
-- [ ] **Step 5: Commit:** `feat(filing-data): add the refetch command and the refetches table`
+- [x] **Step 2: Run the test command.** Expected: failures in `test_refetch`.
+- [x] **Step 3: Implement.**
+- [x] **Step 4: Run the test command.** Expected: `OK`.
+- [x] **Step 5: Commit:** `feat(filing-data): add the refetch command and the refetches table`
+  > Deviation: the CLI refuses only on a new `UnknownAccession` error (a `ValueError` subclass), so an error after a request record exists is not reported as a refusal (`4ec0611`). After the final review, `run_refetch` returns exit 5 when the Stage 2 ledger already counts as spent, before it walks the accessions (`d683628`).
 
 ### Task 7: The Stage 2 report sections
 
@@ -249,16 +253,17 @@ Values, for each `filings` row:
     - **Refetches**: one line for each `refetches` row, with all of its columns. Then `- Stage 2 requests: <n> of 20` and `- Stage 2 wire bytes: <n> of 50000000`, from `ledger_usage(layout.stage2_ledger)` and `STAGE2_LIMITS`. `_cost` stays as it is.
   - `tests/test_report.py`: `build_fixture_root(case: CommandTestCase) -> Path`, which Task 8 uses too.
 
-- [ ] **Step 1: Write the failing tests** in `tests/test_report.py`.
+- [x] **Step 1: Write the failing tests** in `tests/test_report.py`.
   - Add the helper `build_fixture_root(case: CommandTestCase) -> Path`. It writes a zip from `fixtures/master-fixture.idx`, and patches `index.INDEX_SHA256` and `INDEX_SIZE` to that zip until the test ends (`case.enterContext`). Then it runs `run_index`, `run_sample`, `run_fetch` (`FixtureSession`), `run_envelopes`, `run_facts`, `run_ownership`, a `run_refetch` of the first sampled accession, and `run_compare_refetches`. It returns the zip path.
   - `test_report_times_section`: write `filings` directly with four parsed `ok` filings: `acceptance` with a gap of 12 s, `next_opening` with 186 s, `acceptance` with 1,102,799 s, and one whose `public_at` comes 5 s after its `last_modified_at` (a gap of -5 s). Add a fifth whose `public_at` is 1 s before its `accepted_at`, with a null `last_modified_at`. Assert the exact section lines: a null `last_modified_at` 1; least -5 s, median 12 s, largest 1102799 s (over the four with both times); the 1,102,799 s filing is the only one above 1 hour; the -5 s filing is the only one after; the fifth is the only one before.
   - `test_report_provenance_section` (Review Focus 4): from `build_fixture_root`, every table reads `0 rows ... 0 rows`, and `- index rows with filing times: 6`. After an `ok` filing's `accepted_at` is set to null, the `filings` line reads `1 rows of ok filings`, and a `parties` row with a null `source_url` gives `1 rows with a null source_url`.
   - `test_index_rerun_after_envelopes_shows_in_provenance` (Review Focus 5): after `build_fixture_root`, `run_index` runs again. The `index` line counts all 6 index rows under `rows of ok filings with a null accepted_at or fetched_at`, and `- index rows with filing times: 0`.
   - `test_report_refetches_section`: from `build_fixture_root`, there is one row line and `- Stage 2 requests: 1 of 20`.
-- [ ] **Step 2: Run the test command.** Expected: failures in `test_report`.
-- [ ] **Step 3: Implement.**
-- [ ] **Step 4: Run the test command.** Expected: `OK`.
-- [ ] **Step 5: Commit:** `feat(filing-data): report the Stage 2 times, sources and refetches`
+- [x] **Step 2: Run the test command.** Expected: failures in `test_report`.
+- [x] **Step 3: Implement.**
+- [x] **Step 4: Run the test command.** Expected: `OK`.
+- [x] **Step 5: Commit:** `feat(filing-data): report the Stage 2 times, sources and refetches`
+  > Deviation: three existing tests moved their section index by one line, as C11 requires. After the final review, the Times section gained a line for an unreadable `filed_as_of_date`, as C9 says (`7985dff`).
 
 ### Task 8: Rebuild and the Stage 1 column check
 
@@ -278,17 +283,18 @@ Values, for each `filings` row:
   - `check_stage1(layout: Layout) -> tuple[int, list[str]]`: for each table file in `tables_stage1`, sorted by name, the line is `<name>: <compare_table(frozen, live.select(frozen.column_names))>`. A missing `tables-stage1` folder gives `no tables-stage1 folder` and exit 1.
   - CLI: `rebuild --out ROOT --zip PATH` and `check-stage1 --out ROOT` print their lines and return their code. Each one runs inside `record_step`. Neither imports `fetch` or `client`.
 
-- [ ] **Step 1: Write the failing tests** in `tests/test_rebuild.py`. Add `rebuild` to the name set of the import test.
+- [x] **Step 1: Write the failing tests** in `tests/test_rebuild.py`. Add `rebuild` to the name set of the import test.
   - `test_equal_tables_give_exit_0`: after `build_fixture_root`, `run_rebuild` gives `(0, [f"{name}: equal" for name in REBUILT_TABLES])`.
   - `test_a_changed_live_table_gives_exit_1_and_names_it`: re-write the live `parties` with one `name` changed. The code is 1, the `parties` line starts `parties: row 0 column name:`, and every other line is `equal`.
   - `test_rebuild_leaves_the_root_unchanged` (Review Focus 1): map each file under `ROOT` to its SHA-256, except `runs.jsonl`, before and after `cli.main(["rebuild", ...])`. The two maps are equal, and so are both ledgers' line counts.
   - `test_missing_live_table_and_failed_step` (Review Focus 2): with the live `refetches.parquet` deleted, the line is `refetches: no live table` and the code is 1. With `index.INDEX_SIZE` patched to a wrong value, the result is `(1, ["rebuild failed: ValueError: ..."])`. In both cases the `temp_parent` folder is empty afterwards.
   - `test_rebuild_never_loads_requests`: in a subprocess, patch the two index constants to the fixture zip and call `cli.main(["rebuild", ...])` on a fixture root. It prints exit 0, and `'requests' in sys.modules` is False.
   - `test_check_stage1_compares_the_frozen_columns`: write `tables-stage1` as each live table restricted to its Stage 1 columns. The result is `(0, ...)` with every line `equal`. After a Stage 1 value in the live `documents` is changed, the code is 1 and the `documents` line names the row.
-- [ ] **Step 2: Run the test command.** Expected: errors, `sec_filing_data.rebuild` not found.
-- [ ] **Step 3: Implement.**
-- [ ] **Step 4: Run the test command.** Expected: `OK`.
-- [ ] **Step 5: Commit:** `feat(filing-data): add the rebuild and the Stage 1 column check`
+- [x] **Step 2: Run the test command.** Expected: errors, `sec_filing_data.rebuild` not found.
+- [x] **Step 3: Implement.**
+- [x] **Step 4: Run the test command.** Expected: `OK`.
+- [x] **Step 5: Commit:** `feat(filing-data): add the rebuild and the Stage 1 column check`
+  > Deviation: `check_stage1` exits 1 with one line for an empty `tables-stage1` folder, and names the missing frozen columns of a live table instead of raising (`140062a`).
 
 ### Task 9: The live run and the findings
 
@@ -302,19 +308,19 @@ export SEC_USER_AGENT="$(python3 -c 'import json; print(json.load(open("conf/sec
 
 The commands below are short for `uv run --package sec-filing-data sec-filing-data <command> --out "$ROOT"`.
 
-- [ ] **Step 1: Check the preconditions** (spec 6.5 step 1). `pgrep -fl '[s]ec-edgar-ingest|[s]ec-filing-data (fetch|refetch)'` prints nothing. `git -C /Users/lowell/Projects/sec-edgar check-ignore -q filing-data/x` exits 0. The test command gives `OK`. Record `wc -l "$ROOT/fetch-log.jsonl"` (expected 1006), `shasum -a 256 "$ROOT/fetch-log.jsonl"`, and one digest over the Stage 1 bytes: `(cd "$ROOT/bytes" && find . -type f | sort | xargs shasum -a 256 | shasum -a 256)`.
-- [ ] **Step 2: Freeze the Stage 1 tables** (step 2). Run `test ! -e "$ROOT/tables-stage1" && cp -Rp "$ROOT/tables" "$ROOT/tables-stage1"`. It refuses when the folder exists. Expected: the 10 Stage 1 Parquet files.
-- [ ] **Step 3: Refetch** (step 3): `refetch --accession 9999999995-26-002992`. Expected: exit 0, `stage 2 requests: 1 of 20`, and about 1 KB on the wire (Stage 1 took 881 wire bytes). The Stage 1 ledger still has 1006 lines. Any other result follows spec 6.3, "Known effect": stop and ask the owner before any further request.
-- [ ] **Step 4: Re-run the offline steps** (step 4): `index --zip "$ZIP"` (expected `rows: 302499`), `envelopes`, `facts`, `ownership`, `compare-refetches` (expected `refetches: 1`), then `report`. The expected report, from spec 6.1:
+- [x] **Step 1: Check the preconditions** (spec 6.5 step 1). `pgrep -fl '[s]ec-edgar-ingest|[s]ec-filing-data (fetch|refetch)'` prints nothing. `git -C /Users/lowell/Projects/sec-edgar check-ignore -q filing-data/x` exits 0. The test command gives `OK`. Record `wc -l "$ROOT/fetch-log.jsonl"` (expected 1006), `shasum -a 256 "$ROOT/fetch-log.jsonl"`, and one digest over the Stage 1 bytes: `(cd "$ROOT/bytes" && find . -type f | sort | xargs shasum -a 256 | shasum -a 256)`.
+- [x] **Step 2: Freeze the Stage 1 tables** (step 2). Run `test ! -e "$ROOT/tables-stage1" && cp -Rp "$ROOT/tables" "$ROOT/tables-stage1"`. It refuses when the folder exists. Expected: the 10 Stage 1 Parquet files.
+- [x] **Step 3: Refetch** (step 3): `refetch --accession 9999999995-26-002992`. Expected: exit 0, `stage 2 requests: 1 of 20`, and about 1 KB on the wire (Stage 1 took 881 wire bytes). The Stage 1 ledger still has 1006 lines. Any other result follows spec 6.3, "Known effect": stop and ask the owner before any further request.
+- [x] **Step 4: Re-run the offline steps** (step 4): `index --zip "$ZIP"` (expected `rows: 302499`), `envelopes`, `facts`, `ownership`, `compare-refetches` (expected `refetches: 1`), then `report`. The expected report, from spec 6.1:
   - Times: `acceptance: 477`, `next_opening: 23`, `private_to_public: 0`, `no_acceptance: 0`; a null `last_modified_at` 0; least gap 12 s; largest gap 1102799 s; one filing above 1 hour, `0001836875-26-000073`; `public_at` after `last_modified_at` 0; `public_at` before `accepted_at` 0.
   - Provenance: `0 rows ... 0 rows` for each records table, and `- index rows with filing times: 740`.
   - Refetches: the row of `9999999995-26-002992`, with Stage 1 SHA-256 `740252a6178e54e6121c7701084949adabb113f5d002d00814ca9ec098f431f3` and Stage 1 `Last-Modified` 2026-09-18 10:03:06 UTC; then `Stage 2 requests: 1 of 20`.
   - The `EFFECT` row: `uv run --package sec-filing-data python -c "import pyarrow.parquet as pq; r = next(x for x in pq.read_table('$ROOT/tables/filings.parquet').to_pylist() if x['accession_number'] == '9999999995-26-002992'); print(r['public_rule'], r['public_at'].isoformat(), int((r['last_modified_at'] - r['public_at']).total_seconds()))"`. Expected: `next_opening 2026-09-18T10:00:00+00:00 186`.
 
   A result that differs is a problem to fix and record (D1 of plan 10, carried by spec section 3). Then re-run the offline steps.
-- [ ] **Step 5: Check the Stage 1 columns** (step 5): `check-stage1`. Expected: exit 0 and 10 lines `equal`.
-- [ ] **Step 6: Rebuild** (step 6): `rebuild --zip "$ZIP"`. `$ROOT` must be the same absolute path that Stage 1 used, because `fetches.path` holds paths under it. Expected: exit 0 and 11 lines `equal`. Both ledgers' `wc -l` match Steps 1 and 3. The Stage 1 ledger's SHA-256 and the digest over `bytes/` equal their Step 1 values (spec section 2: no Stage 1 byte file or ledger line changed).
-- [ ] **Step 7: Write `specs/sec-filing-data-stage-2-findings.md`** (step 7, spec section 8). Its sections:
+- [x] **Step 5: Check the Stage 1 columns** (step 5): `check-stage1`. Expected: exit 0 and 10 lines `equal`.
+- [x] **Step 6: Rebuild** (step 6): `rebuild --zip "$ZIP"`. `$ROOT` must be the same absolute path that Stage 1 used, because `fetches.path` holds paths under it. Expected: exit 0 and 11 lines `equal`. Both ledgers' `wc -l` match Steps 1 and 3. The Stage 1 ledger's SHA-256 and the digest over `bytes/` equal their Step 1 values (spec section 2: no Stage 1 byte file or ledger line changed).
+- [x] **Step 7: Write `specs/sec-filing-data-stage-2-findings.md`** (step 7, spec section 8). Its sections:
   - Run record: root and commit.
   - SEC documentation: spec section 4, repeated with its URLs.
   - Times: the rule counts, the gap, and the 10-Q `0001836875-26-000073`. Its copy changed after acceptance, with no sign in its header.
@@ -325,6 +331,25 @@ The commands below are short for `uv run --package sec-filing-data sec-filing-da
   - Measured cost: requests and wire bytes against the Stage 2 limits, wall time from `runs.jsonl`, and disk use.
   - Problems found and fixed.
   - Exit check: spec section 8's table, filled, and the anti-goal checks of Steps 4 and 6 (`public_at` before `accepted_at` 0, and the Stage 1 ledger and bytes unchanged).
-- [ ] **Step 8: Commit:** `docs(specs): record the Stage 2 run`
+- [x] **Step 8: Commit:** `docs(specs): record the Stage 2 run`
+  > Deviation: the live run came before the final whole-branch review. Two review fixes landed after it, and `report` was run again on the live root (see the findings, "Problems found and fixed"). The findings file also has a median gap (27 s), which the plan did not state.
 
 The Plan Completion Protocol then ticks the V6 refetch item and the V7 and V8 item in `specs/deferred_items.md`, section `10-sec-filing-data-stage-1 — 2026-11-17`. It also appends the D6 item with spec section 11's wording and `Revisit if`.
+
+## Handoff to later stages
+
+Roadmap departure (spec section 11, D5): Stage 2's Consumes line names Stage 1's outputs only. Stage 2 also used one record of the parked store, the `master.zip` receipt, as three committed constants in `index.py` (`INDEX_URL`, `INDEX_RECEIVED_AT`, `INDEX_LAST_MODIFIED_AT`). No code or test reads the receipt. The roadmap's Stage 2 Consumes line was not amended: that is derive-roadmap's job at the resume.
+
+- **Stage 3 (manifests, hash-bound evidence, release pinning).** Consumes, as built:
+  - Tables under `/Users/lowell/Projects/sec-edgar/filing-data/2026Q3/tables/`: `index`, `sample`, `fetches`, `filings`, `parties`, `documents`, `facts`, `facts_status`, `ownership`, `ownership_status` and `refetches`. Each records table (`index`, `filings`, `parties`, `documents`, `facts`, `ownership`) carries `source_url`, a source SHA-256 (`source_sha256`, and `sha256` on `filings`) and five filing times (`accepted_at`, `public_at`, `public_rule`, `last_modified_at`, `fetched_at`, all UTC). `ownership` also has `source_document`, the filename of the XML document that gave the record. `index` also has `index_built_at`, `index_data_through`, `index_received_at` and `index_last_modified_at`. Column order is in `tables.py` (`SCHEMAS`).
+  - The frozen Stage 1 tables in `tables-stage1/`, and `check-stage1`, which compares their columns with the live tables. The Stage 2 ledger and refetch copy are under `stage2/` (`fetch-log.jsonl`, `refetch/<accession>.txt`).
+  - `rebuild --out ROOT --zip PATH` re-creates every table in a temporary folder and compares it with the live table. It reads bytes and both ledgers in place, so Stage 3 can treat the retained bytes plus the ledgers as the inputs of a manifest. `Layout(root, tables_dir)` points a command at another tables folder.
+  - Differs from the roadmap's Produces: the runs record no code version. `runs.jsonl` has a step name and times only, and the findings name commit `140062a`. Stage 3's pinning has nothing to read from Stage 1 or 2 runs.
+  - Traps: `rebuild --out` must repeat the absolute root that Stage 1 used, because `fetches.path` stores that prefix. Run order is `index`, `sample`, `fetches`, `envelopes`, `facts`, `ownership`, `compare-refetches`: `envelopes` rewrites `index` and `facts` and `ownership` refuse to run without `filings`. A later `index` run alone resets the 740 sampled `index` rows' times to null, and the report's Provenance section shows it. `refetches` takes both SHA-256 values from the ledgers and does not hash the kept files again.
+  - Deferred into Stage 3: the re-hash of kept refetch files, in `specs/deferred_items.md`, section `11-sec-filing-data-stage-2-provenance-and-timing — 2026-11-18`.
+- **Stage 4 (as-of views).** Consumes, as built:
+  - Two bounds for each sampled filing: `public_at` is the earliest time that the filing could have been public, by rule. `last_modified_at` is the `Last-Modified` of the stored copy, the latest time by which it existed. The rule time is never labeled observed, and `Last-Modified` is never labeled the public time (spec 6.1). A view that must never show a filing early reads `last_modified_at`.
+  - `public_rule` has four values. On the sample: `acceptance` 477, `next_opening` 23, `private_to_public` 0 and `no_acceptance` 0. A `private_to_public` filing has a null `public_at`. The rule rolls over by calendar day and needs no holiday calendar, so `public_at` is a lower bound.
+  - The 10-Q `0001836875-26-000073` shows that a copy can change after acceptance with no sign in its header: accepted 2026-08-14, last modified 2026-08-27. The only `Last-Modified` gap above 1 hour on the sample is this filing, and 499 of 500 gaps are 12 s to 432 s.
+  - Times exist for the 500 sampled accessions only: 740 `index` rows carry them, and the other 301,759 `index` rows are null (spec section 2, Non-goals).
+  - Deferred, in `specs/deferred_items.md`, section `11-sec-filing-data-stage-2-provenance-and-timing — 2026-11-18`: whether an archive copy changes after a correction (spec section 11, D6). The V6 refetch could not answer it, because both copies were taken after the change.
