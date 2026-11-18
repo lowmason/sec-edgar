@@ -12,6 +12,7 @@
 
 ## Global Constraints
 
+- No spec retires with this plan. `specs/deferred_items.md` is the live backlog and stays in place. At Plan Completion step 5, run `deferral_scan.py scan` on this plan only.
 - Tag: `ingest-parked-2026-11-16`, annotated, pushed to `origin` once. Never move or delete it after the push.
 - Keep all of `specs/`. The only edits there are the findings lines in Task 2 and the pointer lines in Task 4. Retired plans 10 and 11, ADR 0001 and `specs/evidence/` (whose scripts import `sec_edgar_ingest`) stay byte-unchanged.
 - Keep the root `constraint-dependencies = ["pyarrow==25.0.1", "requests==2.34.2"]` byte-unchanged.
@@ -225,7 +226,7 @@ git commit -m "docs(specs): point the old-engine deferred items at the parked-en
 
 The Plan Completion Protocol ticks row 4 with `→ done <date> (plan 12)` and retires this plan inside the PR.
 
-**Before you enable auto-merge:**
+**Before you open the PR** (the PR lifecycle turns on auto-merge as soon as the PR opens):
 
 ```bash
 git fetch origin
