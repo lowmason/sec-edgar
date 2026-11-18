@@ -1,6 +1,8 @@
 # Deferred items
 
 ## 4-sec-filing-index-bounded-drain — 2026-10-27
+Plan 12 removed the parked engine from `main`. The paths that these items name under `packages/sec-edgar-ingest/`,
+`conf/`, `scripts/` (except `check-sec-filing-data.sh`), `docs/runbooks/` and `.sdd/` are at tag `ingest-parked-2026-11-16`.
 - [x] Per-member cost (owner decision D2, plan 4): the owner does not accept the measured
       per-member cost. Full-size quarterly members took more than 9,000 s, and no reserve fits
       them under the 3,300 s launcher default. A per-member-cost roadmap stage goes before
@@ -50,6 +52,8 @@
       lands with the full gate green.
 
 ## 5-sec-filing-index-per-member-cost — 2026-10-28
+Plan 12 removed the parked engine from `main`. The paths that these items name under `packages/sec-edgar-ingest/`,
+`conf/`, `scripts/` (except `check-sec-filing-data.sh`), `docs/runbooks/` and `.sdd/` are at tag `ingest-parked-2026-11-16`.
 - [ ] Review Minor (plan 5 Task 10, task review of the runtime race fix 17d78da; see
       specs/plans/completed/5-sec-filing-index-per-member-cost.md, Decision D8): in `run_child`,
       packages/sec-edgar-ingest/src/sec_edgar_ingest/runtime.py, the two group-existence probes
@@ -258,6 +262,8 @@
       1b generation, or a later stage plans to select D5 after a live 1b run.
 
 ## 6-sec-filing-index-member-completion — 2026-10-30
+Plan 12 removed the parked engine from `main`. The paths that these items name under `packages/sec-edgar-ingest/`,
+`conf/`, `scripts/` (except `check-sec-filing-data.sh`), `docs/runbooks/` and `.sdd/` are at tag `ingest-parked-2026-11-16`.
 - [ ] The completion conflict names no cause when the evaluation has no gap (plan 6 Task 3, from
       the whole-branch review; the owner was told at the Task 4 checkpoint. See
       specs/plans/completed/6-sec-filing-index-member-completion.md). In
@@ -272,6 +278,8 @@
       the cause is not visible from the gaps or the obligation rows.
 
 ## 2-sec-filing-index-ingestion-spec — 2026-10-31
+Plan 12 removed the parked engine from `main`. The paths that these items name under `packages/sec-edgar-ingest/`,
+`conf/`, `scripts/` (except `check-sec-filing-data.sh`), `docs/runbooks/` and `.sdd/` are at tag `ingest-parked-2026-11-16`.
 - [ ] Parser/schema design for `conflicting duplicate logical key` (plan 2 Tasks 5 and 7, owner
       ruled defer). All 28 quarterly sources 2020Q1–2026Q4 and 7 daily sources quarantine on it.
       The raw enumeration shows one accession carrying several form types (SC 13E3 with SC TO-T).
@@ -297,6 +305,8 @@
       a bounded-end command on a store that holds quarantined members.
 
 ## 9-sec-filing-index-pre-dispatch-cost — 2026-11-15
+Plan 12 removed the parked engine from `main`. The paths that these items name under `packages/sec-edgar-ingest/`,
+`conf/`, `scripts/` (except `check-sec-filing-data.sh`), `docs/runbooks/` and `.sdd/` are at tag `ingest-parked-2026-11-16`.
 - [ ] Registered-member accumulation (spec §2.2 of `specs/completed/sec-filing-index-pre-dispatch-cost.md`;
       plan 9 Handoff, owner ruled defer to Stage 5): registered members never retire. They grow by about 55 for each
       business day with a new listing, which is about 13,750 members in a year of daily runs. On the 2a1 release each
@@ -322,6 +332,8 @@
       Size: quick-fix. Done when: each gap has a test, or the owner drops it with a reason.
 
 ## sec-filing-index-ingestion-roadmap — 2026-11-16
+Plan 12 removed the parked engine from `main`. The paths that these items name under `packages/sec-edgar-ingest/`,
+`conf/`, `scripts/` (except `check-sec-filing-data.sh`), `docs/runbooks/` and `.sdd/` are at tag `ingest-parked-2026-11-16`.
 - [ ] Stage 2b, baseline coverage on the 2a1 release (parked roadmap `specs/completed/sec-filing-index-ingestion-roadmap.md`,
       Stage 2b entry; parked at the roadmap reset, 2026-11-16): a revised G2 finding for the 28 quarterly units
       2020Q1–2026Q4 and the 7 daily duplicate-key sources, on release `f414caf8…`. It is blocked. The 2026-11-15 folder
@@ -352,6 +364,8 @@
       verification, and accepted scheduled daily and reconciliation runs link to durable results.
 
 ## sec-filing-platform-roadmap — 2026-11-16
+Plan 12 removed the parked engine from `main`. The paths that these items name under `packages/sec-edgar-ingest/`,
+`conf/`, `scripts/` (except `check-sec-filing-data.sh`), `docs/runbooks/` and `.sdd/` are at tag `ingest-parked-2026-11-16`.
 - [ ] Stage 1, platform package and envelope parser (parked roadmap `specs/completed/sec-filing-platform-roadmap.md`,
       Stage 1 entry; plan 3, `specs/plans/completed/3-sec-filing-platform-stage-1.md`): the work ran to the end on
       branch `platform-stage1` (`12cb8e0`, 13 commits, package `sec-edgar-filings`, 60 fixture tests). The owner retired
