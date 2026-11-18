@@ -5,7 +5,7 @@ from operator import itemgetter
 from sec_filing_data.envelope import EnvelopeError, Submission, parse_submission
 from sec_filing_data.layout import Layout
 from sec_filing_data.ledger import build_fetches, ok_responses
-from sec_filing_data.provenance import record_provenance
+from sec_filing_data.provenance import filing_times, record_provenance
 from sec_filing_data.tables import read_table, write_table
 from sec_filing_data.times import accepted_at, last_modified_at, public_time
 
@@ -26,6 +26,9 @@ _NO_TIMES = dict.fromkeys(["accepted_at", "public_at", "public_rule", "last_modi
 
 def run_envelopes(layout: Layout) -> int:
     """Write `filings` (one row per sampled filing), `parties` and `documents`.
+
+    When `index` exists, it is re-written with the filing times on the rows of sampled
+    accessions.
 
     It reads `fetches` from its table, or builds it from the ledger when the table is
     missing. Only `ok` filings are parsed. A filing that is not `ok` gets its outcome as
@@ -68,7 +71,22 @@ def run_envelopes(layout: Layout) -> int:
     write_table(layout, "filings", filings)
     write_table(layout, "parties", parties)
     write_table(layout, "documents", documents)
+    _write_index_times(layout, filings)
     return 0
+
+
+def _write_index_times(layout: Layout, filings: list[dict]) -> None:
+    """Re-write `index`, when it exists, with the filing times on the rows of sampled accessions.
+
+    Every other row and column stays as it was, in the same order.
+    """
+    if not layout.table("index").exists():
+        return
+    times = {filing["accession_number"]: filing_times(filing) for filing in filings}
+    rows = read_table(layout, "index").to_pylist()
+    for row in rows:
+        row.update(times.get(row["accession_number"], {}))
+    write_table(layout, "index", rows)
 
 
 def _read_fetches(layout: Layout) -> list[dict]:

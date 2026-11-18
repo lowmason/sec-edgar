@@ -40,6 +40,13 @@ SCHEMAS: dict[str, pa.Schema] = {
         ("date_filed", pa.date32()),
         "filename",
         "accession_number",
+        "source_url",
+        "source_sha256",
+        ("index_built_at", _TIMESTAMP),
+        "index_data_through",
+        ("index_received_at", _TIMESTAMP),
+        ("index_last_modified_at", _TIMESTAMP),
+        *_FILING_TIMES,
     ),
     "sample": _schema(
         ("draw", pa.int32()),

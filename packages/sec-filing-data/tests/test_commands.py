@@ -32,10 +32,10 @@ from sec_filing_data.ledger import (
     ok_responses,
     read_ledger,
 )
-from sec_filing_data.provenance import read_provenance, record_provenance
+from sec_filing_data.provenance import filing_times, read_provenance, record_provenance
 from sec_filing_data.report import run_report
 from sec_filing_data.submissions import run_envelopes
-from sec_filing_data.tables import SCHEMAS, read_table, write_table
+from sec_filing_data.tables import FILING_TIME_COLUMNS, SCHEMAS, read_table, write_table
 from tests.test_client import USER_AGENT, FakeClock, FakeResponse, fill_ledger
 
 FIXTURE_BYTES = (Path(__file__).parent / "fixtures" / "submission-13f.txt").read_bytes()
@@ -617,6 +617,79 @@ class EnvelopeTests(CommandTestCase):
                 self.assertEqual(child["source_url"], rows[0]["url"])
                 self.assertEqual(child["source_sha256"], FIXTURE_SHA256)
                 self.assertEqual({key: child[key] for key in times}, times)
+
+    def test_envelopes_writes_filing_times_on_sampled_index_rows(self):
+        rows = self.write_sample(standard_sample()[:2])
+        sampled, other_sample = (row["accession_number"] for row in rows)
+        unsampled = accession_of(99)
+        receipt = {
+            "source_url": "https://example.test/master.zip",
+            "source_sha256": "ab" * 32,
+            "index_built_at": utc(2026, 10, 31, 7, 49, 35),
+            "index_data_through": "September 30, 2026",
+            "index_received_at": utc(2026, 10, 31, 17, 54, 33),
+            "index_last_modified_at": utc(2026, 10, 31, 7, 50, 9),
+        }
+        index_rows = [
+            {**index_row(1), "accession_number": unsampled, "line_number": 1},
+            {**index_row(2), "accession_number": sampled, "line_number": 2, "cik": 1000},
+            {**index_row(3), "accession_number": other_sample, "line_number": 3},
+            {**index_row(4), "accession_number": sampled, "line_number": 4, "cik": 2000},
+            {**index_row(5), "accession_number": unsampled, "line_number": 5, "cik": 3000},
+        ]
+        write_table(self.layout, "index", [{**row, **receipt} for row in index_rows])
+        before = read_table(self.layout, "index")
+        reply = FakeResponse(
+            200, [FIXTURE_BYTES], {"Last-Modified": "Fri, 14 Aug 2026 20:06:00 GMT"}
+        )
+        self.fetch(FixtureSession({rows[0]["url"]: reply}))
+        run_envelopes(self.layout)
+
+        after = read_table(self.layout, "index")
+        filings = {
+            row["accession_number"]: row for row in read_table(self.layout, "filings").to_pylist()
+        }
+        # The sampled filings differ, so a swap of one accession's times for another's shows.
+        self.assertEqual(filings[sampled]["last_modified_at"], utc(2026, 8, 14, 20, 6))
+        self.assertIsNone(filings[other_sample]["last_modified_at"])
+        self.assertNotEqual(filings[sampled]["fetched_at"], filings[other_sample]["fetched_at"])
+        self.assertEqual(after.schema, SCHEMAS["index"])
+        self.assertEqual(after.num_rows, 5)
+        after_rows = after.to_pylist()
+        no_times = dict.fromkeys(FILING_TIME_COLUMNS)
+        for row, was in zip(after_rows, before.to_pylist(), strict=True):
+            times = {name: row[name] for name in FILING_TIME_COLUMNS}
+            with self.subTest(line_number=row["line_number"]):
+                if row["accession_number"] == unsampled:
+                    self.assertEqual(times, no_times)
+                else:
+                    self.assertEqual(times, filing_times(filings[row["accession_number"]]))
+                    self.assertIsNotNone(times["fetched_at"])
+                # Every other column, and the order of the rows, stay as written before.
+                self.assertEqual(
+                    {key: value for key, value in row.items() if key not in FILING_TIME_COLUMNS},
+                    {key: value for key, value in was.items() if key not in FILING_TIME_COLUMNS},
+                )
+        self.assertEqual([row["line_number"] for row in after_rows], [1, 2, 3, 4, 5])
+        self.assertEqual(
+            [row["cik"] for row in after_rows if row["accession_number"] == sampled], [1000, 2000]
+        )
+        self.assertEqual(
+            after_rows[1]["accepted_at"], utc(2026, 8, 14, 20, 5, 23)
+        )
+        self.assertEqual(after_rows[1]["public_rule"], "acceptance")
+        self.assertEqual(after_rows[1]["last_modified_at"], utc(2026, 8, 14, 20, 6))
+        self.assertEqual(after_rows[3]["last_modified_at"], utc(2026, 8, 14, 20, 6))
+        self.assertIsNone(after_rows[2]["last_modified_at"])
+        self.assertEqual(after_rows[2]["fetched_at"], filings[other_sample]["fetched_at"])
+
+    def test_envelopes_without_an_index_table_writes_none(self):
+        self.write_sample(standard_sample()[:1])
+        self.fetch(FixtureSession())
+
+        run_envelopes(self.layout)
+
+        self.assertFalse(self.layout.table("index").exists())
 
     def test_last_modified_is_kept_for_an_ok_filing_that_does_not_parse(self):
         rows = self.write_sample(standard_sample()[:1])

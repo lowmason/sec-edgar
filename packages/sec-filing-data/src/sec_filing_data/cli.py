@@ -10,7 +10,7 @@ from pathlib import Path
 from sec_filing_data import facts, index, ownership, report, sample, submissions
 from sec_filing_data.layout import Layout, record_step
 from sec_filing_data.ledger import FETCH_OUTCOMES
-from sec_filing_data.tables import read_table, write_table
+from sec_filing_data.tables import read_table
 
 USER_AGENT_VARIABLE = "SEC_USER_AGENT"
 
@@ -18,10 +18,7 @@ USER_AGENT_VARIABLE = "SEC_USER_AGENT"
 def _run_index(args: argparse.Namespace) -> int:
     layout = Layout(Path(args.out))
     with record_step(layout, "index"):
-        rows = index.read_index(
-            Path(args.zip), sha256=index.INDEX_SHA256, size=index.INDEX_SIZE
-        )
-        write_table(layout, "index", rows)
+        rows = index.run_index(layout, Path(args.zip))
     print(f"rows: {len(rows)}")
     return 0
 
@@ -29,8 +26,7 @@ def _run_index(args: argparse.Namespace) -> int:
 def _run_sample(args: argparse.Namespace) -> int:
     layout = Layout(Path(args.out))
     with record_step(layout, "sample"):
-        rows = sample.draw_sample(read_table(layout, "index").to_pylist())
-        write_table(layout, "sample", rows)
+        rows = sample.run_sample(layout)
     strata = Counter(row["stratum"] for row in rows)
     quota_forms = Counter(row["form_type"] for row in rows if row["stratum"] == "quota")
     for name in sample.STRATA:
