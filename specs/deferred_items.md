@@ -454,6 +454,7 @@
       it parked now and remove it after Stage 2 (2026-11-18, "Label now, delete after Stage 2 (Recommended)"). Size:
       plan. Done when: `main` holds no `sec-edgar-ingest` code, a tag marks the last commit that held it, and
       `scripts/check-sec-filing-data.sh` passes.
+      → planned 2026-11-18: specs/plans/12-remove-parked-sec-edgar-ingest.md
 
 ## 11-sec-filing-data-stage-2-provenance-and-timing — 2026-11-18
 - [ ] Whether an EDGAR archive copy changes after a correction (spec `specs/completed/sec-filing-data-stage-2-provenance-and-timing.md`,
