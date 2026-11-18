@@ -20,7 +20,7 @@ and the measured cost.
 - Input: the same `master.zip` that Stage 1 read, in place, under `data/objects/raw/` in the main checkout.
   `index` checked its size and SHA-256 (`526d2dbf…`) before it parsed.
 - User-Agent: `sec.user_agent` from `conf/sec-edgar.json`, passed in `SEC_USER_AGENT`. The value is not
-  copied here.
+  copied here. Plan 12 removed `conf/` from `main`. The file is at tag `ingest-parked-2026-11-16`.
 - Before the run: no other SEC client was running, and `filing-data/` was git-ignored. The Stage 1 ledger had
   1,006 lines (SHA-256 `c348d7d4…`). One digest over the files of `bytes/` was `c854e7e5…`.
 - The Stage 1 tables were copied once to `tables-stage1/` (10 Parquet files) before any step changed a table.

@@ -1,9 +1,6 @@
 # sec-edgar
 
-This repository is one uv workspace with two Python packages:
-
-- `sec-filing-data` (live): makes plain tables from the SEC filings of one quarter, 2026Q3.
-- `sec-edgar-ingest` (parked on 2026-11-16): the older filing-index ingestion engine. No current output depends on it. It will be removed from `main` under a git tag after Stage 2.
+This repository is one uv workspace with one Python package, `sec-filing-data`. It makes plain tables from the SEC filings of one quarter, 2026Q3.
 
 The work follows the [roadmap](specs/sec-filing-data-roadmap.md). Stages 1 and 2 are complete. Their results are in the [Stage 1 findings](specs/sec-filing-data-stage-1-findings.md) and the [Stage 2 findings](specs/sec-filing-data-stage-2-findings.md). Stage 2 added the source, the SHA-256 and the filing times to each record. Its [spec](specs/completed/sec-filing-data-stage-2-provenance-and-timing.md) and [plan](specs/plans/completed/11-sec-filing-data-stage-2-provenance-and-timing.md) are retired.
 
@@ -57,7 +54,11 @@ Stage 2 added four commands:
 
 `facts` and `ownership` read the `filings` table, so run them after `envelopes`. `envelopes` also writes the filing times on the sampled rows of `index`, so a later `index` run alone resets them to null.
 
-The `fetch` command needs the `SEC_USER_AGENT` environment variable. The SEC asks for a User-Agent that names the requester and gives a contact address. Without the variable, `fetch` exits with code 2. The live runs take the value from `sec.user_agent` in `conf/sec-edgar.json`.
+The `fetch` command needs the `SEC_USER_AGENT` environment variable. The SEC asks for a User-Agent that names the requester and gives a contact address. Without the variable, `fetch` exits with code 2. Live runs take the value from `sec.user_agent` in `conf/sec-edgar.json` at tag `ingest-parked-2026-11-16`, so the value stays out of the files on `main`. This command sets it in any checkout or worktree:
+
+```bash
+export SEC_USER_AGENT="$(git show ingest-parked-2026-11-16:conf/sec-edgar.json | python3 -I -c 'import json, sys; print(json.load(sys.stdin)["sec"]["user_agent"])')"
+```
 
 The `fetch` command keeps the Stage 1 budget. It sends at most 1,500 requests and 5 GB, and it starts each request at least 0.34 s after the one before. It records each request in `ROOT/fetch-log.jsonl`.
 
@@ -73,21 +74,6 @@ All output is under `ROOT`:
 - `runs.jsonl`: the start and end time of each step.
 - `fetch.lock`: the lock that stops two `fetch` runs at the same time.
 
-## sec-edgar-ingest (parked)
+## sec-edgar-ingest (removed)
 
-The roadmap reset parked this package on 2026-11-16. Do not use its code or its store as an input to `sec-filing-data`. The text below describes it as it was when it was parked.
-
-A native local fork of SEC filing-index ingestion, distribution/import `sec-edgar-ingest` / `sec_edgar_ingest` version 0.2.0. It retains immutable SEC index originals, transforms validated observations, and publishes captured per-quarter Parquet generations with reconciliation, withdrawal approval and recorded rollback.
-
-The first supported host is this Mac: CPython 3.14, macOS arm64, and a native filesystem with working SQLite locking and atomic filesystem operations. Runtime dependencies are Requests 2.34.2, PyArrow 25.0.1 and their exact locked transitives. No cloud SDK, CLI, container service or cloud fallback is required.
-
-Start with [native setup](docs/runbooks/native-setup.md), then [manual local ingestion](docs/runbooks/local-ingestion.md). Keep [recovery](docs/runbooks/local-recovery.md) and [release upgrades](docs/runbooks/release-upgrades.md) with operational evidence. Dependencies/artifacts are prepared explicitly before the offline checks:
-
-```sh
-uv sync --locked
-sh scripts/check-sec-edgar-ingest.sh
-```
-
-The complete check fails if its declared offline artifacts are absent. Test-only `SEC_LOCAL_PROOF_CACHE` and `SEC_LOCAL_PROOF_CATALOG` are described in setup. Ingestion uses an immutable non-editable installed release and never syncs dependencies. No scheduling or notifications are installed.
-
-L01–L11/L13 have [renewed passing offline evidence](specs/evidence/local-port/offline-renewal-task15.md). The separate [genuine SEC acceptance record](specs/evidence/local-port/sec-acceptance.md) records an L12 pass established by a reviewed supplemental offline adjudication of the preserved genuine attempt; the original run and verification remain incomplete with exit 12. This bounded result does not establish historical coverage or authorize further live runs. The preserved generated default config still references the old `900952a8…` release and was not selected for this acceptance case; further operation requires explicit reviewed release/config selection, budgets and operating gates.
+The roadmap reset parked the older filing-index engine, `sec-edgar-ingest`, on 2026-11-16, and plan 12 removed it from `main`. Tag `ingest-parked-2026-11-16` holds its last state: `packages/sec-edgar-ingest/`, `conf/`, its scripts in `scripts/`, `docs/runbooks/` and `.sdd/`. To read a file, run `git show ingest-parked-2026-11-16:<path>`. Its specs, plans and evidence stay in `specs/`. Do not use its code or its store as an input to `sec-filing-data`.
