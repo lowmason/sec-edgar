@@ -1,5 +1,7 @@
 # Remove the Parked sec-edgar-ingest Engine Implementation Plan
 
+**Status: COMPLETE (2026-11-18)** — executed via executing-plans; nothing deferred
+
 > **For agentic workers:** REQUIRED SUB-SKILL: implement this plan task-by-task via subagent-driven-development (the default) — or executing-plans when your human partner chose inline execution at the handoff. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Remove the parked `sec-edgar-ingest` engine and its support files from `main`, under an annotated tag that holds their last state.
@@ -54,7 +56,7 @@
 **Interfaces:**
 - Produces: tag `ingest-parked-2026-11-16` on `origin`. Tasks 2 and 4 and the merge gate name it.
 
-- [ ] **Step 1: Start from current `main` and save the export baseline**
+- [x] **Step 1: Start from current `main` and save the export baseline**
 
 ```bash
 git fetch origin && git rebase origin/main
@@ -63,7 +65,7 @@ uv export --package sec-filing-data --frozen --no-dev --no-emit-workspace > "$TM
 
 Expected: `git rev-parse HEAD` equals `git rev-parse origin/main`, and the export has 124 lines. It names certifi 2026.7.22, charset-normalizer 3.5.2, idna 3.20, pyarrow 25.0.1, requests 2.34.2 and urllib3 2.8.0, each with hashes.
 
-- [ ] **Step 2: Create and push the tag**
+- [x] **Step 2: Create and push the tag**
 
 ```bash
 git tag -a ingest-parked-2026-11-16 -m "sec-edgar-ingest as parked on 2026-11-16: the last state of the engine, conf/, its scripts, docs/runbooks/ and .sdd/ on main (plan 12)" origin/main
@@ -72,7 +74,7 @@ git push origin refs/tags/ingest-parked-2026-11-16
 
 Expected: `git ls-remote --tags origin refs/tags/ingest-parked-2026-11-16` prints one line. `git rev-parse ingest-parked-2026-11-16:packages/sec-edgar-ingest/pyproject.toml` prints `ac75782d29110eba679d947e00eb78c8182b4b76`.
 
-- [ ] **Step 3: Remove the package and edit the root `pyproject.toml`**
+- [x] **Step 3: Remove the package and edit the root `pyproject.toml`**
 
 Run `git rm -r -q packages/sec-edgar-ingest`. In `pyproject.toml`, change only these:
 - `description` becomes `"SEC filing data workspace: sec-filing-data"`.
@@ -82,12 +84,12 @@ Run `git rm -r -q packages/sec-edgar-ingest`. In `pyproject.toml`, change only t
 
 Leave `[tool.uv]` byte-unchanged.
 
-- [ ] **Step 4: Regenerate the lock**
+- [x] **Step 4: Regenerate the lock**
 
 Run: `uv lock`
 Expected: `Removed sec-edgar-ingest v0.2.0`. `git diff --numstat uv.lock` shows `0	22	uv.lock`, so the diff only deletes lines. `grep -c sec-edgar-ingest uv.lock` prints `0`.
 
-- [ ] **Step 5: Prove the live package's pins did not move**
+- [x] **Step 5: Prove the live package's pins did not move**
 
 ```bash
 uv export --package sec-filing-data --frozen --no-dev --no-emit-workspace | diff "$TMPDIR/plan12-export-before.txt" - && echo export-same
@@ -97,7 +99,7 @@ sh scripts/check-sec-filing-data.sh
 
 Expected: `export-same`. The constraints block lists `pyarrow ==25.0.1` and `requests ==2.34.2` only. The check prints `Ran 327 tests` and `OK`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add pyproject.toml uv.lock
@@ -114,12 +116,12 @@ git commit -m "chore: remove the parked sec-edgar-ingest package from the worksp
 **Interfaces:**
 - Consumes: tag `ingest-parked-2026-11-16` (Task 1).
 
-- [ ] **Step 1: Prove the tag holds today's config file**
+- [x] **Step 1: Prove the tag holds today's config file**
 
 Run: `git rev-parse ingest-parked-2026-11-16:conf/sec-edgar.json HEAD:conf/sec-edgar.json`
 Expected: two equal lines, `ca2c6f3eafaecadd4b699fcc45bb65b5c34c28dc`.
 
-- [ ] **Step 2: Edit `README.md`**
+- [x] **Step 2: Edit `README.md`**
 
 - Replace the first paragraph and its two bullets with: "This repository is one uv workspace with one Python package, `sec-filing-data`. It makes plain tables from the SEC filings of one quarter, 2026Q3."
 - In the `SEC_USER_AGENT` paragraph, replace "The live runs take the value from `sec.user_agent` in `conf/sec-edgar.json`." with "Live runs take the value from `sec.user_agent` in `conf/sec-edgar.json` at tag `ingest-parked-2026-11-16`, so the value stays out of the files on `main`. This command sets it in any checkout or worktree:". Follow it with a `bash` block that holds this line:
@@ -136,11 +138,13 @@ export SEC_USER_AGENT="$(git show ingest-parked-2026-11-16:conf/sec-edgar.json |
 The roadmap reset parked the older filing-index engine, `sec-edgar-ingest`, on 2026-11-16, and plan 12 removed it from `main`. Tag `ingest-parked-2026-11-16` holds its last state: `packages/sec-edgar-ingest/`, `conf/`, its scripts in `scripts/`, `docs/runbooks/` and `.sdd/`. To read a file, run `git show ingest-parked-2026-11-16:<path>`. Its specs, plans and evidence stay in `specs/`. Do not use its code or its store as an input to `sec-filing-data`.
 ```
 
-- [ ] **Step 3: Add the pointer sentence to both findings files**
+> Deviation: after the final review, the README clause reads "so the value stays out of the files on `main` outside `specs/`". Sixteen tracked files under `specs/` hold the value at the base commit, so the plan's wording was too broad (`4b85cfb`).
+
+- [x] **Step 3: Add the pointer sentence to both findings files**
 
 In each file, the User-Agent bullet ends "The value is not copied here." Append after it: " Plan 12 removed `conf/` from `main`. The file is at tag `ingest-parked-2026-11-16`." Keep the existing line wrap.
 
-- [ ] **Step 4: Run the README command and compare digests**
+- [x] **Step 4: Run the README command and compare digests**
 
 ```bash
 sh -c "$(sed -n '/^export SEC_USER_AGENT=/p' README.md)"'; printf %s "$SEC_USER_AGENT" | shasum -a 256' > "$TMPDIR/plan12-ua-tag.txt"
@@ -149,7 +153,7 @@ python3 -I -c 'import json, sys; print(json.load(sys.stdin)["sec"]["user_agent"]
 
 Expected: `ua-same`, and no User-Agent value in the output. The README command runs from this worktree, so it also proves that a worktree can read the tag.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add README.md specs/sec-filing-data-stage-1-findings.md specs/sec-filing-data-stage-2-findings.md
@@ -162,16 +166,16 @@ git commit -m "docs: give SEC_USER_AGENT a source at the parked-engine tag"
 - Delete: `conf/` (5 files), `docs/runbooks/` (4 files), `.sdd/` (2 tracked files)
 - Delete: `scripts/accept-sec-native.py`, `scripts/baseline-campaign.py`, `scripts/check-sec-edgar-ingest.sh`, `scripts/local-bootstrap.py`, `scripts/measure-d5-drain.py`, `scripts/prepare-native-release.py`, `scripts/sec-acceptance-child.py`, `scripts/sec-edgar`, `scripts/verify-native-release.py`, `scripts/verify-sec-native-adjudication.py`
 
-- [ ] **Step 1: Remove the files**
+- [x] **Step 1: Remove the files**
 
 Run `git rm -r -q conf docs/runbooks .sdd`. Then run `git rm -q` with the 10 script paths above, named one by one.
 
-- [ ] **Step 2: Check what is left**
+- [x] **Step 2: Check what is left**
 
 Run: `git ls-files packages/sec-edgar-ingest conf docs scripts .sdd`
 Expected: `scripts/check-sec-filing-data.sh` only. A script that landed on `main` after this plan also stays. Name it in the PR.
 
-- [ ] **Step 3: Check that no stale reference or value is left outside `specs/`**
+- [x] **Step 3: Check that no stale reference or value is left outside `specs/`**
 
 ```bash
 git grep -n -e sec_edgar_ingest -e sec-edgar-ingest -e 'conf/' -e 'docs/runbooks' -- ':!specs' | grep -v ingest-parked-2026-11-16
@@ -182,7 +186,7 @@ sh scripts/check-sec-filing-data.sh
 
 Expected: the first command prints one line, `README.md:<n>:## sec-edgar-ingest (removed)`. Then `value-in-tree: 1`: before this plan, the engine package, `docs/runbooks/local-ingestion.md`, `scripts/accept-sec-native.py` and `scripts/measure-d5-drain.py` held the value too. The check prints `Ran 327 tests` and `OK`.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git commit -m "chore: remove the parked engine's config, scripts, runbooks and SDD records"
@@ -193,7 +197,7 @@ git commit -m "chore: remove the parked engine's config, scripts, runbooks and S
 **Files:**
 - Modify: `specs/deferred_items.md`
 
-- [ ] **Step 1: Add the pointer under each of the 7 old-engine headings**
+- [x] **Step 1: Add the pointer under each of the 7 old-engine headings**
 
 The headings are `4-sec-filing-index-bounded-drain`, `5-sec-filing-index-per-member-cost`, `6-sec-filing-index-member-completion`, `2-sec-filing-index-ingestion-spec`, `9-sec-filing-index-pre-dispatch-cost`, `sec-filing-index-ingestion-roadmap` and `sec-filing-platform-roadmap`. Put these two lines directly under each heading line:
 
@@ -202,7 +206,7 @@ Plan 12 removed the parked engine from `main`. The paths that these items name u
 `conf/`, `scripts/` (except `check-sec-filing-data.sh`), `docs/runbooks/` and `.sdd/` are at tag `ingest-parked-2026-11-16`.
 ```
 
-- [ ] **Step 2: Check the pointers and the backlog counts**
+- [x] **Step 2: Check the pointers and the backlog counts**
 
 ```bash
 grep -c 'are at tag `ingest-parked-2026-11-16`' specs/deferred_items.md
@@ -211,7 +215,7 @@ uv run ~/.claude/skills/writing-plans/scripts/deferred_stats.py | head -1
 
 Expected: `7`. The stats line reads `46 open, 6 ever closed` as before, unless a later PR changed the backlog. The pointers alone change no count.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add specs/deferred_items.md

@@ -15,7 +15,7 @@ measured cost.
   in the main checkout, 3,505,445 bytes, read in place. `index` checks the size and the SHA-256 before
   it parses. The zip's folder was unchanged after the run.
 - User-Agent: `sec.user_agent` from `conf/sec-edgar.json`, passed in `SEC_USER_AGENT`. The value is not
-  copied here.
+  copied here. Plan 12 removed `conf/` from `main`. The file is at tag `ingest-parked-2026-11-16`.
 - Dates: the pilot ran on 2026-11-17.
 
 ## O1
