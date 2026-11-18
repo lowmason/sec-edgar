@@ -12,7 +12,10 @@ and the measured cost.
   checkout and git-ignored.
 - Code: branch `claude/sec-filing-stage-2-exec-d01d8b`, run from the working tree at commit `140062a`
   (the last code commit of Tasks 1 to 8). Plan 11 Tasks 1 to 8 had 324 passing tests at that commit
-  (the baseline was 222).
+  (the baseline was 222). The final whole-branch review then led to two small fixes (commits `d683628` and
+  `7985dff`, 327 tests). They do not touch a path that the live run used, except one added line in the
+  report's Times section. `report` was run again on the live root at the final commit, and its other
+  sections were identical.
 - Date: the run took place on 2026-11-18.
 - Input: the same `master.zip` that Stage 1 read, in place, under `data/objects/raw/` in the main checkout.
   `index` checked its size and SHA-256 (`526d2dbf…`) before it parsed.
@@ -63,6 +66,8 @@ The report's Times section, read on the live root after the Stage 2 steps:
 - Filings with a gap above 1 hour: 1, `0001836875-26-000073`.
 - Filings with `public_at` after `last_modified_at`: 0.
 - Filings with `public_at` before `accepted_at`: 0 (an anti-goal).
+- Filings with an unreadable `filed_as_of_date`: 0. This line was added after the final review (see "Problems
+  found and fixed") and read on the live root at the final commit.
 - `EFFECT` `9999999995-26-002992`: `public_rule` `next_opening`, `public_at` 2026-09-18 10:00:00 UTC
   (06:00 ET), gap 186 s. This is the value that the spec's rule predicts.
 
@@ -136,7 +141,8 @@ The rebuild added one line to `runs.jsonl` and nothing else.
 
 ## Problems found and fixed
 
-The live run found no problem. The task reviews of the code found these, which fix rounds closed before the run:
+The live run found no problem. The task reviews found the first three items, and fix rounds closed them
+before the run. The final whole-branch review found the next two, and a fix wave closed them after the run:
 
 - Task 3 (`envelopes`): no test separated `last_modified_at` on an `ok` filing that does not parse from the
   parsed case, and no test pinned the `public_rule` values `private_to_public` and `no_acceptance`. Two tests
@@ -146,6 +152,21 @@ The live run found no problem. The task reviews of the code found these, which f
   refetched for good under the once-only rule. Only the new `UnknownAccession` error is a refusal now.
 - Task 8 (`check-stage1`): an empty `tables-stage1` folder passed with no line, and a missing frozen column
   crashed with a traceback. The first now exits 1 with one line. The second gives a line that names the columns.
+- Final review, `refetch`: after an interrupted refetch of an accession, a re-run for the same accession skipped
+  it and exited 0. Spec 6.3 says that later refetches are refused, so the re-run now exits 5 before it does
+  anything.
+- Final review, `report`: an unreadable but non-null `FILED AS OF DATE` fell back to `accepted_at` alone with no
+  sign in the report. The Times section now counts these filings (0 on the live root).
+
+A second review, by Codex, raised three more points. The owner's plan and the spec do not ask for them, so the
+run does not change for them:
+
+- The `refetches` table takes both SHA-256 values from the ledgers and does not hash the stored files again.
+  This is what plan C8 says. Byte integrity of the kept files is a Stage 3 concern.
+- `report` raises an error on a Stage 1 table that the Stage 2 steps have not yet rewritten. The live root was
+  rewritten before `report` ran, so the case does not occur.
+- A `refetch` of an unknown accession still writes one `runs.jsonl` line, because the command runs inside
+  `record_step`. It sends no request and creates no `stage2/` folder.
 
 ## Exit check
 
