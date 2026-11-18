@@ -576,6 +576,21 @@ class RefetchCliTests(RefetchTestCase):
         self.assertEqual(session.urls, [])
         self.assertFalse(self.layout.stage2.exists())
 
+    def test_an_error_after_a_request_is_not_a_refusal(self):
+        self.fetch_stage1()
+        # requests raises a ValueError subclass (InvalidHeader, InvalidURL) after the
+        # request record is written. It must not look like a refusal that spent nothing.
+        session = FixtureSession({self.url_a: ValueError("bad header")})
+
+        with self.offline([session], []), self.assertRaisesRegex(ValueError, "bad header"):
+            self.run_cli("refetch", "--accession", self.a)
+
+        self.assertEqual(session.urls, [self.url_a])
+        (request,) = self.stage2_records("request")
+        (response,) = self.stage2_records("response")
+        self.assertEqual(request["key"], self.a)
+        self.assertEqual((response["id"], response["outcome"]), (request["id"], "failed"))
+
 
 if __name__ == "__main__":
     unittest.main()

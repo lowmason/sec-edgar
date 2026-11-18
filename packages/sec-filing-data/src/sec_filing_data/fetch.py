@@ -18,6 +18,10 @@ BUDGET_SPENT_EXIT = 5
 ACCESS_DENIED_EXIT = 6
 
 
+class UnknownAccession(ValueError):
+    """A named accession is not in `sample`. It is raised before anything is sent or written."""
+
+
 def run_fetch(
     layout: Layout,
     *,
@@ -87,16 +91,16 @@ def run_refetch(
     """Fetch each named sampled filing from its `sample.url` into `stage2/refetch/`, once.
 
     The Stage 2 ledger and limits count the requests. Nothing is written under `bytes/` or
-    to the Stage 1 ledger. An accession that is not in `sample` raises ValueError before
-    the lock is taken and before any request. An accession is skipped when its refetch
-    file exists or the Stage 2 ledger holds a request for it, so a failed refetch is never
-    sent again. Returns 0 after the walk, 5 when the Stage 2 budget is spent and 6 when SEC
-    answers 403. A held lock raises RuntimeError and writes nothing.
+    to the Stage 1 ledger. An accession that is not in `sample` raises `UnknownAccession`
+    (a ValueError) before the lock is taken and before any request. An accession is skipped
+    when its refetch file exists or the Stage 2 ledger holds a request for it, so a failed
+    refetch is never sent again. Returns 0 after the walk, 5 when the Stage 2 budget is
+    spent and 6 when SEC answers 403. A held lock raises RuntimeError and writes nothing.
     """
     urls = {row["accession_number"]: row["url"] for row in read_table(layout, "sample").to_pylist()}
     for accession in accessions:
         if accession not in urls:
-            raise ValueError(f"{accession} is not in sample")
+            raise UnknownAccession(f"{accession} is not in sample")
     with exclusive_lock(layout.lock):
         layout.stage2.mkdir(exist_ok=True)
         sec = SecClient(

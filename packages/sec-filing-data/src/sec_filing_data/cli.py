@@ -74,7 +74,9 @@ def _run_refetch(args: argparse.Namespace) -> int:
     try:
         with record_step(layout, "refetch"):
             code = fetch.run_refetch(layout, user_agent=user_agent, accessions=args.accession)
-    except ValueError as error:
+    except fetch.UnknownAccession as error:
+        # Only this refusal sends and writes nothing. Any other error propagates, because
+        # a request record may already be in the Stage 2 ledger.
         print(f"error: {error}", file=sys.stderr)
         return 2
     rows = refetches.build_refetches(layout)
