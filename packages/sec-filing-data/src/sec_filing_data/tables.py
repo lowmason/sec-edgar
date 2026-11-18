@@ -118,6 +118,7 @@ SCHEMAS: dict[str, pa.Schema] = {
         "context_id",
         "dimensions",
         ("is_nil", pa.bool_()),
+        *_PROVENANCE,
     ),
     "facts_status": _schema(
         "accession_number",
@@ -148,6 +149,10 @@ SCHEMAS: dict[str, pa.Schema] = {
         "direct_indirect",
         "percent_of_class",
         "value_usd",
+        "source_url",
+        "source_sha256",
+        "source_document",
+        *_FILING_TIMES,
     ),
     "ownership_status": _schema(
         "accession_number",

@@ -10,8 +10,10 @@ from sec_filing_data import cli
 from sec_filing_data.envelope import Document
 from sec_filing_data.facts import FACT_FORMS, run_facts
 from sec_filing_data.layout import Layout
+from sec_filing_data.provenance import record_provenance
 from sec_filing_data.report import run_report
 from sec_filing_data.tables import SCHEMAS, read_table, write_table
+from sec_filing_data.times import PUBLIC_RULES
 from sec_filing_data.xbrl import Fact, XbrlError, find_instance, parse_instance
 from tests.test_commands import section
 from tests.test_envelope import build_document, build_submission
@@ -407,8 +409,26 @@ HTM_NAME = "acme-20260630_htm.xml"
 EMPTY_INSTANCE = instance("")
 
 
+def filing_row(sampled: dict, outcome: str) -> dict:
+    """The `filings` row of a sampled filing. Its five times differ from each other, and from
+    those of every other draw, so a time copied from the wrong filing or column shows."""
+    draw = sampled["draw"]
+    return {
+        "accession_number": sampled["accession_number"],
+        "form_type": sampled["form_type"],
+        "outcome": outcome,
+        "sha256": f"sha-{draw}",
+        "source_url": sampled["url"],
+        "accepted_at": datetime.datetime(2026, 8, 10 + draw, 20, 5, 23, tzinfo=datetime.UTC),
+        "public_at": datetime.datetime(2026, 8, 11 + draw, 10, 0, tzinfo=datetime.UTC),
+        "public_rule": PUBLIC_RULES[draw % len(PUBLIC_RULES)],
+        "last_modified_at": datetime.datetime(2026, 8, 12 + draw, 12, 0, 1, tzinfo=datetime.UTC),
+        "fetched_at": datetime.datetime(2026, 9, 1 + draw, 13, 30, tzinfo=datetime.UTC),
+    }
+
+
 class FactsRootTestCase(unittest.TestCase):
-    """A temporary root with a `sample`, a `fetches` table and the submission bytes."""
+    """A temporary root with a `sample`, `fetches` and `filings` tables and the submission bytes."""
 
     def setUp(self) -> None:
         folder = tempfile.TemporaryDirectory()
@@ -417,6 +437,7 @@ class FactsRootTestCase(unittest.TestCase):
         self.layout.root.mkdir()
         self.sampled: list[dict] = []
         self.fetched: list[dict] = []
+        self.filings: list[dict] = []
 
     def add(self, form_type: str, raw: bytes | None = None, outcome: str = "ok") -> str:
         """Sample one filing. Bytes of `raw` go on disk, as the fetch would leave them."""
@@ -443,16 +464,24 @@ class FactsRootTestCase(unittest.TestCase):
                 "reason": None if outcome == "ok" else outcome,
             }
         )
+        self.filings.append(filing_row(self.sampled[-1], outcome))
         if raw is not None:
             self.layout.bytes_dir.mkdir(exist_ok=True)
             self.layout.submission(accession).write_bytes(raw)
         return accession
 
-    def write_tables(self, *, fetches: bool = True) -> None:
+    def write_tables(self, *, fetches: bool = True, filings: bool = True) -> None:
         # The sample is written out of draw order: the commands sort it themselves.
         write_table(self.layout, "sample", list(reversed(self.sampled)))
         if fetches:
             write_table(self.layout, "fetches", self.fetched)
+        if filings:
+            write_table(self.layout, "filings", self.filings)
+
+    def provenance(self, accession: str) -> dict:
+        """What a record of this filing must carry: `record_provenance` of its `filings` row."""
+        (row,) = (row for row in self.filings if row["accession_number"] == accession)
+        return record_provenance(row)
 
     def run_facts(self, **kwargs) -> tuple[list[dict], list[dict]]:
         self.write_tables(**kwargs)
@@ -464,7 +493,7 @@ class FactsRootTestCase(unittest.TestCase):
         return facts.to_pylist(), status.to_pylist()
 
 
-def fact_row(accession: str, source: str, fact: Fact) -> dict:
+def fact_row(accession: str, source: str, fact: Fact, provenance: dict) -> dict:
     return {
         "accession_number": accession,
         "source_document": source,
@@ -478,7 +507,7 @@ def fact_row(accession: str, source: str, fact: Fact) -> dict:
         "context_id": fact.context_id,
         "dimensions": fact.dimensions,
         "is_nil": fact.is_nil,
-    }
+    } | provenance
 
 
 class RunFactsTests(FactsRootTestCase):
@@ -513,7 +542,10 @@ class RunFactsTests(FactsRootTestCase):
 
         facts, status = self.run_facts()
 
-        self.assertEqual(facts, [fact_row(accession, INS_NAME, fact) for fact in FIXTURE_FACTS])
+        self.assertEqual(
+            facts,
+            [fact_row(accession, INS_NAME, fact, self.provenance(accession)) for fact in FIXTURE_FACTS],
+        )
         self.assertEqual(
             status,
             [
@@ -539,7 +571,10 @@ class RunFactsTests(FactsRootTestCase):
 
         facts, status = self.run_facts()
 
-        self.assertEqual(facts, [fact_row(accession, INS_NAME, fact) for fact in FIXTURE_FACTS])
+        self.assertEqual(
+            facts,
+            [fact_row(accession, INS_NAME, fact, self.provenance(accession)) for fact in FIXTURE_FACTS],
+        )
         self.assertEqual([row["source_document"] for row in status], [INS_NAME])
         self.assertEqual([row["fact_count"] for row in status], [4])
 
@@ -551,7 +586,10 @@ class RunFactsTests(FactsRootTestCase):
 
         facts, status = self.run_facts()
 
-        self.assertEqual(facts, [fact_row(accession, HTM_NAME, fact) for fact in FIXTURE_FACTS])
+        self.assertEqual(
+            facts,
+            [fact_row(accession, HTM_NAME, fact, self.provenance(accession)) for fact in FIXTURE_FACTS],
+        )
         self.assertEqual(status[0]["source_document"], HTM_NAME)
         self.assertIsNone(status[0]["reason"])
 
@@ -634,6 +672,61 @@ class RunFactsTests(FactsRootTestCase):
         self.assertFalse(self.layout.table("fetches").exists())
         self.assertEqual(len(facts), 4)
         self.assertEqual([row["reason"] for row in status], [None, "not_attempted"])
+
+    def test_facts_carry_their_filing_provenance(self):
+        first = self.add(
+            "10-K",
+            submission_with(PRIMARY, ("EX-101.INS", INS_NAME, wrapped(FIXTURE_BYTES, "XBRL"))),
+        )
+        second = self.add(
+            "10-Q", submission_with(PRIMARY, ("XML", HTM_NAME, wrapped(FIXTURE_BYTES, "XML")))
+        )
+
+        facts, _ = self.run_facts()
+
+        self.assertEqual(len(facts), 8)
+        by_accession = {
+            accession: [row for row in facts if row["accession_number"] == accession]
+            for accession in (first, second)
+        }
+        self.assertEqual(
+            {accession: len(rows) for accession, rows in by_accession.items()},
+            {first: 4, second: 4},
+        )
+        provenance_columns = (
+            "source_url",
+            "source_sha256",
+            "accepted_at",
+            "public_at",
+            "public_rule",
+            "last_modified_at",
+            "fetched_at",
+        )
+        self.assertEqual(list(SCHEMAS["facts"].names[-7:]), list(provenance_columns))
+        for draw, accession in ((1, first), (2, second)):
+            for row in by_accession[accession]:
+                self.assertEqual(
+                    {column: row[column] for column in provenance_columns},
+                    {
+                        "source_url": f"https://www.sec.gov/Archives/edgar/data/1000/{accession}"
+                        ".txt",
+                        "source_sha256": f"sha-{draw}",
+                        "accepted_at": datetime.datetime(
+                            2026, 8, 10 + draw, 20, 5, 23, tzinfo=datetime.UTC
+                        ),
+                        "public_at": datetime.datetime(
+                            2026, 8, 11 + draw, 10, 0, tzinfo=datetime.UTC
+                        ),
+                        "public_rule": PUBLIC_RULES[draw % len(PUBLIC_RULES)],
+                        "last_modified_at": datetime.datetime(
+                            2026, 8, 12 + draw, 12, 0, 1, tzinfo=datetime.UTC
+                        ),
+                        "fetched_at": datetime.datetime(
+                            2026, 9, 1 + draw, 13, 30, tzinfo=datetime.UTC
+                        ),
+                    },
+                )
+        self.assertNotEqual(self.provenance(first), self.provenance(second))
 
     def test_fact_forms(self):
         self.assertEqual(FACT_FORMS, {"10-K", "10-K/A", "10-Q", "10-Q/A"})

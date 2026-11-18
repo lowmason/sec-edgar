@@ -13,6 +13,7 @@ from operator import itemgetter
 from sec_filing_data.envelope import EnvelopeError, Submission, document_text, parse_submission
 from sec_filing_data.layout import Layout
 from sec_filing_data.ledger import build_fetches
+from sec_filing_data.provenance import read_provenance
 from sec_filing_data.tables import read_table, write_table
 
 FORMS_345 = frozenset({"3", "3/A", "4", "4/A", "5", "5/A"})
@@ -70,11 +71,21 @@ class OwnershipRecord:
 
 
 @dataclass(frozen=True)
+class XmlDocument:
+    """A document that `xml_document` found: its filename (None when it has none) and its text."""
+
+    filename: str | None
+    text: bytes
+
+
+@dataclass(frozen=True)
 class _Extraction:
-    """What one filing gave: why it gave no records (or None), and the records."""
+    """What one filing gave: why it gave no records (or None), the records, and the filename
+    of the XML document that gave them."""
 
     reason: str | None
     records: list[OwnershipRecord] = field(default_factory=list)
+    source_document: str | None = None
 
 
 def local_name(tag: str) -> str:
@@ -99,13 +110,13 @@ def text_at(parent: ET.Element | None, *path: str) -> str | None:
     return (element.text or "").strip() or None
 
 
-def xml_document(raw: bytes, submission: Submission, root: str) -> bytes | None:
-    """The text of the first document that parses as XML with a root named `root`, or None.
+def xml_document(raw: bytes, submission: Submission, root: str) -> XmlDocument | None:
+    """The first document that parses as XML with a root named `root`, or None.
 
-    One leading UTF-8 byte-order mark is removed, with any whitespace after it, and the text
-    that comes back does not hold it. A document is skipped when its text does not start with
-    `<`, when it has a DOCTYPE declaration, and when it is not well-formed XML. The root
-    matches by local name.
+    The result holds the filename of the document and its text. One leading UTF-8
+    byte-order mark is removed, with any whitespace after it, and the text that comes back
+    does not hold it. A document is skipped when its text does not start with `<`, when it has
+    a DOCTYPE declaration, and when it is not well-formed XML. The root matches by local name.
     """
     for document in submission.documents:
         text = document_text(raw, document).removeprefix(_BYTE_ORDER_MARK).lstrip()
@@ -116,7 +127,7 @@ def xml_document(raw: bytes, submission: Submission, root: str) -> bytes | None:
         except ET.ParseError:
             continue
         if local_name(element.tag) == root:
-            return text
+            return XmlDocument(document.filename, text)
     return None
 
 
@@ -124,8 +135,11 @@ def run_ownership(layout: Layout) -> int:
     """Write `ownership` and `ownership_status` (one row per sampled filing in OWNERSHIP_FORMS).
 
     It reads `fetches` from its table, or builds it from the ledger when the table is
-    missing. `record_count` is the number of records of the filing, 0 when it gave none.
+    missing. `record_count` is the number of records of the filing, 0 when it gave none. Each
+    record carries the source and the times of its filing, from `filings`: without that table
+    it raises FileNotFoundError.
     """
+    provenance = read_provenance(layout)
     sample = sorted(read_table(layout, "sample").to_pylist(), key=itemgetter("draw"))
     fetches = {row["accession_number"]: row for row in _read_fetches(layout)}
     records, statuses = [], []
@@ -145,7 +159,10 @@ def run_ownership(layout: Layout) -> int:
             }
         )
         records.extend(
-            {"accession_number": accession, "form_type": form_type} | asdict(record)
+            {"accession_number": accession, "form_type": form_type}
+            | asdict(record)
+            | {"source_document": extraction.source_document}
+            | provenance[accession]
             for record in extraction.records
         )
     write_table(layout, "ownership", records)
@@ -192,11 +209,11 @@ def _extract(layout: Layout, accession: str, form: str, outcome: str) -> _Extrac
         owner_cik, owner_name = (filer.cik, filer.name) if filer else (None, None)
         root = FORM13F_ROOT
         parse = partial(parse_form13f_table, owner_cik=owner_cik, owner_name=owner_name)
-    xml = xml_document(raw, submission, root)
-    if xml is None:
+    document = xml_document(raw, submission, root)
+    if document is None:
         return _Extraction(NO_DOCUMENT)
-    records = parse(xml)
+    records = parse(document.text)
     if records:
-        return _Extraction(None, records)
-    owns_nothing = form in FORMS_345 and no_securities_owned(xml)
+        return _Extraction(None, records, document.filename)
+    owns_nothing = form in FORMS_345 and no_securities_owned(document.text)
     return _Extraction(NO_SECURITIES if owns_nothing else NO_RECORDS)
