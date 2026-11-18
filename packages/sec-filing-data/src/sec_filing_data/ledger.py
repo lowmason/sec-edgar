@@ -84,6 +84,19 @@ def budget_spent(usage: Usage, limits: Limits = STAGE1_LIMITS) -> bool:
     return usage.requests >= limits.requests or limits.wire_bytes - usage.wire_bytes < BUDGET_MARGIN
 
 
+def ok_responses(path: Path) -> dict[str, dict]:
+    """The last `ok` response record of each key. A key with no `ok` response is absent."""
+    return _last_ok(read_ledger(path))
+
+
+def _last_ok(records: list[dict]) -> dict[str, dict]:
+    last_ok: dict[str, dict] = {}
+    for record in records:
+        if record["event"] == "response" and record["outcome"] == "ok":
+            last_ok[record["key"]] = record
+    return last_ok
+
+
 def build_fetches(layout: Layout) -> list[dict]:
     """One `fetches` row per sampled filing, in draw order, from the ledger and the disk.
 
@@ -95,14 +108,12 @@ def build_fetches(layout: Layout) -> list[dict]:
     spent = budget_spent(_usage(records))
     attempts: Counter[str] = Counter()
     last_response: dict[str, dict] = {}
-    last_ok: dict[str, dict] = {}
     for record in records:
         if record["event"] == "request":
             attempts[record["key"]] += 1
         elif record["event"] == "response":
             last_response[record["key"]] = record
-            if record["outcome"] == "ok":
-                last_ok[record["key"]] = record
+    last_ok = _last_ok(records)
     sample = sorted(read_table(layout, "sample").to_pylist(), key=itemgetter("draw"))
     rows = []
     for sampled in sample:

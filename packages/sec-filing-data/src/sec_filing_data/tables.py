@@ -19,6 +19,18 @@ def _schema(*columns: str | tuple[str, pa.DataType]) -> pa.Schema:
     )
 
 
+# The five times of a filing, as they are copied onto each record of it.
+FILING_TIME_COLUMNS = ("accepted_at", "public_at", "public_rule", "last_modified_at", "fetched_at")
+_FILING_TIMES = (
+    ("accepted_at", _TIMESTAMP),
+    ("public_at", _TIMESTAMP),
+    "public_rule",
+    ("last_modified_at", _TIMESTAMP),
+    ("fetched_at", _TIMESTAMP),
+)
+_PROVENANCE = ("source_url", "source_sha256", *_FILING_TIMES)
+
+
 SCHEMAS: dict[str, pa.Schema] = {
     "index": _schema(
         ("line_number", pa.int64()),
@@ -69,8 +81,13 @@ SCHEMAS: dict[str, pa.Schema] = {
         "public_document_count",
         ("document_count", pa.int32()),
         "parse_error",
+        "source_url",
+        ("accepted_at", _TIMESTAMP),
+        ("public_at", _TIMESTAMP),
+        "public_rule",
+        ("last_modified_at", _TIMESTAMP),
     ),
-    "parties": _schema("accession_number", "role", "name", "cik"),
+    "parties": _schema("accession_number", "role", "name", "cik", *_PROVENANCE),
     "documents": _schema(
         "accession_number",
         ("sequence", pa.int32()),
@@ -79,6 +96,7 @@ SCHEMAS: dict[str, pa.Schema] = {
         "description",
         ("text_offset", pa.int64()),
         ("text_length", pa.int64()),
+        *_PROVENANCE,
     ),
     "facts": _schema(
         "accession_number",

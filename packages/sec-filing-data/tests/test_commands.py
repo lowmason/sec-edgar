@@ -29,8 +29,10 @@ from sec_filing_data.ledger import (
     budget_spent,
     build_fetches,
     ledger_usage,
+    ok_responses,
     read_ledger,
 )
+from sec_filing_data.provenance import read_provenance, record_provenance
 from sec_filing_data.report import run_report
 from sec_filing_data.submissions import run_envelopes
 from sec_filing_data.tables import SCHEMAS, read_table, write_table
@@ -38,6 +40,11 @@ from tests.test_client import USER_AGENT, FakeClock, FakeResponse, fill_ledger
 
 FIXTURE_BYTES = (Path(__file__).parent / "fixtures" / "submission-13f.txt").read_bytes()
 FIXTURE_SHA256 = hashlib.sha256(FIXTURE_BYTES).hexdigest()
+
+
+def utc(*parts: int) -> datetime.datetime:
+    return datetime.datetime(*parts, tzinfo=datetime.UTC)
+
 
 # A parsed submission with no party, no acceptance time, no filing date and no document count.
 NO_PARTY = (
@@ -486,6 +493,11 @@ class EnvelopeTests(CommandTestCase):
                 "public_document_count": "2",
                 "document_count": 2,
                 "parse_error": None,
+                "source_url": rows[0]["url"],
+                "accepted_at": utc(2026, 8, 14, 20, 5, 23),
+                "public_at": utc(2026, 8, 14, 20, 5, 23),
+                "public_rule": "acceptance",
+                "last_modified_at": None,
             },
         )
         self.assertIsNotNone(filings[0]["fetched_at"])
@@ -507,6 +519,11 @@ class EnvelopeTests(CommandTestCase):
                 "public_document_count": None,
                 "document_count": None,
                 "parse_error": "no <SEC-HEADER> ... </SEC-HEADER> block",
+                "source_url": rows[1]["url"],
+                "accepted_at": None,
+                "public_at": None,
+                "public_rule": None,
+                "last_modified_at": None,
             },
         )
         self.assertEqual(filings[2]["outcome"], "not_found")
@@ -514,6 +531,10 @@ class EnvelopeTests(CommandTestCase):
         self.assertIsNone(filings[2]["submission_type"])
         self.assertIsNone(filings[2]["private_to_public"])
         self.assertIsNone(filings[2]["parse_error"])
+        self.assertEqual(filings[2]["source_url"], rows[2]["url"])
+        for column in ("accepted_at", "public_at", "public_rule", "last_modified_at"):
+            self.assertIsNone(filings[2][column])
+        provenance = record_provenance(filings[0])
 
         parties = read_table(self.layout, "parties")
         self.assertEqual(parties.schema, SCHEMAS["parties"])
@@ -525,6 +546,7 @@ class EnvelopeTests(CommandTestCase):
                     "role": "FILER",
                     "name": "KINGDON CAPITAL MANAGEMENT, L.L.C.",
                     "cik": "0001000097",
+                    **provenance,
                 }
             ],
         )
@@ -542,6 +564,7 @@ class EnvelopeTests(CommandTestCase):
                     "description": document.description,
                     "text_offset": document.text_offset,
                     "text_length": document.text_length,
+                    **provenance,
                 }
                 for document in expected
             ],
@@ -563,10 +586,113 @@ class EnvelopeTests(CommandTestCase):
         self.assertEqual([row["submission_type"] for row in filings], ["13F-HR"] * 2)
 
 
+    def test_filing_times_come_from_the_header_and_the_ledger(self):
+        rows = self.write_sample(standard_sample()[:1])
+        accession = rows[0]["accession_number"]
+        reply = FakeResponse(
+            200, [FIXTURE_BYTES], {"Last-Modified": "Fri, 14 Aug 2026 20:06:00 GMT"}
+        )
+        self.fetch(FixtureSession({rows[0]["url"]: reply}))
+        fetched_at = self.fetches()[0]["fetched_at"]
+
+        run_envelopes(self.layout)
+
+        (filing,) = read_table(self.layout, "filings").to_pylist()
+        self.assertEqual(filing["last_modified_at"], utc(2026, 8, 14, 20, 6))
+        self.assertEqual(filing["fetched_at"], fetched_at)
+        times = {
+            "accepted_at": utc(2026, 8, 14, 20, 5, 23),
+            "public_at": utc(2026, 8, 14, 20, 5, 23),
+            "public_rule": "acceptance",
+            "last_modified_at": utc(2026, 8, 14, 20, 6),
+            "fetched_at": fetched_at,
+        }
+        for name in ("parties", "documents"):
+            table = read_table(self.layout, name)
+            self.assertEqual(table.schema, SCHEMAS[name])
+            children = table.to_pylist()
+            self.assertTrue(children)
+            for child in children:
+                self.assertEqual(child["accession_number"], accession)
+                self.assertEqual(child["source_url"], rows[0]["url"])
+                self.assertEqual(child["source_sha256"], FIXTURE_SHA256)
+                self.assertEqual({key: child[key] for key in times}, times)
+
+    def test_the_stage_1_ledger_alone_gives_last_modified(self):
+        rows = self.write_sample(standard_sample()[:2])
+        first, second = (row["accession_number"] for row in rows)
+        self.fetch(FixtureSession())
+        for accession, header in ((first, "Fri, 14 Aug 2026 20:06:00 GMT"), (second, "not a date")):
+            append(
+                self.layout.ledger,
+                response_record(f"x-{accession}", accession, last_modified=header),
+            )
+
+        run_envelopes(self.layout)
+
+        filings = read_table(self.layout, "filings").to_pylist()
+        self.assertEqual(filings[0]["last_modified_at"], utc(2026, 8, 14, 20, 6))
+        self.assertIsNone(filings[1]["last_modified_at"])
+
+    def test_read_provenance_needs_filings(self):
+        with self.assertRaises(FileNotFoundError) as caught:
+            read_provenance(self.layout)
+
+        self.assertIn("envelopes", str(caught.exception))
+        self.assertIn(str(self.layout.table("filings")), str(caught.exception))
+
+    def test_read_provenance_gives_each_filing_by_accession(self):
+        rows = self.write_sample(standard_sample()[:2])
+        self.fetch(FixtureSession({rows[1]["url"]: FakeResponse(404, [b"missing"])}))
+        run_envelopes(self.layout)
+        filings = {
+            row["accession_number"]: row for row in read_table(self.layout, "filings").to_pylist()
+        }
+
+        provenance = read_provenance(self.layout)
+
+        self.assertEqual(set(provenance), set(filings))
+        for accession, filing in filings.items():
+            self.assertEqual(provenance[accession], record_provenance(filing))
+        parsed = provenance[rows[0]["accession_number"]]
+        self.assertEqual(parsed["source_url"], rows[0]["url"])
+        self.assertEqual(parsed["source_sha256"], FIXTURE_SHA256)
+        self.assertEqual(parsed["public_at"], utc(2026, 8, 14, 20, 5, 23))
+        missing = provenance[rows[1]["accession_number"]]
+        self.assertEqual(missing["source_url"], rows[1]["url"])
+        self.assertIsNone(missing["public_at"])
+
+
+class OkResponsesTests(CommandTestCase):
+    def test_gives_the_last_ok_response_of_each_key(self):
+        for record in [
+            request_record("a1", "k1"),
+            response_record("a1", "k1", last_modified="first"),
+            request_record("a2", "k1", 2),
+            response_record("a2", "k1", last_modified="second"),
+            request_record("a3", "k1", 3),
+            response_record("a3", "k1", status=503, outcome="retry", reason="HTTP 503"),
+            request_record("b1", "k2"),
+            response_record("b1", "k2", status=404, outcome="not_found"),
+            request_record("c1", "k1/instance"),
+            response_record("c1", "k1/instance", last_modified="other"),
+        ]:
+            append(self.layout.ledger, record)
+
+        found = ok_responses(self.layout.ledger)
+
+        self.assertEqual(set(found), {"k1", "k1/instance"})
+        self.assertEqual(found["k1"]["last_modified"], "second")
+        self.assertEqual(found["k1/instance"]["last_modified"], "other")
+
+    def test_a_missing_ledger_has_none(self):
+        self.assertEqual(ok_responses(self.layout.ledger), {})
+
+
 class OfflineTests(unittest.TestCase):
     def test_offline_modules_never_import_requests(self):
         names = {module.name for module in pkgutil.iter_modules(sec_filing_data.__path__)}
-        self.assertLessEqual({"cli", "client", "fetch", "ledger", "report", "submissions", "times"}, names)
+        self.assertLessEqual({"cli", "client", "fetch", "ledger", "provenance", "report", "submissions", "times"}, names)
         code = (
             "import importlib, pkgutil, sys\n"
             "import sec_filing_data\n"
