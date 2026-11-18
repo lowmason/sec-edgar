@@ -35,14 +35,12 @@
 
 - **D1** (owner, brief, 2026-11-18): remove the parked engine after Stage 2 (tech-debt triage, "Label now, delete after Stage 2 (Recommended)"). Stage 2 merged on 2026-11-18 (PR #7). Applied in: Tasks 1–4.
 
-Defaults for the owner's plan review. Each becomes a D-line when the owner rules on it:
-
-- **P1:** `SEC_USER_AGENT` comes from `git show ingest-parked-2026-11-16:conf/sec-edgar.json`, as README documents. The value stays byte-identical to Stages 1 and 2, out of the files on `main`, and readable from any worktree. Alternative: an export line in the owner's shell profile, outside the repo. Applied in: Task 2.
-- **P2:** The tag goes on `origin/main` at the start of execution, before any removal commit. Docs-only PRs (for example a Stage 3 spec) can merge before the removal. The tag is then not literally the last commit that held the engine. It holds the engine's last state, which the merge gate proves. Alternative: tag `<merge>^1` after the merge. Cost: the PR's README command, item tick and retired plan name a tag that does not exist yet. Applied in: Task 1, merge gate.
-- **P3:** Plan approval authorizes the tag push to the public `origin` in Task 1, Step 2. Applied in: Task 1.
-- **P4:** The two findings files get one pointer sentence each. Retired plans 10 and 11 stay unchanged, because they record how those runs happened. Applied in: Task 2.
-- **P5:** The root `dependencies` becomes `[]`. Every documented command already uses `--package sec-filing-data`. Applied in: Task 1.
-- **P6:** The backlog gets one pointer under each of 7 old-engine section headings. No item text is rewritten, and no old-engine item is ticked or retired. Those dispositions stay with `/deferred`. Applied in: Task 4.
+- **D2** (owner, plan review, 2026-11-18): `SEC_USER_AGENT` comes from `git show ingest-parked-2026-11-16:conf/sec-edgar.json`, as README documents. The value stays byte-identical to Stages 1 and 2, with its old product token, out of the files on `main`. Not chosen: an export line in the owner's shell profile. Applied in: Task 2.
+- **D3** (owner, plan review, 2026-11-18): the tag goes on `origin/main` at the start of execution, before any removal commit. If a docs-only PR merges before the removal, the tag holds the engine's last state but is not literally the last commit that held it. The merge gate proves the state. Not chosen: tag `<merge>^1` after the merge. Applied in: Task 1, merge gate.
+- **D4** (owner, plan review, 2026-11-18): plan approval authorizes the tag push to the public `origin`. Applied in: Task 1, Step 2.
+- **D5** (owner, plan review, 2026-11-18): the two findings files get one pointer sentence each. Retired plans 10 and 11 stay unchanged, because they record how those runs happened. Applied in: Task 2.
+- **D6** (owner, plan review, 2026-11-18): the root `dependencies` becomes `[]`. Every documented command uses `--package sec-filing-data`. Applied in: Task 1.
+- **D7** (owner, plan review, 2026-11-18): one pointer goes under each of the 7 old-engine backlog headings. No item text is rewritten, and no old-engine item is ticked or retired. Those dispositions stay with `/deferred`. Applied in: Task 4.
 
 ---
 
