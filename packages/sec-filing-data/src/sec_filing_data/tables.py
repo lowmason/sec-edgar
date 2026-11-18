@@ -134,8 +134,16 @@ SCHEMAS: dict[str, pa.Schema] = {
 
 
 def write_table(layout: Layout, name: str, rows: list[dict[str, Any]]) -> None:
-    """Write `rows` as table `name`: to a temporary file first, then rename it into place."""
-    table = pa.Table.from_pylist(rows, schema=SCHEMAS[name])
+    """Write `rows` as table `name`: to a temporary file first, then rename it into place.
+
+    A key that is not in the schema raises `ValueError`, because pyarrow would drop it
+    silently. A missing key is written as null.
+    """
+    schema = SCHEMAS[name]
+    unknown = set().union(*rows) - set(schema.names)
+    if unknown:
+        raise ValueError(f"table {name}: keys not in its schema: {sorted(unknown)}")
+    table = pa.Table.from_pylist(rows, schema=schema)
     path = layout.table(name)
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_name(path.name + ".part")
