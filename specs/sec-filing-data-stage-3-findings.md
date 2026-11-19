@@ -1,8 +1,8 @@
 # sec-filing-data Stage 3 findings
 
 This file is the evidence record of Stage 3 of the [sec-filing-data roadmap](sec-filing-data-roadmap.md).
-[Plan 13](plans/13-sec-filing-data-stage-3-manifests-and-pinning.md) implemented it, against the
-[Stage 3 spec](sec-filing-data-stage-3-manifests-and-pinning.md). Under the lighter process (spec section 3, with
+[Plan 13](plans/completed/13-sec-filing-data-stage-3-manifests-and-pinning.md) implemented it, against the
+[Stage 3 spec](completed/sec-filing-data-stage-3-manifests-and-pinning.md). Under the lighter process (spec section 3, with
 the clean-tree rule of D2), this file is the only evidence record. It records the results of the live run, each
 problem found and fixed, and the measured cost.
 

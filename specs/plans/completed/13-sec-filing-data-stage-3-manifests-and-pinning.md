@@ -13,7 +13,7 @@
 
 **Tech Stack:** Python 3.14, uv, `pyarrow` (already locked), and the standard library (`subprocess`, `functools`, `platform`, `hashlib`, `json`, `random`).
 
-**Spec:** `specs/sec-filing-data-stage-3-manifests-and-pinning.md` (approved 2026-11-19). Section 8 holds D1–D4 and the calls that the owner approved with the spec. Background: plan 11 (`specs/plans/completed/11-sec-filing-data-stage-2-provenance-and-timing.md`) and its Handoff section.
+**Spec:** `specs/completed/sec-filing-data-stage-3-manifests-and-pinning.md` (approved 2026-11-19). Section 8 holds D1–D4 and the calls that the owner approved with the spec. Background: plan 11 (`specs/plans/completed/11-sec-filing-data-stage-2-provenance-and-timing.md`) and its Handoff section.
 
 ## Global Constraints
 
