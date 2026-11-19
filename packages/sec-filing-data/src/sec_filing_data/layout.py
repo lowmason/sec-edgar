@@ -38,6 +38,11 @@ class Layout:
         return self.root / "tables-stage2"
 
     @property
+    def manifests(self) -> Path:
+        """The folder of the manifests, one file for each table set and code version."""
+        return self.root / "manifests"
+
+    @property
     def bytes_dir(self) -> Path:
         return self.root / "bytes"
 

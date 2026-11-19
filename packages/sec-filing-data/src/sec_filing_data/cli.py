@@ -10,6 +10,7 @@ from pathlib import Path
 from sec_filing_data import (
     facts,
     index,
+    manifest,
     ownership,
     rebuild,
     refetches,
@@ -217,6 +218,30 @@ def _run_check_frozen(args: argparse.Namespace) -> int:
     return code
 
 
+def _run_manifest(args: argparse.Namespace) -> int:
+    if (refused := _refuse_unless_clean()) is not None:
+        return refused
+    zip_path = None if args.zip is None else Path(args.zip)
+    if (problem := manifest.zip_problem(args.set, zip_path)) is not None:
+        print(f"error: {problem}", file=sys.stderr)
+        return 2
+    layout = Layout(Path(args.out))
+    path = manifest.manifest_path(layout, args.set, version.current_checkout().commit)
+    if path.exists():
+        print(f"error: {path} exists", file=sys.stderr)
+        return 1
+    with record_step(layout, "manifest"):
+        try:
+            path = manifest.write_manifest(layout, args.set, zip_path=zip_path)
+        except FileNotFoundError as error:
+            # The manifest is built before it is written, so nothing was left behind.
+            print(f"error: {error}", file=sys.stderr)
+            return 1
+    print(f"manifest: {path}")
+    print(f"sha256: {manifest.sha256_of(path)}")
+    return 0
+
+
 def _print_lines(lines: list[str]) -> None:
     for line in lines:
         print(line)
@@ -323,6 +348,19 @@ def _build_parser() -> argparse.ArgumentParser:
         help="the frozen folder under the output root",
     )
     frozen_parser.set_defaults(run=_run_check_frozen)
+
+    manifest_parser = commands.add_parser(
+        "manifest",
+        help="write the manifest of one table set: each file with its size and SHA-256",
+    )
+    manifest_parser.add_argument("--out", required=True, help="output root")
+    manifest_parser.add_argument(
+        "--set", required=True, choices=manifest.SETS, help="the table set to list"
+    )
+    manifest_parser.add_argument(
+        "--zip", help="path of the quarter's master.zip (for --set tables only)"
+    )
+    manifest_parser.set_defaults(run=_run_manifest)
     return parser
 
 

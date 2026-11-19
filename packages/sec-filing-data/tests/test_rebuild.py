@@ -191,7 +191,9 @@ class LayoutTests(unittest.TestCase):
         self.assertEqual(plain.tables_stage1, root / "tables-stage1")
         self.assertEqual(moved.tables_stage2, root / "tables-stage2")
         self.assertEqual(plain.tables_stage2, root / "tables-stage2")
+        self.assertEqual(plain.manifests, root / "manifests")
         for name in (
+            "manifests",
             "bytes_dir",
             "ledger",
             "lock",
