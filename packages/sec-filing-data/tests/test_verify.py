@@ -17,6 +17,7 @@ from functools import partial
 from pathlib import Path
 from unittest import mock
 
+import pyarrow as pa
 from sec_filing_data import sample, verify
 from sec_filing_data.manifest import files_under, sha256_of, write_manifest
 from sec_filing_data.tables import read_table, write_table
@@ -81,20 +82,23 @@ class VerifyTestCase(FixtureRootTestCase):
         self.assertEqual(lines[: len(ALL_OK)], with_line(position, line))
         return lines
 
-    def rederive_ok(self, names: tuple[str, ...] = RECORDS_TABLES) -> list[str]:
-        """The `rederive` lines of the tables `names` on an untouched root, at the default rows.
+    def rederive_ok(
+        self, names: tuple[str, ...] = RECORDS_TABLES, rows: int = DEFAULT_ROWS
+    ) -> list[str]:
+        """The `rederive` lines of the tables `names` on an untouched root, at `--rows rows`.
 
-        `index` draws min(10, rows with times) + min(10, rows without). Each other table draws
-        min(20, its rows).
+        `index` draws min(rows // 2, rows with times) + min(rows - rows // 2, rows without).
+        Each other table draws min(rows, its rows). At the default 20, these are
+        min(10, ...) + min(10, ...) and min(20, ...).
         """
         lines = []
         for name in names:
             table = read_table(self.layout, name)
             if name == "index":
                 timed = sum(at is not None for at in table["fetched_at"].to_pylist())
-                count = min(10, timed) + min(10, table.num_rows - timed)
+                count = min(rows // 2, timed) + min(rows - rows // 2, table.num_rows - timed)
             else:
-                count = min(20, table.num_rows)
+                count = min(rows, table.num_rows)
             lines.append(f"rederive {name}: ok, {count} rows")
         return lines
 
@@ -454,6 +458,37 @@ class VerifyRederiveTests(VerifyTestCase):
         # The sample comes from the zip and its seed, so the URLs of the tables still match.
         self.assertEqual(self.verify(path), (0, [*ALL_OK, *self.rederive_ok()]))
 
+    def test_rederive_ignores_fetches_parquet(self):
+        rows = read_table(self.layout, "fetches").to_pylist()
+        position = next(n for n, row in enumerate(rows) if row["outcome"] == "ok")
+        rows[position]["fetched_at"] += datetime.timedelta(seconds=1)
+        write_table(self.layout, "fetches", rows)
+        path = self.write_manifest()
+
+        # The fetch rows come from the Stage 1 ledger, so `filings.fetched_at` and the `index`
+        # times still match. The binding of `fetches` checks only each row's path and SHA-256.
+        self.assertEqual(
+            self.verify(path, "--rows", "1000"),
+            (0, [*ALL_OK, *self.rederive_ok(rows=1000)]),
+        )
+
+    def test_an_empty_table_passes(self):
+        # `index` comes first: an empty `index` once ended the process in the time split.
+        for name in (*RECORDS_TABLES, "fetches", "refetches"):
+            with self.subTest(table=name):
+                rows = read_table(self.layout, name).to_pylist()
+                write_table(self.layout, name, [])
+                path = self.write_manifest()
+                expected = [*ALL_OK, *self.rederive_ok()]
+
+                result = self.verify(path)
+
+                path.unlink()
+                write_table(self.layout, name, rows)
+                self.assertEqual(result, (0, expected))
+                if name in RECORDS_TABLES:
+                    self.assertIn(f"rederive {name}: ok, 0 rows", expected)
+
     def test_rederive_reads_the_bytes_it_hashed(self):
         path = self.write_manifest()
         changed = next(file for file in self.byte_files() if file.read_bytes() == FETCHED_13F)
@@ -504,6 +539,25 @@ class VerifyDrawTests(unittest.TestCase):
         # A small table gives every row once.
         small = verify.draw_positions(5, 1000, random.Random(VERIFY_SEED))
         self.assertEqual(small, [0, 1, 2, 3, 4])
+
+    def test_the_time_split_counts_positions_across_chunks(self):
+        at = datetime.datetime(2026, 8, 14, tzinfo=datetime.UTC)
+        stamp = pa.timestamp("us", tz="UTC")
+        # The live `index` reads back in chunks of up to 131,072 rows.
+        chunks = [
+            pa.array([None, at, None], stamp),
+            pa.array([], stamp),
+            pa.array([at, None, at, at], stamp),
+        ]
+        table = pa.table({"fetched_at": pa.chunked_array(chunks, stamp)})
+
+        self.assertEqual(verify.split_by_times(table), ([1, 3, 5, 6], [0, 2, 4]))
+        # A table with no rows, in no chunk or in one empty chunk.
+        for empty in ([], [pa.array([], stamp)]):
+            with self.subTest(chunks=len(empty)):
+                table = pa.table({"fetched_at": pa.chunked_array(empty, stamp)})
+
+                self.assertEqual(verify.split_by_times(table), ([], []))
 
 
 class VerifyWiderRootTests(VerifyTestCase):

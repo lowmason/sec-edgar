@@ -267,6 +267,17 @@ def draw_index_positions(
     return sorted(drawn)
 
 
+def split_by_times(table: pa.Table) -> tuple[list[int], list[int]]:
+    """The positions of the rows of `table` whose `fetched_at` is not null, and of the others.
+
+    Positions count across the whole table, whatever its chunks.
+    """
+    # In pyarrow 25, `indices_nonzero` of a chunked array with no rows ends the process, so the
+    # mask is made one array first.
+    timed = pc.is_valid(table["fetched_at"]).combine_chunks()
+    return pc.indices_nonzero(timed).to_pylist(), pc.indices_nonzero(pc.invert(timed)).to_pylist()
+
+
 def rederive(layout: Layout, manifest: dict, *, rows: int, seed: int) -> list[str]:
     """One line for each records table: `ok, <n> rows`, or the first drawn row that the steps
     do not derive again from the listed inputs. Each table draws with its own
@@ -293,13 +304,8 @@ def _rederive_table(sources: _Sources, name: str, count: int, seed: int) -> str:
     table = pq.read_table(sources.layout.table(name))
     rng = random.Random(seed)
     if name == "index":
-        timed = pc.is_valid(table["fetched_at"])
-        positions = draw_index_positions(
-            pc.indices_nonzero(timed).to_pylist(),
-            pc.indices_nonzero(pc.invert(timed)).to_pylist(),
-            count,
-            rng,
-        )
+        with_times, without = split_by_times(table)
+        positions = draw_index_positions(with_times, without, count, rng)
     else:
         positions = draw_positions(table.num_rows, count, rng)
     drawn = table.take(pa.array(positions, pa.int64())).to_pylist()
