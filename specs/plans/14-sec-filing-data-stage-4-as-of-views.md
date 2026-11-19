@@ -16,6 +16,7 @@
 ## Global Constraints
 
 - Stage 3's constraints carry over (spec section 3): Python 3.14 in the uv workspace. Runtime dependencies are `requests` and `pyarrow` only. Tests read only `tests/fixtures/` and temporary folders, and `tests/__init__.py` blocks sockets. Code paths below are under `packages/sec-filing-data/`.
+- **Import order.** `ledger.py` imports no Stage 4 module, because `ownership` imports `ledger` (`ownership.py:15`) and `amendments` imports `ownership`. Stage 4 code may import `ledger`. `verify_stage4` imports `verify`, and `verify` imports `verify_stage4` only inside `run_verify` (Task 8).
 - Only `client.py` and `fetch.py` import `requests`. Each new module (`amendments`, `partners`, `partner_tables`, `links`, `asof`, `verify_stage4`) joins the name set of `test_offline_modules_never_import_requests` (`tests/test_commands.py:866`) in the task that creates it. `cli.py` imports `fetch` only inside the handlers of `fetch`, `refetch` and `fetch-partners`, as `_run_fetch` does today. `fetch` never joins the module-level import of `cli.py`.
 - **Clean-tree rule.** The handlers of `partners`, `fetch-partners`, `partner-tables` and `manifest --set stage4` call `_refuse_unless_clean()` first, before the `SEC_USER_AGENT` check and before `record_step`. `asof` is read-only. It never refuses for the tree state, and runs inside `record_step(layout, "asof")`. Add `["partners"]`, `["fetch-partners"]`, `["partner-tables"]` and `["manifest", "--set", "stage4"]` to `WRITING_ARGV` (`tests/test_version.py:34`).
 - **One root** (spec section 3). Stage 4 never builds `Layout(ROOT/"stage4")`. Every Stage 4 path is a property of the one root, and `runs.jsonl`, `fetch.lock` and `manifests/` stay where they are.
@@ -151,12 +152,12 @@ Spec section 9 leaves these to the builder, and the advisor pass found the rest.
 
 ### Task 3: The partner fetch
 
-**Files:** Modify `src/sec_filing_data/fetch.py`, `ledger.py`, `cli.py`. Create `tests/test_fetch_partners.py`. Tests: `tests/test_version.py` (`WRITING_ARGV`).
+**Files:** Modify `src/sec_filing_data/fetch.py`, `partners.py`, `cli.py`. Create `tests/test_fetch_partners.py`. Tests: `tests/test_version.py` (`WRITING_ARGV`).
 
 **Interfaces:**
 - Consumes: Task 1 `STAGE4_LIMITS`, `filing_fetch_rows`, `Layout.partner_submission`, `stage4_ledger`, `stage4_view`. Task 2 `read_partners`, `distinct_partners`. `client.SecClient`, `exclusive_lock`. Test helpers `FakeResponse`, `FixtureSession`, `FakeClock`, `fill_ledger`.
-- Produces:
-  - `ledger.partner_fetch_rows(layout: Layout, partners: list[dict], records: list[dict]) -> list[dict]` is `filing_fetch_rows(distinct_partners(partners), records, path_of=layout.partner_submission, limits=STAGE4_LIMITS)`. `ledger.build_partner_fetches(layout) -> list[dict]` reads `read_partners(layout)` and `read_ledger(layout.stage4_ledger)`. `ledger.run_partner_fetches(layout) -> list[dict]` writes them as `fetches` to `layout.stage4_view` and gives them.
+- Produces (in `partners.py`, never in `ledger.py`: see Global Constraints):
+  - `partners.partner_fetch_rows(layout: Layout, partners: list[dict], records: list[dict]) -> list[dict]` is `filing_fetch_rows(distinct_partners(partners), records, path_of=layout.partner_submission, limits=STAGE4_LIMITS)`. `partners.build_partner_fetches(layout) -> list[dict]` reads `read_partners(layout)` and `read_ledger(layout.stage4_ledger)`. `partners.run_partner_fetches(layout) -> list[dict]` writes them as `fetches` to `layout.stage4_view` and gives them.
   - `fetch.run_fetch_partners(layout: Layout, *, user_agent: str, session=None, monotonic=time.monotonic, sleep=time.sleep) -> int`:
     1. `read_partners(layout)`, before the lock. A missing table raises, and nothing is sent or written.
     2. `exclusive_lock(layout.lock)`. A held lock raises `RuntimeError`, as in `run_fetch`.
@@ -208,7 +209,7 @@ Spec section 9 leaves these to the builder, and the advisor pass found the rest.
       1. Write the fixture zip with `write_zip`, and patch `index.INDEX_SHA256` and `INDEX_SIZE`, as `build_fixture_root` does.
       2. Patch `sample.draw_sample` (C16) with a wrapper that keeps the rows of `SAMPLED` from the real draw and numbers them again from 1.
       3. Run `index`, `sample`, the fetch (a `FixtureSession` that serves `SUBMISSIONS` with `LAST_MODIFIED`), `envelopes`, `facts`, `ownership` and `compare-refetches`.
-      4. Run `run_partners`, `run_fetch_partners` (each URL in `failing` answers 404) and `run_partner_tables`.
+      4. Run `run_partners`, `run_fetch_partners` (with `monotonic=case.clock.monotonic` and `sleep=case.clock.sleep`, as `build_fixture_root` passes them to `run_refetch`, and a 404 for each URL in `failing`) and `run_partner_tables`.
 
       It gives the zip path.
     - `Stage4RootTestCase(CommandTestCase)` builds it in `setUp`, as `self.zip_path`.
