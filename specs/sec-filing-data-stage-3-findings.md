@@ -182,7 +182,7 @@ found the items below, and fix rounds closed them before the run:
   review also found that no test showed that part 3 takes its fetch rows from the hashed ledger and not from
   `fetches.parquet`. A test was added, and the empty-table path has a test for each table.
 
-Points that the reviews raised and the plan does not ask for. The run does not change for them:
+Points that the reviews raised and the plan does not ask for. The run does not change for them. The first, second and fourth are items in `specs/deferred_items.md` (→ item: 13-sec-filing-data-stage-3-manifests-and-pinning — 2026-11-19):
 
 - A corrupt Parquet file, or a `--zip` that names a folder, ends a command in a traceback and not in one error line.
 - `verify` needs an absolute `--out` that equals the manifest `root`, because `fetches.path` keeps the root as given

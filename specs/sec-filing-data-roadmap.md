@@ -61,7 +61,7 @@ consumes the output of the stage before it.
 > Stage 2: COMPLETE (2026-11-18) — implemented by plan 11 (specs/plans/completed/11-sec-filing-data-stage-2-provenance-and-timing.md). Its Handoff section names what Stage 3 and Stage 4 consume.
 > Next: resume the roadmap.
 
-- [ ] Stage 3: Manifests, hash-bound evidence and release pinning
+- [x] Stage 3: Manifests, hash-bound evidence and release pinning
       Objective: Make each output of O1–O4 checkable and reproducible. Each output set gets a manifest, each parsed value is bound to the hash of the bytes it came from, and each run is tied to the code version that made it.
       Outcomes: O1, O2, O3, O4
       Consumes: Stage 2's tables with provenance and times. Stage 1's runs record no code version, and its findings name only the pilot's commit (plan 10, Handoff). (Resolved at resume, 2026-11-17) Stage 2's tables, ledger and refetch copy, the frozen Stage 1 tables, `check-stage1` and `rebuild`, as built (plan 11, Handoff). Stage 2's runs record no code version either, and its findings name commits in prose only (plan 11, Handoff; Stage 2 findings, Run record). No one commit made the live tables: Stage 2's run re-wrote nine of them, and `sample` and `fetches` are unchanged Stage 1 files. The re-hash of the kept refetch files waits on this stage's manifests (`specs/deferred_items.md`, section `11-sec-filing-data-stage-2-provenance-and-timing — 2026-11-18`). (Resolved at resume, 2026-11-18)
@@ -69,6 +69,9 @@ consumes the output of the stage before it.
       Exit: A check re-derives a sample of parsed values from the retained bytes through their hashes. Each manifest lists every output file with its SHA-256. Each output names the code version that made it, and the outputs of two code versions are told apart. The manifests also list, each with its SHA-256, the inputs that `rebuild` reads in place: the retained bytes, both ledgers and the refetch copies under `stage2/refetch/` (plan 11, Handoff). (Resolved at resume, 2026-11-18)
       Leaves out: As-of views and amendment handling: Stage 4.
       ROUTING: brainstorming
+
+> Stage 3: COMPLETE (2026-11-19) — implemented by plan 13 (specs/plans/completed/13-sec-filing-data-stage-3-manifests-and-pinning.md). Its Handoff section names what Stage 4 consumes.
+> Next: resume the roadmap.
 
 - [ ] Stage 4: As-of views
       Objective: Answer what was known about each filing, fact and ownership record of the sample on any date, amendments included.
