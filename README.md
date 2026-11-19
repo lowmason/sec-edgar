@@ -60,7 +60,7 @@ Stage 3 added four commands. None of them sends a request.
 - `verify --manifest PATH [--rows N] [--seed S]` checks the root against a manifest. `--out` must be the `root` that the manifest names. The command prints `seed: S`, then one line for each check. It exits 0 when every line is `ok` or `not run`, and 1 otherwise. A manifest that it cannot read gives one line and exit 1. It writes nothing except its `runs.jsonl` line. It has three parts. Parts 2 and 3 run for the manifest of `tables` only, and their lines read `not run, no inputs listed` for the other manifests.
   1. Files: each listed file is there with its listed size, SHA-256 and stamp, and no unlisted file is in the set folder. For the manifest of `tables`, this covers `bytes/` and `stage2/refetch/` too.
   2. Binding: each record hash and each ledger hash ties to a listed input. It covers every row.
-  3. Re-derivation: `N` rows of each of the `index`, `filings`, `parties`, `documents`, `facts` and `ownership` tables are derived again from the listed input bytes. Each derived row must equal its table row. `--rows` is `N` and defaults to 20. `--seed` seeds the choice of rows and defaults to 20261119.
+  3. Re-derivation: `N` rows of each of the `index`, `filings`, `parties`, `documents`, `facts` and `ownership` tables are derived again from the listed input bytes. Each derived row must equal its table row. `--rows` is `N` and defaults to 20. An `N` below 1 is a usage error (exit 2). `--seed` seeds the choice of rows and defaults to 20261119.
 
 `facts` and `ownership` read the `filings` table, so run them after `envelopes`. `envelopes` also writes the filing times on the sampled rows of `index`, so a later `index` run alone resets them to null.
 
