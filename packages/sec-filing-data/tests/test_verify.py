@@ -1,21 +1,30 @@
-"""`verify`: the files of a manifest, and the binding of each record hash to a listed input."""
+"""`verify`: the files of a manifest, the binding of each record hash to a listed input, and the
+re-derivation of a seeded sample of rows from the hashed bytes."""
 
 import contextlib
 import copy
+import datetime
 import io
 import json
+import random
 import shutil
 import subprocess
 import sys
 import tempfile
+import unittest
 from collections import Counter
+from functools import partial
 from pathlib import Path
+from unittest import mock
 
+from sec_filing_data import sample, verify
 from sec_filing_data.manifest import files_under, sha256_of, write_manifest
 from sec_filing_data.tables import read_table, write_table
 from sec_filing_data.verify import DEFAULT_ROWS, RECORDS_TABLES, VERIFY_SEED, run_verify
 
-from tests import TEST_COMMIT
+from tests import TEST_COMMIT, test_report
+from tests.test_client import FakeResponse
+from tests.test_index import FIXTURE, fingerprint
 from tests.test_rebuild import (
     FETCHED_13F,
     FixtureRootTestCase,
@@ -24,6 +33,8 @@ from tests.test_rebuild import (
     path_stamps,
     run_cli,
 )
+from tests.test_xbrl import FIXTURE_BYTES as INSTANCE_BYTES
+from tests.test_xbrl import INS_NAME, PRIMARY, submission_with, wrapped
 
 SEED_LINE = f"seed: {VERIFY_SEED}"
 BINDING_TABLES = (*RECORDS_TABLES, "fetches", "refetches")
@@ -70,6 +81,29 @@ class VerifyTestCase(FixtureRootTestCase):
         self.assertEqual(lines[: len(ALL_OK)], with_line(position, line))
         return lines
 
+    def rederive_ok(self, names: tuple[str, ...] = RECORDS_TABLES) -> list[str]:
+        """The `rederive` lines of the tables `names` on an untouched root, at the default rows.
+
+        `index` draws min(10, rows with times) + min(10, rows without). Each other table draws
+        min(20, its rows).
+        """
+        lines = []
+        for name in names:
+            table = read_table(self.layout, name)
+            if name == "index":
+                timed = sum(at is not None for at in table["fetched_at"].to_pylist())
+                count = min(10, timed) + min(10, table.num_rows - timed)
+            else:
+                count = min(20, table.num_rows)
+            lines.append(f"rederive {name}: ok, {count} rows")
+        return lines
+
+    def rederive_line(self, lines: list[str], name: str) -> str:
+        """The one `rederive` line of table `name` in `lines`."""
+        found = [line for line in lines if line.startswith(f"rederive {name}: ")]
+        self.assertEqual(len(found), 1, lines)
+        return found[0]
+
 
 class VerifyPassTests(VerifyTestCase):
     def test_an_untouched_root_passes(self):
@@ -82,8 +116,7 @@ class VerifyPassTests(VerifyTestCase):
             RECORDS_TABLES, ("index", "filings", "parties", "documents", "facts", "ownership")
         )
         self.assertEqual((VERIFY_SEED, DEFAULT_ROWS), (20261119, 20))
-        # Part 3 adds its `rederive` lines after these.
-        self.assertEqual(lines[: len(ALL_OK)], ALL_OK)
+        self.assertEqual(lines, [*ALL_OK, *self.rederive_ok()])
         self.assertEqual(run_verify(self.layout, path), (code, lines))
 
     def test_the_seed_line_names_the_seed(self):
@@ -362,11 +395,152 @@ class VerifyBindingTests(VerifyTestCase):
         self.layout.table("ownership").unlink()
         path = self.write_manifest()
 
-        self.assert_fails_with(
+        lines = self.assert_fails_with(
             path,
             line_of("ownership"),
             f"binding ownership: failed: FileNotFoundError: {self.layout.table('ownership')}",
         )
+        # Part 3 names the table too, and derives the other tables.
+        self.assertEqual(
+            lines[len(ALL_OK) :],
+            [
+                *self.rederive_ok(RECORDS_TABLES[:-1]),
+                f"rederive ownership: failed: FileNotFoundError: {self.layout.table('ownership')}",
+            ],
+        )
+
+
+class VerifyRederiveTests(VerifyTestCase):
+    def test_a_changed_value_fails_the_rederive(self):
+        rows = read_table(self.layout, "parties").to_pylist()
+        rows[0]["name"] = "NOT THE FILED NAME"
+        write_table(self.layout, "parties", rows)
+        path = self.write_manifest()
+
+        code, lines = self.verify(path, "--rows", "1000")
+
+        self.assertEqual(code, 1)
+        # The changed row still has a listed source hash: only the re-derivation shows the change.
+        self.assertIn("binding parties: ok", lines)
+        line = self.rederive_line(lines, "parties")
+        self.assertTrue(
+            line.startswith(f"rederive parties: row 0 of {rows[0]['accession_number']}: "), line
+        )
+        self.assertIn("column name: 'NOT THE FILED NAME'", line)
+
+    def test_a_changed_index_time_fails(self):
+        rows = read_table(self.layout, "index").to_pylist()
+        # A row with a public time is a row with times: its `fetched_at` is not null.
+        position = next(n for n, row in enumerate(rows) if row["public_at"] is not None)
+        rows[position]["public_at"] += datetime.timedelta(seconds=1)
+        write_table(self.layout, "index", rows)
+        path = self.write_manifest()
+
+        code, lines = self.verify(path, "--rows", "1000")
+
+        self.assertEqual(code, 1)
+        line = self.rederive_line(lines, "index")
+        accession = rows[position]["accession_number"]
+        self.assertTrue(line.startswith(f"rederive index: row {position} of {accession}: "), line)
+        self.assertIn("column public_at: ", line)
+
+    def test_rederive_ignores_sample_parquet(self):
+        rows = read_table(self.layout, "sample").to_pylist()
+        for row in rows:
+            row["url"] += "?changed"
+        write_table(self.layout, "sample", rows)
+        path = self.write_manifest()
+
+        # The sample comes from the zip and its seed, so the URLs of the tables still match.
+        self.assertEqual(self.verify(path), (0, [*ALL_OK, *self.rederive_ok()]))
+
+    def test_rederive_reads_the_bytes_it_hashed(self):
+        path = self.write_manifest()
+        changed = next(file for file in self.byte_files() if file.read_bytes() == FETCHED_13F)
+        # No other file under the root has its hash, so `verify` must read this one.
+        same = [file for file in files_under(self.layout.root) if file.read_bytes() == FETCHED_13F]
+        self.assertEqual(same, [changed])
+        self.append_a_byte(changed)
+
+        code, lines = self.verify(path, "--rows", "1000")
+
+        self.assertEqual(code, 1)
+        filings = read_table(self.layout, "filings")["accession_number"].to_pylist()
+        self.assertEqual(
+            self.rederive_line(lines, "filings"),
+            f"rederive filings: row {filings.index(changed.stem)} of {changed.stem}:"
+            f" {self.relative(changed)}: SHA-256 differs from the listed value",
+        )
+
+
+class VerifyDrawTests(unittest.TestCase):
+    def test_same_seed_draws_same_rows(self):
+        drawn = verify.draw_positions(1000, 20, random.Random(5))
+
+        self.assertEqual(verify.draw_positions(1000, 20, random.Random(5)), drawn)
+        self.assertNotEqual(verify.draw_positions(1000, 20, random.Random(6)), drawn)
+        self.assertEqual(drawn, sorted(set(drawn)))
+        self.assertEqual(len(drawn), 20)
+
+    def test_draw_sizes(self):
+        with_times, without = list(range(740)), list(range(740, 302_499))
+        # An odd count gives its extra row to the rows without times.
+        for count, split in {20: (10, 10), 21: (10, 11), 1: (0, 1)}.items():
+            with self.subTest(count=count):
+                drawn = verify.draw_index_positions(
+                    with_times, without, count, random.Random(VERIFY_SEED)
+                )
+
+                self.assertEqual(drawn, sorted(set(drawn)))
+                self.assertEqual(
+                    (sum(n < 740 for n in drawn), sum(n >= 740 for n in drawn)), split
+                )
+        # Neither half is topped up from the other: 2 rows in one half give 2 + 10.
+        for timed, untimed in (([0, 1], list(range(2, 100))), (list(range(98)), [98, 99])):
+            with self.subTest(with_times=len(timed), without=len(untimed)):
+                drawn = verify.draw_index_positions(timed, untimed, 20, random.Random(VERIFY_SEED))
+
+                self.assertEqual(len(drawn), 12)
+        # A small table gives every row once.
+        small = verify.draw_positions(5, 1000, random.Random(VERIFY_SEED))
+        self.assertEqual(small, [0, 1, 2, 3, 4])
+
+
+class VerifyWiderRootTests(VerifyTestCase):
+    """A root on which `facts` has rows and one accession of the index is not sampled.
+
+    One 6-K of the index fixture is a 10-Q here, fetched with an XBRL instance. The sample takes
+    4 of the 5 accessions, so the index has a row without times, as on the live root.
+    """
+
+    def setUp(self) -> None:
+        folder = tempfile.TemporaryDirectory()
+        self.addCleanup(folder.cleanup)
+        fixture = Path(folder.name) / FIXTURE.name
+        text = FIXTURE.read_text(encoding="utf-8")
+        fixture.write_text(text.replace("|6-K|2026-07-28|", "|10-Q|2026-07-28|"), encoding="utf-8")
+        self.enterContext(mock.patch.object(test_report, "FIXTURE", fixture))
+        self.enterContext(
+            mock.patch.object(sample, "draw_sample", partial(sample.draw_sample, size=4))
+        )
+        super().setUp()
+
+    def fetch(self, session, **kwargs) -> int:
+        instance = ("EX-101.INS", INS_NAME, wrapped(INSTANCE_BYTES, "XBRL"))
+        with_facts = submission_with(PRIMARY, instance)
+        for row in read_table(self.layout, "sample").to_pylist():
+            if row["form_type"] == "10-Q":
+                session.replies[row["url"]] = FakeResponse(200, [with_facts])
+        return super().fetch(session, **kwargs)
+
+    def test_facts_and_index_rows_outside_the_sample_are_derived(self):
+        sampled = {row["accession_number"] for row in read_table(self.layout, "sample").to_pylist()}
+        index_rows = read_table(self.layout, "index").to_pylist()
+        self.assertTrue(any(row["accession_number"] not in sampled for row in index_rows))
+        self.assertGreater(read_table(self.layout, "facts").num_rows, 0)
+        path = self.write_manifest()
+
+        self.assertEqual(self.verify(path), (0, [*ALL_OK, *self.rederive_ok()]))
 
 
 class VerifyManifestTests(VerifyTestCase):
@@ -437,6 +611,9 @@ class VerifyMalformedManifestTests(VerifyTestCase):
                 self.assertEqual(lines[0], SEED_LINE)
                 self.assertTrue(lines[1].startswith("files: failed: "), lines[1])
                 self.assertTrue(lines[2].startswith("binding: failed: "), lines[2])
+                # Part 3 cannot draw its sample without the inputs: one line for the part.
+                self.assertEqual(len(lines), 4, lines)
+                self.assertTrue(lines[3].startswith("rederive: failed: "), lines[3])
 
     def test_a_malformed_outputs_list_gives_a_files_failure_line(self):
         changes = {
@@ -479,15 +656,18 @@ class VerifyCommandTests(VerifyTestCase):
 
     def test_verify_never_loads_requests(self):
         path = self.write_manifest()
+        # Part 3 parses the zip, so the subprocess names the fixture zip as the tests do.
+        sha256, size = fingerprint(self.zip_path)
         code = (
             "import sys\n"
-            "from sec_filing_data import cli\n"
+            "from sec_filing_data import cli, index\n"
+            "index.INDEX_SHA256, index.INDEX_SIZE = sys.argv[3], int(sys.argv[4])\n"
             "print(cli.main(['verify', '--out', sys.argv[1], '--manifest', sys.argv[2]]))\n"
             "print('requests' in sys.modules)\n"
         )
 
         result = subprocess.run(
-            [sys.executable, "-c", code, str(self.layout.root), str(path)],
+            [sys.executable, "-c", code, str(self.layout.root), str(path), sha256, str(size)],
             capture_output=True,
             text=True,
             check=True,
