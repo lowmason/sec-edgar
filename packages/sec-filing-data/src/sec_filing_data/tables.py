@@ -251,3 +251,8 @@ def write_table(layout: Layout, name: str, rows: list[dict[str, Any]]) -> None:
 
 def read_table(layout: Layout, name: str) -> pa.Table:
     return pq.read_table(layout.table(name))
+
+
+def as_table_rows(name: str, rows: list[dict]) -> list[dict]:
+    """`rows` as they read back from table `name`: the schema's types, null for a missing key."""
+    return pa.Table.from_pylist(rows, schema=SCHEMAS[name]).to_pylist()

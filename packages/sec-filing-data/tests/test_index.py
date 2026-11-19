@@ -156,6 +156,24 @@ class ReadIndexTests(IndexTestCase):
             with self.assertRaisesRegex(ValueError, "size"):
                 index.read_index(self.zip_path, sha256=self.sha256, size=self.size + 1)
 
+    def test_parse_index_takes_bytes(self):
+        data = self.zip_path.read_bytes()
+
+        rows = index.parse_index(data, sha256=self.sha256, size=self.size, label="L")
+
+        self.assertEqual(len(rows), 6)
+        self.assertEqual(rows, index.read_index(self.zip_path, sha256=self.sha256, size=self.size))
+        with self.subTest("a wrong size names the label"):
+            with self.assertRaisesRegex(ValueError, "^L: size"):
+                index.parse_index(data, sha256=self.sha256, size=self.size + 1, label="L")
+        with self.subTest("a wrong hash names the label"):
+            with self.assertRaisesRegex(ValueError, "^L: SHA-256"):
+                index.parse_index(data, sha256="0" * 64, size=self.size, label="L")
+        with self.subTest("read_index names the path"):
+            with self.assertRaises(ValueError) as caught:
+                index.read_index(self.zip_path, sha256=self.sha256, size=self.size + 1)
+            self.assertTrue(str(caught.exception).startswith(f"{self.zip_path}: size"))
+
     def test_refuses_before_parsing(self):
         not_a_zip = self.make_folder() / "master.zip"
         not_a_zip.write_bytes(b"this is not a zip file")

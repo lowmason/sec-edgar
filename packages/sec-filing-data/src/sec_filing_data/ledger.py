@@ -4,6 +4,7 @@ Each HTTP attempt writes a request record before it is sent and a response recor
 it ends. The two records share an `id`. This module does not import `requests`.
 """
 
+import io
 import json
 import os
 from collections import Counter
@@ -58,7 +59,15 @@ def read_ledger(path: Path) -> list[dict]:
     """
     if not path.exists():
         return []
-    with path.open(encoding="utf-8") as ledger:
+    return parse_ledger(path.read_bytes())
+
+
+def parse_ledger(data: bytes) -> list[dict]:
+    """The records of `read_ledger`, from the bytes of the ledger.
+
+    The lines split as a text file reads them, so that a file and its bytes give one result.
+    """
+    with io.TextIOWrapper(io.BytesIO(data), encoding="utf-8") as ledger:
         return [json.loads(line) for line in ledger if line.strip()]
 
 
@@ -86,25 +95,34 @@ def budget_spent(usage: Usage, limits: Limits = STAGE1_LIMITS) -> bool:
 
 def ok_responses(path: Path) -> dict[str, dict]:
     """The last `ok` response record of each key. A key with no `ok` response is absent."""
-    return _last_ok(read_ledger(path))
+    return last_ok(read_ledger(path))
 
 
-def _last_ok(records: list[dict]) -> dict[str, dict]:
-    last_ok: dict[str, dict] = {}
+def last_ok(records: list[dict]) -> dict[str, dict]:
+    """The last `ok` response record of each key, from `records`."""
+    ok_by_key: dict[str, dict] = {}
     for record in records:
         if record["event"] == "response" and record["outcome"] == "ok":
-            last_ok[record["key"]] = record
-    return last_ok
+            ok_by_key[record["key"]] = record
+    return ok_by_key
 
 
 def build_fetches(layout: Layout) -> list[dict]:
     """One `fetches` row per sampled filing, in draw order, from the ledger and the disk.
 
+    See `fetch_rows`.
+    """
+    records = read_ledger(layout.ledger)
+    return fetch_rows(layout, read_table(layout, "sample").to_pylist(), records)
+
+
+def fetch_rows(layout: Layout, sample: list[dict], records: list[dict]) -> list[dict]:
+    """One `fetches` row per row of `sample`, in draw order, from `records` and the disk.
+
     A filing is `ok` when its bytes are on disk. Else its last response record gives the
     outcome, with `retry` read as `failed`. Else it is `budget` when the budget is spent,
     and `not_attempted` otherwise. Records match a filing by `key == accession_number`.
     """
-    records = read_ledger(layout.ledger)
     spent = budget_spent(_usage(records))
     attempts: Counter[str] = Counter()
     last_response: dict[str, dict] = {}
@@ -113,10 +131,9 @@ def build_fetches(layout: Layout) -> list[dict]:
             attempts[record["key"]] += 1
         elif record["event"] == "response":
             last_response[record["key"]] = record
-    last_ok = _last_ok(records)
-    sample = sorted(read_table(layout, "sample").to_pylist(), key=itemgetter("draw"))
+    ok_by_key = last_ok(records)
     rows = []
-    for sampled in sample:
+    for sampled in sorted(sample, key=itemgetter("draw")):
         accession = sampled["accession_number"]
         row = {
             "accession_number": accession,
@@ -134,8 +151,8 @@ def build_fetches(layout: Layout) -> list[dict]:
         path = layout.submission(accession)
         if path.exists():
             row.update(outcome="ok", path=str(path))
-            if accession in last_ok:
-                row.update(_ok_values(last_ok[accession]))
+            if accession in ok_by_key:
+                row.update(_ok_values(ok_by_key[accession]))
         elif accession in last_response:
             row.update(_answer_values(last_response[accession], path))
         rows.append(row)

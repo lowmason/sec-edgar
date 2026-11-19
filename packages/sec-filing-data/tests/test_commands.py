@@ -28,8 +28,11 @@ from sec_filing_data.ledger import (
     append,
     budget_spent,
     build_fetches,
+    fetch_rows,
+    last_ok,
     ledger_usage,
     ok_responses,
+    parse_ledger,
     read_ledger,
 )
 from sec_filing_data.provenance import filing_times, read_provenance, record_provenance
@@ -426,6 +429,35 @@ class BuildFetchesTests(CommandTestCase):
         self.assertEqual(fetches[2]["outcome"], "not_attempted")
         self.assertEqual(fetches[2]["attempts"], 0)
 
+    def test_fetch_rows_follow_the_given_sample(self):
+        rows = self.write_sample(standard_sample()[:3])
+        retried, on_disk, untouched = (row["accession_number"] for row in rows)
+        for record in [
+            request_record("a1", retried),
+            response_record("a1", retried, status=503, outcome="retry", reason="HTTP 503"),
+            request_record("d1", on_disk),
+            response_record("d1", on_disk, wire_bytes=70, body_bytes=70, sha256="d" * 64),
+        ]:
+            append(self.layout.ledger, record)
+        self.layout.bytes_dir.mkdir()
+        self.layout.submission(on_disk).write_bytes(FIXTURE_BYTES)
+        records = read_ledger(self.layout.ledger)
+        expected = build_fetches(self.layout)
+        self.assertEqual([row["outcome"] for row in expected], ["failed", "ok", "not_attempted"])
+        self.assertEqual(
+            [row["accession_number"] for row in expected], [retried, on_disk, untouched]
+        )
+
+        with self.subTest("in the order of the table, which is reverse draw order"):
+            self.assertEqual(fetch_rows(self.layout, list(reversed(rows)), records), expected)
+        with self.subTest("in draw order"):
+            self.assertEqual(fetch_rows(self.layout, rows, records), expected)
+        with self.subTest("one row"):
+            self.assertEqual(fetch_rows(self.layout, [rows[1]], records), [expected[1]])
+        with self.subTest("the given records, not the ledger"):
+            (row,) = fetch_rows(self.layout, [rows[0]], [])
+            self.assertEqual((row["outcome"], row["attempts"]), ("not_attempted", 0))
+
     def test_file_on_disk_without_ok_record_is_ok(self):
         rows = self.write_sample(standard_sample()[:1])
         accession = rows[0]["accession_number"]
@@ -803,9 +835,29 @@ class OkResponsesTests(CommandTestCase):
         self.assertEqual(set(found), {"k1", "k1/instance"})
         self.assertEqual(found["k1"]["last_modified"], "second")
         self.assertEqual(found["k1/instance"]["last_modified"], "other")
+        self.assertEqual(last_ok(read_ledger(self.layout.ledger)), found)
 
     def test_a_missing_ledger_has_none(self):
         self.assertEqual(ok_responses(self.layout.ledger), {})
+
+
+class ParseLedgerTests(CommandTestCase):
+    def test_parse_ledger_matches_read_ledger(self):
+        self.write_sample(standard_sample()[:3])
+        self.assertEqual(self.fetch(FixtureSession()), 0)
+
+        data = self.layout.ledger.read_bytes()
+
+        records = parse_ledger(data)
+
+        self.assertEqual(records, read_ledger(self.layout.ledger))
+        self.assertEqual(len(records), len(data.splitlines()))
+        self.assertEqual({record["event"] for record in records}, {"request", "response"})
+        with self.subTest("blank lines are skipped"):
+            self.assertEqual(parse_ledger(b'{"a": 1}\n\n   \n{"b": 2}\n'), [{"a": 1}, {"b": 2}])
+        with self.subTest("a line that is not JSON raises"):
+            with self.assertRaises(json.JSONDecodeError):
+                parse_ledger(b'{"a": 1}\nnot json\n')
 
 
 class OfflineTests(unittest.TestCase):

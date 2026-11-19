@@ -11,14 +11,23 @@ import sys
 import tempfile
 import unittest
 from collections import Counter
+from operator import itemgetter
 from pathlib import Path
 from unittest import mock
 
 import pyarrow as pa
 import pyarrow.parquet as pq
 from sec_filing_data import cli, index, sample, version
+from sec_filing_data.facts import extract_facts, fact_rows, in_fact_forms, run_facts
 from sec_filing_data.layout import Layout
-from sec_filing_data.ledger import FETCH_OUTCOMES, build_fetches
+from sec_filing_data.ledger import FETCH_OUTCOMES, append, build_fetches, ok_responses, run_fetches
+from sec_filing_data.ownership import (
+    extract_ownership,
+    ownership_form,
+    ownership_rows,
+    run_ownership,
+)
+from sec_filing_data.provenance import record_provenance
 from sec_filing_data.rebuild import (
     REBUILT_TABLES,
     check_frozen,
@@ -26,13 +35,16 @@ from sec_filing_data.rebuild import (
     compare_table,
     run_rebuild,
 )
-from sec_filing_data.tables import read_table, write_table
+from sec_filing_data.submissions import filing_records, run_envelopes
+from sec_filing_data.tables import SCHEMAS, as_table_rows, read_table, write_table
 
 from tests.test_client import FakeResponse
-from tests.test_commands import CommandTestCase, FixtureSession
+from tests.test_commands import CommandTestCase, FixtureSession, response_record
 from tests.test_index import fingerprint
-from tests.test_ownership import INFOTABLE, PAR, submission_13f
+from tests.test_ownership import INFOTABLE, PAR, SCHEDULE13D, submission_13f
 from tests.test_report import build_fixture_root
+from tests.test_xbrl import FIXTURE_BYTES as INSTANCE_BYTES
+from tests.test_xbrl import INS_NAME, PRIMARY, submission_with, wrapped
 
 # The Stage 1 copy of the sampled 13F-HR: one with an information table, so that `ownership`
 # has rows. Its refetch gets the plain 13F fixture, so its `refetches` row lists changes.
@@ -622,6 +634,118 @@ class CheckFrozenTests(FixtureRootTestCase):
             run_cli("check-frozen", "--out", str(self.layout.root), "--folder", "tables-stage1")
 
         self.assertEqual(raised.exception.code, 2)
+
+
+class PerFilingFunctionsTests(FixtureRootTestCase):
+    """The functions that take the bytes of one filing give the rows that the steps wrote."""
+
+    LAST_MODIFIED = "Fri, 18 Sep 2026 10:03:06 GMT"
+
+    def give_every_branch_a_filing(self) -> None:
+        """Change the root, then run the steps again, so that no branch of the per-filing code
+        has only empty rows.
+
+        The 6-K of draw 4 becomes a 10-Q with an XBRL instance, so that it has facts. The 6-K of
+        draw 5 becomes a 10-K whose fetch failed, with no bytes. The SC 13D/A of draw 2, whose form
+        type joins two types, gets a Schedule 13D, so that it has ownership rows. The N-PX of
+        draw 3 and the failed filing get an `ok` ledger record with a Last-Modified time, as the
+        fixture ledger has none.
+        """
+        sampled = sorted(read_table(self.layout, "sample").to_pylist(), key=itemgetter("draw"))
+        sampled[3]["form_type"] = "10-Q"
+        sampled[4]["form_type"] = "10-K"
+        write_table(self.layout, "sample", sampled)
+        schedule, with_facts, failed = (sampled[n]["accession_number"] for n in (1, 3, 4))
+        self.layout.submission(schedule).write_bytes(
+            submission_with(("SC 13D/A", "doc.xml", wrapped(SCHEDULE13D, "XML")), form="SC 13D/A")
+        )
+        self.layout.submission(with_facts).write_bytes(
+            submission_with(PRIMARY, ("EX-101.INS", INS_NAME, wrapped(INSTANCE_BYTES, "XBRL")))
+        )
+
+        last_ok = ok_responses(self.layout.ledger)
+        for number in (2, 4):
+            accession = sampled[number]["accession_number"]
+            late = {"id": f"late-{number}", "last_modified": self.LAST_MODIFIED}
+            append(self.layout.ledger, {**last_ok[accession], **late})
+        self.layout.submission(failed).unlink()
+        append(
+            self.layout.ledger,
+            response_record("lost", failed, status=503, outcome="failed", reason="HTTP 503"),
+        )
+
+        run_fetches(self.layout)
+        for step in (run_envelopes, run_facts, run_ownership):
+            self.assertEqual(step(self.layout), 0)
+
+    def rows_of(self, name: str, accession: str) -> list[dict]:
+        """The rows of the live table `name` that belong to `accession`, in table order."""
+        return [
+            row
+            for row in read_table(self.layout, name).to_pylist()
+            if row["accession_number"] == accession
+        ]
+
+    def test_as_table_rows_gives_the_rows_as_the_table_reads_them_back(self):
+        row = {"accession_number": "0000000001-26-000001", "form_type": "4", "attempts": 2}
+        write_table(self.layout, "fetches", [row])
+
+        rows = as_table_rows("fetches", [row])
+
+        self.assertEqual(rows, [{**dict.fromkeys(SCHEMAS["fetches"].names), **row}])
+        self.assertEqual(rows, read_table(self.layout, "fetches").to_pylist())
+
+    def test_per_filing_functions_give_the_table_rows(self):
+        self.give_every_branch_a_filing()
+        sample_rows = sorted(read_table(self.layout, "sample").to_pylist(), key=itemgetter("draw"))
+        fetches = {
+            row["accession_number"]: row for row in read_table(self.layout, "fetches").to_pylist()
+        }
+        last_ok = ok_responses(self.layout.ledger)
+        seen = Counter()
+        built: dict[str, list[dict]] = {
+            name: [] for name in ("filings", "parties", "documents", "facts", "ownership")
+        }
+
+        for sampled in sample_rows:
+            accession, form_type = sampled["accession_number"], sampled["form_type"]
+            fetched = fetches[accession]
+            ok = fetched["outcome"] == "ok"
+            raw = self.layout.submission(accession).read_bytes() if ok else None
+            with self.subTest(accession=accession, form_type=form_type, outcome=fetched["outcome"]):
+                records = filing_records(sampled, fetched, raw, last_ok.get(accession))
+
+                filing = as_table_rows("filings", [records.filing])
+                self.assertEqual(filing, self.rows_of("filings", accession))
+                parties = as_table_rows("parties", records.parties)
+                self.assertEqual(parties, self.rows_of("parties", accession))
+                documents = as_table_rows("documents", records.documents)
+                self.assertEqual(documents, self.rows_of("documents", accession))
+                built["filings"] += filing
+                built["parties"] += parties
+                built["documents"] += documents
+                seen["ok" if ok else "not ok"] += 1
+                seen["last_modified_at"] += filing[0]["last_modified_at"] is not None
+
+                provenance = record_provenance(filing[0])
+                if in_fact_forms(form_type):
+                    facts = fact_rows(accession, extract_facts(fetched["outcome"], raw), provenance)
+                    self.assertEqual(facts, self.rows_of("facts", accession))
+                    built["facts"] += facts
+                form = ownership_form(form_type)
+                if form is not None:
+                    extraction = extract_ownership(form, fetched["outcome"], raw)
+                    owned = ownership_rows(accession, form_type, extraction, provenance)
+                    self.assertEqual(owned, self.rows_of("ownership", accession))
+                    built["ownership"] += owned
+
+        self.assertEqual(seen["ok"], 4)
+        self.assertEqual(seen["not ok"], 1)
+        self.assertEqual(seen["last_modified_at"], 1)
+        # Every row of each table, in the table's order: the sampled filings in draw order.
+        for name, rows in built.items():
+            self.assertEqual(rows, read_table(self.layout, name).to_pylist(), name)
+            self.assertGreater(len(rows), 0, name)
 
 
 if __name__ == "__main__":
