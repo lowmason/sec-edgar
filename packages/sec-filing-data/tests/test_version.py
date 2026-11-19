@@ -4,6 +4,7 @@ import json
 import os
 import platform
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -123,6 +124,20 @@ class InspectCheckoutTests(VersionTestCase):
                 self.assertIs(checkout.clean, False)
                 self.assertIn(path, checkout.problem)
 
+    def test_edits_to_pyproject_and_python_version_refuse(self):
+        for path in ("pyproject.toml", ".python-version"):
+            with self.subTest(path=path):
+                module = self.make_module()
+                root = module.parents[3]
+                with (root / path).open("a", encoding="utf-8") as pinned:
+                    pinned.write("edit\n")
+
+                checkout = inspect_checkout(module)
+
+                self.assertEqual(checkout.commit, git(root, "rev-parse", "HEAD"))
+                self.assertIs(checkout.clean, False)
+                self.assertIn(path, checkout.problem)
+
     def test_changes_elsewhere_do_not_refuse(self):
         module = self.make_module()
         root = module.parents[3]
@@ -151,6 +166,46 @@ class InspectCheckoutTests(VersionTestCase):
 
                 self.assertEqual((checkout.commit, checkout.clean), (None, None))
                 self.assertTrue(checkout.problem)
+
+
+class RealCheckoutTests(VersionTestCase):
+    def test_the_real_checkout_comes_from_the_module_path(self):
+        # The suite patches `version.current_checkout`, so the real function runs in a
+        # subprocess. Its current folder is no repository, and nothing patches it.
+        code = (
+            "import json\n"
+            "from sec_filing_data import version\n"
+            "first = version.current_checkout()\n"
+            "second = version.current_checkout()\n"
+            "print(json.dumps({\n"
+            "    'commit': first.commit,\n"
+            "    'clean': first.clean,\n"
+            "    'problem': first.problem,\n"
+            "    'same_object': first is second,\n"
+            "    'cache': version.current_checkout.cache_info()._asdict(),\n"
+            "}))\n"
+        )
+        folder = self.make_folder()
+        # A repository above the temporary folder must not count.
+        environment = {**os.environ, "GIT_CEILING_DIRECTORIES": str(folder.parent)}
+
+        result = subprocess.run(
+            [sys.executable, "-c", code],
+            capture_output=True,
+            text=True,
+            check=False,
+            cwd=folder,
+            env=environment,
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        found = json.loads(result.stdout)
+        module_folder = Path(version.__file__).resolve().parent
+        top = git(module_folder, "rev-parse", "--show-toplevel")
+        self.assertEqual(found["commit"], git(top, "rev-parse", "HEAD"))
+        self.assertIsInstance(found["clean"], bool)
+        self.assertTrue(found["same_object"])
+        self.assertEqual((found["cache"]["misses"], found["cache"]["hits"]), (1, 1))
 
 
 class RefusalTests(VersionTestCase):
