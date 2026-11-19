@@ -26,7 +26,7 @@
 - No stamp, manifest or verify line takes a value from the clock (spec anti-goal 6). Only `record_step` keeps its times.
 - Nothing changes a byte file, a ledger line, `stage2/refetch/`, `tables-stage1/` or the input copy under `filing-data/inputs/`. Nothing touches `data/`, `backups/`, tag `ingest-parked-2026-11-16` or the `[build-system]` range of `sec-filing-data` (it was widened on purpose in `a477c54`). No committed line holds the User-Agent or the contact address.
 - Only the controller runs Task 9. Implementer subagents and review loops never run a `sec-filing-data` command on the live root. The final whole-branch review and its fixes come before Task 9. No commit lands on the branch from Task 9 Step 3 to Step 9, in any path.
-- The implementation PR opens only after Task 9 Step 10, and merges with a merge commit (spec section 3). Use `ccd_pr` `set_auto_merge` with `merge_method: "merge"`, or, under the PR lifecycle fallback, `gh pr merge <n> --merge --delete-branch`.
+- The implementation PR opens only after Task 9 Step 11, when the findings and every Plan Completion Protocol commit are on the branch. Auto-merge can land the PR as soon as it opens. It merges with a merge commit (spec section 3). Use `ccd_pr` `set_auto_merge` with `merge_method: "merge"`, or, under the PR lifecycle fallback, `gh pr merge <n> --merge --delete-branch`.
 - Test command, from the worktree root: `uv run --locked --package sec-filing-data python -m unittest discover -s packages/sec-filing-data/tests -t packages/sec-filing-data`. The baseline is `Ran 327 tests` and `OK`. In each code task, Step 2 sees the new tests fail and Step 4 sees `OK`.
 
 ## Review Focus
@@ -400,6 +400,9 @@ In the steps below, a command name is short for `uv run --locked --package sec-f
   - Problems found and fixed.
   - Exit check: spec section 7's table, filled in.
 
-  Commit: `docs(specs): record the Stage 3 run`. Then open the PR (Global Constraints) and run the PR lifecycle rule.
+  Commit: `docs(specs): record the Stage 3 run`.
+- [ ] **Step 11: Run the Plan Completion Protocol, then open the PR.** The protocol's commits touch only `specs/`. All of them land before the PR opens: the gate, the markup, the deferred items, the 3a Handoff section with the roadmap tick and stamp, the backlog report and the retirement. The protocol:
+  - ticks the item "Re-hash the kept files in `refetches`" in `specs/deferred_items.md`, section `11-sec-filing-data-stage-2-provenance-and-timing — 2026-11-18`. It cites `verify` part 1 and part 2's path check (spec 5.5).
+  - records in the Handoff section the two roadmap departures of spec section 10: D2's clean-tree rule, which Stage 4 inherits, and the listing of `master.zip` among the inputs.
 
-The Plan Completion Protocol then ticks the item "Re-hash the kept files in `refetches`" in `specs/deferred_items.md`, section `11-sec-filing-data-stage-2-provenance-and-timing — 2026-11-18`, citing `verify` part 1 and part 2's path check (spec 5.5). Its Handoff section records the two roadmap departures of spec section 10: D2's clean-tree rule, which Stage 4 inherits, and the listing of `master.zip` among the inputs.
+  Then open the PR (Global Constraints), and run the PR lifecycle rule.
