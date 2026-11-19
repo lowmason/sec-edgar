@@ -960,7 +960,7 @@ class ReportTests(CommandTestCase):
         report = run_report(self.layout)
 
         titles = [line for line in report.split("\n") if line.startswith("## ")]
-        self.assertEqual(titles[-4], "## Platform checks")
+        self.assertEqual(titles[-5], "## Platform checks")
         checks = section(report, "Platform checks")
         labels = [line[2:].split(" ")[0] for line in checks if line.startswith("- ")]
         self.assertEqual(labels, ["V3", "V5", "V6", "V7", "V9", "V10"])
