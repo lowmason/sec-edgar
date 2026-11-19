@@ -42,7 +42,7 @@ def _relative(layout: Layout, path: Path) -> str:
     return path.relative_to(layout.root).as_posix()
 
 
-def _files(folder: Path) -> list[Path]:
+def files_under(folder: Path) -> list[Path]:
     """Every file under `folder`, at any depth. Give none when the folder is missing."""
     return [path for path in folder.rglob("*") if path.is_file()]
 
@@ -73,9 +73,9 @@ def _inputs(layout: Layout, zip_path: Path) -> list[dict]:
         ledgers.append(layout.stage2_ledger)
     named = [
         (str(zip_path.absolute()), zip_path, "index"),
-        *((_relative(layout, path), path, "submission") for path in _files(layout.bytes_dir)),
+        *((_relative(layout, path), path, "submission") for path in files_under(layout.bytes_dir)),
         *((_relative(layout, path), path, "ledger") for path in ledgers),
-        *((_relative(layout, path), path, "refetch") for path in _files(layout.refetch_dir)),
+        *((_relative(layout, path), path, "refetch") for path in files_under(layout.refetch_dir)),
     ]
     return sorted((_input(*item) for item in named), key=lambda entry: entry["path"])
 
@@ -103,7 +103,7 @@ def build_manifest(
             "pyarrow_version": stamp.pyarrow_version,
         },
         "outputs": sorted(
-            (_output(layout, path) for path in _files(folder)), key=lambda entry: entry["path"]
+            (_output(layout, path) for path in files_under(folder)), key=lambda entry: entry["path"]
         ),
     }
     if zip_path is not None:

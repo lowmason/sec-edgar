@@ -17,6 +17,7 @@ from sec_filing_data import (
     report,
     sample,
     submissions,
+    verify,
     version,
 )
 from sec_filing_data.layout import Layout, record_step
@@ -242,6 +243,14 @@ def _run_manifest(args: argparse.Namespace) -> int:
     return 0
 
 
+def _run_verify(args: argparse.Namespace) -> int:
+    layout = Layout(Path(args.out))
+    with record_step(layout, "verify"):
+        code, lines = verify.run_verify(layout, Path(args.manifest), rows=args.rows, seed=args.seed)
+    _print_lines(lines)
+    return code
+
+
 def _print_lines(lines: list[str]) -> None:
     for line in lines:
         print(line)
@@ -361,6 +370,26 @@ def _build_parser() -> argparse.ArgumentParser:
         "--zip", help="path of the quarter's master.zip (for --set tables only)"
     )
     manifest_parser.set_defaults(run=_run_manifest)
+
+    verify_parser = commands.add_parser(
+        "verify",
+        help="check a manifest against the root: its files, then record hashes against its inputs",
+    )
+    verify_parser.add_argument("--out", required=True, help="output root")
+    verify_parser.add_argument("--manifest", required=True, help="path of the manifest to check")
+    verify_parser.add_argument(
+        "--rows",
+        type=int,
+        default=verify.DEFAULT_ROWS,
+        help="rows to derive again from each records table (default: %(default)s)",
+    )
+    verify_parser.add_argument(
+        "--seed",
+        type=int,
+        default=verify.VERIFY_SEED,
+        help="seed of the row sample (default: %(default)s)",
+    )
+    verify_parser.set_defaults(run=_run_verify)
     return parser
 
 

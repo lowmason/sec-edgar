@@ -239,7 +239,14 @@ class RefusalTests(VersionTestCase):
 
     def test_read_only_commands_run_on_a_dirty_tree(self):
         dirty = Checkout(TEST_COMMIT, False, "uncommitted changes in uv.lock")
-        for argv in (["report"], ["check-stage1"], ["check-frozen", "--folder", "tables-stage2"]):
+        read_only = (
+            ["report"],
+            ["check-stage1"],
+            ["check-frozen", "--folder", "tables-stage2"],
+            # An empty manifest gives the `manifest:` line and exit 1: no refusal, no traceback.
+            ["verify", "--manifest", os.devnull],
+        )
+        for argv in read_only:
             with self.subTest(command=argv[0]):
                 root = self.make_folder() / "root"
 

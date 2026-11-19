@@ -1,0 +1,421 @@
+"""`verify`: the files of a manifest, and the binding of each record hash to a listed input."""
+
+import json
+import shutil
+import subprocess
+import sys
+import tempfile
+from collections import Counter
+from pathlib import Path
+
+from sec_filing_data.manifest import files_under, sha256_of, write_manifest
+from sec_filing_data.tables import read_table, write_table
+from sec_filing_data.verify import DEFAULT_ROWS, RECORDS_TABLES, VERIFY_SEED, run_verify
+
+from tests import TEST_COMMIT
+from tests.test_rebuild import (
+    FETCHED_13F,
+    FixtureRootTestCase,
+    file_digests,
+    line_count,
+    path_stamps,
+    run_cli,
+)
+
+SEED_LINE = f"seed: {VERIFY_SEED}"
+BINDING_TABLES = (*RECORDS_TABLES, "fetches", "refetches")
+# The lines before Part 3: the seed, the files line, then one binding line for each table.
+ALL_OK = [SEED_LINE, "files: ok", *(f"binding {name}: ok" for name in BINDING_TABLES)]
+NO_INPUTS = ["binding: not run, no inputs listed", "rederive: not run, no inputs listed"]
+
+
+def line_of(table: str) -> int:
+    """The position of the line of `table` in ALL_OK."""
+    return ALL_OK.index(f"binding {table}: ok")
+
+
+def with_line(position: int, line: str) -> list[str]:
+    """ALL_OK with the line at `position` changed to `line`."""
+    return [*ALL_OK[:position], line, *ALL_OK[position + 1 :]]
+
+
+class VerifyTestCase(FixtureRootTestCase):
+    def write_manifest(self, set_name: str = "tables") -> Path:
+        zip_path = self.zip_path if set_name == "tables" else None
+        return write_manifest(self.layout, set_name, zip_path=zip_path)
+
+    def verify(self, manifest_path: Path, *argv: str) -> tuple[int, list[str]]:
+        return run_cli(
+            "verify", "--out", str(self.layout.root), "--manifest", str(manifest_path), *argv
+        )
+
+    def relative(self, path: Path) -> str:
+        return path.relative_to(self.layout.root).as_posix()
+
+    def byte_files(self) -> list[Path]:
+        return sorted(files_under(self.layout.bytes_dir))
+
+    def append_a_byte(self, path: Path) -> None:
+        with path.open("ab") as handle:
+            handle.write(b"\n")
+
+    def assert_fails_with(self, manifest_path: Path, position: int, line: str) -> list[str]:
+        """Run `verify`. Expect exit 1, and ALL_OK with only the line at `position` changed."""
+        code, lines = self.verify(manifest_path)
+
+        self.assertEqual(code, 1)
+        self.assertEqual(lines[: len(ALL_OK)], with_line(position, line))
+        return lines
+
+
+class VerifyPassTests(VerifyTestCase):
+    def test_an_untouched_root_passes(self):
+        path = self.write_manifest()
+
+        code, lines = self.verify(path)
+
+        self.assertEqual(code, 0)
+        self.assertEqual(
+            RECORDS_TABLES, ("index", "filings", "parties", "documents", "facts", "ownership")
+        )
+        self.assertEqual((VERIFY_SEED, DEFAULT_ROWS), (20261119, 20))
+        # Part 3 adds its `rederive` lines after these.
+        self.assertEqual(lines[: len(ALL_OK)], ALL_OK)
+        self.assertEqual(run_verify(self.layout, path), (code, lines))
+
+    def test_the_seed_line_names_the_seed(self):
+        path = self.write_manifest()
+
+        code, lines = self.verify(path, "--seed", "7", "--rows", "3")
+
+        self.assertEqual(code, 0)
+        self.assertEqual(lines[: len(ALL_OK)], ["seed: 7", *ALL_OK[1:]])
+
+    def test_a_frozen_manifest_runs_part_1_only(self):
+        shutil.copytree(self.layout.tables, self.layout.tables_stage2)
+        path = self.write_manifest("tables-stage2")
+
+        result = self.verify(path)
+
+        self.assertEqual(result, (0, [SEED_LINE, "files: ok", *NO_INPUTS]))
+
+
+class VerifyFilesTests(VerifyTestCase):
+    def test_a_changed_byte_fails(self):
+        path = self.write_manifest()
+        changed = self.byte_files()[0]
+        size = changed.stat().st_size
+        self.append_a_byte(changed)
+
+        self.assert_fails_with(
+            path, 1, f"files: {self.relative(changed)}: {size + 1} bytes, listed {size}"
+        )
+
+    def test_a_byte_changed_in_place_fails_on_the_hash(self):
+        path = self.write_manifest()
+        changed = self.byte_files()[0]
+        data = changed.read_bytes()
+        changed.write_bytes(bytes([data[0] ^ 1]) + data[1:])
+
+        self.assert_fails_with(
+            path, 1, f"files: {self.relative(changed)}: SHA-256 differs from the listed value"
+        )
+
+    def test_a_removed_file_fails(self):
+        path = self.write_manifest()
+        self.layout.table("sample").unlink()
+
+        self.assert_fails_with(path, 1, "files: tables/sample.parquet: missing")
+
+    def test_a_removed_input_fails_under_its_listed_path(self):
+        path = self.write_manifest()
+        # The zip is listed by its absolute path, and the ledger by a path under the root.
+        cases = [
+            (self.zip_path, str(self.zip_path.absolute())),
+            (self.layout.stage2_ledger, self.relative(self.layout.stage2_ledger)),
+        ]
+        for target, listed in cases:
+            with self.subTest(file=target.name):
+                data = target.read_bytes()
+                target.unlink()
+
+                code, lines = self.verify(path)
+
+                target.write_bytes(data)
+                self.assertEqual(code, 1)
+                self.assertEqual(lines[1], f"files: {listed}: missing")
+
+    def test_an_unlisted_file_fails(self):
+        path = self.write_manifest()
+        extras = (
+            self.layout.bytes_dir / "extra.txt",
+            self.layout.refetch_dir / "extra.txt",
+            self.layout.tables / "extra.parquet",
+        )
+        for extra in extras:
+            with self.subTest(file=self.relative(extra)):
+                extra.write_bytes(b"not listed")
+
+                code, lines = self.verify(path)
+
+                extra.unlink()
+                self.assertEqual(code, 1)
+                failure = f"files: {self.relative(extra)}: not listed"
+                self.assertEqual(lines[: len(ALL_OK)], with_line(1, failure))
+
+    def test_swapped_byte_files_fail(self):
+        path = self.write_manifest()
+        files = self.byte_files()
+        first = next(file for file in files if file.read_bytes() == FETCHED_13F)
+        second = next(file for file in files if file != first)
+        scratch = first.with_name("swap.tmp")
+        first.rename(scratch)
+        second.rename(first)
+        scratch.rename(second)
+
+        code, lines = self.verify(path)
+
+        self.assertEqual(code, 1)
+        # The manifest came before the swap, so the binding lines still pass.
+        self.assertEqual(lines[2 : len(ALL_OK)], ALL_OK[2:])
+        self.assertTrue(lines[1].startswith("files: bytes/"), lines[1])
+        self.assertTrue(
+            any(self.relative(swapped) in lines[1] for swapped in (first, second)), lines[1]
+        )
+
+    def test_a_changed_stamp_fails(self):
+        path = self.write_manifest()
+        written = json.loads(path.read_text(encoding="utf-8"))
+        entry = next(e for e in written["outputs"] if e["path"] == "tables/sample.parquet")
+        entry["code_version"] = "b" * 40
+        path.write_text(json.dumps(written), encoding="utf-8")
+
+        self.assert_fails_with(
+            path,
+            1,
+            f"files: tables/sample.parquet: stamp code_version {TEST_COMMIT}"
+            f" differs from the listed {'b' * 40}",
+        )
+
+    def test_verify_needs_the_manifest_root(self):
+        path = self.write_manifest()
+        folder = tempfile.TemporaryDirectory()
+        self.addCleanup(folder.cleanup)
+        other = Path(folder.name) / "other"
+
+        result = run_cli("verify", "--out", str(other), "--manifest", str(path))
+
+        self.assertEqual(
+            result,
+            (
+                1,
+                [
+                    SEED_LINE,
+                    f"files: --out {other} differs from the manifest root {self.layout.root}",
+                ],
+            ),
+        )
+
+
+class VerifyBindingTests(VerifyTestCase):
+    def test_a_source_hash_with_no_input_fails(self):
+        write_table(
+            self.layout,
+            "facts",
+            [{"accession_number": "0001000097-26-000006", "source_sha256": "0" * 64}],
+        )
+        path = self.write_manifest()
+
+        self.assert_fails_with(
+            path,
+            line_of("facts"),
+            f"binding facts: source_sha256 {'0' * 64} matches no listed input",
+        )
+
+    def test_the_first_source_hash_with_no_input_is_named(self):
+        rows = read_table(self.layout, "parties").to_pylist()
+        rows[1]["source_sha256"] = "2" * 64
+        rows[2]["source_sha256"] = "1" * 64
+        write_table(self.layout, "parties", rows)
+        path = self.write_manifest()
+
+        self.assert_fails_with(
+            path,
+            line_of("parties"),
+            f"binding parties: source_sha256 {'2' * 64} matches no listed input",
+        )
+
+    def test_a_filing_hash_with_no_input_fails(self):
+        rows = read_table(self.layout, "filings").to_pylist()
+        rows[0]["sha256"] = "3" * 64
+        write_table(self.layout, "filings", rows)
+        path = self.write_manifest()
+
+        self.assert_fails_with(
+            path,
+            line_of("filings"),
+            f"binding filings: sha256 {'3' * 64} matches no listed input",
+        )
+
+    def test_the_hash_of_a_filing_that_is_not_ok_is_not_checked(self):
+        rows = read_table(self.layout, "filings").to_pylist()
+        rows[0].update(outcome="failed", sha256="3" * 64)
+        write_table(self.layout, "filings", rows)
+        path = self.write_manifest()
+
+        # Only the lines before Part 3 are checked: Part 3 may flag the edited row.
+        self.assertEqual(self.verify(path)[1][: len(ALL_OK)], ALL_OK)
+
+    def test_a_missing_source_hash_fails(self):
+        rows = read_table(self.layout, "documents").to_pylist()
+        rows[0]["source_sha256"] = None
+        write_table(self.layout, "documents", rows)
+        path = self.write_manifest()
+
+        self.assert_fails_with(
+            path,
+            line_of("documents"),
+            "binding documents: source_sha256 None matches no listed input",
+        )
+
+    def test_the_rows_of_fetches_and_refetches_that_are_not_ok_are_not_checked(self):
+        fetches = read_table(self.layout, "fetches").to_pylist()
+        fetches[0].update(outcome="failed", path=None, sha256=None)
+        write_table(self.layout, "fetches", fetches)
+        refetches = read_table(self.layout, "refetches").to_pylist()
+        refetches[0].update(outcome="failed", refetch_sha256=None)
+        write_table(self.layout, "refetches", refetches)
+        path = self.write_manifest()
+
+        # Only the lines before Part 3 are checked: Part 3 may flag the edited rows.
+        self.assertEqual(self.verify(path)[1][: len(ALL_OK)], ALL_OK)
+
+    def test_the_path_check_catches_one_of_two_equal_files(self):
+        files = self.byte_files()
+        counts = Counter(file.read_bytes() for file in files)
+        edited = next(file for file in files if counts[file.read_bytes()] > 1)
+        ledger_hash = sha256_of(edited)
+        self.append_a_byte(edited)
+        path = self.write_manifest()
+
+        # The ledger hash is still listed, for the other copy. Only the path check shows the edit.
+        self.assert_fails_with(
+            path,
+            line_of("fetches"),
+            f"binding fetches: {edited.stem} {edited} has the listed SHA-256 {sha256_of(edited)},"
+            f" the ledger gives {ledger_hash}",
+        )
+
+    def test_an_edited_refetch_copy_is_caught_by_its_path(self):
+        accession = read_table(self.layout, "refetches").to_pylist()[0]["accession_number"]
+        copy = self.layout.refetched(accession)
+        ledger_hash = sha256_of(copy)
+        self.append_a_byte(copy)
+        path = self.write_manifest()
+
+        self.assert_fails_with(
+            path,
+            line_of("refetches"),
+            f"binding refetches: {accession} {self.relative(copy)}"
+            f" has the listed SHA-256 {sha256_of(copy)}, the ledger gives {ledger_hash}",
+        )
+
+    def test_a_fetches_path_outside_the_root_fails(self):
+        rows = read_table(self.layout, "fetches").to_pylist()
+        accession = rows[0]["accession_number"]
+        outside = f"/elsewhere/bytes/{accession}.txt"
+        rows[0]["path"] = outside
+        write_table(self.layout, "fetches", rows)
+        path = self.write_manifest()
+
+        self.assert_fails_with(
+            path,
+            line_of("fetches"),
+            f"binding fetches: {accession} {outside} is not under {self.layout.root}",
+        )
+
+    def test_a_fetches_path_that_is_not_a_listed_input_fails(self):
+        rows = read_table(self.layout, "fetches").to_pylist()
+        accession = rows[0]["accession_number"]
+        unlisted = str(self.layout.bytes_dir / "elsewhere" / f"{accession}.txt")
+        rows[0]["path"] = unlisted
+        write_table(self.layout, "fetches", rows)
+        path = self.write_manifest()
+
+        self.assert_fails_with(
+            path,
+            line_of("fetches"),
+            f"binding fetches: {accession} {unlisted} is not a listed input",
+        )
+
+    def test_verify_names_a_missing_table(self):
+        self.layout.table("ownership").unlink()
+        path = self.write_manifest()
+
+        self.assert_fails_with(
+            path,
+            line_of("ownership"),
+            f"binding ownership: failed: FileNotFoundError: {self.layout.table('ownership')}",
+        )
+
+
+class VerifyManifestTests(VerifyTestCase):
+    def test_verify_refuses_an_unreadable_manifest(self):
+        folder = tempfile.TemporaryDirectory()
+        self.addCleanup(folder.cleanup)
+        cases = {
+            "not JSON": ("{", "Expecting"),
+            "format 2": (json.dumps({"manifest_format": 2}), "manifest_format is 2, not 1"),
+            "not an object": ("[]", "not a JSON object"),
+        }
+        for name, (text, reason) in cases.items():
+            with self.subTest(manifest=name):
+                path = Path(folder.name) / f"{name}.json"
+                path.write_text(text, encoding="utf-8")
+
+                code, lines = self.verify(path)
+
+                self.assertEqual(code, 1)
+                self.assertEqual(len(lines), 1)
+                self.assertTrue(lines[0].startswith(f"manifest: {path}: {reason}"), lines[0])
+
+    def test_verify_refuses_a_missing_manifest(self):
+        path = self.layout.manifests / "missing.json"
+
+        result = self.verify(path)
+
+        self.assertEqual(result, (1, [f"manifest: {path}: No such file or directory"]))
+
+
+class VerifyCommandTests(VerifyTestCase):
+    def test_verify_writes_only_its_run_line(self):
+        path = self.write_manifest()
+        digests, stamps = file_digests(self.layout.root), path_stamps(self.layout.root)
+        runs = line_count(self.layout.runs)
+
+        code, lines = self.verify(path)
+
+        self.assertEqual((code, lines[: len(ALL_OK)]), (0, ALL_OK))
+        self.assertEqual(file_digests(self.layout.root), digests)
+        self.assertEqual(path_stamps(self.layout.root), stamps)
+        records = [json.loads(line) for line in self.layout.runs.read_text().splitlines()]
+        self.assertEqual(len(records), runs + 1)
+        self.assertEqual(records[-1]["step"], "verify")
+
+    def test_verify_never_loads_requests(self):
+        path = self.write_manifest()
+        code = (
+            "import sys\n"
+            "from sec_filing_data import cli\n"
+            "print(cli.main(['verify', '--out', sys.argv[1], '--manifest', sys.argv[2]]))\n"
+            "print('requests' in sys.modules)\n"
+        )
+
+        result = subprocess.run(
+            [sys.executable, "-c", code, str(self.layout.root), str(path)],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+
+        self.assertEqual(result.stdout.splitlines()[-2:], ["0", "False"])
