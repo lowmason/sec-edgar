@@ -251,12 +251,22 @@ The rules, by form:
   null.
 - **`none_declared`**: every other amendment, and any amendment whose bytes give none of these values.
 
+An amendment is filed after its original. So when both are held and the rule finds an original whose `accepted_at`
+is after the amendment's, that original is no link: `original_accession` stays null, and `link_problem` says why.
+This can happen under rule 2, where the declared date matches a same-day filing (my call).
+
 A Schedule 13D/A often names the amendment before it, not the first filing. So links can form a chain, for example
 sampled 13D, partner 13D/A No. 1, partner 13D/A No. 2. The table holds one hop. A reader follows a chain by joining
 `original_accession` to `accession_number`.
 
 A **confirmed pair** is a `links` row whose amendment and original are both held. A candidate whose bytes name
 another filing stays held, with its own link. It answers at its own time like every other held filing.
+
+**Order in a pair.** Each filing of a pair answers at its own `known_from`. Usually the original answers first. But
+EDGAR can rewrite a copy after acceptance, as it did for the 10-Q `0001836875-26-000073`. When it rewrote an
+original's copy after its amendment's, the original's `known_from` is the later one, and the amendment answers
+first. This is not an error, and no rule moves either time: the bytes of the original that we hold existed only from
+their `Last-Modified` time. The report and the findings name each pair in this order (my call).
 
 Expected for the 27 sampled amendments, from the live bytes: 2 Form D/A and 2 Form 4/A link to partners. 14 name an
 original that is not in the 2026Q3 index. 1 Form 4/A has no index match for its declared date, 2026-04-16. The
@@ -319,7 +329,8 @@ as Stage 3's sets do.
   compares them by value. With a `stage4/` folder present it prints 8 more lines. At the Stage 4 commit, all 19
   lines must be `equal`. The 11 Stage 3 lines show that the Stage 4 code does not move a Stage 3 value.
 - `report` gains a Stage 4 section: the partners by rule, the partner fetch outcomes and the Stage 4 ledger use
-  against its limits, the links by rule and by `original_held_in`, the number of confirmed pairs, and the
+  against its limits, the links by rule and by `original_held_in`, the number of confirmed pairs and the pairs whose
+  amendment answers first, and the
   `known_from` check: for each held filing, `known_from` is at or after `public_at`. The Versions section covers the
   Stage 4 set too.
 
@@ -342,9 +353,10 @@ come before the run. `$ROOT` is `/Users/lowell/Projects/sec-edgar/filing-data/20
    Stage 3).
 8. **As-of.** `asof` at the end of each of these dates: 2026-06-30, 2026-07-31, 2026-08-14, 2026-08-27, 2026-09-30,
    2026-10-31 and 2026-11-19, with the counts recorded. For each confirmed pair, `asof --table filings` at three
-   instants: 1 µs before the original's `known_from`, between the two `known_from` values, and at the amendment's
-   `known_from`. Expected: neither, then the original only, then both. Where both have the same `known_from`, the
-   middle instant does not exist, and the findings say so.
+   instants: 1 µs before the earlier `known_from`, between the two `known_from` values, and at the later
+   `known_from`. Expected: neither, then the earlier filing only, then both. The findings name each pair whose
+   amendment answers first (5.5). Where both have the same `known_from`, the middle instant does not exist, and the
+   findings say so.
 9. **Report.** The Stage 4 section shows every held filing with `known_from` at or after `public_at`.
 10. **Inputs unchanged.** The ledgers, the `bytes/` digest, the `tables/` files, the Stage 3 manifests and `$ZIP`
     equal their step 1 values.
@@ -377,9 +389,11 @@ fixtures and temporary folders.
   returns 5 at once when the Stage 4 budget is spent. A held lock refuses. It skips a partner with bytes. It writes
   only `stage4/`. It refuses a tree that is not clean and runs without a User-Agent.
 - **Links,** from fixture XML: each of the four rules, a chain through a partner, a 13F-HR/A with no held
-  original, a Form 4/A with two index matches (`link_problem`), and a `/A` filing with no XML document.
+  original, a Form 4/A with two index matches (`link_problem`), a found original accepted after its amendment (no
+  link), and a `/A` filing with no XML document.
 - **The pair:** a fixture original and its amendment answer neither, then the original only, then both, at the
-  three instants of step 8.
+  three instants of step 8. A second pair, whose original has the later `known_from`, answers neither, then the
+  amendment only, then both.
 - **Manifest and `verify`:** the `stage4` manifest lists every file of `stage4/tables/` and `stage4/bytes/`, and
   `builds_on`. It refuses to overwrite. `verify` gives exit 0 on an untouched fixture root. Each of these gives exit
   1 and names the file or row: a changed partner byte file, an unlisted file in `stage4/bytes/`, a changed
@@ -424,6 +438,9 @@ inputs unchanged (step 10), the wall time and disk use, and each problem found a
 - A failed partner fetch may be tried again while budget remains, as in `fetch`, not once only as in `refetch`.
 - The `links` rules of 5.5. A link needs a declared value. The 13F link follows R23: filer and period of report.
 - A rejected candidate stays held and answers at its own time with its own link.
+- A found original that the SEC accepted after its amendment is no link (5.5).
+- In a pair, each filing answers at its own `known_from`, even when the amendment answers first. The report and the
+  findings name such pairs (5.5).
 - `asof` returns the answer in memory and prints counts. It finds each manifest by the set's stamps and checks the
   table files that it reads.
 - The `stage4` manifest names the `tables` manifest in `builds_on`, and does not list the sampled bytes again.
