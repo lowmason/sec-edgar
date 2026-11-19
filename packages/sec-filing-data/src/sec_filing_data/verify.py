@@ -81,8 +81,12 @@ def _guarded(label: str, check: Callable[[], str]) -> str:
     try:
         result = check()
     except Exception as error:
-        result = f"failed: {type(error).__name__}: {error}"
+        result = _failure(error)
     return f"{label}: {result}"
+
+
+def _failure(error: Exception) -> str:
+    return f"failed: {type(error).__name__}: {error}"
 
 
 def _passes(line: str) -> bool:
@@ -153,10 +157,15 @@ def check_binding(layout: Layout, manifest: dict) -> list[str]:
     A records hash must match some listed input. A ledger hash must match the input at its own
     path: so a file that shares its bytes with another is not covered by the other's hash.
     """
-    inputs = {entry["path"]: entry for entry in manifest["inputs"]}
-    listed = {entry["sha256"] for entry in inputs.values()}
+    try:
+        inputs = {entry["path"]: entry for entry in manifest["inputs"]}
+        listed = {entry["sha256"] for entry in inputs.values()}
+        root = manifest["root"]
+    except Exception as error:
+        # No table can be checked without the listed inputs, so one line stands for the part.
+        return [f"binding: {_failure(error)}"]
     checks = {name: partial(_records_result, layout, name, listed) for name in RECORDS_TABLES}
-    checks["fetches"] = partial(_fetches_result, layout, manifest["root"], inputs)
+    checks["fetches"] = partial(_fetches_result, layout, root, inputs)
     checks["refetches"] = partial(_refetches_result, layout, inputs)
     return [_guarded(f"binding {name}", check) for name, check in checks.items()]
 

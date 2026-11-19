@@ -1,5 +1,8 @@
 """`verify`: the files of a manifest, and the binding of each record hash to a listed input."""
 
+import contextlib
+import copy
+import io
 import json
 import shutil
 import subprocess
@@ -151,14 +154,21 @@ class VerifyFilesTests(VerifyTestCase):
             self.layout.bytes_dir / "extra.txt",
             self.layout.refetch_dir / "extra.txt",
             self.layout.tables / "extra.parquet",
+            # A nested folder is checked too: the scan goes to any depth.
+            self.layout.bytes_dir / "sub" / "extra.txt",
+            self.layout.refetch_dir / "sub" / "extra.txt",
+            self.layout.tables / "sub" / "extra.parquet",
         )
         for extra in extras:
             with self.subTest(file=self.relative(extra)):
+                extra.parent.mkdir(exist_ok=True)
                 extra.write_bytes(b"not listed")
 
                 code, lines = self.verify(path)
 
                 extra.unlink()
+                if extra.parent.name == "sub":
+                    extra.parent.rmdir()
                 self.assertEqual(code, 1)
                 failure = f"files: {self.relative(extra)}: not listed"
                 self.assertEqual(lines[: len(ALL_OK)], with_line(1, failure))
@@ -385,6 +395,71 @@ class VerifyManifestTests(VerifyTestCase):
         result = self.verify(path)
 
         self.assertEqual(result, (1, [f"manifest: {path}: No such file or directory"]))
+
+
+class VerifyMalformedManifestTests(VerifyTestCase):
+    """A manifest of format 1 that is wrong inside. Each check names its failure, and no
+    exception escapes, so every line shows."""
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.original = json.loads(self.write_manifest().read_text(encoding="utf-8"))
+
+    def verify_changed(self, change) -> tuple[int, list[str]]:
+        """Write the manifest again with `change` applied to its dict. Run `verify` on it.
+
+        Give the result of `run_verify`. The command gives the same result and no stderr.
+        """
+        path = self.layout.manifests / "changed.json"
+        written = copy.deepcopy(self.original)
+        change(written)
+        path.write_text(json.dumps(written), encoding="utf-8")
+        result = run_verify(self.layout, path)
+        stderr = io.StringIO()
+        with contextlib.redirect_stderr(stderr):
+            self.assertEqual(self.verify(path), result)
+        self.assertEqual(stderr.getvalue(), "")
+        return result
+
+    def test_a_malformed_inputs_list_gives_failure_lines(self):
+        changes = {
+            "inputs null": lambda written: written.update(inputs=None),
+            "an input that is a number": lambda written: written.update(inputs=[1]),
+            "an input with no sha256": lambda written: written["inputs"][0].pop("sha256"),
+            "an input with no path": lambda written: written["inputs"][0].pop("path"),
+            "an input whose path is a list": lambda written: written["inputs"][0].update(path=[]),
+        }
+        for name, change in changes.items():
+            with self.subTest(change=name):
+                code, lines = self.verify_changed(change)
+
+                self.assertEqual(code, 1)
+                self.assertEqual(lines[0], SEED_LINE)
+                self.assertTrue(lines[1].startswith("files: failed: "), lines[1])
+                self.assertTrue(lines[2].startswith("binding: failed: "), lines[2])
+
+    def test_a_malformed_outputs_list_gives_a_files_failure_line(self):
+        changes = {
+            "no outputs": lambda written: written.pop("outputs"),
+            "outputs null": lambda written: written.update(outputs=None),
+            "an output that is a number": lambda written: written.update(outputs=[1]),
+            "no set": lambda written: written.pop("set"),
+        }
+        for name, change in changes.items():
+            with self.subTest(change=name):
+                code, lines = self.verify_changed(change)
+
+                self.assertEqual(code, 1)
+                self.assertEqual(lines[0], SEED_LINE)
+                self.assertTrue(lines[1].startswith("files: failed: "), lines[1])
+                # The binding lines do not read the outputs.
+                self.assertEqual(lines[2 : len(ALL_OK)], ALL_OK[2:])
+
+    def test_a_manifest_with_no_root_names_the_mismatch(self):
+        result = self.verify_changed(lambda written: written.pop("root"))
+
+        failure = f"files: --out {self.layout.root} differs from the manifest root None"
+        self.assertEqual(result, (1, [SEED_LINE, failure]))
 
 
 class VerifyCommandTests(VerifyTestCase):
