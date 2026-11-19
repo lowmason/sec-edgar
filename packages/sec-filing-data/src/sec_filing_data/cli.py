@@ -22,7 +22,13 @@ from sec_filing_data import (
     version,
 )
 from sec_filing_data.layout import Layout, record_step
-from sec_filing_data.ledger import FETCH_OUTCOMES, STAGE2_LIMITS, ledger_usage, run_fetches
+from sec_filing_data.ledger import (
+    FETCH_OUTCOMES,
+    STAGE2_LIMITS,
+    STAGE4_LIMITS,
+    ledger_usage,
+    run_fetches,
+)
 from sec_filing_data.tables import read_table
 
 USER_AGENT_VARIABLE = "SEC_USER_AGENT"
@@ -80,8 +86,8 @@ def _run_fetch(args: argparse.Namespace) -> int:
     user_agent = _user_agent()
     if user_agent is None:
         return 2
-    # Only `fetch` and `refetch` load the SEC client, so the other commands never import
-    # requests.
+    # Only `fetch`, `refetch` and `fetch-partners` load the SEC client, so the other commands
+    # never import requests.
     from sec_filing_data import fetch
 
     layout = Layout(Path(args.out))
@@ -115,7 +121,7 @@ def _run_refetch(args: argparse.Namespace) -> int:
     user_agent = _user_agent()
     if user_agent is None:
         return 2
-    # As in `fetch`: only this command and `fetch` load the SEC client.
+    # As in `fetch`: the SEC client loads only inside the handlers that send requests.
     from sec_filing_data import fetch
 
     layout = Layout(Path(args.out))
@@ -133,6 +139,30 @@ def _run_refetch(args: argparse.Namespace) -> int:
         print(f"{accession}: {outcomes.get(accession, 'not refetched')}")
     requests_sent = ledger_usage(layout.stage2_ledger).requests
     print(f"stage 2 requests: {requests_sent} of {STAGE2_LIMITS.requests}")
+    return code
+
+
+def _run_fetch_partners(args: argparse.Namespace) -> int:
+    if (refused := _refuse_unless_clean()) is not None:
+        return refused
+    user_agent = _user_agent()
+    if user_agent is None:
+        return 2
+    # As in `fetch`: the SEC client loads only inside the handlers that send requests.
+    from sec_filing_data import fetch
+
+    layout = Layout(Path(args.out))
+    with record_step(layout, "fetch-partners"):
+        try:
+            code = fetch.run_fetch_partners(layout, user_agent=user_agent)
+        except FileNotFoundError as error:
+            # The `partners` table is read before the lock, so nothing was sent or written.
+            print(f"error: {error}", file=sys.stderr)
+            return 1
+    _print_fetch_outcomes(read_table(layout.stage4_view, "fetches").to_pylist())
+    usage = ledger_usage(layout.stage4_ledger)
+    print(f"stage 4 requests: {usage.requests} of {STAGE4_LIMITS.requests}")
+    print(f"stage 4 wire bytes: {usage.wire_bytes} of {STAGE4_LIMITS.wire_bytes}")
     return code
 
 
@@ -315,6 +345,16 @@ def _build_parser() -> argparse.ArgumentParser:
         help="accession number of a sampled filing; repeat it for more",
     )
     refetch_parser.set_defaults(run=_run_refetch)
+
+    fetch_partners_parser = commands.add_parser(
+        "fetch-partners",
+        help=(
+            "fetch the partner submission files, under stage4/ and the Stage 4 budget"
+            f" (needs {USER_AGENT_VARIABLE})"
+        ),
+    )
+    fetch_partners_parser.add_argument("--out", required=True, help="output root")
+    fetch_partners_parser.set_defaults(run=_run_fetch_partners)
 
     build_fetches_parser = commands.add_parser(
         "build-fetches",

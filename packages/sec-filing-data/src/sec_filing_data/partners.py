@@ -2,6 +2,9 @@
 
 It reads the `index` and `sample` tables and the bytes of the sampled amendments, and writes
 `stage4/tables/partners.parquet`. It sends no request, and does not import `requests`.
+
+The `fetches` table of the partner fetch is built here too, from the Stage 4 ledger and the
+bytes on disk. The fetch itself, which sends the requests, is `fetch.run_fetch_partners`.
 """
 
 from collections.abc import Callable
@@ -19,6 +22,7 @@ from sec_filing_data.amendments import (
     read_declared,
 )
 from sec_filing_data.layout import Layout
+from sec_filing_data.ledger import STAGE4_LIMITS, filing_fetch_rows, read_ledger
 from sec_filing_data.sample import ARCHIVES
 from sec_filing_data.tables import read_table, write_table
 
@@ -143,3 +147,30 @@ def run_partners(layout: Layout) -> list[dict]:
 def _sampled_bytes(layout: Layout, accession: str) -> bytes | None:
     path = layout.submission(accession)
     return path.read_bytes() if path.exists() else None
+
+
+def partner_fetch_rows(layout: Layout, partners: list[dict], records: list[dict]) -> list[dict]:
+    """One `fetches` row per distinct partner, in accession order, from `records` and the disk.
+
+    The bytes sit at `layout.partner_submission`, and the Stage 4 limits count.
+    """
+    return filing_fetch_rows(
+        distinct_partners(partners),
+        records,
+        path_of=layout.partner_submission,
+        limits=STAGE4_LIMITS,
+    )
+
+
+def build_partner_fetches(layout: Layout) -> list[dict]:
+    """The `fetches` rows of the partners, from the `partners` table, the Stage 4 ledger and the
+    bytes on disk. Raises FileNotFoundError when `partners` is missing."""
+    return partner_fetch_rows(layout, read_partners(layout), read_ledger(layout.stage4_ledger))
+
+
+def run_partner_fetches(layout: Layout) -> list[dict]:
+    """Write `fetches` under `stage4/tables/`, from the ledger and the bytes on disk. Give its
+    rows. This is the offline form of the table that `fetch-partners` writes."""
+    rows = build_partner_fetches(layout)
+    write_table(layout.stage4_view, "fetches", rows)
+    return rows
