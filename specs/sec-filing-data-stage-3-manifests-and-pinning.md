@@ -137,8 +137,10 @@ not meet the Exit's "the code version that made it" without a change to the road
 - **Read-only commands** (`report`, `rebuild`, `check-stage1`, the frozen-copy check of 5.8 and `verify`) never
   refuse for the tree state. `rebuild` stamps the tables in its temporary folder with what it can read, and
   compares by value.
-- Tests give the stamp directly, so the suite runs on a tree with edits in progress. Only the tests of the rule
-  itself use a temporary git repository.
+- Tests give the stamp directly, so the suite runs on a tree with edits in progress. They give it through a
+  function parameter or a test patch, never through an environment variable or a command flag. A hook that a live
+  command could reach would let a table name a version that did not make it (anti-goal 1). Only the tests of the
+  rule itself use a temporary git repository.
 
 ### 5.2 The stamp in each table file
 
@@ -198,7 +200,7 @@ imports `requests`, and writes nothing except its `runs.jsonl` line. It has thre
    file equals its manifest entry. `--out` equals the manifest's `root`.
 2. **Binding** (manifests with inputs only). It covers every row, not a sample:
    - Each distinct `source_sha256` of the records tables (`index`, `parties`, `documents`, `facts`, `ownership`)
-     and each `sha256` of `filings` is the SHA-256 of a listed input.
+     and each `sha256` of an `ok` row of `filings` is the SHA-256 of a listed input.
    - **By path.** For each `ok` row of `fetches`, the listed input at `fetches.path` has the SHA-256 that the row
      gives, which comes from the Stage 1 ledger. For each `ok` row of `refetches`, the listed input
      `stage2/refetch/<accession>.txt` has the row's `refetch_sha256`, which comes from the Stage 2 ledger. So each
