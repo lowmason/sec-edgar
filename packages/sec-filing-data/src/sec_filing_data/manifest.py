@@ -1,7 +1,9 @@
 """The manifest of one table set: each file of the set folder with its size and SHA-256.
 
-The manifest of `tables` also lists the inputs that `rebuild` reads. Its name holds the first
-12 characters of the code version, so manifests of two code versions never share a name.
+The manifest of `tables` also lists the inputs that `rebuild` reads. The manifest of `stage4`
+lists the files under `stage4/bytes/` and the Stage 4 ledger, and names the `tables` manifest that
+it builds on. The name of a manifest holds the first 12 characters of the code version, so
+manifests of two code versions never share a name.
 """
 
 import hashlib
@@ -15,8 +17,9 @@ from sec_filing_data.layout import Layout
 from sec_filing_data.tables import STAMP_KEYS, read_stamp
 
 MANIFEST_FORMAT = 1
-SETS = ("tables", "tables-stage1", "tables-stage2")
-# The set that `rebuild` makes. Only its manifest lists inputs, and it needs the zip.
+STAGE4_SET = "stage4"
+SETS = ("tables", "tables-stage1", "tables-stage2", STAGE4_SET)
+# The set that `rebuild` makes. Its manifest lists the inputs of `rebuild`, and it needs the zip.
 _LIVE_SET = "tables"
 
 
@@ -36,6 +39,37 @@ def zip_problem(set_name: str, zip_path: Path | None) -> str | None:
 
 def manifest_path(layout: Layout, set_name: str, commit: str) -> Path:
     return layout.manifests / f"{set_name}@{commit[:12]}.json"
+
+
+def set_folder(layout: Layout, set_name: str) -> Path:
+    """The folder of the table files of `set_name`."""
+    return layout.stage4_tables if set_name == STAGE4_SET else layout.root / set_name
+
+
+def set_version(folder: Path) -> str:
+    """The one code version in the stamps of the `*.parquet` files of `folder`.
+
+    Files of several versions raise `ValueError`, which names each version. A folder that is
+    missing or holds no table raises `FileNotFoundError`.
+    """
+    versions = {read_stamp(path)["code_version"] for path in folder.glob("*.parquet")}
+    if not versions:
+        raise FileNotFoundError(f"{folder} holds no table")
+    if len(versions) > 1:
+        named = ", ".join(sorted(versions))
+        raise ValueError(f"{folder} holds tables of {len(versions)} code versions: {named}")
+    return versions.pop()
+
+
+def find_manifest(layout: Layout, set_name: str) -> Path:
+    """The manifest of `set_name` under the code version of its table stamps.
+
+    A manifest that does not exist raises `FileNotFoundError`. So do the errors of `set_version`.
+    """
+    path = manifest_path(layout, set_name, set_version(set_folder(layout, set_name)))
+    if not path.is_file():
+        raise FileNotFoundError(f"{path} does not exist")
+    return path
 
 
 def _relative(layout: Layout, path: Path) -> str:
@@ -66,6 +100,11 @@ def _input(name: str, path: Path, kind: str) -> dict:
     return {"path": name, "kind": kind, "bytes": path.stat().st_size, "sha256": sha256_of(path)}
 
 
+def _listed(named: list[tuple[str, Path, str]]) -> list[dict]:
+    """The input entries of `named` (name, file, kind), sorted by name."""
+    return sorted((_input(*item) for item in named), key=lambda entry: entry["path"])
+
+
 def _inputs(layout: Layout, zip_path: Path) -> list[dict]:
     """The inputs that `rebuild` reads. The zip is named by its absolute path."""
     ledgers = [layout.ledger]
@@ -77,7 +116,26 @@ def _inputs(layout: Layout, zip_path: Path) -> list[dict]:
         *((_relative(layout, path), path, "ledger") for path in ledgers),
         *((_relative(layout, path), path, "refetch") for path in files_under(layout.refetch_dir)),
     ]
-    return sorted((_input(*item) for item in named), key=lambda entry: entry["path"])
+    return _listed(named)
+
+
+def _stage4_inputs(layout: Layout) -> list[dict]:
+    """The inputs of the Stage 4 tables that `stage4/` holds: the partner bytes and the ledger."""
+    return _listed(
+        [
+            *(
+                (_relative(layout, path), path, "submission")
+                for path in files_under(layout.stage4_bytes)
+            ),
+            (_relative(layout, layout.stage4_ledger), layout.stage4_ledger, "ledger"),
+        ]
+    )
+
+
+def _builds_on(layout: Layout) -> dict:
+    """The `tables` manifest that the Stage 4 tables read from: its path and SHA-256."""
+    path = find_manifest(layout, _LIVE_SET)
+    return {"path": _relative(layout, path), "sha256": sha256_of(path)}
 
 
 def build_manifest(
@@ -85,12 +143,13 @@ def build_manifest(
 ) -> dict:
     """The manifest of the folder `set_name` under the root, as a dict.
 
-    A `tables` manifest needs `zip_path`, and a frozen set takes none: else `ValueError`. A
-    missing set folder, zip or ledger raises `FileNotFoundError`.
+    A `tables` manifest needs `zip_path`, and every other set takes none: else `ValueError`. A
+    missing set folder, zip, ledger or `tables` manifest raises `FileNotFoundError`. The
+    `stage4` manifest also raises `ValueError` when the files of `tables` name several versions.
     """
     if (problem := zip_problem(set_name, zip_path)) is not None:
         raise ValueError(problem)
-    folder = layout.root / set_name
+    folder = set_folder(layout, set_name)
     if not folder.is_dir():
         raise FileNotFoundError(f"{folder} is not a folder")
     manifest = {
@@ -108,6 +167,9 @@ def build_manifest(
     }
     if zip_path is not None:
         manifest["inputs"] = _inputs(layout, zip_path)
+    elif set_name == STAGE4_SET:
+        manifest["inputs"] = _stage4_inputs(layout)
+        manifest["builds_on"] = _builds_on(layout)
     return manifest
 
 

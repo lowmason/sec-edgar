@@ -20,7 +20,7 @@ from email.utils import format_datetime
 from pathlib import Path
 from unittest import mock
 
-from sec_filing_data import cli, index, sample
+from sec_filing_data import cli, index, manifest, sample, version
 from sec_filing_data.facts import run_facts
 from sec_filing_data.fetch import run_fetch_partners
 from sec_filing_data.index import run_index
@@ -535,3 +535,15 @@ class Stage4RootTestCase(CommandTestCase):
         with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
             code = cli.main([*argv, "--out", str(self.layout.root)])
         return code, stdout.getvalue(), stderr.getvalue()
+
+
+def write_both_manifests(case: Stage4RootTestCase) -> tuple[Path, Path]:
+    """Write the `tables` manifest, then the `stage4` manifest. Give both paths."""
+    commit = version.current_checkout().commit
+    for argv in (("--set", "tables", "--zip", str(case.zip_path)), ("--set", "stage4")):
+        code, _, stderr = case.run_cli("manifest", *argv)
+        case.assertEqual((code, stderr), (0, ""))
+    return (
+        manifest.manifest_path(case.layout, "tables", commit),
+        manifest.manifest_path(case.layout, "stage4", commit),
+    )

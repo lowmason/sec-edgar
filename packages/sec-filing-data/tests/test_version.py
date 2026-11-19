@@ -45,6 +45,7 @@ WRITING_ARGV: list[list[str]] = [
     ["partners"],
     ["fetch-partners"],
     ["partner-tables"],
+    ["manifest", "--set", "stage4"],
 ]
 
 

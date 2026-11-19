@@ -296,8 +296,10 @@ def _run_manifest(args: argparse.Namespace) -> int:
     with record_step(layout, "manifest"):
         try:
             path = manifest.write_manifest(layout, args.set, zip_path=zip_path)
-        except FileNotFoundError as error:
-            # The manifest is built before it is written, so nothing was left behind.
+        except (FileNotFoundError, ValueError) as error:
+            # The manifest is built before it is written, so nothing was left behind. A
+            # `ValueError` is the `stage4` set finding several code versions in `tables`. A
+            # table file that pyarrow cannot read raises one too, for any set.
             print(f"error: {error}", file=sys.stderr)
             return 1
     print(f"manifest: {path}")
