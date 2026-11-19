@@ -1,6 +1,6 @@
 # Stage 4: As-of views — Design Spec
 
-**Status:** Draft for owner review, 2026-11-19.
+**Status:** Approved by the owner, 2026-11-19. Owner's words: "Approve spec".
 **Project:** `/Users/lowell/Projects/sec-edgar`, package `packages/sec-filing-data`.
 **Roadmap:** [sec-filing-data roadmap](sec-filing-data-roadmap.md), Stage 4, the last stage.
 **Inputs:** Stage 3 as built: [plan 13](plans/completed/13-sec-filing-data-stage-3-manifests-and-pinning.md) (its
