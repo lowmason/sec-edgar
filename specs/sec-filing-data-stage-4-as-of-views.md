@@ -148,7 +148,9 @@ EDGAR. The as-of view reads the strict bound, so it never shows a record early.
   `known_from`.
 - **An index row** takes the `known_from` of its filing when we hold that filing, in the sample or in the partners.
   Every other index row takes `index_last_modified_at`, 2026-10-31T07:50:09Z: the index file listed the row by
-  then.
+  then. So an answer for a time before 2026-10-31T07:50:09Z holds at most 775 of the 302,499 index rows: the 740
+  rows of sampled filings and the 35 rows of partners. The other rows all join at that time. A time from
+  `date_filed` could show a row early, because a date has no time of day and the filing has no fetched header.
 - `public_at` and the other times stay on each row, unchanged. They never serve as the cutoff.
 - **The cost.** The 10-Q `0001836875-26-000073` was accepted on 2026-08-14, and its copy was last modified on
   2026-08-27. It answers from 2026-08-27. The bytes that were public before that date are not the bytes we hold.
@@ -262,6 +264,13 @@ sampled 13D, partner 13D/A No. 1, partner 13D/A No. 2. The table holds one hop. 
 A **confirmed pair** is a `links` row whose amendment and original are both held. A candidate whose bytes name
 another filing stays held, with its own link. It answers at its own time like every other held filing.
 
+**Direction.** In a **forward pair**, the original is in the sample, and the amendment is a partner (rule 3). In a
+**reverse pair**, the amendment is in the sample, and the original is a partner (rules 1 and 2). A pair whose
+amendment links to an earlier partner amendment of the same sampled filing counts as forward. The Exit's words, "a
+sampled filing has an amendment", name the forward direction. So the report and the findings count each direction
+apart. If no rule 3 candidate confirms, the forward case rests on the fixture test and the reverse pairs. The
+findings then record this for the roadmap's completion review, and the run does not stop.
+
 **Order in a pair.** Each filing of a pair answers at its own `known_from`. Usually the original answers first. But
 EDGAR can rewrite a copy after acceptance, as it did for the 10-Q `0001836875-26-000073`. When it rewrote an
 original's copy after its amendment's, the original's `known_from` is the later one, and the amendment answers
@@ -329,8 +338,8 @@ as Stage 3's sets do.
   compares them by value. With a `stage4/` folder present it prints 8 more lines. At the Stage 4 commit, all 19
   lines must be `equal`. The 11 Stage 3 lines show that the Stage 4 code does not move a Stage 3 value.
 - `report` gains a Stage 4 section: the partners by rule, the partner fetch outcomes and the Stage 4 ledger use
-  against its limits, the links by rule and by `original_held_in`, the number of confirmed pairs and the pairs whose
-  amendment answers first, and the
+  against its limits, the links by rule and by `original_held_in`, the number of confirmed pairs in each direction,
+  the pairs whose amendment answers first, and the
   `known_from` check: for each held filing, `known_from` is at or after `public_at`. The Versions section covers the
   Stage 4 set too.
 
@@ -408,7 +417,7 @@ fixtures and temporary folders.
 |---|---|
 | For the 2026Q3 sample, an as-of query for any date returns only what was public by that date | The cutoff rule (5.1) and its tests. The report's check that each held filing has `known_from` at or after `public_at`. The `asof` counts at the seven dates of step 8 |
 | Each answer traces to its manifest and its source bytes | `asof` names both manifests by SHA-256, and refuses on a changed table file. `verify` exit 0 on the `stage4` and `tables` manifests: part 2 binds every row's source hash to a listed file |
-| Where a sampled filing has an amendment, the original and the amendment each answer at their own dates | The `links` table on the live root: the count of confirmed pairs, and the three `asof` answers for each pair. The sampled amendments whose original is not held, each with its `link_problem` |
+| Where a sampled filing has an amendment, the original and the amendment each answer at their own dates | The `links` table on the live root: the count of confirmed pairs in each direction (5.5), and the three `asof` answers for each pair. The sampled amendments whose original is not held, each with its `link_problem` |
 
 The findings also record the run record (root, commit, stamp), the partner list, the SEC use against the Stage 4
 budget (requests and wire bytes from the Stage 4 ledger), the `rebuild` lines, the `stage4` manifest's SHA-256, the
@@ -431,7 +440,9 @@ inputs unchanged (step 10), the wall time and disk use, and each problem found a
 - The cutoff is `last_modified_at`, else `fetched_at`. `public_at` never serves as the cutoff (5.1).
 - A date means the end of that day in New York. An instant needs an offset.
 - An answer holds every record that was public by `T`. Nothing is dropped or replaced (platform R24's default).
-- Index rows of filings that we do not hold answer from the index file's `Last-Modified`.
+- Index rows of filings that we do not hold answer from the index file's `Last-Modified`. So before
+  2026-10-31T07:50:09Z, an answer holds at most 775 index rows (5.1).
+- Confirmed pairs are counted by direction, forward and reverse. No forward pair is a finding, not a stop (5.5).
 - The partner rules of 5.2, with "the same CIKs" as the set of `cik` values over the index rows, a same-day
   candidate included, and one hop only.
 - The partner list is a table written before any request.
