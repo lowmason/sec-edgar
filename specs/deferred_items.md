@@ -482,6 +482,7 @@ Plan 12 removed the parked engine from `main`. The paths that these items name u
       `sha256_equal` takes both SHA-256 values from the ledgers and never hashes the stored files again, as plan C8
       says. An edit to a kept file after its `ok` record would not show. Stage 3's manifests are meant to cover byte
       integrity. Size: quick-fix. Revisit if: Stage 3's manifest check does not list the files under `ROOT/stage2/refetch/`.
+      → planned 2026-11-19: specs/plans/13-sec-filing-data-stage-3-manifests-and-pinning.md
 - [ ] Command robustness on an old or busy root (plan 11 final review; `src/sec_filing_data/report.py`, `cli.py`, `rebuild.py`):
       `report` raises a `KeyError` on a `filings` table that has no Stage 2 columns. A refused `refetch` of an unknown
       accession still writes one `runs.jsonl` line. `refetch` exits 0 after a 404 or a failed fetch, and prints the
