@@ -9,7 +9,7 @@ from sec_filing_data.tables import read_table, write_table
 QUOTA_FORMS = ("10-K", "10-Q", "3", "4", "5", "SCHEDULE 13D", "SCHEDULE 13G", "13F-HR")
 STRATA = ("quota", "repeated", "uniform")
 
-_ARCHIVES = "https://www.sec.gov/Archives/"
+ARCHIVES = "https://www.sec.gov/Archives/"
 
 
 @dataclass
@@ -31,7 +31,7 @@ def draw_sample(
     Each draw samples from accessions sorted by accession number, so the input order does
     not matter.
     """
-    filings = _group_by_accession(index_rows)
+    filings = group_by_accession(index_rows)
     accessions = sorted(filings)
     rng = random.Random(seed)
     chosen: list[tuple[str, str, str]] = []  # (stratum, form type, accession)
@@ -72,7 +72,9 @@ def run_sample(layout: Layout) -> list[dict]:
     return rows
 
 
-def _group_by_accession(index_rows: list[dict]) -> dict[str, _Filing]:
+def group_by_accession(index_rows: list[dict]) -> dict[str, _Filing]:
+    """Each accession of `index_rows`: its first row (the lowest `line_number`) and its form
+    types."""
     filings: dict[str, _Filing] = {}
     for row in index_rows:
         filing = filings.setdefault(row["accession_number"], _Filing(row, set()))
@@ -92,5 +94,5 @@ def _sample_row(draw: int, stratum: str, form_type: str, first: dict) -> dict:
         "company_name": first["company_name"],
         "date_filed": first["date_filed"],
         "filename": first["filename"],
-        "url": _ARCHIVES + first["filename"],
+        "url": ARCHIVES + first["filename"],
     }

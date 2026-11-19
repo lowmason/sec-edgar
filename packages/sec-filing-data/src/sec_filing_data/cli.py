@@ -12,6 +12,7 @@ from sec_filing_data import (
     index,
     manifest,
     ownership,
+    partners,
     rebuild,
     refetches,
     report,
@@ -178,6 +179,19 @@ def _run_ownership(args: argparse.Namespace) -> int:
     return code
 
 
+def _run_partners(args: argparse.Namespace) -> int:
+    if (refused := _refuse_unless_clean()) is not None:
+        return refused
+    layout = Layout(Path(args.out))
+    with record_step(layout, "partners"):
+        rows = partners.run_partners(layout)
+        rules = Counter(row["rule"] for row in rows)
+        print(f"partners: {len(partners.distinct_partners(rows))}")
+        for rule in partners.RULES:
+            print(f"{rule}: {rules[rule]}")
+    return 0
+
+
 def _print_status_counts(layout: Layout, table: str) -> None:
     """Print `status ok: n`, then `status <reason>: n` for each reason, sorted."""
     reasons = Counter(row["reason"] for row in read_table(layout, table).to_pylist())
@@ -336,6 +350,16 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     ownership_parser.add_argument("--out", required=True, help="output root")
     ownership_parser.set_defaults(run=_run_ownership)
+
+    partners_parser = commands.add_parser(
+        "partners",
+        help=(
+            "write stage4/tables/partners from the index, the sample and the sampled amendments"
+            " (sends no request)"
+        ),
+    )
+    partners_parser.add_argument("--out", required=True, help="output root")
+    partners_parser.set_defaults(run=_run_partners)
 
     report_parser = commands.add_parser("report", help="print the Markdown report of the root")
     report_parser.add_argument("--out", required=True, help="output root")
