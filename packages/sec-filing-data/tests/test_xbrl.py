@@ -781,7 +781,7 @@ class FactsCommandTests(FactsRootTestCase):
         report = run_report(self.layout)
 
         titles = [line for line in report.split("\n") if line.startswith("## ")]
-        self.assertEqual(titles[-6:-3], ["## Facts", "## Ownership", "## Platform checks"])
+        self.assertEqual(titles[-7:-4], ["## Facts", "## Ownership", "## Platform checks"])
         self.assertEqual(
             section(report, "Facts"),
             [

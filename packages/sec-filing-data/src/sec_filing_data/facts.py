@@ -17,7 +17,7 @@ NO_FACTS = "no facts in the instance"
 
 
 @dataclass(frozen=True)
-class _Extraction:
+class Extraction:
     """What one filing gave: its instance file, why it gave no facts (or None), the facts."""
 
     source_document: str | None
@@ -38,10 +38,12 @@ def run_facts(layout: Layout) -> int:
     fetches = {row["accession_number"]: row for row in _read_fetches(layout)}
     facts, statuses = [], []
     for sampled in sample:
-        if not _in_fact_forms(sampled["form_type"]):
+        if not in_fact_forms(sampled["form_type"]):
             continue
         accession = sampled["accession_number"]
-        extraction = _extract(layout, accession, fetches[accession]["outcome"])
+        outcome = fetches[accession]["outcome"]
+        raw = layout.submission(accession).read_bytes() if outcome == "ok" else None
+        extraction = extract_facts(outcome, raw)
         statuses.append(
             {
                 "accession_number": accession,
@@ -51,12 +53,9 @@ def run_facts(layout: Layout) -> int:
                 "reason": extraction.reason,
             }
         )
-        facts.extend(
-            {"accession_number": accession, "source_document": extraction.source_document}
-            | asdict(fact)
-            | provenance[accession]
-            for fact in extraction.facts
-        )
+        # `provenance[accession]` is read only for a filing that has facts.
+        if extraction.facts:
+            facts.extend(fact_rows(accession, extraction, provenance[accession]))
     write_table(layout, "facts", facts)
     write_table(layout, "facts_status", statuses)
     return 0
@@ -68,27 +67,39 @@ def _read_fetches(layout: Layout) -> list[dict]:
     return build_fetches(layout)
 
 
-def _in_fact_forms(form_type: str) -> bool:
+def in_fact_forms(form_type: str) -> bool:
     """A form type that joins several types with `;` is in the set when any of them is."""
     return any(part in FACT_FORMS for part in form_type.split(";"))
 
 
-def _extract(layout: Layout, accession: str, outcome: str) -> _Extraction:
-    """Read the facts of one filing. The checks run in the order of the `reason` values."""
+def extract_facts(outcome: str, raw: bytes | None) -> Extraction:
+    """Read the facts of one filing, from its fetch `outcome` and its bytes `raw`.
+
+    `raw` is None unless the outcome is `ok`. The checks run in the order of the `reason` values.
+    """
     if outcome != "ok":
-        return _Extraction(None, outcome)
-    raw = layout.submission(accession).read_bytes()
+        return Extraction(None, outcome)
     try:
         submission = parse_submission(raw)
     except EnvelopeError as error:
-        return _Extraction(None, f"submission parse error: {error}")
+        return Extraction(None, f"submission parse error: {error}")
     instance = find_instance(submission.documents)
     if instance is None:
-        return _Extraction(None, NO_INSTANCE)
+        return Extraction(None, NO_INSTANCE)
     try:
         facts = parse_instance(document_text(raw, instance))
     except XbrlError as error:
-        return _Extraction(instance.filename, f"instance parse error: {error}")
+        return Extraction(instance.filename, f"instance parse error: {error}")
     if not facts:
-        return _Extraction(instance.filename, NO_FACTS)
-    return _Extraction(instance.filename, None, facts)
+        return Extraction(instance.filename, NO_FACTS)
+    return Extraction(instance.filename, None, facts)
+
+
+def fact_rows(accession: str, extraction: Extraction, provenance: dict) -> list[dict]:
+    """One `facts` row per fact of `extraction`. `provenance` is that of the filing."""
+    return [
+        {"accession_number": accession, "source_document": extraction.source_document}
+        | asdict(fact)
+        | provenance
+        for fact in extraction.facts
+    ]

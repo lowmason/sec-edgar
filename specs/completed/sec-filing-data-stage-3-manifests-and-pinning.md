@@ -1,16 +1,18 @@
 # Stage 3: Manifests, hash-bound evidence and release pinning — Design Spec
 
+**COMPLETE (2026-11-19)**, implemented by [plan 13](../plans/completed/13-sec-filing-data-stage-3-manifests-and-pinning.md). Results: [Stage 3 findings](../sec-filing-data-stage-3-findings.md).
+
 **Status:** Approved by the owner, 2026-11-19. Owner's words: "Approve spec".
 **Project:** `/Users/lowell/Projects/sec-edgar`, package `packages/sec-filing-data`.
-**Roadmap:** [sec-filing-data roadmap](sec-filing-data-roadmap.md), Stage 3.
-**Inputs:** Stage 2 as built: [plan 11](plans/completed/11-sec-filing-data-stage-2-provenance-and-timing.md) (its
-Handoff section), the [Stage 2 findings](sec-filing-data-stage-2-findings.md), the
-[Stage 2 spec](completed/sec-filing-data-stage-2-provenance-and-timing.md), and the live root
+**Roadmap:** [sec-filing-data roadmap](../sec-filing-data-roadmap.md), Stage 3.
+**Inputs:** Stage 2 as built: [plan 11](../plans/completed/11-sec-filing-data-stage-2-provenance-and-timing.md) (its
+Handoff section), the [Stage 2 findings](../sec-filing-data-stage-2-findings.md), the
+[Stage 2 spec](sec-filing-data-stage-2-provenance-and-timing.md), and the live root
 `/Users/lowell/Projects/sec-edgar/filing-data/2026Q3` (`tables/`, `tables-stage1/`, `bytes/`, both ledgers,
 `stage2/refetch/`). The input copy `/Users/lowell/Projects/sec-edgar/filing-data/inputs/2026Q3/master.zip`. One
 deferred item: "Re-hash the kept files in `refetches`" (`specs/deferred_items.md`, section
 `11-sec-filing-data-stage-2-provenance-and-timing — 2026-11-18`). Background only: the
-[Stage 1 findings](sec-filing-data-stage-1-findings.md), which name commits in prose.
+[Stage 1 findings](../sec-filing-data-stage-1-findings.md), which name commits in prose.
 
 ## 1. Purpose
 

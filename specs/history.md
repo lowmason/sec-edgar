@@ -73,3 +73,25 @@ Differences from the design:
 
 Closed earlier deferred items:
 - "Remove the parked `sec-edgar-ingest` engine from `main` (tech-debt triage 2026-11-18, row 4): tag the last commit" (deferred by tech-debt-triage).
+
+## 13-sec-filing-data-stage-3-manifests-and-pinning — 2026-11-19
+Plan: specs/plans/completed/13-sec-filing-data-stage-3-manifests-and-pinning.md · Spec: specs/completed/sec-filing-data-stage-3-manifests-and-pinning.md (retired) · Roadmap: specs/sec-filing-data-roadmap.md, Stage 3
+
+Differences from the design:
+- Ruling (Task 1): declined line "no test reaches the real current_checkout" -- made a finding (fix round 1, tests only) -- spec 5.1 line 123 (module path, not cwd) and the one-read cache are stated rules with no test; a cwd-based wrong version would pass all 336 -- cost if wrong: a stamp could name the wrong commit when run from another folder
+- Ruling (Task 1): declined line "no edit test for pyproject.toml or .python-version" -- made a finding (fix round 1, tests only) -- a typo in PINNED_PATHS would stamp a changed Python pin as clean -- cost if wrong: a table made under a changed pin names a commit that did not make it (anti-goal 1)
+- Ruling (Task 6): concern "manifest._files renamed to files_under (public), outside the brief's Files list" -- keep -- one definition of "every file at any depth" for manifest and verify, no private import, no behavior change, and no plan line fences manifest.py -- cost if wrong: a one-line rename to undo
+- Ruling (Task 6): re-review declined line "Task 7 rederive must read manifest inputs inside a guard" -- made a requirement of the Task 7 dispatch -- same exposure as the fixed Important 1 -- cost if wrong: a malformed manifest gives a traceback in part 3
+- Ruling (final review): declined line "Task 9 Step 1 'prints a path in this worktree' would also pass for a non-editable install under .venv/lib" -- handled in Task 9 by checking the printed path starts with <worktree>/packages/sec-filing-data/src (the venv sits inside the worktree) -- cost if wrong: stamps would name HEAD for code not loaded from the checkout
+- Deviation (Task 1): Added tests beyond the plan: two for `current_stamp`, one for the real `current_checkout` from a folder that is not a repository, one for edits to only `pyproject.toml` or `.python-version`. Source: plan, Task 1.
+- Deviation (Task 3): The `fetch` outcome printing moved into `cli._print_fetch_outcomes`, shared with `build-fetches`. `rebuild._compare_whole` is the whole-table compare behind `check_frozen`. Source: plan, Task 3.
+- Deviation (Task 4): The CLI catches `FileNotFoundError` around `write_manifest`, prints `error: <message>` and exits 1, so a missing input writes no `manifests/` folder. Source: plan, Task 4.
+- Deviation (Task 5): Added one round-trip test and fixed anchors in four plan tests, because their equality checks are circular after the refactor. Source: plan, Task 5.
+- Deviation (Task 6): `manifest._files` became the public `files_under`. A malformed `inputs` list gives one `binding: failed: …` line. Source: plan, Task 6.
+- Deviation (Task 7): Part 3 gives one `rederive: failed: …` line when its preparation fails, and `split_by_times` joins the chunks first, because an empty `index` table crashed the final review's run. Source: plan, Task 7.
+- Deviation (Task 8): Four existing end-of-list order checks moved by one index, because Versions is now the last section. Source: plan, Task 8.
+- Deviation (Task 9): Step 1 also counted the files of `bytes/` (500) and `stage2/refetch/` (1). Source: plan, Task 9.
+- Deferred: 3 items. Source: specs/deferred_items.md, § 13-sec-filing-data-stage-3-manifests-and-pinning.
+
+Closed earlier deferred items:
+- "Re-hash the kept files in `refetches` (plan 11 final review, Codex review; `src/sec_filing_data/refetches.py`):" (deferred by 11-sec-filing-data-stage-2-provenance-and-timing).

@@ -1,11 +1,14 @@
 """Schemas of the plain tables, and their parquet read and write."""
 
+import hashlib
 import os
+from pathlib import Path
 from typing import Any
 
 import pyarrow as pa
 import pyarrow.parquet as pq
 
+from sec_filing_data import version
 from sec_filing_data.layout import Layout
 
 _TIMESTAMP = pa.timestamp("us", tz="UTC")
@@ -174,14 +177,64 @@ SCHEMAS: dict[str, pa.Schema] = {
     ),
 }
 
+# The format number of each table. It goes up by 1 when the table's columns, their order or
+# their types change. `tests/test_tables.py` pins each schema to its number.
+TABLE_FORMATS: dict[str, int] = {
+    "index": 2,
+    "sample": 1,
+    "fetches": 1,
+    "filings": 2,
+    "parties": 2,
+    "documents": 2,
+    "facts": 2,
+    "facts_status": 1,
+    "ownership": 2,
+    "ownership_status": 1,
+    "refetches": 1,
+}
+
+# The four values that a table file records about its origin. Each is stored in the file's
+# key-value metadata under `sec_filing_data.<key>`.
+STAMP_KEYS = ("code_version", "python_version", "pyarrow_version", "table_format")
+_METADATA_PREFIX = "sec_filing_data."
+
+
+def schema_fingerprint(schema: pa.Schema) -> str:
+    """The SHA-256 of the schema's column names and types, in order, as hex."""
+    description = "\n".join(f"{field.name}: {field.type}" for field in schema)
+    return hashlib.sha256(description.encode("utf-8")).hexdigest()
+
+
+def _stamped_schema(name: str) -> pa.Schema:
+    stamp = version.current_stamp()
+    values = {
+        "code_version": stamp.code_version or version.NOT_RECORDED,
+        "python_version": stamp.python_version,
+        "pyarrow_version": stamp.pyarrow_version,
+        "table_format": str(TABLE_FORMATS[name]),
+    }
+    return SCHEMAS[name].with_metadata(
+        {f"{_METADATA_PREFIX}{key}": values[key] for key in STAMP_KEYS}
+    )
+
+
+def read_stamp(path: Path) -> dict[str, str]:
+    """The four stamp values of a table file, by short key. An absent key reads `not recorded`."""
+    footer = pq.read_metadata(path).metadata or {}
+    return {
+        key: footer.get(f"{_METADATA_PREFIX}{key}".encode(), version.NOT_RECORDED.encode()).decode()
+        for key in STAMP_KEYS
+    }
+
 
 def write_table(layout: Layout, name: str, rows: list[dict[str, Any]]) -> None:
     """Write `rows` as table `name`: to a temporary file first, then rename it into place.
 
+    The file's metadata holds the stamp of the code that wrote it and the table's format number.
     A key that is not in the schema raises `ValueError`, because pyarrow would drop it
     silently. A missing key is written as null.
     """
-    schema = SCHEMAS[name]
+    schema = _stamped_schema(name)
     unknown = set().union(*rows) - set(schema.names)
     if unknown:
         raise ValueError(f"table {name}: keys not in its schema: {sorted(unknown)}")
@@ -198,3 +251,8 @@ def write_table(layout: Layout, name: str, rows: list[dict[str, Any]]) -> None:
 
 def read_table(layout: Layout, name: str) -> pa.Table:
     return pq.read_table(layout.table(name))
+
+
+def as_table_rows(name: str, rows: list[dict]) -> list[dict]:
+    """`rows` as they read back from table `name`: the schema's types, null for a missing key."""
+    return pa.Table.from_pylist(rows, schema=SCHEMAS[name]).to_pylist()

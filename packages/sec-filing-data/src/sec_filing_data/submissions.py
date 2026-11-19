@@ -1,6 +1,7 @@
 """The `envelopes` command: the header and document list of each fetched submission file."""
 
 from operator import itemgetter
+from typing import NamedTuple
 
 from sec_filing_data.envelope import EnvelopeError, Submission, parse_submission
 from sec_filing_data.layout import Layout
@@ -24,6 +25,15 @@ _NOT_PARSED = dict.fromkeys(
 _NO_TIMES = dict.fromkeys(["accepted_at", "public_at", "public_rule", "last_modified_at"])
 
 
+class FilingRecords(NamedTuple):
+    """The rows that one sampled filing gives: its `filings` row, and its `parties` and
+    `documents` rows."""
+
+    filing: dict
+    parties: list[dict]
+    documents: list[dict]
+
+
 def run_envelopes(layout: Layout) -> int:
     """Write `filings` (one row per sampled filing), `parties` and `documents`.
 
@@ -41,38 +51,55 @@ def run_envelopes(layout: Layout) -> int:
     for sampled in sample:
         accession = sampled["accession_number"]
         fetched = fetches[accession]
-        filing = {
-            "accession_number": accession,
-            "form_type": sampled["form_type"],
-            "outcome": fetched["outcome"],
-            "reason": None,
-            "fetched_at": fetched["fetched_at"],
-            "sha256": fetched["sha256"],
-            "source_url": sampled["url"],
-            **_NOT_PARSED,
-            **_NO_TIMES,
-        }
-        if fetched["outcome"] != "ok":
-            filing["reason"] = fetched["outcome"]
-        else:
-            if accession in last_ok:
-                filing["last_modified_at"] = last_modified_at(last_ok[accession]["last_modified"])
-            try:
-                submission = parse_submission(layout.submission(accession).read_bytes())
-            except EnvelopeError as error:
-                filing["parse_error"] = str(error)
-            else:
-                filing.update(_header_columns(submission))
-                filing.update(_public_times(submission))
-                provenance = record_provenance(filing)
-                parties.extend(_party_rows(accession, submission, provenance))
-                documents.extend(_document_rows(accession, submission, provenance))
-        filings.append(filing)
+        raw = layout.submission(accession).read_bytes() if fetched["outcome"] == "ok" else None
+        records = filing_records(sampled, fetched, raw, last_ok.get(accession))
+        filings.append(records.filing)
+        parties.extend(records.parties)
+        documents.extend(records.documents)
     write_table(layout, "filings", filings)
     write_table(layout, "parties", parties)
     write_table(layout, "documents", documents)
     _write_index_times(layout, filings)
     return 0
+
+
+def filing_records(
+    sampled: dict, fetched: dict, raw: bytes | None, ok_record: dict | None
+) -> FilingRecords:
+    """The rows of one sampled filing, from its `sample` row, its `fetches` row and its bytes.
+
+    `raw` is None unless the outcome of `fetched` is `ok`. `ok_record` is the last `ok` ledger
+    record of the filing, or None.
+    """
+    accession = sampled["accession_number"]
+    filing = {
+        "accession_number": accession,
+        "form_type": sampled["form_type"],
+        "outcome": fetched["outcome"],
+        "reason": None,
+        "fetched_at": fetched["fetched_at"],
+        "sha256": fetched["sha256"],
+        "source_url": sampled["url"],
+        **_NOT_PARSED,
+        **_NO_TIMES,
+    }
+    party_rows, document_rows = [], []
+    if fetched["outcome"] != "ok":
+        filing["reason"] = fetched["outcome"]
+    else:
+        if ok_record is not None:
+            filing["last_modified_at"] = last_modified_at(ok_record["last_modified"])
+        try:
+            submission = parse_submission(raw)
+        except EnvelopeError as error:
+            filing["parse_error"] = str(error)
+        else:
+            filing.update(_header_columns(submission))
+            filing.update(_public_times(submission))
+            provenance = record_provenance(filing)
+            party_rows = _party_rows(accession, submission, provenance)
+            document_rows = _document_rows(accession, submission, provenance)
+    return FilingRecords(filing, party_rows, document_rows)
 
 
 def _write_index_times(layout: Layout, filings: list[dict]) -> None:

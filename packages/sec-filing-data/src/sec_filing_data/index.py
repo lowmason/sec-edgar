@@ -36,11 +36,16 @@ def read_index(zip_path: Path, *, sha256: str, size: int) -> list[dict]:
     Raises ValueError for a wrong size or SHA-256 before any parse, and for a bad
     header or a bad row afterwards.
     """
-    data = zip_path.read_bytes()
+    return parse_index(zip_path.read_bytes(), sha256=sha256, size=size, label=str(zip_path))
+
+
+def parse_index(data: bytes, *, sha256: str, size: int, label: str) -> list[dict]:
+    """The rows of `read_index`, from the bytes of the zip. `label` names the zip in the
+    size and SHA-256 errors."""
     if len(data) != size:
-        raise ValueError(f"{zip_path}: size {len(data)}, expected {size}")
+        raise ValueError(f"{label}: size {len(data)}, expected {size}")
     if hashlib.sha256(data).hexdigest() != sha256:
-        raise ValueError(f"{zip_path}: SHA-256 differs from {sha256}")
+        raise ValueError(f"{label}: SHA-256 differs from {sha256}")
 
     with zipfile.ZipFile(io.BytesIO(data)) as archive:
         text = archive.read(MEMBER).decode("utf-8")

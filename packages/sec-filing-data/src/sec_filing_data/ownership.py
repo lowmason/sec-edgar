@@ -79,7 +79,7 @@ class XmlDocument:
 
 
 @dataclass(frozen=True)
-class _Extraction:
+class Extraction:
     """What one filing gave: why it gave no records (or None), the records, and the filename
     of the XML document that gave them."""
 
@@ -145,11 +145,13 @@ def run_ownership(layout: Layout) -> int:
     records, statuses = [], []
     for sampled in sample:
         form_type = sampled["form_type"]
-        form = _ownership_form(form_type)
+        form = ownership_form(form_type)
         if form is None:
             continue
         accession = sampled["accession_number"]
-        extraction = _extract(layout, accession, form, fetches[accession]["outcome"])
+        outcome = fetches[accession]["outcome"]
+        raw = layout.submission(accession).read_bytes() if outcome == "ok" else None
+        extraction = extract_ownership(form, outcome, raw)
         statuses.append(
             {
                 "accession_number": accession,
@@ -158,13 +160,9 @@ def run_ownership(layout: Layout) -> int:
                 "reason": extraction.reason,
             }
         )
-        records.extend(
-            {"accession_number": accession, "form_type": form_type}
-            | asdict(record)
-            | {"source_document": extraction.source_document}
-            | provenance[accession]
-            for record in extraction.records
-        )
+        # `provenance[accession]` is read only for a filing that has records.
+        if extraction.records:
+            records.extend(ownership_rows(accession, form_type, extraction, provenance[accession]))
     write_table(layout, "ownership", records)
     write_table(layout, "ownership_status", statuses)
     return 0
@@ -176,7 +174,7 @@ def _read_fetches(layout: Layout) -> list[dict]:
     return build_fetches(layout)
 
 
-def _ownership_form(form_type: str) -> str | None:
+def ownership_form(form_type: str) -> str | None:
     """The form that decides how a filing is read, or None for a filing outside the forms.
 
     A form type that joins several types with `;` uses its first part, in sorted order,
@@ -185,20 +183,22 @@ def _ownership_form(form_type: str) -> str | None:
     return next((part for part in sorted(form_type.split(";")) if part in OWNERSHIP_FORMS), None)
 
 
-def _extract(layout: Layout, accession: str, form: str, outcome: str) -> _Extraction:
-    """Read the records of one filing. The checks run in the order of the `reason` values."""
+def extract_ownership(form: str, outcome: str, raw: bytes | None) -> Extraction:
+    """Read the records of one filing, from its `form`, its fetch `outcome` and its bytes `raw`.
+
+    `raw` is None unless the outcome is `ok`. The checks run in the order of the `reason` values.
+    """
     # The parser modules import OwnershipRecord from this module, so they are imported here.
     from sec_filing_data.form13f import parse_form13f_table
     from sec_filing_data.forms345 import no_securities_owned, parse_form345
     from sec_filing_data.schedule13 import parse_schedule13
 
     if outcome != "ok":
-        return _Extraction(outcome)
-    raw = layout.submission(accession).read_bytes()
+        return Extraction(outcome)
     try:
         submission = parse_submission(raw)
     except EnvelopeError as error:
-        return _Extraction(f"submission parse error: {error}")
+        return Extraction(f"submission parse error: {error}")
     if form in FORMS_345:
         root, parse = FORM345_ROOT, parse_form345
     elif form in SCHEDULE_FORMS:
@@ -211,9 +211,22 @@ def _extract(layout: Layout, accession: str, form: str, outcome: str) -> _Extrac
         parse = partial(parse_form13f_table, owner_cik=owner_cik, owner_name=owner_name)
     document = xml_document(raw, submission, root)
     if document is None:
-        return _Extraction(NO_DOCUMENT)
+        return Extraction(NO_DOCUMENT)
     records = parse(document.text)
     if records:
-        return _Extraction(None, records, document.filename)
+        return Extraction(None, records, document.filename)
     owns_nothing = form in FORMS_345 and no_securities_owned(document.text)
-    return _Extraction(NO_SECURITIES if owns_nothing else NO_RECORDS)
+    return Extraction(NO_SECURITIES if owns_nothing else NO_RECORDS)
+
+
+def ownership_rows(
+    accession: str, form_type: str, extraction: Extraction, provenance: dict
+) -> list[dict]:
+    """One `ownership` row per record of `extraction`. `provenance` is that of the filing."""
+    return [
+        {"accession_number": accession, "form_type": form_type}
+        | asdict(record)
+        | {"source_document": extraction.source_document}
+        | provenance
+        for record in extraction.records
+    ]

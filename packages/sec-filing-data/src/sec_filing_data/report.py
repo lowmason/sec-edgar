@@ -1,5 +1,5 @@
 """The `report` command: a Markdown summary of one output root: its cost, its platform checks,
-its filing times, its sources and its refetches.
+its filing times, its sources, its refetches and the code version of each table.
 
 The report sends no request and writes nothing. A table that an earlier step has not
 written yet makes its section say so.
@@ -17,10 +17,11 @@ import pyarrow as pa
 import pyarrow.compute as pc
 import pyarrow.parquet as pq
 
+from sec_filing_data import version
 from sec_filing_data.layout import Layout
 from sec_filing_data.ledger import FETCH_OUTCOMES, STAGE2_LIMITS, ledger_usage, read_ledger
 from sec_filing_data.sample import QUOTA_FORMS, STRATA
-from sec_filing_data.tables import read_table
+from sec_filing_data.tables import SCHEMAS, read_stamp, read_table
 from sec_filing_data.times import PUBLIC_RULES, readable_date
 from sec_filing_data.xbrl import INSTANCE_TYPE, SEC_EXTRACTED_SUFFIX
 
@@ -494,6 +495,34 @@ def _refetch_line(row: dict) -> str:
     return f"- {row['accession_number']}: {', '.join(values)}"
 
 
+def _versions(root: _Root) -> list[str]:
+    """Per table, the code version, the format number and the rows, then a count per version.
+
+    Each line reads the footer of the table file only: its stamp and its row count. A version
+    counts in the order that the table lines show it first. A table with no file adds no count.
+    """
+    lines = []
+    made_at: Counter[str] = Counter()
+    for name in SCHEMAS:
+        path = root.layout.table(name)
+        if not path.exists():
+            lines.append(f"- {name}: {_no_table(name)}")
+            continue
+        stamp = read_stamp(path)
+        commit = _short_commit(stamp["code_version"])
+        made_at[commit] += 1
+        lines.append(
+            f"- {name}: code {commit}, format {stamp['table_format']},"
+            f" {pq.read_metadata(path).num_rows} rows"
+        )
+    return [*lines, *(f"- tables made at {commit}: {count}" for commit, count in made_at.items())]
+
+
+def _short_commit(code_version: str) -> str:
+    """The first 12 characters of a commit, as the manifest names do. `not recorded` stays."""
+    return code_version if code_version == version.NOT_RECORDED else code_version[:12]
+
+
 _SECTIONS: tuple[tuple[str, Callable[[_Root], list[str]]], ...] = (
     ("Index", _index),
     ("Sample", _sample),
@@ -509,4 +538,5 @@ _SECTIONS: tuple[tuple[str, Callable[[_Root], list[str]]], ...] = (
     ("Times", _times),
     ("Provenance", _provenance),
     ("Refetches", _refetches),
+    ("Versions", _versions),
 )

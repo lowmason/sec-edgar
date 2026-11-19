@@ -478,11 +478,12 @@ Plan 12 removed the parked engine from `main`. The paths that these items name u
       2026-11-18. The question needs one copy fetched before a correction and another after it. Findings:
       `specs/sec-filing-data-stage-2-findings.md`, V6 refetch. Size: plan. Revisit if: a roadmap stage fetches filings
       on the day they are filed.
-- [ ] Re-hash the kept files in `refetches` (plan 11 final review, Codex review; `src/sec_filing_data/refetches.py`):
+- [x] Re-hash the kept files in `refetches` (plan 11 final review, Codex review; `src/sec_filing_data/refetches.py`):
       `sha256_equal` takes both SHA-256 values from the ledgers and never hashes the stored files again, as plan C8
       says. An edit to a kept file after its `ok` record would not show. Stage 3's manifests are meant to cover byte
       integrity. Size: quick-fix. Revisit if: Stage 3's manifest check does not list the files under `ROOT/stage2/refetch/`.
       → planned 2026-11-19: specs/plans/13-sec-filing-data-stage-3-manifests-and-pinning.md
+      → done 2026-11-19 (plan 13): `verify` part 1 hashes every file under `stage2/refetch/` again, and part 2 ties each `refetches` row's `refetch_sha256` to `stage2/refetch/<accession>.txt` by path. On the live root both gave `ok` (`specs/sec-filing-data-stage-3-findings.md`, Verify)
 - [ ] Command robustness on an old or busy root (plan 11 final review; `src/sec_filing_data/report.py`, `cli.py`, `rebuild.py`):
       `report` raises a `KeyError` on a `filings` table that has no Stage 2 columns. A refused `refetch` of an unknown
       accession still writes one `runs.jsonl` line. `refetch` exits 0 after a 404 or a failed fetch, and prints the
@@ -493,3 +494,22 @@ Plan 12 removed the parked engine from `main`. The paths that these items name u
       after the request record is written spends the one refetch of that accession. `compare-refetches` raises a
       `FileNotFoundError` when the SHA-256 values differ and a Stage 1 byte file is missing. No sampled filing or live
       value meets any of these. Size: quick-fix. Revisit if: a roadmap stage reads a quarter other than 2026Q3.
+
+## 13-sec-filing-data-stage-3-manifests-and-pinning — 2026-11-19
+- [ ] Bad-input errors end in a traceback (plan 13 task reviews and final review; `src/sec_filing_data/cli.py`, `manifest.py`,
+      `verify.py`, `rebuild.py`): a corrupt `.parquet` file in a set folder, a `--zip` that names a folder, a missing `sample`
+      table for `build-fetches`, and a manifest nested deep enough to raise `RecursionError` each end a command in a traceback
+      and not in one `error:` line. `verify` with a relative `--out` fails the `fetches` path check of part 2 (plan C10) and
+      shows it only as a failed binding line. No live value meets any of these. Size: quick-fix. Revisit if: a roadmap stage
+      runs a quarter other than 2026Q3.
+- [ ] Python-level writes are not guarded by the clean-tree rule (plan 13 final review; `src/sec_filing_data/tables.py`,
+      `version.py`): `write_table` stamps the commit at `HEAD` when a Python caller writes a table outside a command, even when
+      the pinned paths have a change. Spec 5.1 puts the rule on the commands, and no command writes without it. Size: quick-fix.
+      Revisit if: a roadmap stage adds a code path that writes a table without a command.
+- [ ] Small cleanups and test gaps in Stage 3 (plan 13 task reviews; `src/sec_filing_data/fetch.py`, `verify.py`, `cli.py`):
+      `fetch.py` writes `fetches` through `write_table(layout, "fetches", build_fetches(layout))` and not through
+      `ledger.run_fetches`, so two call sites write one table. No test counts the reads of a listed file in part 3, so a version
+      that hashes one read and parses a second read passes. `verify --rows 0` gives `ok, 0 rows`, and a negative `--rows` gives a
+      failed line for each table, with no usage error. Size: quick-fix. Done when: `fetch.py` calls `run_fetches`, a test counts
+      the reads of one listed file in part 3 and fails for a version that reads it twice, and `--rows` below 1 gives a usage
+      error (exit 2).

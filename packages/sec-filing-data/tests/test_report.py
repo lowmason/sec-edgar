@@ -5,7 +5,7 @@ from pathlib import Path
 from unittest import mock
 
 import pyarrow.parquet as pq
-from sec_filing_data import index
+from sec_filing_data import index, version
 from sec_filing_data.facts import run_facts
 from sec_filing_data.fetch import run_refetch
 from sec_filing_data.index import run_index
@@ -16,7 +16,7 @@ from sec_filing_data.refetches import run_compare_refetches
 from sec_filing_data.report import run_report
 from sec_filing_data.sample import run_sample
 from sec_filing_data.submissions import run_envelopes
-from sec_filing_data.tables import SCHEMAS, read_table, write_table
+from sec_filing_data.tables import SCHEMAS, TABLE_FORMATS, read_table, write_table
 
 from tests.test_client import USER_AGENT
 from tests.test_commands import (
@@ -420,11 +420,83 @@ class ReportRefetchesTests(CommandTestCase):
             ],
         )
 
-    def test_the_three_sections_follow_platform_checks(self):
+    def test_the_four_sections_follow_platform_checks(self):
         titles = [line for line in run_report(self.layout).split("\n") if line.startswith("## ")]
 
         self.assertEqual(
-            titles[-4:], ["## Platform checks", "## Times", "## Provenance", "## Refetches"]
+            titles[-5:],
+            ["## Platform checks", "## Times", "## Provenance", "## Refetches", "## Versions"],
+        )
+
+
+class ReportVersionsTests(CommandTestCase):
+    def versions(self) -> list[str]:
+        return section(run_report(self.layout), "Versions")
+
+    def table_line(self, table: str, code: str, form: str) -> str:
+        rows = read_table(self.layout, table).num_rows
+        return f"- {table}: code {code}, format {form}, {rows} rows"
+
+    def test_report_versions_section(self):
+        build_fixture_root(self)
+
+        self.assertEqual(
+            self.versions(),
+            [
+                *(
+                    self.table_line(table, "5ca1ab1e5ca1", str(TABLE_FORMATS[table]))
+                    for table in SCHEMAS
+                ),
+                "- tables made at 5ca1ab1e5ca1: 11",
+            ],
+        )
+
+    def test_versions_tell_two_commits_apart(self):
+        build_fixture_root(self)
+        sample_rows = read_rows(self.layout, "sample")
+        other = version.Checkout("b" * 40, True, None)
+        with mock.patch.object(version, "current_checkout", lambda: other):
+            write_table(self.layout, "sample", sample_rows)
+        # `pq.write_table` alone leaves no stamp, as in the files of `tables-stage1/`.
+        unstamped = read_table(self.layout, "refetches").replace_schema_metadata(None)
+        pq.write_table(unstamped, self.layout.table("refetches"))
+
+        lines = self.versions()
+
+        self.assertEqual(
+            lines[1], self.table_line("sample", "bbbbbbbbbbbb", str(TABLE_FORMATS["sample"]))
+        )
+        self.assertEqual(lines[-4], self.table_line("refetches", "not recorded", "not recorded"))
+        self.assertEqual(
+            lines[-3:],
+            [
+                "- tables made at 5ca1ab1e5ca1: 9",
+                "- tables made at bbbbbbbbbbbb: 1",
+                "- tables made at not recorded: 1",
+            ],
+        )
+
+    def test_versions_name_a_table_that_is_not_written_yet(self):
+        write_table(self.layout, "sample", [dict.fromkeys(SCHEMAS["sample"].names)])
+
+        lines = self.versions()
+
+        self.assertEqual(
+            lines,
+            [
+                *(
+                    self.table_line("sample", "5ca1ab1e5ca1", str(TABLE_FORMATS["sample"]))
+                    if table == "sample"
+                    else f"- {table}: no `{table}` table yet"
+                    for table in SCHEMAS
+                ),
+                "- tables made at 5ca1ab1e5ca1: 1",
+            ],
+        )
+
+    def test_versions_without_tables_give_no_count(self):
+        self.assertEqual(
+            self.versions(), [f"- {table}: no `{table}` table yet" for table in SCHEMAS]
         )
 
 

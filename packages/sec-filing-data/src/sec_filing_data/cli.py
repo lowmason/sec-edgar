@@ -7,9 +7,21 @@ from collections import Counter
 from collections.abc import Sequence
 from pathlib import Path
 
-from sec_filing_data import facts, index, ownership, rebuild, refetches, report, sample, submissions
+from sec_filing_data import (
+    facts,
+    index,
+    manifest,
+    ownership,
+    rebuild,
+    refetches,
+    report,
+    sample,
+    submissions,
+    verify,
+    version,
+)
 from sec_filing_data.layout import Layout, record_step
-from sec_filing_data.ledger import FETCH_OUTCOMES, STAGE2_LIMITS, ledger_usage
+from sec_filing_data.ledger import FETCH_OUTCOMES, STAGE2_LIMITS, ledger_usage, run_fetches
 from sec_filing_data.tables import read_table
 
 USER_AGENT_VARIABLE = "SEC_USER_AGENT"
@@ -24,7 +36,21 @@ def _user_agent() -> str | None:
     return user_agent
 
 
+def _refuse_unless_clean() -> int | None:
+    """Refuse a command that writes under the root when no clean commit can be read.
+
+    Print the reason and give the refusal exit code. Give None when the command may run.
+    """
+    checkout = version.current_checkout()
+    if checkout.clean:
+        return None
+    print(f"error: refused: {checkout.problem}", file=sys.stderr)
+    return version.REFUSED_EXIT
+
+
 def _run_index(args: argparse.Namespace) -> int:
+    if (refused := _refuse_unless_clean()) is not None:
+        return refused
     layout = Layout(Path(args.out))
     with record_step(layout, "index"):
         rows = index.run_index(layout, Path(args.zip))
@@ -33,6 +59,8 @@ def _run_index(args: argparse.Namespace) -> int:
 
 
 def _run_sample(args: argparse.Namespace) -> int:
+    if (refused := _refuse_unless_clean()) is not None:
+        return refused
     layout = Layout(Path(args.out))
     with record_step(layout, "sample"):
         rows = sample.run_sample(layout)
@@ -46,6 +74,8 @@ def _run_sample(args: argparse.Namespace) -> int:
 
 
 def _run_fetch(args: argparse.Namespace) -> int:
+    if (refused := _refuse_unless_clean()) is not None:
+        return refused
     user_agent = _user_agent()
     if user_agent is None:
         return 2
@@ -56,14 +86,31 @@ def _run_fetch(args: argparse.Namespace) -> int:
     layout = Layout(Path(args.out))
     with record_step(layout, "fetch"):
         code = fetch.run_fetch(layout, user_agent=user_agent, per_form=args.per_form)
-    outcomes = Counter(row["outcome"] for row in read_table(layout, "fetches").to_pylist())
-    for outcome in FETCH_OUTCOMES:
-        if outcomes[outcome]:
-            print(f"{outcome}: {outcomes[outcome]}")
+    _print_fetch_outcomes(read_table(layout, "fetches").to_pylist())
     return code
 
 
+def _run_build_fetches(args: argparse.Namespace) -> int:
+    if (refused := _refuse_unless_clean()) is not None:
+        return refused
+    layout = Layout(Path(args.out))
+    with record_step(layout, "build-fetches"):
+        rows = run_fetches(layout)
+    _print_fetch_outcomes(rows)
+    return 0
+
+
+def _print_fetch_outcomes(rows: list[dict]) -> None:
+    """Print `<outcome>: <n>` for each outcome of FETCH_OUTCOMES that has a row."""
+    outcomes = Counter(row["outcome"] for row in rows)
+    for outcome in FETCH_OUTCOMES:
+        if outcomes[outcome]:
+            print(f"{outcome}: {outcomes[outcome]}")
+
+
 def _run_refetch(args: argparse.Namespace) -> int:
+    if (refused := _refuse_unless_clean()) is not None:
+        return refused
     user_agent = _user_agent()
     if user_agent is None:
         return 2
@@ -89,6 +136,8 @@ def _run_refetch(args: argparse.Namespace) -> int:
 
 
 def _run_compare_refetches(args: argparse.Namespace) -> int:
+    if (refused := _refuse_unless_clean()) is not None:
+        return refused
     layout = Layout(Path(args.out))
     with record_step(layout, "compare-refetches"):
         code = refetches.run_compare_refetches(layout)
@@ -97,6 +146,8 @@ def _run_compare_refetches(args: argparse.Namespace) -> int:
 
 
 def _run_envelopes(args: argparse.Namespace) -> int:
+    if (refused := _refuse_unless_clean()) is not None:
+        return refused
     layout = Layout(Path(args.out))
     with record_step(layout, "envelopes"):
         code = submissions.run_envelopes(layout)
@@ -106,6 +157,8 @@ def _run_envelopes(args: argparse.Namespace) -> int:
 
 
 def _run_facts(args: argparse.Namespace) -> int:
+    if (refused := _refuse_unless_clean()) is not None:
+        return refused
     layout = Layout(Path(args.out))
     with record_step(layout, "facts"):
         code = facts.run_facts(layout)
@@ -115,6 +168,8 @@ def _run_facts(args: argparse.Namespace) -> int:
 
 
 def _run_ownership(args: argparse.Namespace) -> int:
+    if (refused := _refuse_unless_clean()) is not None:
+        return refused
     layout = Layout(Path(args.out))
     with record_step(layout, "ownership"):
         code = ownership.run_ownership(layout)
@@ -152,6 +207,46 @@ def _run_check_stage1(args: argparse.Namespace) -> int:
     layout = Layout(Path(args.out))
     with record_step(layout, "check-stage1"):
         code, lines = rebuild.check_stage1(layout)
+    _print_lines(lines)
+    return code
+
+
+def _run_check_frozen(args: argparse.Namespace) -> int:
+    layout = Layout(Path(args.out))
+    with record_step(layout, "check-frozen"):
+        code, lines = rebuild.check_frozen(layout, layout.root / args.folder)
+    _print_lines(lines)
+    return code
+
+
+def _run_manifest(args: argparse.Namespace) -> int:
+    if (refused := _refuse_unless_clean()) is not None:
+        return refused
+    zip_path = None if args.zip is None else Path(args.zip)
+    if (problem := manifest.zip_problem(args.set, zip_path)) is not None:
+        print(f"error: {problem}", file=sys.stderr)
+        return 2
+    layout = Layout(Path(args.out))
+    path = manifest.manifest_path(layout, args.set, version.current_checkout().commit)
+    if path.exists():
+        print(f"error: {path} exists", file=sys.stderr)
+        return 1
+    with record_step(layout, "manifest"):
+        try:
+            path = manifest.write_manifest(layout, args.set, zip_path=zip_path)
+        except FileNotFoundError as error:
+            # The manifest is built before it is written, so nothing was left behind.
+            print(f"error: {error}", file=sys.stderr)
+            return 1
+    print(f"manifest: {path}")
+    print(f"sha256: {manifest.sha256_of(path)}")
+    return 0
+
+
+def _run_verify(args: argparse.Namespace) -> int:
+    layout = Layout(Path(args.out))
+    with record_step(layout, "verify"):
+        code, lines = verify.run_verify(layout, Path(args.manifest), rows=args.rows, seed=args.seed)
     _print_lines(lines)
     return code
 
@@ -195,6 +290,13 @@ def _build_parser() -> argparse.ArgumentParser:
         help="accession number of a sampled filing; repeat it for more",
     )
     refetch_parser.set_defaults(run=_run_refetch)
+
+    build_fetches_parser = commands.add_parser(
+        "build-fetches",
+        help="write the fetches table from the ledger and the bytes on disk (sends no request)",
+    )
+    build_fetches_parser.add_argument("--out", required=True, help="output root")
+    build_fetches_parser.set_defaults(run=_run_build_fetches)
 
     compare_parser = commands.add_parser(
         "compare-refetches", help="write the refetches table from both ledgers and copies"
@@ -242,6 +344,52 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     check_parser.add_argument("--out", required=True, help="output root")
     check_parser.set_defaults(run=_run_check_stage1)
+
+    frozen_parser = commands.add_parser(
+        "check-frozen",
+        help="compare each table of a frozen folder with the live table, on every column",
+    )
+    frozen_parser.add_argument("--out", required=True, help="output root")
+    frozen_parser.add_argument(
+        "--folder",
+        required=True,
+        choices=("tables-stage2",),
+        help="the frozen folder under the output root",
+    )
+    frozen_parser.set_defaults(run=_run_check_frozen)
+
+    manifest_parser = commands.add_parser(
+        "manifest",
+        help="write the manifest of one table set: each file with its size and SHA-256",
+    )
+    manifest_parser.add_argument("--out", required=True, help="output root")
+    manifest_parser.add_argument(
+        "--set", required=True, choices=manifest.SETS, help="the table set to list"
+    )
+    manifest_parser.add_argument(
+        "--zip", help="path of the quarter's master.zip (for --set tables only)"
+    )
+    manifest_parser.set_defaults(run=_run_manifest)
+
+    verify_parser = commands.add_parser(
+        "verify",
+        help="check a manifest against the root: its files, then record hashes against its inputs",
+    )
+    verify_parser.add_argument("--out", required=True, help="output root")
+    verify_parser.add_argument("--manifest", required=True, help="path of the manifest to check")
+    verify_parser.add_argument(
+        "--rows",
+        type=int,
+        default=verify.DEFAULT_ROWS,
+        help="rows to derive again from each records table (default: %(default)s)",
+    )
+    verify_parser.add_argument(
+        "--seed",
+        type=int,
+        default=verify.VERIFY_SEED,
+        help="seed of the row sample (default: %(default)s)",
+    )
+    verify_parser.set_defaults(run=_run_verify)
     return parser
 
 
