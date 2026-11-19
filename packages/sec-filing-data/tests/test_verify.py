@@ -542,6 +542,68 @@ class VerifyWiderRootTests(VerifyTestCase):
 
         self.assertEqual(self.verify(path), (0, [*ALL_OK, *self.rederive_ok()]))
 
+    def index_halves(self) -> tuple[list[int], list[int]]:
+        """The positions of the `index` rows with filing times, and of the rows without."""
+        fetched_at = read_table(self.layout, "index")["fetched_at"].to_pylist()
+        timed = [position for position, at in enumerate(fetched_at) if at is not None]
+        untimed = [position for position, at in enumerate(fetched_at) if at is None]
+        return timed, untimed
+
+    def test_index_draws_half_its_rows_from_rows_with_times(self):
+        timed, untimed = self.index_halves()
+        # The sampled accessions have 5 rows, all with times. The unsampled one has 1, without.
+        self.assertEqual((len(timed), len(untimed)), (5, 1))
+        path = self.write_manifest()
+        for rows in (3, 5):
+            with self.subTest(rows=rows):
+                split = min(rows // 2, len(timed)) + min(rows - rows // 2, len(untimed))
+                # The split differs from a plain draw, and from a draw with its halves swapped.
+                plain = min(rows, len(timed) + len(untimed))
+                swapped = min(rows // 2, len(untimed)) + min(rows - rows // 2, len(timed))
+                self.assertNotIn(split, (plain, swapped))
+                drawn = verify.draw_index_positions(
+                    timed, untimed, rows, random.Random(VERIFY_SEED)
+                )
+                self.assertEqual(len(drawn), split)
+                self.assertTrue(set(drawn) & set(timed) and set(drawn) & set(untimed), drawn)
+
+                code, lines = self.verify(path, "--rows", str(rows))
+
+                self.assertEqual(code, 0)
+                line = self.rederive_line(lines, "index")
+                self.assertEqual(line, f"rederive index: ok, {split} rows")
+
+    def test_a_changed_index_column_fails(self):
+        original = read_table(self.layout, "index").to_pylist()
+        sampled = {row["accession_number"] for row in read_table(self.layout, "sample").to_pylist()}
+        accessions = [row["accession_number"] for row in original]
+        positions = {
+            "sampled": next(n for n, accession in enumerate(accessions) if accession in sampled),
+            "unsampled": next(
+                n for n, accession in enumerate(accessions) if accession not in sampled
+            ),
+        }
+        for kind, position in positions.items():
+            for column in ("company_name", "form_type"):
+                with self.subTest(row=kind, column=column):
+                    rows = copy.deepcopy(original)
+                    rows[position][column] += " CHANGED"
+                    write_table(self.layout, "index", rows)
+                    path = self.write_manifest()
+
+                    code, lines = self.verify(path, "--rows", "1000")
+
+                    path.unlink()
+                    self.assertEqual(code, 1)
+                    line = self.rederive_line(lines, "index")
+                    accession = rows[position]["accession_number"]
+                    self.assertTrue(
+                        line.startswith(
+                            f"rederive index: row {position} of {accession}: column {column}: "
+                        ),
+                        line,
+                    )
+
 
 class VerifyManifestTests(VerifyTestCase):
     def test_verify_refuses_an_unreadable_manifest(self):
