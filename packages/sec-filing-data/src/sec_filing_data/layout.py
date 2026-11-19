@@ -8,6 +8,8 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
+from sec_filing_data import version
+
 
 @dataclass(frozen=True)
 class Layout:
@@ -75,18 +77,23 @@ class Layout:
 def record_step(layout: Layout, step: str) -> Iterator[None]:
     """Append the start time, end time and length of one step to `runs.jsonl`.
 
-    The record is written when the step fails too, so a crashed run still shows its time.
+    The record also names the code version (the commit, or null) and whether the pinned paths
+    were clean (true, false or null). It is written when the step fails too, so a crashed run
+    still shows its time.
     """
     started_at = datetime.now(UTC)
     started = time.monotonic()
     try:
         yield
     finally:
+        checkout = version.current_checkout()
         record = {
             "step": step,
             "started_at": started_at.isoformat(),
             "finished_at": datetime.now(UTC).isoformat(),
             "seconds": round(time.monotonic() - started, 3),
+            "code_version": checkout.commit,
+            "tree_clean": checkout.clean,
         }
         layout.root.mkdir(parents=True, exist_ok=True)
         with layout.runs.open("a", encoding="utf-8") as runs:

@@ -14,6 +14,7 @@ from unittest import mock
 from sec_filing_data import cli, index
 from sec_filing_data.layout import Layout
 from sec_filing_data.tables import FILING_TIME_COLUMNS, SCHEMAS, read_table
+from tests import TEST_COMMIT
 
 FIXTURE = Path(__file__).parent / "fixtures" / "master-fixture.idx"
 SHARED_PATH = "edgar/data/1326200/0001104659-26-081696.txt"
@@ -318,7 +319,12 @@ class IndexCommandTests(IndexTestCase):
         self.assertEqual(written, ["runs.jsonl", "tables/index.parquet"])
         step = json.loads((root / "runs.jsonl").read_text(encoding="utf-8"))
         self.assertEqual(step["step"], "index")
-        self.assertEqual(set(step), {"step", "started_at", "finished_at", "seconds"})
+        self.assertEqual(
+            set(step),
+            {"step", "started_at", "finished_at", "seconds", "code_version", "tree_clean"},
+        )
+        self.assertEqual(step["code_version"], TEST_COMMIT)
+        self.assertIs(step["tree_clean"], True)
 
     def test_run_index_writes_the_table_and_returns_its_rows(self):
         zip_path = write_zip(self.make_folder(), FIXTURE.read_text(encoding="utf-8"))

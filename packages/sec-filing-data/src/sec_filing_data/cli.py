@@ -7,7 +7,17 @@ from collections import Counter
 from collections.abc import Sequence
 from pathlib import Path
 
-from sec_filing_data import facts, index, ownership, rebuild, refetches, report, sample, submissions
+from sec_filing_data import (
+    facts,
+    index,
+    ownership,
+    rebuild,
+    refetches,
+    report,
+    sample,
+    submissions,
+    version,
+)
 from sec_filing_data.layout import Layout, record_step
 from sec_filing_data.ledger import FETCH_OUTCOMES, STAGE2_LIMITS, ledger_usage
 from sec_filing_data.tables import read_table
@@ -24,7 +34,21 @@ def _user_agent() -> str | None:
     return user_agent
 
 
+def _refuse_unless_clean() -> int | None:
+    """Refuse a command that writes under the root when no clean commit can be read.
+
+    Print the reason and give the refusal exit code. Give None when the command may run.
+    """
+    checkout = version.current_checkout()
+    if checkout.clean:
+        return None
+    print(f"error: refused: {checkout.problem}", file=sys.stderr)
+    return version.REFUSED_EXIT
+
+
 def _run_index(args: argparse.Namespace) -> int:
+    if (refused := _refuse_unless_clean()) is not None:
+        return refused
     layout = Layout(Path(args.out))
     with record_step(layout, "index"):
         rows = index.run_index(layout, Path(args.zip))
@@ -33,6 +57,8 @@ def _run_index(args: argparse.Namespace) -> int:
 
 
 def _run_sample(args: argparse.Namespace) -> int:
+    if (refused := _refuse_unless_clean()) is not None:
+        return refused
     layout = Layout(Path(args.out))
     with record_step(layout, "sample"):
         rows = sample.run_sample(layout)
@@ -46,6 +72,8 @@ def _run_sample(args: argparse.Namespace) -> int:
 
 
 def _run_fetch(args: argparse.Namespace) -> int:
+    if (refused := _refuse_unless_clean()) is not None:
+        return refused
     user_agent = _user_agent()
     if user_agent is None:
         return 2
@@ -64,6 +92,8 @@ def _run_fetch(args: argparse.Namespace) -> int:
 
 
 def _run_refetch(args: argparse.Namespace) -> int:
+    if (refused := _refuse_unless_clean()) is not None:
+        return refused
     user_agent = _user_agent()
     if user_agent is None:
         return 2
@@ -89,6 +119,8 @@ def _run_refetch(args: argparse.Namespace) -> int:
 
 
 def _run_compare_refetches(args: argparse.Namespace) -> int:
+    if (refused := _refuse_unless_clean()) is not None:
+        return refused
     layout = Layout(Path(args.out))
     with record_step(layout, "compare-refetches"):
         code = refetches.run_compare_refetches(layout)
@@ -97,6 +129,8 @@ def _run_compare_refetches(args: argparse.Namespace) -> int:
 
 
 def _run_envelopes(args: argparse.Namespace) -> int:
+    if (refused := _refuse_unless_clean()) is not None:
+        return refused
     layout = Layout(Path(args.out))
     with record_step(layout, "envelopes"):
         code = submissions.run_envelopes(layout)
@@ -106,6 +140,8 @@ def _run_envelopes(args: argparse.Namespace) -> int:
 
 
 def _run_facts(args: argparse.Namespace) -> int:
+    if (refused := _refuse_unless_clean()) is not None:
+        return refused
     layout = Layout(Path(args.out))
     with record_step(layout, "facts"):
         code = facts.run_facts(layout)
@@ -115,6 +151,8 @@ def _run_facts(args: argparse.Namespace) -> int:
 
 
 def _run_ownership(args: argparse.Namespace) -> int:
+    if (refused := _refuse_unless_clean()) is not None:
+        return refused
     layout = Layout(Path(args.out))
     with record_step(layout, "ownership"):
         code = ownership.run_ownership(layout)
