@@ -1,13 +1,18 @@
 """The `sec-filing-data` command. Each subcommand is one step of the run."""
 
 import argparse
+import json
 import os
 import sys
 from collections import Counter
 from collections.abc import Sequence
+from datetime import date, datetime
 from pathlib import Path
 
+import pyarrow.compute as pc
+
 from sec_filing_data import (
+    asof,
     facts,
     index,
     manifest,
@@ -315,6 +320,45 @@ def _run_verify(args: argparse.Namespace) -> int:
     return code
 
 
+def _run_asof(args: argparse.Namespace) -> int:
+    # Read-only: it never refuses for the tree state.
+    layout = Layout(Path(args.out))
+    with record_step(layout, "asof"):
+        try:
+            result = asof.answer(layout.root, args.at)
+        except asof.AsOfRefused as error:
+            print(f"error: {error}", file=sys.stderr)
+            return 1
+    # With --table, the rows go to stdout and the summary to stderr, so the rows can be piped.
+    summary = sys.stdout if args.table is None else sys.stderr
+    for line in _asof_summary(result):
+        print(line, file=summary)
+    if args.table is not None:
+        for batch in result.tables[args.table].to_batches():
+            for row in batch.to_pylist():
+                print(json.dumps(row, default=_isoformat))
+    return 0
+
+
+def _asof_summary(result: asof.Answer) -> list[str]:
+    """The time, each manifest, and the rows of each table that answer, by `held_in` (C10)."""
+    lines = [f"at: {result.at.isoformat()}"]
+    lines += [f"manifest {used.set_name}: {used.path} {used.sha256}" for used in result.manifests]
+    for name, table in result.tables.items():
+        values = pc.value_counts(table["held_in"]).to_pylist()
+        found = {item["values"]: item["counts"] for item in values}
+        counts = ", ".join(f"{held_in} {found.get(held_in, 0)}" for held_in in asof.HELD_IN)
+        lines.append(f"{name}: {table.num_rows} rows, {counts}")
+    return lines
+
+
+def _isoformat(value: object) -> str:
+    """A `json.dumps` default: a date or a datetime as its `isoformat()`."""
+    if isinstance(value, date):
+        return value.isoformat()
+    raise TypeError(f"{type(value).__name__} is not JSON serializable")
+
+
 def _print_lines(lines: list[str]) -> None:
     for line in lines:
         print(line)
@@ -329,6 +373,14 @@ def _at_least_one(text: str) -> int:
     if value < 1:
         raise argparse.ArgumentTypeError(f"must be 1 or more, not {value}")
     return value
+
+
+def _instant(text: str) -> datetime:
+    """An argparse type: the time of `asof --at`, in UTC. A bad value is a usage error (exit 2)."""
+    try:
+        return asof.parse_at(text)
+    except ValueError as error:
+        raise argparse.ArgumentTypeError(str(error)) from None
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -495,6 +547,30 @@ def _build_parser() -> argparse.ArgumentParser:
         help="seed of the row sample (default: %(default)s)",
     )
     verify_parser.set_defaults(run=_run_verify)
+
+    asof_parser = commands.add_parser(
+        "asof",
+        help=(
+            "print what was public by a time: the rows of the sample and of its partners,"
+            " from the files that the manifests check (writes nothing)"
+        ),
+    )
+    asof_parser.add_argument("--out", required=True, help="output root")
+    asof_parser.add_argument(
+        "--at",
+        required=True,
+        type=_instant,
+        help=(
+            "a date YYYY-MM-DD (the end of that day in New York), or an ISO 8601 instant with"
+            " a UTC offset or Z"
+        ),
+    )
+    asof_parser.add_argument(
+        "--table",
+        choices=asof.ASOF_TABLES,
+        help="also print the rows of this table to stdout as JSON Lines",
+    )
+    asof_parser.set_defaults(run=_run_asof)
     return parser
 
 

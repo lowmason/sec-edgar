@@ -10,6 +10,7 @@ import hashlib
 import json
 from pathlib import Path
 
+import pyarrow as pa
 import pyarrow.parquet as pq
 
 from sec_filing_data import version
@@ -49,16 +50,25 @@ def set_folder(layout: Layout, set_name: str) -> Path:
 def set_version(folder: Path) -> str:
     """The one code version in the stamps of the `*.parquet` files of `folder`.
 
-    Files of several versions raise `ValueError`, which names each version. A folder that is
-    missing or holds no table raises `FileNotFoundError`.
+    Files of several versions raise `ValueError`, which names each version. A file that pyarrow
+    cannot read raises `ValueError`, which names the file. A folder that is missing or holds no
+    table raises `FileNotFoundError`.
     """
-    versions = {read_stamp(path)["code_version"] for path in folder.glob("*.parquet")}
+    versions = {_code_version(path) for path in folder.glob("*.parquet")}
     if not versions:
         raise FileNotFoundError(f"{folder} holds no table")
     if len(versions) > 1:
         named = ", ".join(sorted(versions))
         raise ValueError(f"{folder} holds tables of {len(versions)} code versions: {named}")
     return versions.pop()
+
+
+def _code_version(path: Path) -> str:
+    try:
+        return read_stamp(path)["code_version"]
+    except pa.ArrowException as error:
+        # pyarrow's message does not name the file.
+        raise ValueError(f"{path}: {error}") from error
 
 
 def find_manifest(layout: Layout, set_name: str) -> Path:

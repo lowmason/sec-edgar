@@ -441,6 +441,15 @@ class Stage4ManifestTests(Stage4RootTestCase):
         self.assertIn(TEST_COMMIT, str(caught.exception))
         self.assertIn(OTHER_COMMIT, str(caught.exception))
 
+    def test_set_version_names_a_file_that_it_cannot_read(self):
+        links = self.layout.stage4_view.table("links")
+        links.write_bytes(links.read_bytes() + b"\0")
+
+        with self.assertRaises(ValueError) as caught:
+            manifest.set_version(self.layout.stage4_tables)
+
+        self.assertIn(str(links), str(caught.exception))
+
     def test_set_version_needs_a_table(self):
         with tempfile.TemporaryDirectory() as name:
             empty = Path(name)
