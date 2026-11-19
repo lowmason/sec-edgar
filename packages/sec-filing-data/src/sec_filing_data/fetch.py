@@ -14,11 +14,11 @@ from sec_filing_data.layout import Layout
 from sec_filing_data.ledger import (
     STAGE2_LIMITS,
     budget_spent,
-    build_fetches,
     ledger_usage,
     read_ledger,
+    run_fetches,
 )
-from sec_filing_data.tables import read_table, write_table
+from sec_filing_data.tables import read_table
 
 BUDGET_SPENT_EXIT = 5
 ACCESS_DENIED_EXIT = 6
@@ -52,7 +52,7 @@ def run_fetch(
         try:
             return _walk(layout, sec, rows)
         finally:
-            write_table(layout, "fetches", build_fetches(layout))
+            run_fetches(layout)
 
 
 def _rows_to_walk(sample: list[dict], per_form: int | None) -> list[dict]:

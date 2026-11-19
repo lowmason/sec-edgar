@@ -256,6 +256,17 @@ def _print_lines(lines: list[str]) -> None:
         print(line)
 
 
+def _at_least_one(text: str) -> int:
+    """An argparse type: an int of 1 or more. A bad value is a usage error (exit 2)."""
+    try:
+        value = int(text)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"invalid int value: {text!r}") from None
+    if value < 1:
+        raise argparse.ArgumentTypeError(f"must be 1 or more, not {value}")
+    return value
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="sec-filing-data")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -379,7 +390,7 @@ def _build_parser() -> argparse.ArgumentParser:
     verify_parser.add_argument("--manifest", required=True, help="path of the manifest to check")
     verify_parser.add_argument(
         "--rows",
-        type=int,
+        type=_at_least_one,
         default=verify.DEFAULT_ROWS,
         help="rows to derive again from each records table (default: %(default)s)",
     )
