@@ -47,7 +47,7 @@
 
 ## Decisions
 
-None.
+- **D1** (owner, plan review, 2026-11-19): the plan is approved as written, with the calls C1–C16 and no change asked. Owner's words: "Approved". Applied in: Calls made in this plan.
 
 ## Calls made in this plan
 
