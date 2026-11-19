@@ -15,21 +15,9 @@ import pyarrow as pa
 from sec_filing_data import facts, index, ownership, refetches, sample, submissions
 from sec_filing_data.layout import Layout
 from sec_filing_data.ledger import run_fetches
-from sec_filing_data.tables import read_table
+from sec_filing_data.tables import STAGE3_TABLES, read_table
 
-REBUILT_TABLES = (
-    "index",
-    "sample",
-    "fetches",
-    "filings",
-    "parties",
-    "documents",
-    "facts",
-    "facts_status",
-    "ownership",
-    "ownership_status",
-    "refetches",
-)
+REBUILT_TABLES = STAGE3_TABLES
 
 EQUAL = "equal"
 NO_LIVE_TABLE = "no live table"

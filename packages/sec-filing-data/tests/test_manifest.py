@@ -13,11 +13,11 @@ import pyarrow
 import pyarrow.parquet as pq
 
 from sec_filing_data import cli, manifest, version
-from sec_filing_data.tables import STAMP_KEYS, TABLE_FORMATS, read_table, write_table
+from sec_filing_data.tables import STAGE3_TABLES, STAMP_KEYS, TABLE_FORMATS, read_table, write_table
 from tests import TEST_COMMIT
 from tests.test_rebuild import FixtureRootTestCase, line_count
 
-TABLE_NAMES = sorted(TABLE_FORMATS)
+TABLE_NAMES = sorted(STAGE3_TABLES)
 OUTPUT_KEYS = {"path", "bytes", "sha256", "rows", *STAMP_KEYS}
 INPUT_KEYS = {"path", "kind", "bytes", "sha256"}
 WRITTEN_BY_KEYS = {"code_version", "python_version", "pyarrow_version"}

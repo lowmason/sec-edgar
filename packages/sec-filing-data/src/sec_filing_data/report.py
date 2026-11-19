@@ -21,7 +21,7 @@ from sec_filing_data import version
 from sec_filing_data.layout import Layout
 from sec_filing_data.ledger import FETCH_OUTCOMES, STAGE2_LIMITS, ledger_usage, read_ledger
 from sec_filing_data.sample import QUOTA_FORMS, STRATA
-from sec_filing_data.tables import SCHEMAS, read_stamp, read_table
+from sec_filing_data.tables import STAGE3_TABLES, read_stamp, read_table
 from sec_filing_data.times import PUBLIC_RULES, readable_date
 from sec_filing_data.xbrl import INSTANCE_TYPE, SEC_EXTRACTED_SUFFIX
 
@@ -503,7 +503,7 @@ def _versions(root: _Root) -> list[str]:
     """
     lines = []
     made_at: Counter[str] = Counter()
-    for name in SCHEMAS:
+    for name in STAGE3_TABLES:
         path = root.layout.table(name)
         if not path.exists():
             lines.append(f"- {name}: {_no_table(name)}")

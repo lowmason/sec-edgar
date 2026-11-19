@@ -175,7 +175,62 @@ SCHEMAS: dict[str, pa.Schema] = {
         "changed_header_fields",
         "changed_documents",
     ),
+    "partners": _schema(
+        "accession_number",
+        "form_type",
+        ("cik", pa.int64()),
+        "company_name",
+        ("date_filed", pa.date32()),
+        "filename",
+        "url",
+        "rule",
+        "sampled_accession",
+    ),
+    "links": _schema(
+        "accession_number",
+        "form_type",
+        "held_in",
+        "link_rule",
+        "declared_previous_accession",
+        "declared_original_date",
+        "declared_period",
+        "amendment_number",
+        "amendment_type",
+        "original_accession",
+        "original_held_in",
+        "link_problem",
+        "source_url",
+        "source_sha256",
+        "source_document",
+        *_FILING_TIMES,
+    ),
 }
+
+# The tables of `tables/`, in the order of `SCHEMAS`. The tables of `stage4/tables/` are the
+# ones of `STAGE4_TABLES`: five of them repeat a Stage 3 name.
+STAGE3_TABLES = (
+    "index",
+    "sample",
+    "fetches",
+    "filings",
+    "parties",
+    "documents",
+    "facts",
+    "facts_status",
+    "ownership",
+    "ownership_status",
+    "refetches",
+)
+STAGE4_TABLES = (
+    "partners",
+    "fetches",
+    "filings",
+    "parties",
+    "documents",
+    "ownership",
+    "ownership_status",
+    "links",
+)
 
 # The format number of each table. It goes up by 1 when the table's columns, their order or
 # their types change. `tests/test_tables.py` pins each schema to its number.
@@ -191,6 +246,8 @@ TABLE_FORMATS: dict[str, int] = {
     "ownership": 2,
     "ownership_status": 1,
     "refetches": 1,
+    "partners": 1,
+    "links": 1,
 }
 
 # The four values that a table file records about its origin. Each is stored in the file's

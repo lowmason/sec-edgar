@@ -23,12 +23,15 @@ from sec_filing_data.layout import Layout
 from sec_filing_data.ledger import (
     MAX_REQUESTS,
     MAX_WIRE_BYTES,
+    STAGE1_LIMITS,
     STAGE2_LIMITS,
+    STAGE4_LIMITS,
     Usage,
     append,
     budget_spent,
     build_fetches,
     fetch_rows,
+    filing_fetch_rows,
     last_ok,
     ledger_usage,
     ok_responses,
@@ -457,6 +460,36 @@ class BuildFetchesTests(CommandTestCase):
         with self.subTest("the given records, not the ledger"):
             (row,) = fetch_rows(self.layout, [rows[0]], [])
             self.assertEqual((row["outcome"], row["attempts"]), ("not_attempted", 0))
+
+    def test_filing_fetch_rows_follow_the_order_and_limits(self):
+        # 30 requests in the ledger, for keys that are not in the list: the Stage 4 budget is
+        # spent, and the Stage 1 budget is not.
+        fill_ledger(self.layout.ledger, [100] * 30)
+        records = read_ledger(self.layout.ledger)
+        other, on_disk = accession_of(9), accession_of(2)
+        filings = [
+            {"accession_number": other, "form_type": "SC 13D/A"},
+            {"accession_number": on_disk, "form_type": "4/A"},
+        ]
+        self.layout.stage4_bytes.mkdir(parents=True)
+        self.layout.partner_submission(on_disk).write_bytes(FIXTURE_BYTES)
+
+        def run(limits):
+            return filing_fetch_rows(
+                filings, records, path_of=self.layout.partner_submission, limits=limits
+            )
+
+        with self.subTest("the Stage 4 limits"):
+            rows = run(STAGE4_LIMITS)
+            self.assertEqual([row["accession_number"] for row in rows], [other, on_disk])
+            self.assertEqual([row["form_type"] for row in rows], ["SC 13D/A", "4/A"])
+            self.assertEqual([row["outcome"] for row in rows], ["budget", "ok"])
+            self.assertIsNone(rows[0]["path"])
+            self.assertEqual(rows[1]["path"], str(self.layout.partner_submission(on_disk)))
+        with self.subTest("the Stage 1 limits"):
+            rows = run(STAGE1_LIMITS)
+            self.assertEqual([row["accession_number"] for row in rows], [other, on_disk])
+            self.assertEqual([row["outcome"] for row in rows], ["not_attempted", "ok"])
 
     def test_file_on_disk_without_ok_record_is_ok(self):
         rows = self.write_sample(standard_sample()[:1])

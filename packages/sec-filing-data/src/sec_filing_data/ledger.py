@@ -8,6 +8,7 @@ import io
 import json
 import os
 from collections import Counter
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 from operator import itemgetter
@@ -41,6 +42,7 @@ class Limits:
 
 STAGE1_LIMITS = Limits(MAX_REQUESTS, MAX_WIRE_BYTES)
 STAGE2_LIMITS = Limits(20, 50_000_000)
+STAGE4_LIMITS = Limits(30, 50_000_000)
 
 
 def append(path: Path, record: dict) -> None:
@@ -119,11 +121,31 @@ def build_fetches(layout: Layout) -> list[dict]:
 def fetch_rows(layout: Layout, sample: list[dict], records: list[dict]) -> list[dict]:
     """One `fetches` row per row of `sample`, in draw order, from `records` and the disk.
 
-    A filing is `ok` when its bytes are on disk. Else its last response record gives the
-    outcome, with `retry` read as `failed`. Else it is `budget` when the budget is spent,
-    and `not_attempted` otherwise. Records match a filing by `key == accession_number`.
+    See `filing_fetch_rows`. The bytes sit at `layout.submission`, and the Stage 1 limits count.
     """
-    spent = budget_spent(_usage(records))
+    return filing_fetch_rows(
+        sorted(sample, key=itemgetter("draw")),
+        records,
+        path_of=layout.submission,
+        limits=STAGE1_LIMITS,
+    )
+
+
+def filing_fetch_rows(
+    filings: list[dict],
+    records: list[dict],
+    *,
+    path_of: Callable[[str], Path],
+    limits: Limits,
+) -> list[dict]:
+    """One `fetches` row per entry of `filings`, in the given order, from `records` and the disk.
+
+    Each entry has `accession_number` and `form_type`. A filing is `ok` when its bytes are on
+    disk at `path_of(accession_number)`. Else its last response record gives the outcome, with
+    `retry` read as `failed`. Else it is `budget` when `records` spend `limits`, and
+    `not_attempted` otherwise. Records match a filing by `key == accession_number`.
+    """
+    spent = budget_spent(_usage(records), limits)
     attempts: Counter[str] = Counter()
     last_response: dict[str, dict] = {}
     for record in records:
@@ -133,11 +155,11 @@ def fetch_rows(layout: Layout, sample: list[dict], records: list[dict]) -> list[
             last_response[record["key"]] = record
     ok_by_key = last_ok(records)
     rows = []
-    for sampled in sorted(sample, key=itemgetter("draw")):
-        accession = sampled["accession_number"]
+    for filing in filings:
+        accession = filing["accession_number"]
         row = {
             "accession_number": accession,
-            "form_type": sampled["form_type"],
+            "form_type": filing["form_type"],
             "outcome": "budget" if spent else "not_attempted",
             "reason": None,
             "status": None,
@@ -148,7 +170,7 @@ def fetch_rows(layout: Layout, sample: list[dict], records: list[dict]) -> list[
             "fetched_at": None,
             "path": None,
         }
-        path = layout.submission(accession)
+        path = path_of(accession)
         if path.exists():
             row.update(outcome="ok", path=str(path))
             if accession in ok_by_key:

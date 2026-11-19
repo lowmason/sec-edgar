@@ -16,7 +16,7 @@ from sec_filing_data.refetches import run_compare_refetches
 from sec_filing_data.report import run_report
 from sec_filing_data.sample import run_sample
 from sec_filing_data.submissions import run_envelopes
-from sec_filing_data.tables import SCHEMAS, TABLE_FORMATS, read_table, write_table
+from sec_filing_data.tables import SCHEMAS, STAGE3_TABLES, TABLE_FORMATS, read_table, write_table
 
 from tests.test_client import USER_AGENT
 from tests.test_commands import (
@@ -445,7 +445,7 @@ class ReportVersionsTests(CommandTestCase):
             [
                 *(
                     self.table_line(table, "5ca1ab1e5ca1", str(TABLE_FORMATS[table]))
-                    for table in SCHEMAS
+                    for table in STAGE3_TABLES
                 ),
                 "- tables made at 5ca1ab1e5ca1: 11",
             ],
@@ -488,7 +488,7 @@ class ReportVersionsTests(CommandTestCase):
                     self.table_line("sample", "5ca1ab1e5ca1", str(TABLE_FORMATS["sample"]))
                     if table == "sample"
                     else f"- {table}: no `{table}` table yet"
-                    for table in SCHEMAS
+                    for table in STAGE3_TABLES
                 ),
                 "- tables made at 5ca1ab1e5ca1: 1",
             ],
@@ -496,7 +496,7 @@ class ReportVersionsTests(CommandTestCase):
 
     def test_versions_without_tables_give_no_count(self):
         self.assertEqual(
-            self.versions(), [f"- {table}: no `{table}` table yet" for table in SCHEMAS]
+            self.versions(), [f"- {table}: no `{table}` table yet" for table in STAGE3_TABLES]
         )
 
 
