@@ -12,6 +12,7 @@ from sec_filing_data import (
     index,
     manifest,
     ownership,
+    partner_tables,
     partners,
     rebuild,
     refetches,
@@ -29,7 +30,7 @@ from sec_filing_data.ledger import (
     ledger_usage,
     run_fetches,
 )
-from sec_filing_data.tables import read_table
+from sec_filing_data.tables import STAGE4_TABLES, read_table
 
 USER_AGENT_VARIABLE = "SEC_USER_AGENT"
 
@@ -222,6 +223,23 @@ def _run_partners(args: argparse.Namespace) -> int:
     return 0
 
 
+def _run_partner_tables(args: argparse.Namespace) -> int:
+    if (refused := _refuse_unless_clean()) is not None:
+        return refused
+    layout = Layout(Path(args.out))
+    with record_step(layout, "partner-tables"):
+        try:
+            counts = partner_tables.run_partner_tables(layout)
+        except FileNotFoundError as error:
+            # The `partners` table is read before anything is written.
+            print(f"error: {error}", file=sys.stderr)
+            return 1
+    for name in STAGE4_TABLES:
+        if name in counts:
+            print(f"{name}: {counts[name]}")
+    return 0
+
+
 def _print_status_counts(layout: Layout, table: str) -> None:
     """Print `status ok: n`, then `status <reason>: n` for each reason, sorted."""
     reasons = Counter(row["reason"] for row in read_table(layout, table).to_pylist())
@@ -400,6 +418,16 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     partners_parser.add_argument("--out", required=True, help="output root")
     partners_parser.set_defaults(run=_run_partners)
+
+    partner_tables_parser = commands.add_parser(
+        "partner-tables",
+        help=(
+            "write the stage4/tables of the partners from their bytes and the Stage 4 ledger"
+            " (sends no request)"
+        ),
+    )
+    partner_tables_parser.add_argument("--out", required=True, help="output root")
+    partner_tables_parser.set_defaults(run=_run_partner_tables)
 
     report_parser = commands.add_parser("report", help="print the Markdown report of the root")
     report_parser.add_argument("--out", required=True, help="output root")

@@ -44,6 +44,7 @@ WRITING_ARGV: list[list[str]] = [
     ["manifest", "--set", "tables", "--zip", "missing.zip"],
     ["partners"],
     ["fetch-partners"],
+    ["partner-tables"],
 ]
 
 
