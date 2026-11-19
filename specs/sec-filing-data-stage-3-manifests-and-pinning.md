@@ -1,6 +1,6 @@
 # Stage 3: Manifests, hash-bound evidence and release pinning — Design Spec
 
-**Status:** Draft, for the owner's review.
+**Status:** Approved by the owner, 2026-11-19. Owner's words: "Approve spec".
 **Project:** `/Users/lowell/Projects/sec-edgar`, package `packages/sec-filing-data`.
 **Roadmap:** [sec-filing-data roadmap](sec-filing-data-roadmap.md), Stage 3.
 **Inputs:** Stage 2 as built: [plan 11](plans/completed/11-sec-filing-data-stage-2-provenance-and-timing.md) (its
