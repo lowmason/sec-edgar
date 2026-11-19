@@ -23,20 +23,22 @@ Plan 12 removed the parked engine from `main`. The paths that these items name u
       members. Size: design. Done when: the owner approves a reserve set from measured member
       costs, or approves 1800 as final.
       → done in plan 5 (specs/evidence/stage1b/measurement.md, specs/evidence/stage1b/release.md)
-- [ ] B4 single-candidate limit (final-review note): runner.sibling_completion in
+- [x] B4 single-candidate limit (final-review note): runner.sibling_completion in
       packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/runner.py never skips a source
       with two or more historical snapshots, so those sources keep F10's repeated child
       sequence. A refused skip also costs an extra inventory scan and evaluate_member before
       process_member repeats it. Size: plan. Revisit if: the per-member-cost stage or Stage 2
       shows repeated child sequences or refused-skip scans as a material share of run time.
       Checked against plan 5 section 6 (specs/evidence/stage1b/measurement.md, 2026-10-28): engine time inside a member's wall is 0.1% to 0.4% for the full-size members (closed baseline, authority) but 28.8% for the open daily members (about 3.7 s each) and 54.5% for the finish members. The scenarios do not separate repeated child sequences or refused-skip scans, so the revisit trigger is neither met nor cleared. Owner decision D12: keep open.
-- [ ] Order-aware two-release proofs (owner decision R2): member order is not pinnable because
+      → retired 2026-11-19: plan 12 removed the parked engine from `main`, and no live roadmap stage uses it. Its last state is at tag `ingest-parked-2026-11-16`.
+- [x] Order-aware two-release proofs (owner decision R2): member order is not pinnable because
       member_id hashes wall-clock and per-build inputs. In about half the runs of the pending
       scenario in packages/sec-edgar-ingest/tests/test_release_upgrade.py, and one run in four
       of the first test in test_release_origin.py, no child runs on the origin release. See
       specs/evidence/d5-release/two-release.md, "Limits of the proof". Size: plan. Revisit if:
       member ordering becomes deterministic, or an origin-release regression escapes these tests.
-- [ ] Test-hygiene Minors from plan 4 task reviews (all triaged to ship by the whole-branch
+      → retired 2026-11-19: plan 12 removed the parked engine from `main`, and no live roadmap stage uses it. Its last state is at tag `ingest-parked-2026-11-16`.
+- [x] Test-hygiene Minors from plan 4 task reviews (all triaged to ship by the whole-branch
       review), in packages/sec-edgar-ingest/tests/:
       test_workflow_cli.py engine admission test has a vacuous assertFalse(live data exists),
       a comment that says "missing manifest" for a case that reaches the isolation refusal, and
@@ -50,11 +52,12 @@ Plan 12 removed the parked engine from `main`. The paths that these items name u
       B4 shape (processing._validate_sibling_completion enforces it); a refusal message has a
       cosmetic order issue. Size: quick-fix. Done when: one test-hygiene pass over these files
       lands with the full gate green.
+      → retired 2026-11-19: plan 12 removed the parked engine from `main`, and no live roadmap stage uses it. Its last state is at tag `ingest-parked-2026-11-16`.
 
 ## 5-sec-filing-index-per-member-cost — 2026-10-28
 Plan 12 removed the parked engine from `main`. The paths that these items name under `packages/sec-edgar-ingest/`,
 `conf/`, `scripts/` (except `check-sec-filing-data.sh`), `docs/runbooks/` and `.sdd/` are at tag `ingest-parked-2026-11-16`.
-- [ ] Review Minor (plan 5 Task 10, task review of the runtime race fix 17d78da; see
+- [x] Review Minor (plan 5 Task 10, task review of the runtime race fix 17d78da; see
       specs/plans/completed/5-sec-filing-index-per-member-cost.md, Decision D8): in `run_child`,
       packages/sec-edgar-ingest/src/sec_edgar_ingest/runtime.py, the two group-existence probes
       `os.killpg(process.pid, 0)` at :657-659 and :666-668 catch only `ProcessLookupError`. On
@@ -71,7 +74,8 @@ Plan 12 removed the parked engine from `main`. The paths that these items name u
       did not cover a reaped leader with a zombie descendant. Cost: full gate,
       release build, config selection. Size: quick-fix. Done when: both probes handle
       `PermissionError`, a zombie-descendant test pins it, and the full gate is green.
-- [ ] A candidate that the C6 equivalence check refuses blocks its own retry (plan 5 whole-branch
+      → retired 2026-11-19: plan 12 removed the parked engine from `main`, and no live roadmap stage uses it. Its last state is at tag `ingest-parked-2026-11-16`.
+- [x] A candidate that the C6 equivalence check refuses blocks its own retry (plan 5 whole-branch
       review, finding I1; the owner chose "test and document" with no code change in Decision D7,
       and ruled on the recovery text in Decision D12, both 2026-10-28; see
       specs/plans/completed/5-sec-filing-index-per-member-cost.md). In
@@ -99,7 +103,8 @@ Plan 12 removed the parked engine from `main`. The paths that these items name u
       a config selection. Size: design. Done when: the owner approves running C6 on the local
       Parquet files before anything is staged and it lands, or records a reviewed operator
       procedure for removing a refused candidate's objects.
-- [ ] History-scan cost (spec decision S4, "Measure, defer fix"; plan 5 Task 12, see
+      → retired 2026-11-19: plan 12 removed the parked engine from `main`, and no live roadmap stage uses it. Its last state is at tag `ingest-parked-2026-11-16`.
+- [x] History-scan cost (spec decision S4, "Measure, defer fix"; plan 5 Task 12, see
       specs/plans/completed/5-sec-filing-index-per-member-cost.md): per-member engine
       time grows with the `WorkflowChildCall` rows that the engine scans (`_obligations`,
       `reuse_exact_binding`). specs/evidence/stage1b/measurement.md, "History scan (S4)", fits
@@ -118,7 +123,8 @@ Plan 12 removed the parked engine from `main`. The paths that these items name u
       the cost and does not fix it. Size: plan. Revisit if: a live run's per-member engine time
       grows past the measured slope, or the projection at the live store's child-call count
       exceeds the reserve's margin.
-- [ ] Unmeasured member class: an open-quarter member with a quarterly membership authority (the
+      → retired 2026-11-19: plan 12 removed the parked engine from `main`, and no live roadmap stage uses it. Its last state is at tag `ingest-parked-2026-11-16`.
+- [x] Unmeasured member class: an open-quarter member with a quarterly membership authority (the
       A1 locality exception; plan 5, specs/plans/completed/5-sec-filing-index-per-member-cost.md,
       "Defaults for owner review", A1). The §6 `open` scenario has no authority, and the
       `authority` scenario runs in a closed quarter (2026Q3), so
@@ -132,7 +138,8 @@ Plan 12 removed the parked engine from `main`. The paths that these items name u
       480 s and reserve 1800 s (plan 5 Decision D10, 2026-10-28). Size: plan. Revisit if: a live
       open-quarter member with a quarterly authority has a member wall above the slowest measured
       wall (1,010.9 s), or a later stage needs this class in its reserve.
-- [ ] Full-check accounting and engine-path test gaps (plan 5 Task 3 and Task 4 reviews; see
+      → retired 2026-11-19: plan 12 removed the parked engine from `main`, and no live roadmap stage uses it. Its last state is at tag `ingest-parked-2026-11-16`.
+- [x] Full-check accounting and engine-path test gaps (plan 5 Task 3 and Task 4 reviews; see
       specs/plans/completed/5-sec-filing-index-per-member-cost.md). Code and test paths below are
       under packages/sec-edgar-ingest/:
       (1) Lost `put_once` race: in src/sec_edgar_ingest/etl/catalog.py, `_store_manifest`
@@ -154,7 +161,8 @@ Plan 12 removed the parked engine from `main`. The paths that these items name u
       second check is removed. Size: plan. Done when: the race path is tested and either skips the
       second full check or the C3 row states two checks, the budget test covers `daily` and
       `reconcile`, an engine-caller C11 test exists, and the full gate is green.
-- [ ] Test gaps in the columnar, equivalence, incremental and integrity tests (plan 5 Task 2, 5, 6
+      → retired 2026-11-19: plan 12 removed the parked engine from `main`, and no live roadmap stage uses it. Its last state is at tag `ingest-parked-2026-11-16`.
+- [x] Test gaps in the columnar, equivalence, incremental and integrity tests (plan 5 Task 2, 5, 6
       and 7 reviews; see specs/plans/completed/5-sec-filing-index-per-member-cost.md), in
       packages/sec-edgar-ingest/tests/:
       test_etl_integrity.py: no test for a missing rows file in `checked_observation` (expect
@@ -181,7 +189,8 @@ Plan 12 removed the parked engine from `main`. The paths that these items name u
       `source_id`, and an empty delta for the quarter.
       Deferred: tests are frozen with the 1b release build. Size: quick-fix. Done when: these
       tests land, each fails when its guard is removed by hand, and the full gate is green.
-- [ ] Small cleanups in the frozen ETL code (plan 5 Task 2, 5 and 6 reviews; see
+      → retired 2026-11-19: plan 12 removed the parked engine from `main`, and no live roadmap stage uses it. Its last state is at tag `ingest-parked-2026-11-16`.
+- [x] Small cleanups in the frozen ETL code (plan 5 Task 2, 5 and 6 reviews; see
       specs/plans/completed/5-sec-filing-index-per-member-cost.md), in
       packages/sec-edgar-ingest/src/sec_edgar_ingest/etl/:
       manifest.py:384-394: `check_candidate_integrity` repeats the identity and gate-record logic
@@ -198,7 +207,8 @@ Plan 12 removed the parked engine from `main`. The paths that these items name u
       Deferred: `src` is frozen. Cost: full gate, release build, config selection, so do this
       with the next plan that builds a release. Size: quick-fix. Done when: the cleanups land in a
       release-building plan with the full gate green.
-- [ ] Hardening of scripts/measure-d5-drain.py (plan 5 Task 9 review and implementer notes,
+      → retired 2026-11-19: plan 12 removed the parked engine from `main`, and no live roadmap stage uses it. Its last state is at tag `ingest-parked-2026-11-16`.
+- [x] Hardening of scripts/measure-d5-drain.py (plan 5 Task 9 review and implementer notes,
       triaged "may wait"; see specs/plans/completed/5-sec-filing-index-per-member-cost.md):
       (1) `history_fit` (:497-505) fits only `WorkflowChildCall` rows, and `history_counts`
       (:393-409) counts the whole `Attempts` table. specs/completed/sec-filing-index-per-member-cost.md
@@ -217,7 +227,8 @@ Plan 12 removed the parked engine from `main`. The paths that these items name u
       (specs/evidence/stage1b/measurement.md) was made with this script as it stands.
       Size: quick-fix. Done when: one pass lands with tests in
       packages/sec-edgar-ingest/tests/test_measure_cost.py and that module is green.
-- [ ] Release-test assertions and documentation wording (plan 5 Task 1, 8, 11 and 14 notes; see
+      → retired 2026-11-19: plan 12 removed the parked engine from `main`, and no live roadmap stage uses it. Its last state is at tag `ingest-parked-2026-11-16`.
+- [x] Release-test assertions and documentation wording (plan 5 Task 1, 8, 11 and 14 notes; see
       specs/plans/completed/5-sec-filing-index-per-member-cost.md): (1)
       packages/sec-edgar-ingest/tests/test_release_1b.py
       `test_d5_runs_again_on_a_store_that_1b_wrote` (:28-39) asserts only exit 0 and an outcome of
@@ -243,7 +254,8 @@ Plan 12 removed the parked engine from `main`. The paths that these items name u
       Deferred: the test file is frozen with the release build. The text items were triaged "may
       wait". Size: quick-fix. Done when: one wording and assertion pass lands and the full gate is
       green for the test change.
-- [ ] Two-release proof covers only first-generation 1b stores (plan 5 Task 8; on 2026-10-28 the
+      → retired 2026-11-19: plan 12 removed the parked engine from `main`, with the test file of part (1). Parts (2)–(6) edit the parked engine's evidence and retired specs, which stay unchanged as the record.
+- [x] Two-release proof covers only first-generation 1b stores (plan 5 Task 8; on 2026-10-28 the
       owner chose to narrow the evidence wording and add no new scenario, Decision D3 in
       specs/plans/completed/5-sec-filing-index-per-member-cost.md).
       In all six runs of packages/sec-edgar-ingest/tests/test_release_1b.py, each 1b generation
@@ -260,11 +272,12 @@ Plan 12 removed the parked engine from `main`. The paths that these items name u
       (specs/evidence/stage1c/diagnosis/diagnosis.md). The item stays open.
       Size: plan. Revisit if: the D5 release must run again on a store that holds an incremental
       1b generation, or a later stage plans to select D5 after a live 1b run.
+      → retired 2026-11-19: plan 12 removed the parked engine from `main`, and no live roadmap stage uses it. Its last state is at tag `ingest-parked-2026-11-16`.
 
 ## 6-sec-filing-index-member-completion — 2026-10-30
 Plan 12 removed the parked engine from `main`. The paths that these items name under `packages/sec-edgar-ingest/`,
 `conf/`, `scripts/` (except `check-sec-filing-data.sh`), `docs/runbooks/` and `.sdd/` are at tag `ingest-parked-2026-11-16`.
-- [ ] The completion conflict names no cause when the evaluation has no gap (plan 6 Task 3, from
+- [x] The completion conflict names no cause when the evaluation has no gap (plan 6 Task 3, from
       the whole-branch review; the owner was told at the Task 4 checkpoint. See
       specs/plans/completed/6-sec-filing-index-member-completion.md). In
       packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/processing.py, the completion
@@ -276,11 +289,12 @@ Plan 12 removed the parked engine from `main`. The paths that these items name u
       test beside `test_member_completion.ProcessMemberTests`, and ship it in the next release.
       Size: quick-fix. Revisit if: an acceptance or campaign run ends with this stock conflict and
       the cause is not visible from the gaps or the obligation rows.
+      → retired 2026-11-19: plan 12 removed the parked engine from `main`, and no live roadmap stage uses it. Its last state is at tag `ingest-parked-2026-11-16`.
 
 ## 2-sec-filing-index-ingestion-spec — 2026-10-31
 Plan 12 removed the parked engine from `main`. The paths that these items name under `packages/sec-edgar-ingest/`,
 `conf/`, `scripts/` (except `check-sec-filing-data.sh`), `docs/runbooks/` and `.sdd/` are at tag `ingest-parked-2026-11-16`.
-- [ ] Parser/schema design for `conflicting duplicate logical key` (plan 2 Tasks 5 and 7, owner
+- [x] Parser/schema design for `conflicting duplicate logical key` (plan 2 Tasks 5 and 7, owner
       ruled defer). All 28 quarterly sources 2020Q1–2026Q4 and 7 daily sources quarantine on it.
       The raw enumeration shows one accession carrying several form types (SC 13E3 with SC TO-T).
       See specs/plans/completed/2-sec-filing-index-ingestion-spec.md; evidence in
@@ -289,25 +303,30 @@ Plan 12 removed the parked engine from `main`. The paths that these items name u
       later campaign covers or re-quarantines the 28 units and 7 daily sources.
       → planned 2026-10-31: specs/plans/7-sec-filing-index-duplicate-key.md
       → planned 2026-11-05: specs/plans/8-sec-filing-index-ingestion-spec.md
-- [ ] The `daily-index/index.json` listing is refused with `permit_expired`, and daily 2026-10-27
+      → retired 2026-11-19: plan 7 shipped the approved `sec-index-v2` design (its spec reads COMPLETE 2026-11-02), and plan 12 removed the parked engine from `main`. The campaign half of this item is the parked Stage 2b item → item: sec-filing-index-ingestion-roadmap — 2026-11-16
+- [x] The `daily-index/index.json` listing is refused with `permit_expired`, and daily 2026-10-27
       ended `incomplete` for the same cause (plan 2 invocations 1, 2 and 4; owner accepted a named
       gap). The cause is not diagnosed. See specs/evidence/baseline-campaign/coverage-finding.md
       §4.2–4.3. Size: plan. Revisit if: Stage 3 discovery meets the refusal again, or a run lists
       daily bodies after 2026-10-30.
-- [ ] 14 non-retryable `legacy_member_unresolved` gaps, "source has no verified original parent"
+      → triggered 2026-11-19: the Stage 2b runs met the same refusal (`specs/evidence/stage2b/startup-overhead.md:35`) and listed the daily bodies of 2026-11-02 to 2026-11-05 (`:53`)
+      → retired 2026-11-19: plan 12 removed the parked engine from `main`, and no live roadmap stage uses it. Its last state is at tag `ingest-parked-2026-11-16`.
+- [x] 14 non-retryable `legacy_member_unresolved` gaps, "source has no verified original parent"
       (plan 2 invocation 4, owner accepted a named gap). Cause not investigated; they stopped
       nothing. See specs/evidence/baseline-campaign/coverage-finding.md §4.3. Size: plan. Revisit
       if: a run stops on one of these gaps, or Stage 3 selects those sources.
-- [ ] The engine retains quarantined members, so any run whose pinned end lies before a retained
+      → retired 2026-11-19: plan 12 removed the parked engine from `main`, and no live roadmap stage uses it. Its last state is at tag `ingest-parked-2026-11-16`.
+- [x] The engine retains quarantined members, so any run whose pinned end lies before a retained
       member's period ends `state_conflict` (plan 2 invocation 3; F9 was wrong). See
       packages/sec-edgar-ingest/src/sec_edgar_ingest/workflows/runner.py `select_work` and
       worksets.py `_validate_source_directory`. Size: design. Revisit if: Stage 3 or Stage 5 needs
       a bounded-end command on a store that holds quarantined members.
+      → retired 2026-11-19: plan 12 removed the parked engine from `main`, and no live roadmap stage uses it. Its last state is at tag `ingest-parked-2026-11-16`.
 
 ## 9-sec-filing-index-pre-dispatch-cost — 2026-11-15
 Plan 12 removed the parked engine from `main`. The paths that these items name under `packages/sec-edgar-ingest/`,
 `conf/`, `scripts/` (except `check-sec-filing-data.sh`), `docs/runbooks/` and `.sdd/` are at tag `ingest-parked-2026-11-16`.
-- [ ] Registered-member accumulation (spec §2.2 of `specs/completed/sec-filing-index-pre-dispatch-cost.md`;
+- [x] Registered-member accumulation (spec §2.2 of `specs/completed/sec-filing-index-pre-dispatch-cost.md`;
       plan 9 Handoff, owner ruled defer to Stage 5): registered members never retire. They grow by about 55 for each
       business day with a new listing, which is about 13,750 members in a year of daily runs. On the 2a1 release each
       registered member costs about 0.5 s in each run before the first dispatch (measured at 155 to 208 members: 38.1 s
@@ -317,19 +336,22 @@ Plan 12 removed the parked engine from `main`. The paths that these items name u
       `workflows/members.py`. Size: design. Done when: Stage 5's design retires old registered members or stops
       evaluating them, and an offline measurement at the resulting member count shows the first dispatch before the
       cutoff.
-- [ ] Path guards of the Stage 2a1 evidence scripts (plan 9 Task 6 and Task 7 reviews, owner ruled defer):
+      → retired 2026-11-19: plan 12 removed the parked engine from `main`. The parked Stage 5 item restates this requirement → item: sec-filing-index-ingestion-roadmap — 2026-11-16
+- [x] Path guards of the Stage 2a1 evidence scripts (plan 9 Task 6 and Task 7 reviews, owner ruled defer):
       `specs/evidence/stage2a1/predispatch/replay.py` and `specs/evidence/stage2a1/walls/member-walls.py` refuse a path
       under `data/` or `backups/` by directory identity (`os.path.samefile`). They do not refuse a scratch file that is
       hard-linked to a live file in `data/`, and `walls` and `starts` do not refuse an output or scratch path under
       `releases/`. The plans' clone commands (`cp -c -R`) and the rule that scratch folders live under `logs/` avoid
       both cases. Size: quick-fix. Revisit if: a later plan names `replay.py` or `member-walls.py` in a step.
-- [ ] Test-gap Minors from plan 9 (Task 1 and Task 5 reviews, owner ruled defer): (1) no test that
+      → retired 2026-11-19: plan 12 removed the parked engine from `main`. `specs/evidence/stage2a1/predispatch/replay.py:38` imports `sec_edgar_ingest`, so neither script runs on `main`.
+- [x] Test-gap Minors from plan 9 (Task 1 and Task 5 reviews, owner ruled defer): (1) no test that
       `record_type_hints` does not cache a raised decode error (`functools.cache` stores no exception, and the
       `SelectionChecks` tests cover the rule for the new kept values); (2) `tests/test_release_2a1.py` omits the check
       at the end of `test_release_2a` that the published pending manifest has `schema_version` `sec-index-v2`; (3) in
       its pending scenario a hash-ordered member sort can leave no cross-release child (the repair case always runs
       one). Touches `packages/sec-edgar-ingest/tests/test_pre_dispatch_cost.py` and `test_release_2a1.py`.
       Size: quick-fix. Done when: each gap has a test, or the owner drops it with a reason.
+      → retired 2026-11-19: plan 12 removed the parked engine from `main`, and no live roadmap stage uses it. Its last state is at tag `ingest-parked-2026-11-16`.
 
 ## sec-filing-index-ingestion-roadmap — 2026-11-16
 Plan 12 removed the parked engine from `main`. The paths that these items name under `packages/sec-edgar-ingest/`,
@@ -347,21 +369,25 @@ Plan 12 removed the parked engine from `main`. The paths that these items name u
       (`specs/plans/completed/8-sec-filing-index-ingestion-spec.md`) and plan 9's Handoff hold the inputs.
       Size: design. Done when: the owner accepts a revised G2 finding that accounts for each of the 28 quarterly units
       and the 7 daily duplicate-key sources by validated publication or by a named gap with an owner disposition.
+      → held 2026-11-19: `specs/sec-filing-data-roadmap.md` retires to `specs/completed/` after its completion review (derive-roadmap §6)
 - [ ] Stage 3, daily catch-up acceptance (parked roadmap, Stage 3 entry, G3): accepted manual daily continuation from
       the handoff to the current date over the retained pending inventory. It needs the Stage 2b finding. The `daily`
       command shares the cost before the first dispatch (plan 9, Handoff, "Stages 3, 4 and 5" bullet). Size: plan.
       Done when: a dated catch-up report accounts for the daily discovery and pending units from the handoff to the
       current date, and the owner accepts its coverage and limits.
+      → held 2026-11-19: `specs/sec-filing-data-roadmap.md` retires to `specs/completed/` after its completion review (derive-roadmap §6)
 - [ ] Stage 4, manual reconciliation acceptance (parked roadmap, Stage 4 entry, G4): accepted operational
       reconciliation with change, gate, revert, quarantine and recovery dispositions. It needs the Stage 2b finding and
       a quarterly authority to compare with. Plan 8 F3 predicted a 2026Q3 withdrawal gate of about 47 keys, which waits
       here. Size: plan. Done when: a reconciliation report gives each unresolved candidate and gap an explicit
       disposition, and each approval names its exact authority.
+      → held 2026-11-19: `specs/sec-filing-data-roadmap.md` retires to `specs/completed/` after its completion review (derive-roadmap §6)
 - [ ] Stage 5, local scheduling and observed-operation acceptance (parked roadmap, Stage 5 entry, R13, G5): a reviewed
       scheduler for unattended runs, with enable and disable records and observed scheduled runs. Its design retires
       old registered members or stops evaluating them (item "Registered-member accumulation", section
       `9-sec-filing-index-pre-dispatch-cost — 2026-11-15`). Size: design. Done when: R13 has scheduler-specific
       verification, and accepted scheduled daily and reconciliation runs link to durable results.
+      → held 2026-11-19: `specs/sec-filing-data-roadmap.md` retires to `specs/completed/` after its completion review (derive-roadmap §6)
 
 ## sec-filing-platform-roadmap — 2026-11-16
 Plan 12 removed the parked engine from `main`. The paths that these items name under `packages/sec-edgar-ingest/`,
@@ -372,21 +398,26 @@ Plan 12 removed the parked engine from `main`. The paths that these items name u
       plan 3 unmerged at the roadmap reset (2026-11-16), and the new roadmap does not consume it. Merge gate items 2–4
       of plan 3 were never met. Size: plan. Done when: the `sec-edgar-filings` package is on `main` with its
       import-direction test and a recorded ingest export diff, or the owner drops the branch.
+      → held 2026-11-19: `specs/sec-filing-data-roadmap.md` retires to `specs/completed/` after its completion review (derive-roadmap §6)
 - [ ] Stage 2, XBRL fact extraction over fixtures (parked roadmap, Stage 2 entry; platform spec
       `specs/completed/sec-filing-platform.md` R18–R20, V13): a draft extractor with inline XBRL document sets, R18 fact
       keys, R19 duplicate classes and the cover record. Stage 1 of `specs/sec-filing-data-roadmap.md` parses as-filed
       facts on real filings without this design. Size: plan. Done when: each V13 case passes as a fixture test.
+      → held 2026-11-19: `specs/sec-filing-data-roadmap.md` retires to `specs/completed/` after its completion review (derive-roadmap §6)
 - [ ] Stage 3, ownership records over fixtures (parked roadmap, Stage 3 entry; platform spec R22–R24, V15): typed
       ownership records with the R23 13F rules and the R24 amendment row set. Size: plan. Done when: each V15 case
       passes as a fixture test.
+      → held 2026-11-19: `specs/sec-filing-data-roadmap.md` retires to `specs/completed/` after its completion review (derive-roadmap §6)
 - [ ] Stage 4, platform catalog release (parked roadmap, Stage 4 entry; platform spec R4–R7; ADR 0001): a release of
       the shared governor with a bulk lane, three priorities, a protocol version, platform URL classes and
       multi-application build and verify, plus ADR 0002 on shared code. Size: design. Done when: the owner approves the
       governor change and the release, and ADR 0002 is Accepted.
+      → held 2026-11-19: `specs/sec-filing-data-roadmap.md` retires to `specs/completed/` after its completion review (derive-roadmap §6)
 - [ ] Stage 5, governed retrieval and retention (parked roadmap, Stage 5 entry; platform spec R3 rules 1, 2 and 5,
       R5–R7, R26): governed fetch and retention of Feed archives, complete submission files and `submissions.zip`.
       Size: plan. Done when: offline tests show members mapped by header accession, snapshot records with their
       encoding and decoded-byte hashes, and oversize routing to the bulk lane, and the owner reviews the release.
+      → held 2026-11-19: `specs/sec-filing-data-roadmap.md` retires to `specs/completed/` after its completion review (derive-roadmap §6)
 - [x] Stage 6, evidence campaign and finding (parked roadmap, Stage 6 entry; platform spec V1–V12, R30): a bounded live
       campaign that retains a real-submission sample and gives a result for each of V1–V12. Size: plan. Done when:
       each of V1–V12 has a recorded result or a named open item with an owner disposition, and the sample manifest is
@@ -396,27 +427,34 @@ Plan 12 removed the parked engine from `main`. The paths that these items name u
 - [ ] Stage 7, parser freeze (parked roadmap, Stage 7 entry; platform spec R14–R16, R18–R20, R22–R24): revise the
       envelope, fact and ownership parsers against the retained sample and freeze their versions. Size: plan.
       Done when: each frozen version parses the whole sample, with a recorded reason for each refusal.
+      → held 2026-11-19: `specs/sec-filing-data-roadmap.md` retires to `specs/completed/` after its completion review (derive-roadmap §6)
 - [ ] Stage 8, point-in-time store and views (parked roadmap, Stage 8 entry; platform spec R9–R13, R26, R28, V14):
       per-quarter platform generations with four times, tombstones and both view clocks. Stages 2–4 of
       `specs/sec-filing-data-roadmap.md` cover point-in-time awareness for that roadmap's sample. Size: plan.
       Done when: each V14 sequence passes, and a generation publishes by conditional replace in a fixture store.
+      → held 2026-11-19: `specs/sec-filing-data-roadmap.md` retires to `specs/completed/` after its completion review (derive-roadmap §6)
 - [ ] Stage 9, entity history and events (parked roadmap, Stage 9 entry; platform spec R17, R25): ticker and name
       histories from as-filed sources, and 8-K item events. Size: plan. Done when: tests show ticker observations from
       both R17 sources, an item crosswalk with effective date ranges, and one event row per item.
+      → held 2026-11-19: `specs/sec-filing-data-roadmap.md` retires to `specs/completed/` after its completion review (derive-roadmap §6)
 - [ ] Stage 10, publication quality gates (parked roadmap, Stage 10 entry; platform spec R21, R27, V16): fact accuracy
       against SEC reference data, and a review policy for level-B fields. Size: design. Done when: a version of the
       fact extractor meets the V16 conditions, or is recorded as not fit with its residuals.
+      → held 2026-11-19: `specs/sec-filing-data-roadmap.md` retires to `specs/completed/` after its completion review (derive-roadmap §6)
 - [ ] Stage 11, run composition and accounting (parked roadmap, Stage 11 entry; platform spec R2, R3 rules 3, 4 and 6,
       R29, R31): backfill, daily, audit and replay runs with coverage accounting per quarter. Size: plan. Done when:
       fixture runs show selection from the pinned catalog only, a recorded gap for each unlisted Feed member, and a
       reported audit detection bound.
+      → held 2026-11-19: `specs/sec-filing-data-roadmap.md` retires to `specs/completed/` after its completion review (derive-roadmap §6)
 - [ ] Stage 12, storage gate and first backfill (parked roadmap, Stage 12 entry; platform spec R30, V17): the owner's
       storage budget and the first platform backfill over catalog-accepted quarters, at about 1.0–1.9 TB per quarter
       uncompressed. Size: plan. Done when: the measured volume and the owner's budget are recorded before the first
       backfill request, and each requested quarter is covered or named as a gap.
+      → held 2026-11-19: `specs/sec-filing-data-roadmap.md` retires to `specs/completed/` after its completion review (derive-roadmap §6)
 - [ ] Stage 13, daily continuation acceptance (parked roadmap, Stage 13 entry; platform spec R29, R31): accepted daily
       platform runs after the catalog's daily run. Size: plan. Done when: daily runs take each evening's Feed archive
       after the catalog's daily run, and the audit's detection bound is recorded.
+      → held 2026-11-19: `specs/sec-filing-data-roadmap.md` retires to `specs/completed/` after its completion review (derive-roadmap §6)
 
 ## 10-sec-filing-data-stage-1 — 2026-11-17
 - [ ] Feed archive checks V1, V2 and the `.corrNN` part of V6 (plan 10, findings `specs/sec-filing-data-stage-1-findings.md`,
@@ -506,10 +544,11 @@ Plan 12 removed the parked engine from `main`. The paths that these items name u
       `version.py`): `write_table` stamps the commit at `HEAD` when a Python caller writes a table outside a command, even when
       the pinned paths have a change. Spec 5.1 puts the rule on the commands, and no command writes without it. Size: quick-fix.
       Revisit if: a roadmap stage adds a code path that writes a table without a command.
-- [ ] Small cleanups and test gaps in Stage 3 (plan 13 task reviews; `src/sec_filing_data/fetch.py`, `verify.py`, `cli.py`):
+- [x] Small cleanups and test gaps in Stage 3 (plan 13 task reviews; `src/sec_filing_data/fetch.py`, `verify.py`, `cli.py`):
       `fetch.py` writes `fetches` through `write_table(layout, "fetches", build_fetches(layout))` and not through
       `ledger.run_fetches`, so two call sites write one table. No test counts the reads of a listed file in part 3, so a version
       that hashes one read and parses a second read passes. `verify --rows 0` gives `ok, 0 rows`, and a negative `--rows` gives a
       failed line for each table, with no usage error. Size: quick-fix. Done when: `fetch.py` calls `run_fetches`, a test counts
       the reads of one listed file in part 3 and fails for a version that reads it twice, and `--rows` below 1 gives a usage
       error (exit 2).
+      → done 2026-11-19 (/deferred quick fix): `fetch.py` writes `fetches` through `ledger.run_fetches`, `test_rederive_reads_each_listed_file_once` counts the reads of one listed file in part 3 and fails for a version that reads it twice, and `verify --rows` below 1 is a usage error (exit 2)
