@@ -40,6 +40,7 @@ WRITING_ARGV: list[list[str]] = [
     ["facts"],
     ["ownership"],
     ["compare-refetches"],
+    ["build-fetches"],
 ]
 
 
@@ -237,7 +238,7 @@ class RefusalTests(VersionTestCase):
 
     def test_read_only_commands_run_on_a_dirty_tree(self):
         dirty = Checkout(TEST_COMMIT, False, "uncommitted changes in uv.lock")
-        for argv in (["report"], ["check-stage1"]):
+        for argv in (["report"], ["check-stage1"], ["check-frozen", "--folder", "tables-stage2"]):
             with self.subTest(command=argv[0]):
                 root = self.make_folder() / "root"
 

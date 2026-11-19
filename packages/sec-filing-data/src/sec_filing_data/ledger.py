@@ -13,7 +13,7 @@ from operator import itemgetter
 from pathlib import Path
 
 from sec_filing_data.layout import Layout
-from sec_filing_data.tables import read_table
+from sec_filing_data.tables import read_table, write_table
 
 MAX_REQUESTS = 1_500
 MAX_WIRE_BYTES = 5_000_000_000
@@ -139,6 +139,16 @@ def build_fetches(layout: Layout) -> list[dict]:
         elif accession in last_response:
             row.update(_answer_values(last_response[accession], path))
         rows.append(row)
+    return rows
+
+
+def run_fetches(layout: Layout) -> list[dict]:
+    """Write the `fetches` table from the ledger and the bytes on disk. Give its rows.
+
+    This is the offline form of the table that `fetch` writes. It sends no request.
+    """
+    rows = build_fetches(layout)
+    write_table(layout, "fetches", rows)
     return rows
 
 

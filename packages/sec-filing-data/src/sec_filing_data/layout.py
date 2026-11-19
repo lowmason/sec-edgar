@@ -33,6 +33,11 @@ class Layout:
         return self.root / "tables-stage1"
 
     @property
+    def tables_stage2(self) -> Path:
+        """The copy of the tables that the Stage 2 findings rest on."""
+        return self.root / "tables-stage2"
+
+    @property
     def bytes_dir(self) -> Path:
         return self.root / "bytes"
 

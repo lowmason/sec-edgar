@@ -19,7 +19,7 @@ from sec_filing_data import (
     version,
 )
 from sec_filing_data.layout import Layout, record_step
-from sec_filing_data.ledger import FETCH_OUTCOMES, STAGE2_LIMITS, ledger_usage
+from sec_filing_data.ledger import FETCH_OUTCOMES, STAGE2_LIMITS, ledger_usage, run_fetches
 from sec_filing_data.tables import read_table
 
 USER_AGENT_VARIABLE = "SEC_USER_AGENT"
@@ -84,11 +84,26 @@ def _run_fetch(args: argparse.Namespace) -> int:
     layout = Layout(Path(args.out))
     with record_step(layout, "fetch"):
         code = fetch.run_fetch(layout, user_agent=user_agent, per_form=args.per_form)
-    outcomes = Counter(row["outcome"] for row in read_table(layout, "fetches").to_pylist())
+    _print_fetch_outcomes(read_table(layout, "fetches").to_pylist())
+    return code
+
+
+def _run_build_fetches(args: argparse.Namespace) -> int:
+    if (refused := _refuse_unless_clean()) is not None:
+        return refused
+    layout = Layout(Path(args.out))
+    with record_step(layout, "build-fetches"):
+        rows = run_fetches(layout)
+    _print_fetch_outcomes(rows)
+    return 0
+
+
+def _print_fetch_outcomes(rows: list[dict]) -> None:
+    """Print `<outcome>: <n>` for each outcome of FETCH_OUTCOMES that has a row."""
+    outcomes = Counter(row["outcome"] for row in rows)
     for outcome in FETCH_OUTCOMES:
         if outcomes[outcome]:
             print(f"{outcome}: {outcomes[outcome]}")
-    return code
 
 
 def _run_refetch(args: argparse.Namespace) -> int:
@@ -194,6 +209,14 @@ def _run_check_stage1(args: argparse.Namespace) -> int:
     return code
 
 
+def _run_check_frozen(args: argparse.Namespace) -> int:
+    layout = Layout(Path(args.out))
+    with record_step(layout, "check-frozen"):
+        code, lines = rebuild.check_frozen(layout, layout.root / args.folder)
+    _print_lines(lines)
+    return code
+
+
 def _print_lines(lines: list[str]) -> None:
     for line in lines:
         print(line)
@@ -233,6 +256,13 @@ def _build_parser() -> argparse.ArgumentParser:
         help="accession number of a sampled filing; repeat it for more",
     )
     refetch_parser.set_defaults(run=_run_refetch)
+
+    build_fetches_parser = commands.add_parser(
+        "build-fetches",
+        help="write the fetches table from the ledger and the bytes on disk (sends no request)",
+    )
+    build_fetches_parser.add_argument("--out", required=True, help="output root")
+    build_fetches_parser.set_defaults(run=_run_build_fetches)
 
     compare_parser = commands.add_parser(
         "compare-refetches", help="write the refetches table from both ledgers and copies"
@@ -280,6 +310,19 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     check_parser.add_argument("--out", required=True, help="output root")
     check_parser.set_defaults(run=_run_check_stage1)
+
+    frozen_parser = commands.add_parser(
+        "check-frozen",
+        help="compare each table of a frozen folder with the live table, on every column",
+    )
+    frozen_parser.add_argument("--out", required=True, help="output root")
+    frozen_parser.add_argument(
+        "--folder",
+        required=True,
+        choices=("tables-stage2",),
+        help="the frozen folder under the output root",
+    )
+    frozen_parser.set_defaults(run=_run_check_frozen)
     return parser
 
 

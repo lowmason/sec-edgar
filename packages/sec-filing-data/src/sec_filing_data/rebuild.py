@@ -1,8 +1,9 @@
 """The `rebuild` command: every table built again in a temporary folder and compared with
 the live table. The `check-stage1` command: the Stage 1 columns of each live table compared
-with the frozen copy in `tables-stage1`.
+with the frozen copy in `tables-stage1`. The `check-frozen` command: every table of a frozen
+folder compared with the live table, on every column.
 
-Both read the root in place and write nothing under it. This module does not import
+All three read the root in place and write nothing under it. This module does not import
 `requests`.
 """
 
@@ -13,8 +14,8 @@ import pyarrow as pa
 
 from sec_filing_data import facts, index, ownership, refetches, sample, submissions
 from sec_filing_data.layout import Layout
-from sec_filing_data.ledger import build_fetches
-from sec_filing_data.tables import read_table, write_table
+from sec_filing_data.ledger import run_fetches
+from sec_filing_data.tables import read_table
 
 REBUILT_TABLES = (
     "index",
@@ -86,7 +87,7 @@ def _build_tables(scratch: Layout, zip_path: Path) -> None:
     writes it, from the ledger and the bytes on disk."""
     index.run_index(scratch, zip_path)
     sample.run_sample(scratch)
-    write_table(scratch, "fetches", build_fetches(scratch))
+    run_fetches(scratch)
     # `envelopes` writes `filings`, which `facts` and `ownership` read.
     submissions.run_envelopes(scratch)
     facts.run_facts(scratch)
@@ -123,6 +124,28 @@ def _compare_frozen(frozen: Layout, live: Layout, name: str) -> str:
     if missing:
         return f"missing columns {', '.join(missing)}"
     return compare_table(expected, actual.select(expected.column_names))
+
+
+def check_frozen(layout: Layout, frozen_dir: Path) -> tuple[int, list[str]]:
+    """Compare each table of `frozen_dir`, by name, with the live table, schema and values.
+
+    Unlike `check_stage1`, it compares the whole table: a column that only one side has is a
+    difference. Gives one line per frozen table and exit 0 when every table is equal. A
+    missing or empty folder gives one line and exit 1, as it compares nothing.
+    """
+    if not frozen_dir.is_dir():
+        return 1, [f"no {frozen_dir.name} folder"]
+    names = sorted(path.stem for path in frozen_dir.glob("*.parquet"))
+    if not names:
+        return 1, [f"no tables in {frozen_dir.name}"]
+    frozen = Layout(layout.root, tables_dir=frozen_dir)
+    return _outcome([(name, _compare_whole(frozen, layout, name)) for name in names])
+
+
+def _compare_whole(frozen: Layout, live: Layout, name: str) -> str:
+    if not live.table(name).exists():
+        return NO_LIVE_TABLE
+    return compare_table(read_table(frozen, name), read_table(live, name))
 
 
 def _outcome(results: list[tuple[str, str]]) -> tuple[int, list[str]]:

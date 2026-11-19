@@ -4,18 +4,28 @@ import contextlib
 import hashlib
 import io
 import json
+import os
+import shutil
 import subprocess
 import sys
 import tempfile
 import unittest
+from collections import Counter
 from pathlib import Path
 from unittest import mock
 
 import pyarrow as pa
 import pyarrow.parquet as pq
-from sec_filing_data import cli, index, sample
+from sec_filing_data import cli, index, sample, version
 from sec_filing_data.layout import Layout
-from sec_filing_data.rebuild import REBUILT_TABLES, check_stage1, compare_table, run_rebuild
+from sec_filing_data.ledger import FETCH_OUTCOMES, build_fetches
+from sec_filing_data.rebuild import (
+    REBUILT_TABLES,
+    check_frozen,
+    check_stage1,
+    compare_table,
+    run_rebuild,
+)
 from sec_filing_data.tables import read_table, write_table
 
 from tests.test_client import FakeResponse
@@ -179,6 +189,8 @@ class LayoutTests(unittest.TestCase):
         self.assertEqual(moved.table("facts"), elsewhere / "facts.parquet")
         self.assertEqual(moved.tables_stage1, root / "tables-stage1")
         self.assertEqual(plain.tables_stage1, root / "tables-stage1")
+        self.assertEqual(moved.tables_stage2, root / "tables-stage2")
+        self.assertEqual(plain.tables_stage2, root / "tables-stage2")
         for name in (
             "bytes_dir",
             "ledger",
@@ -474,6 +486,140 @@ class CheckStage1Tests(FixtureRootTestCase):
         self.assertEqual((code, lines), (0, [f"{name}: equal" for name in sorted(STAGE1_COLUMNS)]))
         steps = [json.loads(line)["step"] for line in self.layout.runs.read_text().splitlines()]
         self.assertEqual(steps, ["check-stage1", "check-stage1"])
+
+
+class BuildFetchesTests(FixtureRootTestCase):
+    def test_build_fetches_writes_the_table_of_build_fetches(self):
+        self.layout.table("fetches").unlink()
+        expected = build_fetches(self.layout)
+        counts = Counter(row["outcome"] for row in expected)
+        self.assertGreater(counts["ok"], 0)
+
+        with mock.patch.dict(os.environ):
+            os.environ.pop(cli.USER_AGENT_VARIABLE, None)
+            code, lines = run_cli("build-fetches", "--out", str(self.layout.root))
+
+        self.assertEqual(code, 0)
+        listed = [f"{name}: {counts[name]}" for name in FETCH_OUTCOMES if counts[name]]
+        self.assertEqual(lines, listed)
+        self.assertIn(f"ok: {counts['ok']}", lines)
+        self.assertEqual(read_table(self.layout, "fetches").to_pylist(), expected)
+        steps = [json.loads(line)["step"] for line in self.layout.runs.read_text().splitlines()]
+        self.assertEqual(steps[-1], "build-fetches")
+
+    def test_build_fetches_never_loads_requests(self):
+        code = (
+            "import sys\n"
+            "from sec_filing_data import cli, version\n"
+            "version.current_checkout = lambda: version.Checkout('5ca1ab1e' * 5, True, None)\n"
+            "print(cli.main(['build-fetches', '--out', sys.argv[1]]))\n"
+            "print('requests' in sys.modules)\n"
+        )
+
+        result = subprocess.run(
+            [sys.executable, "-c", code, str(self.layout.root)],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+
+        self.assertEqual(result.stdout.splitlines()[-2:], ["0", "False"])
+
+
+class CheckFrozenTests(FixtureRootTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.names = sorted(path.stem for path in self.layout.tables.glob("*.parquet"))
+        self.frozen = self.layout.tables_stage2
+
+    def freeze(self) -> None:
+        shutil.copytree(self.layout.tables, self.frozen)
+
+    def check(self) -> tuple[int, list[str]]:
+        return check_frozen(self.layout, self.frozen)
+
+    def test_check_frozen_compares_every_column(self):
+        self.freeze()
+
+        self.assertEqual(self.check(), (0, [f"{name}: equal" for name in self.names]))
+
+        rows = read_table(self.layout, "documents").to_pylist()
+        rows[0]["type"] = "CHANGED"
+        write_table(self.layout, "documents", rows)
+        code, lines = self.check()
+
+        self.assertEqual(code, 1)
+        self.assertEqual(len(lines), len(self.names))
+        for name, line in zip(self.names, lines, strict=True):
+            if name == "documents":
+                self.assertTrue(line.startswith("documents: row 0 column"), line)
+            else:
+                self.assertEqual(line, f"{name}: equal")
+
+        path = self.frozen / "sample.parquet"
+        table = pq.read_table(path)
+        extra = pa.array([None] * table.num_rows, pa.string())
+        pq.write_table(table.append_column("extra", extra), path)
+        code, lines = self.check()
+
+        self.assertEqual(code, 1)
+        self.assertTrue(lines[self.names.index("sample")].startswith("sample: schema:"), lines)
+
+        shutil.rmtree(self.frozen)
+
+        self.assertEqual(self.check(), (1, ["no tables-stage2 folder"]))
+
+    def test_a_live_column_that_the_frozen_table_lacks(self):
+        # `check-stage1` lets a live column that the frozen copy lacks pass. This check does not.
+        self.freeze()
+        path = self.frozen / "documents.parquet"
+        pq.write_table(pq.read_table(path).drop_columns(["description"]), path)
+
+        code, lines = self.check()
+
+        self.assertEqual(code, 1)
+        line = lines[self.names.index("documents")]
+        self.assertTrue(line.startswith("documents: schema:"), line)
+        self.assertEqual(lines.count("documents: equal"), 0)
+
+    def test_a_frozen_table_with_no_live_table(self):
+        self.freeze()
+        self.layout.table("facts").unlink()
+
+        code, lines = self.check()
+
+        self.assertEqual(code, 1)
+        self.assertEqual(lines[self.names.index("facts")], "facts: no live table")
+
+    def test_an_empty_frozen_folder_fails(self):
+        self.frozen.mkdir()
+        # A leftover partial write is not a table.
+        (self.frozen / "documents.parquet.part").write_bytes(b"")
+
+        self.assertEqual(self.check(), (1, ["no tables in tables-stage2"]))
+
+    def test_check_frozen_command(self):
+        root = str(self.layout.root)
+        argv = ["check-frozen", "--out", root, "--folder", "tables-stage2"]
+        self.assertEqual(run_cli(*argv), (1, ["no tables-stage2 folder"]))
+        self.freeze()
+
+        dirty = version.Checkout("5ca1ab1e" * 5, False, "uncommitted changes in uv.lock")
+        with mock.patch.object(version, "current_checkout", lambda: dirty):
+            code, lines = run_cli(*argv)
+
+        self.assertEqual((code, lines), (0, [f"{name}: equal" for name in self.names]))
+        steps = [json.loads(line)["step"] for line in self.layout.runs.read_text().splitlines()]
+        self.assertEqual(steps, ["check-frozen", "check-frozen"])
+
+    def test_check_frozen_takes_only_the_stage2_folder(self):
+        with (
+            contextlib.redirect_stderr(io.StringIO()),
+            self.assertRaises(SystemExit) as raised,
+        ):
+            run_cli("check-frozen", "--out", str(self.layout.root), "--folder", "tables-stage1")
+
+        self.assertEqual(raised.exception.code, 2)
 
 
 if __name__ == "__main__":
