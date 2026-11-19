@@ -89,6 +89,9 @@ under one pinned version (D1), after it freezes today's tables as evidence for t
 - The live run writes only `ROOT/tables/`, `ROOT/tables-stage2/` (once), `ROOT/manifests/` and `runs.jsonl` lines.
   It reads `master.zip` from the input copy, in place. `index` checks its size and SHA-256 against `INDEX_SHA256`.
 - `--out` repeats the absolute root that Stage 1 used, because `fetches.path` stores paths under it.
+- The plan's pull request merges with a merge commit, not a squash or a rebase. So the commit that the tables name
+  stays reachable from `main` after the branch is deleted, and anyone can check it out. The repository already
+  merges this way.
 - No committed line holds the User-Agent or the contact address.
 
 ## 4. Approaches
@@ -193,25 +196,37 @@ imports `requests`, and writes nothing except its `runs.jsonl` line. It has thre
 1. **Files.** Each listed file exists, with its listed size and SHA-256. Each file in the set folder is listed. For
    the `tables` manifest, each file in `bytes/` and in `stage2/refetch/` is listed too. Each output's stamp in the
    file equals its manifest entry. `--out` equals the manifest's `root`.
-2. **Binding** (manifests with inputs only). Each distinct `source_sha256` of the records tables (`index`,
-   `parties`, `documents`, `facts`, `ownership`), each `sha256` of `filings` and each `sha256` of an `ok` row in
-   `fetches` is the SHA-256 of a listed input. This covers every row, not a sample.
+2. **Binding** (manifests with inputs only). It covers every row, not a sample:
+   - Each distinct `source_sha256` of the records tables (`index`, `parties`, `documents`, `facts`, `ownership`)
+     and each `sha256` of `filings` is the SHA-256 of a listed input.
+   - **By path.** For each `ok` row of `fetches`, the listed input at `fetches.path` has the SHA-256 that the row
+     gives, which comes from the Stage 1 ledger. For each `ok` row of `refetches`, the listed input
+     `stage2/refetch/<accession>.txt` has the row's `refetch_sha256`, which comes from the Stage 2 ledger. So each
+     ledger hash is tied to its own file, not only to some file with the same hash. This matters because
+     `9999999995-26-002992` has one SHA-256 in two files, its Stage 1 copy and its refetch copy. Without the path
+     check, an edit to one copy before the manifest was written would pass through the other.
 3. **Re-derive** (manifests with inputs only). It draws `N` rows (default 20) from each of `index`, `filings`,
-   `parties`, `documents`, `facts` and `ownership`, with `random.Random(S)`. The default seed is a committed
-   constant, and the command prints the seed that it used. For each row:
+   `parties`, `documents`, `facts` and `ownership`, with `random.Random(S)`. For `index`, half of the rows come from
+   the rows that carry filing times (740 on the live root) and half from the rest. A plain draw of 20 rows would
+   miss all 740 about 95% of the time, and the time path would not run on live data. The default seed is a
+   committed constant, and the command prints the seed that it used. For each row:
    - It finds the listed input whose SHA-256 equals the row's source hash, through the manifest, not through the
-     accession path. For `index` rows the input is `master.zip`.
+     accession path. For `index` rows the input is `master.zip`. When two listed inputs share the hash, their
+     bytes are equal, and either serves.
    - It reads that file once, hashes the bytes that it read, and confirms the hash.
    - It parses those same bytes with the step's own code, and confirms that the sampled row equals one row of the
      result, in every column. A column whose value comes from a ledger or a committed constant is re-derived from
-     that ledger or constant, which part 1 hashed. The filing times on a sampled `index` row are re-derived from
-     its filing's bytes and ledger lines, as `envelopes` derives them.
+     that ledger or constant, which part 1 hashed. A column that comes from `sample`, such as the form type or
+     the URL, is re-derived from the hashed `master.zip` and the committed sample seed, not read from
+     `sample.parquet`. The filing times on a sampled `index` row are re-derived from its filing's bytes and ledger
+     lines, as `envelopes` derives them.
 
 It prints one line for each part and each table, `ok` or the first failure. It exits 0 when every part passes, and
 1 otherwise.
 
-Part 1 hashes each file under `stage2/refetch/` again. That meets the deferred item "Re-hash the kept files in
-`refetches`".
+Part 1 hashes each file under `stage2/refetch/` again, and part 2 ties the Stage 2 ledger's hash to that file by
+its path. Together they meet the deferred item "Re-hash the kept files in `refetches`": an edit to a kept file
+after its `ok` record shows.
 
 ### 5.6 The offline `fetches` step
 
@@ -226,7 +241,10 @@ and the number of rows. It also counts the tables for each code version, so a mi
 
 ### 5.8 The live run
 
-Each command runs from the plan's final code commit, with a clean tree. `$ROOT` is
+Each command runs from the plan's final code commit, with a clean tree. The plan's final whole-branch review and
+its fixes come before the live run, because any later code commit makes steps 3 to 9 run again. No commit lands on
+the branch from step 3 to step 9, in any path, because the code version is the commit at HEAD. The findings are
+committed after step 9. `$ROOT` is
 `/Users/lowell/Projects/sec-edgar/filing-data/2026Q3`. `$ZIP` is
 `/Users/lowell/Projects/sec-edgar/filing-data/inputs/2026Q3/master.zip`.
 
@@ -249,8 +267,9 @@ Each command runs from the plan's final code commit, with a clean tree. `$ROOT` 
 10. **Findings.** Write `specs/sec-filing-data-stage-3-findings.md` (section 7).
 
 A result that differs is a problem to fix and record, under the lighter process. The fix is a commit, and steps 3
-to 9 run again at the new commit. The freeze of step 2 stays. The run ends with every table of `tables/` made at one
-commit.
+to 9 run again at the new commit. The freeze of step 2 stays. Manifests of the earlier commit stay in
+`manifests/`, because none is overwritten, and the findings name the three of the final commit. The run ends with
+every table of `tables/` made at one commit.
 
 The frozen-copy check generalizes `check-stage1` to another frozen folder. `check-stage1` keeps working as it is.
 
@@ -279,8 +298,10 @@ fixtures and temporary folders.
   - two byte files with their names swapped
   - a records row whose source hash matches no input
   - a sampled row whose value was changed in the table
+  - one of two files that share a ledger hash, edited before the manifest was written (the path check of part 2)
 
-  The same seed draws the same rows. `verify` loads no module that imports `requests`.
+  The same seed draws the same rows. The `index` draw holds rows with filing times and rows without.
+  `verify` loads no module that imports `requests`.
 - The offline `fetches` step writes the same table as `build_fetches`, and loads no SEC client.
 - The existing tests pass, with `write_table` stamping.
 
@@ -327,6 +348,12 @@ found and fixed.
 - The refusal comes before `record_step`.
 - An offline `fetches` step (5.6).
 - `verify` part 2 binds every row, beside the sampled re-derive.
+- `verify` part 2 also ties each ledger hash to its own file by path (`fetches.path`, and
+  `stage2/refetch/<accession>.txt`). Part 3 still finds its files by hash, as D3 says.
+- Half of the 20 sampled `index` rows come from the rows with filing times. The count per table stays 20, as D3
+  says.
+- The final review comes before the live run, no commit lands during the run, and the plan's pull request merges
+  with a merge commit.
 - Manifests are named by set and writer commit, and never overwritten. They hold no clock value.
 - Records bind to the hash of the whole submission file. No per-document hash (section 2).
 - The report gains a Versions section.
