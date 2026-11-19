@@ -507,6 +507,26 @@ class VerifyRederiveTests(VerifyTestCase):
             f" {self.relative(changed)}: SHA-256 differs from the listed value",
         )
 
+    def test_rederive_reads_each_listed_file_once(self):
+        path = self.write_manifest()
+        manifest = json.loads(path.read_text(encoding="utf-8"))
+        target = next(file for file in self.byte_files() if file.read_bytes() == FETCHED_13F)
+        real_open, opened = io.open, Counter()
+
+        def counting_open(file, *args, **kwargs):
+            if isinstance(file, (str, Path)) and Path(file) == target:
+                opened[target] += 1
+            return real_open(file, *args, **kwargs)
+
+        # Part 3 alone, because parts 1 and 2 read the file for their own checks. `Path.read_bytes`
+        # opens through `io.open` and a plain `open` through `builtins.open`, so a second read of
+        # the file, hashed or parsed, is counted.
+        with mock.patch("io.open", counting_open), mock.patch("builtins.open", counting_open):
+            lines = verify.rederive(self.layout, manifest, rows=1000, seed=VERIFY_SEED)
+
+        self.assertEqual(lines, self.rederive_ok(rows=1000))
+        self.assertEqual(opened[target], 1)
+
 
 class VerifyDrawTests(unittest.TestCase):
     def test_same_seed_draws_same_rows(self):
@@ -769,6 +789,19 @@ class VerifyCommandTests(VerifyTestCase):
         records = [json.loads(line) for line in self.layout.runs.read_text().splitlines()]
         self.assertEqual(len(records), runs + 1)
         self.assertEqual(records[-1]["step"], "verify")
+
+    def test_verify_refuses_rows_below_one(self):
+        path = self.write_manifest()
+        runs = line_count(self.layout.runs)
+        for rows in ("0", "-1"):
+            with self.subTest(rows=rows):
+                stderr = io.StringIO()
+                with contextlib.redirect_stderr(stderr), self.assertRaises(SystemExit) as raised:
+                    self.verify(path, "--rows", rows)
+
+                self.assertEqual(raised.exception.code, 2)
+                self.assertIn("--rows", stderr.getvalue())
+                self.assertEqual(line_count(self.layout.runs), runs)
 
     def test_verify_never_loads_requests(self):
         path = self.write_manifest()

@@ -95,3 +95,8 @@ Differences from the design:
 
 Closed earlier deferred items:
 - "Re-hash the kept files in `refetches` (plan 11 final review, Codex review; `src/sec_filing_data/refetches.py`):" (deferred by 11-sec-filing-data-stage-2-provenance-and-timing).
+
+## /deferred — 2026-11-19
+
+Closed deferred items:
+- "Small cleanups and test gaps in Stage 3 (plan 13 task reviews; `src/sec_filing_data/fetch.py`, `verify.py`, `cli.py`):" (deferred by 13-sec-filing-data-stage-3-manifests-and-pinning): `fetch` writes `fetches` through `run_fetches`, a part 3 test counts the reads of one listed file, and `verify --rows` below 1 exits 2.
