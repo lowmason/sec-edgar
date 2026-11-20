@@ -4,7 +4,7 @@
 
 **Status:** Approved by the owner, 2026-11-17. Owner's words: "Approve spec".
 **Project:** `/Users/lowell/Projects/sec-edgar`, package `packages/sec-filing-data`.
-**Roadmap:** [sec-filing-data roadmap](../sec-filing-data-roadmap.md), Stage 2.
+**Roadmap:** [sec-filing-data roadmap](sec-filing-data-roadmap.md), Stage 2.
 **Inputs:** Stage 1 as built: [plan 10](../plans/completed/10-sec-filing-data-stage-1.md) (its Handoff section),
 the [Stage 1 findings](../sec-filing-data-stage-1-findings.md), and the live root
 `/Users/lowell/Projects/sec-edgar/filing-data/2026Q3` (tables, bytes, `fetch-log.jsonl`). The items that the owner

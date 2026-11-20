@@ -1,6 +1,6 @@
 # Stage 2b Baseline Coverage on the 2a Release Implementation Plan
 
-**Status: SUPERSEDED (2026-11-16)** — halted at Task 5 on 2026-11-06 (stop rule 10). The owner chose "Stop, new plan", and no new plan was written. The roadmap reset of 2026-11-16 parked Stage 2b, and [the sec-filing-data roadmap](../../sec-filing-data-roadmap.md) replaced the old roadmaps. The Handoff below stays as the record. The Stage 2b item in `specs/deferred_items.md`, section `sec-filing-index-ingestion-roadmap — 2026-11-16`, cites it.
+**Status: SUPERSEDED (2026-11-16)** — halted at Task 5 on 2026-11-06 (stop rule 10). The owner chose "Stop, new plan", and no new plan was written. The roadmap reset of 2026-11-16 parked Stage 2b, and [the sec-filing-data roadmap](../../completed/sec-filing-data-roadmap.md) replaced the old roadmaps. The Handoff below stays as the record. The Stage 2b item in `specs/deferred_items.md`, section `sec-filing-index-ingestion-roadmap — 2026-11-16`, cites it.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: implement this plan task-by-task via subagent-driven-development (the default) — or executing-plans when your human partner chose inline execution at the handoff. Steps use checkbox (`- [ ]`) syntax for tracking.
 

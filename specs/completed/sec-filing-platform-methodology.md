@@ -1,6 +1,6 @@
 # SEC EDGAR filing platform methodology
 
-**PARKED (2026-11-16)** with [its roadmap](sec-filing-platform-roadmap.md). The live roadmap is [sec-filing-data](../sec-filing-data-roadmap.md).
+**PARKED (2026-11-16)** with [its roadmap](sec-filing-platform-roadmap.md). The replacement roadmap is [sec-filing-data](sec-filing-data-roadmap.md).
 
 > For agentic workers: when specs/sec-filing-platform-critique.md exists beside this
 > file, REQUIRED SKILL: describe-critique-methodology (synthesize mode) —

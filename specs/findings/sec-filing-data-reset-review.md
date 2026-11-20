@@ -1,7 +1,7 @@
 # sec-filing-data reset review
 
 Read-only review of 2026-11-16, made before the reset to the
-[sec-filing-data roadmap](../sec-filing-data-roadmap.md). Counts come from `git` on `main` at `f10c70f`
+[sec-filing-data roadmap](../completed/sec-filing-data-roadmap.md). Counts come from `git` on `main` at `f10c70f`
 (tracked files only). No SEC request was sent.
 
 ## What worked on 2026-11-16

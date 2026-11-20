@@ -570,3 +570,18 @@ Plan 12 removed the parked engine from `main`. The paths that these items name u
       steps again. Stage 3's manifest names work the same way, and Task 11 let no commit land between Steps 2 and 10. The
       fix would make `manifest --set stage4` refuse when the table stamps name a commit other than `HEAD`. Size: quick-fix.
       Revisit if: `asof` on a live root exits 1 because its `stage4` manifest does not exist.
+
+## sec-filing-data-roadmap — 2026-11-19
+- [ ] Amendment pairs that cross the quarter (completion review `specs/findings/sec-filing-data-completion-review.md`,
+      amendment clause row; Stage 4 spec `specs/completed/sec-filing-data-stage-4-as-of-views.md`, section 2 Non-goals and
+      D1; findings `specs/sec-filing-data-stage-4-findings.md`, Partner tables and links): 16 of the 27 sampled amendments
+      point to an original that is not held, so each amendment answers alone at its own time. 14 name an accession that
+      the 2026Q3 index does not list (9 Form D/A and 5 Schedule 13D/A or 13G/A). Form 4/A `0000108985-26-000080` declares
+      an original filing date of 2026-04-16, in 2026Q2. 13F-HR/A `0000905148-26-003942` declares the period 2021-12-31,
+      and no held 13F-HR matches it. Its original is probably in an earlier quarter, but no partner rule searches the
+      index by filer and period, so this is not checked. Amendments of sampled filings filed after 2026Q3 are not looked
+      for either, so no sampled 10-K or 10-Q has an amendment in the as-of views. The roadmap left other quarters out (owner, 2026-11-16), and the
+      owner chose in-quarter partners (Stage 4 spec D1, "C: fetch in-quarter"). At the completion review the owner deferred
+      this gap (2026-11-19, "Approve all five (Recommended)"). The work would extend the partner rules and fetch these
+      originals under a new owner budget, about 16 SEC requests (`src/sec_filing_data/partners.py`, `fetch.py`,
+      `links.py`). Size: plan. Revisit if: a roadmap stage covers a quarter other than 2026Q3.

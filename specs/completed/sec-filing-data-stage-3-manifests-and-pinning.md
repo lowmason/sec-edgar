@@ -4,7 +4,7 @@
 
 **Status:** Approved by the owner, 2026-11-19. Owner's words: "Approve spec".
 **Project:** `/Users/lowell/Projects/sec-edgar`, package `packages/sec-filing-data`.
-**Roadmap:** [sec-filing-data roadmap](../sec-filing-data-roadmap.md), Stage 3.
+**Roadmap:** [sec-filing-data roadmap](sec-filing-data-roadmap.md), Stage 3.
 **Inputs:** Stage 2 as built: [plan 11](../plans/completed/11-sec-filing-data-stage-2-provenance-and-timing.md) (its
 Handoff section), the [Stage 2 findings](../sec-filing-data-stage-2-findings.md), the
 [Stage 2 spec](sec-filing-data-stage-2-provenance-and-timing.md), and the live root

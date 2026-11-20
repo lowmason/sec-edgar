@@ -1,4 +1,4 @@
-**PARKED (2026-11-16) — 7 of 11 stages complete.** The live roadmap is [sec-filing-data](../sec-filing-data-roadmap.md). The unticked stages (2b, 3, 4 and 5) are deferred items in `specs/deferred_items.md`, section `sec-filing-index-ingestion-roadmap — 2026-11-16`.
+**PARKED (2026-11-16) — 7 of 11 stages complete.** The replacement roadmap is [sec-filing-data](sec-filing-data-roadmap.md). The unticked stages (2b, 3, 4 and 5) are deferred items in `specs/deferred_items.md`, section `sec-filing-index-ingestion-roadmap — 2026-11-16`.
 
 > For agentic workers: REQUIRED SKILL: derive-roadmap — resume via its
 > reconcile step; route each unticked stage per its ROUTING line; never plan
