@@ -1,7 +1,7 @@
 # sec-filing-data Stage 1 findings
 
-This file is the evidence record of Stage 1 of the [sec-filing-data roadmap](sec-filing-data-roadmap.md),
-implemented by [plan 10](plans/10-sec-filing-data-stage-1.md). Under the lighter process (D1), it is the
+This file is the evidence record of Stage 1 of the [sec-filing-data roadmap](completed/sec-filing-data-roadmap.md),
+implemented by [plan 10](plans/completed/10-sec-filing-data-stage-1.md). Under the lighter process (D1), it is the
 only evidence record. It records the results of the real run, each problem found and fixed, and the
 measured cost.
 

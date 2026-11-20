@@ -1,6 +1,6 @@
 # sec-filing-data Stage 4 findings
 
-This file is the evidence record of Stage 4 of the [sec-filing-data roadmap](sec-filing-data-roadmap.md).
+This file is the evidence record of Stage 4 of the [sec-filing-data roadmap](completed/sec-filing-data-roadmap.md).
 [Plan 14](plans/completed/14-sec-filing-data-stage-4-as-of-views.md) implemented it, against the
 [Stage 4 spec](completed/sec-filing-data-stage-4-as-of-views.md). Under the lighter process (spec section 3), this file is the
 only evidence record. It records the results of the live run, each problem found and fixed, and the measured cost.

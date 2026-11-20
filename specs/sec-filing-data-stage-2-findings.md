@@ -1,6 +1,6 @@
 # sec-filing-data Stage 2 findings
 
-This file is the evidence record of Stage 2 of the [sec-filing-data roadmap](sec-filing-data-roadmap.md).
+This file is the evidence record of Stage 2 of the [sec-filing-data roadmap](completed/sec-filing-data-roadmap.md).
 [Plan 11](plans/completed/11-sec-filing-data-stage-2-provenance-and-timing.md) implemented it, against the
 [Stage 2 spec](completed/sec-filing-data-stage-2-provenance-and-timing.md). Under the lighter process (spec section 3),
 this file is the only evidence record. It records the results of the live run, each problem found and fixed,

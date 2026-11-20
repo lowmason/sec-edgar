@@ -1,6 +1,6 @@
 # SEC filing-index ingestion for sec-edgar — Design Spec
 
-**PARKED (2026-11-16)** with [its roadmap](sec-filing-index-ingestion-roadmap.md). The live roadmap is [sec-filing-data](../sec-filing-data-roadmap.md).
+**PARKED (2026-11-16)** with [its roadmap](sec-filing-index-ingestion-roadmap.md). The replacement roadmap is [sec-filing-data](sec-filing-data-roadmap.md).
 
 **Status:** Local documentation rewrite, 2026-10-18. The native implementation is complete;
 operational coverage and the future scheduling phase have separate acceptance gates.

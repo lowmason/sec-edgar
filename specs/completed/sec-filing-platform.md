@@ -1,6 +1,6 @@
 # SEC EDGAR filing platform — Design Spec
 
-**PARKED (2026-11-16)** with [its roadmap](sec-filing-platform-roadmap.md). The live roadmap is [sec-filing-data](../sec-filing-data-roadmap.md).
+**PARKED (2026-11-16)** with [its roadmap](sec-filing-platform-roadmap.md). The replacement roadmap is [sec-filing-data](sec-filing-data-roadmap.md).
 
 > For agentic workers: REQUIRED NEXT SKILL: derive-roadmap — do not plan
 > this spec directly and do not split it into per-subsystem plans.

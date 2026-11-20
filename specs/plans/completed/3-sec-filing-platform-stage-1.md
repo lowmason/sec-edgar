@@ -1,6 +1,6 @@
 # Platform Stage 1: Package and Envelope Parser Implementation Plan
 
-**Status: SUPERSEDED (2026-11-16)** — executed on branch `platform-stage1` (`12cb8e0`, 13 commits, 60 fixture tests) and never merged. The owner retired it unmerged at the roadmap reset, and [the sec-filing-data roadmap](../../sec-filing-data-roadmap.md) does not consume it. The executed copy, with its deviation notes, is on the branch. Its stage is an item in `specs/deferred_items.md`, section `sec-filing-platform-roadmap — 2026-11-16`.
+**Status: SUPERSEDED (2026-11-16)** — executed on branch `platform-stage1` (`12cb8e0`, 13 commits, 60 fixture tests) and never merged. The owner retired it unmerged at the roadmap reset, and [the sec-filing-data roadmap](../../completed/sec-filing-data-roadmap.md) does not consume it. The executed copy, with its deviation notes, is on the branch. Its stage is an item in `specs/deferred_items.md`, section `sec-filing-platform-roadmap — 2026-11-16`.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: implement this plan task-by-task via subagent-driven-development (the default) — or executing-plans when your human partner chose inline execution at the handoff. Steps use checkbox (`- [ ]`) syntax for tracking.
 

@@ -1,3 +1,5 @@
+**COMPLETE (2026-11-19) — 4 of 4 stages complete.** Results: the [completion review](../findings/sec-filing-data-completion-review.md).
+
 > For agentic workers: REQUIRED SKILL: derive-roadmap — resume via its
 > reconcile step; route each unticked stage per its ROUTING line; never plan
 > this document wholesale.
@@ -5,11 +7,11 @@
 ## Outcomes
 
 Source: the owner's words, 2026-11-16 (the owner focus of the roadmap-reset brief, and the owner's answers to
-its questions). Background: the [local spec](completed/sec-edgar-local-spec.md); the
-[ingestion spec](completed/sec-filing-index-ingestion-spec.md), its [methodology](completed/sec-filing-index-ingestion-methodology.md)
-and its [roadmap](completed/sec-filing-index-ingestion-roadmap.md); the [platform spec](completed/sec-filing-platform.md), its
-[methodology](completed/sec-filing-platform-methodology.md), [critique](completed/sec-filing-platform-critique.md) and
-[roadmap](completed/sec-filing-platform-roadmap.md); and the [reset review](findings/sec-filing-data-reset-review.md).
+its questions). Background: the [local spec](sec-edgar-local-spec.md); the
+[ingestion spec](sec-filing-index-ingestion-spec.md), its [methodology](sec-filing-index-ingestion-methodology.md)
+and its [roadmap](sec-filing-index-ingestion-roadmap.md); the [platform spec](sec-filing-platform.md), its
+[methodology](sec-filing-platform-methodology.md), [critique](sec-filing-platform-critique.md) and
+[roadmap](sec-filing-platform-roadmap.md); and the [reset review](../findings/sec-filing-data-reset-review.md).
 Choices made:
 - Repository: `~/Projects/sec-edgar`, Python 3.14, the existing uv workspace.
 - Stage 1 process: the lighter process. The code runs from the working tree, and a fix needs no release. No per-run deadline, reserve or member-wall tuning. The findings file is the only evidence record. The stage fixes each problem that its run finds, and a new stage needs the owner's word. From Stage 3 on, a command that writes under the root needs a clean tree at a commit, so a fix needs a commit but still no release, and Stage 4 inherits the rule (owner, 2026-11-18, Stage 3 spec D2; plan 13, Handoff). (Resolved at resume, 2026-11-19)
@@ -116,3 +118,14 @@ name, where the index lists one. Owner's words: "Stage 1 records it (Recommended
 Retire this roadmap only after the completion review (derive-roadmap §6) re-runs the rubric over O1–O4, with
 evidence from each stage. An unmet outcome needs a new stage, or a written deferral in
 `specs/deferred_items.md`.
+
+The [completion review](../findings/sec-filing-data-completion-review.md) ran on 2026-11-19. O1–O4 are implemented as
+specified. The Stage 4 amendment clause is implemented differently, on the in-quarter reading of Stage 4 spec D1, and
+Stage 4 added 20 partner filings under its own SEC budget (plan 14, Handoff). The owner approved the review's five
+defaults on 2026-11-19. Owner's words: "Approve all five (Recommended)".
+- The ticked Stage 4 entry stays as written. The review cites plan 14's three departures as evidence.
+- O2–O4 count as met under Stage 4 spec D1. The 16 originals that are not held are a deferred item
+  (`specs/deferred_items.md`, section `sec-filing-data-roadmap — 2026-11-19`).
+- The review writes no note on the 16 held items of the parked roadmaps. The owner's next `/deferred` pass triages them.
+- The review lives in `specs/findings/`, and this header links it.
+- This roadmap retired to `specs/completed/` on 2026-11-19.

@@ -2,7 +2,7 @@
 
 This repository is one uv workspace with one Python package, `sec-filing-data`. It makes plain tables from the SEC filings of one quarter, 2026Q3.
 
-The work follows the [roadmap](specs/sec-filing-data-roadmap.md). Stages 1 and 2 are complete. Their results are in the [Stage 1 findings](specs/sec-filing-data-stage-1-findings.md) and the [Stage 2 findings](specs/sec-filing-data-stage-2-findings.md). Stage 2 added the source, the SHA-256 and the filing times to each record. Its [spec](specs/completed/sec-filing-data-stage-2-provenance-and-timing.md) and [plan](specs/plans/completed/11-sec-filing-data-stage-2-provenance-and-timing.md) are retired.
+The work followed the [roadmap](specs/completed/sec-filing-data-roadmap.md). All four stages are complete, and the roadmap retired on 2026-11-19 after its [completion review](specs/findings/sec-filing-data-completion-review.md). Stage 1 made the tables. Stage 2 added the source, the SHA-256 and the filing times to each record. Stage 3 added manifests and the code version of each run. Stage 4 added the as-of views. The results are in the [Stage 1](specs/sec-filing-data-stage-1-findings.md), [Stage 2](specs/sec-filing-data-stage-2-findings.md), [Stage 3](specs/sec-filing-data-stage-3-findings.md) and [Stage 4](specs/sec-filing-data-stage-4-findings.md) findings. The stage specs are in `specs/completed/`, and the plans are in `specs/plans/completed/`.
 
 ## sec-filing-data
 
