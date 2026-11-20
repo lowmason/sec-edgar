@@ -1,5 +1,5 @@
-"""`verify` on a `stage4` manifest, parts 1 and 2: the files of the manifest, and the binding of
-each source hash of the Stage 4 tables to a listed input."""
+"""`verify` on a `stage4` manifest: the files of the manifest, the binding of each source hash of
+the Stage 4 tables to a listed input, and the re-derivation of the partners and of drawn rows."""
 
 import copy
 import json
@@ -9,14 +9,17 @@ from pathlib import Path
 from sec_filing_data import manifest, verify_stage4, version
 from sec_filing_data.manifest import sha256_of
 from sec_filing_data.tables import read_table, write_table
-from sec_filing_data.verify import RECORDS_TABLES, VERIFY_SEED
+from sec_filing_data.verify import DEFAULT_ROWS, RECORDS_TABLES, VERIFY_SEED
 
 from tests.stage4_root import (
+    PARTNER_4,
     PARTNER_13D_A1,
+    PARTNER_13D_A2,
     PARTNER_D,
     SAMPLED_8K_A,
     SAMPLED_13D,
     SAMPLED_D_A,
+    UNRELATED_10K,
     Stage4RootTestCase,
     write_both_manifests,
 )
@@ -35,6 +38,8 @@ OK_LINES = [
     "binding fetches: ok",
 ]
 FILES, LINKS = 1, 6
+# The `partners` line of Part 3 on the untouched root: the 5 sampled filings choose 5 partners.
+PARTNERS_OK = "rederive partners: ok, 5 rows"
 
 
 def with_line(label: str, result: str) -> list[str]:
@@ -48,8 +53,8 @@ def changed(rows: list[dict], accession: str, **values) -> list[dict]:
 
 
 class VerifyStage4TestCase(Stage4RootTestCase):
-    def verify(self, manifest_path: Path) -> tuple[int, list[str]]:
-        code, stdout, stderr = self.run_cli("verify", "--manifest", str(manifest_path))
+    def verify(self, manifest_path: Path, *argv: str) -> tuple[int, list[str]]:
+        code, stdout, stderr = self.run_cli("verify", "--manifest", str(manifest_path), *argv)
         self.assertEqual(stderr, "")
         return code, stdout.splitlines()
 
@@ -80,6 +85,24 @@ class VerifyStage4TestCase(Stage4RootTestCase):
         with path.open("ab") as handle:
             handle.write(b"\n")
 
+    def rederive_ok(self, rows: int = DEFAULT_ROWS) -> list[str]:
+        """The Part 3 lines of an untouched root at `--rows rows`: the whole `partners` table,
+        then min(rows, its rows) drawn rows of each of BINDING_TABLES."""
+        return [
+            PARTNERS_OK,
+            *(
+                f"rederive {name}: ok,"
+                f" {min(rows, read_table(self.layout.stage4_view, name).num_rows)} rows"
+                for name in verify_stage4.BINDING_TABLES
+            ),
+        ]
+
+    def rederive_line(self, lines: list[str], name: str) -> str:
+        """The one `rederive` line of table `name` in `lines`."""
+        found = [line for line in lines if line.startswith(f"rederive {name}: ")]
+        self.assertEqual(len(found), 1, lines)
+        return found[0]
+
 
 class VerifyStage4PassTests(VerifyStage4TestCase):
     def test_an_untouched_stage4_root_passes(self):
@@ -88,7 +111,7 @@ class VerifyStage4PassTests(VerifyStage4TestCase):
         code, lines = self.verify(stage4_path)
 
         self.assertEqual(code, 0)
-        self.assertEqual(lines[: len(OK_LINES)], OK_LINES)
+        self.assertEqual(lines, [*OK_LINES, *self.rederive_ok()])
         self.assertEqual(verify_stage4.STAGE4_READS, ("index", "sample", "filings", "parties"))
         self.assertEqual(
             verify_stage4.BINDING_TABLES, ("filings", "parties", "documents", "ownership", "links")
@@ -383,3 +406,108 @@ class VerifyStage4MalformedTests(VerifyStage4TestCase):
         self.assertTrue(lines[LINKS].startswith("binding links: failed: "), lines[LINKS])
         for position in set(range(len(OK_LINES))) - {FILES, LINKS}:
             self.assertEqual(lines[position], OK_LINES[position])
+
+
+class VerifyStage4RederiveTests(VerifyStage4TestCase):
+    def test_a_changed_partners_row_fails(self):
+        # Before the `stage4` manifest, so that Parts 1 and 2 still pass.
+        rows = read_table(self.layout.stage4_view, "partners").to_pylist()
+        position = next(
+            n for n, row in enumerate(rows) if row["accession_number"] == PARTNER_13D_A2
+        )
+        self.assertEqual(rows[position]["rule"], "candidate_amendment")
+        self.rewrite(
+            "partners",
+            lambda rows: changed(rows, PARTNER_13D_A2, rule="original_previous_accession"),
+        )
+        _, stage4_path = write_both_manifests(self)
+
+        code, lines = self.verify(stage4_path)
+
+        self.assertEqual(code, 1)
+        # The partners are chosen again from the inputs, so the other tables still derive.
+        self.assertEqual(
+            lines,
+            [
+                *OK_LINES,
+                f"rederive partners: row {position} of {PARTNER_13D_A2}: column rule:"
+                " 'original_previous_accession' in the table, 'candidate_amendment' derived",
+                *self.rederive_ok()[1:],
+            ],
+        )
+
+    def test_a_partners_table_with_a_missing_row_fails_on_its_row_count(self):
+        self.rewrite(
+            "partners", lambda rows: [r for r in rows if r["accession_number"] != PARTNER_13D_A2]
+        )
+        _, stage4_path = write_both_manifests(self)
+
+        code, lines = self.verify(stage4_path)
+
+        self.assertEqual(code, 1)
+        # The table's count, then the derived count.
+        self.assertEqual(
+            lines, [*OK_LINES, "rederive partners: rows: 4 against 5", *self.rederive_ok()[1:]]
+        )
+
+    def test_a_changed_links_value_fails(self):
+        # A `links` row held in `partner`, after rows held in both places.
+        rows = read_table(self.layout.stage4_view, "links").to_pylist()
+        position = next(
+            n for n, row in enumerate(rows) if row["accession_number"] == PARTNER_13D_A2
+        )
+        self.assertEqual(rows[position]["held_in"], "partner")
+        self.assertEqual({row["held_in"] for row in rows[:position]}, {"sample", "partner"})
+        derived = rows[position]["link_problem"]
+        self.rewrite("links", lambda rows: changed(rows, PARTNER_13D_A2, link_problem="changed"))
+        _, stage4_path = write_both_manifests(self)
+
+        code, lines = self.verify(stage4_path, "--rows", "1000")
+
+        self.assertEqual(code, 1)
+        # The changed row still has a listed source hash: only the re-derivation shows it.
+        self.assertEqual(lines[: len(OK_LINES)], OK_LINES)
+        self.assertEqual(
+            self.rederive_line(lines, "links"),
+            f"rederive links: row {position} of {PARTNER_13D_A2}: column link_problem:"
+            f" 'changed' in the table, {derived!r} derived",
+        )
+
+    def test_rederive_reads_the_hashed_bytes(self):
+        _, stage4_path = write_both_manifests(self)
+        path = self.layout.partner_submission(PARTNER_4)
+        self.append_a_byte(path)
+
+        code, lines = self.verify(stage4_path, "--rows", "1000")
+
+        self.assertEqual(code, 1)
+        filings = read_table(self.layout.stage4_view, "filings")["accession_number"].to_pylist()
+        self.assertEqual(
+            self.rederive_line(lines, "filings"),
+            f"rederive filings: row {filings.index(PARTNER_4)} of {PARTNER_4}:"
+            f" {self.relative(path)}: SHA-256 differs from the listed value",
+        )
+
+    def test_rederive_parses_the_hashed_index_table(self):
+        _, stage4_path = write_both_manifests(self)
+        # A row that chooses no partner: only the hash of the file shows the change to Part 3.
+        rows = read_table(self.layout, "index").to_pylist()
+        position = next(
+            n for n, row in enumerate(rows) if row["accession_number"] == UNRELATED_10K
+        )
+        rows[position]["company_name"] = "CHANGED CORP"
+        write_table(self.layout, "index", rows)
+
+        code, lines = self.verify(stage4_path, "--rows", "1000")
+
+        self.assertEqual(code, 1)
+        rederived = lines[len(OK_LINES) :]
+        self.assertEqual(
+            [line.partition(": ")[0] for line in rederived],
+            ["rederive partners", *(f"rederive {name}" for name in verify_stage4.BINDING_TABLES)],
+        )
+        for line in rederived:
+            self.assertTrue(
+                line.endswith(": tables/index.parquet: SHA-256 differs from the listed value"),
+                line,
+            )
