@@ -8,7 +8,8 @@
    steps' own code, from the bytes of the listed inputs, hashed as they are read.
 
 Parts 2 and 3 run only for a manifest that lists inputs. Each part reads the root in place and
-writes nothing. This module does not import `requests`.
+writes nothing. A `stage4` manifest has its own checks, in `verify_stage4`. This module does not
+import `requests`.
 """
 
 import hashlib
@@ -26,7 +27,7 @@ from sec_filing_data import index, sample
 from sec_filing_data.facts import extract_facts, fact_rows, in_fact_forms
 from sec_filing_data.layout import Layout
 from sec_filing_data.ledger import fetch_rows, last_ok, parse_ledger
-from sec_filing_data.manifest import MANIFEST_FORMAT, files_under, sha256_of
+from sec_filing_data.manifest import MANIFEST_FORMAT, STAGE4_SET, files_under, sha256_of
 from sec_filing_data.ownership import extract_ownership, ownership_form, ownership_rows
 from sec_filing_data.provenance import filing_times, record_provenance
 from sec_filing_data.submissions import FilingRecords, filing_records
@@ -61,12 +62,19 @@ def run_verify(
     if root != manifest.get("root"):
         lines.append(f"files: --out {root} differs from the manifest root {manifest.get('root')}")
         return 1, lines
-    lines.append(_guarded("files", partial(check_files, layout, manifest)))
-    if "inputs" in manifest:
-        lines += check_binding(layout, manifest)
-        lines += rederive(layout, manifest, rows=rows, seed=seed)
+    if manifest.get("set") == STAGE4_SET:
+        # `verify_stage4` imports this module's checks, as `ownership.extract_ownership` imports
+        # its parsers, so the import sits here and not at the top of the module.
+        from sec_filing_data import verify_stage4
+
+        lines += verify_stage4.check(layout, manifest, rows=rows, seed=seed)
     else:
-        lines += [f"binding: {NO_INPUTS}", f"rederive: {NO_INPUTS}"]
+        lines.append(guarded("files", partial(check_files, layout, manifest)))
+        if "inputs" in manifest:
+            lines += check_binding(layout, manifest)
+            lines += rederive(layout, manifest, rows=rows, seed=seed)
+        else:
+            lines += [f"binding: {NO_INPUTS}", f"rederive: {NO_INPUTS}"]
     return (0 if all(_passes(line) for line in lines) else 1), lines
 
 
@@ -81,7 +89,7 @@ def _read_manifest(path: Path) -> dict:
     return manifest
 
 
-def _guarded(label: str, check: Callable[[], str]) -> str:
+def guarded(label: str, check: Callable[[], str]) -> str:
     """The line `<label>: <result>`, where `check` gives the result: `ok`, or the failure.
 
     A check that raises gives `failed: <ExceptionType>: <message>`, so one table that cannot
@@ -90,11 +98,11 @@ def _guarded(label: str, check: Callable[[], str]) -> str:
     try:
         result = check()
     except Exception as error:
-        result = _failure(error)
+        result = failure(error)
     return f"{label}: {result}"
 
 
-def _failure(error: Exception) -> str:
+def failure(error: Exception) -> str:
     return f"failed: {type(error).__name__}: {error}"
 
 
@@ -115,7 +123,7 @@ def check_files(layout: Layout, manifest: dict) -> str:
     inputs = manifest.get("inputs", [])
     # An absolute path, as the zip is listed, replaces the root in the join.
     for entry in [*outputs, *inputs]:
-        if (problem := _content_problem(layout.root / entry["path"], entry)) is not None:
+        if (problem := content_problem(layout.root / entry["path"], entry)) is not None:
             return f"{entry['path']}: {problem}"
     checked = [(layout.root / manifest["set"], outputs)]
     if "inputs" in manifest:
@@ -126,12 +134,12 @@ def check_files(layout: Layout, manifest: dict) -> str:
             if (relative := path.relative_to(layout.root).as_posix()) not in names:
                 return f"{relative}: not listed"
     for entry in outputs:
-        if (problem := _stamp_problem(layout.root / entry["path"], entry)) is not None:
+        if (problem := stamp_problem(layout.root / entry["path"], entry)) is not None:
             return f"{entry['path']}: {problem}"
     return OK
 
 
-def _content_problem(path: Path, entry: dict) -> str | None:
+def content_problem(path: Path, entry: dict) -> str | None:
     """Why `path` is not the file that `entry` lists, or None when it is."""
     if not path.is_file():
         return "missing"
@@ -143,7 +151,7 @@ def _content_problem(path: Path, entry: dict) -> str | None:
     return None
 
 
-def _stamp_problem(path: Path, entry: dict) -> str | None:
+def stamp_problem(path: Path, entry: dict) -> str | None:
     """Why the stamp in the table at `path` differs from `entry`, or None when it does not.
 
     A file that is not a table lists no stamp.
@@ -172,14 +180,14 @@ def check_binding(layout: Layout, manifest: dict) -> list[str]:
         root = manifest["root"]
     except Exception as error:
         # No table can be checked without the listed inputs, so one line stands for the part.
-        return [f"binding: {_failure(error)}"]
-    checks = {name: partial(_records_result, layout, name, listed) for name in RECORDS_TABLES}
-    checks["fetches"] = partial(_fetches_result, layout, root, inputs)
+        return [f"binding: {failure(error)}"]
+    checks = {name: partial(records_result, layout, name, listed) for name in RECORDS_TABLES}
+    checks["fetches"] = partial(fetches_result, layout, root, inputs)
     checks["refetches"] = partial(_refetches_result, layout, inputs)
-    return [_guarded(f"binding {name}", check) for name, check in checks.items()]
+    return [guarded(f"binding {name}", check) for name, check in checks.items()]
 
 
-def _records_result(layout: Layout, name: str, listed: set[str]) -> str:
+def records_result(layout: Layout, name: str, listed: set[str]) -> str:
     """`ok`, or the first source hash of `name` that no listed input has.
 
     Only `filings` has the hash in `sha256`, and only its `ok` rows have one.
@@ -198,7 +206,7 @@ def _records_result(layout: Layout, name: str, listed: set[str]) -> str:
     return OK
 
 
-def _fetches_result(layout: Layout, root: str, inputs: dict[str, dict]) -> str:
+def fetches_result(layout: Layout, root: str, inputs: dict[str, dict]) -> str:
     """`ok`, or the first `ok` row whose file is not the listed input at its path.
 
     `fetches.path` keeps the root as it was given, so it is compared with the manifest root.
@@ -212,7 +220,7 @@ def _fetches_result(layout: Layout, root: str, inputs: dict[str, dict]) -> str:
             relative = Path(path).relative_to(root).as_posix()
         except ValueError:
             return f"{accession} {path} is not under {root}"
-        if (problem := _ledger_problem(inputs.get(relative), row["sha256"])) is not None:
+        if (problem := ledger_problem(inputs.get(relative), row["sha256"])) is not None:
             return f"{accession} {path} {problem}"
     return OK
 
@@ -225,7 +233,7 @@ def _refetches_result(layout: Layout, inputs: dict[str, dict]) -> str:
     for row in _ok_rows(table).to_pylist():
         accession = row["accession_number"]
         relative = layout.refetched(accession).relative_to(layout.root).as_posix()
-        if (problem := _ledger_problem(inputs.get(relative), row["refetch_sha256"])) is not None:
+        if (problem := ledger_problem(inputs.get(relative), row["refetch_sha256"])) is not None:
             return f"{accession} {relative} {problem}"
     return OK
 
@@ -234,7 +242,7 @@ def _ok_rows(table: pa.Table) -> pa.Table:
     return table.filter(pc.equal(table["outcome"], OK))
 
 
-def _ledger_problem(listed: dict | None, sha256: str | None) -> str | None:
+def ledger_problem(listed: dict | None, sha256: str | None) -> str | None:
     """Why a listed input is not the file that a ledger hash names, or None when it is."""
     if listed is None:
         return "is not a listed input"
@@ -288,9 +296,9 @@ def rederive(layout: Layout, manifest: dict, *, rows: int, seed: int) -> list[st
     except Exception as error:
         # No row can be derived without the sample and the fetch rows, so one line stands for
         # the part.
-        return [f"rederive: {_failure(error)}"]
+        return [f"rederive: {failure(error)}"]
     return [
-        _guarded(f"rederive {name}", partial(_rederive_table, sources, name, rows, seed))
+        guarded(f"rederive {name}", partial(_rederive_table, sources, name, rows, seed))
         for name in RECORDS_TABLES
     ]
 
@@ -322,11 +330,11 @@ def _row_problem(sources: _Sources, name: str, row: dict) -> str | None:
     except RederiveError as error:
         return str(error)
     except Exception as error:
-        return _failure(error)
-    return None if row in derived else _difference(row, derived)
+        return failure(error)
+    return None if row in derived else difference(row, derived)
 
 
-def _difference(row: dict, derived: list[dict]) -> str:
+def difference(row: dict, derived: list[dict]) -> str:
     """The first column in which `row` differs from the derived row nearest to it: the one that
     differs from it in the fewest columns."""
     if not derived:
