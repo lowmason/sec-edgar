@@ -1,7 +1,8 @@
 """The `rebuild` command: every table built again in a temporary folder and compared with
-the live table. The `check-stage1` command: the Stage 1 columns of each live table compared
-with the frozen copy in `tables-stage1`. The `check-frozen` command: every table of a frozen
-folder compared with the live table, on every column.
+the live table, and the Stage 4 tables too when the root has a `stage4/` folder. The
+`check-stage1` command: the Stage 1 columns of each live table compared with the frozen copy in
+`tables-stage1`. The `check-frozen` command: every table of a frozen folder compared with the
+live table, on every column.
 
 All three read the root in place and write nothing under it. This module does not import
 `requests`.
@@ -12,10 +13,19 @@ from pathlib import Path
 
 import pyarrow as pa
 
-from sec_filing_data import facts, index, ownership, refetches, sample, submissions
+from sec_filing_data import (
+    facts,
+    index,
+    ownership,
+    partner_tables,
+    partners,
+    refetches,
+    sample,
+    submissions,
+)
 from sec_filing_data.layout import Layout
 from sec_filing_data.ledger import run_fetches
-from sec_filing_data.tables import STAGE3_TABLES, read_table
+from sec_filing_data.tables import STAGE3_TABLES, STAGE4_TABLES, read_table
 
 REBUILT_TABLES = STAGE3_TABLES
 
@@ -53,18 +63,32 @@ def run_rebuild(
     layout: Layout, zip_path: Path, *, temp_parent: Path | None = None
 ) -> tuple[int, list[str]]:
     """Build every table of REBUILT_TABLES again in a temporary folder, and compare it with
-    the live table of `layout`.
+    the live table of `layout`. When the root has a `stage4/` folder, do the same for each
+    table of STAGE4_TABLES.
 
-    The steps read the zip, the bytes and both ledgers in place, through the live root. Gives
-    one line per table and exit 0 when every table is equal. A step or a table read that
-    raises gives one `rebuild failed` line and exit 1. The temporary folder is removed in
-    every case.
+    The steps read the zip, the bytes and the ledgers in place, through the live root. The
+    Stage 4 tables take the Stage 3 tables that were just rebuilt as their inputs. Gives one
+    line per table and exit 0 when every table is equal. A Stage 4 line reads
+    `stage4 <name>: <result>`, because five Stage 4 tables have the name of a Stage 3 table.
+    A step or a table read that raises gives one `rebuild failed` line and exit 1. The
+    temporary folder is removed in every case.
     """
     with tempfile.TemporaryDirectory(dir=temp_parent) as folder:
-        scratch = Layout(layout.root, tables_dir=Path(folder))
+        scratch = Layout(
+            layout.root, tables_dir=Path(folder), stage4_tables_dir=Path(folder) / "stage4"
+        )
         try:
             _build_tables(scratch, zip_path)
             results = [(name, _compare_with_live(layout, scratch, name)) for name in REBUILT_TABLES]
+            if layout.stage4.is_dir():
+                _build_stage4_tables(scratch)
+                results += [
+                    (
+                        f"stage4 {name}",
+                        _compare_with_live(layout.stage4_view, scratch.stage4_view, name),
+                    )
+                    for name in STAGE4_TABLES
+                ]
         except Exception as error:
             return 1, [f"rebuild failed: {type(error).__name__}: {error}"]
     return _outcome(results)
@@ -81,6 +105,13 @@ def _build_tables(scratch: Layout, zip_path: Path) -> None:
     facts.run_facts(scratch)
     ownership.run_ownership(scratch)
     refetches.run_compare_refetches(scratch)
+
+
+def _build_stage4_tables(scratch: Layout) -> None:
+    """Run the offline Stage 4 steps on the rebuilt Stage 3 tables. They read the Stage 4
+    ledger and the partner bytes in place, and write the Stage 4 tables of `scratch`."""
+    partners.run_partners(scratch)
+    partner_tables.run_partner_tables(scratch)
 
 
 def _compare_with_live(live: Layout, rebuilt: Layout, name: str) -> str:

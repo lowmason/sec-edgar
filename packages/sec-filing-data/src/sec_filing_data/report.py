@@ -1,5 +1,6 @@
 """The `report` command: a Markdown summary of one output root: its cost, its platform checks,
-its filing times, its sources, its refetches and the code version of each table.
+its filing times, its sources, its refetches, its Stage 4 partners and links, and the code
+version of each table.
 
 The report sends no request and writes nothing. A table that an earlier step has not
 written yet makes its section say so.
@@ -7,21 +8,31 @@ written yet makes its section say so.
 
 import json
 import statistics
-from collections import Counter
+from collections import Counter, defaultdict
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from operator import itemgetter
+from typing import NamedTuple
 
 import pyarrow as pa
 import pyarrow.compute as pc
 import pyarrow.parquet as pq
 
 from sec_filing_data import version
+from sec_filing_data.asof import known_from
 from sec_filing_data.layout import Layout
-from sec_filing_data.ledger import FETCH_OUTCOMES, STAGE2_LIMITS, ledger_usage, read_ledger
+from sec_filing_data.ledger import (
+    FETCH_OUTCOMES,
+    STAGE2_LIMITS,
+    STAGE4_LIMITS,
+    ledger_usage,
+    read_ledger,
+)
+from sec_filing_data.links import HELD_IN_PARTNER, HELD_IN_SAMPLE, LINK_RULES
+from sec_filing_data.partners import RULES, distinct_partners
 from sec_filing_data.sample import QUOTA_FORMS, STRATA
-from sec_filing_data.tables import STAGE3_TABLES, read_stamp, read_table
+from sec_filing_data.tables import STAGE3_TABLES, STAGE4_TABLES, read_stamp, read_table
 from sec_filing_data.times import PUBLIC_RULES, readable_date
 from sec_filing_data.xbrl import INSTANCE_TYPE, SEC_EXTRACTED_SUFFIX
 
@@ -40,6 +51,10 @@ V10_CASES = {
     "minus": "public_document_count equals document_count minus those documents",
     "neither": "neither",
 }
+# The Stage 4 tables that the Stage 4 section reads.
+STAGE4_READ = ("partners", "fetches", "filings", "links")
+_, _, CANDIDATE_AMENDMENT = RULES
+FORWARD, REVERSE, OTHER = "forward", "reverse", "other"
 
 
 @dataclass(frozen=True)
@@ -57,13 +72,14 @@ class _Root:
     ownership: list[dict] | None
     ownership_status: list[dict] | None
     refetches: list[dict] | None
+    stage4: dict[str, list[dict] | None]
 
     @classmethod
     def load(cls, layout: Layout) -> _Root:
-        def rows(name: str) -> list[dict] | None:
-            if not layout.table(name).exists():
+        def rows(name: str, source: Layout = layout) -> list[dict] | None:
+            if not source.table(name).exists():
                 return None
-            return read_table(layout, name).to_pylist()
+            return read_table(source, name).to_pylist()
 
         sample = rows("sample")
         return cls(
@@ -80,6 +96,7 @@ class _Root:
             ownership=rows("ownership"),
             ownership_status=rows("ownership_status"),
             refetches=rows("refetches"),
+            stage4={name: rows(name, layout.stage4_view) for name in STAGE4_READ},
         )
 
     @property
@@ -90,6 +107,15 @@ class _Root:
             for filing in self.filings or []
             if filing["outcome"] == "ok" and filing["parse_error"] is None
         ]
+
+    @property
+    def held(self) -> list[dict] | None:
+        """The `filings` rows of the held filings, sampled and partner. A filing is held when
+        its fetch is `ok`. None until both `filings` tables are written."""
+        partners = self.stage4["filings"]
+        if self.filings is None or partners is None:
+            return None
+        return [row for row in (*self.filings, *partners) if known_from(row) is not None]
 
 
 def run_report(layout: Layout) -> str:
@@ -495,27 +521,211 @@ def _refetch_line(row: dict) -> str:
     return f"- {row['accession_number']}: {', '.join(values)}"
 
 
+def _no_stage4_table(name: str) -> str:
+    return f"no Stage 4 `{name}` table yet"
+
+
+class _Pair(NamedTuple):
+    """A confirmed pair: an amendment, the original that its bytes declare, and a direction."""
+
+    amendment: str
+    original: str
+    direction: str
+
+
+def _stage4(root: _Root) -> list[str]:
+    """The Stage 4 partners, the partner fetch, the links, and the pairs that the links make.
+
+    A table that is not written yet is named once, by the group that owns it. A group that
+    needs that table too says nothing.
+    """
+    if not root.layout.stage4_tables.is_dir():
+        return ["- no Stage 4 tables yet"]
+    partners, links, held = root.stage4["partners"], root.stage4["links"], root.held
+    pairs = None if partners is None or links is None else _pairs(partners, links)
+    return [
+        *_stage4_partners(partners),
+        *_stage4_fetches(root),
+        *_stage4_links(links),
+        *([] if pairs is None else _stage4_directions(pairs)),
+        *([] if pairs is None or held is None else _stage4_order(pairs, held)),
+        *_stage4_held(root, held),
+    ]
+
+
+def _stage4_partners(partners: list[dict] | None) -> list[str]:
+    if partners is None:
+        return [f"- {_no_stage4_table('partners')}"]
+    by_rule = Counter(row["rule"] for row in partners)
+    return [
+        f"- partners: {len(distinct_partners(partners))} distinct, {len(partners)} rows",
+        *(f"- partners by {rule}: {by_rule[rule]}" for rule in RULES),
+    ]
+
+
+def _stage4_fetches(root: _Root) -> list[str]:
+    """The outcomes of the partner fetch, and the Stage 4 ledger use against its limits."""
+    usage = ledger_usage(root.layout.stage4_ledger)
+    fetches = root.stage4["fetches"]
+    if fetches is None:
+        outcomes = [f"- {_no_stage4_table('fetches')}"]
+    else:
+        counts = Counter(row["outcome"] for row in fetches)
+        outcomes = [f"- fetch {name}: {counts[name]}" for name in FETCH_OUTCOMES if counts[name]]
+    return [
+        *outcomes,
+        f"- Stage 4 requests: {usage.requests} of {STAGE4_LIMITS.requests}",
+        f"- Stage 4 wire bytes: {usage.wire_bytes} of {STAGE4_LIMITS.wire_bytes}",
+    ]
+
+
+def _stage4_links(links: list[dict] | None) -> list[str]:
+    if links is None:
+        return [f"- {_no_stage4_table('links')}"]
+    by_rule = Counter(row["link_rule"] for row in links)
+    held_in = Counter(row["original_held_in"] for row in links)
+    return [
+        f"- links: {len(links)}",
+        *(f"- links by {rule}: {by_rule[rule]}" for rule in LINK_RULES),
+        f"- original held in {HELD_IN_SAMPLE}: {held_in[HELD_IN_SAMPLE]}",
+        f"- original held in {HELD_IN_PARTNER}: {held_in[HELD_IN_PARTNER]}",
+        f"- original not held: {held_in[None]}",
+    ]
+
+
+def _pairs(partners: list[dict], links: list[dict]) -> list[_Pair]:
+    """The confirmed pairs: each `links` row whose original is held, in accession order.
+
+    A row can name an original that the index lists and that we do not hold. Its
+    `original_held_in` is null, and it makes no pair.
+    """
+    chosen_from: defaultdict[str, set[str]] = defaultdict(set)
+    candidate_of: defaultdict[str, set[str]] = defaultdict(set)
+    for row in partners:
+        chosen_from[row["accession_number"]].add(row["sampled_accession"])
+        if row["rule"] == CANDIDATE_AMENDMENT:
+            candidate_of[row["accession_number"]].add(row["sampled_accession"])
+    pairs = [
+        _Pair(
+            link["accession_number"],
+            link["original_accession"],
+            _direction(link, chosen_from, candidate_of),
+        )
+        for link in links
+        if link["original_held_in"] is not None
+    ]
+    return sorted(pairs, key=lambda pair: (pair.amendment, pair.original))
+
+
+def _direction(
+    link: dict, chosen_from: dict[str, set[str]], candidate_of: dict[str, set[str]]
+) -> str:
+    """The direction of the pair that a `links` row makes (spec 5.5).
+
+    Forward: the amendment is a partner and the original is sampled. It is also forward when
+    both are partners, and the original is a candidate amendment of a sampled filing that
+    chose the amendment too. Reverse: the amendment is sampled and the original is a partner.
+    """
+    held_in, original_held_in = link["held_in"], link["original_held_in"]
+    if (held_in, original_held_in) == (HELD_IN_SAMPLE, HELD_IN_PARTNER):
+        return REVERSE
+    if (held_in, original_held_in) == (HELD_IN_PARTNER, HELD_IN_SAMPLE):
+        return FORWARD
+    shared = chosen_from[link["accession_number"]] & candidate_of[link["original_accession"]]
+    if held_in == original_held_in == HELD_IN_PARTNER and shared:
+        return FORWARD
+    return OTHER
+
+
+def _stage4_directions(pairs: list[_Pair]) -> list[str]:
+    lines = []
+    for direction in (FORWARD, REVERSE, OTHER):
+        chosen = [pair for pair in pairs if pair.direction == direction]
+        lines += [
+            f"- {direction} pairs: {len(chosen)}",
+            *(f"  - {pair.amendment} amends {pair.original}" for pair in chosen),
+        ]
+    return lines
+
+
+def _stage4_order(pairs: list[_Pair], held: list[dict]) -> list[str]:
+    """The pairs whose amendment answers first, and the pairs that answer at one time.
+
+    Each filing answers at its `known_from`. A pair with a filing that is not held is left out.
+    """
+    known = {row["accession_number"]: known_from(row) for row in held}
+    timed = [pair for pair in pairs if pair.amendment in known and pair.original in known]
+    first = [pair for pair in timed if known[pair.amendment] < known[pair.original]]
+    equal = [pair for pair in timed if known[pair.amendment] == known[pair.original]]
+
+    def line(pair: _Pair) -> str:
+        return (
+            f"  - {pair.amendment} ({known[pair.amendment].isoformat()})"
+            f" before {pair.original} ({known[pair.original].isoformat()})"
+        )
+
+    return [
+        f"- pairs whose amendment answers first: {len(first)}",
+        *(line(pair) for pair in first),
+        f"- pairs with equal known_from: {len(equal)}",
+        *(line(pair) for pair in equal),
+    ]
+
+
+def _stage4_held(root: _Root, held: list[dict] | None) -> list[str]:
+    """The held filings, and the check that each is known at or after its `public_at` (spec 5.8)."""
+    if held is None:
+        stage4_missing = root.stage4["filings"] is None
+        return [f"- {_no_stage4_table('filings') if stage4_missing else _no_table('filings')}"]
+    early = sorted(
+        row["accession_number"]
+        for row in held
+        if row["public_at"] is not None and known_from(row) < row["public_at"]
+    )
+    return [
+        f"- held filings: {len(held)}",
+        *_counted("known_from before public_at", early),
+        f"- no public_at: {sum(1 for row in held if row['public_at'] is None)}",
+    ]
+
+
 def _versions(root: _Root) -> list[str]:
     """Per table, the code version, the format number and the rows, then a count per version.
 
+    The Stage 3 tables come first. The Stage 4 tables follow, with a `stage4` label, when the
+    root has a `stage4/tables` folder.
+    """
+    lines = _table_versions(root.layout, STAGE3_TABLES, "")
+    if root.layout.stage4_tables.is_dir():
+        lines += _table_versions(root.layout.stage4_view, STAGE4_TABLES, "stage4 ")
+    return lines
+
+
+def _table_versions(layout: Layout, names: tuple[str, ...], label: str) -> list[str]:
+    """One line for each table of `names`, then a count line for each version.
+
     Each line reads the footer of the table file only: its stamp and its row count. A version
     counts in the order that the table lines show it first. A table with no file adds no count.
+    `label` goes before the table name and before `tables` in the count line.
     """
     lines = []
     made_at: Counter[str] = Counter()
-    for name in STAGE3_TABLES:
-        path = root.layout.table(name)
+    for name in names:
+        path = layout.table(name)
         if not path.exists():
-            lines.append(f"- {name}: {_no_table(name)}")
+            lines.append(f"- {label}{name}: {_no_table(name)}")
             continue
         stamp = read_stamp(path)
         commit = _short_commit(stamp["code_version"])
         made_at[commit] += 1
         lines.append(
-            f"- {name}: code {commit}, format {stamp['table_format']},"
+            f"- {label}{name}: code {commit}, format {stamp['table_format']},"
             f" {pq.read_metadata(path).num_rows} rows"
         )
-    return [*lines, *(f"- tables made at {commit}: {count}" for commit, count in made_at.items())]
+    return [
+        *lines,
+        *(f"- {label}tables made at {commit}: {count}" for commit, count in made_at.items()),
+    ]
 
 
 def _short_commit(code_version: str) -> str:
@@ -538,5 +748,6 @@ _SECTIONS: tuple[tuple[str, Callable[[_Root], list[str]]], ...] = (
     ("Times", _times),
     ("Provenance", _provenance),
     ("Refetches", _refetches),
+    ("Stage 4", _stage4),
     ("Versions", _versions),
 )
