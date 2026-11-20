@@ -148,6 +148,35 @@ class VerifyStage4FilesTests(VerifyStage4TestCase):
             stage4_path, "files", f"{self.relative(path)}: SHA-256 differs from the listed value"
         )
 
+    def test_a_changed_output_table_fails(self):
+        _, stage4_path = write_both_manifests(self)
+        listed = next(
+            entry["bytes"]
+            for entry in json.loads(stage4_path.read_text(encoding="utf-8"))["outputs"]
+            if entry["path"] == "stage4/tables/links.parquet"
+        )
+        # The rewrite keeps the stamp, so only the size or the hash of the file can show it.
+        self.rewrite("links", lambda rows: changed(rows, SAMPLED_D_A, link_rule="x"))
+        size = (self.layout.stage4_tables / "links.parquet").stat().st_size
+        self.assertNotEqual(size, listed)
+
+        self.assert_fails_with(
+            stage4_path, "files", f"stage4/tables/links.parquet: {size} bytes, listed {listed}"
+        )
+
+    def test_a_changed_output_table_of_the_same_size_fails_on_its_hash(self):
+        _, stage4_path = write_both_manifests(self)
+        path = self.layout.stage4_tables / "partners.parquet"
+        data = path.read_bytes()
+        # One flipped bit after the 4-byte magic number keeps the size and the stamp.
+        path.write_bytes(data[:4] + bytes([data[4] ^ 1]) + data[5:])
+
+        self.assert_fails_with(
+            stage4_path,
+            "files",
+            "stage4/tables/partners.parquet: SHA-256 differs from the listed value",
+        )
+
     def test_an_unlisted_partner_file_fails(self):
         _, stage4_path = write_both_manifests(self)
         (self.layout.stage4_bytes / "extra.txt").write_bytes(b"extra")
