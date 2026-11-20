@@ -1,6 +1,7 @@
 """The as-of query: each record of the sample and of its partners that was public by a time."""
 
 import contextlib
+import hashlib
 import io
 import json
 import shutil
@@ -14,6 +15,7 @@ from pathlib import Path
 from unittest import mock
 
 import pyarrow as pa
+import pyarrow.parquet as pq
 
 from sec_filing_data import cli, manifest, version
 from sec_filing_data.asof import (
@@ -26,7 +28,7 @@ from sec_filing_data.asof import (
     parse_at,
 )
 from sec_filing_data.index import INDEX_LAST_MODIFIED_AT
-from sec_filing_data.tables import SCHEMAS, read_table, write_table
+from sec_filing_data.tables import SCHEMAS, STAMP_KEYS, read_stamp, read_table, write_table
 from tests import TEST_COMMIT
 from tests.stage4_root import (
     INDEX_FILINGS,
@@ -249,6 +251,39 @@ class AnswerTests(Stage4RootTestCase):
             write_table(self.layout.stage4_view, "links", rows)
             self.assertNotEqual(links.read_bytes(), before)
             self.assertIn(str(links), self.refusal())
+
+    def test_answer_refuses_a_same_length_change(self):
+        parties = self.layout.table("parties")
+        original = parties.read_bytes()
+        listed = json.loads(self.tables_manifest.read_text(encoding="utf-8"))
+        (entry,) = (
+            entry for entry in listed["outputs"] if entry["path"] == "tables/parties.parquet"
+        )
+        stored = read_table(self.layout, "parties").to_pylist()
+        # One letter of a stored name, in a data page before the footer that holds the stamp.
+        at = original.index(b"EXAMPLE")
+        footer_length = int.from_bytes(original[-8:-4], "little")
+        self.assertLess(at, len(original) - 8 - footer_length)
+        changed = bytearray(original)
+        changed[at] = ord("X")
+        parties.write_bytes(changed)
+
+        # The file keeps its length, its stamp still matches the manifest, and it still parses,
+        # with an altered value: only the SHA-256 tells.
+        self.assertEqual(parties.stat().st_size, len(original))
+        self.assertEqual(read_stamp(parties), {key: entry[key] for key in STAMP_KEYS})
+        altered = pq.read_table(parties).to_pylist()
+        self.assertEqual(len(altered), len(stored))
+        self.assertNotEqual(altered, stored)
+        digest = hashlib.sha256(changed).hexdigest()
+        self.assertNotEqual(digest, entry["sha256"])
+
+        message = self.refusal()
+
+        self.assertEqual(
+            message,
+            f"{parties} has SHA-256 {digest}, and {self.tables_manifest} lists {entry['sha256']}",
+        )
 
     def test_answer_refuses_a_changed_stamp_entry(self):
         listed = json.loads(self.tables_manifest.read_text(encoding="utf-8"))
