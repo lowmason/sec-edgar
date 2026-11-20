@@ -17,11 +17,13 @@ class Layout:
 
     With `tables_dir`, the tables are read and written there, and every other path stays
     under `root`. The rebuild uses it to write its tables to a temporary folder while it
-    reads the bytes and the ledgers in place.
+    reads the bytes and the ledgers in place. With `stage4_tables_dir`, the Stage 4 tables
+    are there in place of `stage4/tables`.
     """
 
     root: Path
     tables_dir: Path | None = None
+    stage4_tables_dir: Path | None = None
 
     @property
     def tables(self) -> Path:
@@ -70,6 +72,33 @@ class Layout:
     def refetch_dir(self) -> Path:
         return self.stage2 / "refetch"
 
+    @property
+    def stage4(self) -> Path:
+        return self.root / "stage4"
+
+    @property
+    def stage4_bytes(self) -> Path:
+        """The complete submission files of the Stage 4 partners."""
+        return self.stage4 / "bytes"
+
+    @property
+    def stage4_ledger(self) -> Path:
+        return self.stage4 / "fetch-log.jsonl"
+
+    @property
+    def stage4_tables(self) -> Path:
+        return self.stage4 / "tables" if self.stage4_tables_dir is None else self.stage4_tables_dir
+
+    @property
+    def stage4_view(self) -> Layout:
+        """The same root, with the Stage 4 tables where the tables are.
+
+        A function that reads or writes `tables` through a layout then reads or writes the
+        Stage 4 tables. Every other path, including `runs`, `lock` and `manifests`, stays
+        where it is.
+        """
+        return Layout(self.root, tables_dir=self.stage4_tables)
+
     def table(self, name: str) -> Path:
         return self.tables / f"{name}.parquet"
 
@@ -81,6 +110,9 @@ class Layout:
 
     def refetched(self, accession: str) -> Path:
         return self.refetch_dir / f"{accession}.txt"
+
+    def partner_submission(self, accession: str) -> Path:
+        return self.stage4_bytes / f"{accession}.txt"
 
 
 @contextmanager

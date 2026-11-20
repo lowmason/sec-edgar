@@ -552,3 +552,21 @@ Plan 12 removed the parked engine from `main`. The paths that these items name u
       the reads of one listed file in part 3 and fails for a version that reads it twice, and `--rows` below 1 gives a usage
       error (exit 2).
       → done 2026-11-19 (/deferred quick fix): `fetch.py` writes `fetches` through `ledger.run_fetches`, `test_rederive_reads_each_listed_file_once` counts the reads of one listed file in part 3 and fails for a version that reads it twice, and `verify --rows` below 1 is a usage error (exit 2)
+
+## 14-sec-filing-data-stage-4-as-of-views — 2026-11-19
+- [ ] A hard kill of `fetch-partners` blocks the next run (plan 14 final review, owner decision D3; `src/sec_filing_data/fetch.py`,
+      `ledger.py`, `manifest.py`): a kill during a request leaves `stage4/bytes/<accession>.txt.part` and a request record
+      with no answer in `stage4/fetch-log.jsonl`. `ledger_usage` counts an unanswered request as `MAX_RESPONSE_BYTES`
+      (268,435,456 bytes), which is above the 50,000,000-byte budget. So the next `fetch-partners` exits 5 before `_walk`
+      can remove the `.part`, and a later `manifest --set stage4` lists the `.part` as a `submission` input. Plan Review
+      Focus 3 (the next run removes the `.part`) holds only after the owner raises the budget. Spec section 3 stops the run
+      for the owner at exit 5, and the live run had no kill. The fix would remove a leftover `.part` under the lock before
+      the budget check. Size: quick-fix. Revisit if: a `.part` file appears under `ROOT/stage4/bytes/`.
+- [ ] `asof` refuses when a commit lands between the table steps and the stage4 manifest (plan 14 final review, owner
+      decision D3; `src/sec_filing_data/manifest.py`, `asof.py`): `write_manifest` names `stage4@<commit12>.json` by the
+      commit at `HEAD`, and `find_manifest` looks it up by the commit stamped in the Stage 4 tables. A commit after
+      `partner-tables` and before `manifest --set stage4` gives two different names, so `asof` exits 1 with `does not
+      exist`. It never gives a wrong answer. A manifest is never overwritten, so the way back is a new commit and the table
+      steps again. Stage 3's manifest names work the same way, and Task 11 let no commit land between Steps 2 and 10. The
+      fix would make `manifest --set stage4` refuse when the table stamps name a commit other than `HEAD`. Size: quick-fix.
+      Revisit if: `asof` on a live root exits 1 because its `stage4` manifest does not exist.

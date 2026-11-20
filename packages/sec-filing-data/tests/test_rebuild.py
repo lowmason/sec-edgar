@@ -17,7 +17,7 @@ from unittest import mock
 
 import pyarrow as pa
 import pyarrow.parquet as pq
-from sec_filing_data import cli, index, sample, version
+from sec_filing_data import cli, index, partner_tables, partners, sample, version
 from sec_filing_data.facts import extract_facts, fact_rows, in_fact_forms, run_facts
 from sec_filing_data.layout import Layout
 from sec_filing_data.ledger import FETCH_OUTCOMES, append, build_fetches, ok_responses, run_fetches
@@ -36,8 +36,15 @@ from sec_filing_data.rebuild import (
     run_rebuild,
 )
 from sec_filing_data.submissions import filing_records, run_envelopes
-from sec_filing_data.tables import SCHEMAS, as_table_rows, read_table, write_table
+from sec_filing_data.tables import (
+    SCHEMAS,
+    STAGE4_TABLES,
+    as_table_rows,
+    read_table,
+    write_table,
+)
 
+from tests.stage4_root import Stage4RootTestCase
 from tests.test_client import FakeResponse
 from tests.test_commands import CommandTestCase, FixtureSession, response_record
 from tests.test_index import fingerprint
@@ -412,6 +419,126 @@ class RebuildTests(FixtureRootTestCase):
         )
 
         self.assertEqual(result.stdout.splitlines()[-2:], ["0", "False"])
+
+
+class RebuildStage4Tests(Stage4RootTestCase):
+    """`rebuild` on a root with a `stage4/` folder gives 8 more lines."""
+
+    STAGE4_EQUAL = [f"stage4 {name}: equal" for name in STAGE4_TABLES]
+
+    def setUp(self) -> None:
+        super().setUp()
+        parent = tempfile.TemporaryDirectory()
+        self.addCleanup(parent.cleanup)
+        self.temp_parent = Path(parent.name)
+
+    def rebuild(self) -> tuple[int, list[str]]:
+        return run_rebuild(self.layout, self.zip_path, temp_parent=self.temp_parent)
+
+    def assert_temp_parent_empty(self) -> None:
+        self.assertEqual(list(self.temp_parent.iterdir()), [])
+
+    def test_a_stage4_root_gives_19_equal_lines(self):
+        for name in STAGE4_TABLES:
+            self.assertGreater(read_table(self.layout.stage4_view, name).num_rows, 0, name)
+
+        self.assertEqual(self.rebuild(), (0, ALL_EQUAL + self.STAGE4_EQUAL))
+        self.assertEqual(len(ALL_EQUAL + self.STAGE4_EQUAL), 19)
+        self.assert_temp_parent_empty()
+
+    def test_a_changed_stage4_table_gives_exit_1(self):
+        rows = read_table(self.layout.stage4_view, "links").to_pylist()
+        original = rows[0]["link_rule"]
+        changed = original + " CHANGED"
+        rows[0]["link_rule"] = changed
+        write_table(self.layout.stage4_view, "links", rows)
+
+        code, lines = self.rebuild()
+
+        self.assertEqual(code, 1)
+        self.assertEqual(
+            lines,
+            [
+                *ALL_EQUAL,
+                *(
+                    f"stage4 links: row 0 column link_rule: {changed!r} against {original!r}"
+                    if name == "links"
+                    else f"stage4 {name}: equal"
+                    for name in STAGE4_TABLES
+                ),
+            ],
+        )
+        self.assert_temp_parent_empty()
+
+    def test_a_missing_stage4_table_has_no_live_table(self):
+        self.layout.stage4_view.table("ownership_status").unlink()
+
+        code, lines = self.rebuild()
+
+        self.assertEqual(code, 1)
+        self.assertEqual(
+            lines,
+            [
+                *ALL_EQUAL,
+                *(
+                    "stage4 ownership_status: no live table"
+                    if name == "ownership_status"
+                    else f"stage4 {name}: equal"
+                    for name in STAGE4_TABLES
+                ),
+            ],
+        )
+
+    def test_a_changed_stage3_table_does_not_show_in_the_stage4_lines(self):
+        rows = read_table(self.layout, "documents").to_pylist()
+        rows[0]["type"] = "CHANGED"
+        write_table(self.layout, "documents", rows)
+
+        code, lines = self.rebuild()
+
+        self.assertEqual(code, 1)
+        self.assertEqual(lines[-8:], self.STAGE4_EQUAL)
+        self.assertEqual(
+            [line.split(":")[0] for line in lines if not line.endswith(": equal")], ["documents"]
+        )
+
+    def test_the_stage4_steps_write_only_into_a_folder_of_temp_parent(self):
+        steps = (
+            (partners, "run_partners"),
+            (partner_tables, "run_partner_tables"),
+        )
+        for module, name in steps:
+            with self.subTest(step=name):
+                with mock.patch.object(module, name, wraps=getattr(module, name)) as spy:
+                    self.assertEqual(self.rebuild()[0], 0)
+
+                scratch = spy.call_args.args[0]
+                self.assertEqual(scratch.root, self.layout.root)
+                self.assertEqual(scratch.stage4_tables.parent.parent, self.temp_parent)
+                self.assertNotEqual(scratch.stage4_tables, self.layout.stage4_tables)
+                self.assertFalse(scratch.stage4_tables.exists())
+                self.assert_temp_parent_empty()
+
+    def test_a_failed_stage4_step_gives_one_line_and_cleans_up(self):
+        with mock.patch.object(partner_tables, "run_partner_tables", side_effect=OSError("disk")):
+            result = self.rebuild()
+
+        self.assertEqual(result, (1, ["rebuild failed: OSError: disk"]))
+        self.assert_temp_parent_empty()
+
+    def test_rebuild_leaves_a_stage4_root_unchanged(self):
+        root = self.layout.root
+        digests, stamps = file_digests(root), path_stamps(root)
+        stage4_ledger = line_count(self.layout.stage4_ledger)
+        self.assertGreater(stage4_ledger, 0)
+        self.assertIn("stage4/tables/links.parquet", digests)
+
+        code, lines = run_cli("rebuild", "--out", str(root), "--zip", str(self.zip_path))
+
+        self.assertEqual((code, lines), (0, ALL_EQUAL + self.STAGE4_EQUAL))
+        self.assertEqual(file_digests(root), digests)
+        self.assertEqual(path_stamps(root), stamps)
+        self.assertEqual(line_count(self.layout.stage4_ledger), stage4_ledger)
 
 
 class CheckStage1Tests(FixtureRootTestCase):

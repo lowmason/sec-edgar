@@ -100,3 +100,27 @@ Closed earlier deferred items:
 
 Closed deferred items:
 - "Small cleanups and test gaps in Stage 3 (plan 13 task reviews; `src/sec_filing_data/fetch.py`, `verify.py`, `cli.py`):" (deferred by 13-sec-filing-data-stage-3-manifests-and-pinning): `fetch` writes `fetches` through `run_fetches`, a part 3 test counts the reads of one listed file, and `verify --rows` below 1 exits 2.
+
+## 14-sec-filing-data-stage-4-as-of-views — 2026-11-19
+Plan: specs/plans/completed/14-sec-filing-data-stage-4-as-of-views.md · Spec: specs/completed/sec-filing-data-stage-4-as-of-views.md (retired) · Roadmap: specs/sec-filing-data-roadmap.md, Stage 4
+
+Differences from the design:
+- Ruling (Task 1): tests/test_manifest.py:20 `TABLE_NAMES = sorted(TABLE_FORMATS)` -> `sorted(STAGE3_TABLES)` is accepted. TABLE_FORMATS gains partners/links by plan; the tables manifest still lists the same 11 Stage 3 files, so the check is unchanged, not loosened. Plan gap: the by-design list missed it.
+- Ruling (Task 2): (unclear) Important (8-K/A `Declared.owner_ciks` is `()`, not None) - keep the code and the test as written - the brief's interface types the field `owner_ciks: tuple[str, ...]` (not optional), so the empty tuple is that field's "no value", and every other declared value is None as the plan test says; no spec sentence defines `Declared` - cost if wrong: a later caller that tests `owner_ciks is None` misreads an empty declaration; this plan's only callers (match_date_issuer_owner, link_row) test it by truthiness.
+- Ruling (Task 4): concern (test_a_failed_partner_is_not_held sits on FailedPartnerTests(CommandTestCase), which calls build_stage4_root(self, failing={PARTNER_13D_A2}), not on Stage4RootTestCase) - accepted - build_stage4_root takes `failing` for exactly this; a prebuilt root already holds the partner's bytes, so the 404 would never be sent; every assertion of the plan test stays - cost if wrong: none. Task 7's failed-partner test uses the same pattern.
+- Ruling (Task 5): concern (filer_period gives a 4th problem text, `CIK <text> is not a number`, for a FILER CIK that is present but not a number) - keep - the brief is silent on that input; the text is accurate and is the same text match_date_issuer_owner uses; folding it into `no FILER party` would misstate it - cost if wrong: one extra problem text no live row can reach.
+- Ruling (Task 6): declined line (_run_manifest now catches ValueError too, so a two-version set or a corrupt parquet prints one `error:` line and exits 1 in place of a traceback) - keep - spec 295 makes two versions a refusal; exit code stays 1 either way; record_step's line is the same - cost if wrong: a corrupt-table traceback is now one line.
+- Ruling (Task 7): cannot-verify (manifest.set_version now wraps a pyarrow read error as ValueError naming the file, outside the brief's file list) - accepted - the plan test test_answer_refuses_a_changed_table_file needs the file named; _run_manifest already catches ValueError, so `manifest` keeps exit 1 and now names the file - cost if wrong: none.
+- Ruling (Task 10): deviation (rebuild's scratch is `Layout(root, tables_dir=<temp>, stage4_tables_dir=<temp>/"stage4")`, not the brief's `<temp>/"tables"`) - accepted - the brief's layout breaks tests/test_rebuild.py:383 and :393 (`scratch.tables.parent == temp_parent`), which the plan does not list as breaking by design; the Global Constraint "Every other test passes unchanged" governs over the task's layout detail; the temporary parent is still empty afterwards - cost if wrong: none (scratch paths are internal).
+- Deviation (Task 1): `tests/test_manifest.py:20` reads `sorted(STAGE3_TABLES)`, because `TABLE_FORMATS` gained two formats. Source: plan, Task 1.
+- Deviation (Task 2): `Declared.owner_ciks` is `()` when nothing is declared (D3), and `form13f_cover_xml` takes `period_of_report`. Source: plan, Task 2.
+- Deviation (Task 3): `fetch._walk` takes `path_of`, so `fetch` and `fetch-partners` share one walk. Source: plan, Task 3.
+- Deviation (Task 4): the failed-partner test builds its own root with `failing=...`, and the fixture adds one unrelated 10-K. Source: plan, Task 4.
+- Deviation (Task 5): `filer_period` has a fourth problem text, `CIK <text> is not a number`. Source: plan, Task 5.
+- Deviation (Task 6): `manifest` also catches `ValueError`, so a set with two code versions gives one `error:` line. Source: plan, Task 6.
+- Deviation (Task 7): `manifest.set_version` names an unreadable table file, and a same-length change test reaches the SHA-256 refusal. Source: plan, Task 7.
+- Deviation (Task 8): two tests change a Stage 4 output after the manifest, and the `verify.py` helpers became public. Source: plan, Task 8.
+- Deviation (Task 10): the `rebuild` scratch puts the Stage 4 tables in `<temp>/stage4`, not `<temp>/tables`. Source: plan, Task 10.
+- Deviation (Task 11): `check-ignore` ran in the worktree, because the worktree guard refuses `git -C` on the main checkout. Source: plan, Task 11.
+- Deviation (Task 11): a wrapper script in the ignored workspace set `SEC_USER_AGENT` and ran the fetch, so the value was never printed. Source: plan, Task 11.
+- Deferred: 2 items. Source: specs/deferred_items.md, § 14-sec-filing-data-stage-4-as-of-views.

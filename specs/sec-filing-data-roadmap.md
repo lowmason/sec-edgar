@@ -73,7 +73,7 @@ consumes the output of the stage before it.
 > Stage 3: COMPLETE (2026-11-19) — implemented by plan 13 (specs/plans/completed/13-sec-filing-data-stage-3-manifests-and-pinning.md). Its Handoff section names what Stage 4 consumes.
 > Next: resume the roadmap.
 
-- [ ] Stage 4: As-of views
+- [x] Stage 4: As-of views
       Objective: Answer what was known about each filing, fact and ownership record of the sample on any date, amendments included.
       Outcomes: O1, O2, O3, O4
       Consumes: Stage 2's times, and Stage 3's manifests, evidence and pinned versions. Stage 2's times, as built: two bounds for each sampled filing, `public_at` by rule and `last_modified_at` from the stored copy, and four `public_rule` values. Times exist for the 500 sampled accessions only. A view that must never show a filing early reads `last_modified_at`. The 10-Q `0001836875-26-000073` changed after acceptance with no sign in its header: accepted 2026-08-14, its kept copy last modified 2026-08-27 (plan 11, Handoff). Whether an archive copy changes after a correction stays deferred (D6; `specs/deferred_items.md`, section `11-sec-filing-data-stage-2-provenance-and-timing — 2026-11-18`). No stage of this roadmap fetches a filing on the day it is filed, so its `Revisit if` does not fire. (Resolved at resume, 2026-11-18) Stage 3's manifests, evidence and pinned versions, as built: plan 13, Handoff, which names no difference from Stage 3's Produces. Stage 4 inherits the clean-tree rule (Choices made), which guards commands only. A view that a Python function writes outside a command meets the `Revisit if` of the `write_table` item (`specs/deferred_items.md`, section `13-sec-filing-data-stage-3-manifests-and-pinning — 2026-11-19`). (Resolved at resume, 2026-11-19)
@@ -81,6 +81,9 @@ consumes the output of the stage before it.
       Exit: For the 2026Q3 sample, an as-of query for any date returns only what was public by that date, and each answer traces to its manifest and its source bytes. Where a sampled filing has an amendment, the original and the amendment each answer at their own dates.
       Leaves out: nothing
       ROUTING: brainstorming
+
+> Stage 4: COMPLETE (2026-11-19) — implemented by plan 14 (specs/plans/completed/14-sec-filing-data-stage-4-as-of-views.md).
+> Next: resume the roadmap.
 
 ## Stage-spec stamp
 

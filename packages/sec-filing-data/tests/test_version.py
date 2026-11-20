@@ -42,6 +42,10 @@ WRITING_ARGV: list[list[str]] = [
     ["compare-refetches"],
     ["build-fetches"],
     ["manifest", "--set", "tables", "--zip", "missing.zip"],
+    ["partners"],
+    ["fetch-partners"],
+    ["partner-tables"],
+    ["manifest", "--set", "stage4"],
 ]
 
 

@@ -12,6 +12,8 @@ from sec_filing_data.layout import Layout
 from sec_filing_data.rebuild import compare_table
 from sec_filing_data.tables import (
     SCHEMAS,
+    STAGE3_TABLES,
+    STAGE4_TABLES,
     STAMP_KEYS,
     TABLE_FORMATS,
     read_stamp,
@@ -49,6 +51,8 @@ SCHEMA_FINGERPRINTS = {
     ("ownership", 2): "f40995ce69a304dd4ce568a3106376f0cce78488a544cb87ddb04f410b6271a6",
     ("ownership_status", 1): "fd8744133acfd2fb77070ba8247e8b72ddc2fbad948b8c34a84f93cc30027ff8",
     ("refetches", 1): "8f0f9ed4ca108ee081d70f862a8f62cadc3d66e66255c948a1b5710d96c28b19",
+    ("partners", 1): "f0d74d67c35e1a6cbf341e07c517cc72ea178a209805c3b1e2707743bef40c5f",
+    ("links", 1): "dee89c92c27f2d799d1d15f497edd260cb23db94e292a75c3a6c14438a2caa54",
 }
 
 
@@ -94,6 +98,73 @@ class TableFormatTests(unittest.TestCase):
         for description, schema in changed.items():
             with self.subTest(change=description):
                 self.assertNotEqual(schema_fingerprint(schema), SCHEMA_FINGERPRINTS[("sample", 1)])
+
+
+class Stage4LayoutTests(unittest.TestCase):
+    def test_stage4_paths_stay_under_one_root(self) -> None:
+        layout = Layout(Path("/r"))
+        view = layout.stage4_view
+
+        self.assertEqual(layout.stage4_bytes, Path("/r/stage4/bytes"))
+        self.assertEqual(layout.stage4_ledger, Path("/r/stage4/fetch-log.jsonl"))
+        self.assertEqual(layout.stage4_tables, Path("/r/stage4/tables"))
+        self.assertEqual(layout.partner_submission("A"), Path("/r/stage4/bytes/A.txt"))
+        self.assertEqual(view.table("links"), Path("/r/stage4/tables/links.parquet"))
+        self.assertEqual(view.runs, Path("/r/runs.jsonl"))
+        self.assertEqual(view.lock, Path("/r/fetch.lock"))
+        self.assertEqual(view.manifests, Path("/r/manifests"))
+        # The Stage 3 paths do not move.
+        self.assertEqual(layout.table("links"), Path("/r/tables/links.parquet"))
+        # A folder for the Stage 4 tables moves them and nothing else.
+        moved = Layout(Path("/r"), stage4_tables_dir=Path("/t"))
+        self.assertEqual(moved.stage4_view.table("links"), Path("/t/links.parquet"))
+        self.assertEqual(moved.table("links"), Path("/r/tables/links.parquet"))
+        self.assertEqual(moved.stage4_bytes, Path("/r/stage4/bytes"))
+
+    def test_a_stage4_table_is_written_under_stage4(self) -> None:
+        folder = tempfile.TemporaryDirectory()
+        self.addCleanup(folder.cleanup)
+        layout = Layout(Path(folder.name) / "root")
+
+        write_table(layout.stage4_view, "partners", [])
+
+        path = layout.root / "stage4" / "tables" / "partners.parquet"
+        self.assertTrue(path.exists())
+        self.assertEqual(read_stamp(path)["table_format"], "1")
+        self.assertFalse((layout.root / "tables").exists())
+
+    def test_the_table_name_tuples_split_the_stages(self) -> None:
+        self.assertEqual(
+            STAGE3_TABLES,
+            (
+                "index",
+                "sample",
+                "fetches",
+                "filings",
+                "parties",
+                "documents",
+                "facts",
+                "facts_status",
+                "ownership",
+                "ownership_status",
+                "refetches",
+            ),
+        )
+        self.assertEqual(
+            STAGE4_TABLES,
+            (
+                "partners",
+                "fetches",
+                "filings",
+                "parties",
+                "documents",
+                "ownership",
+                "ownership_status",
+                "links",
+            ),
+        )
+        self.assertEqual(set(STAGE3_TABLES) | set(STAGE4_TABLES), set(SCHEMAS))
+        self.assertEqual(set(STAGE3_TABLES) & {"partners", "links"}, set())
 
 
 class StampTests(unittest.TestCase):

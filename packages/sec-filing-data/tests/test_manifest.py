@@ -5,6 +5,7 @@ import hashlib
 import io
 import json
 import platform
+import tempfile
 from collections import Counter
 from pathlib import Path
 from unittest import mock
@@ -13,15 +14,27 @@ import pyarrow
 import pyarrow.parquet as pq
 
 from sec_filing_data import cli, manifest, version
-from sec_filing_data.tables import STAMP_KEYS, TABLE_FORMATS, read_table, write_table
+from sec_filing_data.layout import Layout
+from sec_filing_data.manifest import files_under
+from sec_filing_data.tables import (
+    STAGE3_TABLES,
+    STAGE4_TABLES,
+    STAMP_KEYS,
+    TABLE_FORMATS,
+    read_table,
+    write_table,
+)
 from tests import TEST_COMMIT
+from tests.stage4_root import Stage4RootTestCase, write_both_manifests
 from tests.test_rebuild import FixtureRootTestCase, line_count
 
-TABLE_NAMES = sorted(TABLE_FORMATS)
+TABLE_NAMES = sorted(STAGE3_TABLES)
+STAGE4_TABLE_NAMES = sorted(set(STAGE4_TABLES))
 OUTPUT_KEYS = {"path", "bytes", "sha256", "rows", *STAMP_KEYS}
 INPUT_KEYS = {"path", "kind", "bytes", "sha256"}
 WRITTEN_BY_KEYS = {"code_version", "python_version", "pyarrow_version"}
 TOP_KEYS = {"manifest_format", "set", "root", "written_by", "outputs", "inputs"}
+OTHER_COMMIT = "b" * 40
 
 
 def sha256_of_bytes(path: Path) -> str:
@@ -263,3 +276,202 @@ class BuildManifestTests(ManifestTestCase):
         for name, (set_name, zip_path) in cases.items():
             with self.subTest(case=name), self.assertRaises(ValueError):
                 manifest.build_manifest(self.layout, set_name, zip_path=zip_path, stamp=stamp)
+
+
+class Stage4ManifestTests(Stage4RootTestCase):
+    def manifest_paths(self) -> tuple[Path, Path]:
+        """The paths of the `tables` and `stage4` manifests that the root's commit names."""
+        return (
+            manifest.manifest_path(self.layout, "tables", TEST_COMMIT),
+            manifest.manifest_path(self.layout, "stage4", TEST_COMMIT),
+        )
+
+    def write_tables_manifest(self) -> Path:
+        code, _, stderr = self.run_cli("manifest", "--set", "tables", "--zip", str(self.zip_path))
+        self.assertEqual((code, stderr), (0, ""))
+        return self.manifest_paths()[0]
+
+    def rewrite_under(self, commit: str, layout: Layout, name: str) -> None:
+        """Write the table `name` again from its own rows, under the code version `commit`."""
+        rows = read_table(layout, name).to_pylist()
+        checkout = version.Checkout(commit, True, None)
+        with mock.patch.object(version, "current_checkout", return_value=checkout):
+            write_table(layout, name, rows)
+
+    def test_stage4_manifest_lists_outputs_inputs_and_builds_on(self):
+        tables_path, stage4_path = write_both_manifests(self)
+
+        self.assertEqual(stage4_path.name, "stage4@5ca1ab1e5ca1.json")
+        text = stage4_path.read_text(encoding="utf-8")
+        written = json.loads(text)
+        self.assertEqual(text, json.dumps(written, sort_keys=True, indent=2) + "\n")
+        self.assertEqual(set(written), TOP_KEYS | {"builds_on"})
+        self.assertEqual(written["manifest_format"], 1)
+        self.assertEqual(written["set"], "stage4")
+        self.assertEqual(written["root"], str(self.layout.root.absolute()))
+        self.assertEqual(
+            written["written_by"],
+            {
+                "code_version": TEST_COMMIT,
+                "python_version": platform.python_version(),
+                "pyarrow_version": pyarrow.__version__,
+            },
+        )
+        outputs = written["outputs"]
+        self.assertEqual(
+            [entry["path"] for entry in outputs],
+            [f"stage4/tables/{name}.parquet" for name in STAGE4_TABLE_NAMES],
+        )
+        for name, entry in zip(STAGE4_TABLE_NAMES, outputs, strict=True):
+            file = self.layout.stage4_tables / f"{name}.parquet"
+            with self.subTest(table=name):
+                self.assertEqual(set(entry), OUTPUT_KEYS)
+                self.assertEqual(entry["bytes"], file.stat().st_size)
+                self.assertEqual(entry["sha256"], sha256_of_bytes(file))
+                self.assertEqual(entry["rows"], read_table(self.layout.stage4_view, name).num_rows)
+                self.assertEqual(entry["code_version"], TEST_COMMIT)
+                self.assertEqual(entry["python_version"], platform.python_version())
+                self.assertEqual(entry["pyarrow_version"], pyarrow.__version__)
+                self.assertEqual(entry["table_format"], str(TABLE_FORMATS[name]))
+        inputs = written["inputs"]
+        self.assertEqual(Counter(entry["kind"] for entry in inputs), {"submission": 5, "ledger": 1})
+        self.assertNotIn("index", {entry["kind"] for entry in inputs})
+        self.assertEqual([entry["path"] for entry in inputs], sorted(e["path"] for e in inputs))
+        expected = {
+            "stage4/fetch-log.jsonl": (self.layout.stage4_ledger, "ledger"),
+            **{
+                path.relative_to(self.layout.root).as_posix(): (path, "submission")
+                for path in files_under(self.layout.stage4_bytes)
+            },
+        }
+        self.assertEqual({entry["path"] for entry in inputs}, set(expected))
+        for entry in inputs:
+            file, kind = expected[entry["path"]]
+            with self.subTest(path=entry["path"]):
+                self.assertEqual(set(entry), INPUT_KEYS)
+                self.assertEqual(entry["kind"], kind)
+                self.assertEqual(entry["bytes"], file.stat().st_size)
+                self.assertEqual(entry["sha256"], sha256_of_bytes(file))
+        self.assertEqual(
+            written["builds_on"],
+            {"path": "manifests/tables@5ca1ab1e5ca1.json", "sha256": sha256_of_bytes(tables_path)},
+        )
+
+    def test_stage4_manifest_builds_on_the_tables_that_the_stamps_name(self):
+        tables_path = self.write_tables_manifest()
+        newer = version.Checkout("c" * 40, True, None)
+
+        with mock.patch.object(version, "current_checkout", return_value=newer):
+            code, _, stderr = self.run_cli("manifest", "--set", "stage4")
+
+        self.assertEqual((code, stderr), (0, ""))
+        path = manifest.manifest_path(self.layout, "stage4", newer.commit)
+        self.assertEqual(path.name, "stage4@cccccccccccc.json")
+        written = json.loads(path.read_text(encoding="utf-8"))
+        self.assertEqual(written["written_by"]["code_version"], newer.commit)
+        self.assertEqual(
+            written["builds_on"],
+            {"path": "manifests/tables@5ca1ab1e5ca1.json", "sha256": sha256_of_bytes(tables_path)},
+        )
+
+    def test_stage4_manifest_needs_the_tables_manifest(self):
+        code, stdout, stderr = self.run_cli("manifest", "--set", "stage4")
+
+        self.assertEqual((code, stdout), (1, ""))
+        self.assertTrue(stderr.startswith("error: "), stderr)
+        self.assertIn("manifests/tables@5ca1ab1e5ca1.json", stderr)
+        self.assertEqual(stderr.count("\n"), 1)
+        self.assertFalse(self.manifest_paths()[1].exists())
+
+    def test_stage4_manifest_needs_the_ledger(self):
+        self.write_tables_manifest()
+        self.layout.stage4_ledger.unlink()
+
+        code, stdout, stderr = self.run_cli("manifest", "--set", "stage4")
+
+        self.assertEqual((code, stdout), (1, ""))
+        self.assertTrue(stderr.startswith("error: "), stderr)
+        self.assertIn(str(self.layout.stage4_ledger), stderr)
+        self.assertFalse(self.manifest_paths()[1].exists())
+
+    def test_stage4_manifest_names_both_versions_when_the_tables_hold_two(self):
+        self.rewrite_under(OTHER_COMMIT, self.layout, "sample")
+
+        code, stdout, stderr = self.run_cli("manifest", "--set", "stage4")
+
+        self.assertEqual((code, stdout), (1, ""))
+        self.assertTrue(stderr.startswith("error: "), stderr)
+        self.assertIn(TEST_COMMIT, stderr)
+        self.assertIn(OTHER_COMMIT, stderr)
+        self.assertFalse(self.manifest_paths()[1].exists())
+
+    def test_stage4_manifest_refuses_to_overwrite(self):
+        _, stage4_path = write_both_manifests(self)
+        original = stage4_path.read_bytes()
+
+        code, stdout, stderr = self.run_cli("manifest", "--set", "stage4")
+
+        self.assertEqual((code, stdout), (1, ""))
+        self.assertEqual(stderr, f"error: {stage4_path} exists\n")
+        self.assertEqual(stage4_path.read_bytes(), original)
+
+    def test_stage4_takes_no_zip(self):
+        runs = line_count(self.layout.runs)
+
+        code, stdout, stderr = self.run_cli(
+            "manifest", "--set", "stage4", "--zip", str(self.zip_path)
+        )
+
+        self.assertEqual((code, stdout), (2, ""))
+        self.assertTrue(stderr.startswith("error: "), stderr)
+        self.assertEqual(stderr.count("\n"), 1)
+        self.assertFalse(self.layout.manifests.exists())
+        self.assertEqual(line_count(self.layout.runs), runs)
+
+    def test_set_version_gives_the_one_version(self):
+        self.assertEqual(manifest.set_version(self.layout.stage4_tables), TEST_COMMIT)
+        self.assertEqual(manifest.set_version(self.layout.tables), TEST_COMMIT)
+
+    def test_set_version_refuses_two_versions(self):
+        self.rewrite_under(OTHER_COMMIT, self.layout.stage4_view, "links")
+
+        with self.assertRaises(ValueError) as caught:
+            manifest.set_version(self.layout.stage4_tables)
+
+        self.assertIn(TEST_COMMIT, str(caught.exception))
+        self.assertIn(OTHER_COMMIT, str(caught.exception))
+
+    def test_set_version_names_a_file_that_it_cannot_read(self):
+        links = self.layout.stage4_view.table("links")
+        links.write_bytes(links.read_bytes() + b"\0")
+
+        with self.assertRaises(ValueError) as caught:
+            manifest.set_version(self.layout.stage4_tables)
+
+        self.assertIn(str(links), str(caught.exception))
+
+    def test_set_version_needs_a_table(self):
+        with tempfile.TemporaryDirectory() as name:
+            empty = Path(name)
+            (empty / "stray.txt").write_text("not a table", encoding="utf-8")
+            for folder in (empty, empty / "missing"):
+                with self.subTest(folder=folder.name), self.assertRaises(FileNotFoundError):
+                    manifest.set_version(folder)
+
+    def test_set_folder_is_the_stage4_tables_or_a_folder_of_the_root(self):
+        self.assertEqual(manifest.set_folder(self.layout, "stage4"), self.layout.stage4_tables)
+        for name in ("tables", "tables-stage1", "tables-stage2"):
+            with self.subTest(set=name):
+                self.assertEqual(manifest.set_folder(self.layout, name), self.layout.root / name)
+
+    def test_find_manifest_names_the_manifest_of_the_stamped_version(self):
+        tables_path, stage4_path = write_both_manifests(self)
+
+        self.assertEqual(manifest.find_manifest(self.layout, "tables"), tables_path)
+        self.assertEqual(manifest.find_manifest(self.layout, "stage4"), stage4_path)
+
+    def test_find_manifest_needs_the_manifest(self):
+        for set_name, path in zip(("tables", "stage4"), self.manifest_paths(), strict=True):
+            with self.subTest(set=set_name), self.assertRaises(FileNotFoundError) as caught:
+                manifest.find_manifest(self.layout, set_name)
+            self.assertIn(str(path), str(caught.exception))

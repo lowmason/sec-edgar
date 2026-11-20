@@ -12,12 +12,33 @@ from sec_filing_data.index import run_index
 from sec_filing_data.layout import Layout
 from sec_filing_data.ledger import ledger_usage
 from sec_filing_data.ownership import run_ownership
+from sec_filing_data.partners import RULES
 from sec_filing_data.refetches import run_compare_refetches
 from sec_filing_data.report import run_report
 from sec_filing_data.sample import run_sample
 from sec_filing_data.submissions import run_envelopes
-from sec_filing_data.tables import SCHEMAS, TABLE_FORMATS, read_table, write_table
+from sec_filing_data.tables import (
+    SCHEMAS,
+    STAGE3_TABLES,
+    STAGE4_TABLES,
+    TABLE_FORMATS,
+    read_table,
+    write_table,
+)
 
+from tests.stage4_root import (
+    PARTNER_4,
+    PARTNER_13D_A1,
+    PARTNER_13D_A2,
+    PARTNER_13F_A,
+    PARTNER_D,
+    SAMPLED_4_A,
+    SAMPLED_13D,
+    SAMPLED_13F,
+    SAMPLED_D_A,
+    Stage4RootTestCase,
+    build_stage4_root,
+)
 from tests.test_client import USER_AGENT
 from tests.test_commands import (
     CommandTestCase,
@@ -424,8 +445,283 @@ class ReportRefetchesTests(CommandTestCase):
         titles = [line for line in run_report(self.layout).split("\n") if line.startswith("## ")]
 
         self.assertEqual(
-            titles[-5:],
-            ["## Platform checks", "## Times", "## Provenance", "## Refetches", "## Versions"],
+            titles[-6:],
+            [
+                "## Platform checks",
+                "## Times",
+                "## Provenance",
+                "## Refetches",
+                "## Stage 4",
+                "## Versions",
+            ],
+        )
+
+
+def row_of(layout: Layout, name: str, accession: str) -> dict:
+    """The one row of `accession` in table `name`."""
+    (row,) = [row for row in read_rows(layout, name) if row["accession_number"] == accession]
+    return row
+
+
+def update_row(layout: Layout, name: str, accession: str, **values) -> None:
+    """Write table `name` again with `values` set on the one row of `accession`."""
+    rows = read_rows(layout, name)
+    (row,) = [row for row in rows if row["accession_number"] == accession]
+    row.update(values)
+    write_table(layout, name, rows)
+
+
+def pair_lines(lines: list[str]) -> list[str]:
+    """The lines of a Stage 4 section from its forward pairs to the end of its other pairs."""
+    start = lines.index(next(line for line in lines if line.startswith("- forward pairs: ")))
+    end = lines.index(next(line for line in lines if line.startswith("- pairs whose amendment")))
+    return lines[start:end]
+
+
+class ReportStage4Tests(Stage4RootTestCase):
+    def stage4(self) -> list[str]:
+        return section(run_report(self.layout), "Stage 4")
+
+    def test_report_stage4_section(self):
+        usage = ledger_usage(self.layout.stage4_ledger)
+
+        self.assertEqual(
+            self.stage4(),
+            [
+                "- partners: 5 distinct, 5 rows",
+                "- partners by original_previous_accession: 1",
+                "- partners by original_date_issuer_owner: 1",
+                "- partners by candidate_amendment: 3",
+                "- fetch ok: 5",
+                "- Stage 4 requests: 5 of 30",
+                f"- Stage 4 wire bytes: {usage.wire_bytes} of 50000000",
+                "- links: 6",
+                "- links by previous_accession: 3",
+                "- links by original_date_issuer_owner: 1",
+                "- links by filer_period: 1",
+                "- links by none_declared: 1",
+                "- original held in sample: 2",
+                "- original held in partner: 3",
+                "- original not held: 1",
+                "- forward pairs: 3",
+                f"  - {PARTNER_13D_A1} amends {SAMPLED_13D}",
+                f"  - {PARTNER_13D_A2} amends {PARTNER_13D_A1}",
+                f"  - {PARTNER_13F_A} amends {SAMPLED_13F}",
+                "- reverse pairs: 2",
+                f"  - {SAMPLED_D_A} amends {PARTNER_D}",
+                f"  - {SAMPLED_4_A} amends {PARTNER_4}",
+                "- other pairs: 0",
+                "- pairs whose amendment answers first: 1",
+                (
+                    f"  - {SAMPLED_D_A} (2026-07-20T15:00:30+00:00)"
+                    f" before {PARTNER_D} (2026-07-21T09:00:00+00:00)"
+                ),
+                "- pairs with equal known_from: 0",
+                "- held filings: 10",
+                "- known_from before public_at: 0",
+                "- no public_at: 0",
+            ],
+        )
+        self.assertEqual(usage.requests, 5)
+
+    def test_pairs_that_fit_neither_direction_are_other(self):
+        stage4 = self.layout.stage4_view
+        # Both are partners, and PARTNER_D is no candidate amendment of the same sampled filing.
+        partner_original = {"original_accession": PARTNER_D, "original_held_in": "partner"}
+        update_row(stage4, "links", PARTNER_13D_A1, **partner_original)
+        # Both are sampled.
+        sampled_original = {"original_accession": SAMPLED_13D, "original_held_in": "sample"}
+        update_row(stage4, "links", SAMPLED_D_A, **sampled_original)
+
+        self.assertEqual(
+            pair_lines(self.stage4()),
+            [
+                "- forward pairs: 2",
+                f"  - {PARTNER_13D_A2} amends {PARTNER_13D_A1}",
+                f"  - {PARTNER_13F_A} amends {SAMPLED_13F}",
+                "- reverse pairs: 1",
+                f"  - {SAMPLED_4_A} amends {PARTNER_4}",
+                "- other pairs: 2",
+                f"  - {SAMPLED_D_A} amends {SAMPLED_13D}",
+                f"  - {PARTNER_13D_A1} amends {PARTNER_D}",
+            ],
+        )
+
+    def test_a_partner_amendment_of_another_sampled_filing_is_not_forward(self):
+        update_row(
+            self.layout.stage4_view, "partners", PARTNER_13D_A1, sampled_accession=SAMPLED_13F
+        )
+
+        self.assertEqual(
+            pair_lines(self.stage4()),
+            [
+                "- forward pairs: 2",
+                f"  - {PARTNER_13D_A1} amends {SAMPLED_13D}",
+                f"  - {PARTNER_13F_A} amends {SAMPLED_13F}",
+                "- reverse pairs: 2",
+                f"  - {SAMPLED_D_A} amends {PARTNER_D}",
+                f"  - {SAMPLED_4_A} amends {PARTNER_4}",
+                "- other pairs: 1",
+                f"  - {PARTNER_13D_A2} amends {PARTNER_13D_A1}",
+            ],
+        )
+
+    def test_a_pair_with_equal_known_from_is_listed_apart(self):
+        moment = row_of(self.layout, "filings", SAMPLED_13D)["last_modified_at"]
+        update_row(self.layout.stage4_view, "filings", PARTNER_13D_A1, last_modified_at=moment)
+
+        lines = self.stage4()
+
+        self.assertIn("- pairs whose amendment answers first: 1", lines)
+        at = lines.index("- pairs with equal known_from: 1")
+        at_moment = moment.isoformat()
+        self.assertEqual(
+            lines[at + 1], f"  - {PARTNER_13D_A1} ({at_moment}) before {SAMPLED_13D} ({at_moment})"
+        )
+
+    def test_a_copy_with_no_last_modified_time_is_known_from_its_fetch_time(self):
+        # PARTNER_D's copy was last modified on 2026-07-21 at 09:00:00 UTC.
+        update_row(
+            self.layout,
+            "filings",
+            SAMPLED_D_A,
+            last_modified_at=None,
+            fetched_at=utc(2026, 7, 22, 0, 0, 0),
+        )
+
+        lines = self.stage4()
+
+        self.assertIn("- pairs whose amendment answers first: 0", lines)
+        self.assertIn("- held filings: 10", lines)
+
+    def test_known_from_before_public_at_and_a_null_public_at_are_named(self):
+        stage4 = self.layout.stage4_view
+        modified = row_of(stage4, "filings", PARTNER_4)["last_modified_at"]
+        update_row(stage4, "filings", PARTNER_4, public_at=modified + datetime.timedelta(seconds=1))
+        update_row(stage4, "filings", PARTNER_13F_A, public_at=None)
+
+        lines = self.stage4()
+
+        at = lines.index("- held filings: 10")
+        self.assertEqual(
+            lines[at:],
+            [
+                "- held filings: 10",
+                "- known_from before public_at: 1",
+                f"  - {PARTNER_4}",
+                "- no public_at: 1",
+            ],
+        )
+
+    def test_a_filing_that_is_not_ok_is_not_held(self):
+        update_row(self.layout.stage4_view, "filings", PARTNER_D, outcome="failed")
+
+        self.assertIn("- held filings: 9", self.stage4())
+
+    def test_versions_cover_the_stage4_set(self):
+        lines = section(run_report(self.layout), "Versions")
+
+        self.assertEqual(len(lines), len(STAGE3_TABLES) + 1 + len(STAGE4_TABLES) + 1)
+        self.assertEqual(lines[11], "- tables made at 5ca1ab1e5ca1: 11")
+        self.assertEqual(
+            lines[12:],
+            [
+                *(
+                    f"- stage4 {name}: code 5ca1ab1e5ca1, format {TABLE_FORMATS[name]},"
+                    f" {read_table(self.layout.stage4_view, name).num_rows} rows"
+                    for name in STAGE4_TABLES
+                ),
+                "- stage4 tables made at 5ca1ab1e5ca1: 8",
+            ],
+        )
+
+
+class ReportStage4PartialTests(CommandTestCase):
+    def test_a_failed_partner_fetch_shows_in_the_outcomes_and_the_held_count(self):
+        build_stage4_root(self, failing=frozenset({PARTNER_13D_A2}))
+
+        lines = section(run_report(self.layout), "Stage 4")
+
+        self.assertEqual(lines[0], "- partners: 5 distinct, 5 rows")
+        self.assertEqual(lines[4:6], ["- fetch ok: 4", "- fetch not_found: 1"])
+        self.assertIn("- links: 5", lines)
+        self.assertIn("- held filings: 9", lines)
+        self.assertIn("- forward pairs: 2", lines)
+        self.assertNotIn(f"  - {PARTNER_13D_A2} amends {PARTNER_13D_A1}", lines)
+
+    def test_a_link_to_an_original_that_is_not_held_is_no_pair(self):
+        build_stage4_root(self, failing=frozenset({PARTNER_13D_A1}))
+        # PARTNER_13D_A2 is held, and it names PARTNER_13D_A1, which the index lists but we do
+        # not hold: the link names its original, and `original_held_in` is null.
+        link = row_of(self.layout.stage4_view, "links", PARTNER_13D_A2)
+        self.assertEqual(link["original_accession"], PARTNER_13D_A1)
+        self.assertIsNone(link["original_held_in"])
+
+        lines = section(run_report(self.layout), "Stage 4")
+
+        self.assertIn("- original not held: 2", lines)
+        self.assertEqual(
+            pair_lines(lines),
+            [
+                "- forward pairs: 1",
+                f"  - {PARTNER_13F_A} amends {SAMPLED_13F}",
+                "- reverse pairs: 2",
+                f"  - {SAMPLED_D_A} amends {PARTNER_D}",
+                f"  - {SAMPLED_4_A} amends {PARTNER_4}",
+                "- other pairs: 0",
+            ],
+        )
+
+    def test_report_without_stage4(self):
+        build_fixture_root(self)
+
+        report = run_report(self.layout)
+
+        self.assertEqual(section(report, "Stage 4"), ["- no Stage 4 tables yet"])
+        self.assertNotIn("stage4", "\n".join(section(report, "Versions")))
+
+    def test_an_empty_stage4_tables_folder_names_each_missing_table_once(self):
+        build_fixture_root(self)
+        self.layout.stage4_tables.mkdir(parents=True)
+
+        report = run_report(self.layout)
+
+        self.assertEqual(
+            section(report, "Stage 4"),
+            [
+                "- no Stage 4 `partners` table yet",
+                "- no Stage 4 `fetches` table yet",
+                "- Stage 4 requests: 0 of 30",
+                "- Stage 4 wire bytes: 0 of 50000000",
+                "- no Stage 4 `links` table yet",
+                "- no Stage 4 `filings` table yet",
+            ],
+        )
+        self.assertEqual(
+            section(report, "Versions")[-8:],
+            [f"- stage4 {name}: no `{name}` table yet" for name in STAGE4_TABLES],
+        )
+
+    def test_the_tables_that_each_step_has_written_so_far(self):
+        build_stage4_root(self)
+        for name in ("fetches", "filings", "links"):
+            self.layout.stage4_view.table(name).unlink()
+
+        lines = section(run_report(self.layout), "Stage 4")
+
+        by_rule = dict(zip(RULES, (1, 1, 3), strict=True))
+        wire_bytes = ledger_usage(self.layout.stage4_ledger).wire_bytes
+        self.assertEqual(
+            lines,
+            [
+                "- partners: 5 distinct, 5 rows",
+                *(f"- partners by {rule}: {count}" for rule, count in by_rule.items()),
+                "- no Stage 4 `fetches` table yet",
+                "- Stage 4 requests: 5 of 30",
+                f"- Stage 4 wire bytes: {wire_bytes} of 50000000",
+                "- no Stage 4 `links` table yet",
+                "- no Stage 4 `filings` table yet",
+            ],
         )
 
 
@@ -445,7 +741,7 @@ class ReportVersionsTests(CommandTestCase):
             [
                 *(
                     self.table_line(table, "5ca1ab1e5ca1", str(TABLE_FORMATS[table]))
-                    for table in SCHEMAS
+                    for table in STAGE3_TABLES
                 ),
                 "- tables made at 5ca1ab1e5ca1: 11",
             ],
@@ -488,7 +784,7 @@ class ReportVersionsTests(CommandTestCase):
                     self.table_line("sample", "5ca1ab1e5ca1", str(TABLE_FORMATS["sample"]))
                     if table == "sample"
                     else f"- {table}: no `{table}` table yet"
-                    for table in SCHEMAS
+                    for table in STAGE3_TABLES
                 ),
                 "- tables made at 5ca1ab1e5ca1: 1",
             ],
@@ -496,7 +792,7 @@ class ReportVersionsTests(CommandTestCase):
 
     def test_versions_without_tables_give_no_count(self):
         self.assertEqual(
-            self.versions(), [f"- {table}: no `{table}` table yet" for table in SCHEMAS]
+            self.versions(), [f"- {table}: no `{table}` table yet" for table in STAGE3_TABLES]
         )
 
 
