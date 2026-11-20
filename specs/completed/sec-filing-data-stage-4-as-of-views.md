@@ -1,12 +1,14 @@
 # Stage 4: As-of views — Design Spec
 
+**COMPLETE (2026-11-19)**, implemented by [plan 14](../plans/completed/14-sec-filing-data-stage-4-as-of-views.md). Results: [Stage 4 findings](../sec-filing-data-stage-4-findings.md).
+
 **Status:** Approved by the owner, 2026-11-19. Owner's words: "Approve spec".
 **Project:** `/Users/lowell/Projects/sec-edgar`, package `packages/sec-filing-data`.
-**Roadmap:** [sec-filing-data roadmap](sec-filing-data-roadmap.md), Stage 4, the last stage.
-**Inputs:** Stage 3 as built: [plan 13](plans/completed/13-sec-filing-data-stage-3-manifests-and-pinning.md) (its
-Handoff section), the [Stage 3 findings](sec-filing-data-stage-3-findings.md) and the
-[Stage 3 spec](completed/sec-filing-data-stage-3-manifests-and-pinning.md). Stage 2's times as built:
-[plan 11](plans/completed/11-sec-filing-data-stage-2-provenance-and-timing.md), Handoff section. The live root
+**Roadmap:** [sec-filing-data roadmap](../sec-filing-data-roadmap.md), Stage 4, the last stage.
+**Inputs:** Stage 3 as built: [plan 13](../plans/completed/13-sec-filing-data-stage-3-manifests-and-pinning.md) (its
+Handoff section), the [Stage 3 findings](../sec-filing-data-stage-3-findings.md) and the
+[Stage 3 spec](sec-filing-data-stage-3-manifests-and-pinning.md). Stage 2's times as built:
+[plan 11](../plans/completed/11-sec-filing-data-stage-2-provenance-and-timing.md), Handoff section. The live root
 `/Users/lowell/Projects/sec-edgar/filing-data/2026Q3`: `tables/`, `bytes/`, both ledgers and the manifest
 `manifests/tables@c36aa2cf5571.json` (SHA-256 `a9a1e833…`, recorded in the Stage 3 findings). Background only: the
 parked platform spec's time and amendment rules, R9–R13 and R22–R24 with V14 and V15
@@ -63,7 +65,7 @@ times.
   SEC's clock only.
 - XBRL facts for partners. No partner form is a 10-K or 10-Q, so `stage4/tables/` has no facts tables.
 - Whether an archive copy changes after a correction. The item stays deferred: Stage 4 fetches filings weeks after
-  their filing day, so its `Revisit if` does not fire.
+  their filing day, so its `Revisit if` does not fire. → item: 11-sec-filing-data-stage-2-provenance-and-timing — 2026-11-18
 - Feed archives, SEC reference data and inline XBRL. Their deferred items' `Revisit if` conditions do not fire.
 
 **Anti-goals.** Stage 4 fails, even if every check passes, when:

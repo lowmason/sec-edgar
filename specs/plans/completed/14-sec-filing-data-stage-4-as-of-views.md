@@ -1,5 +1,7 @@
 # Stage 4: As-of views — Implementation Plan
 
+**Status: COMPLETE (2026-11-19)** — executed via subagent-driven-development; deferred items in specs/deferred_items.md
+
 > **For agentic workers:** REQUIRED SUB-SKILL: implement this plan task-by-task via subagent-driven-development (the default) — or executing-plans when your human partner chose inline execution at the handoff. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 > Roadmap: specs/sec-filing-data-roadmap.md, Stage 4 — on plan completion, tick the
@@ -11,7 +13,7 @@
 
 **Tech Stack:** Python 3.14, uv, `pyarrow` (already locked), and the standard library (`xml.etree.ElementTree`, `zoneinfo`, `json`, `random`, `hashlib`, `re`).
 
-**Spec:** `specs/sec-filing-data-stage-4-as-of-views.md` (approved 2026-11-19). Section 8 holds D1–D3 and the calls that the owner approved with the spec. Background: plan 13 (`specs/plans/completed/13-sec-filing-data-stage-3-manifests-and-pinning.md`) and its Handoff section.
+**Spec:** `specs/completed/sec-filing-data-stage-4-as-of-views.md` (approved 2026-11-19). Section 8 holds D1–D3 and the calls that the owner approved with the spec. Background: plan 13 (`specs/plans/completed/13-sec-filing-data-stage-3-manifests-and-pinning.md`) and its Handoff section.
 
 ## Global Constraints
 
@@ -48,6 +50,8 @@
 ## Decisions
 
 - **D1** (owner, plan review, 2026-11-19): the plan is approved as written, with the calls C1–C16 and no change asked. Owner's words: "Approved". Applied in: Calls made in this plan.
+- **D2** (owner, final review, 2026-11-19): skip the Codex second opinion. Owner's words: "Skip Codex (Recommended)". Applied in: the final whole-branch review, which ran the code-reviewer seat only.
+- **D3** (owner, completion gate, 2026-11-19): keep `Declared.owner_ciks` as `()` when nothing is declared, and defer both lines that the final review declined to judge. Owner's words: "Keep () (Recommended)", "Defer as an item (Recommended)" and "Defer as an item (Recommended)". Applied in: `specs/deferred_items.md`, section `14-sec-filing-data-stage-4-as-of-views — 2026-11-19`.
 
 ## Calls made in this plan
 
@@ -101,16 +105,17 @@ Spec section 9 leaves these to the builder, and the advisor pass found the rest.
 - `tables.STAGE3_TABLES`: the 11 names of today, in today's `SCHEMAS` order. `tables.STAGE4_TABLES = ("partners", "fetches", "filings", "parties", "documents", "ownership", "ownership_status", "links")`.
 - `rebuild.REBUILT_TABLES = STAGE3_TABLES`. `report._versions` iterates `STAGE3_TABLES`.
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
   - `tests/test_tables.py`: `SCHEMA_FINGERPRINTS` gains `("partners", 1): "f0d74d67c35e1a6cbf341e07c517cc72ea178a209805c3b1e2707743bef40c5f"` and `("links", 1): "dee89c92c27f2d799d1d15f497edd260cb23db94e292a75c3a6c14438a2caa54"`. `test_each_schema_matches_its_format_number` is unchanged.
   - `test_stage4_paths_stay_under_one_root` (`test_tables.py`): for `Layout(Path("/r"))`, `stage4_bytes`, `stage4_ledger`, `stage4_tables` and `partner_submission("A")` are `/r/stage4/bytes`, `/r/stage4/fetch-log.jsonl`, `/r/stage4/tables` and `/r/stage4/bytes/A.txt`. `stage4_view.table("links")` is `/r/stage4/tables/links.parquet`. `stage4_view.runs`, `.lock` and `.manifests` are `/r/runs.jsonl`, `/r/fetch.lock` and `/r/manifests`. With `stage4_tables_dir=Path("/t")`, `stage4_view.table("links")` is `/t/links.parquet`.
   - `test_a_stage4_table_is_written_under_stage4` (`test_tables.py`): `write_table(layout.stage4_view, "partners", [])` makes `root/stage4/tables/partners.parquet`. Its `read_stamp` gives `table_format` `"1"`, and `root/tables/` does not exist.
   - `test_filing_fetch_rows_follow_the_order_and_limits` (`test_commands.py`): `fill_ledger` writes 30 matched pairs for keys that are not in the list. Two filings are given in reverse accession order, and the bytes of one sit at its `path_of` path. With `STAGE4_LIMITS`, the rows keep the given order, the file on disk reads `ok` with its path, and the other reads `budget`. With `STAGE1_LIMITS`, the other reads `not_attempted`.
   - `tests/test_report.py:448`, `:491` and `:499` iterate `STAGE3_TABLES`.
-- [ ] **Step 2: Run the test command.** Expected: failures and import errors in `test_tables` and `test_commands`.
-- [ ] **Step 3: Implement.**
-- [ ] **Step 4: Run the test command.** Expected: `OK`, with `test_fetch_rows_follow_the_given_sample` and `ALL_EQUAL` unchanged.
-- [ ] **Step 5: Commit:** `feat(filing-data): add the Stage 4 paths, budget and table formats`
+- [x] **Step 2: Run the test command.** Expected: failures and import errors in `test_tables` and `test_commands`.
+- [x] **Step 3: Implement.**
+- [x] **Step 4: Run the test command.** Expected: `OK`, with `test_fetch_rows_follow_the_given_sample` and `ALL_EQUAL` unchanged.
+- [x] **Step 5: Commit:** `feat(filing-data): add the Stage 4 paths, budget and table formats`
+  > Deviation: `tests/test_manifest.py:20` also broke by design, because `sorted(TABLE_FORMATS)` gained the two new formats. It now reads `sorted(STAGE3_TABLES)`, the same 11 files (controller ruling).
 
 ### Task 2: Declared values and the partner list
 
@@ -137,7 +142,7 @@ Spec section 9 leaves these to the builder, and the advisor pass found the rest.
     - `submission(form_type, *, accepted: str, filed: str, parties: list[tuple[str, str, str]], period: str | None = None, documents: list[tuple[str, str, bytes]] = ()) -> bytes`. `parties` holds (role, name, padded CIK). Each document is (type, filename, text), and an XML text is wrapped in `<XML>`.
     - `schedule13_xml(form, *, previous, amendment_no, issuer_cik)` with one `reportingPersonInfo`, `form_d_xml(*, previous)`, `form345_xml(form, *, original_date, issuer_cik, owner_ciks)` with one `nonDerivativeTransaction`, `form13f_cover_xml(form, *, amendment_no, amendment_type)` and `infotable_xml()` with one `infoTable`.
 
-- [ ] **Step 1: Write the failing tests** in `tests/test_partners.py`. Each test writes `index` and `sample` with `write_table`, and the sampled bytes under `bytes/`. Add `amendments` and `partners` to the name set, and `["partners"]` to `WRITING_ARGV`.
+- [x] **Step 1: Write the failing tests** in `tests/test_partners.py`. Each test writes `index` and `sample` with `write_table`, and the sampled bytes under `bytes/`. Add `amendments` and `partners` to the name set, and `["partners"]` to `WRITING_ARGV`.
   - `test_read_declared_reads_each_form`: a `SCHEDULE 13D/A` gives `previous_accession` and `amendment_number` `"4"`. A `D/A` gives `previous_accession` from the `offeringData` path. A `4/A` gives `original_date` `"2026-07-06"`, `issuer_cik` `"0000763532"` and two `owner_ciks`. A `13F-HR/A` with header period `20211231` and XML `periodOfReport` `12-31-2021` gives `period` `"20211231"`, `amendment_number` `"1"` and `amendment_type` `"NEW HOLDINGS"`. An `8-K/A` with no XML gives every value None except `filer_cik`. Bytes with no `<SEC-HEADER>` give a `problem` that starts with `submission parse error:`.
   - `test_rule_1`: a sampled `D/A` names an accession that the index lists: one row with rule `original_previous_accession`. One that the index does not list gives none. One that names a sampled accession gives none.
   - `test_rule_2_compares_ciks_as_numbers_and_dates_as_dates`: the XML gives `0000000051` and `0000000052`, and the index rows give the int64 values 51 and 52. One `4` filed on the declared date under exactly {51, 52} gives one row. A `4` on another date gives none. Two such `4` filings give none.
@@ -145,10 +150,11 @@ Spec section 9 leaves these to the builder, and the advisor pass found the rest.
   - `test_repeated_rows_and_partners_of_partners_are_skipped`: a `repeated` row of `SC 13D/A;SC TO-T/A` that names an indexed accession gives none. When rule 1 chooses a `D`, a `D/A` of the same CIKs that the index lists is not chosen, because the `D` is not sampled.
   - `test_one_partner_chosen_twice_is_one_distinct_partner` (Review Focus 2): two sampled `SCHEDULE 13D` filings with one CIK set choose the same `SCHEDULE 13D/A`. `choose_partners` gives two rows, and `distinct_partners` gives one.
   - `test_partners_command_writes_under_stage4`: `cli.main(["partners", ...])` returns 0 and prints the counts. `stage4/tables/partners.parquet` holds the rows, and the SHA-256 of each file under `tables/` and `bytes/` stays as it was.
-- [ ] **Step 2: Run the test command.** Expected: errors, `sec_filing_data.partners` not found.
-- [ ] **Step 3: Implement.**
-- [ ] **Step 4: Run the test command.** Expected: `OK`.
-- [ ] **Step 5: Commit:** `feat(filing-data): choose the in-quarter partners of the sampled filings`
+- [x] **Step 2: Run the test command.** Expected: errors, `sec_filing_data.partners` not found.
+- [x] **Step 3: Implement.**
+- [x] **Step 4: Run the test command.** Expected: `OK`.
+- [x] **Step 5: Commit:** `feat(filing-data): choose the in-quarter partners of the sampled filings`
+  > Deviation: `Declared.owner_ciks` is `()` when nothing is declared, not None (D3). `form13f_cover_xml` in `tests/stage4_root.py` also takes `period_of_report`.
 
 ### Task 3: The partner fetch
 
@@ -175,7 +181,7 @@ Spec section 9 leaves these to the builder, and the advisor pass found the rest.
 
     Inside `record_step(layout, "fetch-partners")`, a `FileNotFoundError` prints `error: <message>` and exits 1. Then it prints `_print_fetch_outcomes` of the Stage 4 `fetches`, `stage 4 requests: <n> of 30` and `stage 4 wire bytes: <n> of 50000000`, and returns the code.
 
-- [ ] **Step 1: Write the failing tests** in `tests/test_fetch_partners.py`. Each test writes `partners` to `layout.stage4_view`. Add `["fetch-partners"]` to `WRITING_ARGV`.
+- [x] **Step 1: Write the failing tests** in `tests/test_fetch_partners.py`. Each test writes `partners` to `layout.stage4_view`. Add `["fetch-partners"]` to `WRITING_ARGV`.
   - `test_fetch_partners_walks_distinct_partners_in_accession_order` (Review Focus 2): three accessions, one of them on two rows, are written out of order. The session sees the three URLs once each, in accession order. The ledger keys follow the same order. `stage4/tables/fetches.parquet` has three `ok` rows in that order. `bytes/`, `fetch-log.jsonl`, `stage2/` and `tables/` do not exist.
   - `test_fetch_partners_stops_at_30_requests`: 31 accessions, each answered 200. The exit is 5 after 30 requests, and the 31st row reads `budget`.
   - `test_fetch_partners_stops_at_the_wire_byte_limit`: `fill_ledger` puts 48,000,000 wire bytes in the Stage 4 ledger. The first reply has a body of 1,500,000 bytes. The exit is 5, and the second row reads `budget`.
@@ -186,10 +192,11 @@ Spec section 9 leaves these to the builder, and the advisor pass found the rest.
   - `test_fetch_partners_exits_6_on_403`.
   - `test_fetch_partners_needs_the_partner_list` (Review Focus 5): with `SEC_USER_AGENT` patched to a test value and no `partners` table, `cli.main` returns 1. Stderr is `error: <path> is missing: run partners first`, and `stage4/` does not exist.
   - `test_fetch_partners_needs_a_user_agent`: with the variable unset, the exit is 2 and nothing is sent.
-- [ ] **Step 2: Run the test command.** Expected: failures in `test_fetch_partners` and `test_version`.
-- [ ] **Step 3: Implement.**
-- [ ] **Step 4: Run the test command.** Expected: `OK`.
-- [ ] **Step 5: Commit:** `feat(filing-data): fetch the partner filings under the Stage 4 budget`
+- [x] **Step 2: Run the test command.** Expected: failures in `test_fetch_partners` and `test_version`.
+- [x] **Step 3: Implement.**
+- [x] **Step 4: Run the test command.** Expected: `OK`.
+- [x] **Step 5: Commit:** `feat(filing-data): fetch the partner filings under the Stage 4 budget`
+  > Deviation: `fetch._walk` takes `path_of`, so `fetch` and `fetch-partners` share one walk.
 
 ### Task 4: The partner tables and the Stage 4 fixture root
 
@@ -214,7 +221,7 @@ Spec section 9 leaves these to the builder, and the advisor pass found the rest.
       It gives the zip path.
     - `Stage4RootTestCase(CommandTestCase)` builds it in `setUp`, as `self.zip_path`.
 
-- [ ] **Step 1: Write the failing tests** in `tests/test_partner_tables.py`, on `Stage4RootTestCase`. Add `partner_tables` to the name set, and `["partner-tables"]` to `WRITING_ARGV`.
+- [x] **Step 1: Write the failing tests** in `tests/test_partner_tables.py`, on `Stage4RootTestCase`. Add `partner_tables` to the name set, and `["partner-tables"]` to `WRITING_ARGV`.
   - `test_fixture_partners`: the partner rows are `PARTNER_D` by rule 1, `PARTNER_4` by rule 2, and `PARTNER_13D_A1`, `PARTNER_13D_A2` and `PARTNER_13F_A` by rule 3, each from its sampled filing. The Stage 4 `fetches` has 5 `ok` rows in accession order.
   - `test_partner_tables_match_their_namesakes`: each Stage 4 table has the schema `SCHEMAS[name]` and the stamp `table_format` of `TABLE_FORMATS[name]`. `filings` has the 5 partners in accession order. Each row has `accepted_at`, `public_at`, `fetched_at`, `source_url` (the partner's `url`), `sha256` (the file's SHA-256) and `last_modified_at` read from its `LAST_MODIFIED` value.
   - `test_partner_ownership_by_form`: `ownership` has rows for `PARTNER_4`, `PARTNER_13D_A1`, `PARTNER_13D_A2` and `PARTNER_13F_A`, and none for `PARTNER_D`, which also has no `ownership_status` row. Each ownership row's `source_sha256` and five times equal those of its `filings` row.
@@ -223,10 +230,11 @@ Spec section 9 leaves these to the builder, and the advisor pass found the rest.
   - `test_partner_tables_write_only_stage4`: the CLI run returns 0. The SHA-256 of each file outside `stage4/`, except `runs.jsonl`, stays as it was, and `runs.jsonl` gains one `partner-tables` line.
   - `test_partner_tables_need_the_partner_list` (Review Focus 5): on a root with no `partners`, the CLI returns 1, stderr ends with `run partners first`, and `stage4/` does not exist.
   - `test_the_stage4_root_still_rebuilds_stage3`: `run_rebuild(layout, zip_path)` gives code 0, and its first 11 lines equal `ALL_EQUAL`.
-- [ ] **Step 2: Run the test command.** Expected: errors, `sec_filing_data.partner_tables` not found.
-- [ ] **Step 3: Implement.**
-- [ ] **Step 4: Run the test command.** Expected: `OK`.
-- [ ] **Step 5: Commit:** `feat(filing-data): write the partner tables with the Stage 3 parse code`
+- [x] **Step 2: Run the test command.** Expected: errors, `sec_filing_data.partner_tables` not found.
+- [x] **Step 3: Implement.**
+- [x] **Step 4: Run the test command.** Expected: `OK`.
+- [x] **Step 5: Commit:** `feat(filing-data): write the partner tables with the Stage 3 parse code`
+  > Deviation: `test_a_failed_partner_is_not_held` sits on a `CommandTestCase` that calls `build_stage4_root(self, failing=...)`, because a built root already holds the partner's bytes. The fixture adds one unrelated 10-K, which the draw wrapper drops.
 
 ### Task 5: The `links` table
 
@@ -251,7 +259,7 @@ Spec section 9 leaves these to the builder, and the advisor pass found the rest.
     6. `source_url`, `source_sha256` and the five times come from `record_provenance` of the amendment's `filings` row.
   - `run_partner_tables` also writes `links`, sorted by accession. Its amendments are `amendment_filings` of `tables/filings` (held in `sample`, bytes through `layout.submission`) and of the Stage 4 `filings` that it has just built (held in `partner`, bytes through `layout.partner_submission`). The context reads `tables/index` and both sets of `filings` and `parties`.
 
-- [ ] **Step 1: Write the failing tests** in `tests/test_links.py`. Add `links` to the name set.
+- [x] **Step 1: Write the failing tests** in `tests/test_links.py`. Add `links` to the name set.
   - `test_fixture_links` (`Stage4RootTestCase`): the rows, as (accession, `link_rule`, `original_accession`, `original_held_in`, `link_problem`):
     - (`PARTNER_13D_A1`, `previous_accession`, `SAMPLED_13D`, `sample`, None)
     - (`PARTNER_13D_A2`, `previous_accession`, `PARTNER_13D_A1`, `partner`, None)
@@ -271,10 +279,11 @@ Spec section 9 leaves these to the builder, and the advisor pass found the rest.
     - `test_a_slash_a_filing_with_no_xml_is_none_declared`.
     - `test_a_repeated_form_type_picks_its_declaring_part`: `SC 13D/A;SC TO-T/A` with no XML gives `none_declared`. With an `edgarSubmission` that names an indexed accession, it gives `previous_accession`.
     - `test_amendment_filings_take_held_slash_a_filings_only`: a `not_found` `D/A` and an `ok` `D` are left out.
-- [ ] **Step 2: Run the test command.** Expected: errors, `sec_filing_data.links` not found.
-- [ ] **Step 3: Implement.**
-- [ ] **Step 4: Run the test command.** Expected: `OK`.
-- [ ] **Step 5: Commit:** `feat(filing-data): link each held amendment to the original its bytes declare`
+- [x] **Step 2: Run the test command.** Expected: errors, `sec_filing_data.links` not found.
+- [x] **Step 3: Implement.**
+- [x] **Step 4: Run the test command.** Expected: `OK`.
+- [x] **Step 5: Commit:** `feat(filing-data): link each held amendment to the original its bytes declare`
+  > Deviation: `filer_period` has a fourth problem text, `CIK <text> is not a number`, for a FILER CIK that is not a number.
 
 ### Task 6: The `stage4` manifest
 
@@ -290,16 +299,17 @@ Spec section 9 leaves these to the builder, and the advisor pass found the rest.
   - `build_manifest(layout, "stage4", zip_path=None, stamp=...)` lists outputs from `set_folder`. `inputs` holds the files under `stage4_bytes` (kind `submission`) and `stage4_ledger` (kind `ledger`), sorted by path. `builds_on` is `{"path": <find_manifest(layout, "tables") under the root>, "sha256": <its SHA-256>}` (C11). A missing ledger or `tables` manifest raises `FileNotFoundError`, and the CLI's existing handler gives exit 1.
   - `tests/stage4_root.py`: `write_both_manifests(case) -> tuple[Path, Path]` writes the `tables` manifest (with `case.zip_path`) and then the `stage4` manifest. It gives both paths.
 
-- [ ] **Step 1: Write the failing tests** in `tests/test_manifest.py`, on `Stage4RootTestCase`. Add `["manifest", "--set", "stage4"]` to `WRITING_ARGV`.
+- [x] **Step 1: Write the failing tests** in `tests/test_manifest.py`, on `Stage4RootTestCase`. Add `["manifest", "--set", "stage4"]` to `WRITING_ARGV`.
   - `test_stage4_manifest_lists_outputs_inputs_and_builds_on`: the name is `stage4@5ca1ab1e5ca1.json`. The outputs are `stage4/tables/<name>.parquet` for each of `STAGE4_TABLES`, sorted, with stamps. The input kinds count `{"submission": 5, "ledger": 1}`, and no input has kind `index`. `builds_on` is `{"path": "manifests/tables@5ca1ab1e5ca1.json", "sha256": <that file's SHA-256>}`, and `manifest_format` is 1.
   - `test_stage4_manifest_needs_the_tables_manifest`: with no `tables` manifest, the CLI exits 1, stderr names `manifests/tables@5ca1ab1e5ca1.json`, and no `stage4` manifest exists.
   - `test_stage4_manifest_refuses_to_overwrite`: a second run exits 1, and the file's bytes stay as they were.
   - `test_stage4_takes_no_zip`: `--set stage4 --zip <zip>` exits 2.
   - `test_set_version_refuses_two_versions`: under commit `"b" * 40`, `links` is re-written. `set_version(layout.stage4_tables)` raises `ValueError` that names both versions.
-- [ ] **Step 2: Run the test command.** Expected: failures in `test_manifest` and `test_version`.
-- [ ] **Step 3: Implement.**
-- [ ] **Step 4: Run the test command.** Expected: `OK`, with the Stage 3 manifest tests unchanged.
-- [ ] **Step 5: Commit:** `feat(filing-data): add the stage4 manifest that builds on the tables manifest`
+- [x] **Step 2: Run the test command.** Expected: failures in `test_manifest` and `test_version`.
+- [x] **Step 3: Implement.**
+- [x] **Step 4: Run the test command.** Expected: `OK`, with the Stage 3 manifest tests unchanged.
+- [x] **Step 5: Commit:** `feat(filing-data): add the stage4 manifest that builds on the tables manifest`
+  > Deviation: `manifest` also catches `ValueError`, so a set with two code versions gives one `error:` line and exit 1.
 
 ### Task 7: The as-of query
 
@@ -326,7 +336,7 @@ Spec section 9 leaves these to the builder, and the advisor pass found the rest.
     <table>: <n> rows, sample <n>, partner <n>, index <n>      (for each of ASOF_TABLES)
     ```
 
-- [ ] **Step 1: Write the failing tests** in `tests/test_asof.py`. Tests on `Stage4RootTestCase` call `write_both_manifests` first. Add `asof` to the name set.
+- [x] **Step 1: Write the failing tests** in `tests/test_asof.py`. Tests on `Stage4RootTestCase` call `write_both_manifests` first. Add `asof` to the name set.
   - `test_parse_at`:
     - `2026-08-14` gives `2026-08-15T03:59:59.999999Z` (EDT).
     - `2026-01-15` gives `2026-01-16T04:59:59.999999Z` (EST).
@@ -348,10 +358,11 @@ Spec section 9 leaves these to the builder, and the advisor pass found the rest.
   - `test_asof_runs_on_a_dirty_tree`: under `Checkout(TEST_COMMIT, False, "…")`, the exit is 0, and the run line has `tree_clean` False.
   - `test_asof_writes_only_its_run_line`: every file's SHA-256 stays as it was, except `runs.jsonl`, which gains one `asof` line.
   - `test_asof_never_loads_requests`: in a subprocess, `cli.main(["asof", ...])` prints `0` and `False` for `'requests' in sys.modules`.
-- [ ] **Step 2: Run the test command.** Expected: errors, `sec_filing_data.asof` not found.
-- [ ] **Step 3: Implement.** Compute `known_from` and the filters with `pyarrow.compute`, because `index` has 302,499 rows on the live root.
-- [ ] **Step 4: Run the test command.** Expected: `OK`.
-- [ ] **Step 5: Commit:** `feat(filing-data): answer what was public by a given time`
+- [x] **Step 2: Run the test command.** Expected: errors, `sec_filing_data.asof` not found.
+- [x] **Step 3: Implement.** Compute `known_from` and the filters with `pyarrow.compute`, because `index` has 302,499 rows on the live root.
+- [x] **Step 4: Run the test command.** Expected: `OK`.
+- [x] **Step 5: Commit:** `feat(filing-data): answer what was public by a given time`
+  > Deviation: `manifest.set_version` names a table file that PyArrow cannot read. A fix round (`a6ed24f`) added a same-length change test, so a test reaches the SHA-256 refusal.
 
 ### Task 8: `verify` on the `stage4` manifest, parts 1 and 2
 
@@ -373,7 +384,7 @@ Spec section 9 leaves these to the builder, and the advisor pass found the rest.
     - `bytes/<accession>.txt: differs from <builds_on path>`, for each `sample` row that `is_amendment` whose file differs from its input entry there.
   - **Part 2.** `filings`, `parties`, `documents` and `ownership` use `records_result(layout.stage4_view, name, listed)`, where `listed` is the set of Stage 4 input SHA-256 values. A `links` row held in `partner` must bind to `listed`. One held in `sample` must bind to the `submission` inputs of the `builds_on` manifest. A failure reads `source_sha256 <hash> of <accession> matches no listed input`. `fetches` uses `fetches_result(layout.stage4_view, root, inputs)`.
 
-- [ ] **Step 1: Write the failing tests** in `tests/test_verify_stage4.py`, on `Stage4RootTestCase`, after `write_both_manifests` unless a test says otherwise. Add `verify_stage4` to the name set.
+- [x] **Step 1: Write the failing tests** in `tests/test_verify_stage4.py`, on `Stage4RootTestCase`, after `write_both_manifests` unless a test says otherwise. Add `verify_stage4` to the name set.
   - `test_an_untouched_stage4_root_passes`: the code is 0. The lines start `["seed: 20261119", "files: ok", "binding filings: ok", "binding parties: ok", "binding documents: ok", "binding ownership: ok", "binding links: ok", "binding fetches: ok"]`.
   - Each case below gives exit 1 and a line that names the file or row:
     - `test_a_changed_partner_byte_fails`: one byte appended to `stage4/bytes/<PARTNER_D>.txt`.
@@ -382,10 +393,11 @@ Spec section 9 leaves these to the builder, and the advisor pass found the rest.
     - `test_a_changed_tables_manifest_fails`: the `tables` manifest re-written with an added key. The `files:` line names its path.
     - `test_a_links_row_binds_by_its_set`: before the `stage4` manifest, the `SAMPLED_D_A` row of `links` is re-written with `held_in` `partner`. The `binding links:` line names `SAMPLED_D_A`.
   - `test_the_tables_manifest_still_verifies`: `verify` on the `tables` manifest of the Stage 4 root gives exit 0 and the Stage 3 lines.
-- [ ] **Step 2: Run the test command.** Expected: errors, `sec_filing_data.verify_stage4` not found.
-- [ ] **Step 3: Implement.**
-- [ ] **Step 4: Run the test command.** Expected: `OK`, with every `test_verify.py` test unchanged.
-- [ ] **Step 5: Commit:** `feat(filing-data): verify the stage4 manifest's files and hashes`
+- [x] **Step 2: Run the test command.** Expected: errors, `sec_filing_data.verify_stage4` not found.
+- [x] **Step 3: Implement.**
+- [x] **Step 4: Run the test command.** Expected: `OK`, with every `test_verify.py` test unchanged.
+- [x] **Step 5: Commit:** `feat(filing-data): verify the stage4 manifest's files and hashes`
+  > Deviation: a fix round (`c2de8bf`) added two tests that change a Stage 4 output file after the manifest. The `verify.py` helpers became public, so `verify_stage4` reuses them.
 
 ### Task 9: `verify` on the `stage4` manifest, part 3
 
@@ -399,15 +411,15 @@ Spec section 9 leaves these to the builder, and the advisor pass found the rest.
   3. **Partner records.** `records = parse_ledger(<the Stage 4 ledger input>)`. `fetched` is `partner_fetch_rows(layout, derived partners, records)` by accession, and `ok_records = last_ok(records)`. Every partner's `partner_records` comes from the input whose SHA-256 is its fetch row's `sha256`.
   4. **`links`.** `link_context` reads the hashed `tables/index`, `tables/filings` and `tables/parties`, and the partner `filings` and `parties` of step 3 (C13). The amendment's `filings` row comes from the hashed `tables/filings` (`sample`) or step 3 (`partner`). Its bytes come from the input whose SHA-256 is the row's `source_sha256`.
   5. **Draw.** Each table of `BINDING_TABLES` draws `draw_positions(num_rows, rows, random.Random(seed))`. Each drawn row must equal one row of `as_table_rows(table, <its accession's derived rows>)`. A failure reads `row <position> of <accession>: <reason>`, as in Stage 3.
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
   - `test_an_untouched_stage4_root_passes` gains `rederive partners: ok, 5 rows`, then `rederive <table>: ok, <min(20, rows)> rows` for each of `BINDING_TABLES`.
   - `test_a_changed_partners_row_fails`: before the `stage4` manifest, `partners` is re-written with one `rule` changed. `files: ok` shows, and the `rederive partners:` line names that row.
   - `test_a_changed_links_value_fails`: before the `stage4` manifest, one `link_problem` is changed. With `rows=1000`, the `rederive links:` line starts `rederive links: row <i> of <accession>:`.
   - `test_rederive_reads_the_hashed_bytes`: after the manifests, a byte is appended to `stage4/bytes/<PARTNER_4>.txt`. With `rows=1000`, the `rederive filings:` line names that path.
-- [ ] **Step 2: Run the test command.** Expected: failures in `test_verify_stage4`.
-- [ ] **Step 3: Implement.**
-- [ ] **Step 4: Run the test command.** Expected: `OK`.
-- [ ] **Step 5: Commit:** `feat(filing-data): re-derive the partner list and Stage 4 rows from the hashed bytes`
+- [x] **Step 2: Run the test command.** Expected: failures in `test_verify_stage4`.
+- [x] **Step 3: Implement.**
+- [x] **Step 4: Run the test command.** Expected: `OK`.
+- [x] **Step 5: Commit:** `feat(filing-data): re-derive the partner list and Stage 4 rows from the hashed bytes`
 
 ### Task 10: `rebuild`, the report and the README
 
@@ -432,17 +444,18 @@ Spec section 9 leaves these to the builder, and the advisor pass found the rest.
     - an Output bullet for `stage4/`.
     - the write commands list, extended to `partners`, `fetch-partners`, `partner-tables`, with `asof` among the read-only commands.
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
   - `test_a_stage4_root_gives_19_equal_lines` (`test_rebuild.py`, `Stage4RootTestCase`): `(0, ALL_EQUAL + [f"stage4 {name}: equal" for name in STAGE4_TABLES])`, and the temporary parent is empty afterwards.
   - `test_a_changed_stage4_table_gives_exit_1`: with one `links` value changed in the live table, the line starts `stage4 links: row`, and the code is 1.
   - `test_report_stage4_section` (`test_report.py`, `Stage4RootTestCase`): the counts are 5 distinct partners (1, 1 and 3 by rule) and `fetch ok: 5`. There are 6 links (3, 1, 1 and 1 by rule), and originals held in sample 2, in partner 3 and not held 1. There are 3 forward pairs, 2 reverse and 0 other. One pair's amendment answers first (`SAMPLED_D_A` before `PARTNER_D`). `held filings: 10`, `known_from before public_at: 0` and `no public_at: 0`.
   - `test_report_without_stage4`: `build_fixture_root` gives the one line `- no Stage 4 tables yet`, and Versions has no `stage4` line.
   - `test_versions_cover_the_stage4_set`: on `Stage4RootTestCase`, Versions ends with 8 `- stage4 <table>: code 5ca1ab1e5ca1, …` lines and `- stage4 tables made at 5ca1ab1e5ca1: 8`.
   - The four order checks of Global Constraints.
-- [ ] **Step 2: Run the test command.** Expected: failures in `test_rebuild` and `test_report`.
-- [ ] **Step 3: Implement**, and write the README text (plain technical English).
-- [ ] **Step 4: Run** `sh scripts/check-sec-filing-data.sh`. Expected: `OK` and no whitespace errors.
-- [ ] **Step 5: Commit:** `feat(filing-data): rebuild and report the Stage 4 tables`
+- [x] **Step 2: Run the test command.** Expected: failures in `test_rebuild` and `test_report`.
+- [x] **Step 3: Implement**, and write the README text (plain technical English).
+- [x] **Step 4: Run** `sh scripts/check-sec-filing-data.sh`. Expected: `OK` and no whitespace errors.
+- [x] **Step 5: Commit:** `feat(filing-data): rebuild and report the Stage 4 tables`
+  > Deviation: the `rebuild` scratch keeps `tables_dir=<temp>` and puts the Stage 4 tables in `<temp>/stage4`, because `<temp>/tables` breaks `tests/test_rebuild.py:383` and `:393`. The `test_commands.py` order check sat at line 996, not 963.
 
 ### Task 11: The live run and the findings
 
@@ -455,10 +468,11 @@ ZIP=/Users/lowell/Projects/sec-edgar/filing-data/inputs/2026Q3/master.zip
 
 A command name below is short for `uv run --locked --package sec-filing-data sec-filing-data <command> --out "$ROOT"`.
 
-- [ ] **Step 1: Check the preconditions** (spec 5.9 step 1). Each item has its expected result:
+- [x] **Step 1: Check the preconditions** (spec 5.9 step 1). Each item has its expected result:
   - `git status --porcelain -- packages/sec-filing-data pyproject.toml uv.lock .python-version` prints nothing. Record `git rev-parse HEAD` as the run commit.
   - `uv run --locked --package sec-filing-data python -c "import sec_filing_data; print(sec_filing_data.__file__)"` prints a path under `<worktree>/packages/sec-filing-data/src`.
   - `git -C /Users/lowell/Projects/sec-edgar check-ignore -q filing-data/x` exits 0.
+    > Deviation: the check ran in the worktree, because the worktree guard refuses `git -C` on the main checkout. The branch has not changed `.gitignore` since `66f81c5`, the main checkout's commit.
   - `pgrep -fl '[s]ec-filing-data'` and `pgrep -fl '[s]ec_edgar'` print nothing (D2: no other SEC client).
   - `find "$ROOT" -name '.*'` prints nothing. On the first pass, `test ! -e "$ROOT/stage4"` holds.
   - `sh scripts/check-sec-filing-data.sh` gives `OK`.
@@ -468,9 +482,10 @@ A command name below is short for `uv run --locked --package sec-filing-data sec
     - `shasum -a 256` of each file of `tables/` and of the three Stage 3 manifests.
     - `shasum -a 256 "$ZIP"`, which starts `526d2dbf2dd2e4c6`.
   - `verify --manifest "$ROOT/manifests/tables@c36aa2cf5571.json"` gives exit 0.
-- [ ] **Step 2: Partners** (step 2). `partners` prints `partners: 20`, `original_previous_accession: 2`, `original_date_issuer_owner: 2` and `candidate_amendment: 16`. Print `stage4/tables/partners.parquet` with `pyarrow`, and compare its (partner, form, date filed, rule, sampled filing) rows with spec Appendix A. A different list stops the run. Then it is a code fix, and no request is sent. Nobody edits Appendix A without the owner.
-- [ ] **Step 3: Fetch** (step 3). Set `SEC_USER_AGENT` with the command of README section Run (it reads tag `ingest-parked-2026-11-16`). Then run `fetch-partners`. Expected: exit 0, `ok: 20`, `stage 4 requests: 20 of 30` and less than 5,000,000 wire bytes. A failed partner may be fetched again by one more `fetch-partners` while requests remain. Exit 5 stops the run for the owner (spec section 3). So does exit 6.
-- [ ] **Step 4: Partner tables and links** (step 4). `partner-tables` prints `fetches: 20`, `filings: 20` and `links: 43`. With `pyarrow`, the 27 `links` rows held in `sample` give the counts of spec 5.5:
+- [x] **Step 2: Partners** (step 2). `partners` prints `partners: 20`, `original_previous_accession: 2`, `original_date_issuer_owner: 2` and `candidate_amendment: 16`. Print `stage4/tables/partners.parquet` with `pyarrow`, and compare its (partner, form, date filed, rule, sampled filing) rows with spec Appendix A. A different list stops the run. Then it is a code fix, and no request is sent. Nobody edits Appendix A without the owner.
+- [x] **Step 3: Fetch** (step 3). Set `SEC_USER_AGENT` with the command of README section Run (it reads tag `ingest-parked-2026-11-16`). Then run `fetch-partners`. Expected: exit 0, `ok: 20`, `stage 4 requests: 20 of 30` and less than 5,000,000 wire bytes. A failed partner may be fetched again by one more `fetch-partners` while requests remain. Exit 5 stops the run for the owner (spec section 3). So does exit 6.
+  > Deviation: a wrapper script in the ignored execution workspace ran the README's `SEC_USER_AGENT` command and the fetch, so the value was never printed.
+- [x] **Step 4: Partner tables and links** (step 4). `partner-tables` prints `fetches: 20`, `filings: 20` and `links: 43`. With `pyarrow`, the 27 `links` rows held in `sample` give the counts of spec 5.5:
   - The sampled D/A `0002065248-26-000003` and `0002135638-26-000005`, and 4/A `0000892251-26-000099` and `0001628280-26-051492`, link to their partners.
   - 14 have `link_problem` `not in the 2026Q3 index`.
   - `0000108985-26-000080` has `no index match for 2026-04-16 …`.
@@ -478,15 +493,15 @@ A command name below is short for `uv run --locked --package sec-filing-data sec
   - 7 are `none_declared`.
 
   Record the 16 partner amendments' links. Pin no expected link for `0001921640-26-000017`.
-- [ ] **Step 5: Rebuild** (step 5). `rebuild --zip "$ZIP"` gives exit 0 and 19 lines `equal`.
-- [ ] **Step 6: Manifest** (step 6). `manifest --set stage4`. Record its path and SHA-256. The name ends `@<run commit, first 12 characters>.json`.
-- [ ] **Step 7: Verify** (step 7). `verify` on the `stage4` manifest gives exit 0 with `seed: 20261119`, `files: ok`, 6 `binding … ok` lines, `rederive partners: ok, 20 rows` and 5 `rederive … ok` lines. `verify` on `tables@c36aa2cf5571.json` gives exit 0 with the Stage 3 lines.
-- [ ] **Step 8: As-of** (step 8). Run `asof --at <date>` for 2026-06-30, 2026-07-31, 2026-08-14, 2026-08-27, 2026-09-30, 2026-10-31 and 2026-11-19, and record each summary. Through 2026-09-30, `index` has at most 775 rows, with `index 0`. At 2026-10-31 and 2026-11-19, `index` has 302,499 rows. For each confirmed pair, run `asof --at <instant> --table filings` at 1 µs before the earlier `known_from`, between the two, and at the later `known_from`. Expected: neither, then the earlier filing only, then both. Record each pair whose amendment answers first, and each pair whose two values are equal, for which the middle instant does not exist.
-- [ ] **Step 9: Report** (step 9). The Stage 4 section shows `known_from before public_at: 0`. Record the section.
-- [ ] **Step 10: Check that the inputs did not change** (step 10). The ledgers, the `bytes/` digest, the `tables/` files, the Stage 3 manifests and `$ZIP` equal their Step 1 values.
+- [x] **Step 5: Rebuild** (step 5). `rebuild --zip "$ZIP"` gives exit 0 and 19 lines `equal`.
+- [x] **Step 6: Manifest** (step 6). `manifest --set stage4`. Record its path and SHA-256. The name ends `@<run commit, first 12 characters>.json`.
+- [x] **Step 7: Verify** (step 7). `verify` on the `stage4` manifest gives exit 0 with `seed: 20261119`, `files: ok`, 6 `binding … ok` lines, `rederive partners: ok, 20 rows` and 5 `rederive … ok` lines. `verify` on `tables@c36aa2cf5571.json` gives exit 0 with the Stage 3 lines.
+- [x] **Step 8: As-of** (step 8). Run `asof --at <date>` for 2026-06-30, 2026-07-31, 2026-08-14, 2026-08-27, 2026-09-30, 2026-10-31 and 2026-11-19, and record each summary. Through 2026-09-30, `index` has at most 775 rows, with `index 0`. At 2026-10-31 and 2026-11-19, `index` has 302,499 rows. For each confirmed pair, run `asof --at <instant> --table filings` at 1 µs before the earlier `known_from`, between the two, and at the later `known_from`. Expected: neither, then the earlier filing only, then both. Record each pair whose amendment answers first, and each pair whose two values are equal, for which the middle instant does not exist.
+- [x] **Step 9: Report** (step 9). The Stage 4 section shows `known_from before public_at: 0`. Record the section.
+- [x] **Step 10: Check that the inputs did not change** (step 10). The ledgers, the `bytes/` digest, the `tables/` files, the Stage 3 manifests and `$ZIP` equal their Step 1 values.
 
   A result that differs is a problem to fix and record (spec 5.9). Fix it in a commit, and repeat Steps 1, 2 and 4–10 at the new commit. The fetch is not repeated for a partner that has bytes. A fix that would change a Stage 3 value is not a Stage 4 fix: the run stops, and the owner decides.
-- [ ] **Step 11: Write `specs/sec-filing-data-stage-4-findings.md`** (spec section 7). Its sections:
+- [x] **Step 11: Write `specs/sec-filing-data-stage-4-findings.md`** (spec section 7). Its sections:
   - Run record: root, run commit and stamp.
   - Partners: the list, compared with Appendix A.
   - SEC use: requests and wire bytes from the Stage 4 ledger, against 30 and 50,000,000.
@@ -498,4 +513,14 @@ A command name below is short for `uv run --locked --package sec-filing-data sec
   - Exit check: spec section 7's table, filled in.
 
   Commit: `docs(specs): record the Stage 4 run`.
-- [ ] **Step 12: Run the Plan Completion Protocol, then open the PR.** The protocol's commits touch only `specs/`, and all of them land before the PR opens. Stage 4 is the roadmap's last stage. So the 3a Handoff section records the three roadmap departures of spec section 10, then reads `None: last stage.` The resume handoff routes to the roadmap's completion review (derive-roadmap §6). The 16 held parked items of `specs/deferred_items.md` stay as they are. Then open the PR (Global Constraints), and run the PR lifecycle rule.
+- [x] **Step 12: Run the Plan Completion Protocol, then open the PR.** The protocol's commits touch only `specs/`, and all of them land before the PR opens. Stage 4 is the roadmap's last stage. So the 3a Handoff section records the three roadmap departures of spec section 10, then reads `None: last stage.` The resume handoff routes to the roadmap's completion review (derive-roadmap §6). The 16 held parked items of `specs/deferred_items.md` stay as they are. Then open the PR (Global Constraints), and run the PR lifecycle rule.
+
+## Handoff to later stages
+
+Roadmap departures (spec section 10). The roadmap's Stage 4 entry was not amended. That is derive-roadmap's job at the resume.
+
+- Stage 4 sent live SEC requests under its own owner budget (D2 of the spec): 20 of 30 requests and 1,578,979 of 50,000,000 wire bytes, counted in `ROOT/stage4/fetch-log.jsonl` (`specs/sec-filing-data-stage-4-findings.md`, SEC use).
+- Stage 4 holds 20 in-quarter partner filings beyond the 500-filing sample (D1 of the spec), in `ROOT/stage4/`, with their own ledger, tables and manifest. The roadmap's Stage 4 entry names the sample only.
+- The Exit's amendment clause took the in-quarter reading (D1 of the spec). Originals in other quarters stay out. On the live root, 10 forward and 4 reverse pairs confirmed, and 23 sampled amendments keep a `link_problem` or `none_declared` (findings, Partner tables and links).
+
+None: last stage.
